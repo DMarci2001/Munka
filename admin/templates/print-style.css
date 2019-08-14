@@ -1,0 +1,256 @@
+@media print{
+	body{
+		font-family:"Courier New", Courier, monospace;
+		padding:0;
+		margin:0;
+	}
+	.wrapper{
+		//width:595px;
+		width:815px;
+		//height:842px;
+		height:1055px;
+		//border:1px solid black;
+	}
+	.page-title{
+		display:table;
+		margin:0 auto;
+		font-size:24px;
+		font-weight:bold;
+		font-style: italic;
+		margin-top:10px;
+		padding-bottom:10px;
+	}
+	.top-gray-line{
+		//width:575px;
+		width:795px;
+		border-bottom:1px solid gray;
+		height:1px;
+		display:block;
+		margin:auto;
+	}
+	.top-date-box{
+		display:block;
+		float:right;
+		padding-right:10px;
+		padding-top:5px;
+		padding-bottom:5px;
+		font-size:13px;
+		color:gray;
+	}
+	.top-date-box i{
+		font-weight:bold;
+		color:#000;
+	}
+	.patient-details-table,
+	.core-details-table{
+		margin:auto;
+		border-collapse: collapse;
+		border:none;
+		font-size:12px;
+		color:gray;
+		//width:575px;
+		width:795px;
+	}
+	.core-details-table{
+		margin-top:10px;
+	}
+	.core-details-table tr:nth-child(1) td:nth-child(1){
+		width:180px;
+	}
+	.core-details-table tr:nth-child(1) td:nth-child(2){
+		width:380px;
+	}
+	.patient-details-table td,
+	.core-details-table td{
+		border:1px solid #676c6d;
+		padding:3px;
+	}
+	.patient-details-table i,
+	.core-details-table i{
+		color:#000;
+		font-weight:bold;
+		
+	}
+	#PDT-row-01 td:nth-child(1){
+		width:620px;
+	}
+	#PDT-row-02{
+	margin-top:-1px;
+	}
+	#PDT-row-02 td:nth-child(1){
+		width:480px;
+	}
+	#PDT-row-03{
+	margin-top:-1px;
+	}
+	#PDT-row-03 td:nth-child(1){
+		width:500px;
+	}
+	#PDT-row-04{
+	margin-top:-1px;
+	}
+	#PDT-row-04 td:nth-child(1){
+		width:550px;
+	}
+	.modul-box{
+		//height:421px;
+		height:600px;
+		//width:575px;
+		width:795px;
+		margin:10px auto;
+		//border:1px solid black;
+	}
+	.s1-modul-table{
+		font-size:12px;
+		color:#000;
+		//width:188.3px;
+		width:260px;
+		//height:461px;
+		height:595px;
+		border:1px solid gray;
+		display:inline-block;
+		float:left;
+	}
+	.s1-modul-table i ,.s2-modul-table i{
+		color:gray;
+	}
+	.s2-modul-table{
+		font-size:12px;
+		color:#000;
+		//width:188.3px;
+		width:260px;
+		//height:150px;
+		height:195px;
+		display:inline-block;
+		float:left;
+		border:1px solid gray;
+	}
+	#s3-scales{
+		//width:186.3px;
+		width:265px;
+		border:none;
+	}
+	#vizelet-lista{
+		height:172px;
+		width:265px;
+		margin-bottom:5px;
+	}
+	#tumormarker-lista{
+		width:265px;
+		height:183px;
+		margin-bottom:5px;
+	}
+	#egyeb-lista{
+		height:210px;
+	}
+	#veralvadas-lista{
+		margin-bottom:5px;
+		height:180px;
+	}
+	#s3-modul-scales{
+		width:265px;
+		//height:308.6px;
+		height:440px;
+		margin-bottom:5px;
+	}
+	#third-modul-table{
+		height:230px;
+		width:265px;
+	}
+	.s2-modul-table textarea{
+		resize: none;
+		width:265px;
+		height:214px;
+		font-size:12px;
+		margin-left:-3px;
+		margin-top:-3px;
+	}
+	.s1-modul-table i,
+	.s2-modul-table i{
+		font-size:12px;
+	}
+	.s1-modul-table td,
+	.s2-modul-table td{
+		//width:188.3px;
+		width:260px;
+		clear:both;
+		font-size:13px;
+		margin:0px;
+		padding:0px;
+	}
+	.s1-modul-table tr:nth-child(1) td,
+	.s2-modul-table tr:nth-child(1) td{
+		font-size:14px;
+		text-align:center;
+		border-bottom:1px solid gray;
+	}
+	.comment-box{
+		border:1px solid gray;
+		height:150px;
+		//width:575px;
+		width:795px;
+		margin:auto;
+	}
+	.comment-box span{
+		display:block;
+		color:black;
+		font-size:12px;
+		font-weight:bold;
+		font-style:italic;
+		padding:5px;
+	}
+	.comment-box textarea{
+		resize: none;
+		//width:575px;
+		width:795px;
+		height:125px;
+	}
+	.docketing-box{
+		display:inline-block;
+		height:21px;
+		width:260px;
+		border:1px solid gray;
+		float:left;
+		margin-left:10px;
+		margin-top:10px;
+	}
+	.docketing-box span{
+		font-size:12px;
+		display:block;
+		padding:5px;
+		color:gray;
+	}
+	.docketing-box span input{
+		font-size:12px;
+		margin-top:-18px;
+		text-align:right;
+		height:18px;
+		width:120px;
+		border:none;
+		font-family:"Courier New", Courier, monospace;
+	}
+	.docketing-box span i{
+		font-style:italic;
+		font-weight:bold;
+		color:#000;
+	}
+	.signature-box{
+		display:inline-block;
+		height:21px;
+		width:260px;
+		border:1px solid gray;
+		float:right;
+		margin-right:10px;
+		margin-top:10px;
+	}
+	.signature-box span{
+		font-size:12px;
+		display:block;
+		padding:5px;
+		color:black;
+		font-style:italic;
+	}
+	.protocol-select-box{
+		display:none;
+	}
+}

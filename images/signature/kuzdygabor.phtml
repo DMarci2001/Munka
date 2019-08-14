@@ -1,0 +1,25 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body>
+<div style="font-family:tahoma,arial;color:#3e3a39;font-size:12px;">
+    <div style="font-size:16px;"><?= $_COOKIE["signature_name"]; ?></div>
+    <div><strong><?= $_COOKIE["signature_status"]; ?></strong></div>
+    <div style="margin-top:10px;">
+        <span style="color:#8b0304">M:</span> <?= $_COOKIE["signature_phone"]; ?><br/>
+        <?php if ($_COOKIE["signature_email"] != ""): ?><span style="color:#8b0304">E:</span> <?= $_COOKIE["signature_email"]; ?><br/><?php endif; ?>
+        <span style="color:#8b0304">W:</span> <?= $_COOKIE["signature_web"]; ?><br/>
+        <span style="color:#8b0304">C:</span> <?= $_COOKIE["signature_address"]; ?>
+    </div>
+
+    <div style="display:table-cell;padding-top:10px;vertical-align: middle;">
+        <a href="<?= $_COOKIE["signature_web"]; ?>"><img src="https://bejelentkezes.hungariamed.hu/images/signature/hmm_logo_nagy.png" height="25" style="padding-right:20px;"/></a>
+    </div>
+    <div style="display:table-cell;padding-top:10px;vertical-align: middle;">
+        <a href="<?= $_COOKIE["signature_facebook"]; ?>" target="_blank"><img src="https://bejelentkezes.hungariamed.hu/images/signature/face.png" alt="Facebook" title="Facebook" height="20" style="padding-right:1px;"/></a>
+        <?php if ($_COOKIE["signature_linkedin"] != ""): ?><a href="<?= $_COOKIE["signature_linkedin"]; ?>" target="_blank"><img src="https://bejelentkezes.hungariamed.hu/images/signature/linkedin.png" alt="Linkedin" title="Linkedin" height="20" style="padding-right:1px;"/></a><?php endif; ?>
+        <a href="<?= $_COOKIE["signature_instagram"]; ?>" target="_blank"><img src="https://bejelentkezes.hungariamed.hu/images/signature/insta.png" alt="Instagram" title="Instagram" height="20" style="padding-right:1px;"/></a>
+    </div>
+</div>
+</body>
