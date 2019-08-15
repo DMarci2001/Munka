@@ -2,9 +2,10 @@
 
 class Booking_Settings
 {
-
     private $munkaszunetiNapok;
 
+    const SITE_NAME = 'KeltexMed időpontfoglalás';
+    const SITE_LOGO = 'images/hmm_logo.png';
 
     public function __construct()
     {

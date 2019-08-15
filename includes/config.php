@@ -151,53 +151,6 @@ function getSubDomain() {
 }
 
 
-function htmlheader($pagetitle="HMM online bejelentkezés") {
-	$subdomain=$_SESSION["helyszindata"]["domain"];
-	
-	$htmlout='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-	$htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
-	$htmlout.='<head>';
-	
-	if (!isset($GLOBALS["admin"])) {
-		$htmlout.="<!-- Google Tag Manager -->
-		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-		})(window,document,'script','dataLayer','GTM-KGL6C9C');</script>
-		<!-- End Google Tag Manager -->";
-		
-		$htmlout.="<!-- Google Tag Manager (noscript) -->
-		<noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-KGL6C9C\"
-		height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>
-		<!-- End Google Tag Manager (noscript) -->";
-	}	
-	
-	$htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pagetitle}</title>";
-	$favicon="/images/hmm_favicon.png";
-	if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
-	
-	$htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-
-	if (isset($GLOBALS["ertekeles"])) {
-        $htmlout.="<link rel='stylesheet' type='text/css' href='ertekeles.css' />";
-    } else {
-        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css' />";
-    }
-	$htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
-	$htmlout.='<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>';
-	$htmlout.='<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>';
-	$htmlout.='<script type="text/javascript" src="ajax.js"></script>';
-	$htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
-	//$htmlout.='<script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>';
-	$htmlout.='<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">';
-    $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-    $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-    $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-
-    $htmlout.="</head>";
-	return $htmlout;
-}
 
 
 function numtostring($Mit) {
