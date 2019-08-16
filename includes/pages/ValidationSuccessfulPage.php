@@ -1,0 +1,22 @@
+<?php
+
+class ValidationSuccessfulPage extends CorePage {
+
+    public function __construct()
+    {
+        parent::__construct();
+
+    }
+
+    public function showPage() {
+        $webText = $this->lang->webText;
+
+        echo $this->displayFejlec();
+
+        echo "A regisztráció érvényesítése sikerült.</b><br/>
+        <br/>
+        <a href='/'>Tovább</a>";
+
+        if (isset($_SESSION["captcha"])) unset($_SESSION["captcha"]);
+    }
+}

@@ -6,6 +6,9 @@ class Booking_Settings
 
     const SITE_NAME = 'KeltexMed időpontfoglalás';
     const SITE_LOGO = 'images/hmm_logo.png';
+    const GENERATED_PASSWORD_LENGTH = 8;
+    const PASSWORD_LENGTH_MIN = 6;
+    const PASSWORD_LENGTH_MAX = 20;
 
     public function __construct()
     {

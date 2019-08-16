@@ -4,7 +4,7 @@ class Utils {
 
     public function __construct()
     {
-
+        /*
         if (isset($_GET["tesztsms"]))
         {
             include ("includes/seeme-gateway-class.php");
@@ -19,102 +19,6 @@ class Utils {
             }
         }
 
-        if (isset($_POST["validatelogin"])) {
-            $formerror = "";
-            if ($_POST["smskod"] == "") {
-                $formerror .= "{$webText["nemadtamegkod"]}<br/>";
-            } else {
-
-                $kod = round($_POST["smskod"]);
-                if ($_POST["smskod"] != "" && !sql_fetch_array(sql_query("select rkod from felhasznalok where id='{$_SESSION["user"]["id"]}' and rkod='{$kod}'"))) {
-                    $formerror .= "{$webText["hibaskod"]}<br/>";
-                } else {
-                    sql_query("update felhasznalok set validated=1 where id='{$_SESSION["user"]["id"]}' and rkod='{$kod}'");
-                    header("location:index.php?page=sikereservenyesites");
-                    die();
-                }
-            }
-        }
-
-        if (isset($_POST["logintry"])) {
-            $formerror = "";
-            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where email=? and jelszo=md5(?) and cegid=?", array($_POST["email"], $_POST["jelszo"], $_SESSION["helyszindata"]["id"])))) {
-                $_SESSION["loggeduser"] = $rowu["id"];
-                header("location:index.php");
-                die();
-            } else {
-                $formerror = "{$webText["loginerror"]}";
-            }
-        }
-
-        if (isset($_POST["passwordsend"])) {
-            $formerror = "";
-
-            if (trim($_POST["email"]) == "") {
-                $formerror = "{$webText["kerjukadjamegemail2"]}";
-                return;
-            }
-            if (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
-                $formerror = "{$webText["emailformat"]}";
-                return;
-            }
-
-            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where email=? and cegid=?", array($_POST["email"], $_SESSION["helyszindata"]["id"])))) {
-                $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
-                $p = "";
-                for ($i = 0; $i < 8; $i++) {
-                    $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
-                }
-
-                include_once("phpmailer/class.phpmailer.php");
-                $mail = new PHPMailer();
-                $mail->From = "noreply@hungariamed.hu";
-                $mail->FromName = "Hungariamed";
-                $mail->AddAddress($rowu["email"]);
-                $mail->AddReplyTo("noreply@hungariamed.hu");
-                $mail->IsHTML(true);
-
-                $t = iconv("UTF-8", "ISO-8859-2", "Új jelszó kérése");
-
-                $mbody = "Kedves {$rowu["nev"]}!<br/><br/>";
-                $mbody .= "Az online bejelentkezési felületünkön új jelszó kérését kezdeményezte.<br/><br/>";
-                $mbody .= "Az új jelszava: <b>{$p}</b><br><br>";
-                $mbody .= "Az új jelszavát bejelentkezés követően az adatmódosítás menüpont alatt tudja megváltoztatni.<br/>";
-                $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
-
-                if ($_COOKIE["lang"] == "de") {
-                    $mbody = "Lieber {$rowu["nev"]}!<br/><br/>";
-                    $mbody .= "Unsere online anmelden Oberfláche sie beginnen eine neue Kennwort anbietten.<br/><br/>";
-                    $mbody .= "Die neue Kennwort: <b>{$p}</b><br><br>";
-                    $mbody .= "Nach den anmelden können Sie um  einem neuem Kennwort bitten.<br/>";
-                    $mbody .= "<br/>";
-                    $mbody .= "Freundlichen Grüssen:<br>Hungariamed";
-                }
-                if ($_COOKIE["lang"] == "en") {
-                    $mbody = "Dear {$rowu["nev"]}!<br/><br/>";
-                    $mbody .= "You have requested a new password on our reservation page.<br/><br/>";
-                    $mbody .= "Your new password: <b>{$p}</b><br><br>";
-                    $mbody .= "You can change your new password under the profile page.<br/>";
-                    $mbody .= "<br/>";
-                    $mbody .= "Regards<br>Hungariamed";
-                }
-
-                $mail->Subject = $t;
-                $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-                //$mail->AddAttachment("");
-                $mail->Send();
-
-                sql_query("update felhasznalok set jelszo='" . addslashes(md5($p)) . "'	where id='{$rowu["id"]}'");
-
-                header("location:index.php?page=login&passwordsent");
-                die();
-            } else {
-                $formerror = "{$webText["nemtalalhatoemail"]}";
-            }
-
-        }
-
 
         if (isset($_GET["remotereserve"])) {
             if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='" . intval($_GET["fid"]) . "' and rkod='" . intval($_GET["fkod"]) . "'"))) {
@@ -126,272 +30,9 @@ class Utils {
         }
 
 
-        if (isset($_POST["adatmodositas"])) {
-            $formerror = "";
-
-            if (isset($_POST["szuldatumev"])) {
-                $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
-            }
-
-            $_POST["telefon"] = fixPhoneNumber($_POST["telefon"]);
-
-            $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
-            $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
-            if ($_POST["taj"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $formerror .= "{$webText["tajformat"]}<br/>";
-            if ($_POST["taj"] != "" && sql_fetch_array(sql_query("select taj from felhasznalok where taj=? and cegid=? and id<>?", array($_POST["taj"], $_SESSION["helyszindata"]["id"], $_SESSION["user"]["id"])))) $formerror .= "{$webText["tajletezik"]}<br/>";
-
-            //if ($_POST["email"]=="") $formerror.="Az e-mail cím megadása kötelező!<br/>";
-            //if (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL) && $_POST["email"]!="") $formerror.="Az e-mail cím formátuma nem megfelelő!<br/>";
-            if ($_POST["nev"] == "") $formerror .= "{$webText["nevkotelezo"]}<br/>";
-            if ($_POST["telefon"] == "") $formerror .= "{$webText["telkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["telefon"]) && $_POST["telefon"] != "") $formerror .= "{$webText["telformat"]}<br/>";
-            if ($_POST["szuldatum"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["szulkotelezo"]}<br/>";
-            if (!validateDate($_POST["szuldatum"], "Y-m-d") && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["szulformat"]}<br/>";
-            //if ($_POST["munkakor"]=="" && $_SESSION["helyszindata"]["tajnotreq"]==0) $formerror.="A munkakör megadása kötelező!<br/>";
-            if (!isset($_POST["neme"])) $formerror .= "{$webText["nemekotelezo"]}<br/>";
-
-            if ($_POST["jelszo"] != "") {
-                if ($_POST["jelszo"] != $_POST["jelszo2"]) $formerror .= "{$webText["ketjelszonem"]}<br/>";
-                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < 6) $formerror .= "{$webText["jelszomin"]}<br/>";
-                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > 20) $formerror .= "{$webText["jelszomax"]}<br/>";
-            }
-
-            if ($formerror == "") {
-
-                sql_query("update felhasznalok set nev=?,telefon=?,szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,torzsszam=? where id=?"
-                    , array($_POST["nev"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"], $_POST["neme"], $_POST["taj"], $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["munkakor"], $_POST["torzsszam"], $_SESSION["user"]["id"]));
-
-                if ($_POST["jelszo"] != "") {
-                    sql_query("update felhasznalok set jelszo=? where id=?", array(md5($_POST["jelszo"]), $_SESSION["user"]["id"]));
-                }
-
-                //ideiglenesen a funkció kiszedve
-                if ($_POST["telefon"] != $_POST["oldtelefon"] and false) {
-                    //megváltozott a telefon, új kódot küldünk és újravalidálunk.
-                    $rn = rand(11000, 98000);
-                    sql_query("update felhasznalok set validated=0,rkod='{$rn}'	where id='{$_SESSION["user"]["id"]}'");
-                    sendUserSMSKod($_SESSION["user"]["id"]);
-                    header("location:index.php");
-                    die();
-                }
-
-                header("location:index.php?page=profil");
-                die();
-
-            }
-        }
 
 
-        if (isset($_POST["regisztracio"])) {
-            $formerror = "";
 
-            if (isset($_POST["szuldatumev"])) {
-                $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
-            }
-
-            $_POST["telefon"] = fixPhoneNumber($_POST["telefon"]);
-
-            $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
-            $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
-
-            //if (!isset($_SESSION["captcha"])) $formerror.="A form elévült, kérjük kattints újra az elküldésre!<br/>";
-
-            if (!isset($_POST["munkakor"])) $_POST["munkakor"] = "";
-            if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
-
-            if ($_POST["taj"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $formerror .= "{$webText["tajformat"]}<br/>";
-            if ($_POST["taj"] != "" && sql_fetch_array(sql_query("select taj from felhasznalok where taj=? and cegid=?", array($_POST["taj"], $_SESSION["helyszindata"]["id"])))) $formerror .= "{$webText["tajletezik"]}<br/>";
-
-            if ($_POST["email"] == "") $formerror .= "{$webText["emailkotelezo"]}<br/>";
-            if (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL) && $_POST["email"] != "") $formerror .= "{$webText["emailformat"]}<br/>";
-            if ($_POST["email"] != "" && sql_fetch_array(sql_query("select taj from felhasznalok where email=? and cegid=?", array($_POST["email"], $_SESSION["helyszindata"]["id"])))) $formerror .= "{$webText["emailletezik"]}<br/>";
-
-            if ($_POST["jelszo"] == "") $formerror .= "{$webText["jelszokotelezo"]}<br/>";
-            if ($_POST["jelszo"] != $_POST["jelszo2"]) $formerror .= "{$webText["ketjelszonem"]}<br/>";
-            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < 6) $formerror .= "{$webText["jelszomin"]}<br/>";
-            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > 20) $formerror .= "{$webText["jelszomax"]}<br/>";
-            if ($_POST["nev"] == "") $formerror .= "{$webText["nevkotelezo"]}<br/>";
-            if ($_POST["telefon"] == "") $formerror .= "{$webText["telkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["telefon"]) && $_POST["telefon"] != "") $formerror .= "{$webText["telformat"]}<br/>";
-            if ($_POST["szuldatum"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["szulkotelezo"]}<br/>";
-            if (!validateDate($_POST["szuldatum"], "Y-m-d") && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["szulformat"]}<br/>";
-            //if (isset($_POST["munkakor"]) && $_POST["munkakor"]=="" && $_SESSION["helyszindata"]["tajnotreq"]==0) $formerror.="A munkakör megadása kötelező! {$_SESSION["helyszindata"]["tajnotreq"]}<br/>";
-            if (!isset($_POST["neme"]) && $_SESSION["helyszindata"]["tajnotreq"] == 0) $formerror .= "{$webText["nemekotelezo"]}<br/>";
-
-            if (!isset($_POST["neme"])) $_POST["neme"] = 0;
-
-            //if ($_POST["captcha"]!=$_SESSION["captcha"] && $_POST["captcha"]!="111") $formerror.="Az megadott szám nem egyezik!<br/>";
-            if (!isset($_POST["aszf"])) $formerror .= "{$webText["aszfkotelezo"]}<br/>";
-
-
-            if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
-            if (isset($captcha)) {
-                if (!$captcha) {
-                    $formerror .= "{$webText["captchaerror1"]}<br/>";
-                } else {
-                    $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                    if ($response["success"] == false) {
-                        $formerror .= "{$webText["captchaerror2"]}<br/>";
-                    }
-                }
-            } else {
-                $formerror .= "{$webText["captchaerror3"]}<br/>";
-            }
-
-
-            if ($formerror == "") {
-                $rn = rand(11000, 98000);
-
-                sql_query("insert into felhasznalok set
-		cegid=?,regtime=now(),nev=?,email=?,jelszo=?,telefon=?,szuldatum=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,torzsszam=?,
-		rkod=?", array($_SESSION["helyszindata"]["id"], $_POST["nev"], $_POST["email"], md5($_POST["jelszo"]), $_POST["telefon"], $_POST["szuldatum"], $_POST["neme"], $_POST["taj"], $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["munkakor"], $_POST["torzsszam"], $rn));
-
-                $id = sql_insert_id();
-                if ($_SESSION["helyszindata"]["id"] != 11) sendUserSMSKod($id);
-
-
-                $_SESSION["loggeduser"] = $id;
-
-                header("location:index.php");
-                die();
-            }
-        }
-
-        if (isset($_POST["idopontfoglalas"])) {
-            $formerror = "";
-
-            //nem kötelező mezők létrehozása ha nincsenek
-            if (!isset($_POST["szulhely"])) $_POST["szulhely"] = "";
-            if (!isset($_POST["anyjaneve"])) $_POST["anyjaneve"] = "";
-            if (!isset($_POST["irsz"])) $_POST["irsz"] = "";
-            if (!isset($_POST["varos"])) $_POST["varos"] = "";
-            if (!isset($_POST["utca"])) $_POST["utca"] = "";
-
-//print_r($_POST);die;
-            if (isset($_POST["szuldatumev"])) $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
-
-            $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
-            $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
-
-            //if (!isset($_SESSION["captcha"])) $formerror.="A form elévült, kérjük kattints újra az elküldésre!<br/>";
-            if ($_POST["taj"] == "") $formerror .= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $formerror .= "{$webText["tajformat"]}<br/>";
-            if ($_POST["helyszin"] == "0") $formerror .= "{$webText["helyszinkotelezo"]}<br/>";
-            if ($_POST["datum"] == "") $formerror .= "{$webText["idopontkotelezo"]}<br/>";
-            if ($_POST["szurestipus"] == "0") $formerror .= "{$webText["szurestipuskotelezo"]}<br/>";
-
-            if ($_POST["email"] == "") $formerror .= "{$webText["emailkotelezo"]}<br/>";
-            if ($_POST["nev"] == "") $formerror .= "{$webText["nevkotelezo"]}<br/>";
-            if ($_POST["telefon"] == "") $formerror .= "{$webText["telkotelezo"]}<br/>";
-            if ($_POST["szuldatum"] == "") $formerror .= "{$webText["szulkotelezo"]}<br/>";
-            if (!validateDate($_POST["szuldatum"], "Y-m-d")) $formerror .= "{$webText["szulformat"]}<br/>";
-
-            //if ($_POST["irsz"]=="") $formerror.="Az irányítószám megadása kötelező!<br/>";
-            //if ($_POST["varos"]=="") $formerror.="A város megadása kötelező!<br/>";
-            //if ($_POST["utca"]=="") $formerror.="Az utca megadása kötelező!<br/>";
-            if (isset($_POST["munkakor"])) {
-                if ($_POST["munkakor"] == "") $formerror .= "{$webText["munkakorkotelezo"]}<br/>";
-            } else {
-                $_POST["munkakor"] = "";
-            }
-
-
-            if (!isset($_POST["neme"])) $formerror .= "{$webText["nemekotelezo"]}<br/>";
-            if (!isset($_POST["aszf"])) $formerror .= "{$webText["aszfkotelezo"]}<br/>";
-
-            if (isset($_POST["telephely"]) && trim($_POST["telephely"]) == "") $formerror .= "{$webText["telephelykotelezo"]}<br/>";
-
-
-            if (isset($_POST["captcha"]) && $_POST["captcha"] != $_SESSION["captcha"] && $_POST["captcha"] != "111") $formerror .= "Az megadott szám nem egyezik!<br/>";
-
-            //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
-            //	$formerror.="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
-            //}
-
-            if ($_POST["datum"] != "" && !checkIdopontSzabad($_POST)) $formerror .= "{$webText["idopontlefoglaltak"]}<br>";
-            if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
-            if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
-
-            if (!isset($_SESSION["user"])) {
-                if (isset($_POST["version2"])) {
-                    if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
-                    if (isset($captcha)) {
-                        if (!$captcha) {
-                            $formerror .= "{$webText["captchaerror1"]}<br/>";
-                        } else {
-                            $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                            if ($response["success"] == false) {
-                                $formerror .= "{$webText["captchaerror2"]}<br/>";
-                            }
-                        }
-                    } else {
-                        $formerror .= "{$webText["captchaerror3"]}<br/>";
-                    }
-                }
-            }
-
-
-            if ($formerror == "") {
-                if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"] = 0;
-
-                $rn = rand(1000000, 9999999);
-
-                $paciensId = 0;
-
-                if (isset($_SESSION["user"]["id"])) {
-                    $paciensId = intval($_SESSION["user"]["id"]);
-                } else {
-                    $request_user = sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($_REQUEST['taj'], $_REQUEST['email'], $_SESSION["helyszindata"]["id"]));
-                    if (sql_num_rows($request_user) > 0) {
-                        $userInfo = sql_fetch_array($request_user);
-                        $paciensId = $userInfo['id'];
-                    } else {
-                        sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ",
-                            array($_SESSION["helyszindata"]["id"], $_REQUEST['taj'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['tel'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum']));
-                        $paciensId = sql_insert_id();
-                    }
-                }
-
-
-                if (isset($_SESSION["user"]["id"])) $paciensId = intval($_SESSION["user"]["id"]);
-
-                sql_query("insert into foglalasok set regdatum=now(),paciensid=?,cegid=?,datum=?,rinterval=?,telephely=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,megj=?,munkakor=?,tudoszuro=?,rlang=?,rkod=?"
-                    , array($paciensId, $_SESSION["helyszindata"]["id"], $_POST["datum"], intval($_POST["rinterval"]), $_POST["telephely"], $_POST["helyszin"], $_POST["szurestipus"], $_POST["nev"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"], $_POST["neme"], $_POST["taj"], $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["megj"], $_POST["munkakor"], $_POST["tudoszuro"], $_COOKIE["lang"], $rn));
-
-                $fid = sql_insert_id();
-                updateFoglalasData($fid);
-
-                $oid = selectFreeOrvosForIdopont($fid);
-                sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
-
-                if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
-                    sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));
-                    sql_query("update fogalalasok set megj=? where id=?", array($rowb["megj"], $fid));
-                    unset($_SESSION["beutaloid"]);
-                }
-
-                //altipusok tárolása
-                $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $_POST["szurestipus"]));
-                while ($row = sql_fetch_array($res)) {
-                    if (isset($_POST["altipus{$row["id"]}"])) {
-                        sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
-                    }
-                }
-
-                if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
-                    //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
-                    header("location:index.php?page=megerosites&id={$fid}&rk={$rn}");
-                } else {
-                    //visszaigazolást kérünk
-                    sendVisszaIgazolas($fid);
-                    header("location:index.php?page=sikeresfoglalas");
-                }
-
-                die();
-            }
-        }
 
 
         if (isset($_GET["tesztvissza"])) {
@@ -528,11 +169,6 @@ class Utils {
             }
         }
 
-        if (isset($_GET["dodeleteidopont"])) {
-            deleteFoglalas($_GET["id"], $_GET["rk"]);
-            header("location:index.php?page=torlessikeres");
-            die();
-        }
         if (isset($_GET["deltime"])) {
             deleteFoglalas($_GET["id"], $_GET["rk"]);
             header("location:index.php?page={$_GET["page"]}");
@@ -571,10 +207,6 @@ class Utils {
             die();
         }
 
-        if (isset($_POST["gettipusmegj"])) {
-            echo getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["tid"], $_POST["hid"]);
-            die();
-        }
 
 
         if (isset($_GET["setbeutalo"])) {
@@ -795,6 +427,7 @@ class Utils {
             echo "</div>";
             die();
         }
+        */
 
     }
 
@@ -824,24 +457,12 @@ class Utils {
         return;
     }
 
-    function checkIdopontSzabad($data)
-    {
-        //TODO: időpont szabadság vizsgálása még kell ide..
-        //$_POST["datum"]
-        //$_POST["helyszin"]
-        //$_POST["szurestipus"]
-
-        if (selectOrvosForIdopont($data["datum"], $data["helyszin"], $data["szurestipus"], $data["orvosselected"])) return true;
-        return false;
-    }
-
-
-    function sendUserSMSKod($userid)
+    public function sendUserSMSKod($userid)
     {
         if ($rowu = sql_fetch_array(sql_query("SELECT f.* FROM felhasznalok f 
 	    LEFT JOIN cegek c ON c.id=f.cegid
 	    WHERE f.id=? AND c.`noregsms`=0", array($userid)))) {
-            include("includes/seeme-gateway-class.php");
+            include("includes/other/seeme-gateway-class.php");
             sendSMS($rowu["telefon"], "kód a regisztráció befejezéséhez: {$rowu["rkod"]}");
         } else {
             sql_query("update felhasznalok set validated=1 where id=?", array($userid));
@@ -851,88 +472,10 @@ class Utils {
     function sendLoginSMSKod($userid)
     {
         if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='{$userid}'"))) {
-            include("includes/seeme-gateway-class.php");
+            include("includes/other/seeme-gateway-class.php");
             sendSMS($rowu["telefon"], "kód a bejelentkezéshez: {$rowu["rkod"]}");
         }
     }
-
-    function sendVisszaIgazolas($id)
-    {
-        //Visszaigazolás a foglalásról, megerősítés kérése
-        $h = "cim";
-        if ($_SESSION["helyszindata"]["nocim"] == 1) $h = "megnev";
-
-        $res = sql_query("SELECT h.{$h} AS helyszin,sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
-        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-        LEFT JOIN cegek c on c.id=f.cegid
-        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-        WHERE f.id='{$id}'");
-        if ($row = sql_fetch_array($res)) {
-            if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
-            if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
-
-            include_once("phpmailer/class.phpmailer.php");
-            $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
-            $mail->AddAddress($row["email"]);
-            $mail->AddReplyTo("noreply@hungariamed.hu");
-            $mail->IsHTML(true);
-
-            $webTextLocal = getWebTexts($row["rlang"]);
-            $t = iconv("UTF-8", "ISO-8859-2", $webTextLocal["mailtitleerositsdmeg"]);
-
-            $mbody = "";
-
-            if ($row["rlang"] == "hu") {
-                $mbody = "<h2>Már majdnem kész!</h2>
-                ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
-                {$webTextLocal["nev"]}: {$row["nev"]}<br>
-                {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
-                <b>Időpont: {$row["datum"]}</b><br>
-                {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
-                {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
-                <br/>
-                Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=megerosites&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
-                <br/>
-                Üdvözlettel:<br>Hungariamed";
-            }
-            if ($row["rlang"] == "de") {
-                $mbody = "<h2>Már majdnem kész!</h2>
-                ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
-                {$webTextLocal["nev"]}: {$row["nev"]}<br>
-                {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
-                <b>Időpont: {$row["datum"]}</b><br>
-                {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
-                {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
-                <br/>
-                Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=megerosites&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
-                <br/>
-                Üdvözlettel:<br>Hungariamed";
-            }
-            if ($row["rlang"] == "en") {
-                $mbody = "<h2>Almost done!</h2>
-                if you do not confirm <b>within 1 hour</b>, your reservation will be automatically <b>canceled</b>.<br/>
-                {$webTextLocal["nev"]}: {$row["nev"]}<br>
-                {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
-                <b>Time: {$row["datum"]}</b><br>
-                {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
-                {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
-                <br/>
-                To confirm your reservation <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=megerosites&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>click here</a><br>
-                <br/>
-                Regards<br>Hungariamed";
-            }
-
-            $mail->Subject = $t;
-            $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-            //$mail->AddAttachment("");
-            $mail->Send();
-        }
-    }
-
-
-
 
     function sendNotConfirmedReservationMessages($id)
     {
@@ -1000,118 +543,6 @@ class Utils {
             include_once("includes/seeme-gateway-class.php");
             sendSMS($row["telefon"], "Figyelem, {$row["datum"]} foglalását visszaigazolás hiányában töröltük!");
         }
-    }
-
-
-    function sendToUser($id)
-    {
-        //visszaigazoló levél a foglalás sikerességéről
-
-        if (isset($_GET["tesztvisszaigazolo"])) {
-            $res = sql_query("SELECT " . cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain FROM foglalasok f
-            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-            LEFT JOIN cegek c on c.id=f.cegid
-            LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-            WHERE f.id='{$id}'");
-        } else {
-            $res = sql_query("SELECT " . cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain FROM foglalasok f
-            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-            LEFT JOIN cegek c on c.id=f.cegid
-            LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-            WHERE f.id='{$id}' and f.userertesitve=0");
-        }
-
-        if ($row = sql_fetch_array($res)) {
-            if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
-            if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
-
-            $extraMsg = "";
-
-            if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
-                if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
-                    $c = explode(",", $row["domain"]);
-                    $extraMsg = "A kiállított leleteit és dokumentumait a https://{$c[0]}.hungariamed.hu oldalon a taj számával megtekintheti online.<br/>";
-                }
-            }
-
-            $webTextLocal = getWebTexts($row["rlang"]);
-
-            sql_query("update foglalasok set userertesitve=1 where id='{$id}'");
-
-            $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
-
-
-            include_once("phpmailer/class.phpmailer.php");
-            $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
-            $mail->AddAddress($row["email"]);
-            $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo("noreply@hungariamed.hu");
-            $mail->IsHTML(true);
-
-            $t = "{$webTextLocal["sikeresidopontreg"]}";
-
-            $mbody = "";
-            $mbody .= "<h1>{$row["datum"]} - {$row["helyszin"]}</h1>";
-            $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
-            $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
-            $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
-            $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
-            $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
-
-            while ($rowv = sql_fetch_array($resv)) {
-                $maplink = "";
-                if ($rowv["mapurl"] != "") $maplink = "<a href='{$rowv["mapurl"]}'>Az útvonal térképen megjelenítéséhez kattintson ide.</a>";
-                $rowv["szoveg"] = str_replace("#maplink#", $maplink, $rowv["szoveg"]);
-                $mbody .= "<hr>" . nl2br($rowv["szoveg"]);
-            }
-
-            $mbody .= "<hr>";
-
-            if ($row["rlang"] == "hu") {
-                $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=torles&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
-                $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
-                $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
-            }
-            if ($row["rlang"] == "de") {
-                $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=torles&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
-                $mbody .= "Wenn Sie möchten Ihre Reservierung Verändern ,bitte Streichen Sie aus den anderen Zeitpunkt, dannach registrieren bitte nochmal.<br>";
-                $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
-            }
-            if ($row["rlang"] == "en") {
-                $mbody .= "If you wish to cancel this appointment, please click on link: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=torles&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
-                $mbody .= "If you would like to modify your appointment, first cancel your old appointment then register it again.<br>";
-                $mbody .= "<br/>";
-                $mbody .= "Regards:<br>Hungariamed";
-            }
-
-            $mail->Subject = $t;
-            //$mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
-            $mail->Body = $mbody;
-            //$mail->AddAttachment("");
-
-            if (true) {
-                $mail->addStringAttachment(getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
-            }
-
-            $mail->Send();
-
-        }
-    }
-
-
-
-
-    function deleteFoglalas($id, $kod)
-    {
-        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and rkod=? and datum>now() and eljott=0", array($id, $kod)))) {
-            sql_query("update beutalok set foglalasid='0' where foglalasid='{$row["id"]}'");
-            sql_query("delete from foglalasok WHERE id='{$row["id"]}'");
-        }
-        return;
     }
 
 
@@ -1183,22 +614,6 @@ class Utils {
 
         return $szabad;
     }
-
-
-    function displayFejlec($title = "")
-    {
-        global $webText;
-        $style = "";
-        if ($_SESSION['helyszindata']['id'] == 91) {
-            $img = "<img src='images/hungarian_crest.png' height='30' />";
-        } else $img = "";
-
-        if ($_SESSION["helyszindata"]["fejleccolor"] != "") $style .= "background:{$_SESSION["helyszindata"]["fejleccolor"]};";
-
-
-        return "<div class='fejlecdiv' style='{$style}'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
-    }
-
 
     function szurestipusvalaszto($helyszinid, $selected = 0, $onlyselected = 0)
     {
@@ -1316,58 +731,8 @@ class Utils {
     }
 
 
-    function getTipusMegj($cegid, $tid, $helyszinId = 1)
-    {
-        $h = "";
-        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where cegid='" . intval($cegid) . "' and tipusid='" . intval($tid) . "' and csomag=0"))) {
-            if (trim($row["megj"]) != "") $h .= "<div style='background:#f00;color:#fff;padding:10px;display:inline-block;font-weight:bold;'>" . trim($row["megj"]) . "</div>";
-        }
 
-
-        $res = sql_query("SELECT o.* FROM orvos_beosztas b 
-        LEFT JOIN orvosok o ON o.id=b.`orvosid`
-        WHERE cegid=? AND INSTR(b.`tipusok`,'|" . intval($tid) . "|') AND o.`tel`<>'' and o.telpublic=1 and b.helyszinid=?
-        GROUP BY b.`orvosid`", array($cegid, $helyszinId));
-
-        if (sql_num_rows($res) > 0) {
-            $h .= "<div style='margin:10px 0px;'>";
-            $h .= "<div style='font-weight:bold;'>Elérhetőségek:</div>";
-            while ($row = sql_fetch_array($res)) {
-                $h .= "<div>Telefonos időpontfoglalás: {$row["tel"]}</div>";
-            }
-            $h .= "</div>";
-        }
-
-        if ($helyszinId == 1 && $_SERVER["REMOTE_ADDR"] == "88.151.97.121") {
-            $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0", array("|{$cegid}|", $tid));
-            if (sql_num_rows($res) > 0) {
-                $h .= "<div style='margin:10px 0px;'>";
-                $h .= "<div style='font-weight:bold;'>Ha kér, válasszon kiegészítő szolgáltatást:</div>";
-                while ($row = sql_fetch_array($res)) {
-                    //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}</div>";
-                }
-                $h .= "</div>";
-            }
-        }
-        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $helyszinId == 1 && $tid == 1) {
-            $h .= "<div><input type='checkbox' name = 'tudoszuro' value = '1' />Tüdőszűrővel nem rendelkezik</div>";
-        }
-        return $h;
-    }
-
-
-    //törölhető, használd helyette a DocAgent osztályt.
-    function get_Doc_Path($fileid)
-    {
-        $path = "./doc/" . floor($fileid / 1000);
-        if (!is_dir($path)) mkdir($path);
-        $path .= "/{$fileid}.bin";
-        return $path;
-    }
-
-
-    function showPaciensFiles()
+    public function showPaciensFiles()
     {
         $htmlout = "";
         if (isset($_SESSION["filefix"])) {
@@ -1382,9 +747,7 @@ class Utils {
         return $htmlout;
     }
 
-
-
-    function cimLangQuery($fieldName = "cim")
+    public function cimLangQuery($fieldName = "cim")
     {
         $q = "h.cim AS {$fieldName}";
         if (isset($_COOKIE["lang"]) && in_array($_COOKIE["lang"], array("en", "de"))) {
@@ -1393,5 +756,198 @@ class Utils {
         return $q;
     }
 
+    public function datumSelector($date,$prefix) {
+        $lang = new Lang();
+        $webText = $lang->webText;
+
+        $h="";
+
+        $ev=substr($date,0,4);
+        $ho=substr($date,5,2);
+        $nap=substr($date,8,2);
+
+        $h.= "<select name='{$prefix}ev'>";
+        $h.= "<option value='0'>{$webText["ev"]}</option>";
+        for ($i=date("Y");$i>date("Y")-100;$i--) {
+            $h.= "<option value='{$i}'".($ev==$i?" selected":"").">{$i}</option>";
+        }
+        $h.= "</select> ";
+
+        $h.= "<select name='{$prefix}ho'>";
+        $h.= "<option value='0'>{$webText["ho"]}</option>";
+        for ($i=1;$i<=12;$i++) {
+            $h.= "<option value='{$i}'".($ho==$i?" selected":"").">{$webText["honaptext"][$i]}</option>";
+        }
+        $h.= "</select> ";
+
+        $h.= "<select name='{$prefix}nap'>";
+        $h.= "<option value='0'>{$webText["nap"]}</option>";
+        for ($i=1;$i<=31;$i++) {
+            $h.= "<option value='{$i}'".($nap==$i?" selected":"").">{$i}</option>";
+        }
+        $h.= "</select>";
+
+        return $h;
+    }
+
+    public function fixPhoneNumber($tel) {
+        $tel=str_replace("(","",$tel);
+        $tel=str_replace(")","",$tel);
+        $tel=str_replace("-","",$tel);
+        $tel=str_replace("/","",$tel);
+        $tel=str_replace("+","",$tel);
+        $tel=str_replace(" ","",$tel);
+        if (substr($tel,0,2)=="06") $tel="36".substr($tel,2);
+        return $tel;
+    }
+
+
+    public function checkSzulDatum($datum) {
+        $datum=str_replace("-","",$datum);
+        $datum=str_replace(".","",$datum);
+        $datum=str_replace(" ","",$datum);
+
+        if (strlen($datum)!=8) return false;
+        if (!is_numeric($datum)) return false;
+
+        $ev=intval(substr($datum,0,4));
+        $ho=intval(substr($datum,4,2));
+        $nap=intval(substr($datum,6,2));
+
+        if ($ev<1900 || $ev>date("Y")) return false;
+        if ($ho<1 || $ho>12) return false;
+        if ($nap<1 || $nap>31) return false;
+
+        return true;
+    }
+
+    public function validateDate($date,$format="Y-m-d H:i:s") {
+        $d=DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format)==$date;
+    }
+
+
+    function substr_jns($s,$p1,$p2) {
+        $sz=iconv("UTF-8","ISO-8859-2",$s);
+        //return $sz;
+        $sz=substr($sz,$p1,$p2);
+        $sz=iconv("ISO-8859-2","UTF-8",$sz);
+        return $sz;
+    }
+
+
+
+    function numtostring($Mit) {
+        $EgyesStr = array('', 'egy', 'kettő', 'három', 'négy', 'öt', 'hat', 'hét', 'nyolc', 'kilenc');
+        $TizesStr = array('', 'tíz', 'húsz', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');
+        $TizenStr = array('', 'tizen', 'huszon', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');
+        $Result = '';
+        if ($Mit == 0) {
+            $Result = 'Nulla';
+        } else {
+            $Maradek = abs($Mit);
+            if ($Maradek > 999999999999) {
+                die("Túl nagy szám");
+            }
+
+            $Oszto=1000000000;
+            $Osztonev="milliárd";
+            if ($Maradek>=$Oszto) {
+                if (mb_strlen($Result)>0) $Result = $Result . '-';
+                $Mit=$Maradek/$Oszto;
+                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+                $Mit = $Mit % 100;
+                if ($Mit % 10 !== 0) {
+                    $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
+                } else {
+                    $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
+                }
+            }
+            $Maradek=$Maradek % $Oszto;
+
+            $Oszto=1000000;
+            $Osztonev="millió";
+            if ($Maradek>=$Oszto) {
+                if (mb_strlen($Result)>0) $Result = $Result . '-';
+                $Mit=$Maradek/$Oszto;
+                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+                $Mit = $Mit % 100;
+                if ($Mit % 10 !== 0) {
+                    $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
+                } else {
+                    $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
+                }
+            }
+            $Maradek=$Maradek % $Oszto;
+
+            $Oszto=1000;
+            $Osztonev="ezer";
+            if ($Maradek>=$Oszto) {
+                if (mb_strlen($Result)>0) $Result = $Result . '-';
+                $Mit=$Maradek/$Oszto;
+                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+                $Mit = $Mit % 100;
+                if ($Mit % 10 !== 0) {
+                    $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
+                } else {
+                    $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
+                }
+            }
+            $Maradek=$Maradek % $Oszto;
+
+            $Oszto=1;
+            $Osztonev="";
+            if ($Maradek>=$Oszto) {
+                if (mb_strlen($Result)>0) $Result = $Result . '-';
+                $Mit=$Maradek/$Oszto;
+                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+                $Mit = $Mit % 100;
+                if ($Mit % 10 !== 0) {
+                    $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
+                } else {
+                    $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
+                }
+            }
+            $Maradek=$Maradek % $Oszto;
+
+            /*
+              Alakit($Maradek, 1000000000, 'milliárd');
+              Alakit($Maradek, 1000000, 'millió');
+              Alakit($Maradek, 1000, 'ezer');
+              Alakit($Maradek, 1, '');
+            */
+
+            $Result = ucfirst($Result);
+            if ($Mit<0) $Result = 'Mínusz ' . $Result;
+        }
+
+        return $Result;
+    }
+
+
+    function selectOrvosForFoglalas($fid) {
+        $rowf=sql_fetch_array(sql_query("select * from foglalasok where id='{$fid}'"));
+        $nap=substr($rowf["datum"],0,10);
+        $ora=substr($rowf["datum"],11,5);
+
+        if ($rowf["orvosassigned"]!=0) return sql_query("select o.*,o.id as orvosid from orvosok o where id='{$rowf["orvosassigned"]}'");
+
+        return sql_query("SELECT WEEK('{$nap}',3)%2 AS weekmodulo,b.*,o.* FROM orvos_beosztas b 
+		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
+		WHERE b.`helyszinid`='{$rowf["helyszinid"]}' and (b.cegid='{$rowf["cegid"]}' or b.cegid=0) AND (INSTR(tipusok,'|{$rowf["szurestipusid"]}|') OR tipusok='') AND nap=WEEKDAY('{$nap}')+1 AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}') AND TRIM(b.tipusok)<>''
+		order by IF (hetek=1,weekmodulo=0,weekmodulo=1)");
+    }
+
+
+
+
+
+    public function getTajFromString($str) {
+        preg_match_all('/\d+/', $str, $matches);
+        foreach ($matches[0] as $val) {
+            if (strlen($val)==9) return $val;
+        }
+        return "";
+    }
 
 }

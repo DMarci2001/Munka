@@ -1,8 +1,20 @@
 <?php
 
-include_once("lang.php");
+include_once("Lang.php");
 include_once("Settings.php");
 include_once("Utils.php");
-include_once("Page.php");
+include_once("pages/CorePage.php");
+include_once("pages/BookingPage.php");
+include_once("pages/BookingSuccessfulPage.php");
+include_once("pages/BookingValidatePage.php");
+include_once("pages/BookingDeletePage.php");
+include_once("pages/BookingDeleteSuccessfulPage.php");
+include_once("pages/LoginPage.php");
+include_once("pages/RegistrationPage.php");
+include_once("pages/ProfilePage.php");
+include_once("pages/PasswordSendPage.php");
+include_once("pages/ValidateLoginPage.php");
+include_once("pages/ValidationSuccessfulPage.php");
+include_once("BasePage.php");
 include_once("DocAgent.php");
-include_once("ReservationService.php");
+include_once("BookingService.php");

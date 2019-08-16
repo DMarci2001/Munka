@@ -1,0 +1,43 @@
+<?php
+
+class Lang {
+    public $webText;
+
+    public function __construct()
+    {
+        $this->webText = $this->getWebTexts($_COOKIE["lang"]);
+    }
+
+    public function getWebTexts($lang) {
+        $webText = [];
+        $resL=sql_query("select * from langtext where langid=?",array($lang));
+        while ($rowL=sql_fetch_array($resL)) {
+            if ($rowL["tipus"]==0) {
+                $webText[$rowL["kulcs"]]=$rowL["szoveg"];
+            }
+            if ($rowL["tipus"]==2) {
+                $webText[$rowL["kulcs"]]=explode(",",$rowL["szoveg"]);
+            }
+        }
+        return $webText;
+    }
+
+    public static function getLangLink($langCode) {
+        $link = $_SERVER["PHP_SELF"];
+        if ($_SERVER["QUERY_STRING"]!="") {
+            $link.="?".$_SERVER["QUERY_STRING"]."&";
+        } else {
+            $link.="?";
+        }
+
+        if (substr_count($link,"?page=") == 0 && substr_count($link,"&page=") == 0) {
+            if (isset($_GET["page"]) && in_array($_GET["page"],array("main","welcome","idopontfoglalas"))) {
+                $link.="page={$_GET["page"]}&";
+            }
+        }
+
+        $langLink = "<a style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
+        return $langLink;
+    }
+
+}
