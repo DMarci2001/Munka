@@ -8,26 +8,37 @@ class BasePage {
 
     public function __construct()
     {
+        if (isset($_SESSION["loggeduser"])) {
+            $_SESSION["user"] = sql_fetch_array(sql_query("select * from felhasznalok where id=?",array($_SESSION["loggeduser"])));
+        }
+
+        if (isset($_GET["logout"])) {
+            unset($_SESSION["loggeduser"]);
+            unset($_SESSION["user"]);
+            header("location:index.php");
+            die();
+        }
+
+        if (isset($_POST["page"])) $_GET["page"] =  $_POST["page"];
         if (!isset($_GET["page"]) && isset($_SESSION["user"])) $_GET["page"] = "booking";
         if (!isset($_GET["page"])) $_GET["page"] = "booking";
 
         $this->utils = new Utils();
         $this->lang = new Lang();
 
-        if ($_GET["page"] == "booking") $this->page = new BookingPage();
-        if ($_GET["page"] == "bookingsuccessful") $this->page = new BookingSuccessfulPage();
-        if ($_GET["page"] == "bookingvalidate") $this->page = new BookingValidatePage();
-        if ($_GET["page"] == "bookingdelete") $this->page = new BookingDeletePage();
-        if ($_GET["page"] == "bookingdeletesuccessful") $this->page = new BookingDeleteSuccessfulPage();
-        if ($_GET["page"] == "login") $this->page = new LoginPage();
-        if ($_GET["page"] == "reg") $this->page = new RegistrationPage();
-        if ($_GET["page"] == "profile") $this->page = new ProfilePage();
-        if ($_GET["page"] == "passwordsend") $this->page = new PasswordSendPage();
-        if ($_GET["page"] == "validationsuccessful") $this->page = new ValidationSuccessfulPage();
+        $_SESSION["LAST_ACTIVITY"] = time();
+
+        $pageName = ucfirst($_GET["page"])."Page";
+        if (class_exists($pageName)) {
+            $this->page = new $pageName;
+        } else {
+            die("Error, page not found!");
+        }
 
         if (isset($_SESSION["user"]) && $_SESSION["user"]["validated"] == 0) {
             $this->page = new ValidateLoginPage();
         }
+
     }
 
 
@@ -39,21 +50,16 @@ class BasePage {
         echo $this->_htmlheader("{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés");
         echo "<body>";
 
-        echo "<div id='sound' style='display:none;'></div>";
-        echo '<div class="successful-message"><span>Loading...</span></div>';
-        echo '<div class="obj-container-framebox"></div>';
-
+        echo "<div class='pagecontainer'>";
         echo $this->_pageHeader();
 
-        echo "<div style='margin:20px;min-height:0px;'>";
-        echo "<div style='background-color:#fff;border-radius:5px;'>";
+        echo "<div class='contentcontainer'>";
         echo "<div style='padding:20px;'>";
         $this->page->showPage();
         echo "</div>";
         echo $this->_pageFooter();
         echo "</div>";
         echo "</div>";
-
 
         echo "</body>";
     }
@@ -63,9 +69,15 @@ class BasePage {
         $webText = $this->lang->webText;
 
         $html = "";
-        $html.= "<div style='display:table;width:100%;margin:20px 0px;'>";
+
+        $html.= "<div id='sound' style='display:none;'></div>";
+        $html.= '<div class="successful-message"><span>Loading...</span></div>';
+        $html.= '<div class="obj-container-framebox"></div>';
+
+        $html.= "<div class='headercontainer'>";
+        $html.= "<div style='display:table;width:100%;'>";
         $html.= "<div style='display:table-row;'>";
-        $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;padding-left:40px;'>";
+        $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
         $html.= "<a href='/index.php'><img width='30' src='".Booking_Settings::SITE_LOGO."' alt='' title='".Booking_Settings::SITE_NAME."' style='margin-right:10px;' /></a>";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align:middle;'>";
@@ -77,21 +89,21 @@ class BasePage {
             $rowf=sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
 
             $html.= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
-            $html.= "<a href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";
-            $html.= "<a href='index.php?page=foglalasok'>".ucfirst($webText["foglalasok"])."</a>".($rowf["hany"]>0?" <span class='ujnumber'>{$rowf["hany"]}</span>":"")." &bull; ";
-            $html.= "<a href='index.php?page=beutalok'>".ucfirst($webText["beutalok"])."</a>".($rowb["hany"]>0?" <span class='ujnumber'>{$rowb["hany"]}</span>":"")." &bull; ";
-            $html.= "<a href='index.php?page=dokumentumok'>".ucfirst($webText["dokumentumok"])."</a>".($rowd["hany"]>0?" <span class='ujnumber'>{$rowd["hany"]}</span>":"")." &bull; ";
-            $html.= "<a href='index.php?page=leletek'>Leletek</a> &bull; ";
-            $html.= "<a href='index.php?page=profile'>".ucfirst($webText["adatmodositas"])."</a> &bull; ";
-            $html.= "<a href='index.php?logout'>".ucfirst($webText["kijelentkezes"])."</a>";
+            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=bookinglist'>".ucfirst($webText["foglalasok"])."</a>".($rowf["hany"]>0?" <span class='ujnumber'>{$rowf["hany"]}</span>":"")." &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=beutalok'>".ucfirst($webText["beutalok"])."</a>".($rowb["hany"]>0?" <span class='ujnumber'>{$rowb["hany"]}</span>":"")." &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=documents'>".ucfirst($webText["dokumentumok"])."</a>".($rowd["hany"]>0?" <span class='ujnumber'>{$rowd["hany"]}</span>":"")." &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($webText["leletek"])."</a> &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=profile'>".ucfirst($webText["adatmodositas"])."</a> &bull; ";
+            $html.= "<a class='toplink' href='index.php?logout'>".ucfirst($webText["kijelentkezes"])."</a>";
         } else {
-            $html.= "<a href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";
-            $html.= "<a href='index.php?page=reg'>".ucfirst($webText["regisztracio"])."</a>&nbsp;&bull;&nbsp;";
-            $html.= "<a href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
+            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";
+            $html.= "<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>&nbsp;&bull;&nbsp;";
+            $html.= "<a class='toplink' href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
         }
         $html.= "</div>";
 
-        $html.= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;padding-right:40px;text-align:right;'>";
+        $html.= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;text-align:right;'>";
         if (isset($_SERVER["HTTP_HOST"]) && substr_count($_SERVER["HTTP_HOST"],"anmeldung")==0) {
             $html.= Lang::getLangLink("hu")." ";
             $html.= Lang::getLangLink("en")." ";
@@ -101,14 +113,15 @@ class BasePage {
 
         $html.= "</div>";
         $html.= "</div>";
+        $html.= "</div>";
         return $html;
     }
 
     private function _pageFooter() {
         $html = "";
-        $html.= "<div style='background:#ccc;color:#555;padding:20px;border-bottom-left-radius:5px;border-bottom-right-radius:5px;'>";
+        $html.= "<div class='footercontainer'>";
 
-        $html.= "<div style='float:left;margin:0px 20px 10px 0px;'><b>Budapesti egészségközpont</b><br/>1135 Budapest, Jász u. 33-35.</div>";
+        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'><b>Budapesti egészségközpont</b><br/>1135 Budapest, Jász u. 33-35.</div>";
         $html.= "<div style='float:left;margin:0px 10px 10px 0px;'><b>Telefon:</b><br/>+36 1 800 9333, +36 30 633 0961</div>";
         $html.= "<br clear='all'/>";
 
@@ -142,6 +155,7 @@ class BasePage {
         */
 
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
+        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
         $favicon="/images/hmm_favicon.png";
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
 

@@ -4,6 +4,11 @@ class Utils {
 
     public function __construct()
     {
+        if (isset($_GET["downloaddoc"]) && isset($_GET["f"]) && isset($_GET["k"])) {
+            $docAgent = new DocAgent();
+            $docAgent->showDocBinary($_GET["f"], $_GET["k"]);
+        }
+
         /*
         if (isset($_GET["tesztsms"]))
         {
@@ -11,25 +16,6 @@ class Utils {
             sendSMS("36209996183", "kód a regisztráció befejezéséhez: 1111");
             die("ok");
         }
-
-        if (!isset($_SESSION["user"]) && isset($_GET["page"])) {
-            if (in_array($_GET["page"], array("beutalok", "dokumentumok", "foglalasok"))) {
-                header("location:/");
-                die();
-            }
-        }
-
-
-        if (isset($_GET["remotereserve"])) {
-            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='" . intval($_GET["fid"]) . "' and rkod='" . intval($_GET["fkod"]) . "'"))) {
-                $_SESSION["remotebeutalo"] = $_GET["remotereserve"];
-                $_SESSION["loggeduser"] = $rowu["id"];
-                header("location:index.php?setbeutalo=" . intval($_GET["remotereserve"]));
-                die();
-            }
-        }
-
-
 
 
 
@@ -169,144 +155,9 @@ class Utils {
             }
         }
 
-        if (isset($_GET["deltime"])) {
-            deleteFoglalas($_GET["id"], $_GET["rk"]);
-            header("location:index.php?page={$_GET["page"]}");
-            die();
-        }
-
-        if (isset($_GET["showpaciensfiles"])) {
-            echo showPaciensFiles();
-            die();
-        }
-
-
-        if (isset($_POST["deletepaciensdoc"])) {
-            $docAgent = new DocAgent();
-            $docAgent->deleteDoc($_POST["id"], $_POST["k"]);
-            echo showPaciensFiles();
-            die();
-        }
-
-
-        if (isset($_REQUEST["addpaciensfiles"])) {
-            if (!isset($_SESSION["filefix"])) $_SESSION["filefix"] = rand(10000, 99999);
-            $fileFix = $_SESSION["filefix"];
-
-            $docAgent = new DocAgent();
-
-            foreach ($_FILES as $file) {
-                $sess = $fileFix . session_id();
-                $result = $docAgent->saveDoc($file, array('beutaloid' => 0, 'userid' => 0, 'megnev' => $_POST["dokmegnev"], 'sess' => $sess));
-
-                if ($result != "0") {
-                    echo $result;
-                    die;
-                }
-            }
-            die();
-        }
 
 
 
-        if (isset($_GET["setbeutalo"])) {
-            if ($row = sql_fetch_array(sql_query("select * from beutalok where id='" . intval($_GET["setbeutalo"]) . "' and userid='" . intval($_SESSION["user"]["id"]) . "'"))) {
-                $_SESSION["beutaloid"] = $row["id"];
-            }
-
-            header("location:index.php?page=main");
-            die();
-        }
-
-
-        if (isset($_POST["requestsmskod"])) {
-            $taj = $_POST["taj"];
-            $taj = str_replace("-", "", $taj);
-            $taj = trim(str_replace(" ", "", $taj));
-
-            if ($_POST["captcha"] != $_SESSION["captcha"]) {
-                echo "A beírt szám nem egyezik!";
-                die();
-            }
-
-            if ($taj == "") {
-                echo "A TAJ szám megadása kötelező!";
-                die();
-            }
-            if (!ctype_digit($taj) && $taj != "") {
-                echo "A TAJ szám formátuma nem megfelelő!";
-                die();
-            }
-
-            if (!$rowu = sql_fetch_array(sql_query("select f.*,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec from felhasznalok f where taj='" . addslashes($taj) . "' and cegid='{$_SESSION["helyszindata"]["id"]}'"))) {
-                echo "A megadott TAJ számmal nem található felhasználó!";
-                die();
-            }
-
-            if ($rowu["rkodsec"] < 600 && $rowu["rkodsec"] != NULL) {
-                echo "sentback";
-                die();
-            }
-
-            //kód generálása és kiküldése:
-            $rn = rand(11000, 98000);
-            sql_query("update felhasznalok set rkod='{$rn}',rkoddatum=now() where id='{$rowu["id"]}'");
-            sendLoginSMSKod($rowu["id"]);
-
-            echo "sentnow";
-            die();
-        }
-
-
-        if (isset($_POST["logintrywithtaj"])) {
-            $taj = $_POST["taj"];
-            $taj = str_replace("-", "", $taj);
-            $taj = trim(str_replace(" ", "", $taj));
-
-            if ($taj == "") {
-                echo "A TAJ szám megadása kötelező!";
-                die();
-            }
-            if (!ctype_digit($taj) && $taj != "") {
-                echo "A TAJ szám formátuma nem megfelelő!";
-                die();
-            }
-
-
-            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where taj='" . addslashes($taj) . "' and rkod='" . intval($_POST["kod"]) . "' and cegid='" . addslashes($_SESSION["helyszindata"]["id"]) . "'"))) {
-
-                if (strtotime("now") - strtotime($rowu["rkoddatum"]) > 600) {
-                    echo "lejartkod";
-                    die();
-                }
-
-                $_SESSION["loggeduser"] = $rowu["id"];
-                echo "ok";
-            } else {
-                echo "A megadott TAJ szám, vagy kód nem megfelelő!";
-            }
-            die();
-        }
-
-        if (isset($_POST["adduserbeutalo"])) {
-            if (isset($_SESSION["user"]["id"])) {
-
-                $data = explode("-", $_POST["beutalotarget"]);
-                $hid = intval($data[0]);
-                $sztid = intval($data[1]);
-
-                sql_query("insert into beutalok set datum=now(),selfcreated=1,userid=?,cegid=?,helyszinid=?,szurestipusid=?,naploszam=?,megj=?", array($_SESSION["user"]["id"], $_SESSION["helyszindata"]["id"], $hid, $sztid, $_POST["naploszam"], $_POST["beutalomegj"]));
-            }
-
-            header("location:index.php?page=beutalok");
-            die();
-        }
-
-        if (isset($_GET["delbeutalo"])) {
-            sql_query("delete from beutalok where id=? and userid=?", array($_GET["delbeutalo"], $_SESSION["user"]["id"]));
-            header("location:index.php?page=beutalok");
-            die();
-        }
 
         if (isset($_GET["showidopontvalaszto"])) {
             $honnan = intval($_GET["honnan"]);
@@ -457,21 +308,21 @@ class Utils {
         return;
     }
 
-    public function sendUserSMSKod($userid)
+    public function sendUserSMSKod($userId)
     {
         if ($rowu = sql_fetch_array(sql_query("SELECT f.* FROM felhasznalok f 
 	    LEFT JOIN cegek c ON c.id=f.cegid
-	    WHERE f.id=? AND c.`noregsms`=0", array($userid)))) {
+	    WHERE f.id=? AND c.`noregsms`=0", array($userId)))) {
             include("includes/other/seeme-gateway-class.php");
             sendSMS($rowu["telefon"], "kód a regisztráció befejezéséhez: {$rowu["rkod"]}");
         } else {
-            sql_query("update felhasznalok set validated=1 where id=?", array($userid));
+            sql_query("update felhasznalok set validated=1 where id=?", array($userId));
         }
     }
 
-    function sendLoginSMSKod($userid)
+    public function sendLoginSMSKod($userId)
     {
-        if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='{$userid}'"))) {
+        if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='{$userId}'"))) {
             include("includes/other/seeme-gateway-class.php");
             sendSMS($rowu["telefon"], "kód a bejelentkezéshez: {$rowu["rkod"]}");
         }
@@ -676,62 +527,6 @@ class Utils {
         return $htmlout;
     }
 
-    function szuresTipusValasztoNewV2($helyszinid, $selected = NULL, $onlyselected = NULL)
-    {
-        $tipusok = array();
-
-        $rest = sql_query("SELECT * FROM szurestipusok");
-        while ($rowt = sql_fetch_array($rest)) {
-            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
-        }
-
-        $addJava = "";
-        if ($_SESSION["helyszindata"]["id"] == 11) {
-            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
-        }
-
-        $htmlout = '';
-        $htmlout .= '<SELECT name = "szurestipus" class = "design-put" id = "szurestipus">';
-        $htmlout .= '<option value = "0"> - Válassz Szűrést! - </option>';
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas b 
-                           WHERE b.helyszinid = '" . addslashes($helyszinid) . "' AND b.cegid = '11' ");
-
-        while ($row = sql_fetch_array($res)) {
-            $ta = explode("|", $row["tipusok"]);
-
-            for ($i = 0; $i < count($ta); $i++) {
-                if (trim($ta[$i]) != "" && !in_array($ta[$i], $tipusok)) {
-                    $tipusok[] = $ta[$i];
-                }
-            }
-        }
-
-        if (isset($tipusok)) {
-            for ($i = 0; $i < count($tipusok); $i++) {
-                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
-            }
-            if (isset ($tipusdisplay)) {
-
-                asort($tipusdisplay);
-                foreach ($tipusdisplay as $key => $value) {
-                    //if (count($tipusdisplay)==1) $selected=$key;
-                    if ($onlyselected == 1 && $key != $selected) continue;
-                    if (trim($value) == "") continue;
-                    if ($key == 1) continue;
-                    $htmlout .= "<option value = '" . $key . "' " . ($selected == $key ? "selected" : "") . ">" . $value . "</option>";
-                }
-            }
-        }
-
-        $htmlout .= "</select>";
-
-        if (trim($helyszinid) == "" || $helyszinid == 0) $htmlout = "Válassz előbb helyszínt!<input type = 'hidden' name = 'szurestipus' value = '' />";
-
-        return $htmlout;
-    }
-
-
-
     public function showPaciensFiles()
     {
         $htmlout = "";
@@ -740,7 +535,7 @@ class Utils {
             $res = sql_query("select * from dokumentumok where sess=?", array($_SESSION["filefix"] . session_id()));
             //if (sql_num_rows($res)==0) $htmlout.="Az adminisztráció megkönnyítése érdekében a beutaló itt feltölthető";
             while ($row = sql_fetch_array($res)) {
-                $htmlout .= "<div><div style='display:table-cell;vertical-align:middle;'><a href='#' onclick='deletePaciensDoc({$row["id"]},\"{$row["kod"]}\");return false;'><img style='margin-right:5px;' src='/images/trash.png' /></a></div><div style='display:table-cell;vertical-align:middle;'>{$row["filename"]}</div></div>";
+                $htmlout .= "<div><div style='display:table-cell;vertical-align:middle;'><a href='#' onclick='deletePaciensFile({$row["id"]},\"{$row["kod"]}\");return false;'><img style='margin-right:5px;' src='/images/trash.png' /></a></div><div style='display:table-cell;vertical-align:middle;'>{$row["filename"]}</div></div>";
             }
             $htmlout .= "</div>";
         }
@@ -837,7 +632,7 @@ class Utils {
 
 
 
-    function numtostring($Mit) {
+    public function numToString($Mit) {
         $EgyesStr = array('', 'egy', 'kettő', 'három', 'négy', 'öt', 'hat', 'hét', 'nyolc', 'kilenc');
         $TizesStr = array('', 'tíz', 'húsz', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');
         $TizenStr = array('', 'tizen', 'huszon', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');

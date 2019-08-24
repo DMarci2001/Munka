@@ -120,13 +120,16 @@ class RegistrationPage extends CorePage {
         echo $this->displayFejlec($webText["regisztracio"]);
         echo $this->showFormErrors();
 
+        echo $this->showPageDescription("Regisztráljon, hogy kényelmesebben foglalhasson időpont foglalást, valamint kiegészítő szolgáltatásokat érhessen el. A regisztráció után nem kell minden foglalásnál kitöltenie az adatait, megtekintheti előző foglalásait, megnézheti a leleteit, és az egyéb vizsgálatokkal kapcsolatos dokumentumokat.<br/>Adja meg az adatait az alábbi form kitöltésével.");
+
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
-        echo "<table style='font-size:12px;'>";
+        echo "<input type='hidden' name='regisztracio' value='1'/>";
+        echo "<table>";
 
         echo "<tr><td width='100'>{$webText["email"]}: *</td><td><input class='inputbox' autocomplete='off' style='width:250px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
         echo "<tr><td>{$webText["jelszo"]}: *</td><td><input style='display:none;' type='text' autocomplete='off' name='dummyname' value=''><input style='display:none;' type='password' autocomplete='off' name='dummypass' value=''> <input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
         echo "<tr><td>{$webText["jelszoujra"]}: *</td><td><input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo2' value='{$_POST["jelszo2"]}'></td></tr>";
-        echo "<tr><td colspan='2'><hr></td></tr>";
+        echo "<tr><td colspan='2'><div style='border-top:1px solid #ccc;padding-top:10px;margin-top:10px;'></div></td></tr>";
 
         echo "<tr><td>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
         echo "<tr><td>{$webText["nev"]}: *</td><td><input class='inputbox' style='width:270px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
@@ -145,7 +148,7 @@ class RegistrationPage extends CorePage {
 
         echo "<tr><td width='100'><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
 
-        echo "<tr><td></td><td><br/><input style='margin-top:5px;' type='submit' name='regisztracio' value='{$webText["regisztracio"]}'></td></tr>";
+        echo "<tr><td></td><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["regisztracio"]}</a></td></tr>";
 
         echo "</table>";
         echo "</form>";

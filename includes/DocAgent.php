@@ -3,11 +3,13 @@
 
 class DocAgent {
 
-    private $docPath = "/var/doc_keltexmed/";
+    public function __construct()
+    {
+    }
 
     private function _getDocPath($fileId) {
         $id = (int)$fileId;
-        $path = $this->docPath.floor($id / 1000);
+        $path = Booking_Settings::DOCUMENT_PATH.floor($id / 1000);
         if (!is_dir($path)) mkdir($path);
         $path.="/{$id}.bin";
         return $path;
@@ -43,7 +45,7 @@ class DocAgent {
                 @move_uploaded_file($uploadedFile["tmp_name"], $destinationFile);
                 return "0";
             } else {
-                return "A feltöltött file formátuma nem megfelelő (csak pdf, és word dokumentumot lehet feltölteni {$extension})";
+                return "A feltöltött file formátuma nem megfelelő (csak pdf, és word dokumentumot lehet feltölteni)";
             }
 
 
@@ -68,6 +70,7 @@ class DocAgent {
     }
 
     public function showDocBinary($id, $code) {
+        error_reporting(0);
         if (!$fileData = sql_fetch_array(sql_query("select * from dokumentumok where id=? and kod=?",array($id, $code)))) {
             die("error 2");
         }

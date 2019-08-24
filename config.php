@@ -1,5 +1,8 @@
 <?php
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 sql_connect();
 
 sql_query("SET NAMES utf8");
@@ -30,23 +33,6 @@ if (isset($_GET["phpinfo_jns"])) {
     die();
 }
 
-$honaptext=$GLOBALS["honaptext"]=array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
-$hetnap=$GLOBALS["hetnap"]=array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
-
-$adminszintek=array("recepció","cégadmin","<b>admin</b>");
-
-$uploadbasepath="/uploads";
-
-
-$alkalmassagvariaciok["I"]="alkalmas";
-$alkalmassagvariaciok["N"]="alkalmatlan";
-$alkalmassagvariaciok["IN"]="ideiglenesen nem alkalmas";
-$alkalmassagvariaciok["K"]="korlátozottan alkalmas";
-$GLOBALS["alkalmassagvariaciok"]=$alkalmassagvariaciok;
-
-
-$GLOBALS["daydisplay"]=7;
-
 
 function sql_connect() {
 	$MYSQL_USER="hungariamed";
@@ -59,8 +45,8 @@ function sql_connect() {
 	try {
 		$GLOBALS["db"]=new PDO("mysql:host={$MYSQL_HOST};dbname={$MYSQL_DB};charset=utf8", $MYSQL_USER, $MYSQL_PASS);
 	} catch (PDOException $e) {
-    print "Error: " . $e->getMessage();
-    die();
+        print "Error: " . $e->getMessage();
+        die();
 	}
 }
 
@@ -83,30 +69,16 @@ function sql_query($q,$params=null) {
 
 
 function sql_fetch_array($stmt) {
-	//return mysqli_fetch_assoc($stmt);
 	$row=$stmt->fetch(PDO::FETCH_ASSOC);
 	return $row;
 }
 
 function sql_num_rows($stmt) {
-	//return mysqli_num_rows($stmt);
 	return $stmt->rowCount();
 }
 
 function sql_insert_id() {
 	return $GLOBALS["db"]->lastInsertId();
-	//return mysqli_insert_id($GLOBALS["link"]);
-}
-
-if (isset($_GET["logout"])) {
-	unset($_SESSION["loggeduser"]);
-	unset($_SESSION["user"]);
-	header("location:index.php");
-	die();
-}
-
-if (isset($_SESSION["loggeduser"])) {
-	$_SESSION["user"]=sql_fetch_array(sql_query("select * from felhasznalok where id=?",array($_SESSION["loggeduser"])));
 }
 
 

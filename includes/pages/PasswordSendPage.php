@@ -94,7 +94,7 @@ class PasswordSendPage extends CorePage {
         echo "{$webText["kerjukadjamegemail"]}";
         echo "</div>";
 
-        echo "<table style='font-size:12px;margin-top:20px;'>";
+        echo "<table style='margin-top:20px;'>";
         echo "<tr><td>{$webText["email"]}:&nbsp;&nbsp;&nbsp;</td><td><input class='inputbox' style='width:200px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
         echo "</table>";
 

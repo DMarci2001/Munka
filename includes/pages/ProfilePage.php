@@ -100,7 +100,7 @@ class ProfilePage extends CorePage {
         echo $this->showFormErrors();
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
-        echo "<table style='font-size:12px;'>";
+        echo "<table>";
 
         echo "<tr><td width=100>{$webText["email"]}:</td><td>{$_SESSION["user"]["email"]}</td></tr>";
         echo "<tr><td colspan='2'><hr></td></tr>";
@@ -128,14 +128,13 @@ class ProfilePage extends CorePage {
 
         echo "</table>";
 
-
-        echo "<br><br><input type='submit' name='adatmodositas' value='{$webText["adatokmodositasa"]}' 
-        onclick=\"
+        echo "<br/><a href='#' class='newbutton' onclick=\"
         if ($('#telefon').val()!=$('#oldtelefon').val()) {
-            return confirm('{$webText["telmodq"]} '+$('#telefon').val()+'?');
-        }
-        \"/> ";
-
+            if (confirm('{$webText["telmodq"]} '+$('#telefon').val()+'?')) {
+                document.iform.submit();return false;
+            }
+        }            
+        \">{$webText["adatokmodositasa"]}</a>";
 
         echo "</form>";
     }

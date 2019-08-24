@@ -10,10 +10,26 @@ class Booking_Settings
     const PASSWORD_LENGTH_MIN = 6;
     const PASSWORD_LENGTH_MAX = 20;
 
+    const DOCUMENT_PATH = "/var/doc_keltexmed/";
+    
+    public $honaptext = array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
+    public $hetnap = array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
+
+    public $adminszintek = array("recepció","cégadmin","<b>admin</b>");
+
+
+    public $alkalmassagvariaciok = array ("I" => "alkalmas",
+            "N" => "alkalmatlan",
+            "IN" => "ideiglenesen nem alkalmas", "K" => "korlátozottan alkalmas");
+
+    public $dayDisplay = 7;
+
+
     public function __construct()
     {
         $rows = sql_fetch_array(sql_query("select * from settings"));
         $this->munkaszunetiNapok = explode(",",$rows["szunnapok"]);
+
     }
 
 

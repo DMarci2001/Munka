@@ -37,7 +37,7 @@ class ValidateLoginPage extends CorePage {
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
 
-        echo "<table style='font-size:12px;'>";
+        echo "<table>";
         echo "<tr><td width=150>SMS-ben kapott kód: *</td><td><input class='inputbox' style='width:100px;' type='text' name='smskod' value='{$_POST["smskod"]}'></td></tr>";
         echo "</table>";
 

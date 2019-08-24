@@ -35,13 +35,14 @@ class LoginPage extends CorePage {
 
         echo "<div id='normallogin'>";
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
+        echo "<input type='hidden' name='logintry' value='1'/>";
 
-        echo "<table style='font-size:12px;'>";
+        echo "<table>";
         echo "<tr><td width='100'>{$webText["email"]}:</td><td><input class='inputbox' style='width:200px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
         echo "<tr><td width='100'>{$webText["jelszo"]}:</td><td><input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
         echo "</table>";
 
-        echo "<br/><input type='submit' name='logintry' value='{$webText["bejelentkezes"]}'> ";
+        echo "<br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["bejelentkezes"]}</a>";
         echo "</form>";
 
         echo "<div style='margin-top:20px;'>";
@@ -49,7 +50,7 @@ class LoginPage extends CorePage {
         echo "</div>";
 
         echo "<div style='margin-top:20px;'>";
-        echo "{$webText["amennyibennememail"]}:<br/><a href='index.php?page=tajlogin'>{$webText["bejelentkezestaj"]}</a>";
+        echo "{$webText["amennyibennememail"]}:<br/><a href='index.php?page=loginwithtajnumber'>{$webText["bejelentkezestaj"]}</a>";
         echo "</div>";
 
         echo "</div>";

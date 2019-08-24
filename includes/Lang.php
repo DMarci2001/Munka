@@ -36,7 +36,7 @@ class Lang {
             }
         }
 
-        $langLink = "<a style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
+        $langLink = "<a class='toplink' style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
         return $langLink;
     }
 

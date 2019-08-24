@@ -11,6 +11,53 @@ class BookingPage extends CorePage {
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
 
+        if (isset($_GET["showpaciensfiles"])) {
+            echo $this->utils->showPaciensFiles();
+            die();
+        }
+
+        if (isset($_POST["deletepaciensfile"])) {
+            $docAgent = new DocAgent();
+            $docAgent->deleteDoc($_POST["id"], $_POST["k"]);
+            echo $this->utils->showPaciensFiles();
+            die();
+        }
+
+        if (isset($_REQUEST["addpaciensfiles"])) {
+            if (!isset($_SESSION["filefix"])) $_SESSION["filefix"] = rand(10000, 99999);
+            $fileFix = $_SESSION["filefix"];
+
+            $docAgent = new DocAgent();
+
+            foreach ($_FILES as $file) {
+                $sess = $fileFix . session_id();
+                $result = $docAgent->saveDoc($file, array('beutaloid' => 0, 'userid' => 0, 'megnev' => '', 'sess' => $sess));
+                if ($result != "0") {
+                    echo $result;
+                    die;
+                }
+            }
+            die();
+        }
+
+        if (isset($_GET["remotereserve"])) {
+            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id=? and rkod=?",array($_GET["fid"], $_GET["fkod"])))) {
+                $_SESSION["remotebeutalo"] = $_GET["remotereserve"];
+                $_SESSION["loggeduser"] = $rowu["id"];
+                header("location:index.php?setbeutalo=" . intval($_GET["remotereserve"]));
+                die();
+            }
+        }
+
+        if (isset($_GET["setbeutalo"])) {
+            if ($row = sql_fetch_array(sql_query("select * from beutalok where id=? and userid=?",array($_GET["setbeutalo"], $_SESSION["user"]["id"])))) {
+                $_SESSION["beutaloid"] = $row["id"];
+            }
+            header("location:index.php?page=booking");
+            die();
+        }
+
+
         if (isset($_POST["idopontfoglalas"])) {
             //nem kötelező mezők létrehozása ha nincsenek
             if (!isset($_POST["szulhely"]))  $_POST["szulhely"] = "";
@@ -203,9 +250,9 @@ class BookingPage extends CorePage {
 
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
-        echo "<table style='font-size:12px;'>";
+        echo "<table>";
 
-        echo "<tr><td width='120'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
+        echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
@@ -264,7 +311,14 @@ class BookingPage extends CorePage {
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if ($nofoglalasText == "") {
-            echo "<tr><td valign='top'><div style='margin-top:5px;'>{$webText["idopont"]}: *</div></td><td><table cellpadding='0' cellspacing='0'><tr><td><input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' /><input placeholder='{$webText["kattintsagombra"]}' readonly class='inputbox' style='width:120px;height:19px;margin-right:5px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "'></td><td><a href='#' onclick='showIdoPontValasztoV2(0);return false;' class='newbuttonfoglalas'>{$webText["idopontvalasztas"]}</a></td><td><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></td></tr></table></td></tr>";
+            echo "<tr><td valign='top'><div style='margin-top:5px;'>{$webText["idopont"]}: *</div></td><td>";
+            echo "<table cellpadding='0' cellspacing='0'><tr><td>";
+            echo "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
+            echo "<input placeholder='{$webText["kattintsagombra"]}' readonly class='inputbox' style='width:120px;height:24px;margin-right:5px;padding:4px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
+            echo "</td><td>";
+            echo "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' class='newbutton'>{$webText["idopontvalasztas"]}</a></td><td><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
+            echo "</td></tr></table>";
+            echo "</td></tr>";
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
             echo "<tr><td></td><td>{$nofoglalasText}</td></tr>";
@@ -273,8 +327,8 @@ class BookingPage extends CorePage {
         echo "<tr><td></td><td>&nbsp;</td></tr>";
 
         echo "<tr><td></td><td>";
-        if ($_SESSION["helyszindata"]["onlyreg"]==0) echo "<div>{$webText["dokfelinfo"]}</div>";
-        echo "<div class='upload-btn-wrapper'><button class='upbtn'>{$webText["dokumentumfeltoltese"]}</button><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+        echo "<div>{$webText["dokfelinfo"]}</div>";
+        echo "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
         echo "</td></tr>";
         echo "<tr><td></td><td><div id='paciensfilediv'>".$this->utils->showPaciensFiles()."</div></td></tr>";
 
