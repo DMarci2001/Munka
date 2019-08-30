@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800,900');
 body {
 	background-color:#eee;
 	padding:0px;
@@ -144,8 +145,9 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .szamlalo {
-	padding:20px;
 	text-align:right;
+	padding:10px;
+	min-height:30px;
 }
 
 .rendeles_megnezett {
@@ -867,6 +869,14 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	transition-duration:0.3s;
 	color:#444;
 	background-color:white;
+}
+.ui-table{
+	border-collapse: collapse;
+	position:absolute;
+	right:0px;
+}
+.ui-table td{
+	padding:5px;
 }
 .warrnings-top-border{
 	text-align:right;

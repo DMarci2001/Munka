@@ -8,7 +8,7 @@ function createSetalolap($id)
 {
 	$result = sql_fetch_array( sql_query("SELECT * FROM felhasznalok WHERE id = ?", array( $id )));
 	
-	require_once( "../Classes/PHPExcel.php" );
+	require_once("../Classes/PHPExcel.php");
 	$tmpfname 	 = "tatabányaRAW3.xlsx";
 	$excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
 	$excelObj 	 = $excelReader->load( $tmpfname );

@@ -26,7 +26,8 @@ if (isset($_GET["lang"]) && in_array($_GET["lang"],array("hu","de","en"))) {
 	die();
 }
 
-require_once("includes/autoload.php");
+require_once($_SERVER["DOCUMENT_ROOT"]."/includes/autoload.php");
+require_once($_SERVER["DOCUMENT_ROOT"]."/admin/includes/autoload.php");
 
 if (isset($_GET["phpinfo_jns"])) {
     phpinfo();

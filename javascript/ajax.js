@@ -17,34 +17,43 @@ var respo="";
 
 function showIdoPontValaszto(honnan) {
     if ($("#helyszin").val()=="0") {
-        alert("Az időpont kiválasztásához válassza ki a helyszínt!");
+        myAlert("Az időpont kiválasztásához válassza ki a helyszínt!");
         return;
     }
     if ($("#szurestipus").val()=="0") {
-        alert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
+        myAlert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
         return;
     }
     if ($("#tajszam").val().trim()=="") {
-        alert("Időpont kiválasztásához adja meg a TAJ számát!");
+        myAlert("Időpont kiválasztásához adja meg a TAJ számát!");
         return;
     }
 
     $("#idopontvalasztodiv").load("index.php?showidopontvalaszto&honnan="+honnan+"&helyszin="+$("#helyszin").val()+"&szurestipus="+$("#szurestipus").val()+"&taj="+encodeURIComponent($("#tajszam").val()));
 }
 
+function myAlert(szoveg,tipus) {
+    tipus = tipus || "info";
+    swal({
+        title: "",
+        text: szoveg,
+        confirmButtonColor: "#e34f45",
+        confirmButtonText: "OK"
+    });
+}
 
-function showIdoPontValasztoV2(honnan,orvosid) {
+function showIdoPontValasztoV2(honnan, orvosid) {
     if (orvosid === undefined) orvosid = 0;
     if ($("#helyszin").val()=="0") {
-        alert("Az időpont kiválasztásához válassza ki a helyszínt!");
+        myAlert("Az időpont kiválasztásához válassza ki a helyszínt!");
         return;
     }
     if ($("#szurestipus").val()=="0") {
-        alert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
+        myAlert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
         return;
     }
     if ($("#tajszam").val().trim()=="") {
-        //alert("Időpont kiválasztásához adja meg a TAJ számát!");
+        //myAlert("Időpont kiválasztásához adja meg a TAJ számát!");
         //return;
     }
 
@@ -65,13 +74,13 @@ function showIdoPontValasztoV2(honnan,orvosid) {
 
 
 function nemfog() {
-    alert("nem foglalható, vagy foglalt időpont!");
+    myAlert("nem foglalható, vagy foglalt időpont!");
 }
 function nemfogs(tol) {
-    alert(tol+"-tól csak sorban foglalhatóak az időpontok!");
+    myAlert(tol+"-tól csak sorban foglalhatóak az időpontok!");
 }
 function nemfogs2() {
-    alert("Ezen a napon csak fordított sorrenben foglalhatók az időpontok!");
+    myAlert("Ezen a napon csak fordított sorrenben foglalhatók az időpontok!");
 }
 
 function clearIdopontValaszto() {
@@ -87,7 +96,7 @@ function showTipusMegj(tipusid) {
         data:{ gettipusmegj:"1", tid:tipusid, hid:$("#helyszin").val() }
     }).done(function(msg) {
         if (msg!="") {
-            //alert(msg);
+            //myAlert(msg);
             $("#szurestipusmegj").html(msg);
             $("#szurestipusmegj").slideDown();
         } else {
@@ -121,7 +130,7 @@ function chooseIdoPont(idopont,orvos) {
             $("#warnidopontpress").show();
             return;
         }
-        alert(msg);
+        myAlert(msg);
     });
 
 }
@@ -162,7 +171,7 @@ function ujrendeles_lekerdezes() {
                 $("#querystatus").html("");
                 $("#statussor").show();
                 //playSound();
-                //alert("Response:\n" + responseText);
+                //myAlert("Response:\n" + responseText);
             }
         });
 
@@ -273,11 +282,11 @@ function rendelesdetail(id) {
 
 function requestSMSkod(taj,captcha) {
     if (taj=="") {
-        alert("Kérjük adja meg a TAJ számát!");
+        myAlert("Kérjük adja meg a TAJ számát!");
         return;
     }
     if (captcha=="") {
-        alert("Kérjük adja meg a számot!");
+        myAlert("Kérjük adja meg a számot!");
         return;
     }
 
@@ -291,13 +300,13 @@ function requestSMSkod(taj,captcha) {
         $("#kodbutton").prop("disabled",false);
 
         if (msg=="sentnow" || msg=="sentback") {
-            if (msg=="sentnow") alert("A bejelentkezéshez szükséges kódot elküldtük a telefonszámára.");
-            if (msg=="sentback") alert("A bejelentkezéshez szükséges kódot nemrég elküldtük a telefonszámára, kérjük használja azt.");
+            if (msg=="sentnow") myAlert("A bejelentkezéshez szükséges kódot elküldtük a telefonszámára.");
+            if (msg=="sentback") myAlert("A bejelentkezéshez szükséges kódot nemrég elküldtük a telefonszámára, kérjük használja azt.");
             $("#kodmezo").show();
             $("#kodkerogomb").hide();
             $("#logingomb").show();
         } else {
-            alert(msg);
+            myAlert(msg);
         }
 
     });
@@ -307,11 +316,11 @@ function requestSMSkod(taj,captcha) {
 
 function loginTryWithTAJ(taj,kod) {
     if (taj=="") {
-        alert("Kérjük adja meg a TAJ számát!");
+        myAlert("Kérjük adja meg a TAJ számát!");
         return;
     }
     if (kod=="") {
-        alert("Kérjük adja meg a kódot!");
+        myAlert("Kérjük adja meg a kódot!");
         return;
     }
 
@@ -322,14 +331,14 @@ function loginTryWithTAJ(taj,kod) {
         data:{ logintrywithtaj:"1", taj:taj, kod:kod, page:"loginwithtajnumber" }
     }).done(function(msg) {
         if (msg=="lejartkod") {
-            alert("A kapott kód időközben lejárt, kérjen egy újat!");
+            myAlert("A kapott kód időközben lejárt, kérjen egy újat!");
             window.location.href="index.php?page=tajlogin";
             return;
         }
         if (msg=="ok") {
             window.location.href="index.php";
         } else {
-            alert(msg);
+            myAlert(msg);
         }
 
     });
@@ -343,7 +352,7 @@ function addUserBeutalo() {
     var beutalomegj=$("#beutalomegj").val();
 
     if (beutalotarget=="0") {
-        alert("Nem adta meg, hogy hova szól a beutalója!");
+        myAlert("Nem adta meg, hogy hova szól a beutalója!");
         return;
     }
 
@@ -388,7 +397,7 @@ function prepareUpload(event) {
             $("#paciensloader").hide();
 
             if (response!="") {
-                alert(response);
+                myAlert(response);
                 return;
             }
         }, error: function(jqXHR, textStatus, errorThrown) {
@@ -441,7 +450,7 @@ function showIdoPontValasztoV4(type,honnan,stat,orvosid) {
     if (orvosid === undefined) orvosid = 0;
     if($('.obj-container-framebox').css('display') == 'block' && stat == 0) return false;
     if (type == '0') {
-        alert('Az időpont kiválasztásához válassza ki a helyszínt!');
+        myAlert('Az időpont kiválasztásához válassza ki a helyszínt!');
         return;
     }
 
@@ -523,7 +532,7 @@ function chooseIdoPontV1( idopont,szurestipus,helyszin,orvos ) {
             $.redirectPost(redirect, { tipus: $('#szurestipus').val(), idopont: idopont });
             return;
         }
-        alert(msg);
+        myAlert(msg);
     });
 }
 

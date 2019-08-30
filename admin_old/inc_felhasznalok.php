@@ -45,7 +45,7 @@ if (isset($_GET["szerk"])) {
 	{
 		if($row['cegid'] == 98)
 		{
-			require_once( "Classes/PHPExcel.php" );
+			require_once("Classes/PHPExcel.php");
 			$tmpfname 	 = "templates/tatabányaRAW3.xlsx";
 			$excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
 			$excelObj 	 = $excelReader->load( $tmpfname );
@@ -102,7 +102,7 @@ if (isset($_GET["szerk"])) {
 	{
 		if($row['cegid'] == 104)
 		{
-			require_once( "Classes/PHPExcel.php" );
+			require_once("Classes/PHPExcel.php");
 			$tmpfname 	 = "templates/debrecen.xlsx";
 			$excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
 			$excelObj 	 = $excelReader->load( $tmpfname );

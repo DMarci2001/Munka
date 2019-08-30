@@ -1,6 +1,6 @@
 <?php
 
-class BasePage {
+class Page {
 
     private $utils;
     private $lang;
@@ -47,7 +47,7 @@ class BasePage {
 
         header("Content-type: text/html; charset=UTF-8");
 
-        echo $this->_htmlheader("{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés");
+        echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés");
         echo "<body>";
 
         echo "<div class='pagecontainer'>";
@@ -121,58 +121,14 @@ class BasePage {
         $html = "";
         $html.= "<div class='footercontainer'>";
 
-        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'><b>Budapesti egészségközpont</b><br/>1135 Budapest, Jász u. 33-35.</div>";
-        $html.= "<div style='float:left;margin:0px 10px 10px 0px;'><b>Telefon:</b><br/>+36 1 800 9333, +36 30 633 0961</div>";
+        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'>".Booking_Settings::FOOTER_ADDRESS_PARAM."</div>";
+        $html.= "<div style='float:left;margin:0px 10px 10px 0px;'>".Booking_Settings::FOOTER_CONTACT_PARAM."</div>";
         $html.= "<br clear='all'/>";
 
-        $html.= "&copy; ".date("Y")." HUNGÁRIA MED-M KFT.";
+        $html.= "&copy; ".date("Y")." ".Booking_Settings::FOOTER_COPYRIGHT;
         $html.= "</div>";
         return $html;
     }
 
-    private function _htmlheader($pageTitle = "HMM online bejelentkezés") {
-        $subdomain=$_SESSION["helyszindata"]["domain"];
-
-        $htmlout='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-        $htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
-        $htmlout.='<head>';
-
-        /*
-        if (!isset($GLOBALS["admin"])) {
-            $htmlout.="<!-- Google Tag Manager -->
-                <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                })(window,document,'script','dataLayer','GTM-KGL6C9C');</script>
-                <!-- End Google Tag Manager -->";
-
-            $htmlout.="<!-- Google Tag Manager (noscript) -->
-                <noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-KGL6C9C\"
-                height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>
-                <!-- End Google Tag Manager (noscript) -->";
-        }
-        */
-
-        $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
-        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
-        $favicon="/images/hmm_favicon.png";
-        if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
-
-        $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css' />";
-        $htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
-        $htmlout.='<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>';
-        $htmlout.='<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>';
-        $htmlout.='<script type="text/javascript" src="ajax.js"></script>';
-        $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
-        $htmlout.='<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">';
-        $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-        $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-        $htmlout.="<link rel='stylesheet' href='images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-
-        $htmlout.="</head>";
-        return $htmlout;
-    }
 
 }

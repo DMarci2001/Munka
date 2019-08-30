@@ -526,7 +526,7 @@ class BookingService {
 
 
 
-    function isOrvosAvailable($idopont,$helyszinid,$szurestipusid) {
+    public function isOrvosAvailable($idopont,$helyszinid,$szurestipusid) {
         $nap=substr($idopont,0,10);
         $ora=substr($idopont,11,5);
         $helyszinid=intval($helyszinid);

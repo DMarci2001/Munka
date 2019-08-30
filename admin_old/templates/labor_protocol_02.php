@@ -7,7 +7,7 @@ include("../../config.php");
 include("../ajax.php");
 
 //A páciens nevéből megtudom állapítani a laborhoz szükséges információkat:
-require_once( "../Classes/PHPExcel.php" );
+require_once("../Classes/PHPExcel.php");
 $tmpfname 	 = "debrecen.xlsx";
 $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
 $excelObj 	 = $excelReader->load( $tmpfname );

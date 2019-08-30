@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 include( "../../config.php" );
-require( "../fpdf/fpdf.php" );
+require("../fpdf/fpdf.php");
 
 function pdfString($s) {
 	return iconv("UTF-8","ISO-8859-2",$s);

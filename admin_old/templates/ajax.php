@@ -51,7 +51,7 @@ if(isset($_POST['savemodify']) && $_POST['savemodify']==true){
 	else $modData[7] = "";
 	$key =	"";
 	
-	require_once( "../Classes/PHPExcel.php" );
+	require_once("../Classes/PHPExcel.php");
 	require_once "../Classes/PHPExcel/IOFactory.php";
 	
 	$objPHPExcel = PHPExcel_IOFactory::load("módosított debrecen - laborkérő.xlsx");
@@ -144,7 +144,7 @@ if(isset($_POST['savemodifySP']) && $_POST['savemodifySP']==true){
 	else $modData[10] = "";
 	$key =	"";
 	
-	require_once( "../Classes/PHPExcel.php" );
+	require_once("../Classes/PHPExcel.php");
 	require_once "../Classes/PHPExcel/IOFactory.php";
 	
 	$objPHPExcel = PHPExcel_IOFactory::load("módosított debrecen - sétálólap.xlsx");

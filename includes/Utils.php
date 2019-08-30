@@ -8,278 +8,6 @@ class Utils {
             $docAgent = new DocAgent();
             $docAgent->showDocBinary($_GET["f"], $_GET["k"]);
         }
-
-        /*
-        if (isset($_GET["tesztsms"]))
-        {
-            include ("includes/seeme-gateway-class.php");
-            sendSMS("36209996183", "kód a regisztráció befejezéséhez: 1111");
-            die("ok");
-        }
-
-
-
-
-
-        if (isset($_GET["tesztvissza"])) {
-            sendVisszaIgazolas(89252);
-            die("sent");
-        }
-
-
-        if (isset($_REQUEST['idopontfoglalasV2'])) {
-            $formerror = "";
-            //Hibás adat korrigálás:
-            $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
-            $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
-            $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
-
-            //Mező ellenőrzés:
-            //if( $_POST["taj"] == "" ) $formerror.= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $formerror .= "{$webText["tajformat"]}<br/>";
-            if ($_POST["helyszin"] == "0") $formerror .= "{$webText["helyszinkotelezo"]}<br/>";
-            if ($_POST["datum"] == "") $formerror .= "{$webText["idopontkotelezo"]}<br/>";
-            if ($_POST["szurestipus"] == "0") $formerror .= "{$webText["szurestipuskotelezo"]}<br/>";
-
-            if ($_POST["email"] == "") $formerror .= "{$webText["emailkotelezo"]}<br/>";
-            if ($_POST["nev"] == "") $formerror .= "{$webText["nevkotelezo"]}<br/>";
-            if ($_POST["tel"] == "") $formerror .= "{$webText["telkotelezo"]}<br/>";
-            if ($_POST["szuldatum"] == "") $formerror .= "{$webText["szulkotelezo"]}<br/>";
-            if (!validateDate($_POST["szuldatum"], "Y-m-d")) $formerror .= "{$webText["szulformat"]}<br/>";
-
-            //if( !isset( $_POST["neme"] )) $formerror.= "{$webText["nemekotelezo"]}<br/>";
-            if (!isset($_POST["aszf"])) $formerror .= "{$webText["aszfkotelezo"]}<br/>";
-
-            //Még nem bevett mezők:
-            //if ($_POST["irsz"]=="") $formerror.="Az irányítószám megadása kötelező!<br/>";
-            //if ($_POST["varos"]=="") $formerror.="A város megadása kötelező!<br/>";
-            //if ($_POST["utca"]=="") $formerror.="Az utca megadása kötelező!<br/>";
-            if (isset($_POST["munkakor"])) if ($_POST["munkakor"] == "") $formerror .= "{$webText["munkakorkotelezo"]}<br/>";
-            else $_POST["munkakor"] = "";
-
-            //Szabad időpont ellenőrzése:
-            if ($_POST["datum"] != "" && !checkIdopontSzabad($_POST)) $formerror .= "{$webText["idopontlefoglaltak"]}<br>";
-
-            //Captcha ellenőrzés ha a páciens nincs belépve:
-            if (!isset($_SESSION["user"])) {
-                if (isset($_POST["version2"])) {
-                    if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
-                    if (isset($captcha)) {
-                        if (!$captcha) $formerror .= "{$webText["captchaerror1"]}<br/>";
-                        else {
-                            $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                            if ($response["success"] == false) $formerror .= "{$webText["captchaerror2"]}<br/>";
-                        }
-                    } else $formerror .= "{$webText["captchaerror3"]}<br/>";
-                }
-            }
-
-            //Ha nincsen hiba akkor rögzítem az adatok az adatbázisban:
-            if ($formerror == "") {
-                if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"] = 0;
-
-                $rn = rand(1000000, 9999999);
-
-                $paciensId = 0;
-
-                if (isset($_SESSION["user"]["id"])) $paciensId = intval($_SESSION["user"]["id"]);
-                else {
-                    $request_user = sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?",
-                        array($_REQUEST['taj'], $_REQUEST['email'], $_SESSION["helyszindata"]["id"]));
-                    if (sql_num_rows($request_user) > 0) {
-                        $userInfo = sql_fetch_array($request_user);
-                        $paciensId = $userInfo['id'];
-                    } else {
-                        sql_query("INSERT INTO felhasznalok SET 
-						   validated = 1, cegid = ?, regtime = NOW(), taj  = ?, email 	  = ?, nev 		 = ?, telefon   = ?, 
-						   munkakor  = ?, irsz 	= ?, varos	 = ?, 	  utca = ?, szulhely  = ?, anyjaneve = ?, szuldatum = ? ",
-                            array($_SESSION["helyszindata"]["id"], $_REQUEST['taj'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['tel'],
-                                $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'],
-                                $_REQUEST['anyjaneve'], $_REQUEST['datum']
-                            ));
-                        $paciensId = sql_insert_id();
-                    }
-                }
-
-                if (isset($_SESSION["user"]["id"])) $paciensId = intval($_SESSION["user"]["id"]);
-
-                sql_query("INSERT INTO foglalasok SET 
-				   regdatum  = NOW(), paciensid = ?, cegid = ?, datum 	 = ?, helyszinid = ?, 
-				   szurestipusid = ?, nev 		= ?, email = ?, telefon  = ?, szuldatum  = ?, 
-				   neme  		 = ?, taj       = ?, megj  = ?, rlang 	 = ?, rkod 		 = ?",
-                    array($paciensId, $_SESSION["helyszindata"]["id"], $_POST["datum"], $_POST["helyszin"], $_POST["szurestipus"],
-                        $_POST["nev"], $_POST["email"], $_POST["tel"], $_POST["szuldatum"],
-                        $_POST["neme"], $_POST["taj"], $_POST["megj"], $_COOKIE["lang"], $rn));
-
-                $fid = sql_insert_id();
-                updateFoglalasData($fid);
-
-                if ($_POST['kuponkod'] != "") {
-                    $foglalas = sql_fetch_array(sql_query("SELECT fogl.datum, kl.foglalasid, fogl.szurestipusid FROM foglalasok fogl LEFT JOIN kupon_lista kl ON kl.foglalasid = fogl.id WHERE fogl.id = ? ", array($fid)));
-                    $check = kuponCheck($_POST['kuponkod'], 3, date("Y-m-d", strtotime($foglalas['datum'])), $foglalas['szurestipusid']);
-                    if ($check == "usable") {
-                        $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok WHERE kod = ?", array($_POST['kuponkod'])));
-                        sql_query("INSERT INTO kupon_lista SET kuponid = ?, kuponkod = ?, foglalasid = ?",
-                            array($kupon['id'], $kupon['kod'], $fid));
-                    }
-                }
-
-                $oid = selectFreeOrvosForIdopont($fid);
-                sql_query("UPDATE foglalasok SET orvosassigned = ? WHERE id = ?", array($oid, $fid));
-
-                if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("SELECT * FROM beutalok WHERE id = ?", array($_SESSION["beutaloid"])))) {
-                    sql_query("UPDATE beutalok SET foglalasid = ? WHERE id=?", array($fid, $_SESSION["beutaloid"]));
-                    sql_query("UPDATE fogalalasok SET megj = ? where id = ?", array($rowb["megj"], $fid));
-                    unset($_SESSION["beutaloid"]);
-                }
-
-                //altipusok tárolása
-                $res = sql_query("SELECT * FROM arak WHERE INSTR( cegid, ? ) and tipusid = ? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $_POST["szurestipus"]));
-                while ($row = sql_fetch_array($res)) {
-                    if (isset($_POST["altipus{$row["id"]}"])) {
-                        sql_query("INSERT INTO fizkapcs SET fid = ?, aid = ?, megnev = ?, ar = ?, valuta = ?",
-                            array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
-                    }
-                }
-
-                if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
-                    //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
-                    header("Location:index.php?page=megerosites&id={$fid}&rk={$rn}");
-                } else {
-                    //visszaigazolást kérünk
-                    sendVisszaIgazolas($fid);
-                    header("Location:index.php?page=sikeresfoglalas");
-                }
-
-                die();
-            }
-        }
-
-
-
-
-
-        if (isset($_GET["showidopontvalaszto"])) {
-            $honnan = intval($_GET["honnan"]);
-            if ($honnan < 0) $honnan = 0;
-
-            $helyszin = intval($_GET["helyszin"]);
-            $szurestipus = intval($_GET["szurestipus"]);
-            $taj = $_GET["taj"];
-
-            $szunnapok[] = "";
-            $rows = sql_fetch_array(sql_query("select * from settings"));
-            $n = explode(",", $rows["szunnapok"]);
-            for ($i = 0; $i < count($n); $i++) {
-                $szunnapok[] = trim($n[$i]);
-            }
-
-            $foglaltnapok[] = "";
-            $res = sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap>=? and (szurestipusid=0 or szurestipusid=?)", array($helyszin, $_SESSION["helyszindata"]["id"], date("Y-m-d"), $szurestipus));
-            while ($row = sql_fetch_array($res)) {
-                $foglaltnapok[] = $row["nap"];
-            }
-
-            $res = sql_query("select datum,COUNT(*) AS hany,GROUP_CONCAT(szurestipusid) AS szurestipusok from foglalasok where helyszinid='{$helyszin}' and szurestipusid='{$szurestipus}' and datum>now() GROUP BY datum");
-            while ($row = sql_fetch_array($res)) {
-                $i = substr($row["datum"], 0, 16);
-                $foglaltidopontok[$i] = $row;
-            }
-
-            if (!$rowmax = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid='{$helyszin}' and (cegid='{$_SESSION["helyszindata"]["id"]}') and (instr(tipusok,'|{$szurestipus}|')) HAVING MAX(tol) IS NOT NULL"))) {
-                echo "<div style='margin:10px 0px;'>Erre a szűrés típusra nincsenek beállítva rendelési időpontok.</div>";
-                die();
-            }
-
-            $res = sql_query("select b.*,o.nev as orvosnev from orvos_beosztas b
-                left join orvosok o on o.id=b.orvosid
-                where b.helyszinid='{$helyszin}' and (b.cegid='{$_SESSION["helyszindata"]["id"]}' or b.cegid=0) and (instr(b.tipusok,'|{$szurestipus}|'))");
-            while ($row = sql_fetch_array($res)) {
-                $beosztas[] = $row;
-                $beosztasData[$row["nap"]] = $row;
-                //$beosztasOrvos[$row["nap"]]=$row["orvosnev"];
-            }
-
-            echo "<div style='margin:10px 0px 10px 0px;'>";
-            //echo "Itt lesz az időpontválasztó... most még csak fixen kirak pár lehetőséget.<br>";
-            echo "<div>{$webText["valasszidopontot"]}:</div>";
-            echo "<div style='margin-top:5px;'><a href='javascript:showIdoPontValaszto(" . ($honnan - 7) . ")'>{$webText["elo7"]}</a> | <a href='javascript:showIdoPontValaszto(" . ($honnan + 7) . ")'>{$webText["kov7"]}</a></div>";
-            echo "<table><tr>";
-
-            $dist = "6 hour";
-            if ($helyszin == 1) $dist = "0 hour"; //jász utca bármikor foglalható
-
-            for ($i = 0; $i <= 6; $i++) {
-
-                $nap = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $i + $honnan, date("Y")));
-                $wd = date("N", mktime(0, 0, 0, date("m"), date("d") + $i + $honnan, date("Y")));  //day of week
-                $wn = date("W", mktime(0, 0, 0, date("m"), date("d") + $i + $honnan, date("Y")));  //number of week
-
-                echo "<td valign='top'>";
-                echo "<div style='background:#0a0;padding:2px 10px 2px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br>{$webText["hetnap"][$wd]}</div>";
-
-                $beginora = round(substr($rowmax["minrendeles"], 0, 2));
-                $beginperc = round(substr($rowmax["minrendeles"], 3, 2));
-
-                if (!isset($beosztasData[$wd]["binterval"])) {
-                    echo "<div style='text-align:center;margin:5px;padding:5px 0px;border-radius:5px;'>{$webText["nincsrendeles"]}</div>";
-                    echo "</td>";
-                    continue;
-                }
-
-                $binterval = $beosztasData[$wd]["binterval"];
-                $firstfreetime = "";
-                for ($o = 0; $o <= 55; $o++) {
-                    $ora = date("H:i", mktime($beginora, $beginperc + $o * $binterval, 0, date("m"), date("d"), date("Y")));
-                    if (strtotime($ora) >= strtotime($rowmax["maxrendeles"])) break;
-
-                    echo "<div style='text-align:center;'>";
-
-                    $java = "nemfog();";
-                    $class = "foglaltbutton";
-
-                    if (isBeosztasWeekDay($beosztas, $wd, $wn) && !in_array($nap, $szunnapok)) {
-                        if (strtotime("now + {$dist}") < strtotime("{$nap} {$ora}")) {
-                            $hanyfoglalt = 0;
-                            if (isset($foglaltidopontok["{$nap} {$ora}"])) $hanyfoglalt = $foglaltidopontok["{$nap} {$ora}"]["hany"];
-
-
-                            if (!in_array("{$nap}", $foglaltnapok)) {
-                                $szabad = isFreeIdopont($wd, $ora, $beosztas, $hanyfoglalt);
-                                if ($szabad[0] == 1 || $szabad[0] == 2) {
-                                    $java = "chooseIdoPont(\"{$nap} {$ora}\");return false;";
-                                    $class = "foglalhatobutton";
-                                    if ($szabad[0] == 2 && $firstfreetime != "") {
-                                        $java = "nemfogs(\"{$firstfreetime}\");return false;";
-                                        $class .= " halv";
-                                    }
-                                    if ($firstfreetime == "") $firstfreetime = $ora;
-                                }
-                            }
-                        }
-                    }
-
-                    $t = "";
-                    if ($_SESSION["helyszindata"]["id"] == 15) {
-                        if (isset($beosztasData[$wd]["orvosnev"])) {
-                            $t = "title='" . $beosztasData[$wd]["orvosnev"] . "'";
-                        }
-                    }
-
-                    echo "<a class='{$class}' {$t} onclick='{$java}' href='#'>{$ora}</a>";
-                    echo "</div>";
-                }
-
-                echo "</td>";
-
-            }
-
-            echo "</tr></table>";
-            echo "</div>";
-            die();
-        }
-        */
-
     }
 
     public function sendEljottMail($foglalasData) {
@@ -624,7 +352,6 @@ class Utils {
 
     function substr_jns($s,$p1,$p2) {
         $sz=iconv("UTF-8","ISO-8859-2",$s);
-        //return $sz;
         $sz=substr($sz,$p1,$p2);
         $sz=iconv("ISO-8859-2","UTF-8",$sz);
         return $sz;
@@ -734,15 +461,58 @@ class Utils {
     }
 
 
-
-
-
     public function getTajFromString($str) {
         preg_match_all('/\d+/', $str, $matches);
         foreach ($matches[0] as $val) {
             if (strlen($val)==9) return $val;
         }
         return "";
+    }
+
+    public function htmlheader($pageTitle = "HMM online bejelentkezés") {
+        $subdomain=$_SESSION["helyszindata"]["domain"];
+
+        $htmlout='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+        $htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
+        $htmlout.='<head>';
+
+        /*
+        if (!isset($GLOBALS["admin"])) {
+            $htmlout.="<!-- Google Tag Manager -->
+                <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','GTM-KGL6C9C');</script>
+                <!-- End Google Tag Manager -->";
+
+            $htmlout.="<!-- Google Tag Manager (noscript) -->
+                <noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-KGL6C9C\"
+                height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>
+                <!-- End Google Tag Manager (noscript) -->";
+        }
+        */
+
+        $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
+        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
+        $favicon="/images/hmm_favicon.png";
+        if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
+
+        $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
+        $htmlout.='<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>';
+        $htmlout.='<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
+        $htmlout.='<script type="text/javascript" src="javascript/ajax.js"></script>';
+        $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
+        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css' />";
+        $htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
+        $htmlout.='<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
+        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+
+        $htmlout.="</head>";
+        return $htmlout;
     }
 
 }

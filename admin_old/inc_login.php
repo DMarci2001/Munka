@@ -35,7 +35,7 @@ $htmlout.="</div>";
 
 $htmlout.="<div id='forgetbox' style='color:#444;display:none;'>";
 $htmlout.="<form method='post'>";
-$htmlout.="<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét. Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
+$htmlout.="<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
 
 $htmlout.="<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";
 $htmlout.="<div style='padding-top:10px;'><input type='submit' name='passwordsend' value='Új jelszó kérése' /></div>";

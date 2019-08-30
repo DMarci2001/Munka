@@ -7,7 +7,7 @@ include("../../config.php");
 
 $result = sql_fetch_array( sql_query("SELECT * FROM felhasznalok WHERE id = ?", array( $_GET['szerk'] )));
 
-require_once( "../Classes/PHPExcel.php" );
+require_once("../Classes/PHPExcel.php");
 $tmpfname 	 = "debrecen.xlsx";
 $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
 $excelObj 	 = $excelReader->load( $tmpfname );
@@ -297,7 +297,7 @@ function saveModify(){
 
 <div style = "width:198mm;height:277mm;display:inline-block;float:left;">
 	<table id = "patient-header">
-		<tr><td colspan = "2" align = "center"><img src = "../images/logo.png" width = "180" /></td></tr>
+		<tr><td colspan = "2" align = "center"><img src = "../../admin/images/logo.png" width = "180" /></td></tr>
 		<tr><td colspan = "2" align = "center" style = "font-size:29px"><strong>Sétálólap</strong></td></tr>
 		<tr><td style = "border-right:none"><strong>Név:</strong></td><td style = "border-left:none"><?php echo $result["nev"] ?></td></tr>
 		<tr><td style = "border-right:none"><strong>Születési idő:</strong></td><td style = "border-left:none"><?php echo date("Y.m.d",strtotime($result["szuldatum"])) ?></td></tr>
