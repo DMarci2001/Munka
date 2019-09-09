@@ -61,51 +61,8 @@ if (isset($_GET["toggleeljott"])) {
 }
 
 
-if (isset($_GET["toggleinterval"])) {
-	$beosztasid=intval($_GET["toggleinterval"]);
-	if ($row=sql_fetch_array(sql_query("select binterval from orvos_beosztas where id='{$beosztasid}'"))) {
-		$i=$row["binterval"];
-		if (beosztasModJog()) {
-			$i+=5;
-            if ($i==25) $i=30;
-            //if ($i==35) $i=45;
-			if ($i==50) $i=60;
-			if ($i>60) $i=5;
-			sql_query("update orvos_beosztas set binterval='{$i}' where id='{$beosztasid}'");
-		}
-	}
-	echo "<a href='#' class='tlink' onclick='toggleIntervals({$beosztasid});return false;'>{$i} perc</a> ";
-	die();
-}
 
 
-
-if (isset($_GET["showtipusvalaszto"])) {
-	if (!beosztasModJog()) die();
-	$beosztasid=round($_GET["showtipusvalaszto"]);
-	$rowo=sql_fetch_array(sql_query("select * from orvos_beosztas where id='{$beosztasid}'"));
-	
-	$res=sql_query("select * from szurestipusok where true order by megnev");
-	
-	echo "<div style='width:750px;'>";
-	while ($row=sql_fetch_array($res)) {
-		echo "<label><input onchange='saveTipusList({$beosztasid})' type='checkbox' name='tipusvalaszto{$beosztasid}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["tipusok"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
-	}
-	
-	echo "<div style=''><input type='button' onclick='showTipusValaszto({$beosztasid});' value='OK'></div>";
-	echo "</div>";
-	
-	
-	
-	die();
-}
-
-
-if (isset($_GET["savebeosztastipusok"])) {
-	$bid=round($_GET["savebeosztastipusok"]);
-	sql_query("update orvos_beosztas set tipusok='".addslashes($_GET["value"])."' where id='{$bid}'");
-	die();
-}
 
 
 if (isset($_GET["sethelyszin"])) {
@@ -216,204 +173,7 @@ if (isset($_POST["orvosdataverify"])) {
 }
 
 
-if (isset($_POST["addszabadsag"])) {
-	if (szabadsagJog()) {
-		$rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-		sql_query("insert into szabadsag set datumtol=?,datumig=?,oid=?",array($_POST["szabadsagtol"],$_POST["szabadsagig"],$_GET["szerk"]));
-		logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság hozzáadva: ".$_POST["szabadsagtol"]." - ".$_POST["szabadsagig"],print_r($_POST,true));
-	}
-	$_POST["orvosmentes"]=1;
-}
 
-if (isset($_GET["delszabadsag"])) {
-	if (szabadsagJog()) {
-		$rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-		sql_query("delete from szabadsag where id=? and oid=?",array($_GET["delszabadsag"],$_GET["szerk"]));
-		logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
-	}
-	header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
-	die();
-}
-
-
-if (isset($_GET["delbeosztas"])) {
-	if (beosztasModJog())	sql_query("delete from orvos_beosztas where id=? and orvosid=?",array($_GET["delbeosztas"],$_GET["szerk"]));
-	header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
-	die();
-}
-
-if (isset($_POST["addbeosztas"])) {
-	if (beosztasModJog()) {
-		if ($user["jogosultsag"]>=2) {
-			if (isset($_SESSION["orvosbeosztascegfilter"])) {
-				sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
-			}
-		} else {
-			if (isset($_SESSION["orvosbeosztascegfilter"])) {
-				sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
-			}
-		}
-	}
-	$_POST["orvosmentes"]=1;
-}
-
-
-
-
-if (isset($_POST["orvosmentes"]) || isset($_POST["orvosform"])) {
-	$sor=1;
-	$oid=intval($_GET["szerk"]);
-	$_SESSION["orvosbeosztascegfilter"]=$_POST["orvosbeosztascegfilter"];
-	
-	//echo count($_REQUEST);
-	//die();
-
-	if (orvosModJog()) {
-
-		if (beosztasModJog()) {
-			while (isset($_POST["beosztasid{$sor}"])) {
-				$sorban=$aktiv=0;
-				if (isset($_POST["aktiv{$sor}"])) $aktiv=1;
-				if (isset($_POST["csaksorban{$sor}"])) $sorban=1;
-				if (isset($_POST["csakvsorban{$sor}"])) $sorban=2;
-				
-				//cegid='".addslashes($_POST["cegid{$sor}"])."',
-				sql_query("update orvos_beosztas set 
-				nap='".addslashes($_POST["weekday{$sor}"])."',
-				beonap='".addslashes($_POST["beonap{$sor}"])."',
-				hetek='".addslashes($_POST["hetek{$sor}"])."',
-				helyszinid='".addslashes($_POST["helyszinid{$sor}"])."',
-				csaksorban='{$sorban}',
-				aktiv='{$aktiv}',
-				tol='".addslashes($_POST["tol{$sor}"])."',
-				ig='".addslashes($_POST["ig{$sor}"])."' 
-				where id='".addslashes($_POST["beosztasid{$sor}"])."'");
-				$sor++;
-			}
-		}
-
-
-		$sor=1;
-        while (isset($_POST["phoneid{$sor}"])) {
-            $smsfoglalas=$smsgroupfoglalas=0;
-            if (isset($_POST["smsfoglalas{$sor}"])) $smsfoglalas=1;
-            if (isset($_POST["smsgroupfoglalas{$sor}"])) $smsgroupfoglalas=1;
-
-            sql_query("update smsphones set 
-				tel='".addslashes($_POST["smsphone{$sor}"])."',
-				smsfoglalas='{$smsfoglalas}',
-				smsgroupfoglalas='{$smsgroupfoglalas}'
-				where id='".addslashes($_POST["phoneid{$sor}"])."'");
-            $sor++;
-        }
-
-
-
-		if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
-		if (!isset($_POST["visszaigazol"])) $_POST["visszaigazol"]=0;
-		if (!isset($_POST["onlytel"])) $_POST["onlytel"]=0;
-		if (!isset($_POST["smsfoglalas"])) $_POST["smsfoglalas"]=0;
-		if (!isset($_POST["smsgroupfoglalas"])) $_POST["smsgroupfoglalas"]=0;
-		if (!isset($_POST["telpublic"])) $_POST["telpublic"]=0;
-		
-		if (!isset($_POST['szak_belgyogy'])) $_POST['szak_belgyogy']=0;
-		if (!isset($_POST['szak_rtg'])) $_POST['szak_rtg']=0;
-		if (!isset($_POST['szak_uh'])) $_POST['szak_uh']=0;
-		if (!isset($_POST['szak_borgyogy'])) $_POST['szak_borgyogy']=0;
-		if (!isset($_POST['szak_szemesz'])) $_POST['szak_szemesz']=0;
-		if (!isset($_POST['szak_kardio'])) $_POST['szak_kardio']=0;
-		if (!isset($_POST['szak_torna'])) $_POST['szak_torna']=0;
-		
-		if (!isset($_POST['szak_labor'])) $_POST['szak_labor']=0;
-		if (!isset($_POST['szak_urologia'])) $_POST['szak_urologia']=0;
-		if (!isset($_POST['szak_nogyogy'])) $_POST['szak_nogyogy']=0;
-		if (!isset($_POST['szak_tudogyogy'])) $_POST['szak_tudogyogy']=0;
-		if (!isset($_POST['szak_ortopedia'])) $_POST['szak_ortopedia']=0;
-		
-		$vizsgtipusok = $_POST['szak_belgyogy'].",".$_POST['szak_rtg'].",";
-		$vizsgtipusok.= $_POST['szak_uh'].",".$_POST['szak_borgyogy'].",";
-		$vizsgtipusok.= $_POST['szak_szemesz'].",".$_POST['szak_kardio'].",";
-		$vizsgtipusok.= $_POST['szak_torna'].",".$_POST['szak_labor'].",";
-		
-		$vizsgtipusok.= $_POST['szak_urologia'].",".$_POST['szak_nogyogy'].",";
-		$vizsgtipusok.= $_POST['szak_tudogyogy'].",".$_POST['szak_ortopedia'];
-		
-		
-		sql_query("update orvosok set 
-			nev='".addslashes($_POST["nev"])."',
-			pecsetszam='".addslashes($_POST["pecsetszam"])."',
-			email='".addslashes($_POST["email"])."',
-			tel='".addslashes($_POST["tel"])."',
-			onlytel='".addslashes($_POST["onlytel"])."',
-			smsfoglalas='".addslashes($_POST["smsfoglalas"])."',
-			smsgroupfoglalas='".addslashes($_POST["smsgroupfoglalas"])."',
-			telpublic='".addslashes($_POST["telpublic"])."',
-			hmedemail='".addslashes($_POST["hmedemail"])."',
-			visszaigazol='".addslashes($_POST["visszaigazol"])."',
-			visszaigazolemail='".addslashes($_POST["visszaigazolemail"])."',
-			username='".addslashes($_POST["username"])."',
-			jelszo='".addslashes($_POST["password"])."',
-			szurestipusok='".addslashes($vizsgtipusok)."',
-			aktiv='".addslashes($_POST["aktiv"])."'
-		where id='{$oid}'");
-
-
-		if ($_POST["orvosmentesandcopy"]==1 && isset($_SESSION["orvosbeosztascegfilter"]) && beosztasModJog()) {
-			$res=sql_query("select id from cegek");
-			while ($row=sql_fetch_array($res)) {
-				$cegId=$row["id"];
-				if (isset($_POST["copyceg{$cegId}"])) {
-					
-					sql_query("delete from orvos_beosztas where orvosid=? and cegid=?",array($oid,$cegId));
-									
-					$ress=sql_query("select * from orvos_beosztas where orvosid=? and cegid=?",array($oid,$_SESSION["orvosbeosztascegfilter"]));
-					while ($rows=sql_fetch_array($ress)) {
-						sql_query("insert into orvos_beosztas set 
-						orvosid='{$rows["orvosid"]}',
-						helyszinid='{$rows["helyszinid"]}',
-						nap='{$rows["nap"]}',
-						beonap='{$rows["beonap"]}',
-						tol='{$rows["tol"]}',
-						ig='{$rows["ig"]}',
-						hetek='{$rows["hetek"]}',
-						binterval='{$rows["binterval"]}',
-						cegid='{$cegId}',
-						csaksorban='{$rows["csaksorban"]}',
-						tipusok='{$rows["tipusok"]}',
-						aktiv='{$rows["aktiv"]}'");
-					}
-					
-				}
-			}
-		}
-		
-		logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
-
-		//print_r($_POST);
-		//die();
-
-	}
-	
-	if($_SESSION["adminuser"]["jog_jogset"]==1) {
-		
-		//Jelszó módosítás:
-		if ($_POST["password"]!="") sql_query("UPDATE users SET password = MD5(?) WHERE orvosid = ?",array( $_POST["password"], $oid ));
-		
-		//Jogkörök módosítása:
-		sql_query("UPDATE users 
-				   SET 	  jog_cegset = ?, jog_helyszinset = ?, jog_orvosset = ?, jog_beosztasset = ?, 
-						  jog_szabi  = ?, jog_szurestipusset = ?, jog_zarolista = ?, jog_zaroszerk = ?, 
-						  jog_leletszerk = ?, jog_leletlatas = ?, jog_gdprhferes = ?, jog_kuponlista = ?, 
-						  jog_kuponkeszites = ?, username = ?, nev = ? WHERE orvosid = {$oid}",
-						  array($_POST['jog_cegset'], 		 $_POST['jog_helyszinset'],    $_POST['jog_orvosset'],   $_POST['jog_beosztasset'],
-								$_POST['jog_szabi'], 		 $_POST['jog_szurestipusset'], $_POST['jog_zarolista'],  $_POST['jog_zaroszerk'], 
-								$_POST['jog_leletszerk'], 	 $_POST['jog_leletlatas'], 	   $_POST['jog_gdprhferes'], $_POST['jog_kuponlista'], 
-								$_POST['jog_kuponkeszites'], $_POST['username'], 		   $_POST['nev'])
-				 );
-	}
-	header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
-	die();
-}
 
 if (isset($_GET["oertes"])) {
 	sendToCegAndOrvos($_GET["oertes"],1);
@@ -910,85 +670,10 @@ if (isset($_POST["savelangvalue"])) {
 
 
 
-if (isset($_GET["addsmsphone"])) {
-    sql_query("insert into smsphones set orvosid=?",array($_GET["oid"]));
-    echo smsAlertSettings($_GET["oid"]);
-    die();
-}
-if (isset($_GET["deletesmsphone"])) {
-    sql_query("delete from smsphones where id=? and orvosid=?",array($_GET["id"],$_GET["oid"]));
-    echo smsAlertSettings($_GET["oid"]);
-    die();
-}
-
-function smsAlertSettings($oid) {
-    $htmlout="";
-    $htmlout.="<div>";
-
-    $res=sql_query("select * from smsphones where orvosid=?",array($oid));
-    $x=1;
-    while ($row=sql_fetch_array($res)) {
-        $htmlout.="<div>";
-        $htmlout.="<input style='width:110px;' type='text' id='smsphone{$x}' name='smsphone{$x}' placeholder='SMS telefonszám' value='{$row["tel"]}' /> ";
-
-        $num=0;
-        unset($idk);
-        $idk[]=0;
-        $titl="";
-
-        $ik=explode("|",$row["cegek"]);
-        for ($i=0;$i<count($ik);$i++) {
-            if ($ik[$i]!="") {
-                $num++;
-                $idk[]=$ik[$i];
-            }
-        }
-
-        if (count($idk)>1) {
-            $rowtt=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev SEPARATOR ', ') AS megnevek FROM cegek WHERE id IN (".implode(",",$idk).")"));
-            $titl=$rowtt["megnevek"];
-        }
-        $btn="{$num} cég";
-        if ($num==0) $btn="Összes cég";
-
-        $htmlout.="<span id='cegstatus{$row["id"]}'><a href='#' class='tlink' style='width:100px;' title='{$titl}' onclick='showCegValaszto({$row["id"]});return false;'>{$btn}</a></span> ";
 
 
-        $htmlout.="<input type='checkbox' value=1 name='smsfoglalas{$x}'".($row["smsfoglalas"]==1?" checked":"")."> foglalás értesítés ";
-        $htmlout.="<input type='checkbox' value=1 name='smsgroupfoglalas{$x}'".($row["smsgroupfoglalas"]==1?" checked":"")."> értesítés a másnapi foglalásokról (19 órakor) ";
-        $htmlout.="[<a href='#' onclick='deleteSMSPhone({$oid},{$row["id"]});return false;'>szám törlése</a>]";
-        $htmlout.="<input type='hidden' value='{$row["id"]}' name='phoneid{$x}' />";
-        $htmlout.="</div>";
-        $htmlout.="<div id='cegvalaszto{$row["id"]}'></div>";
-        $x++;
-    }
-    $htmlout.="<div style='margin-top:5px;'><input onclick='addSMSPhone({$oid})' type='button' name='addsmstel' value='+ SMS telefonszám hozzáadása'></div>";
-    $htmlout.="</div>";
-    return $htmlout;
-}
 
 
-if (isset($_GET["showcegvalaszto"])) {
-    $phoneId=intval($_GET["showcegvalaszto"]);
-    $rowo=sql_fetch_array(sql_query("select * from smsphones where id='{$phoneId}'"));
-
-    $res=sql_query("select * from cegek where true order by megnev");
-
-    echo "<div style='width:650px;'>";
-    while ($row=sql_fetch_array($res)) {
-        echo "<label><input onchange='saveCegList({$phoneId})' type='checkbox' name='cegvalaszto{$phoneId}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["cegek"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
-    }
-
-    echo "<div style=''><input type='button' onclick='showCegValaszto({$phoneId});' value='OK'></div>";
-    echo "</div>";
-
-    die();
-}
-
-if (isset($_GET["savesmsphonetipusok"])) {
-    sql_query("update smsphones set cegek=? where id=?",array($_GET["value"],round($_GET["savesmsphonetipusok"])));
-    die();
-}
 
 
 function sample_category( $condition ) {
@@ -1003,24 +688,6 @@ function sample_category( $condition ) {
 
 
 
-if(isset($_REQUEST['AFForm'])){
-	$TAJ = $_REQUEST['AFForm'];
-	$szuldatum = $_REQUEST['birth'];
-	$request = sql_query("SELECT * FROM felhasznalok WHERE taj = ".$TAJ." AND szuldatum = '".$szuldatum."' ");
-	$result = sql_fetch_array($request);
-	if($result){
-		$returnString  = "success||".$result['id']."||".$result['nev']."||".$result['taj']."||";
-		$returnString .= $result['munkakor']."||".$result['szuldatum']."||".$result['szulhely']."||";
-		$returnString .= $result['anyjaneve']."||".$result['email']."||".$result['telefon']."||";
-		$returnString .= $result['irsz']."||".$result['varos']."||".$result['utca']."||".$result['cegid']."||".$result['torzsszam'];
-	}
-	else{
-		$returnString = "failed";
-	}
-	
-	echo $returnString;
-	die();
-}
 if( isset( $_REQUEST['uploadfiles'] ))
 {	
 	$smartFile 	  = array();
@@ -1385,19 +1052,7 @@ function medTemplateFilter($type)
 	}
 	return $htmlout;
 }
-if( isset( $_POST['checkSzabiData'] ))
-{
-	$_POST['end'] = date("Y-m-d",strtotime($_POST['end'].' + 1 day'));
-	$query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN '{$_POST['start']}%' AND '{$_POST['end']}%' ", array($_POST['orvosid']));
-	$data = "";
-	while($result = sql_fetch_array($query))
-	{
-		$data.=$result['nev'].",".$result['datum']."|";
-	}
-	$data =  substr($data, 0, -1);
-	echo $data;
-	die();
-}
+
 
 if ( isset( $_POST['download-signed-pdf'] ))
 {

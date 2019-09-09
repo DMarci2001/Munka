@@ -70,7 +70,7 @@ function startKepImport(id) {
 
 
 function toggleIntervals(beosztasid) {
-    $("#intervalchooser"+beosztasid).load("index.php?toggleinterval="+beosztasid);
+    $("#intervalchooser"+beosztasid).load("index.php?page=doctors&toggleinterval="+beosztasid);
 }
 
 function showTipusValaszto(beosztasid) {
@@ -78,7 +78,7 @@ function showTipusValaszto(beosztasid) {
         $("#tipusvalaszto"+beosztasid).html("");
         return;
     }
-    $("#tipusvalaszto"+beosztasid).load("index.php?showtipusvalaszto="+beosztasid);
+    $("#tipusvalaszto"+beosztasid).load("index.php?page=doctors&showtipusvalaszto="+beosztasid);
 }
 
 
@@ -102,7 +102,7 @@ function saveTipusList(beosztasid) {
     request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "savebeosztastipusok="+beosztasid+"&value="+encodeURIComponent(tk)
+        data: "page=doctors&savebeosztastipusok="+beosztasid+"&value="+encodeURIComponent(tk)
     });
 
     request.done(function (response, textStatus, jqXHR){
@@ -743,11 +743,11 @@ function naptarMove(d) {
 }
 
 function addSMSPhone(oid) {
-    $("#smsalertsettings").load("index.php?addsmsphone&oid="+oid);
+    $("#smsalertsettings").load("index.php?page=doctors&addsmsphone&oid="+oid);
 }
 
 function deleteSMSPhone(oid,id) {
-    $("#smsalertsettings").load("index.php?deletesmsphone&oid="+oid+"&id="+id);
+    $("#smsalertsettings").load("index.php?page=doctors&deletesmsphone&oid="+oid+"&id="+id);
 }
 
 function showCegValaszto(phoneid) {
@@ -755,7 +755,7 @@ function showCegValaszto(phoneid) {
         $("#cegvalaszto"+phoneid).html("");
         return;
     }
-    $("#cegvalaszto"+phoneid).load("index.php?showcegvalaszto="+phoneid);
+    $("#cegvalaszto"+phoneid).load("index.php?page=doctors&showcegvalaszto="+phoneid);
 }
 
 function saveCegList(phoneid) {
@@ -781,7 +781,7 @@ function saveCegList(phoneid) {
     request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "savesmsphonetipusok="+phoneid+"&value="+encodeURIComponent(tk)
+        data: "page=doctors&savesmsphonetipusok="+phoneid+"&value="+encodeURIComponent(tk)
     });
 
     request.done(function (response, textStatus, jqXHR){
@@ -1309,7 +1309,7 @@ function checkSzabiData() {
     $.ajax({
         type: 'POST',
         url: 'index.php',
-        data: 'checkSzabiData=1&start='+$('input[name="szabadsagtol"]').val()+'&end='+$('input[name="szabadsagig"]').val()+'&orvosid='+$('input[name="orvosid"]').val(),
+        data: 'page=doctors&checkSzabiData=1&start='+$('input[name="szabadsagtol"]').val()+'&end='+$('input[name="szabadsagig"]').val()+'&orvosid='+$('input[name="orvosid"]').val(),
         success: function(data)
         {
             if(data != '')

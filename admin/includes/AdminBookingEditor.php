@@ -129,6 +129,24 @@ class AdminBookingEditor {
             die;
         }
 
+        if (isset($_REQUEST['AFForm'])) {
+            $TAJ = $_REQUEST['AFForm'];
+            $szuldatum = $_REQUEST['birth'];
+            $request = sql_query("SELECT * FROM felhasznalok WHERE taj = ? AND szuldatum = ?",array($TAJ, $szuldatum));
+
+            if ($result = sql_fetch_array($request)) {
+                $returnString  = "success||".$result['id']."||".$result['nev']."||".$result['taj']."||";
+                $returnString .= $result['munkakor']."||".$result['szuldatum']."||".$result['szulhely']."||";
+                $returnString .= $result['anyjaneve']."||".$result['email']."||".$result['telefon']."||";
+                $returnString .= $result['irsz']."||".$result['varos']."||".$result['utca']."||".$result['cegid']."||".$result['torzsszam'];
+            } else {
+                $returnString = "failed";
+            }
+
+            echo $returnString;
+            die();
+        }
+
     }
 
 

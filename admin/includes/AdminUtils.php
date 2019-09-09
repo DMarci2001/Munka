@@ -30,8 +30,8 @@ class AdminUtils {
             if ($_GET["page"]=="places" && $this->helyszinModJog()) {
                 sql_query("insert into helyszinek set cim='Új helyszín'");
             }
-            if ($_GET["page"]=="orvosok" && orvosModJog()) {
-                sql_query("insert into orvosok set nev='Új orvos',createdby='".addslashes($user["nev"])."',created=now()");
+            if ($_GET["page"]=="doctors" && $this->orvosModJog()) {
+                sql_query("insert into orvosok set nev='Új orvos',createdby=?, created=now()", array($_SESSION["adminuser"]["nev"]));
                 $oid = sql_insert_id();
                 sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
             }
@@ -55,9 +55,9 @@ class AdminUtils {
             if ($_GET["page"]=="places" && $this->helyszinModJog()) {
                 sql_query("delete from helyszinek where id=?",array($_GET["delete"]));
             }
-            if ($_GET["page"]=="orvosok" && orvosModJog()) {
-                sql_query("delete from orvosok where id='".addslashes($_GET["delete"])."'");
-                sql_query("delete from orvos_beosztas where orvosid='".addslashes($_GET["delete"])."'");
+            if ($_GET["page"]=="doctors" && $this->orvosModJog()) {
+                sql_query("delete from orvosok where id=?", array($_GET["delete"]));
+                sql_query("delete from orvos_beosztas where orvosid=?", array($_GET["delete"]));
             }
 
             if ($_GET["page"]=="screenings" && $this->szurestipusModJog()) {
@@ -79,7 +79,9 @@ class AdminUtils {
             if ($_GET["page"]=="places") {
                 sql_query("update helyszinek set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
             }
-            if ($_GET["page"]=="orvosok") sql_query("update orvosok set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            if ($_GET["page"]=="doctors") {
+                sql_query("update orvosok set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            }
             if ($_GET["page"]=="screenings") {
                 sql_query("update szurestipusok set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
             }

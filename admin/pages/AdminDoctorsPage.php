@@ -1,2 +1,754 @@
 <?php
 
+class AdminDoctorsPage extends AdminCorePage {
+
+    private $bookingService;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (!isset($_SESSION["orvosbeosztascegfilter"])) $_SESSION["orvosbeosztascegfilter"] = 0;
+        if (!isset($_SESSION["cegfilter"])) $_SESSION["cegfilter"] = 0;
+
+        if (isset($_POST["addszabadsag"])) {
+            if ($this->adminUtils->szabadsagJog()) {
+                $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
+                sql_query("insert into szabadsag set datumtol=?,datumig=?,oid=?",array($_POST["szabadsagtol"],$_POST["szabadsagig"],$_GET["szerk"]));
+                logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság hozzáadva: ".$_POST["szabadsagtol"]." - ".$_POST["szabadsagig"],print_r($_POST,true));
+            }
+            $_POST["orvosmentes"]=1;
+        }
+
+        if (isset($_GET["delszabadsag"])) {
+            if ($this->adminUtils->szabadsagJog()) {
+                $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
+                sql_query("delete from szabadsag where id=? and oid=?",array($_GET["delszabadsag"],$_GET["szerk"]));
+                logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+
+
+        if (isset($_GET["delbeosztas"])) {
+            if ($this->adminUtils->beosztasModJog()) {
+                sql_query("delete from orvos_beosztas where id=? and orvosid=?",array($_GET["delbeosztas"],$_GET["szerk"]));
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+
+        if (isset($_POST["addbeosztas"])) {
+            if ($this->adminUtils->beosztasModJog()) {
+                if ($_SESSION["adminuser"]["jogosultsag"]>=2) {
+                    if (isset($_SESSION["orvosbeosztascegfilter"])) {
+                        sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
+                    }
+                } else {
+                    if (isset($_SESSION["orvosbeosztascegfilter"])) {
+                        sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
+                    }
+                }
+            }
+            $_POST["orvosmentes"]=1;
+        }
+
+        if (isset($_GET["addsmsphone"])) {
+            sql_query("insert into smsphones set orvosid=?",array($_GET["oid"]));
+            echo $this->smsAlertSettings($_GET["oid"]);
+            die();
+        }
+        if (isset($_GET["deletesmsphone"])) {
+            sql_query("delete from smsphones where id=? and orvosid=?",array($_GET["id"],$_GET["oid"]));
+            echo $this->smsAlertSettings($_GET["oid"]);
+            die();
+        }
+
+
+        if (isset($_GET["showcegvalaszto"])) {
+            $phoneId=intval($_GET["showcegvalaszto"]);
+            $rowo=sql_fetch_array(sql_query("select * from smsphones where id='{$phoneId}'"));
+
+            $res=sql_query("select * from cegek where true order by megnev");
+
+            echo "<div style='width:650px;'>";
+            while ($row=sql_fetch_array($res)) {
+                echo "<label><input onchange='saveCegList({$phoneId})' type='checkbox' name='cegvalaszto{$phoneId}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["cegek"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
+            }
+
+            echo "<div style=''><input type='button' onclick='showCegValaszto({$phoneId});' value='OK'></div>";
+            echo "</div>";
+
+            die();
+        }
+
+        if (isset($_GET["savesmsphonetipusok"])) {
+            sql_query("update smsphones set cegek=? where id=?",array($_GET["value"],round($_GET["savesmsphonetipusok"])));
+            die();
+        }
+
+        if (isset($_GET["toggleinterval"])) {
+            $beosztasid = intval($_GET["toggleinterval"]);
+            if ($row = sql_fetch_array(sql_query("select binterval from orvos_beosztas where id=?", array($beosztasid)))) {
+                $i = $row["binterval"];
+                if ($this->adminUtils->beosztasModJog()) {
+                    $i+=5;
+                    if ($i==25) $i=30;
+                    //if ($i==35) $i=45;
+                    if ($i==50) $i=60;
+                    if ($i>60) $i=5;
+                    sql_query("update orvos_beosztas set binterval=? where id=?", array($i, $beosztasid));
+                }
+            }
+            echo "<a href='#' class='tlink' onclick='toggleIntervals({$beosztasid});return false;'>{$i} perc</a> ";
+            die();
+        }
+
+        if (isset($_GET["showtipusvalaszto"])) {
+            if (!$this->adminUtils->beosztasModJog()) die();
+            $beosztasid = intval($_GET["showtipusvalaszto"]);
+            $rowo = sql_fetch_array(sql_query("select * from orvos_beosztas where id=?", array($beosztasid)));
+
+            $res=sql_query("select * from szurestipusok where true order by megnev");
+
+            echo "<div style='width:750px;'>";
+            while ($row=sql_fetch_array($res)) {
+                echo "<label><input onchange='saveTipusList({$beosztasid})' type='checkbox' name='tipusvalaszto{$beosztasid}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["tipusok"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
+            }
+
+            echo "<div style=''><input type='button' onclick='showTipusValaszto({$beosztasid});' value='OK'></div>";
+            echo "</div>";
+            die();
+        }
+
+        if (isset($_GET["savebeosztastipusok"])) {
+            $bid = intval($_GET["savebeosztastipusok"]);
+            sql_query("update orvos_beosztas set tipusok=? where id=?", array($_GET["value"], $bid));
+            die();
+        }
+
+        if (isset($_POST['checkSzabiData'])) {
+            $_POST['end'] = date("Y-m-d",strtotime($_POST['end'].' + 1 day'));
+            $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN '{$_POST['start']}%' AND '{$_POST['end']}%' ", array($_POST['orvosid']));
+            $data = "";
+            while($result = sql_fetch_array($query)) {
+                $data.=$result['nev'].",".$result['datum']."|";
+            }
+            $data =  substr($data, 0, -1);
+            echo $data;
+            die();
+        }
+
+        if (isset($_POST["orvosmentes"]) || isset($_POST["orvosform"])) {
+            $sor = 1;
+            $oid = intval($_GET["szerk"]);
+            $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
+
+            if ($this->adminUtils->orvosModJog()) {
+                if ($this->adminUtils->beosztasModJog()) {
+                    while (isset($_POST["beosztasid{$sor}"])) {
+                        $sorban=$aktiv=0;
+                        if (isset($_POST["aktiv{$sor}"])) $aktiv=1;
+                        if (isset($_POST["csaksorban{$sor}"])) $sorban=1;
+                        if (isset($_POST["csakvsorban{$sor}"])) $sorban=2;
+
+                        //cegid='".addslashes($_POST["cegid{$sor}"])."',
+                        sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=? where id=?"
+                            ,array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $_POST["beosztasid{$sor}"]));
+                        $sor++;
+                    }
+                }
+
+                $sor=1;
+                while (isset($_POST["phoneid{$sor}"])) {
+                    $smsfoglalas=$smsgroupfoglalas=0;
+                    if (isset($_POST["smsfoglalas{$sor}"])) $smsfoglalas=1;
+                    if (isset($_POST["smsgroupfoglalas{$sor}"])) $smsgroupfoglalas=1;
+
+                    sql_query("update smsphones set tel=?, smsfoglalas=?, smsgroupfoglalas=? where id=?"
+                        ,array($_POST["smsphone{$sor}"], $smsfoglalas, $smsgroupfoglalas, $_POST["phoneid{$sor}"]));
+                    $sor++;
+                }
+
+                if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
+                if (!isset($_POST["visszaigazol"])) $_POST["visszaigazol"]=0;
+                if (!isset($_POST["onlytel"])) $_POST["onlytel"]=0;
+                if (!isset($_POST["smsfoglalas"])) $_POST["smsfoglalas"]=0;
+                if (!isset($_POST["smsgroupfoglalas"])) $_POST["smsgroupfoglalas"]=0;
+                if (!isset($_POST["telpublic"])) $_POST["telpublic"]=0;
+
+                if (!isset($_POST['szak_belgyogy'])) $_POST['szak_belgyogy']=0;
+                if (!isset($_POST['szak_rtg'])) $_POST['szak_rtg']=0;
+                if (!isset($_POST['szak_uh'])) $_POST['szak_uh']=0;
+                if (!isset($_POST['szak_borgyogy'])) $_POST['szak_borgyogy']=0;
+                if (!isset($_POST['szak_szemesz'])) $_POST['szak_szemesz']=0;
+                if (!isset($_POST['szak_kardio'])) $_POST['szak_kardio']=0;
+                if (!isset($_POST['szak_torna'])) $_POST['szak_torna']=0;
+
+                if (!isset($_POST['szak_labor'])) $_POST['szak_labor']=0;
+                if (!isset($_POST['szak_urologia'])) $_POST['szak_urologia']=0;
+                if (!isset($_POST['szak_nogyogy'])) $_POST['szak_nogyogy']=0;
+                if (!isset($_POST['szak_tudogyogy'])) $_POST['szak_tudogyogy']=0;
+                if (!isset($_POST['szak_ortopedia'])) $_POST['szak_ortopedia']=0;
+
+                $vizsgtipusok = $_POST['szak_belgyogy'].",".$_POST['szak_rtg'].",";
+                $vizsgtipusok.= $_POST['szak_uh'].",".$_POST['szak_borgyogy'].",";
+                $vizsgtipusok.= $_POST['szak_szemesz'].",".$_POST['szak_kardio'].",";
+                $vizsgtipusok.= $_POST['szak_torna'].",".$_POST['szak_labor'].",";
+
+                $vizsgtipusok.= $_POST['szak_urologia'].",".$_POST['szak_nogyogy'].",";
+                $vizsgtipusok.= $_POST['szak_tudogyogy'].",".$_POST['szak_ortopedia'];
+
+
+                sql_query("update orvosok set 
+                    nev=?,
+                    pecsetszam=?,
+                    email=?,
+                    tel=?,
+                    onlytel=?,
+                    smsfoglalas=?,
+                    smsgroupfoglalas=?,
+                    telpublic=?,
+                    hmedemail=?,
+                    visszaigazol=?,
+                    visszaigazolemail=?,
+                    szurestipusok=?,
+                    aktiv=?
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["szurestipusok"], $_POST["aktiv"], $oid));
+
+
+                if ($_POST["orvosmentesandcopy"]==1 && isset($_SESSION["orvosbeosztascegfilter"]) && $this->adminUtils->beosztasModJog()) {
+                    $res=sql_query("select id from cegek");
+                    while ($row=sql_fetch_array($res)) {
+                        $cegId = $row["id"];
+                        if (isset($_POST["copyceg{$cegId}"])) {
+                            sql_query("delete from orvos_beosztas where orvosid=? and cegid=?",array($oid,$cegId));
+
+                            $ress=sql_query("select * from orvos_beosztas where orvosid=? and cegid=?",array($oid,$_SESSION["orvosbeosztascegfilter"]));
+                            while ($rows=sql_fetch_array($ress)) {
+                                sql_query("insert into orvos_beosztas set 
+                                    orvosid='{$rows["orvosid"]}',
+                                    helyszinid='{$rows["helyszinid"]}',
+                                    nap='{$rows["nap"]}',
+                                    beonap='{$rows["beonap"]}',
+                                    tol='{$rows["tol"]}',
+                                    ig='{$rows["ig"]}',
+                                    hetek='{$rows["hetek"]}',
+                                    binterval='{$rows["binterval"]}',
+                                    cegid='{$cegId}',
+                                    csaksorban='{$rows["csaksorban"]}',
+                                    tipusok='{$rows["tipusok"]}',
+                                    aktiv='{$rows["aktiv"]}'");
+                            }
+
+                        }
+                    }
+                }
+
+                logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
+            }
+
+            if($_SESSION["adminuser"]["jog_jogset"] == 1) {
+                //Jelszó módosítás:
+                if ($_POST["password"]!="") sql_query("UPDATE users SET password = MD5(?) WHERE orvosid = ?",array( $_POST["password"], $oid ));
+
+                //Jogkörök módosítása:
+                sql_query("UPDATE users 
+				   SET    jog_cegset = ?, jog_helyszinset = ?, jog_orvosset = ?, jog_beosztasset = ?, 
+						  jog_szabi  = ?, jog_szurestipusset = ?, jog_zarolista = ?, jog_zaroszerk = ?, 
+						  jog_leletszerk = ?, jog_leletlatas = ?, jog_gdprhferes = ?, jog_kuponlista = ?, 
+						  jog_kuponkeszites = ?, username = ?, nev = ? WHERE orvosid = {$oid}",
+                    array($_POST['jog_cegset'], 		 $_POST['jog_helyszinset'],    $_POST['jog_orvosset'],   $_POST['jog_beosztasset'],
+                          $_POST['jog_szabi'], 		 $_POST['jog_szurestipusset'], $_POST['jog_zarolista'],  $_POST['jog_zaroszerk'],
+                          $_POST['jog_leletszerk'], 	 $_POST['jog_leletlatas'], 	   $_POST['jog_gdprhferes'], $_POST['jog_kuponlista'],
+                          $_POST['jog_kuponkeszites'], $_POST['username'], 		   $_POST['nev'])
+                );
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+
+
+    }
+
+    public function showPage() {
+        if (!$this->adminUtils->helyszinModJog()) {
+            return;
+        }
+
+        if (isset($_GET["szerk"])) {
+            $oid = intval($_GET["szerk"]);
+            $row = sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
+            $_POST = $row;
+
+            $hibak="";
+            $resc=sql_query("SELECT TIME_TO_SEC(tol) AS tolsec,TIME_TO_SEC(ig) AS igsec,b.*,c.megnev as cegnev,h.cim as helyszin FROM orvos_beosztas b 
+	        left join cegek c on c.id=b.cegid
+	        left join helyszinek h on h.id=b.helyszinid
+	        WHERE orvosid=? AND tol<>0 AND ig<>0",array($_GET["szerk"]));
+            while ($rowc = sql_fetch_array($resc)) {
+                $res = sql_query("SELECT b.*,c.megnev as cegnev,h.cim as helyszin FROM orvos_beosztas b
+    	        left join cegek c on c.id=b.cegid
+		        left join helyszinek h on h.id=b.helyszinid
+	            WHERE orvosid=? AND helyszinid<>? AND nap=? AND tol<>0 AND ig<>0 AND ((TIME_TO_SEC(tol)>? AND TIME_TO_SEC(tol)<?) OR  (TIME_TO_SEC(ig)>? AND TIME_TO_SEC(ig)<?))",array($_GET["szerk"],$rowc["helyszinid"],$rowc["nap"],$rowc["tolsec"],$rowc["igsec"],$rowc["tolsec"],$rowc["igsec"]));
+                if ($rowe = sql_fetch_array($res)) {
+                    $hibak.="<div>Orvos két helyszínen van egyszerre: ".$GLOBALS["hetnap"][$rowe["nap"]]." <b>1.</b> {$rowe["tol"]}-{$rowe["ig"]} {$rowe["cegnev"]} {$rowe["helyszin"]} <b>2.</b> {$rowc["tol"]}-{$rowc["ig"]} {$rowc["cegnev"]} {$rowc["helyszin"]}</div>";
+                }
+            }
+
+            if ($hibak != "") {
+                echo "<div style='margin-bottom:10px;background:#f88;padding:10px;display:inline-block;'>{$hibak}</div>";
+            }
+
+            echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='orvosform' value='1'/><input type='hidden' name='orvosid' value='{$_POST["id"]}'/>";
+            echo "<table style='font-size:12px;'>";
+
+            echo "<tr><td width='130'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
+            echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'></td></tr>";
+            echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
+            echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'> <input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
+
+            echo "<tr><td>SMS értesítés:</td><td><div id='smsalertsettings'>".$this->smsAlertSettings($oid)."</div></td></tr>";
+
+            echo "<tr><td>&nbsp;</td><td><input type='checkbox' value=1 name='visszaigazol'".($_POST["visszaigazol"]==1?" checked":"")."> visszaigazolás szükséges, erre a címre: <input class='inputbox' style='width:200px;' type='text' name='visszaigazolemail' value='{$_POST["visszaigazolemail"]}'></td></tr>";
+            echo "<tr><td>HMED értesítés email:</td><td><input class='inputbox' style='width:600px;' type='text' name='hmedemail' value='{$_POST["hmedemail"]}'></td></tr>";
+
+
+            $w=$wc="";
+            if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+                $w="and b.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
+                $wc="and id in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
+            }
+
+
+            echo "<tr><td colspan='2'>";
+            echo "<div class='tdsepdiv'>Beosztás ";
+
+            $cegbeo[]=0;
+            $resstat=sql_query("SELECT cegid,GROUP_CONCAT(DISTINCT concat(nap,beonap)) AS napok FROM orvos_beosztas b WHERE orvosid=? {$w} GROUP BY cegid",array($_GET["szerk"]));
+            while ($rowstat=sql_fetch_array($resstat)) {
+                if (isset($_GET["sp"]) && $_GET["sp"]!=1) {
+                    $_GET["sp"]=1;
+                    $_SESSION["orvosbeosztascegfilter"]=$rowstat["cegid"];
+                }
+                $beostat[$rowstat["cegid"]]=$rowstat;
+                $cegbeo[]=$rowstat["cegid"];
+            }
+
+
+            echo "<select onchange='document.iform.submit();' name='orvosbeosztascegfilter' style='width:300px;'>";
+            $resh=sql_query("select * from cegek where true {$wc} order by id not in (".implode(",",$cegbeo)."),megnev");
+
+            if (sql_num_rows($resh)>1) {
+                echo "<option value='0'>Válassz!".(count($cegbeo)>1?" (beosztva ".(count($cegbeo)-1)." céghez)":"")."</option>";
+            }
+
+            while ($rowh=sql_fetch_array($resh)) {
+                echo "<option style='".(isset($beostat[$rowh["id"]])?"font-weight:bold;":"")."' value='{$rowh["id"]}'".($_SESSION["orvosbeosztascegfilter"]==$rowh["id"]?" selected":"").">{$rowh["megnev"]} ".(isset($beostat[$rowh["id"]])?"(".count(explode(",",$beostat[$rowh["id"]]["napok"]))." nap)":"")."</option>";
+            }
+
+            echo "</select> ";
+
+
+            echo "<a class='ujbutton' style='padding:3px 10px;font-weight:normal;' href='#' onclick='$(\"#bcopierdiv\").slideToggle();return false;'>Beosztás másolása</a>";
+
+            echo "<div id='bcopierdiv' style='font-size:12px;font-weight:normal;width:800px;padding:10px;display:none;'>";
+            $resh=sql_query("select * from cegek where id<>? {$wc} order by id not in (".implode(",",$cegbeo)."),megnev",array($_SESSION["orvosbeosztascegfilter"]));
+            while ($rowh=sql_fetch_array($resh)) {
+                echo "<div style='display:inline-block;'><input name='copyceg{$rowh["id"]}' type='checkbox' ".(in_array($rowh["id"],$cegbeo)?" checked":"")." value='1' /> {$rowh["megnev"]}</div/> ";
+            }
+            echo "<div style='padding-top:10px;'>";
+            echo "<input type='hidden' id='orvosmentesandcopy' name='orvosmentesandcopy' value='0' />";
+            echo "<a class='ujbutton' style='padding:3px 10px;font-weight:normal;' href='#' onclick='if (!confirm(\"Biztos másolod ezt a beosztást a kijelölt cégekhez?\")) {return false;} $(\"#orvosmentesandcopy\").val(1);document.iform.submit();'>Beosztás másolása a kijelölt cégekhez</a> <a class='ujbutton' style='padding:3px 10px;font-weight:normal;' href='#' onclick='$(\"#bcopierdiv\").slideToggle();'>Mégse</a>";
+            echo "</div>";
+
+
+            echo "</div>";
+
+
+            echo "</div>";
+            echo "</td></tr>";
+
+            if (!$this->adminUtils->beosztasModJog()) {
+                echo "<tr><td colspan='2' style=''><div class='nojog'>A beosztás módosításához nincs jogosultsága</div></td></tr>";
+            }
+
+
+            $resb = sql_query("select * from orvos_beosztas b where orvosid=? and (cegid=?) {$w} order by cegid,nap<>0,nap,tol",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
+
+            $sor = 1;
+            $hetBackgrounds=array("","#ffffbb","#bbffff");
+
+            while ($rowb=sql_fetch_array($resb)) {
+                echo "<tr><td colspan='2'>";
+
+                echo "<input type='hidden' name='beosztasid{$sor}' value='{$rowb["id"]}'/>";
+
+                echo "<input title='aktív?' type='checkbox' name='aktiv{$sor}' value='1' ".($rowb["aktiv"]==1?" checked":"")."/> ";
+
+                echo "<select name='weekday{$sor}' onchange=\"if (this.value!=10) { $('#hetek{$sor}').show(); $('#beonap{$sor}').hide(); } else { $('#hetek{$sor}').hide(); $('#beonap{$sor}').show(); }\">";
+                echo "<option value='0'>Válassz napot!</option>";
+                for ($n=1;$n<=7;$n++) {
+                    echo "<option value='{$n}'".($rowb["nap"]==$n?" selected":"").">{$GLOBALS["hetnap"][$n]}</option>";
+                }
+                echo "<option value='10'".($rowb["nap"]==10?" selected":"").">Egy dátum</option>";
+                echo "</select> ";
+
+                echo "<select id='hetek{$sor}' name='hetek{$sor}' style='width:110px;background:{$hetBackgrounds[$rowb["hetek"]]};".($rowb["nap"]==10?"display:none;":"")."'>";
+                echo "<option value='0'".($rowb["hetek"]==0?" selected":"").">Minden hét</option>";
+                echo "<option value='1'".($rowb["hetek"]==1?" selected":"").">Páratlan hetek</option>";
+                echo "<option value='2'".($rowb["hetek"]==2?" selected":"").">Páros hetek</option>";
+                echo "</select> ";
+
+                echo "<input id='beonap{$sor}' name='beonap{$sor}' type='text' value='{$rowb["beonap"]}' style='width:102px;".($rowb["nap"]==10?"":"display:none;")."' placeholder='éééé-hh-nn' /> ";
+
+                if (!isset($_SESSION["orvos_helyszinid"]) && $rowb["helyszinid"]!=0) {
+                    $_SESSION["orvos_helyszinid"] = $rowb["helyszinid"];
+                }
+                if (!isset($_SESSION["orvos_cegid"]) && $rowb["cegid"]!=0) {
+                    $_SESSION["orvos_cegid"] = $rowb["cegid"];
+                }
+
+                echo "<select id='helyszinid{$sor}' name='helyszinid{$sor}' style='width:200px;'>";
+
+                if ($rowb["helyszinid"]==0 && isset($_SESSION["orvos_helyszinid"])) {
+                    $rowb["helyszinid"] = $_SESSION["orvos_helyszinid"];
+                }
+                if ($rowb["cegid"]==0 && isset($_SESSION["orvos_cegid"])) {
+                    $rowb["cegid"] = $_SESSION["orvos_cegid"];
+                }
+
+
+                $resh=sql_query("select * from helyszinek where true order by cim");
+                echo "<option value='0'>Válassz helyszínt!</option>";
+                while ($rowh=sql_fetch_array($resh)) {
+                    echo "<option value='{$rowh["id"]}'".($rowb["helyszinid"]==$rowh["id"]?" selected":"").">{$rowh["cim"]}</option>";
+                }
+                echo "</select> ";
+
+                echo "<select name='tol{$sor}'>";
+                echo "<option value='0'>Kezdés?</option>";
+                for ($n=0;$n<=1125;$n+=5) {
+                    $t=date("H:i",mktime(5,0+$n,0,1,1,2015));
+                    echo "<option value='{$t}'".($rowb["tol"]==$t?" selected":"").">{$t}</option>";
+                }
+                echo "</select> ";
+
+                echo "<select name='ig{$sor}'>";
+                echo "<option value='0'>Vége?</option>";
+                for ($n=0;$n<=1065;$n+=5) {
+                    $t=date("H:i",mktime(6,0+$n,0,1,1,2015));
+                    echo "<option value='{$t}'".($rowb["ig"]==$t?" selected":"").">{$t}</option>";
+                }
+                echo "</select> ";
+
+                /*
+                echo "<select name='cegid{$sor}' style='width:200px;'>";
+
+                $resh=sql_query("select * from cegek where true {$wc} order by megnev");
+
+                if (sql_num_rows($resh)>1) echo "<option value='0'>Összes cég</option>";
+                while ($rowh=sql_fetch_array($resh)) {
+                    echo "<option value='{$rowh["id"]}'".($rowb["cegid"]==$rowh["id"]?" selected":"").">{$rowh["megnev"]}</option>";
+                }
+                echo "</select> ";
+                */
+
+                echo "<input type='hidden' name='tipusidk{$sor}' id='tipusidk{$sor}' value='{$rowb["tipusok"]}' />";
+
+                $num=0;
+                unset($idk);
+                $idk[]=0;
+                $titl="nincs tipus hozzárendelve";
+
+                $ik=explode("|",$rowb["tipusok"]);
+                for ($i=0;$i<count($ik);$i++) {
+                    if ($ik[$i]!="") {
+                        $num++;
+                        $idk[]=$ik[$i];
+                    }
+                }
+
+                if (count($idk)>1) {
+                    $rowtt=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev SEPARATOR ', ') AS megnevek FROM szurestipusok WHERE id IN (".implode(",",$idk).")"));
+                    $titl=$rowtt["megnevek"];
+                }
+
+                //audi
+                //if ($_SESSION["orvosbeosztascegfilter"]==15 || $_SESSION["orvosbeosztascegfilter"]==42) {
+                echo "<span title='egy kezelés időtartama' id='intervalchooser{$rowb["id"]}'><a href='#' class='tlink' onclick='toggleIntervals({$rowb["id"]});return false;'>{$rowb["binterval"]} perc</a></span> ";
+                //}
+
+                echo "<span id='tipusstatus{$rowb["id"]}'><a href='#' class='tlink' title='{$titl}' onclick='showTipusValaszto({$rowb["id"]});return false;'>{$num} tipus</a></span> ";
+
+                echo "<span title='Csak sorban foglalható időpontok'><input onclick='cssClick(1,{$sor});' type='checkbox' value='1' id='csaksorban{$sor}' name='csaksorban{$sor}'".($rowb["csaksorban"]==1?" checked":"").">&darr;</span> ";
+                echo "<span title='Csak fordított sorrendben foglalható időpontok'><input onclick='cssClick(2,{$sor});' type='checkbox' value='2' id='csakvsorban{$sor}' name='csakvsorban{$sor}'".($rowb["csaksorban"]==2?" checked":"").">&uarr;</span> ";
+
+                echo "<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delbeosztas={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt a beosztás sort?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
+
+                echo "<div id='tipusvalaszto{$rowb["id"]}'></div>";
+
+                echo "</td></tr>";
+                $sor++;
+            }
+
+            echo "<tr><td colspan=2 valign=top>";
+            if ($_SESSION["orvosbeosztascegfilter"]==0) {
+                echo "<div style='margin:10px 0px;'>A beosztás szerkesztéséhez először válassz céget!</div>";
+            } else {
+                if (sql_num_rows($resb)==0) echo "<div style='margin:10px 0px;'>Ennek az orvosnak nincs beosztása a kiválasztott céghez!</div>";
+                echo "<input type='submit' name='addbeosztas' value='+ Beosztás hozzáadása'>";
+            }
+            echo "</td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv' style='margin-top:10px;'>Szabadság</div></td></tr>";
+            if (!$this->adminUtils->szabadsagJog()) {
+                echo "<tr><td colspan='2' style=''><div class='nojog'>A szabadságok módosításához nincs jogosultsága</div></td></tr>";
+            }
+
+            echo "<tr><td colspan='2'>";
+            $ressz=sql_query("select * from szabadsag where oid=? order by datumtol",array($_GET["szerk"]));
+            while ($rowsz=sql_fetch_array($ressz)) {
+                echo "<div>{$rowsz["datumtol"]} - {$rowsz["datumig"]} <a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delszabadsag={$rowsz["id"]}' onclick='return confirm(\"Biztos törlöd ezt a szabadság sort?\")'><img src='images/trash.png' title='Sor törlése'/></a></div>";
+            }
+            echo "<div><input class='inputbox' style='width:100px;' type='text' name='szabadsagtol' value='' placeholder='-tól dátum'> - <input class='inputbox' style='width:100px;' type='text' name='szabadsagig' value='' placeholder='-ig dátum'> <input type='submit' onClick='return checkSzabiData()' name='addszabadsag' value='+ szabadság hozzáadása'></div>";
+            echo "</td></tr>";
+
+            if( $_SESSION['adminuser']['jog_orvosset'] == 1 )
+            {
+                $type = explode( ",", $_POST['szurestipusok'] );
+
+                echo "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Vizsgálat típusok kiválasztása</div></td></tr>";
+                echo "<tr><td><table>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(1, $type)?"checked":"")." name = 'szak_belgyogy' value = '1' /></td>";
+                echo "	  <td>Belgyógyász</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(2, $type)?"checked":"")." name = 'szak_rtg' value = '2' /></td>";
+                echo "	  <td>Röntgen</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(3, $type)?"checked":"")." name = 'szak_uh' value = '3' /></td>";
+                echo "	  <td>Ultrahang</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(4, $type)?"checked":"")." name = 'szak_borgyogy' value = '4' /></td>";
+                echo " 	  <td>Bőrgyógyász</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(5, $type)?"checked":"")." name = 'szak_szemesz' value = '5' /></td>";
+                echo "	  <td>Szemész</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(6, $type)?"checked":"")." name = 'szak_kardio' value = '6' /></td>";
+                echo "	  <td>Kardiológia</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(7, $type)?"checked":"")." name = 'szak_torna' value = '7' /></td>";
+                echo "	  <td>Gyógytornász</td></tr>";
+
+                echo "<tr><td><input type = 'checkbox' ".(in_array(8, $type)?"checked":"")." name = 'szak_labor' value = '8' /></td>";
+                echo "	  <td>Labor</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(9, $type)?"checked":"")." name = 'szak_urologia' value = '9' /></td>";
+                echo "	  <td>Urológia</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(10, $type)?"checked":"")." name = 'szak_nogyogy' value = '10' /></td>";
+                echo "	  <td>Nőgyógyászat</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(11, $type)?"checked":"")." name = 'szak_tudogyogy' value = '11' /></td>";
+                echo "	  <td>Tüdőgyógyászat</td></tr>";
+                echo "<tr><td><input type = 'checkbox' ".(in_array(12, $type)?"checked":"")." name = 'szak_ortopedia' value = '12' /></td>";
+                echo "	  <td>Ortopédia</td></tr>";
+
+                echo "</td></tr></table>";
+            }
+
+
+            //Orvosi jogkörök:
+            $request = sql_query( "SELECT * FROM users WHERE orvosid = ?", array( $_GET['szerk'] ));
+            if ( sql_num_rows($request) > 0 && $_SESSION['adminuser']['jog_jogset'] == 1) {
+                $adminAutorithy = "";
+                $result = sql_fetch_array( $request );
+                $nowrap = "style = 'white-space:nowrap'";
+                $adminAutorithy.= "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Jogkörök hozzárendelése</div></td></tr>";
+                $adminAutorithy.= "<tr><td><table>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_cegset' ".( $result["jog_cegset"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Cégek kezelése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_helyszinset' ".( $result["jog_helyszinset"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Helyszínek kezelése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_orvosset' ".( $result["jog_orvosset"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Orvosok kezelése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_beosztasset' ".( $result["jog_beosztasset"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Orvos beosztások kezelése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_szabi' ".( $result["jog_szabi"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Szabadságok beállítása</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_szurestipusset' ".( $result["jog_szurestipusset"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Szűréstipusok kezelése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_zarolista' ".( $result["jog_zarolista"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Zárólista látása</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_zaroszerk' ".( $result["jog_zaroszerk"] == 1 ? "checked" : "" )."  value = '1'/ ></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Záró leletek szerkesztése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_leletlatas' ".( $result["jog_leletlatas"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Leletek látása</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_leletszerk' ".( $result["jog_leletszerk"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Leletek szerkesztése</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_gdprhferes' ".( $result["jog_gdprhferes"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >GDPR hozzáférés</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_kuponlista' ".( $result["jog_kuponlista"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Kuponkód lista</td></tr>";
+                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_kuponkeszites' ".( $result["jog_kuponkeszites"] == 1 ? "checked" : "" )." value = '1' /></td>";
+                $adminAutorithy.= "	   <td {$nowrap} >Kuponkód hozzáadás/szerkesztés</td></tr>";
+                $adminAutorithy.= "<tr><td {$nowrap} colspan = '2'>Felh. név: <input type = 'text' value = '{$result['username']}' name = 'username' /></td></tr>";
+                $adminAutorithy.= "<tr><td {$nowrap} colspan = '2'>Új jelszó: <input type = 'text' name = 'password' style = 'margin-left:2px'/></td></tr>";
+                $adminAutorithy.= "</table></td></tr>";
+                echo $adminAutorithy;
+            }
+
+            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value=1 name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
+
+            echo "</table>";
+
+
+            echo "<div id='errorlistdiv' style='padding:10px;background:#f00;color:#fff;font-weight:bold;display:none;'></div>";
+            //onclick=\"return orvosDataVerify();\";
+            if ($this->adminUtils->orvosModJog()) {
+                if (sql_num_rows($request) == 0) {
+                    echo "<br><input type='submit' onClick='accountini({$_GET['szerk']})' name = 'account-ini' value = 'Account inicializálás' /> ";
+                } else {
+                    echo "<br>";
+                }
+                echo "<input  type='submit' name='orvosmentes' value='Mentés'> ";
+            } else {
+                echo "<br><input onclick='alert(\"Az orvos adatlap módosításához nincs jogosultsága!\");return false;' type='submit' name='orvosmentes' value='Mentés'> ";
+            }
+            echo "<input type='submit' name='scancel' value='Vissza'> ";
+
+            echo "</form>";
+            return;
+        }
+
+
+        $w="";
+        if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+            $w="and (b.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).") or b.cegid is null)";
+        }
+
+        if ($_SESSION["cegfilter"]>0) $w = "and (b.cegid='".addslashes($_SESSION["cegfilter"])."' or b.cegid is null)";
+        if ($_SESSION["cegfilter"]==-1) $w = "and (b.cegid='0' or b.cegid is null)";
+
+        if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
+            echo "<div style='margin-bottom:10px;'>";
+            echo "<select name='cegselect' onchange='setCegFilter(this.value,\"doctors\");'>";
+            echo "<option value='0'>Szűrés cégre</option>";
+            echo "<option value='-1'".($_SESSION["cegfilter"]==-1?" selected":"").">Összes céget fogadók</option>";
+
+            $res = sql_query("SELECT * FROM cegek order by megnev");
+            while ($rowt = sql_fetch_array($res)) {
+                echo "<option value='{$rowt["id"]}'".($_SESSION["cegfilter"]==$rowt["id"]?" selected":"").">{$rowt["megnev"]}</option>";
+            }
+
+            echo "</select>";
+            echo "</div>";
+        }
+
+        $res=sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator '<br/>') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
+        LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id`
+        LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
+        LEFT JOIN cegek c ON c.`id`=b.`cegid`
+        where true {$w}
+        GROUP BY o.id
+        ORDER BY nev<>'Új orvos',nev");
+
+        $rest = sql_query("select * from szurestipusok");
+        while ($rowt = sql_fetch_array($rest)) {
+            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
+        }
+
+        echo "<table cellpadding='0' cellspacing='0' border='0'>";
+        while ($row = sql_fetch_array($res)) {
+            unset($tipusok);
+            $ta=explode("|",$row["tipusok"]);
+            for ($i=0;$i<count($ta);$i++) {
+                if (trim($ta[$i])!="") {
+                    if (isset($tipusnevek[$ta[$i]])) {
+                        $tipusok[] = $tipusnevek[$ta[$i]];
+                    }
+                }
+            }
+
+            if ($row["cegidk"] == "nulla") {
+                $row["cegek"] = "*<br/>{$row["cegek"]}";
+            }
+            $tc = "tcella";
+            if (!isset($first)) {
+                echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                $first = 1;
+            }
+            if (trim($row["nev"])=="") $row["nev"] = "nincs neve";
+            echo "<tr>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>";
+            echo "<a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}&sp'>{$row["nev"]}</a>";
+            if (isset($tipusok)) echo "<div>".implode("<br/>",array_unique($tipusok))."</div>";
+            echo "</div></td>";
+            //echo "<td nowrap valign=top><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
+            //echo "<td nowrap valign=top><div class='{$tc}'>{$row["cegek"]}</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>";
+            if ($row["cimek"]!="") {
+                echo "{$row["cimek"]}";
+            } else {
+                echo "<span style='color:#f00;'>nincs még beosztása</span>";
+            }
+            echo "</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:200px;'>";
+            if ($row["cegek"] != "") {
+                echo "{$row["cegek"]}";
+            } else {
+                echo "Létrehozta: {$row["createdby"]}";
+            }
+            echo "</div></td>";
+            echo "<td nowrap valign='top'><div class={$tc} style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
+            echo "<td nowrap valign='top'><div class={$tc} style='min-width:100px;'>{$row["email"]}</div></td>";
+            echo "<td nowrap valign='top'><div class={$tc} style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
+            echo "<td nowrap valign='top'><div class={$tc}>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            echo "</tr>";
+            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+        }
+        echo "</table>";
+
+    }
+
+
+    private function smsAlertSettings($oid) {
+        $htmlout="";
+        $htmlout.="<div>";
+
+        $res=sql_query("select * from smsphones where orvosid=?",array($oid));
+        $x=1;
+        while ($row=sql_fetch_array($res)) {
+            $htmlout.="<div>";
+            $htmlout.="<input style='width:110px;' type='text' id='smsphone{$x}' name='smsphone{$x}' placeholder='SMS telefonszám' value='{$row["tel"]}' /> ";
+
+            $num=0;
+            unset($idk);
+            $idk[]=0;
+            $titl="";
+
+            $ik=explode("|",$row["cegek"]);
+            for ($i=0;$i<count($ik);$i++) {
+                if ($ik[$i]!="") {
+                    $num++;
+                    $idk[]=$ik[$i];
+                }
+            }
+
+            if (count($idk)>1) {
+                $rowtt=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev SEPARATOR ', ') AS megnevek FROM cegek WHERE id IN (".implode(",",$idk).")"));
+                $titl=$rowtt["megnevek"];
+            }
+            $btn="{$num} cég";
+            if ($num==0) $btn="Összes cég";
+
+            $htmlout.="<span id='cegstatus{$row["id"]}'><a href='#' class='tlink' style='width:100px;' title='{$titl}' onclick='showCegValaszto({$row["id"]});return false;'>{$btn}</a></span> ";
+
+
+            $htmlout.="<input type='checkbox' value=1 name='smsfoglalas{$x}'".($row["smsfoglalas"]==1?" checked":"")."> foglalás értesítés ";
+            $htmlout.="<input type='checkbox' value=1 name='smsgroupfoglalas{$x}'".($row["smsgroupfoglalas"]==1?" checked":"")."> értesítés a másnapi foglalásokról (19 órakor) ";
+            $htmlout.="[<a href='#' onclick='deleteSMSPhone({$oid},{$row["id"]});return false;'>szám törlése</a>]";
+            $htmlout.="<input type='hidden' value='{$row["id"]}' name='phoneid{$x}' />";
+            $htmlout.="</div>";
+            $htmlout.="<div id='cegvalaszto{$row["id"]}'></div>";
+            $x++;
+        }
+        $htmlout.="<div style='margin-top:5px;'><input onclick='addSMSPhone({$oid})' type='button' name='addsmstel' value='+ SMS telefonszám hozzáadása'></div>";
+        $htmlout.="</div>";
+        return $htmlout;
+    }
+}
+
