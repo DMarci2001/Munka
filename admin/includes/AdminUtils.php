@@ -2,10 +2,128 @@
 
 class AdminUtils {
     public $settings;
+    public $leletService;
+    public $protocolService;
 
     public function __construct()
     {
         $this->settings = new Booking_Settings();
+        $this->leletService = new AdminLeletService();
+        $this->protocolService = new AdminProtocolService();
+
+        if (isset($_POST["scancel"])) {
+            header("location:index.php?page={$_GET["page"]}");
+            die();
+        }
+
+        if (isset($_GET["setcegfilter"])) {
+            $_SESSION["cegfilter"]=$_GET["setcegfilter"];
+            $_SESSION["kereskulcs"]="";
+            header("location:index.php?page={$_GET["p"]}");
+            die();
+        }
+
+        if (isset($_GET["addnew"])) {
+            if ($_GET["page"]=="companies" && $this->cegModJog()) {
+                sql_query("insert into cegek set megnev='Új cég'");
+            }
+            if ($_GET["page"]=="places" && $this->helyszinModJog()) {
+                sql_query("insert into helyszinek set cim='Új helyszín'");
+            }
+            if ($_GET["page"]=="orvosok" && orvosModJog()) {
+                sql_query("insert into orvosok set nev='Új orvos',createdby='".addslashes($user["nev"])."',created=now()");
+                $oid = sql_insert_id();
+                sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
+            }
+            if ($_GET["page"]=="screenings" && $this->szurestipusModJog()) {
+                sql_query("insert into szurestipusok set megnev='Új tétel'");
+            }
+            if ($_GET["page"]=="users") {
+                if ($user["jogosultsag"]>=2) {
+                    sql_query("insert into users set nev='Új felhasználó'");
+                } else {
+                    sql_query("insert into users set nev='Új felhasználó', cegid='{$user["cegid"]}'");
+                }
+                logActivity("user",sql_insert_id(),"felhasználó létrehozva");
+            }
+
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
+
+        if (isset($_GET["delete"])) {
+            if ($_GET["page"]=="places" && $this->helyszinModJog()) {
+                sql_query("delete from helyszinek where id=?",array($_GET["delete"]));
+            }
+            if ($_GET["page"]=="orvosok" && orvosModJog()) {
+                sql_query("delete from orvosok where id='".addslashes($_GET["delete"])."'");
+                sql_query("delete from orvos_beosztas where orvosid='".addslashes($_GET["delete"])."'");
+            }
+
+            if ($_GET["page"]=="screenings" && $this->szurestipusModJog()) {
+                sql_query("delete from szurestipusok where id=?",array($_GET["delete"]));
+            }
+            if ($_GET["page"]=="users") {
+                sql_query("delete from users where id=? and id<>1",array($_GET["delete"]));
+                logActivity("user",$_GET["delete"],"felhasználó törölve");
+            }
+            if ($_GET["page"]=="patients") {
+                sql_query("delete from felhasznalok where id=?", array($_GET["delete"]));
+            }
+
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
+
+        if (isset($_GET["oaktivtoggle"])) {
+            if ($_GET["page"]=="places") {
+                sql_query("update helyszinek set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            }
+            if ($_GET["page"]=="orvosok") sql_query("update orvosok set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            if ($_GET["page"]=="screenings") {
+                sql_query("update szurestipusok set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            }
+            if ($_GET["page"]=="companies") {
+                sql_query("update cegek set aktiv=not aktiv where id=?",array($_GET["oaktivtoggle"]));
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
+        if (isset($_GET["ocsaktivtoggle"])) {
+            if ($_GET["page"]=="szurestipusok") sql_query("update szurescsomagok set aktiv=not aktiv where id=?",array($_GET["ocsaktivtoggle"]));
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
+
+        if (isset($_POST["add2sztceg"])) {
+            $sor = intval($_POST["sor"]);
+            $cegid = "|".intval($_POST["cegid"])."|";
+
+            if ($row=sql_fetch_array(sql_query("select * from arak where id=?",array($_POST["arid"])))) {
+
+                if (substr_count($row["cegid"],$cegid)==0) {
+                    $row["cegid"].=$cegid;
+                    sql_query("update arak set cegid=? where id=?",array($row["cegid"],$_POST["arid"]));
+                }
+
+                echo $this->showCegListSzT($row["cegid"],$sor);
+            }
+            die();
+        }
+
+        if (isset($_POST["removesztceg"])) {
+            $sor = intval($_POST["sor"]);
+            $cegid = "|".intval($_POST["cegid"])."|";
+
+            sql_query("update arak set cegid=replace(cegid,?,'') where id=?",array($cegid,$_POST["arid"]));
+
+            if ($row = sql_fetch_array(sql_query("select * from arak where id=?",array($_POST["arid"])))) {
+                echo $this->showCegListSzT($row["cegid"],$sor);
+            }
+            die();
+        }
+
+
     }
 
     public function beosztasModJog() {
@@ -35,6 +153,11 @@ class AdminUtils {
 
     public function helyszinModJog() {
         if ($_SESSION["adminuser"]["jog_helyszinset"]==1 || $_SESSION["adminuser"]["jog_jogset"]==1) return true;
+        return false;
+    }
+
+    public function userModJog() {
+        if ($_SESSION["adminuser"]["jog_jogset"]==1) return true;
         return false;
     }
 
@@ -327,7 +450,7 @@ class AdminUtils {
     public function getAdminMenu() {
         $adminMenu = [];
         if (isset($_SESSION["adminuser"])) {
-            $res = sql_query("select * from adminmenu order by sorrend, megnev");
+            $res = sql_query("select * from adminmenu where aktiv=1 order by sorrend, megnev");
             while ($menuData = sql_fetch_array($res)) {
                 if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
                     continue;
@@ -367,5 +490,40 @@ class AdminUtils {
         return $GLOBALS["adminuser"]["orvosid"] == 0 ? false:true;
     }
 
+
+    public function showAlkalmassagStatus($row) {
+        $htmlout="";
+
+        if (isset($GLOBALS["alkalmassagvariaciok"][$row["alkalmassag"]])) {
+            $htmlout.="<div style='display:table;margin-top:10px;'>";
+
+            $htmlout.="<div style='display:table-cell;vertical-align:middle;'>";
+            $htmlout.="<div class='alkalmassagjelzes alkalmascolor{$row["alkalmassag"]}'>".$GLOBALS["alkalmassagvariaciok"][$row["alkalmassag"]];
+            if ($row["alkalmassag"]=="I") $htmlout.=" {$row["alkalmassagido"]} hó";
+            $htmlout.="</div>";
+            $htmlout.="</div>";
+
+            $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:10px;'>";
+            $htmlout.="<a href='printalkalmassagi?id={$row["id"]}&token=".md5($row["datum"].$row["regdatum"])."' target='_blank'><img src='images/print-icon.png' style='height:21px;' title='Alkalmassági igazolás nyomtatása' alt='' /></a>";
+            $htmlout.="</div>";
+
+            $htmlout.="</div>";
+        }
+
+        return $htmlout;
+    }
+
+    public function showEljottCheckBox($row) {
+        $htmlout="";
+        $htmlout.="<div style='display:table;'>";
+        $htmlout.="<div style='display:table-row;'>";
+        $htmlout.="<div style='display:table-cell;'>";
+        $htmlout.="<div onclick='toggleEljott({$row["id"]})' class='nagycheckbox".($row["eljott"]==1?" nagychecked":"")."'></div>";
+        $htmlout.="</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'>&nbsp;Eljött</div>";
+        $htmlout.="</div>";
+        $htmlout.="</div>";
+        return $htmlout;
+    }
 
 }

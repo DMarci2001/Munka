@@ -13,7 +13,7 @@ class AdminPage {
     public function __construct()
     {
         if (isset($_POST["page"])) $_GET["page"] =  $_POST["page"];
-        if (!isset($_GET["page"])) $_GET["page"] = "calendar";
+        if (!isset($_GET["page"])) $_GET["page"] = "booking";
         if (!isset($_SESSION["helyid"])) $_SESSION["helyid"] = 1;
 
         if (isset($_COOKIE["pid"])) $_SESSION["pid"] = $_COOKIE["pid"];
@@ -45,7 +45,8 @@ class AdminPage {
         if (class_exists($pageName)) {
             $this->page = new $pageName;
         } else {
-            die("Error, page not found {$pageName}!");
+            $_GET["page"] = "error";
+            $this->page = new AdminErrorPage();
         }
 
         if (!isset($user)) {

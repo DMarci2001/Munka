@@ -942,7 +942,6 @@ function printLelet() {
 }
 
 function open_lelet(id){
-
     $('#uj-lelet').remove();
     if($('#leletform').css('display') == 'none')
     {
