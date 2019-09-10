@@ -805,7 +805,7 @@ function lEditorSave(id) {
     $.ajax({
         url: 'index.php',
         type: 'POST',
-        data: "savelangvalue="+encodeURIComponent(e)+"&id="+id,
+        data: "page=langsettings&savelangvalue="+encodeURIComponent(e)+"&id="+id,
         success: function(data){
             $("#llink"+id).html(data);
         }
@@ -1644,3 +1644,9 @@ function downloadExamStat(){
 }
 
 //marci end
+
+function showLogDetail(id) {
+    $("#logdetail"+id).toggle();
+    $("#logdetailcontent"+id).load("index.php?page=log&loadlogdetail="+id);
+    return false;
+}
