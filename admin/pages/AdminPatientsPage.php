@@ -460,7 +460,7 @@ class AdminPatientsPage extends AdminCorePage {
                     echo "<td>".substr($rowf["datum"],0,16)."&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td>BNO: {$rowf["bno"]}&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td>{$rowf["megnev"]}&nbsp;&nbsp;&nbsp;</td>";
-                    echo "<td><a href='http://bejelentkezes.hungariamed.hu/downloaddoc.php?f={$rowf["id"]}&k={$rowf["kod"]}'>{$rowf["filename"]}</a>&nbsp;&nbsp;&nbsp;</td>";
+                    echo "<td><a href='http://bejelentkezes.keltexmed.hu/downloaddoc.php?f={$rowf["id"]}&k={$rowf["kod"]}'>{$rowf["filename"]}</a>&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td nowrap valign='top'><div>[<a onclick='return confirm(\"Biztosan törli ezt a dokumentumot?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deletedoc={$rowf["id"]}&kod={$rowf["kod"]}'>törlés</a>]</div></td>";
                     echo "</tr>";
                 }
@@ -530,7 +530,7 @@ class AdminPatientsPage extends AdminCorePage {
                     //echo "<td>".($rowf["foglalasid"]=="0"?"nincs felhasználva":"felhasználva")."</td>";
                     echo "<td nowrap valign='top'><div>";
                     if ($rowf["foglalasid"]==0) {
-                        echo "[<a target='idopontfoglalo' href='//{$rowf["domain"]}.hungariamed.hu?fkod={$rowf["rkod"]}&fid={$rowf["userid"]}&remotereserve={$rowf["id"]}'>időpont foglalás</a>] ";
+                        echo "[<a target='idopontfoglalo' href='//{$rowf["domain"]}.keltexmed.hu?fkod={$rowf["rkod"]}&fid={$rowf["userid"]}&remotereserve={$rowf["id"]}'>időpont foglalás</a>] ";
                         echo "[<a onclick='return confirm(\"Biztosan törli ezt a beutalót?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deletebeutalo={$rowf["id"]}'>törlés</a>]";
                     } else {
                         echo "Időpontja: ".substr($rowf["idopont"],0,16);

@@ -16,7 +16,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminScreeningsPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminPatientsPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminCompaniesPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminDoctorsPage.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminLangSettings.php");
+require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminLangSettingsPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminSettingsPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminLogPage.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/admin/pages/AdminStatPage.php");

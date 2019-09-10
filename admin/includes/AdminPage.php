@@ -22,9 +22,14 @@ class AdminPage {
             $_SESSION["adminuser"] = $GLOBALS["adminuser"] = $user;
         }
 
-        if (isset($_GET["logout"])) {
-            unset($_SESSION["loggeduser"]);
-            unset($_SESSION["user"]);
+        if (isset($_GET["logoutadmin"])) {
+            unset($_SESSION["pid"]);
+            session_destroy();
+
+            if (isset($_COOKIE["pid"])) {
+                unset($_COOKIE["pid"]);
+                setcookie("pid", null, -1);
+            }
             header("location:index.php");
             die();
         }
@@ -88,8 +93,6 @@ class AdminPage {
             die();
         }
 
-
-
         echo "<div class='szamlalo' style='display:table;float: right'>";
 
         if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
@@ -135,7 +138,7 @@ class AdminPage {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='120' src='/images/hmm_logo_nagy.png' /></div>";
+        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='80' src='/admin/images/keltexmed_logo.png' /></div>";
         if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }
