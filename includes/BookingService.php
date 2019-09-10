@@ -37,25 +37,31 @@ class BookingService {
             //
             //orvosválasztó
             //
-            if (!isset($_SESSION["orvosselected"])) $_SESSION["orvosselected"]=0;
-            $orvosAvailable=[];
+            if (!isset($_SESSION["orvosselected"])) {
+                $_SESSION["orvosselected"]=0;
+            }
+            $orvosAvailable = [];
             $res=sql_query("select * from orvos_beosztas b 
-                        left join orvosok o on o.id=b.orvosid 
-                        where b.helyszinid=? 
-                        and instr(b.tipusok,?) 
-                        and	b.cegid = ? 
-						and (nap<10 or b.beonap >= date(now())) 
-						and b.aktiv=1 
-						and o.aktiv=1",array($helyszin, "|{$szuresTipus}|", $_SESSION['helyszindata']['id']));
-            while ($beoData=sql_fetch_array($res)) {
-                if ($beoData["csaksorban"]!=0) $vanCsakSorban=true;
-                $orvosAvailable[$beoData["orvosid"]]=$beoData;
+                                left join orvosok o on o.id=b.orvosid 
+                                where b.helyszinid=? 
+                                and instr(b.tipusok,?) 
+                                and	b.cegid = ? 
+                                and (nap<10 or b.beonap >= date(now())) 
+                                and b.aktiv=1 
+                                and o.aktiv=1",array($helyszin, "|{$szuresTipus}|", $_SESSION['helyszindata']['id']));
+            while ($beoData = sql_fetch_array($res)) {
+                if ($beoData["csaksorban"]!=0) {
+                    $vanCsakSorban = true;
+                }
+                $orvosAvailable[$beoData["orvosid"]] = $beoData;
             }
 
-            if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"]!=0) $_SESSION["orvosselected"]=$_REQUEST["selectoid"];
+            if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"] != 0) {
+                $_SESSION["orvosselected"] = $_REQUEST["selectoid"];
+            }
 
             //feltétel ami alapján kirakjuk az orvosválasztót
-            if (($_SESSION['helyszindata']['id']==74 || in_array($_SERVER["REMOTE_ADDR"],array("194.143.226.42","89.134.90.181"))) && count($orvosAvailable)>1) {
+            if (count($orvosAvailable)>1) {
                 echo "<div style='margin:10px 0px 10px 0px;'>{$webText["valasszorvost"]}:</div>";
                 foreach ($orvosAvailable as $orvosData) {
                     $s="border:1px solid #fff;";
@@ -63,8 +69,9 @@ class BookingService {
                         $s="border:1px solid #080;";
                         $orvosIsSelected=true;
                     }
-                    echo "<div><a href='#' onclick='showIdoPontValasztoV2({$honnan},{$orvosData["orvosid"]});return false;' style='display:inline-block;padding:3px;color:#080;{$s}'>{$orvosData["nev"]}</a></div>";
+                    echo "<div style='display:inline-block;'><a href='#' onclick='showIdoPontValasztoV2({$honnan},{$orvosData["orvosid"]});return false;' style='display:inline-block;padding:3px;color:#080;{$s}'>{$orvosData["nev"]}</a></div>";
                 }
+                echo "<br clear='all'/>";
                 if (!isset($orvosIsSelected)) {
                     die();
                 }
@@ -232,190 +239,7 @@ class BookingService {
             die();
         }
 
-        if (isset($_GET["showidopontvalasztov5"])) {
-            $helyszin=intval($_GET["helyszin"]);
-            $szuresTipus=intval($_GET["szurestipus"]);
-            $honnan=intval($_GET["honnan"]);
-            //if ($honnan<0) $honnan=0;
 
-
-            if ( !$rowmax = sql_fetch_array( sql_query( "SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas 
-												 WHERE helyszinid = '{$helyszin}' 
-												 AND  ( cegid = 11 ) 
-												 AND  ( instr( tipusok, '|{$szuresTipus}|' )) HAVING MAX(tol) IS NOT NULL" ))) {
-                echo "<div style='margin:10px 0px;color:#f00;'>Erre a szűrés típusra nincsenek beállítva rendelési időpontok.</div>";
-                die();
-            }
-
-
-            //
-            //orvosválasztó
-            //
-            if (!isset($_SESSION["orvosselected"])) $_SESSION["orvosselected"]=0;
-            $orvosAvailable=[];
-            $res=sql_query("select * from orvos_beosztas b 
-                        left join orvosok o on o.id=b.orvosid 
-                        where b.helyszinid=? and instr(b.tipusok,?) and (nap<10 or b.beonap >= date(now())) and b.aktiv=1 and o.aktiv=1",array($helyszin,"|{$szuresTipus}|"));
-            while ($beoData=sql_fetch_array($res)) {
-                if ($beoData["csaksorban"]!=0) $vanCsakSorban=true;
-                $orvosAvailable[$beoData["orvosid"]]=$beoData;
-            }
-
-            if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"]!=0) $_SESSION["orvosselected"]=$_REQUEST["selectoid"];
-
-            //feltétel ami alapján kirakjuk az orvosválasztót
-            if (in_array($_SERVER["REMOTE_ADDR"],array("194.143.226.42","89.134.90.181","78.92.193.167")) && count($orvosAvailable)>1) {
-                echo "<div style='margin:10px 0px 10px 0px;'>{$webText["valasszorvost"]}:</div>";
-                foreach ($orvosAvailable as $orvosData) {
-                    $s="border:1px solid #fff;";
-                    if ($orvosData["orvosid"]==$_SESSION["orvosselected"]) {
-                        $s="border:1px solid #080;";
-                        $orvosIsSelected=true;
-                    }
-                    echo "<div><a href='#' onclick='showIdoPontValasztoV4({$szuresTipus},{$honnan},1,{$orvosData["orvosid"]});return false;' style='display:inline-block;padding:3px;color:#080;{$s}'>{$orvosData["nev"]}</a></div>";
-                }
-                if (!isset($orvosIsSelected)) {
-                    die();
-                }
-            }
-            //orvosválasztó vége
-
-
-            $szunnapok[] = "";
-            $rows = sql_fetch_array( sql_query( "select * from settings" ));
-            $n = explode( ",", $rows["szunnapok"] );
-            for ( $i = 0; $i < count($n); $i++ ) {
-                $szunnapok[] = trim( $n[$i] );
-            }
-
-
-            echo "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
-            echo "<div>{$webText["valasszidopontot"]}:</div>";
-
-            echo "<table style='margin-top:5px;width:100%;font-size:12px;'><tr><td><a href='#' style='color:#a00;text-decoration:none;' onClick='showIdoPontValasztoV4(".$szuresTipus.",".($honnan-7).",1);return false'>{$webText["elo7"]}</a></td><td align='right'><a href = '#' style='color:#a00;text-decoration:none;' onClick='showIdoPontValasztoV4(".$szuresTipus.",".($honnan+7).",1);return false'>{$webText["kov7"]}</a></td></tr></table>";
-            //echo "<div style='margin-top:5px;'> | </div>";
-
-            echo "<table style = 'font-size:12px;' cellpadding='0' cellspacing='0'><tr>";
-
-
-            $dist = "6 hour";
-            if ( $helyszin == 1 ) $dist = "0 hour"; //jász utca bármikor foglalható
-
-
-            for ( $i = 0; $i <= 6; $i++ ) {
-                $fix = $i + $honnan;
-
-                $nap = date( "Y-m-d", strtotime( "this week monday +{$fix} day" ));
-                $wd = date( "N", strtotime( "this week monday +{$fix} day" ));  //day of week
-                $wn = date( "W", strtotime( "this week monday +{$fix} day" ));  //number of week
-
-                echo "<td valign='top'>";
-
-                if ( $nap == date( "Y-m-d" )) {
-                    echo "<div style='background:#607d8b;margin:0px 1px;padding:12px 10px 12px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
-                } else {
-                    echo "<div style='background:#607d8b;margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
-                }
-
-                if ( !$napiBeos = getBeosztasok( "{$nap}", $helyszin, $szuresTipus, $_SESSION["orvosselected"] )) {
-                    echo "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$webText["nincsrendeles"]}</div>";
-                    echo "</td>";
-                    continue;
-                }
-
-                if ( in_array( $nap,$szunnapok )) {
-                    echo "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Munkaszüneti<br/>nap</div>";
-                    echo "</td>";
-                    continue;
-                }
-
-
-                //get binterval;
-                foreach ( $napiBeos as &$beoData ) {
-                    //ütköző beosztások is lehetnek
-                    $binterval = $beoData["binterval"];
-                }
-
-                $beginora = round( substr( $rowmax["minrendeles"], 0, 2 ));
-                $beginperc = round( substr( $rowmax["minrendeles"], 3, 2 ));
-
-                $napHTML = "";
-                for ( $o = 0; $o <= 55; $o++ ) {
-                    $ora = date( "H:i", mktime( $beginora, $beginperc + $o * $binterval, 0, date( "m" ), date( "d" ), date( "Y" )));
-                    if ( strtotime( $ora ) >= strtotime( $rowmax["maxrendeles"] )) break;
-
-                    $napHTML.= "<div style='text-align:center;'>";
-
-                    $buttonTitle = "";
-                    $buttonClass = "foglaltbtn";
-                    $buttonJava = "nemfog();return false;";
-
-                    if ( isset( $beos )) unset( $beos );
-                    $vanRendeles = false;
-                    $numRendeles = 0;
-                    $orvosNevek = "";
-                    //beosztások beolvasása
-                    if ( $beos = getBeosztasok( "{$nap} {$ora}", $helyszin, $szuresTipus, $_SESSION["orvosselected"] )) {
-                        //szabad orvos kiválasztása
-                        foreach ( $beos as &$beoData ) {
-                            $vanRendeles = true;
-                            if ( orvosIdopontIsFree( "{$nap} {$ora}", $beoData["orvosid"], $helyszin )) {
-                                $numRendeles++;
-                                $orvosNevek.=  ", {$beoData["orvosnev"]}";
-                                $buttonClass = "foglalhatobtn";
-                                $buttonTitle = "{$numRendeles} hely (".substr($orvosNevek,2).")";
-                                $buttonJava =  "chooseIdoPontV1(\"{$nap} {$ora}\",{$szuresTipus},{$helyszin},{$_SESSION["orvosselected"]});return false;";
-                                //break;
-                            }
-                        }
-                    }
-
-                    if ( strtotime( "now + {$dist}") > strtotime( "{$nap} {$ora}" )) {
-                        //mégse foglalható, múltbéli dátum vagy túl közeli
-                        $buttonTitle = "";
-                        $buttonClass = "foglaltbtn";
-                        $buttonJava = "nemfog();return false;";
-                    }
-
-                    //csak sorban foglalható időpontok intézése
-                    if ( $beoData["csaksorban"] == 1 && isset( $elsoIdopont[$nap] ) && $buttonClass == "foglalhatobtn" ) {
-                        $buttonJava = "nemfogs(\"{$elsoIdopont[$nap]}\");return false;";
-                        $buttonClass.= " halv";
-                    }
-                    if ( !isset( $elsoIdopont[$nap] ) && $buttonClass == "foglalhatobtn" ) $elsoIdopont[$nap] = $ora;
-
-                    //teszt: minden időpont foglalható
-                    //$buttonJava="chooseIdoPont(\"{$nap} {$ora}\");return false;";
-                    $btn = "<a class = '{$buttonClass}' title = '{$buttonTitle}' onclick = '{$buttonJava}' href = '#'>{$ora}</a>";
-
-                    //csak fordított sorrendben időpontok intézése
-                    if ( $beoData["csaksorban"] == 2 && $buttonClass == "foglalhatobtn" ) {
-                        $lastButton = $btn;
-                        $buttonJava = "nemfogs2();return false;";
-                        $buttonClass.= " halv";
-                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
-                    }
-
-                    $napHTML.= $btn;
-
-
-
-                    //echo print_r($beos,true);
-                    $napHTML.= "</div>";
-                }
-
-                if ( isset( $lastButton )) {
-                    $napHTML = str_replace( $btn, $lastButton, $napHTML );
-                    unset( $lastButton );
-                }
-
-                echo $napHTML;
-                echo "</td>";
-            }
-            echo "</tr></table>";
-            echo "</div>";
-            die();
-        }
 
         if (isset($_POST["checkrendeles"])) {
             header("Cache-Control: no-cache, no-store, must-revalidate");
