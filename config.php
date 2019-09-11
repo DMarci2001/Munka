@@ -42,8 +42,6 @@ function sql_connect() {
 	$MYSQL_HOST="localhost";
 	$MYSQL_DB="keltexmed";
 
-	if (substr_count(getSubDomain(),"teszt")) $MYSQL_DB="hungariamedteszt";
-
 	try {
 		$GLOBALS["db"]=new PDO("mysql:host={$MYSQL_HOST};dbname={$MYSQL_DB};charset=utf8", $MYSQL_USER, $MYSQL_PASS);
 	} catch (PDOException $e) {
