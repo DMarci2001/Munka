@@ -495,7 +495,7 @@ class Utils {
 
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
         $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
-        $favicon="/images/hmm_favicon.png";
+        $favicon="/images/".Booking_Settings::SITE_FAVICON;
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
 
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
@@ -515,4 +515,11 @@ class Utils {
         return $htmlout;
     }
 
+    public function setupLongSession() {
+        $sessionUp = 2; //óra
+        ini_set('session.gc_maxlifetime', $sessionUp*60*60);
+        session_set_cookie_params($sessionUp*60*60);
+
+        $_SESSION["LAST_ACTIVITY"] = time();
+    }
 }

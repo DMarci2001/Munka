@@ -5,42 +5,42 @@ class Page {
     private $utils;
     private $lang;
     public $page;
+    public $companyService;
+    public $user;
 
     public function __construct()
     {
-        if (isset($_SESSION["loggeduser"])) {
-            $_SESSION["user"] = sql_fetch_array(sql_query("select * from felhasznalok where id=?",array($_SESSION["loggeduser"])));
-        }
-
-        if (isset($_GET["logout"])) {
-            unset($_SESSION["loggeduser"]);
-            unset($_SESSION["user"]);
-            header("location:index.php");
-            die();
-        }
-
-        if (isset($_POST["page"])) $_GET["page"] =  $_POST["page"];
-        if (!isset($_GET["page"]) && isset($_SESSION["user"])) $_GET["page"] = "booking";
-        if (!isset($_GET["page"])) $_GET["page"] = "booking";
-
+        $this->companyService = new CompanyService();
+        $this->user = new User();
         $this->utils = new Utils();
         $this->lang = new Lang();
 
-        $_SESSION["LAST_ACTIVITY"] = time();
+        $this->page = $this->_getActualPage();
+    }
+
+    private function _getActualPage() {
+        if (isset($_POST["page"])) {
+            $_GET["page"] =  $_POST["page"];
+        }
+        if (!isset($_GET["page"]) && isset($_SESSION["user"])) {
+            $_GET["page"] = "booking";
+        }
+        if (!isset($_GET["page"])) {
+            $_GET["page"] = "booking";
+        }
 
         $pageName = ucfirst($_GET["page"])."Page";
         if (class_exists($pageName)) {
-            $this->page = new $pageName;
+            $page = new $pageName;
         } else {
             die("Error, page not found!");
         }
 
         if (isset($_SESSION["user"]) && $_SESSION["user"]["validated"] == 0) {
-            $this->page = new ValidateLoginPage();
+            $page = new ValidateLoginPage();
         }
-
+        return $page;
     }
-
 
     public function showPage() {
         $webText = $this->lang->webText;

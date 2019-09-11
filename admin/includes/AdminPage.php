@@ -4,7 +4,10 @@ class AdminPage {
 
     private $utils;
     private $adminUtils;
+    public $adminUser;
+    public $companyService;
     private $lang;
+    private $bookingEditor;
     public $page;
 
     private $skipFrame = false;
@@ -12,63 +15,52 @@ class AdminPage {
 
     public function __construct()
     {
-        if (isset($_POST["page"])) $_GET["page"] =  $_POST["page"];
-        if (!isset($_GET["page"])) $_GET["page"] = "booking";
-        if (!isset($_SESSION["helyid"])) $_SESSION["helyid"] = 1;
-
-        if (isset($_COOKIE["pid"])) $_SESSION["pid"] = $_COOKIE["pid"];
-        if (isset($_SESSION["pid"])) {
-            $user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
-            $_SESSION["adminuser"] = $GLOBALS["adminuser"] = $user;
-        }
-
-        if (isset($_GET["logoutadmin"])) {
-            unset($_SESSION["pid"]);
-            session_destroy();
-
-            if (isset($_COOKIE["pid"])) {
-                unset($_COOKIE["pid"]);
-                setcookie("pid", null, -1);
-            }
-            header("location:index.php");
-            die();
-        }
-
+        $this->companyService = new CompanyService();
+        $this->adminUser = new AdminUser();
         $this->utils = new Utils();
         $this->adminUtils = new AdminUtils();
         $this->lang = new Lang();
+        $this->bookingEditor =new AdminBookingEditor();
 
-        new AdminBookingEditor();
+        $this->utils->setupLongSession();
 
-        $sessionUp = 2; //óra
-        ini_set('session.gc_maxlifetime', $sessionUp*60*60);
-        session_set_cookie_params($sessionUp*60*60);
-
-        $_SESSION["LAST_ACTIVITY"] = time();
-
-        $pageName = "Admin".ucfirst($_GET["page"])."Page";
-        if (class_exists($pageName)) {
-            $this->page = new $pageName;
-        } else {
-            $_GET["page"] = "error";
-            $this->page = new AdminErrorPage();
-        }
-
-        if (!isset($user)) {
-            $this->skipFrame = true;
-            $this->page = new AdminLoginPage();
-        }
-
-        if (isset($user["auth2fac"]) && $user["auth2fac"]==1 && $user["tel"]!="") {
-            if (!isset($_SESSION["2facomplete"])) {
-                $this->skipFrame = true;
-                $this->page = new AdminTwoFactorLoginPage();
-            }
-        }
+        $this->page = $this->_getActualPage();
 
         $this->adminMenu = $this->adminUtils->getAdminMenu();
     }
 
+    private function _getActualPage() {
+        if (isset($_POST["page"])) {
+            $_GET["page"] = $_POST["page"];
+        }
+        if (!isset($_GET["page"])) {
+            $_GET["page"] = "booking";
+        }
+        if (!isset($_SESSION["helyid"])) {
+            $_SESSION["helyid"] = 1;
+        }
+
+        $pageName = "Admin".ucfirst($_GET["page"])."Page";
+        if (class_exists($pageName)) {
+            $page = new $pageName;
+        } else {
+            $_GET["page"] = "error";
+            $page = new AdminErrorPage();
+        }
+
+        if (empty($this->adminUser->user)) {
+            $this->skipFrame = true;
+            $page = new AdminLoginPage();
+        }
+
+        if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1 && $this->adminUser->user["tel"]!="") {
+            if (!isset($_SESSION["2facomplete"])) {
+                $this->skipFrame = true;
+                $page = new AdminTwoFactorLoginPage();
+            }
+        }
+        return $page;
+    }
 
     public function showPage() {
         $adminUtils = new AdminUtils();
@@ -138,7 +130,7 @@ class AdminPage {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='80' src='/admin/images/keltexmed_logo.png' /></div>";
+        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='80' src='/images/".Booking_Settings::SITE_ADMIN_LOGO."' /></div>";
         if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }

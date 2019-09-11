@@ -1,6 +1,7 @@
 <?php
 
 require_once("AdminPage.php");
+require_once("AdminUser.php");
 require_once("AdminUtils.php");
 require_once("AdminBookingEditor.php");
 require_once("AdminLeletService.php");

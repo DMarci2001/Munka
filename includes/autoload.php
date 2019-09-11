@@ -1,8 +1,11 @@
 <?php
 
+
 require_once("Lang.php");
 require_once("Settings.php");
 require_once("Utils.php");
+require_once("User.php");
+require_once("CompanyService.php");
 require_once("pages/CorePage.php");
 require_once("pages/BookingPage.php");
 require_once("pages/BookingListPage.php");
