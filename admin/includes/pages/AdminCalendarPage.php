@@ -129,7 +129,7 @@ class AdminCalendarPage extends AdminCorePage
 
         echo "</td><td valign='middle' style='text-align:right;width:20px;'>";
 
-        echo "<a href='#'><img id='naptarloading' src='../images/loading.svg' style='height:24px;margin-right:10px;opacity:.7;display:none;' alt='' /></a>";
+        echo "<a href='#'><img id='naptarloading' src='../../images/loading.svg' style='height:24px;margin-right:10px;opacity:.7;display:none;' alt='' /></a>";
 
         echo "</td><td valign='middle' style='text-align:right;width:60px;'>";
 

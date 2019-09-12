@@ -536,7 +536,6 @@ class BookingService {
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
-            include_once("phpmailer/class.phpmailer.php");
             $mail = new PHPMailer();
             $mail->From = "noreply@hungariamed.hu";
             $mail->FromName = "Hungariamed";
@@ -627,8 +626,6 @@ class BookingService {
 
             $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
 
-
-            include_once("includes/phpmailer/class.phpmailer.php");
             $mail = new PHPMailer();
             $mail->From = "noreply@hungariamed.hu";
             $mail->FromName = "Hungariamed";
@@ -690,9 +687,6 @@ class BookingService {
     }
 
     public function sendToCegAndOrvos($id, $force=0) {
-        include_once("includes/phpmailer/class.phpmailer.php");
-        include_once("includes/other/seeme-gateway-class.php");
-
         $row = sql_fetch_array(sql_query("SELECT * FROM foglalasok f WHERE f.id=?",array($id)));
 
         if ($row["ertesitve"] == 1 && $force == 0) return;
@@ -712,11 +706,9 @@ class BookingService {
             //if ($rowf["rlang"] == "de" && $rowf["szurestipus_de"] != "") $rowf["szurestipus"] = $rowf["szurestipus_de"];
 
             if ($rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($rowf["orvosassigned"])))) {
-                require_once("includes/other/seeme-gateway-class.php");
-
                 $resp = sql_query("select * from smsphones where orvosid=? and smsfoglalas=1 and smsgroupfoglalas=0 and instr(cegek,'|{$cegId}|')",array($rowo["id"]));
                 while ($rowp = sql_fetch_array($resp)) {
-                    sendSMS(trim($rowp["tel"]),"Hungáriamed időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
+                    $this->utils->sendSMS(trim($rowp["tel"]),"Hungáriamed időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
                 }
 
                 if (!empty(trim($rowo["email"]))) {

@@ -11,7 +11,6 @@ class Utils {
     }
 
     public function sendEljottMail($foglalasData) {
-        include_once("phpmailer/class.phpmailer.php");
         $mail = new PHPMailer();
         $mail->From = "noreply@hungariamed.hu";
         $mail->FromName = "Hungariamed";
@@ -41,8 +40,7 @@ class Utils {
         if ($rowu = sql_fetch_array(sql_query("SELECT f.* FROM felhasznalok f 
 	    LEFT JOIN cegek c ON c.id=f.cegid
 	    WHERE f.id=? AND c.`noregsms`=0", array($userId)))) {
-            include("includes/other/seeme-gateway-class.php");
-            sendSMS($rowu["telefon"], "kód a regisztráció befejezéséhez: {$rowu["rkod"]}");
+            $this->sendSMS($rowu["telefon"], "kód a regisztráció befejezéséhez: {$rowu["rkod"]}");
         } else {
             sql_query("update felhasznalok set validated=1 where id=?", array($userId));
         }
@@ -51,8 +49,7 @@ class Utils {
     public function sendLoginSMSKod($userId)
     {
         if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='{$userId}'"))) {
-            include("includes/other/seeme-gateway-class.php");
-            sendSMS($rowu["telefon"], "kód a bejelentkezéshez: {$rowu["rkod"]}");
+            $this->sendSMS($rowu["telefon"], "kód a bejelentkezéshez: {$rowu["rkod"]}");
         }
     }
 
@@ -73,7 +70,6 @@ class Utils {
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
         WHERE f.id=?", array($id));
         if ($row = sql_fetch_array($res)) {
-            include_once("phpmailer/class.phpmailer.php");
             $mail = new PHPMailer();
             $mail->From = "noreply@hungariamed.hu";
             $mail->FromName = "Hungariamed";
@@ -119,8 +115,7 @@ class Utils {
             //$mail->AddAttachment("");
             $mail->Send();
 
-            include_once("includes/seeme-gateway-class.php");
-            sendSMS($row["telefon"], "Figyelem, {$row["datum"]} foglalását visszaigazolás hiányában töröltük!");
+            $this->sendSMS($row["telefon"], "Figyelem, {$row["datum"]} foglalását visszaigazolás hiányában töröltük!");
         }
     }
 
@@ -522,4 +517,245 @@ class Utils {
 
         $_SESSION["LAST_ACTIVITY"] = time();
     }
+
+    public function sendSMS($num,$szoveg) {
+        $num = str_replace(" ","",$num);
+        $num = str_replace("-","",$num);
+        $num = str_replace("/","",$num);
+        $num = str_replace("(","",$num);
+        $num = str_replace(")","",$num);
+        $num = str_replace("+","",$num);
+
+        if (substr($num,0,2)=="06") {
+            $num="36".substr($num,2);
+        }
+
+        $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
+
+        try {
+            $SeeMe->sendSMS($num, $szoveg);
+        } catch (Exception $e) {
+            //print_r($SeeMe->getResult());
+            //die();
+        }
+        $result = $SeeMe->getResult();
+        //print_r($result);
+
+        @sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?",array($num,$szoveg,print_r($SeeMe->getResult(),true)));
+
+        return $result["result"]=="OK";
+    }
+
+
+    public function ENS($companies) {
+        foreach ($companies as $company) {
+            $query = sql_query( "SELECT felh.alklejarat,felh.nev,c.domain,felh.taj,felh.email AS umail,felh.id AS userid, felh.hrmail 
+							 FROM felhasznalok felh
+							 LEFT JOIN cegek c ON c.id = felh.cegid
+							 WHERE cegid = {$company}
+							 AND felh.alklejarat >= NOW() AND felh.alklejarat < ADDDATE(NOW(),14)
+							 AND CASE WHEN felh.lastalkert IS NOT NULL 
+							 THEN felh.lastalkert NOT BETWEEN ADDDATE(NOW(),-14) AND ADDDATE(NOW(),14) 
+							 ELSE TRUE 
+							 END");
+
+            while ($result = sql_fetch_array($query)) {
+                $checkFoglalas = sql_query("SELECT * FROM foglalasok 
+										WHERE email = '{$result['umail']}' 
+										AND   taj 	= '{$result['taj']}' 
+										AND   datum >= NOW() AND datum < ADDDATE(NOW(),14)");
+                if ($checkFoglalas->rowCount() == 0) {
+                    $mail = new PHPMailer();
+                    $mail->From="noreply@hungariamed.hu";
+                    $mail->FromName="Hungariamed";
+                    $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['umail']));
+                    if($result['hrmail'] != "") $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
+                    $mail->AddReplyTo("noreply@hungariamed.hu");
+                    $mail->IsHTML(true);
+
+                    $t = iconv("UTF-8","ISO-8859-2","Orvosi alkalmassági vizsgálata hamarosan lejár!");
+
+                    $mbody = "Kedves {$result['nev']},<br/>";
+                    $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
+                    $mbody.= "Lejárat dátuma: ".date("Y.m.d",strtotime($result['alklejarat']))."<br/>";
+                    $mbody.= "Kérem foglaljon időpontot honlapunkon:<br/>";
+                    $mbody.= "<a href='https://".$result['domain'].".hungariamed.hu'>https://".$result['domain'].".hungariamed.hu</a><br/>";
+                    $mbody.= "Tisztelettel,<br/>";
+                    $mbody.= "Hungária Med - M.kft";
+
+                    $mail->Subject=$t;
+                    $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
+                    //$mail->AddAttachment("");
+                    if (!$mail->Send()) {
+                        sql_query("INSERT INTO alkert_mail SET nev = '{$result['nev']}', email = '{$result['umail']}', eredmeny = '{$mail->ErrorInfo}', datum = NOW() ");
+                    } else {
+                        sql_query("INSERT INTO alkert_mail SET nev = '{$result['nev']}', email = '{$result['umail']}', eredmeny = 'elkuldve', datum = NOW() ");
+                        sql_query("UPDATE felhasznalok SET lastalkert = NOW() WHERE id = {$result['userid']} ");
+                    }
+                }
+            }
+        }
+    }
+
+    public function send_alkExcel( $cegid, $intvallType, $mails ) {
+        $rowCount = 2;
+        $SendingDayParameters = array( "1", "2", "3", "4", "5", "6", "7" );
+        if( $intvallType == "napi" && in_array( date( "N" ), $SendingDayParameters )) {
+            $intervall = "fogl.datum ";
+            //$intervall.= "LIKE '2018-10-01%' ";
+            $intervall.= "LIKE '".date("Y-m-d")."%' ";
+            $releaseDate = date("Y-m-d");
+            //$releaseDate = "2018-11-05";
+        }
+
+        if( $intvallType == "heti" && date( "N" ) == 3 ) {
+
+            $intervall = "fogl.datum ";
+            $intervall.= "BETWEEN '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -4 day" ))."' ";
+            $intervall.= "AND     '".date( "Y-m-d", strtotime( date( "Y-m-d")." +1 day" ))."' ";
+            $releaseDate = date( "Y-m" )." ".getWeeks( date( "Y-m-d" ), "sunday" ).". hét";
+        }
+        if( $intvallType == "havi" && date( "j" ) == 1 ) {
+
+            $intervall = "fogl.datum ";
+            $intervall.= "BETWEEN '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -1 month" ))."' ";
+            $intervall.= "AND     '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -1 day" ))."' ";
+            $releaseDate = date("Y-m");
+        }
+
+        //Ha nem lehetett definiálni az intervallumot szakítsa meg a kódot.
+        if( !isset( $intervall )) return;
+
+        $filename = $releaseDate." napi riport";
+        $objPHPExcel = new PHPExcel();
+        $objPHPExcel->setActiveSheetIndex(0);
+        $objPHPExcel->getActiveSheet()->setTitle('Napi lista');
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
+        header('Cache-Control: max-age=0');
+
+        //Lekérdezés
+        $request = sql_query("SELECT fogl.*, doc.nev as orvos FROM foglalasok fogl
+						    LEFT JOIN orvosok doc ON doc.id = fogl.orvosassigned
+						    WHERE ".$intervall."
+						    AND fogl.cegid = ? ", array(  $cegid ));
+
+
+
+        //Oszlop nevek:
+        $objPHPExcel->getActiveSheet()->SetCellValue('A1', "Név");
+        $objPHPExcel->getActiveSheet()->SetCellValue('B1', "Szül. dátum");
+        $objPHPExcel->getActiveSheet()->SetCellValue('C1', "TAJ");
+        $objPHPExcel->getActiveSheet()->SetCellValue('D1', "Törzsszám");
+        $objPHPExcel->getActiveSheet()->SetCellValue('E1', "Munkakör");
+        $objPHPExcel->getActiveSheet()->SetCellValue('F1', "Orvos");
+        $objPHPExcel->getActiveSheet()->SetCellValue('G1', "Vizsgálat dátuma");
+        $objPHPExcel->getActiveSheet()->SetCellValue('H1', "Elvégzett vizsgálatok");
+        $objPHPExcel->getActiveSheet()->SetCellValue('I1', "Alkalmassági státusz");
+        $objPHPExcel->getActiveSheet()->SetCellValue('J1', "Alkalmassági idő");
+        $objPHPExcel->getActiveSheet()->SetCellValue('K1', "Következő vizsg.");
+        $objPHPExcel->getActiveSheet()->SetCellValue('L1', "Korlátozás/Megjegyzés");
+
+
+        while( $result = sql_fetch_array( $request )) {
+
+            //Extra vizsgálatok listázáa:
+            $request_extra = sql_query("SELECT a.megnev FROM extra_szolg es
+									LEFT JOIN arak a ON a.id = es.szurestipus_id
+									WHERE idopont_id = ".$result['id']);
+
+            $extrak = "";
+            while($extra = sql_fetch_array( $request_extra ))
+            {
+                $extrak = $extrak.", ".$extra['megnev'];
+            }
+            if( $extrak != "" ) $extrak = substr( $extrak, 1 );
+
+            //Ciklus változók:
+            $status 	= "";
+            $period 	= "";
+            $limitation = "";
+            $next_test  = "";
+
+            if( $result['alkalmassag'] == "I" ) {
+                $status 	= "Alkalmas";
+                $period 	= $result['alkalmassagido']." hónap";
+                $next_test 	= date("Y-m-d",strtotime($result['datum']." +".$result['alkalmassagido']." month"));
+                $limitation = $result['alkalmassagkorl'];
+            }
+            if( $result['alkalmassag'] == "N" ) {
+                $status 	= "Alkalmatlan";
+                $period 	= "";
+                $next_test 	= "";
+                $limitation = $result['alkalmassagkorl'];
+            }
+            if( $result['alkalmassag'] == "IN" ) {
+                $status 	= "Ideiglenesen nem alkalmas";
+                $period 	= $result['alkalmassagido']." hónap";
+                $next_test 	= $result['alkalmassagikhet']." hét";
+                $limitation = $result['alkalmassagkorl'];
+            }
+            if( $result['alkalmassag'] == "K" ) {
+                $status 	= "Korlátozottan alkalmas";
+                $period 	= $result['alkalmassagido']." hónap";
+                $next_test 	= date( "Y-m-d", strtotime( $result['datum']." +".$result['alkalmassagido']." month" ));
+                $limitation = $result['alkalmassagkorl'];
+            }
+            if( $result['alkalmassak'] == "" && $result['alkalmassagkorl'] != "" ) {
+                $limitation = $result['alkalmassagkorl'];
+            }
+
+            //Excel adatsorok:
+            $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $result['nev']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount, $result['szuldatum']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount, $result['taj']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount, $result['torzsszam']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount, $result['munkakor']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount, $result['orvos']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount, $result['datum']);
+            $objPHPExcel->getActiveSheet()->SetCellValue('H'.$rowCount, $extrak);
+            $objPHPExcel->getActiveSheet()->SetCellValue('I'.$rowCount, $status);
+            $objPHPExcel->getActiveSheet()->SetCellValue('J'.$rowCount, $period);
+            $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount, $next_test);
+            $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount, $limitation);
+
+            $rowCount++;
+        }
+
+        //Fájl véglegesítése:
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        ob_start();
+        $objWriter->save('php://output');
+        $xlsData = ob_get_contents();
+        $contact_image_data="data:application/vnd.ms-excel;base64,".base64_encode( $xlsData );
+        $data 		= substr( $contact_image_data, strpos( $contact_image_data, "," ));
+        $encoding 	= "base64";
+        $type 		= "application/vnd.ms-excel";
+        ob_end_clean();
+
+        //Email(ek) készítése:
+        $mail = new PHPMailer();
+        $mail->From 	= "noreply@hungariamed.hu";
+        $mail->FromName	= "Hungariamed";
+        $mail->AddAddress( "m.gergely9409@gmail.com" );
+        foreach($mails as $email)
+        {
+            $mail->AddAddress($email, $email);
+        }
+        $mail->AddReplyTo( "noreply@hungariamed.hu" );
+        $mail->AddStringAttachment( base64_decode( $data ), $filename.".xlsx", $encoding, $type );
+        $mail->IsHTML( true );
+
+        $t = iconv( "UTF-8", "ISO-8859-2", $releaseDate." napi riport" );
+
+        $mbody = " ";
+
+        $mail->Subject = $t;
+        $mail->Body = iconv( "UTF-8", "ISO-8859-2", $mbody );
+        //$mail->AddAttachment("");
+        $mail->Send();
+    }
+
+
 }

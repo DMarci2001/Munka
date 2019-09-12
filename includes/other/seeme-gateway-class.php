@@ -358,34 +358,3 @@ class SeeMeGatewayException extends Exception {
 	}
 }
 
-
-
-function sendSMS($num,$szoveg) {
-	$num=str_replace(" ","",$num);
-	$num=str_replace("-","",$num);
-	$num=str_replace("/","",$num);
-	$num=str_replace("(","",$num);
-	$num=str_replace(")","",$num);
-	$num=str_replace("+","",$num);
-
-	if (substr($num,0,2)=="06") $num="36".substr($num,2);
-
-	$SeeMe=new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
-
-	try {
-		$SeeMe->sendSMS($num,$szoveg);
-	} catch (Exception $e) {
-		//print_r($SeeMe->getResult());
-		//die();
-	}
-  $result=$SeeMe->getResult();
-
-	//print_r($result);
-	
-	@sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?",array($num,$szoveg,print_r($SeeMe->getResult(),true)));
-
-	if ($result["result"]=="OK") return true;
-	return false;
-}
-
-

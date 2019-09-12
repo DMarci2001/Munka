@@ -26,8 +26,8 @@ if (isset($_GET["lang"]) && in_array($_GET["lang"],array("hu","de","en"))) {
 	die();
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/includes/autoload.php");
-require_once($_SERVER["DOCUMENT_ROOT"] ."/admin/includes/autoload.php");
+require_once(__DIR__ . "/includes/autoload.php");
+require_once(__DIR__ . "/admin/includes/autoload.php");
 
 
 if (isset($_GET["phpinfo_jns"])) {
@@ -52,17 +52,11 @@ function sql_connect() {
 
 
 function sql_query($q,$params=null) {
-    $GLOBALS["alltime"] = 0;
-    $startTime = microtime(true);
-	$stmt=$GLOBALS["db"]->prepare($q);
+	$stmt = $GLOBALS["db"]->prepare($q);
 	$stmt->execute($params);
-	$error=$stmt->errorInfo();
-	if ($error[2]!="") print_r($error);
-    $endTime = microtime(true);
-    if ($_SERVER["REMOTE_ADDR"]=="194.143.226.42") {
-        $time = $endTime - $startTime;
-        $GLOBALS["alltime"] += $time;
-        //echo str_replace("?","%",$q)." ".print_r($params,true)." ".$time." ".$GLOBALS["alltime"]."<br/>";
+	$error = $stmt->errorInfo();
+	if ($error[2] != "") {
+	    print_r($error);
     }
 	return $stmt;
 }

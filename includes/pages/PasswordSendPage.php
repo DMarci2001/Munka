@@ -26,7 +26,6 @@ class PasswordSendPage extends CorePage {
                     $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
                 }
 
-                include_once("includes/phpmailer/class.phpmailer.php");
                 $mail = new PHPMailer();
                 $mail->From = "noreply@hungariamed.hu";
                 $mail->FromName = "Hungariamed";

@@ -57,7 +57,6 @@ pl: "/doc/drive/1TKqDdigtBmEp5qIqWGOc4nl85OQ1gZLY.pdf"
 
 */
 
-require_once __DIR__."/../vendor/autoload.php";
 
 //$downloader = new GoogleDriveDownloader();
 //print_r($downloader->getFiles());
@@ -74,6 +73,8 @@ class GoogleDriveDownloader {
 
     public function __construct()
     {
+        require_once __DIR__."/../../vendor/autoload.php";
+
         $this->client = $this->getClient();
         $this->drive = new Google_Service_Drive($this->client);
     }

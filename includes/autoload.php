@@ -1,6 +1,5 @@
 <?php
 
-
 require_once("Lang.php");
 require_once("Settings.php");
 require_once("Utils.php");
@@ -26,4 +25,7 @@ require_once("pages/LeletekPage.php");
 require_once("Page.php");
 require_once("DocAgent.php");
 require_once("BookingService.php");
-require_once("phpmailer/class.phpmailer.php");
+
+require_once("other/phpmailer/class.phpmailer.php");
+require_once("other/seeme-gateway-class.php");
+require_once("other/google-drive-downloader.php");
