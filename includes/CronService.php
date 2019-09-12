@@ -123,12 +123,12 @@ class CronService {
             while ($row = sql_fetch_array($res)) {
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
 
-                $szoveg = Booking_Settings::SITE_COMPANY_NAME_SHORT." időpont foglalása van: ".substr($row["datum"],11,5)." {$row["cim"]}";
+                $szoveg = Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása van: ".substr($row["datum"],11,5)." {$row["cim"]}";
                 if ($row["rlang"] == "en") {
-                    $szoveg = Booking_Settings::SITE_COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
+                    $szoveg = Booking_Constants::COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
                 }
                 if ($row["rlang"] == "de") {
-                    $szoveg = Booking_Settings::SITE_COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
+                    $szoveg = Booking_Constants::COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
                 }
 
                 $tel = $row["telefon"];

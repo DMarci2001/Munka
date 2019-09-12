@@ -78,7 +78,7 @@ class Page {
         $html.= "<div style='display:table;width:100%;'>";
         $html.= "<div style='display:table-row;'>";
         $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
-        $html.= "<a href='/index.php'><img width='30' src='".Booking_Settings::SITE_LOGO."' alt='' title='".Booking_Settings::SITE_NAME."' style='margin-right:10px;' /></a>";
+        $html.= "<a href='/index.php'><img width='30' src='".Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align:middle;'>";
 
@@ -121,11 +121,11 @@ class Page {
         $html = "";
         $html.= "<div class='footercontainer'>";
 
-        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'>".Booking_Settings::FOOTER_ADDRESS_PARAM."</div>";
-        $html.= "<div style='float:left;margin:0px 10px 10px 0px;'>".Booking_Settings::FOOTER_CONTACT_PARAM."</div>";
+        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'>".Booking_Constants::FOOTER_ADDRESS_PARAM."</div>";
+        $html.= "<div style='float:left;margin:0px 10px 10px 0px;'>".Booking_Constants::FOOTER_CONTACT_PARAM."</div>";
         $html.= "<br clear='all'/>";
 
-        $html.= "&copy; ".date("Y")." ".Booking_Settings::FOOTER_COPYRIGHT;
+        $html.= "&copy; ".date("Y")." ".Booking_Constants::FOOTER_COPYRIGHT;
         $html.= "</div>";
         return $html;
     }

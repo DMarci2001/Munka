@@ -171,10 +171,10 @@ class AdminUtils {
         }
 
         $mail = new PHPMailer();
-        $mail->From="noreply@hungariamed.hu";
-        $mail->FromName="Hungariamed";
+        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->FromName = Booking_Constants::COMPANY_NAME;
         $mail->AddAddress($rowu["email"]);
-        $mail->AddReplyTo("noreply@hungariamed.hu");
+        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->IsHTML(true);
 
         $t=iconv("UTF-8","ISO-8859-2","HMM admin felület - új jelszó");
@@ -184,7 +184,7 @@ class AdminUtils {
         $mbody.="Felhasználóneve: <b>{$rowu["username"]}</b><br/>";
         $mbody.="Az új jelszava: <b>{$p}</b><br>";
         $mbody.="<br/>";
-        $mbody.="Üdvözlettel:<br>Hungariamed";
+        $mbody.="Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
 
         $mail->Subject=$t;
         $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
@@ -251,7 +251,7 @@ class AdminUtils {
         $htmlout.="<table border='0' cellpadding='0' cellspacing='0'><tr>";
 
 
-        for ($i=0; $i<Booking_Settings::ADMIN_DAY_DISPLAY; $i++) {
+        for ($i=0; $i<Booking_Constants::ADMIN_DAY_DISPLAY; $i++) {
             $dd=$i+$shift;
 
             $nap=date("Y-m-d",strtotime("now +{$dd} day"));

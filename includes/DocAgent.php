@@ -9,7 +9,7 @@ class DocAgent {
 
     private function _getDocPath($fileId) {
         $id = (int)$fileId;
-        $path = Booking_Settings::DOCUMENT_PATH.floor($id / 1000);
+        $path = Booking_Constants::DOCUMENT_PATH.floor($id / 1000);
         if (!is_dir($path)) mkdir($path);
         $path.="/{$id}.bin";
         return $path;

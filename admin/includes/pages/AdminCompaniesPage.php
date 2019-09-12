@@ -295,7 +295,10 @@ class AdminCompaniesPage extends AdminCorePage {
             if ($row["tajnotreq"]==1) echo "<br/>Csak név, email, telefonszám kötelező";
             echo "</div></td>";
             //echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}'>".($row["domain"]==""?"":"http://{$row["domain"]}.hungariamed.hu (<a target='_blank' href='http://{$row["domain"]}.hungariamed.hu'>open</a>)")."</div></td>";
+
+            $url = Booking_Constants::SITE_PROTOCOL."://{$row["domain"]}.".Booking_Constants::SITE_DOMAIN;
+
+            echo "<td nowrap valign='top'><div class='{$tc}'>".($row["domain"]==""?"":"{$url} (<a target='_blank' href='{$url}'>open</a>)")."</div></td>";
             //echo "<td nowrap valign='top'><div class='{$tc}'>{$row["cimek"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";

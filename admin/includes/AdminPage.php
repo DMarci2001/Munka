@@ -117,7 +117,7 @@ class AdminPage {
         echo "</tr>";
 
         echo "<tr><td></td><td>";
-        echo "<div class='footersor'>&copy; ".Booking_Settings::FOOTER_COPYRIGHT."</div>";
+        echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT."</div>";
         echo "</td></tr>";
 
         echo "</table>";
@@ -130,7 +130,7 @@ class AdminPage {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='80' src='/images/".Booking_Settings::SITE_ADMIN_LOGO."' /></div>";
+        $html.= "<div align='center' style='margin-top:-20px;padding-right:5px;'><img width='80' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></div>";
         if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }

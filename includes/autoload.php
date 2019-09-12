@@ -1,5 +1,6 @@
 <?php
 
+require_once("sql.php");
 require_once("Lang.php");
 require_once("Settings.php");
 require_once("Utils.php");

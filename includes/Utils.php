@@ -10,13 +10,17 @@ class Utils {
         }
     }
 
+    public function isTesztIP() {
+        return in_array($_SERVER["REMOTE_ADDR"],array("88.151.97.121","81.182.23.124","5.204.54.10","81.182.23.106"));
+    }
+
     public function sendEljottMail($foglalasData) {
         $mail = new PHPMailer();
-        $mail->From = "noreply@hungariamed.hu";
-        $mail->FromName = "Hungariamed";
+        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->FromName = Booking_Constants::COMPANY_NAME;
         //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
         $mail->AddAddress("jns@jns.hu");
-        $mail->AddReplyTo("noreply@hungariamed.hu");
+        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->IsHTML(true);
 
         if ($emailData = sql_fetch_array(sql_query("select * from ertekeles_formok where (instr(rule_cegids,'|{$foglalasData["cegid"]}|') or rule_cegids='all') and rule_mail=1 and rule_aftereljott=1"))) {
@@ -71,11 +75,11 @@ class Utils {
         WHERE f.id=?", array($id));
         if ($row = sql_fetch_array($res)) {
             $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->AddAddress($row["email"]);
             //$mail->AddAddress("jns@jns.hu");
-            $mail->AddReplyTo("noreply@hungariamed.hu");
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
             $t = iconv("UTF-8", "ISO-8859-2", "Figyelem! Foglalását töröltük!");
@@ -83,7 +87,7 @@ class Utils {
             $mbody = "<h2>Foglalását töröltük!</h2>";
             $mbody .= "Előző levelünkben küldött megerősítő hivatkozásra nem kattintott rá, ezért a {$row["datum"]} időpontra szóló foglalását töröltük.<br/>";
             $mbody .= "<br/>";
-            $mbody .= "Üdvözlettel:<br/>Hungariamed";
+            $mbody .= "Üdvözlettel:<br/>".Booking_Constants::COMPANY_NAME;
 
             $mail->Subject = $t;
             $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
@@ -91,10 +95,10 @@ class Utils {
             $mail->Send();
 
             $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
-            $mail->AddAddress("bejelentkezes@hungariamed.hu");
-            $mail->AddReplyTo("noreply@hungariamed.hu");
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->AddAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
             $t = iconv("UTF-8", "ISO-8859-2", "Egy paciens foglalása törölve lett!");
@@ -490,7 +494,7 @@ class Utils {
 
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
         $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
-        $favicon="/images/".Booking_Settings::SITE_FAVICON;
+        $favicon="/images/".Booking_Constants::SITE_FAVICON;
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
 
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
@@ -566,11 +570,11 @@ class Utils {
 										AND   datum >= NOW() AND datum < ADDDATE(NOW(),14)");
                 if ($checkFoglalas->rowCount() == 0) {
                     $mail = new PHPMailer();
-                    $mail->From="noreply@hungariamed.hu";
-                    $mail->FromName="Hungariamed";
+                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                    $mail->FromName = Booking_Constants::COMPANY_NAME;
                     $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['umail']));
                     if($result['hrmail'] != "") $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
-                    $mail->AddReplyTo("noreply@hungariamed.hu");
+                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                     $mail->IsHTML(true);
 
                     $t = iconv("UTF-8","ISO-8859-2","Orvosi alkalmassági vizsgálata hamarosan lejár!");
@@ -579,9 +583,9 @@ class Utils {
                     $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
                     $mbody.= "Lejárat dátuma: ".date("Y.m.d",strtotime($result['alklejarat']))."<br/>";
                     $mbody.= "Kérem foglaljon időpontot honlapunkon:<br/>";
-                    $mbody.= "<a href='https://".$result['domain'].".hungariamed.hu'>https://".$result['domain'].".hungariamed.hu</a><br/>";
+                    $mbody.= "<a href='".Booking_Constants::SITE_PROTOCOL."://".$result['domain'].".".Booking_Constants::SITE_DOMAIN."'>".Booking_Constants::SITE_PROTOCOL."://".$result['domain'].".".Booking_Constants::SITE_DOMAIN."</a><br/>";
                     $mbody.= "Tisztelettel,<br/>";
-                    $mbody.= "Hungária Med - M.kft";
+                    $mbody.= Booking_Constants::COMPANY_NAME;
 
                     $mail->Subject=$t;
                     $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
@@ -736,14 +740,14 @@ class Utils {
 
         //Email(ek) készítése:
         $mail = new PHPMailer();
-        $mail->From 	= "noreply@hungariamed.hu";
-        $mail->FromName	= "Hungariamed";
+        $mail->From 	= Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->FromName	= Booking_Constants::COMPANY_NAME;
         $mail->AddAddress( "m.gergely9409@gmail.com" );
         foreach($mails as $email)
         {
             $mail->AddAddress($email, $email);
         }
-        $mail->AddReplyTo( "noreply@hungariamed.hu" );
+        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->AddStringAttachment( base64_decode( $data ), $filename.".xlsx", $encoding, $type );
         $mail->IsHTML( true );
 

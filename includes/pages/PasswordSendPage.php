@@ -22,15 +22,15 @@ class PasswordSendPage extends CorePage {
             if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where email=? and cegid=?", array($_POST["email"], $_SESSION["helyszindata"]["id"])))) {
                 $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
                 $p = "";
-                for ($i = 0; $i < Booking_Settings::GENERATED_PASSWORD_LENGTH; $i++) {
+                for ($i = 0; $i < Booking_Constants::GENERATED_PASSWORD_LENGTH; $i++) {
                     $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
                 }
 
                 $mail = new PHPMailer();
-                $mail->From = "noreply@hungariamed.hu";
-                $mail->FromName = "Hungariamed";
+                $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                $mail->FromName = Booking_Constants::COMPANY_NAME;
                 $mail->AddAddress($rowu["email"]);
-                $mail->AddReplyTo("noreply@hungariamed.hu");
+                $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                 $mail->IsHTML(true);
 
                 $t = iconv("UTF-8", "ISO-8859-2", "Új jelszó kérése");
@@ -40,7 +40,7 @@ class PasswordSendPage extends CorePage {
                 $mbody .= "Az új jelszava: <b>{$p}</b><br><br>";
                 $mbody .= "Az új jelszavát bejelentkezés követően az adatmódosítás menüpont alatt tudja megváltoztatni.<br/>";
                 $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
+                $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
 
                 if ($_COOKIE["lang"] == "de") {
                     $mbody = "Lieber {$rowu["nev"]}!<br/><br/>";
@@ -48,7 +48,7 @@ class PasswordSendPage extends CorePage {
                     $mbody .= "Die neue Kennwort: <b>{$p}</b><br><br>";
                     $mbody .= "Nach den anmelden können Sie um  einem neuem Kennwort bitten.<br/>";
                     $mbody .= "<br/>";
-                    $mbody .= "Freundlichen Grüssen:<br>Hungariamed";
+                    $mbody .= "Freundlichen Grüssen:<br>".Booking_Constants::COMPANY_NAME;
                 }
                 if ($_COOKIE["lang"] == "en") {
                     $mbody = "Dear {$rowu["nev"]}!<br/><br/>";
@@ -56,7 +56,7 @@ class PasswordSendPage extends CorePage {
                     $mbody .= "Your new password: <b>{$p}</b><br><br>";
                     $mbody .= "You can change your new password under the profile page.<br/>";
                     $mbody .= "<br/>";
-                    $mbody .= "Regards<br>Hungariamed";
+                    $mbody .= "Regards<br>".Booking_Constants::COMPANY_NAME;
                 }
 
                 $mail->Subject = $t;

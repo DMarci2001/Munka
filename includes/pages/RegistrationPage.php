@@ -32,8 +32,8 @@ class RegistrationPage extends CorePage {
 
             if ($_POST["jelszo"] == "") $this->formError .= "{$webText["jelszokotelezo"]}<br/>";
             if ($_POST["jelszo"] != $_POST["jelszo2"]) $this->formError .= "{$webText["ketjelszonem"]}<br/>";
-            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < Booking_Settings::PASSWORD_LENGTH_MIN) $this->formError .= "{$webText["jelszomin"]}<br/>";
-            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > Booking_Settings::PASSWORD_LENGTH_MAX) $this->formError .= "{$webText["jelszomax"]}<br/>";
+            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < Booking_Constants::PASSWORD_LENGTH_MIN) $this->formError .= "{$webText["jelszomin"]}<br/>";
+            if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > Booking_Constants::PASSWORD_LENGTH_MAX) $this->formError .= "{$webText["jelszomax"]}<br/>";
             if ($_POST["nev"] == "") $this->formError .= "{$webText["nevkotelezo"]}<br/>";
             if ($_POST["telefon"] == "") $this->formError .= "{$webText["telkotelezo"]}<br/>";
             if (!ctype_digit($_POST["telefon"]) && $_POST["telefon"] != "") $this->formError .= "{$webText["telformat"]}<br/>";

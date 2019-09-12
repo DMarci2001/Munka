@@ -136,7 +136,7 @@ class AdminCalendarPage extends AdminCorePage
         echo "<div>";
         if (isset($_SESSION["helyszin"]) && $_SESSION["helyszin"]!=0) {
 
-            $dayDisplay = Booking_Settings::ADMIN_DAY_DISPLAY;
+            $dayDisplay = Booking_Constants::ADMIN_DAY_DISPLAY;
             //echo "<a href='#'><img id='naptarloading' src='../images/loading.svg' style='height:20px;margin-right:10px;opacity:.7;border:1px solid #000;' alt='' /></a> ";
             echo "<a onclick='naptarMove(-{$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/prev.png' title='Lapozás vissza'/></a>";
             echo "<a onclick='naptarMove({$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/next.png' title='Lapozás előre'/></a>";

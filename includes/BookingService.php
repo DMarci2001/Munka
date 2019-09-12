@@ -537,10 +537,10 @@ class BookingService {
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
             $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->AddAddress($row["email"]);
-            $mail->AddReplyTo("noreply@hungariamed.hu");
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
             $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
@@ -559,7 +559,7 @@ class BookingService {
                 <br/>
                 Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
                 <br/>
-                Üdvözlettel:<br>Hungariamed";
+                Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
             }
             if ($row["rlang"] == "de") {
                 $mbody = "<h2>Már majdnem kész!</h2>
@@ -572,7 +572,7 @@ class BookingService {
                 <br/>
                 Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
                 <br/>
-                Üdvözlettel:<br>Hungariamed";
+                Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
             }
             if ($row["rlang"] == "en") {
                 $mbody = "<h2>Almost done!</h2>
@@ -585,7 +585,7 @@ class BookingService {
                 <br/>
                 To confirm your reservation <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>click here</a><br>
                 <br/>
-                Regards<br>Hungariamed";
+                Regards<br>".Booking_Constants::COMPANY_NAME;
             }
 
             $mail->Subject = $t;
@@ -616,7 +616,7 @@ class BookingService {
             if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
                 if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
                     $c = explode(",", $row["domain"]);
-                    $extraMsg = "A kiállított leleteit és dokumentumait a https://{$c[0]}.hungariamed.hu oldalon a taj számával megtekintheti online.<br/>";
+                    $extraMsg = "A kiállított leleteit és dokumentumait a ".Booking_Constants::SITE_PROTOCOL."://{$c[0]}.".Booking_Constants::SITE_DOMAIN." oldalon a taj számával megtekintheti online.<br/>";
                 }
             }
 
@@ -627,11 +627,11 @@ class BookingService {
             $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
 
             $mail = new PHPMailer();
-            $mail->From = "noreply@hungariamed.hu";
-            $mail->FromName = "Hungariamed";
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->AddAddress($row["email"]);
             $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo("noreply@hungariamed.hu");
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
             $t = "{$webTextLocal["sikeresidopontreg"]}";
@@ -657,19 +657,19 @@ class BookingService {
                 $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
                 $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
                 $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
+                $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
             }
             if ($row["rlang"] == "de") {
                 $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
                 $mbody .= "Wenn Sie möchten Ihre Reservierung Verändern ,bitte Streichen Sie aus den anderen Zeitpunkt, dannach registrieren bitte nochmal.<br>";
                 $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>Hungariamed";
+                $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
             }
             if ($row["rlang"] == "en") {
                 $mbody .= "If you wish to cancel this appointment, please click on link: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
                 $mbody .= "If you would like to modify your appointment, first cancel your old appointment then register it again.<br>";
                 $mbody .= "<br/>";
-                $mbody .= "Regards:<br>Hungariamed";
+                $mbody .= "Regards:<br>".Booking_Constants::COMPANY_NAME;
             }
 
             $mail->Subject = $t;
@@ -708,14 +708,14 @@ class BookingService {
             if ($rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($rowf["orvosassigned"])))) {
                 $resp = sql_query("select * from smsphones where orvosid=? and smsfoglalas=1 and smsgroupfoglalas=0 and instr(cegek,'|{$cegId}|')",array($rowo["id"]));
                 while ($rowp = sql_fetch_array($resp)) {
-                    $this->utils->sendSMS(trim($rowp["tel"]),"Hungáriamed időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
+                    $this->utils->sendSMS(trim($rowp["tel"]),Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
                 }
 
                 if (!empty(trim($rowo["email"]))) {
                     $mbody = "";
 
                     $mail = new PHPMailer();
-                    $mail->FromName="Hungariamed";
+                    $mail->FromName = Booking_Constants::COMPANY_NAME;
                     if ($_SERVER["REMOTE_ADDR"] == "84.2.96.42") {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
@@ -725,15 +725,15 @@ class BookingService {
                     if ($rowo["visszaigazol"]==1 && $rowo["visszaigazolemail"]!="") {
                         $mbody.="Kedves {$rowo["nev"]}!<br>
                     <br>
-                    Foglalása érkezett a Hungariamed foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
+                    Foglalása érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
                     <br>
                     <hr>
                     <br>";
                         $mail->From=$rowo["visszaigazolemail"];
                         $mail->AddReplyTo($rowo["visszaigazolemail"]);
                     } else {
-                        $mail->From="noreply@hungariamed.hu";
-                        $mail->AddReplyTo("noreply@hungariamed.hu");
+                        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                     }
                     $mail->IsHTML(true);
 
@@ -772,14 +772,16 @@ class BookingService {
         if ($row=sql_fetch_array($res)) {
             if ($row["foglalasemail"] == 1) {
                 $mail = new PHPMailer();
-                $mail->From="noreply@hungariamed.hu";
-                $mail->FromName="Hungariamed";
+                $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                $mail->FromName = Booking_Constants::COMPANY_NAME;
                 $mail->AddAddress($row["cegemail"]);
-                if ($row["hmedemail"]!="") $mail->AddAddress($row["hmedemail"]);
-                $mail->AddReplyTo("noreply@hungariamed.hu");
+                if ($row["hmedemail"] != "") {
+                    $mail->AddAddress($row["hmedemail"]);
+                }
+                $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                 $mail->IsHTML(true);
 
-                $t=iconv("UTF-8","ISO-8859-2","{$row["cegnev"]} - időpont regisztráció");
+                $t = iconv("UTF-8","ISO-8859-2","{$row["cegnev"]} - időpont regisztráció");
 
                 $mbody="Név: {$row["nev"]}<br>";
                 $mbody.="Cég: {$row["cegnev"]}<br>";
@@ -807,7 +809,9 @@ class BookingService {
         $webTextLocal = $this->lang->getWebTexts($foglalasData["rlang"]);
 
         $interval = (int)$foglalasData["rinterval"];
-        if ($interval == 0) $interval = 15;
+        if ($interval == 0) {
+            $interval = 15;
+        }
         $dateStart = date("Ymd",strtotime("{$foglalasData["datum"]} -2 hour"));
         $timeStart = date("His",strtotime("{$foglalasData["datum"]} -2 hour"));
         $dateEnd = date("Ymd",strtotime("{$foglalasData["datum"]} -2 hour + {$interval} minute"));
@@ -824,7 +828,7 @@ DTEND:{$dateEnd}T{$timeEnd}Z
 SUMMARY:{$webTextLocal["idopontfoglalas"]} - {$foglalasData["nev"]}
 LOCATION:{$foglalasData["helyszin"]}
 DESCRIPTION:{$foglalasData["szurestipus"]}
-ORGANIZER;CN=\"Hungária Med-m Kft.\":mailto:info@hungariamed.hu
+ORGANIZER;CN=\"".Booking_Constants::COMPANY_NAME."\":mailto:".Booking_Constants::RESERVATION_TO_ADDRESS."
 END:VEVENT
 END:VCALENDAR";
 

@@ -35,8 +35,8 @@ class ProfilePage extends CorePage {
 
             if ($_POST["jelszo"] != "") {
                 if ($_POST["jelszo"] != $_POST["jelszo2"]) $this->formError .= "{$webText["ketjelszonem"]}<br/>";
-                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < Booking_Settings::PASSWORD_LENGTH_MIN) $this->formError .= "{$webText["jelszomin"]}<br/>";
-                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > Booking_Settings::PASSWORD_LENGTH_MAX) $this->formError .= "{$webText["jelszomax"]}<br/>";
+                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) < Booking_Constants::PASSWORD_LENGTH_MIN) $this->formError .= "{$webText["jelszomin"]}<br/>";
+                if ($_POST["jelszo"] != "" && strlen($_POST["jelszo"]) > Booking_Constants::PASSWORD_LENGTH_MAX) $this->formError .= "{$webText["jelszomax"]}<br/>";
             }
 
             if ($this->formError == "") {
