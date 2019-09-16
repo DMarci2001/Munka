@@ -120,7 +120,7 @@ class RegistrationPage extends CorePage {
         echo $this->displayFejlec($webText["regisztracio"]);
         echo $this->showFormErrors();
 
-        echo $this->showPageDescription("Regisztráljon, hogy kényelmesebben foglalhasson időpont foglalást, valamint kiegészítő szolgáltatásokat érhessen el. A regisztráció után nem kell minden foglalásnál kitöltenie az adatait, megtekintheti előző foglalásait, megnézheti a leleteit, és az egyéb vizsgálatokkal kapcsolatos dokumentumokat.<br/>Adja meg az adatait az alábbi form kitöltésével.");
+        echo $this->showPageDescription("Regisztráljon, hogy kényelmesebben foglalhasson időpontot, valamint kiegészítő szolgáltatásokat érhessen el. A regisztráció után nem kell minden foglalásnál kitöltenie az adatait, megtekintheti előző foglalásait, megnézheti a leleteit, és az egyéb vizsgálatokkal kapcsolatos dokumentumokat.<br/>Adja meg az adatait az alábbi form kitöltésével.");
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
         echo "<input type='hidden' name='regisztracio' value='1'/>";

@@ -123,11 +123,39 @@ function chooseIdoPont(idopont,orvos) {
         data:{ checkrendeles:"1", idopont:idopont, helyszin:$("#helyszin").val(), taj:$("#tajszam").val(), szurestipusid:$("#szurestipus").val(),orvos:orvos }
     }).done(function(msg) {
         if (msg=="ok") {
+            $("#datum").css("background-image","");
             $("#datum").val(idopont);
             $("#rinterval").val(rinterval);
             $("#orvosselected").val(orvos);
-            $("#idopontvalasztodiv").slideUp();
+            $("#idopontvalasztodiv").slideUp(400, function() {
+                $("#datum").animate({
+                    backgroundColor: '#41b6c6',
+                    color: '#fff'
+                }, 100, function() {
+                    $("#datum").animate({
+                        backgroundColor: '#fff',
+                        color: '#555'
+                    }, 100, function() {
+                        $("#datum").animate({
+                            backgroundColor: '#41b6c6',
+                            color: '#fff'
+                        }, 100, function() {
+                            $("#datum").animate({
+                                backgroundColor: '#fff',
+                                color: '#555'
+                            }, 100, function() {
+                                $("#datum").css("background-image","url(images/check.png)");
+                            });
+                        });
+                    });
+                });
+            });
             $("#warnidopontpress").show();
+
+
+
+
+
             return;
         }
         myAlert(msg);

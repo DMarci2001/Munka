@@ -2,9 +2,9 @@ var rendelestimer=10;
 
 
 $(document).ready(function() {
-
-
-
+    $("#loginbox").css("margin-top",$(window).height()/2 - $("#loginbox").height()/2);
+    //$("#loginbox").css("margin-left",-$("#loginbox").width()/2);
+    //$("#loginbox").css("opacity",1);
 });
 
 

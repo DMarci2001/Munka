@@ -288,36 +288,37 @@ class BookingPage extends CorePage {
 
             $numOfH=sql_num_rows($res);
 
-
             echo "<option value='0'>{$webText["valasszhelyszint"]}</option>";
-            while ($rowt=sql_fetch_array($res)) {
-                if ($_SESSION["helyszindata"]["nocim"]==1) $rowt["cim"]=$rowt["megnev"];
+            while ($rowt = sql_fetch_array($res)) {
+                if ($_SESSION["helyszindata"]["nocim"] == 1) {
+                    $rowt["cim"] = $rowt["megnev"];
+                }
 
                 echo "<option value='{$rowt["id"]}'".($_POST["helyszin"]==$rowt["id"] || $numOfH==1?" selected":"").">{$rowt["cim"]}</option>";
-                if ($numOfH==1) {
-                    $_POST["helyszin"]=$rowt["id"];
-                    $_POST["szurestipus"]=0;
+                if ($numOfH == 1) {
+                    $_POST["helyszin"] = $rowt["id"];
+                    //$_POST["szurestipus"] = 0;
                 }
             }
             echo "</select>";
-
-            //print_r($_SESSION["helyszindata"]);
             echo "</td></tr>";
 
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"],$_POST["szurestipus"])."</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"]);
             echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if ($nofoglalasText == "") {
-            echo "<tr><td valign='top'><div style='margin-top:5px;'>{$webText["idopont"]}: *</div></td><td>";
-            echo "<table cellpadding='0' cellspacing='0'><tr><td>";
+            echo "<tr><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>";
+            echo "<div style='display:table-cell;vertical-align: middle;'>";
             echo "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-            echo "<input placeholder='{$webText["kattintsagombra"]}' readonly class='inputbox' style='width:120px;height:24px;margin-right:5px;padding:4px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
-            echo "</td><td>";
-            echo "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' class='newbutton'>{$webText["idopontvalasztas"]}</a></td><td><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
-            echo "</td></tr></table>";
+            echo "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' 
+            style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' 
+            type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
+            echo "</div><div style='display:table-cell;vertical-align: middle;'>";
+            echo "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div><div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
+            echo "</div>";
             echo "</td></tr>";
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
@@ -353,7 +354,7 @@ class BookingPage extends CorePage {
         else echo "<input type='hidden' name='szulhely' value='' />";
         if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["anyjaneve"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='{$_POST["anyjaneve"]}' placeholder='' /></td></tr>";
         else echo "<input type='hidden' name='anyjaneve' value='' />";
-        echo "<tr><td>{$webText["neme"]}: *</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]}</td></tr>";
+        echo "<tr><td>{$webText["neme"]}: *</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
         if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["irsz"]}:</td><td><input class='inputbox' style='width:60px;' type='text' name='irsz' value='{$_POST["irsz"]}' /></td></tr>";
         else echo "<input type='hidden' name='irsz' value='' />";
         if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["varos"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='varos' value='{$_POST["varos"]}' /></td></tr>";
@@ -365,10 +366,8 @@ class BookingPage extends CorePage {
             echo "<tr><td>{$webText["munkakor"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='munkakor' value='{$_POST["munkakor"]}' /></td></tr>";
         }
 
-
-
         if (!isset($beutalodata)) {
-            echo "<tr><td width=100>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
+            echo "<tr><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
             echo "<textarea class='inputbox' style='height:100px;width:400px;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             //apollo tyres kivétel
             if ($_SESSION["helyszindata"]["id"]==43) {
@@ -393,8 +392,6 @@ class BookingPage extends CorePage {
             //echo "<tr><td colspan='2'><div style='margin-top:10px;'>Kérem, adja meg a következő számot számjegyekkel: ".numtostring($_SESSION["captcha"]).":<br><input class='inputbox' style='width:60px;' type='text' name='captcha' value='{$_POST["captcha"]}'></div></td></tr>";
             echo "<tr><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         }
-
-
 
         if (!isset($_SESSION["user"])) {
             echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";

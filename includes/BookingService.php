@@ -407,36 +407,38 @@ class BookingService {
 
 
     public function szuresTipusValasztoNew($helyszinid, $selected=0, $onlyselected=0) {
-        $tipusok=array();
+        $tipusok = array();
 
-        $rest=sql_query("select * from szurestipusok");
-        while ($rowt=sql_fetch_array($rest)) {
-            if ($_COOKIE["lang"]!="hu" && trim($rowt["megnev_{$_COOKIE["lang"]}"])!="") $rowt["megnev"]=$rowt["megnev_{$_COOKIE["lang"]}"];
-            $tipusnevek[$rowt["id"]]=$rowt["megnev"];
+        $rest = sql_query("select * from szurestipusok");
+        while ($rowt = sql_fetch_array($rest)) {
+            if ($_COOKIE["lang"]!="hu" && trim($rowt["megnev_{$_COOKIE["lang"]}"])!="") {
+                $rowt["megnev"] = $rowt["megnev_{$_COOKIE["lang"]}"];
+            }
+            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
         }
 
-        $addJava="";
-        if ($_SESSION["helyszindata"]["id"]==11) {
-            $addJava="if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
+        $addJava = "";
+        if ($_SESSION["helyszindata"]["id"] == 11) {
+            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
         }
-        $megjBox="if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
+        $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
         $htmlout="";
         $htmlout.="<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();showTipusMegj(this.value);{$megjBox};{$addJava}'>";
         $htmlout.="<option value='0'>".$this->lang->webText["valasszon"]."!</option>";
 
         $res=sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.helyszinid='".addslashes($helyszinid)."' AND b.cegid='{$_SESSION["helyszindata"]["id"]}'");
-        while ($row=sql_fetch_array($res)) {
-            $ta=explode("|",$row["tipusok"]);
+        while ($row = sql_fetch_array($res)) {
+            $ta = explode("|",$row["tipusok"]);
             for ($i=0;$i<count($ta);$i++) {
                 if (trim($ta[$i])!="" && !in_array($ta[$i],$tipusok)) {
-                    $tipusok[]=$ta[$i];
+                    $tipusok[] = $ta[$i];
                 }
             }
         }
 
         if (isset($tipusok)) {
             for ($i=0;$i<count($tipusok);$i++) {
-                @$tipusdisplay[$tipusok[$i]]=$tipusnevek[$tipusok[$i]];
+                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
             }
             if (isset($tipusdisplay)) {
                 asort($tipusdisplay);

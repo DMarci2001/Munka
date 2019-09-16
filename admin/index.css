@@ -1071,3 +1071,25 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	transition-duration:1s;
 	filter: grayscale(1);
 }
+
+.loginbox {
+	opacity:1;
+	display:inline-block;
+	background:#fff;
+	border-top-left-radius:10px;
+	border-top-right-radius:10px;
+	border-bottom-left-radius:5px;
+	border-bottom-right-radius:5px;
+	-moz-box-shadow:-0px 0px 10px rgba(20,20,20,.5);
+	-webkit-box-shadow:  0px -0px 10px rgba(20,20,20,.5);
+	box-shadow:  -0px 0px 10px rgba(20,20,20,.5);
+}
+
+.loginhead {
+	background:#32438b;
+	border-top-left-radius:5px;
+	border-top-right-radius:5px;
+	color:#fff;
+	font-size:22px;
+	padding:20px;
+}

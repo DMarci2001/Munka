@@ -71,6 +71,44 @@ class AdminLoginPage extends AdminCorePage {
         echo $this->showPlainErrors();
         echo $this->showPlainMessage();
 
+        echo "<form method='post'>";
+        echo "<div style='color:#444;text-align:center;'>";
+        echo "<div id='loginbox' class='loginbox'>";
+        echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} orvosi felület</div>";
+
+        echo "<div id='loginpart' style='padding:20px;'>";
+        echo "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' type='text' name='loginusername'></div>";
+        echo "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' type='password' placeholder='jelszó' name='loginpassword' /></div>";
+        echo "<div style='padding-top:10px;'><input style='padding:8px 0px;width:100%;box-sizing: border-box;display: inline-block;' type='submit' name='logintry' value='Belépés' /></div>";
+
+        echo "<div style='margin-top:20px;'>";
+        echo "Ha nem emlékszik a jelszavára,<br/>az alábbi linkre kattintva új jelszót kérhet.<br/><a href='#' onclick='$(\"#loginpart\").hide();$(\"#forgetpart\").show();$(\"#errordiv\").hide();return false;'>Új jelszó kérése</a>";
+        echo "</div>";
+
+        echo "</div>";
+
+        echo "<div id='forgetpart' style='color:#444;display:none;padding:20px;'>";
+        echo "<form method='post'>";
+        echo "<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.<br/>Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
+
+        echo "<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";
+        echo "<div style='padding-top:10px;'><input type='submit' name='passwordsend' value='Új jelszó kérése' /></div>";
+        echo "</form>";
+
+        echo "<div style='margin-top:10px;'>";
+        echo "<a href='#' onclick='$(\"#loginpart\").show();$(\"#forgetpart\").hide();$(\"#errordiv\").slideUp();return false;'>Mégse</a>";
+        echo "</div>";
+        echo "</div>";
+
+        echo "</div>";
+        echo "</div>";
+        echo "</form>";
+        echo "</body>";
+        echo "</html>";
+
+        ob_flush();
+        /*
+
         echo "<div style='padding-top:30px;text-align:center;'>";
         echo "<h1>{$_SESSION["helyszindata"]["megnev"]} orvosi felület</h1>";
 
@@ -88,23 +126,12 @@ class AdminLoginPage extends AdminCorePage {
         echo "</div>";
 
 
-        echo "<div id='forgetbox' style='color:#444;display:none;'>";
-        echo "<form method='post'>";
-        echo "<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.<br/>Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
-
-        echo "<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";
-        echo "<div style='padding-top:10px;'><input type='submit' name='passwordsend' value='Új jelszó kérése' /></div>";
-        echo "</form>";
-
-        echo "<div style='margin-top:20px;'>";
-        echo "<a href='#' onclick='$(\"#loginbox\").slideToggle();$(\"#forgetbox\").slideToggle();$(\"#errordiv\").slideUp();return false;'>Bejelentkezés</a>";
-        echo "</div>";
-        echo "</div>";
 
 
         echo "</div>";
         echo "</body>";
         echo "</html>";
+        */
     }
 }
 
