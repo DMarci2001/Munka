@@ -6,35 +6,6 @@
 
 
 
-if (isset($_POST["give2facode"])) {
-	if (!isset($user["id"])) {
-		$_SESSION["error"]="A belépési adatok időközben elévültek, próbáljon belépni újra!";
-		header("location:index.php");
-	}
-	
-	$code=$_REQUEST["login2facode"];
-	
-	if ($code==1289 || sql_fetch_array(sql_query("select * from orvosok where id=? and logincode=?",array($user["id"],$code)))) {
-		$_SESSION["2facomplete"]=$code;
-		header("location:index.php");
-		die();
-	} else {
-		if (sql_fetch_array(sql_query("select * from users where id=? and logincode=?",array($user["id"],$code)))) {
-			$_SESSION["2facomplete"]=$code;
-			header("location:index.php");
-			die();
-		} else {				
-			$_SESSION["error"]="A megadott kód helytelen!";
-			header("location:index.php");
-			die();
-		}
-	}
-	
-	
-}
-
-
-
 
 
 

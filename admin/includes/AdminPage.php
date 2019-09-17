@@ -53,11 +53,15 @@ class AdminPage {
             $page = new AdminLoginPage();
         }
 
-        if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1 && $this->adminUser->user["tel"]!="") {
+        if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1) {
             if (!isset($_SESSION["2facomplete"])) {
                 $this->skipFrame = true;
-                $page = new AdminTwoFactorLoginPage();
+                $page = new AdminLoginPage();
             }
+        }
+        if ($this->adminUser->user["status"] == 0) {
+            $this->skipFrame = true;
+            $page = new AdminLoginPage();
         }
         return $page;
     }
