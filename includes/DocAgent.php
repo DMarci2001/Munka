@@ -102,5 +102,15 @@ class DocAgent {
         die();
     }
 
+    public static function getDocURL($docData) {
+        $domain = "{$_SESSION["helyszindata"]["domain"]}.".Booking_Constants::SITE_DOMAIN;
+        if (isset($_SERVER["HTTP_HOST"])) {
+            $domain = $_SERVER["HTTP_HOST"];
+        }
+
+        $docURL = "//{$domain}/?downloaddoc&f={$docData["id"]}&k={$docData["kod"]}";
+        return $docURL;
+    }
+
 }
 

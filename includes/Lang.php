@@ -5,6 +5,10 @@ class Lang {
 
     public function __construct()
     {
+        if (!isset($_COOKIE["lang"])) {
+            self::setLang("hu");
+        }
+
         $this->webText = $this->getWebTexts($_COOKIE["lang"]);
     }
 
@@ -38,6 +42,14 @@ class Lang {
 
         $langLink = "<a class='toplink' style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
         return $langLink;
+    }
+
+    public static function setLang($lang) {
+        $exp = time() + 60 * 60 * 24 * 365;
+        if (in_array($lang, ["hu","en","de"])) {
+            setcookie("lang", $lang, $exp, "/");
+            $_COOKIE["lang"] = $lang;
+        }
     }
 
 }

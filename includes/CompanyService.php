@@ -18,9 +18,10 @@ class CompanyService {
             return;
         }
 
-        if ($d == "keltexmed") {
+        if ($d == "keltexmed" || $d == "bejelentkezesuj") {
             $d = "bejelentkezes";
         }
+
         if ($d!="admin") {
             if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array($d,$d)))) {
                 unset($_SESSION["helyszindata"]);

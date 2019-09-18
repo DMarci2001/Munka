@@ -107,7 +107,7 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<table style='font-size:12px;'>";
 
             echo "<tr><td width='150'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev' value='{$_POST["megnev"]}'></td></tr>";
-            echo "<tr><td>Domain:</td><td>http:// <input class='inputbox' style='width:100px;' type='text' name='domain' value='{$_POST["domain"]}'> .keltexmed.hu</td></tr>";
+            echo "<tr><td>Domain:</td><td>".Booking_Constants::SITE_PROTOCOL.":// <input class='inputbox' style='width:100px;' type='text' name='domain' value='{$_POST["domain"]}'> .keltexmed.hu</td></tr>";
             echo "<tr><td>E-mail:</td><td><input class='inputbox' style='width:300px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td>SMS a pacinenseknek:</td><td><input class='inputbox' style='width:20px;' type='text' name='smshour' value='{$_POST["smshour"]}'> órával előtte</td></tr>";
             echo "<tr><td>Figyelmeztető szöveg:</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg' value='{$_POST["beutaloszoveg"]}'></td></tr>";
@@ -126,9 +126,9 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='alksend'".($_POST["alksend"]==1?" checked":"")."> Alkalmassági lista küldése</td></tr>";
 
             echo "<tr><td>Rendszeresség: </td><td><select name='alksendint'>";
-            echo "	<option ".($_POST["alksendint"]=="napi"?" selected":"")." value='napi'>Napi</option>";
-            echo "	<option ".($_POST["alksendint"]=="heti"?" selected":"")." value='heti'>Heti</option>";
-            echo "	<option ".($_POST["alksendint"]=="havi"?" selected":"")." value='havi'>Havi</option>";
+            echo "<option ".($_POST["alksendint"]=="napi"?" selected":"")." value='napi'>Napi</option>";
+            echo "<option ".($_POST["alksendint"]=="heti"?" selected":"")." value='heti'>Heti</option>";
+            echo "<option ".($_POST["alksendint"]=="havi"?" selected":"")." value='havi'>Havi</option>";
             echo "</select></td></tr>";
             echo "<tr><td>Fogadó email(ek): </td><td ><textarea class='inputbox' name='sendmail' style='width:600px;height:80px;'>".(isset($_POST["sendmail"])?$_POST["sendmail"]:"")."</textarea>";
             echo "</td></tr>";
@@ -287,25 +287,34 @@ class AdminCompaniesPage extends AdminCorePage {
                 echo "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first=1;
             }
-            if (trim($row["megnev"])=="") $row["megnev"]="nincs neve";
+            if (trim($row["megnev"])=="") {
+                $row["megnev"]="nincs neve";
+            }
+
+            $options = "";
+            if ($row["onlyreg"]==1) $options.= "<div>Csak regisztráltaknak</div>";
+            if ($row["onlybeutalo"]==1) $options.= "<div>Csak beutalóval lehet foglalni</div>";
+            if ($row["fieldoptions"]!="") $options.= "<div>".$this->displayFieldOptions($row["fieldoptions"])."</div>";
+
             echo "<tr>";
-            echo "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a>";
-            if ($row["onlyreg"]==1) echo "<br/>Csak regisztráltaknak";
-            if ($row["onlybeutalo"]==1) echo "<br/>Csak beutalóval lehet foglalni";
-            if ($row["tajnotreq"]==1) echo "<br/>Csak név, email, telefonszám kötelező";
-            echo "</div></td>";
-            //echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
+            echo "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a></div></td>";
 
             $url = Booking_Constants::SITE_PROTOCOL."://{$row["domain"]}.".Booking_Constants::SITE_DOMAIN;
 
             echo "<td nowrap valign='top'><div class='{$tc}'>".($row["domain"]==""?"":"{$url} (<a target='_blank' href='{$url}'>open</a>)")."</div></td>";
-            //echo "<td nowrap valign='top'><div class='{$tc}'>{$row["cimek"]}</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;padding-right: 10px;'>{$options}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
             echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         echo "</table>";
+    }
+
+    private function displayFieldOptions($options) {
+        $options = str_replace("'","", $options);
+        $options = str_replace(",",", ", $options);
+        return $options;
     }
 }
 

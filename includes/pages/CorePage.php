@@ -61,7 +61,7 @@ class CorePage {
     private function setLang() {
         $exp = time() + 60 * 60 * 24 * 365;
         if (!isset($_COOKIE["lang"])) {
-            setcookie("lang","hu",$exp,"/");
+            Lang::setLang("hu");
             $_COOKIE["lang"] = "hu";
         }
 
@@ -70,7 +70,7 @@ class CorePage {
         }
 
         if (isset($_GET["lang"]) && in_array($_GET["lang"],array("hu","de","en"))) {
-            setcookie("lang",$_GET["lang"],$exp,"/");
+            Lang::setLang($_GET["lang"]);
             $params = $_SERVER["QUERY_STRING"];
             $params = str_replace("lang=","slang=",$params);
             $params = str_replace("setlang=","slang=",$params);

@@ -460,7 +460,7 @@ class AdminPatientsPage extends AdminCorePage {
                     echo "<td>".substr($rowf["datum"],0,16)."&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td>BNO: {$rowf["bno"]}&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td>{$rowf["megnev"]}&nbsp;&nbsp;&nbsp;</td>";
-                    echo "<td><a href='http://bejelentkezes.keltexmed.hu/downloaddoc.php?f={$rowf["id"]}&k={$rowf["kod"]}'>{$rowf["filename"]}</a>&nbsp;&nbsp;&nbsp;</td>";
+                    echo "<td><a href='".DocAgent::getDocURL($rowf)."'>{$rowf["filename"]}</a>&nbsp;&nbsp;&nbsp;</td>";
                     echo "<td nowrap valign='top'><div>[<a onclick='return confirm(\"Biztosan törli ezt a dokumentumot?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deletedoc={$rowf["id"]}&kod={$rowf["kod"]}'>törlés</a>]</div></td>";
                     echo "</tr>";
                 }
@@ -506,7 +506,6 @@ class AdminPatientsPage extends AdminCorePage {
                     }
                 }
             }
-            asort($beutalohelyek);
 
             $resf=sql_query("SELECT b.*,c.domain,f.rkod,r.id as foglalasid,r.pass as foglalaspass,r.datum as idopont FROM beutalok b
 	        left join felhasznalok f on f.id=b.userid
@@ -544,31 +543,36 @@ class AdminPatientsPage extends AdminCorePage {
                 }
                 echo "</table>";
             }	else {
-                echo "<div style='color:#aaa;'>Még nincs beutalója</div>";
+                echo "<div style='color:#aaa;padding:2px;'>Még nincs beutalója</div>";
             }
 
 
+            if (isset($beutalohelyek)) {
+                asort($beutalohelyek);
 
-            echo "<div id='beubutton' style='margin-top:10px;'><input onclick=\"$('#beubutton').slideToggle();$('#beuform').slideToggle();\" type='button' value='+ Beutaló kiadása'></div>";
+                echo "<div id='beubutton' style='margin-top:10px;'><input onclick=\"$('#beubutton').slideToggle();$('#beuform').slideToggle();\" type='button' value='+ Beutaló kiadása'></div>";
 
-            echo "<div id='beuform' style='margin-top:10px;display:none;border:1px solid #aaa;background:#eee;padding:10px;'>";
-            echo "Hova kéri a beutalót:<br/><select style='width:400px;' name='beutalotarget' id='beutalotarget'>";
+                echo "<div id='beuform' style='margin-top:10px;display:none;border:1px solid #aaa;background:#eee;padding:10px;'>";
+                echo "Hova kéri a beutalót:<br/><select style='width:400px;' name='beutalotarget' id='beutalotarget'>";
 
-            echo "<option value='0'>Válasszon!</option>";
-            foreach ($beutalohelyek as $key => $value) {
-                echo "<option value='{$key}'>{$value}</option>";
+                echo "<option value='0'>Válasszon!</option>";
+                foreach ($beutalohelyek as $key => $value) {
+                    echo "<option value='{$key}'>{$value}</option>";
+                }
+
+                echo "</select>";
+                echo "<div style='margin-top:5px;'>";
+                echo "<div style='margin-top:5px;'>Naplószám:</div>";
+                echo "<div><input type='text' name='beutalonaploszam' id='beutalonaploszam' style='width:400px;' /></div>";
+                echo "<div style='margin-top:5px;'>Megjegyzés (üzenet az orvosnak):</div>";
+                echo "<div><textarea name='beutalomegj' id='beutalomegj' style='width:400px;height:100px;'></textarea></div>";
+                echo "</div>";
+                echo "<input type='hidden' name='cegid' value='{$row["cegid"]}'/>";
+                echo "<div style='margin-top:10px;'><input onclick=\"return validateBeutalo();\" type='submit' name='addbeutalo' value='Beutaló hozzáadása'> <input onclick=\"$('#beubutton').slideToggle();$('#beuform').slideToggle();\" type='button' value='Mégse'></div>";
+                echo "</div>";
+            } else {
+                echo "<div style='color:#aaa;padding:2px;'>Nincs beosztás ehhez a céghez, beutaló kiadása nem lehetséges!</div>";
             }
-
-            echo "</select>";
-            echo "<div style='margin-top:5px;'>";
-            echo "<div style='margin-top:5px;'>Naplószám:</div>";
-            echo "<div><input type='text' name='beutalonaploszam' id='beutalonaploszam' style='width:400px;' /></div>";
-            echo "<div style='margin-top:5px;'>Megjegyzés (üzenet az orvosnak):</div>";
-            echo "<div><textarea name='beutalomegj' id='beutalomegj' style='width:400px;height:100px;'></textarea></div>";
-            echo "</div>";
-            echo "<input type='hidden' name='cegid' value='{$row["cegid"]}'/>";
-            echo "<div style='margin-top:10px;'><input onclick=\"return validateBeutalo();\" type='submit' name='addbeutalo' value='Beutaló hozzáadása'> <input onclick=\"$('#beubutton').slideToggle();$('#beuform').slideToggle();\" type='button' value='Mégse'></div>";
-            echo "</div>";
 
             echo "</form>";
 

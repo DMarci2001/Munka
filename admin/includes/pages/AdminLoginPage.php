@@ -166,7 +166,7 @@ class AdminLoginPage extends AdminCorePage {
         $user = $this->adminUser->user;
         if (sql_fetch_array(sql_query("select * from users where (logincodetime<date_sub(now(),interval 1 hour) or logincodephone<>?) and id=?", array($user["tel"], $user["id"])))) {
             $code = rand(10000,99999);
-            //$this->utils->sendSMS($user["tel"],"kód a bejelentkezéshez: {$code}");
+            $this->utils->sendSMS($user["tel"],"kód a bejelentkezéshez: {$code}");
             sql_query("update users set logincode=?,logincodetime=now(),logincodephone=? where id=?", array($code, $user["tel"], $user["id"]));
         }
     }

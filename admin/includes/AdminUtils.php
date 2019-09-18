@@ -442,7 +442,7 @@ class AdminUtils {
             $htmlout.="<div style='display:inline-block;'>";
             $htmlout.="<div style='background:#888;color:#fff;padding:5px;'>Paciens által feltöltött file(ok)</div>";
             while ($rowf=sql_fetch_array($resf)) {
-                $htmlout.="<div style='padding:1px 4px;'><a href='//bejelentkezes.keltexmed.hu/downloaddoc.php?f={$rowf["id"]}&k={$rowf["kod"]}'>{$rowf["filename"]}</a></div>";
+                $htmlout.="<div style='padding:1px 4px;'><a href='".DocAgent::getDocURL($rowf)."'>{$rowf["filename"]}</a></div>";
             }
             $htmlout.="</div>";
         }
