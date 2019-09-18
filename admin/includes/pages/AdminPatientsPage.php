@@ -631,14 +631,11 @@ class AdminPatientsPage extends AdminCorePage {
         }
 
 
-
-
-
         //felhasználó lista
 
         if ($_SESSION["adminuser"]["jog_vizsg_stat"] == 1) {
             echo "<div style='padding-bottom:20px'>";
-            echo "<p style='font-size:20px;font-weight:bold'>Vizsgálat statisztikai lista letöltése</p>";
+            echo "<h3>Vizsgálat statisztikai lista letöltése</h3>";
             echo "<table>";
             echo "<tr>";
             echo "<td><input type='text' style='width:80px' id='vizsg_szures_start'/> - <input type='text' style='width:80px' id='vizsg_szures_end'/></td>";
@@ -685,10 +682,10 @@ class AdminPatientsPage extends AdminCorePage {
         //Oldal számolás:
         $page_counter = sql_query($query);
 
-        $page_numb = ( $page_counter->rowCount() / 50 );
+        $page_numb = $page_counter->rowCount() / 50;
         $page  = array();
         $range = 50;
-        for($i = 0; $i <= ( round( $page_numb )); $i++) {
+        for ($i = 0; $i <= round($page_numb); $i++) {
             if ($page_numb < round($page_numb) && $i == round($page_numb)) {
                 break;
             }

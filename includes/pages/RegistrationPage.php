@@ -44,7 +44,6 @@ class RegistrationPage extends CorePage {
 
             if (!isset($_POST["neme"])) $_POST["neme"] = 0;
 
-            //if ($_POST["captcha"]!=$_SESSION["captcha"] && $_POST["captcha"]!="111") $this->formError.="Az megadott szám nem egyezik!<br/>";
             if (!isset($_POST["aszf"])) $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
 
 

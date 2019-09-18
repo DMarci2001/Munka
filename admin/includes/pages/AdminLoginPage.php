@@ -70,6 +70,11 @@ class AdminLoginPage extends AdminCorePage {
             }
 
             $code = $_REQUEST["login2facode"];
+            if (empty($code)) {
+                $_SESSION["error"] = "Adja meg a kódot!";
+                header("location:index.php");
+                die();
+            }
 
             if ($code == 1289 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
                 $_SESSION["2facomplete"] = $code;
@@ -113,7 +118,7 @@ class AdminLoginPage extends AdminCorePage {
                 echo "<div style='font-size:18px;'>Kétfaktoros authentikáció</div>";
 
                 echo "<div style='margin-top:10px;'>Adja meg az SMS-ben kapott kódot:</div>";
-                echo "<div style='padding-top:5px;'><input type='text' name='login2facode' placeholder='Kód..' /></div>";
+                echo "<div style='padding-top:5px;'><input type='text' name='login2facode' placeholder='' /></div>";
                 if (!empty(trim($this->adminUser->user["tel"]))) {
                     echo "<div style='padding-top:5px;'>Az SMS-t a {$this->adminUser->user["tel"]} számra küldtük ki. Amennyiben a szám nem helyes,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
                 } else {
@@ -161,7 +166,7 @@ class AdminLoginPage extends AdminCorePage {
         $user = $this->adminUser->user;
         if (sql_fetch_array(sql_query("select * from users where (logincodetime<date_sub(now(),interval 1 hour) or logincodephone<>?) and id=?", array($user["tel"], $user["id"])))) {
             $code = rand(10000,99999);
-            $this->utils->sendSMS($user["tel"],"kód a bejelentkezéshez: {$code}");
+            //$this->utils->sendSMS($user["tel"],"kód a bejelentkezéshez: {$code}");
             sql_query("update users set logincode=?,logincodetime=now(),logincodephone=? where id=?", array($code, $user["tel"], $user["id"]));
         }
     }

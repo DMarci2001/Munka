@@ -16,6 +16,34 @@ class CronService {
         $this->utils = new Utils();
     }
 
+    public function run() {
+        if ($this->interval == "perc") {
+            //percenként futó cronok
+            $this->_deleteNotActivatedReservations();
+            $this->_smsAlertBeforeReservation();
+            $this->_updateNaploszam();
+            //$this->checkGDPRFiles(); //kell ez?
+        }
+
+        if ($this->interval == "1ora") {
+            //óránként futó cronok
+            $this->_sendReservationReportForDoctors();
+            $this->_sendReviewMails();
+            $this->_sendAlkExcel();
+            $this->_sendAlkExpire();
+        }
+
+        if ($this->interval == "teszt") {
+            $this->_tesztStuff();
+        }
+
+        if ($this->interval == "abi_upload") {
+            $this->_abiUpload();
+        }
+
+    }
+
+
     private function _tesztStuff() {
         $this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
         echo "teszt\n";
@@ -227,30 +255,5 @@ class CronService {
         }
     }
 
-    public function run() {
-        if ($this->interval == "perc") {
-            //percenként futó cronok
-            $this->_deleteNotActivatedReservations();
-            $this->_smsAlertBeforeReservation();
-            $this->_updateNaploszam();
-            //$this->checkGDPRFiles(); //kell ez?
-        }
 
-        if ($this->interval == "1ora") {
-            //óránként futó cronok
-            $this->_sendReservationReportForDoctors();
-            $this->_sendReviewMails();
-            $this->_sendAlkExcel();
-            $this->_sendAlkExpire();
-        }
-
-        if ($this->interval == "teszt") {
-            $this->_tesztStuff();
-        }
-
-        if ($this->interval == "abi_upload") {
-            $this->_abiUpload();
-        }
-
-    }
 }

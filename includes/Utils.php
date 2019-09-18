@@ -468,7 +468,7 @@ class Utils {
         return "";
     }
 
-    public function htmlheader($pageTitle = "HMM online bejelentkezés") {
+    public function htmlheader($pageTitle = "Online bejelentkezés") {
         $subdomain=$_SESSION["helyszindata"]["domain"];
 
         $htmlout='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
@@ -761,5 +761,99 @@ class Utils {
         $mail->Send();
     }
 
+
+    public function dataField($fieldName) {
+        $lang = new Lang();
+        $webText = $lang->webText;
+
+        $translateKey = $fieldName;
+        $field        = $fieldName;
+        $html         = "";
+        $extraHTML    = "";
+        $extraRow     = "";
+        $width        = 250;
+
+        switch ($fieldName) {
+            case "email":
+                $extraRow = "<tr><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
+                break;
+            case "nev":
+                break;
+            case "telefon":
+                $translateKey = "mobil";
+                //$extraRow = "<tr><td></td><td>{$webText["mobiltip"]}</td></tr>";
+                break;
+            case "szuldatum":
+                $extraHTML = "<tr><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
+                break;
+            case "szulhely":
+                if ($_SESSION['helyszindata']['id'] == 46) {
+                    $hidden = true;
+                }
+                $translateKey = "szuletesihely";
+                break;
+            case "neme":
+                $extraHTML = "<tr><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
+                break;
+            case "anyjaneve":
+                if ($_SESSION['helyszindata']['id'] == 46) {
+                    $hidden = true;
+                }
+                break;
+            case "irsz":
+                $width = 60;
+                if ($_SESSION['helyszindata']['id'] == 46) {
+                    $hidden = true;
+                }
+                break;
+            case "varos":
+                //temp 1
+                if ($_SESSION['helyszindata']['id'] == 46) {
+                    $hidden = true;
+                }
+                break;
+            case "utca":
+                //temp 2
+                if ($_SESSION['helyszindata']['id'] == 46) {
+                    $hidden = true;
+                }
+                break;
+            case "munkakor":
+                if (!in_array($_SESSION["helyszindata"]["domain"],array("bejelentkezes","gyor-bejelentkezes"))) {
+                    $hidden = true;
+                }
+        }
+
+        $required = $this->getFieldRequired($field);
+        $hidden = $this->getFieldHidden($field);
+
+        if (!$hidden) {
+            if (empty($extraHTML)) {
+                $html.= "<tr><td>{$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
+            } else {
+                $html.= $extraHTML;
+            }
+        }
+        $html.= $extraRow;
+        $html = str_replace("#requiredmark#",$required?"*":"", $html);
+
+        return $html;
+    }
+
+    public function getFieldRequired($field) {
+        $required = true;
+        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "notreq_{$field}") || $this->getFieldHidden($field)) {
+            $required = false;
+        }
+        return $required;
+    }
+
+    public function getFieldHidden($field) {
+        $hidden = false;
+        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "hidden_{$field}")) {
+            $hidden = true;
+        }
+        return $hidden;
+    }
 
 }

@@ -134,7 +134,7 @@ class AdminPage {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin:-20px 0px 20px 0px;padding-right:5px;'><img width='80' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></div>";
+        $html.= "<div align='center' style='margin:-20px 0px 20px 0px;padding-right:5px;'><a href='index.php'><img width='80' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
         if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }

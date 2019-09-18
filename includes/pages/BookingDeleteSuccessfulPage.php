@@ -15,11 +15,8 @@ class BookingDeleteSuccessfulPage extends CorePage {
         echo $this->displayFejlec();
 
         echo "{$webText["torlessikerult"]}<br/>
-        <br/>
-        
+        <br/>    
         <a href='/'>{$webText["visszafooldal"]}</a>";
-
-        if (isset($_SESSION["captcha"])) unset($_SESSION["captcha"]);
     }
 }
 

@@ -177,10 +177,10 @@ class AdminUtils {
         $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->IsHTML(true);
 
-        $t=iconv("UTF-8","ISO-8859-2","HMM admin felület - új jelszó");
+        $t=iconv("UTF-8","ISO-8859-2",Booking_Constants::SITE_NAME." - új jelszó");
 
         $mbody="Kedves {$rowu["nev"]}!<br/><br/>";
-        $mbody.="A HMM bejelentkezési felületén új jelszó kérését kezdeményezte.<br/><br/>";
+        $mbody.="A ".Booking_Constants::SITE_NAME." felületén új jelszó kérését kezdeményezte.<br/><br/>";
         $mbody.="Felhasználóneve: <b>{$rowu["username"]}</b><br/>";
         $mbody.="Az új jelszava: <b>{$p}</b><br>";
         $mbody.="<br/>";

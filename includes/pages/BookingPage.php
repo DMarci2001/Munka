@@ -65,8 +65,15 @@ class BookingPage extends CorePage {
             if (!isset($_POST["irsz"]))      $_POST["irsz"] = "";
             if (!isset($_POST["varos"]))     $_POST["varos"] = "";
             if (!isset($_POST["utca"]))      $_POST["utca"] = "";
+            if (!isset($_POST["munkakor"]))  $_POST["munkakor"] = "";
+            if (!isset($_POST["szuldatum"])) $_POST["szuldatum"] = "";
+            if (!isset($_POST["nev"]))       $_POST["nev"] = "";
+            if (!isset($_POST["telefon"]))   $_POST["telefon"] = "";
+            if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
 
-            if (isset($_POST["szuldatumev"])) $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
+            if (isset($_POST["szuldatumev"])) {
+                $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
+            }
 
             $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
             $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
@@ -77,53 +84,96 @@ class BookingPage extends CorePage {
             if ($_POST["datum"] == "") $this->formError .= "{$webText["idopontkotelezo"]}<br/>";
             if ($_POST["szurestipus"] == "0") $this->formError .= "{$webText["szurestipuskotelezo"]}<br/>";
 
-            if ($_POST["email"] == "") $this->formError .= "{$webText["emailkotelezo"]}<br/>";
-            if ($_POST["nev"] == "") $this->formError .= "{$webText["nevkotelezo"]}<br/>";
-            if ($_POST["telefon"] == "") $this->formError .= "{$webText["telkotelezo"]}<br/>";
-            if ($_POST["szuldatum"] == "") $this->formError .= "{$webText["szulkotelezo"]}<br/>";
-            if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->formError .= "{$webText["szulformat"]}<br/>";
 
-            //if ($_POST["irsz"]=="") $this->formError.="Az irányítószám megadása kötelező!<br/>";
-            //if ($_POST["varos"]=="") $this->formError.="A város megadása kötelező!<br/>";
-            //if ($_POST["utca"]=="") $this->formError.="Az utca megadása kötelező!<br/>";
-            if (isset($_POST["munkakor"])) {
-                if ($_POST["munkakor"] == "") $this->formError .= "{$webText["munkakorkotelezo"]}<br/>";
-            } else {
-                $_POST["munkakor"] = "";
+            if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
+                if (empty($_POST["email"])) {
+                    $this->formError .= "{$webText["emailkotelezo"]}<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("nev") && $this->utils->getFieldRequired("nev")) {
+                if (empty($_POST["nev"])) {
+                    $this->formError .= "{$webText["nevkotelezo"]}<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
+                if (empty($_POST["telefon"])) {
+                    $this->formError .= "{$webText["telkotelezo"]}<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
+                if (empty($_POST["szulhely"])) {
+                    $this->formError .= "{$webText["szuletesidatum"]}!<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("szuldatum") && $this->utils->getFieldRequired("szuldatum")) {
+                if (empty($_POST["szuldatum"])) {
+                    $this->formError .= "{$webText["szulkotelezo"]}<br/>";
+                }
+                if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) {
+                    $this->formError .= "{$webText["szulformat"]}<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("irsz") && $this->utils->getFieldRequired("irsz")) {
+                if (empty($_POST["irsz"])) {
+                    $this->formError.="Az irányítószám megadása kötelező!<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("varos") && $this->utils->getFieldRequired("varos")) {
+                if (empty($_POST["varos"])) {
+                    $this->formError.="A város megadása kötelező!<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("utca") && $this->utils->getFieldRequired("utca")) {
+                if (empty($_POST["utca"])) {
+                    $this->formError.="Az utca megadása kötelező!<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("munkakor") && $this->utils->getFieldRequired("munkakor")) {
+                if (empty($_POST["munkakor"])) {
+                    $this->formError .= "{$webText["munkakorkotelezo"]}<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("anyjaneve") && $this->utils->getFieldRequired("anyjaneve")) {
+                if (empty($_POST["anyjaneve"])) {
+                    $this->formError .= "{$webText["anyjaneve"]}!<br/>";
+                }
+            }
+            if (!$this->utils->getFieldHidden("neme") && $this->utils->getFieldRequired("neme")) {
+                if (empty($_POST["neme"])) {
+                    $this->formError .= "{$webText["nemekotelezo"]}<br/>";
+                }
+            }
+            if (!isset($_POST["aszf"])) {
+                $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
             }
 
-
-            if (!isset($_POST["neme"])) $this->formError .= "{$webText["nemekotelezo"]}<br/>";
-            if (!isset($_POST["aszf"])) $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
-
-            if (isset($_POST["telephely"]) && trim($_POST["telephely"]) == "") $this->formError .= "{$webText["telephelykotelezo"]}<br/>";
-
-
-            if (isset($_POST["captcha"]) && $_POST["captcha"] != $_SESSION["captcha"] && $_POST["captcha"] != "111") $this->formError .= "Az megadott szám nem egyezik!<br/>";
+            if (isset($_POST["telephely"]) && empty(trim($_POST["telephely"]))) {
+                $this->formError .= "{$webText["telephelykotelezo"]}<br/>";
+            }
 
             //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
             //	$this->formError.="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
-            if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) $this->formError .= "{$webText["idopontlefoglaltak"]}<br>";
+            if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
+                $this->formError .= "{$webText["idopontlefoglaltak"]}<br>";
+            }
             if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
             if (!isset($_SESSION["user"])) {
-                if (isset($_POST["version2"])) {
-                    if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
-                    if (isset($captcha)) {
-                        if (!$captcha) {
-                            $this->formError .= "{$webText["captchaerror1"]}<br/>";
-                        } else {
-                            $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                            if ($response["success"] == false) {
-                                $this->formError .= "{$webText["captchaerror2"]}<br/>";
-                            }
-                        }
+                if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
+                if (isset($captcha)) {
+                    if (!$captcha) {
+                        $this->formError .= "{$webText["captchaerror1"]}<br/>";
                     } else {
-                        $this->formError .= "{$webText["captchaerror3"]}<br/>";
+                        $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
+                        if ($response["success"] == false) {
+                            $this->formError .= "{$webText["captchaerror2"]}<br/>";
+                        }
                     }
+                } else {
+                    $this->formError .= "{$webText["captchaerror3"]}<br/>";
                 }
             }
 
@@ -177,7 +227,7 @@ class BookingPage extends CorePage {
 
                 if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
                     //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
-                    header("location:index.php?page=megerosites&id={$fid}&rk={$rn}");
+                    header("location:index.php?page=bookingvalidate&id={$fid}&rk={$rn}");
                 } else {
                     //visszaigazolást kérünk
                     $this->bookingService->sendVisszaIgazolas($fid);
@@ -256,24 +306,32 @@ class BookingPage extends CorePage {
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
-        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_COOKIE["lang"]!="hu" && trim($_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"])!="") $_SESSION["helyszindata"]["beutaloszoveg"]=$_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];
+        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_COOKIE["lang"]!="hu" && trim($_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"])!="") {
+            $_SESSION["helyszindata"]["beutaloszoveg"] = $_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];
+        }
 
 
 
         if (isset($beutalodata)) {
             //beutalóval fix választás
 
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
+            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
+                echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
+            }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>";
             echo "<select name='helyszin' id='helyszin'>";
-            $res=sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h where h.id='{$beutalodata["helyszinid"]}'");
-            if ($rowt=sql_fetch_array($res)) echo "<option value='{$rowt["id"]}' selected>{$rowt["cim"]}</option>";
+            $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h where h.id='{$beutalodata["helyszinid"]}'");
+            if ($rowt = sql_fetch_array($res)) {
+                echo "<option value='{$rowt["id"]}' selected>{$rowt["cim"]}</option>";
+            }
             echo "</select>";
             echo "</td></tr>";
 
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($beutalodata["helyszinid"],$beutalodata["szurestipusid"],1)."</div></td></tr>";
-            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$beutalodata["szurestipusid"],$beutalodata["helyszinid"]);
-            if ($tipusMegj!="") echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
+            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $beutalodata["szurestipusid"], $beutalodata["helyszinid"]);
+            if (!empty($tipusMegj)) {
+                echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
+            }
         } else {
             //beutaló nélkül szabad választás
 
@@ -343,28 +401,18 @@ class BookingPage extends CorePage {
             }
             echo "</select></td></tr>";
         }
-        echo "<tr><td>{$webText["email"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='email' value='{$_POST["email"]}' /></td></tr>";
-        echo "<tr><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
-        echo "<tr><td>{$webText["nev"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='nev' value='{$_POST["nev"]}' /></td></tr>";
-        echo "<tr><td>{$webText["mobil"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='Formátum pl: 06301234567' /></td></tr>";
-        //echo "<tr><td></td><td>{$webText["mobiltip"]}</td></tr>";
-        echo "<tr><td>{$webText["szuletesidatum"]}: *</td><td>".$this->utils->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
 
-        if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["szuletesihely"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='szulhely' value='{$_POST["szulhely"]}' placeholder='' /></td></tr>";
-        else echo "<input type='hidden' name='szulhely' value='' />";
-        if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["anyjaneve"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='{$_POST["anyjaneve"]}' placeholder='' /></td></tr>";
-        else echo "<input type='hidden' name='anyjaneve' value='' />";
-        echo "<tr><td>{$webText["neme"]}: *</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
-        if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["irsz"]}:</td><td><input class='inputbox' style='width:60px;' type='text' name='irsz' value='{$_POST["irsz"]}' /></td></tr>";
-        else echo "<input type='hidden' name='irsz' value='' />";
-        if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["varos"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='varos' value='{$_POST["varos"]}' /></td></tr>";
-        else echo "<input type='hidden' name='varos' value='' />";
-        if($_SESSION['helyszindata']['id'] != 46) echo "<tr><td>{$webText["utca"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='utca' value='{$_POST["utca"]}' /></td></tr>";
-        else echo "<input type='hidden' name='utca' value='' />";
-
-        if (!in_array($_SESSION["helyszindata"]["domain"],array("bejelentkezes","gyor-bejelentkezes"))) {
-            echo "<tr><td>{$webText["munkakor"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='munkakor' value='{$_POST["munkakor"]}' /></td></tr>";
-        }
+        echo $this->utils->dataField("email");
+        echo $this->utils->dataField("nev");
+        echo $this->utils->dataField("telefon");
+        echo $this->utils->dataField("szuldatum");
+        echo $this->utils->dataField("szulhely");
+        echo $this->utils->dataField("anyjaneve");
+        echo $this->utils->dataField("neme");
+        echo $this->utils->dataField("irsz");
+        echo $this->utils->dataField("varos");
+        echo $this->utils->dataField("utca");
+        echo $this->utils->dataField("munkakor");
 
         if (!isset($beutalodata)) {
             echo "<tr><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
@@ -387,9 +435,7 @@ class BookingPage extends CorePage {
             echo "</td></tr>";
         }
 
-        if (!isset($_SESSION["captcha"])) $_SESSION["captcha"]=rand(110,988);
         if (!isset($_SESSION["user"])) {
-            //echo "<tr><td colspan='2'><div style='margin-top:10px;'>Kérem, adja meg a következő számot számjegyekkel: ".numtostring($_SESSION["captcha"]).":<br><input class='inputbox' style='width:60px;' type='text' name='captcha' value='{$_POST["captcha"]}'></div></td></tr>";
             echo "<tr><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         }
 

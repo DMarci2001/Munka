@@ -16,7 +16,5 @@ class ValidationSuccessfulPage extends CorePage {
         echo "A regisztráció érvényesítése sikerült.</b><br/>
         <br/>
         <a href='/'>Tovább</a>";
-
-        if (isset($_SESSION["captcha"])) unset($_SESSION["captcha"]);
     }
 }
