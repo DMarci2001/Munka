@@ -35,4 +35,23 @@ class AdminUser {
         }
     }
 
+    public function authenticated() {
+        $result = true;
+
+        if (empty($user)) {
+            $result = false;
+        }
+
+        if (!empty($user) && $user["status"] == 0) {
+            $result = false;
+        }
+
+        if (!empty($user) && $user["auth2fac"] == 1 && !isset($_SESSION["2facomplete"])) {
+            $result = false;
+        }
+
+        return $result;
+
+    }
+
 }

@@ -302,7 +302,7 @@ window.setInterval( function() {
     $.ajax({
         cache: false,
         type: "GET",
-        url: "refreshsession.php",
+        url: "/includes/refreshsession.php",
         success: function(data) {
         }
     });
@@ -1148,39 +1148,12 @@ function selectFolder(e) {
 	//iframe.src = iframe.src;
 }*/
 
-function syncData(fogl){
-    var validScore = 0;
-    if($('input[name="taj"]').val() != ''){ validScore++; $('input[name="taj"]').css('border','1px solid #ccc') }
-    else $('input[name="taj"]').css('border','1px solid red');
+function syncFoglalasDataToUser(fogl){
+    if (error == 0) {
 
-    if($('input[name="torzsszam"]').val() != ''){ validScore++; $('input[name="torzsszam"]').css('border','1px solid #ccc') }
-    else $('input[name="torzsszam"]').css('border','1px solid red');
+        var data = $("#iform").serialize()+"&syncFoglalasDataToUser=1";
 
-    if($('input[name="nev"]').val() != ''){ validScore++; $('input[name="nev"]').css('border','1px solid #ccc') }
-    else $('input[name="nev"]').css('border','1px solid red');
-
-    if($('input[name="email"]').val() != ''){ validScore++; $('input[name="email"]').css('border','1px solid #ccc') }
-    else $('input[name="email"]').css('border','1px solid red');
-
-    if($('input[name="munkakor"]').val() != ''){ validScore++; $('input[name="munkakor"]').css('border','1px solid #ccc') }
-    else $('input[name="munkakor"]').css('border','1px solid red');
-
-    //if($('input[name="irsz"]').val() != ''){validScore++; $('input[name="irsz"]').css('border','1px solid #ccc');}
-    //else $('input[name="irsz"]').css('border','1px solid red');
-
-    //if($('input[name="varos"]').val() != ''){validScore++; $('input[name="varos"]').css('border','1px solid #ccc');}
-    //else $('input[name="varos"]').css('border','1px solid red');
-
-    if($('input[name="szuldatumev"]').val() != 0){ validScore++; $('input[name="szuldatumev"]').css('border','1px solid #ccc') }
-    else $('input[name="szuldatumev"]').css('border','1px solid red');
-
-    if($('input[name="szuldatumho"]').val() != 0){ validScore++; $('input[name="szuldatumho"]').css('border','1px solid #ccc') }
-    else $('input[name="szuldatumho"]').css('border','1px solid red');
-
-    if($('input[name="szuldatumnap"]').val() != 0){ validScore++; $('input[name="szuldatumnap"]').css('border','1px solid #ccc') }
-    else $('input[name="szuldatumnap"]').css('border','1px solid red');
-
-    if(validScore == 8){
+        /*
         var szuldatumev = $('select[name="szuldatumev"]').val();
         if(szuldatumev < 10) szuldatumev = '0'+szuldatumev;
         var szuldatumho = $('select[name="szuldatumho"]').val();
@@ -1207,12 +1180,16 @@ function syncData(fogl){
             megj:$('textarea[name="megj"]').val(),
             szuldatum:szuldatum
         };
+        */
+
         console.log(data);
+
+        /*
         $.ajax({
             url:'index.php',
             type:'POST',
             data:data,
-            success: function(data){
+            success: function(data) {
                 console.log(data);
                 var pack = data.split(':');
                 if(pack[0] == 'New user'){
@@ -1220,9 +1197,9 @@ function syncData(fogl){
                 }
             }
         });
+        */
 
-    }
-    else{
+    } else {
         return false;
     }
 }

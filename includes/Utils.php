@@ -8,6 +8,16 @@ class Utils {
             $docAgent = new DocAgent();
             $docAgent->showDocBinary($_GET["f"], $_GET["k"]);
         }
+
+        if (isset($_GET["print"]) && isset($_GET["template"])) {
+            $printService = new PrintService();
+            $printService->setTemplate($_GET["template"]);
+            if (isset($_GET["fid"]) && isset($_GET["p"])) {
+                $printService->setReservation($_GET["fid"], $_GET["p"]);
+            }
+            $printService->start();
+            die;
+        }
     }
 
     public function isTesztIP() {

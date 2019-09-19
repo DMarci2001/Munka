@@ -48,17 +48,21 @@ class AdminPage {
             $page = new AdminErrorPage();
         }
 
+        //ha nincs bejelentkezve, akkor loginra dobjuk
         if (empty($this->adminUser->user)) {
             $this->skipFrame = true;
             $page = new AdminLoginPage();
         }
 
+        //ha be van jelentkezve, de 2 faktoros authentikációt még nem végzett
         if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1) {
             if (!isset($_SESSION["2facomplete"])) {
                 $this->skipFrame = true;
                 $page = new AdminLoginPage();
             }
         }
+
+        //ha tiltott felhasználó
         if ($this->adminUser->user["status"] == 0) {
             $this->skipFrame = true;
             $page = new AdminLoginPage();
@@ -67,8 +71,6 @@ class AdminPage {
     }
 
     public function showPage() {
-        $adminUtils = new AdminUtils();
-
         header("Content-type: text/html; charset=UTF-8");
 
         echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} orvosi felület");
