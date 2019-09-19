@@ -41,7 +41,7 @@ class PrintService {
             return;
         }
 
-        if (empty($this->template)) {
+        if (empty($this->templateId)) {
             die("error code 1256");
         }
 

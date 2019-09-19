@@ -37,6 +37,8 @@ class BookingValidatePage extends CorePage {
                 }
             }
 
+            echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
+
             if (isset($menedzserid)) {
                 echo "Kedves {$nev}!<br>
                 <br>
@@ -92,6 +94,7 @@ class BookingValidatePage extends CorePage {
 
             sql_query("update foglalasok set aktiv=1 where id=?", array($row["id"]));
 
+            echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
             echo "{$webText["kedves"]} {$row["nev"]}!<br>
             <br>
             {$webText["foglalassuccesstext"]}

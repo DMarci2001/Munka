@@ -110,6 +110,89 @@ class AdminBookingPage extends AdminCorePage
         }
 
 
+        if (isset($_GET["moveidopont"])) {
+            if (isset($_SESSION["helyszin"])) {
+                $fid            = intval($_GET["fid"]);
+                $newfid         = $fid;
+                $szuresTipusId = intval($_GET["szt"]);
+
+                $rowf = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($fid)));
+
+                if (isset($_GET["cpy"]) && $_GET["cpy"]==1) {
+                    $copy = 1;
+
+                    sql_query("insert into foglalasok set
+                        regdatum=now(),
+                        cegid=?,
+                        paciensid=?,
+                        nev=?,
+                        email=?,
+                        telefon=?,
+                        szuldatum=?,
+                        szulhely=?,
+                        anyjaneve=?,
+                        neme=?,
+                        taj=?,
+                        irsz=?,
+                        varos=?,
+                        utca=?,
+                        munkaltato=?,
+                        munkakor=?,
+                        rkod=?,
+                        megj=?,
+                        alkalmassag=?,
+                        alkalmassagido=?,
+                        alkalmassagikhet=?,
+                        tudoszuroervenyesseg=?,
+                        tudoszuro=?,
+                        smssent=1
+        			",array(
+                        $rowf["cegid"],
+                        $rowf["paciensid"],
+                        $rowf["nev"],
+                        $rowf["email"],
+                        $rowf["telefon"],
+                        $rowf["szuldatum"],
+                        $rowf["szulhely"],
+                        $rowf["anyjaneve"],
+                        $rowf["neme"],
+                        $rowf["taj"],
+                        $rowf["irsz"],
+                        $rowf["varos"],
+                        $rowf["utca"],
+                        $rowf["munkaltato"],
+                        $rowf["munkakor"],
+                        rand(11000,98000),
+                        $rowf["megj"],
+                        $rowf["alkalmassag"],
+                        $rowf["alkalmassagido"],
+                        $rowf["alkalmassagikhet"],
+                        $rowf["tudoszuroervenyesseg"],
+                        $rowf["tudoszuro"]
+                    ));
+
+                    $newfid = sql_insert_id();
+                }
+
+                logActivity("foglalas",$newfid,"{$rowf["nev"]} foglalás ".(isset($copy)?"másolása":"mozgatása")." {$rowf["datum"]} -> {$_GET["moveidopont"]}","");
+
+                sql_query("update foglalasok set aktiv=1,foglalta=?,helyszinid=?,szurestipusid=?,datum=?,rinterval=?,orvosassigned=0 where id=?",array($_SESSION["adminuser"]["nev"],$_SESSION["helyszin"],$szuresTipusId,$_GET["moveidopont"],intval($_GET["rinterval"]),$newfid));
+                $this->bookingService->updateFoglalasData($newfid);
+
+                $oid = $this->bookingService->selectFreeOrvosForIdopont($newfid);
+                sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $newfid));
+            }
+
+            //if ($_GET["page"]=="bnaptar") {
+            //    echo showAdminNaptarIdopont($_GET["moveidopont"]);
+            //    die();
+            //}
+
+            echo $this->_showElojegyzesTable($_SESSION["setday"]);
+            die();
+        }
+
+
     }
 
     public function showPage()

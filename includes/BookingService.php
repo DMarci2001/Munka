@@ -552,7 +552,7 @@ class BookingService {
 
             if ($row["rlang"] == "hu") {
                 $mbody = "<h2>Már majdnem kész!</h2>
-                ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
+                Ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
                 {$webTextLocal["nev"]}: {$row["nev"]}<br>
                 {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
                 <b>Időpont: {$row["datum"]}</b><br>
@@ -565,7 +565,7 @@ class BookingService {
             }
             if ($row["rlang"] == "de") {
                 $mbody = "<h2>Már majdnem kész!</h2>
-                ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
+                Ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
                 {$webTextLocal["nev"]}: {$row["nev"]}<br>
                 {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
                 <b>Időpont: {$row["datum"]}</b><br>

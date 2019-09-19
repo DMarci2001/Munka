@@ -181,12 +181,13 @@ class AdminBookingEditor {
 
                 //Orvos neve:
                 $orvosNev = "";
-                if (isset($_REQUEST['orvosid'])) {
-                    if ($orvos = sql_fetch_array(sql_query("SELECT nev FROM orvosok WHERE id=? ", array($_REQUEST['orvosid'])))) {
+                if (isset($_REQUEST['orvosassigned'])) {
+                    if ($orvos = sql_fetch_array(sql_query("SELECT nev FROM orvosok WHERE id=? ", array($_REQUEST['orvosassigned'])))) {
                         $orvosNev = $orvos['nev'];
                     }
                 }
 
+                /*
                 $wsdl_url = 'http://89.134.90.181:3334/HMMService/Service1.svc?wsdl';
                 $client = new SOAPClient($wsdl_url);
                 $params = array(
@@ -213,6 +214,7 @@ class AdminBookingEditor {
                     //echo print_r($params, true);
                     //echo "</pre>";
                 }
+                */
             }
 
             header('Content-Type: application/json');
@@ -257,25 +259,15 @@ class AdminBookingEditor {
                 where f.id=? and f.pass=?",array($id, $p)))) {
 
             $html.= "<div style='font-size:16px;font-weight:bold;padding:10px;background:#555;color:#fff;'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]} ";
-            $html.= "<div style='margin-top:4px;'>
-				<a class='kisbutton' 
-				   style='font-size:12px;padding:3px 5px;' 
-				   href='#' 
-				   onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'
-				  >áthelyezés</a> 
-				<a class='kisbutton' 
-				   style='font-size:12px;padding:3px 5px;' 
-				   href='#' 
-				   onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'
-				  >másolás</a>
-				<a class='kisbutton'
-				   style='font-size:12px;padding:3px 5px;cursor:pointer' 
-				   onClick='startAutoFill({$row["id"]},\"{$row["pass"]}\")'
-			      >mezők kitöltése</a>
-			  </div>";
+            $html.= "<div style='margin-top:4px;'>";
+            $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
+            $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
+            $html.= "<a class='middlebutton' href='#' onClick='startAutoFill({$row["id"]},\"{$row["pass"]}\");return false;'>mezők kitöltése</a> ";
+            $html.= "<a class='middlebutton' href='#' onClick='syncFoglalasDataToUser({$row['id']});return false;'>szinkronizálás</a> ";
             $html.= "</div>";
-            $html.= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='kisbutton' style='font-size:12px;padding:3px 5px;margin:3px 0px;' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
-            $html.= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='kisbutton' style='font-size:12px;padding:3px 5px;margin:3px 0px;' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+            $html.= "</div>";
+            $html.= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+            $html.= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
             $html.= "<div id='autofill' style='display:none;background:#ff8;color:#555;padding:10px;cursor:pointer;'>";
             $html.= "A mezők kitöltéséhez add meg a páciens TAJ számát és születési dátumát:<br/>
 				  <table>
@@ -284,20 +276,13 @@ class AdminBookingEditor {
 					</tr>
 					<tr><td>Szül. dátum:</td><td><input id = 'user-szuldatum' style = '' type = 'textbox'/></td></tr>
 					<tr>
-						<td colspan='2'>
-							<a class = 'kisbutton'
-							   onClick = 'autoFill($(\"#user-taj\").val(),$(\"#user-szuldatum\").val())'
-							   style = 'font-size:12px;padding:3px 5px;margin-top:-2px;'
-							  >Kitöltés</a>
-							<a class='kisbutton' 
-							   style='font-size:12px;padding:3px 5px;margin-top:-2px;' 
-							   href='#' 
-							   onClick='cancelFoglalasMove();return false;'
-							  >mégse</a>
+						<td></td><td>
+							<a class='middlebutton' href='#' onClick='autoFill($(\"#user-taj\").val(),$(\"#user-szuldatum\").val());return false;' style='font-size:12px;padding:3px 5px;'>Kitöltés</a>
+							<a class='middlebutton' href='#' onClick='cancelFoglalasMove();return false;' style='font-size:12px;padding:3px 5px;'>Mégse</a>
 						</td>
 					</tr>
-				  </table>
-			  </div>";
+				  </table>";
+            $html.="</div>";
             $html.= "<div style='padding:10px;'>";
 
             if ($row["nev"]!="" && $row["nev"]!="nincs név") {
@@ -415,7 +400,6 @@ class AdminBookingEditor {
 
             $html.= "<br><input type='button' onclick='foglalasMentes(\"{$_GET["page"]}\");' value='Mentés'/>&nbsp;&nbsp;";
             $html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
-            $html.= "<button class='sync-button' onClick='syncData({$row['id']});return false;'>Szinkronizálás</button>&nbsp;&nbsp;";
             $html.= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/> ";
 
             if ($row["foglalta"]!="") $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}";

@@ -454,7 +454,9 @@ function setSelectedInterval(i) {
 function addIdopont(idopont,szt) {
     if (foglalasSelected!=0) {
         var msg="Biztos áthelyezed ide a kijelölt foglalást?";
-        if (cpy==1) msg="Biztos átmásolod ide a kijelölt foglalást?";
+        if (cpy==1) {
+            msg="Biztos átmásolod ide a kijelölt foglalást?";
+        }
 
         if (confirm(msg)) {
             let params = "?page=booking&cpy="+cpy+"&szt="+encodeURIComponent(szt)+"&moveidopont="+encodeURIComponent(idopont)+"&fid="+encodeURIComponent(foglalasSelected)+"&rinterval="+selectedInterval;
@@ -673,13 +675,13 @@ function foglalasOrvosErtesites() {
 
     $.ajax({
         type: "POST",
-        url: "index.php",
+        url: "index.php?page=booking",
         data: data,
         success: function(response)	{
             $("#idoponteditor").html(response);
+            alert("Értesítés elküldve!");
         }
     });
-
 }
 
 function foglalasOrvosErtesitesOnly(fid) {
@@ -1149,59 +1151,19 @@ function selectFolder(e) {
 }*/
 
 function syncFoglalasDataToUser(fogl){
-    if (error == 0) {
-
-        var data = $("#iform").serialize()+"&syncFoglalasDataToUser=1";
-
-        /*
-        var szuldatumev = $('select[name="szuldatumev"]').val();
-        if(szuldatumev < 10) szuldatumev = '0'+szuldatumev;
-        var szuldatumho = $('select[name="szuldatumho"]').val();
-        if(szuldatumho < 10) szuldatumho = '0'+szuldatumho;
-        var szuldatumnap = $('select[name="szuldatumnap"]').val();
-        if(szuldatumnap < 10) szuldatumnap = '0'+szuldatumnap;
-        var szuldatum = szuldatumev + '-' + szuldatumho + '-' + szuldatumnap;
-        var data = {
-            setUser:true,
-            fid:fogl,
-            taj:$('input[name="taj"]').val(),
-            cegid:$('select[name="cegid"]').val(),
-            orvosid:$('select[name="orvosassigned"]').val(),
-            email:$('input[name="email"]').val(),
-            nev:$('input[name="nev"]').val(),
-            tel:$('input[name="telefon"]').val(),
-            munkakor:$('input[name="munkakor"]').val(),
-            torzsszam:$('input[name="torzsszam"]').val(),
-            irsz:$('input[name="irsz"]').val(),
-            varos:$('input[name="varos"]').val(),
-            utca:$('input[name="utca"]').val(),
-            szulhely:$('input[name="szulhely"]').val(),
-            anyjaneve:$('input[name="anyjaneve"]').val(),
-            megj:$('textarea[name="megj"]').val(),
-            szuldatum:szuldatum
-        };
-        */
-
-        console.log(data);
-
-        /*
-        $.ajax({
-            url:'index.php',
-            type:'POST',
-            data:data,
-            success: function(data) {
-                console.log(data);
-                var pack = data.split(':');
-                if(pack[0] == 'New user'){
-                    $('input[name="paciensid"]').val(pack[1]);
-                }
+    var data = $("#iform").serialize()+"&syncFoglalasDataToUser=1";
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        data:data,
+        success: function(data) {
+            if (data.error != "") {
+                alert(data.error);
+            } else {
+                $('input[name="paciensid"]').val(data.userId);
             }
-        });
-        */
-
-    } else {
-        return false;
-    }
+        }
+    });
 }
 
 $(function(){
