@@ -52,6 +52,10 @@ class BeutalokPage extends CorePage {
         LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
         WHERE userid=? order by b.datum desc", array($_SESSION["user"]["id"]));
 
+        if (sql_num_rows($res) == 0) {
+            echo "<div>".$this->lang->getText("emptybeutalolist","Önnek még nincs beutalója")."</div>";
+        }
+
         echo "<div style='display:inline-block'>";
 
         while ($row=sql_fetch_array($res)) {

@@ -574,16 +574,15 @@ class Utils {
 							 END");
 
             while ($result = sql_fetch_array($query)) {
-                $checkFoglalas = sql_query("SELECT * FROM foglalasok 
-										WHERE email = '{$result['umail']}' 
-										AND   taj 	= '{$result['taj']}' 
-										AND   datum >= NOW() AND datum < ADDDATE(NOW(),14)");
+                $checkFoglalas = sql_query("SELECT * FROM foglalasok WHERE email=? AND taj=? AND datum>=NOW() AND datum<ADDDATE(NOW(),14)", array($result['umail'], $result['taj']));
                 if ($checkFoglalas->rowCount() == 0) {
                     $mail = new PHPMailer();
                     $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
                     $mail->FromName = Booking_Constants::COMPANY_NAME;
                     $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['umail']));
-                    if($result['hrmail'] != "") $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
+                    if ($result['hrmail'] != "") {
+                        $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
+                    }
                     $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                     $mail->IsHTML(true);
 
@@ -611,10 +610,36 @@ class Utils {
         }
     }
 
-    public function send_alkExcel( $cegid, $intvallType, $mails ) {
+    private function getWeeks( $date, $rollover ) {
+        $cut = substr( $date, 0, 8 );
+        $daylen = 86400;
+
+        $timestamp 	= strtotime( $date );
+        $first 		= strtotime( $cut . "00" );
+        $elapsed	= ( $timestamp - $first ) / $daylen;
+
+        $weeks = 1;
+
+        for ($i = 1; $i <= $elapsed; $i++) {
+            $dayfind = $cut.(strlen( $i ) < 2 ? '0' . $i : $i);
+            $daytimestamp = strtotime($dayfind);
+
+            $day = strtolower(date("l", $daytimestamp));
+
+            if ($day == strtolower($rollover)) {
+                $weeks ++;
+            }
+        }
+
+        return $weeks;
+    }
+
+
+    public function send_alkExcel($cegid, $intvallType, $mails) {
+        require_once("other/PHPExcel.php");
         $rowCount = 2;
         $SendingDayParameters = array( "1", "2", "3", "4", "5", "6", "7" );
-        if( $intvallType == "napi" && in_array( date( "N" ), $SendingDayParameters )) {
+        if ($intvallType == "napi" && in_array(date("N"), $SendingDayParameters)) {
             $intervall = "fogl.datum ";
             //$intervall.= "LIKE '2018-10-01%' ";
             $intervall.= "LIKE '".date("Y-m-d")."%' ";
@@ -622,40 +647,35 @@ class Utils {
             //$releaseDate = "2018-11-05";
         }
 
-        if( $intvallType == "heti" && date( "N" ) == 3 ) {
-
+        if ($intvallType == "heti" && date("N") == 2) {
             $intervall = "fogl.datum ";
-            $intervall.= "BETWEEN '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -4 day" ))."' ";
-            $intervall.= "AND     '".date( "Y-m-d", strtotime( date( "Y-m-d")." +1 day" ))."' ";
-            $releaseDate = date( "Y-m" )." ".getWeeks( date( "Y-m-d" ), "sunday" ).". hét";
+            $intervall.= "BETWEEN '".date( "Y-m-d", strtotime(date( "Y-m-d" )." -4 day"))."' ";
+            $intervall.= "AND     '".date( "Y-m-d", strtotime(date( "Y-m-d")." +1 day"))."' ";
+            $releaseDate = date( "Y-m" )." ".$this->getWeeks(date("Y-m-d"), "sunday").". hét";
         }
-        if( $intvallType == "havi" && date( "j" ) == 1 ) {
-
+        if ($intvallType == "havi" && date("j") == 1) {
             $intervall = "fogl.datum ";
-            $intervall.= "BETWEEN '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -1 month" ))."' ";
-            $intervall.= "AND     '".date( "Y-m-d", strtotime( date( "Y-m-d" )." -1 day" ))."' ";
+            $intervall.= "BETWEEN '".date("Y-m-d", strtotime(date("Y-m-d")." -1 month"))."' ";
+            $intervall.= "AND     '".date("Y-m-d", strtotime(date("Y-m-d")." -1 day"))."' ";
             $releaseDate = date("Y-m");
         }
 
         //Ha nem lehetett definiálni az intervallumot szakítsa meg a kódot.
-        if( !isset( $intervall )) return;
+        if (!isset($intervall)) {
+            return;
+        }
 
         $filename = $releaseDate." napi riport";
         $objPHPExcel = new PHPExcel();
         $objPHPExcel->setActiveSheetIndex(0);
         $objPHPExcel->getActiveSheet()->setTitle('Napi lista');
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
-        header('Cache-Control: max-age=0');
+        //header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        //header('Content-Disposition: attachment;filename="'.$filename.'.xlsx"');
+        //header('Cache-Control: max-age=0');
 
         //Lekérdezés
-        $request = sql_query("SELECT fogl.*, doc.nev as orvos FROM foglalasok fogl
-						    LEFT JOIN orvosok doc ON doc.id = fogl.orvosassigned
-						    WHERE ".$intervall."
-						    AND fogl.cegid = ? ", array(  $cegid ));
-
-
+        $request = sql_query("SELECT fogl.*, doc.nev as orvos FROM foglalasok fogl LEFT JOIN orvosok doc ON doc.id = fogl.orvosassigned WHERE {$intervall} AND fogl.cegid=?", array($cegid));
 
         //Oszlop nevek:
         $objPHPExcel->getActiveSheet()->SetCellValue('A1', "Név");
@@ -672,19 +692,17 @@ class Utils {
         $objPHPExcel->getActiveSheet()->SetCellValue('L1', "Korlátozás/Megjegyzés");
 
 
-        while( $result = sql_fetch_array( $request )) {
-
+        while ($result = sql_fetch_array($request)) {
             //Extra vizsgálatok listázáa:
-            $request_extra = sql_query("SELECT a.megnev FROM extra_szolg es
-									LEFT JOIN arak a ON a.id = es.szurestipus_id
-									WHERE idopont_id = ".$result['id']);
+            $request_extra = sql_query("SELECT a.megnev FROM extra_szolg es	LEFT JOIN arak a ON a.id = es.szurestipus_id WHERE idopont_id=?", array($result["id"]));
 
             $extrak = "";
-            while($extra = sql_fetch_array( $request_extra ))
-            {
+            while ($extra = sql_fetch_array($request_extra)) {
                 $extrak = $extrak.", ".$extra['megnev'];
             }
-            if( $extrak != "" ) $extrak = substr( $extrak, 1 );
+            if ($extrak != "") {
+                $extrak = substr($extrak, 1);
+            }
 
             //Ciklus változók:
             $status 	= "";
@@ -692,31 +710,31 @@ class Utils {
             $limitation = "";
             $next_test  = "";
 
-            if( $result['alkalmassag'] == "I" ) {
+            if ($result['alkalmassag'] == "I") {
                 $status 	= "Alkalmas";
                 $period 	= $result['alkalmassagido']." hónap";
                 $next_test 	= date("Y-m-d",strtotime($result['datum']." +".$result['alkalmassagido']." month"));
                 $limitation = $result['alkalmassagkorl'];
             }
-            if( $result['alkalmassag'] == "N" ) {
+            if ($result['alkalmassag'] == "N") {
                 $status 	= "Alkalmatlan";
                 $period 	= "";
                 $next_test 	= "";
                 $limitation = $result['alkalmassagkorl'];
             }
-            if( $result['alkalmassag'] == "IN" ) {
+            if ($result['alkalmassag'] == "IN") {
                 $status 	= "Ideiglenesen nem alkalmas";
                 $period 	= $result['alkalmassagido']." hónap";
                 $next_test 	= $result['alkalmassagikhet']." hét";
                 $limitation = $result['alkalmassagkorl'];
             }
-            if( $result['alkalmassag'] == "K" ) {
+            if ($result['alkalmassag'] == "K") {
                 $status 	= "Korlátozottan alkalmas";
                 $period 	= $result['alkalmassagido']." hónap";
                 $next_test 	= date( "Y-m-d", strtotime( $result['datum']." +".$result['alkalmassagido']." month" ));
                 $limitation = $result['alkalmassagkorl'];
             }
-            if( $result['alkalmassak'] == "" && $result['alkalmassagkorl'] != "" ) {
+            if ($result['alkalmassag'] == "" && $result['alkalmassagkorl'] != "") {
                 $limitation = $result['alkalmassagkorl'];
             }
 
@@ -724,7 +742,7 @@ class Utils {
             $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $result['nev']);
             $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount, $result['szuldatum']);
             $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount, $result['taj']);
-            $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount, $result['torzsszam']);
+            //$objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount, $result['torzsszam']); //nincs törzsszám!
             $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount, $result['munkakor']);
             $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount, $result['orvos']);
             $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount, $result['datum']);
@@ -742,31 +760,31 @@ class Utils {
         ob_start();
         $objWriter->save('php://output');
         $xlsData = ob_get_contents();
-        $contact_image_data="data:application/vnd.ms-excel;base64,".base64_encode( $xlsData );
-        $data 		= substr( $contact_image_data, strpos( $contact_image_data, "," ));
-        $encoding 	= "base64";
-        $type 		= "application/vnd.ms-excel";
+        $contact_image_data = "data:application/vnd.ms-excel;base64,".base64_encode($xlsData);
+        $data = substr($contact_image_data, strpos($contact_image_data, ","));
+        $encoding = "base64";
+        $type = "application/vnd.ms-excel";
         ob_end_clean();
 
         //Email(ek) készítése:
         $mail = new PHPMailer();
-        $mail->From 	= Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->From     = Booking_Constants::NO_REPLY_ADDRESS;
         $mail->FromName	= Booking_Constants::COMPANY_NAME;
-        $mail->AddAddress( "m.gergely9409@gmail.com" );
-        foreach($mails as $email)
-        {
+        $mail->AddAddress("m.gergely9409@gmail.com");
+        //$mail->AddAddress("jns@jns.hu");
+        foreach ($mails as $email) {
             $mail->AddAddress($email, $email);
         }
         $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-        $mail->AddStringAttachment( base64_decode( $data ), $filename.".xlsx", $encoding, $type );
-        $mail->IsHTML( true );
+        $mail->AddStringAttachment(base64_decode($data), $filename.".xlsx", $encoding, $type);
+        $mail->IsHTML(true);
 
-        $t = iconv( "UTF-8", "ISO-8859-2", $releaseDate." napi riport" );
+        $t = iconv("UTF-8","ISO-8859-2",$releaseDate." napi riport");
 
         $mbody = " ";
 
         $mail->Subject = $t;
-        $mail->Body = iconv( "UTF-8", "ISO-8859-2", $mbody );
+        $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
         //$mail->AddAttachment("");
         $mail->Send();
     }

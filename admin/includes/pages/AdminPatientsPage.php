@@ -227,13 +227,13 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<table style='font-size:12px;'>";
 
             if ($id!=0) {
-                echo "<tr><td width='100' style='padding:4px 0px;'>Cég: </td><td>{$cegdata["cegnev"]}<input type='hidden' name='cegid' value='{$cegdata["cegid"]}'/></td></tr>";
+                echo "<tr><tdstyle='padding:4px 0px;'>Cég: </td><td>{$cegdata["cegnev"]}<input type='hidden' name='cegid' value='{$cegdata["cegid"]}'/></td></tr>";
             } else {
                 $selected = $_SESSION["cegfilter"];
                 if (isset($_POST["cegid"])) {
                     $selected = $_POST["cegid"];
                 }
-                echo "<tr><td width='100'>Cég: </td><td>";
+                echo "<tr><td>Cég: </td><td>";
                 echo "<select name='cegid'>";
                 $res = sql_query("SELECT * FROM cegek where true {$bw} order by megnev");
                 while ($rowt = sql_fetch_array($res)) {
@@ -242,17 +242,17 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "</select>";
                 echo "</td></tr>";
             }
-            echo "<tr><td width='100'>TAJ szám: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' placeholder='Paciens TAJ száma' value='{$_POST["taj"]}'>";
+            echo "<tr><td width='120'>TAJ szám: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' placeholder='Paciens TAJ száma' value='{$_POST["taj"]}'>";
             //audi
             if ($_SESSION["cegfilter"] == 15) {
                 echo " [<a onclick='alert(\"TAJ szám nem található a törzs adatok között!\");' href='#'>Adatok automatikus kitöltése</a>]";
             }
             echo "</td></tr>";
-            echo "<tr><td width='100'>Név: *</td><td><input class='inputbox' style='width:250px;' type='text' name='nev' placeholder='Paciens neve' value='{$_POST["nev"]}'></td></tr>";
-            echo "<tr><td width='100'>E-mail: *</td><td><input class='inputbox' autocomplete='off' style='width:250px;' type='text' name='email' placeholder='Paciens e-mail címe' value='{$_POST["email"]}'></td></tr>";
-            echo "<tr><td width='120'>Mobil telefonszám: *</td><td><input class='inputbox' style='width:250px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='Formátum pl: 06301234567' ></td></tr>";
-            echo "<tr><td width='100'></td><td style='color:#888;'>A felhasználó a telefonszámával és a TAJ számával fog tudni bejelentkezni a felületre, ezért nagyon fontos a mobil telefonszámának is a pontos megadása.</td></tr>";
-            echo "<tr><td width='100'>Születési dátum: *</td><td>";
+            echo "<tr><td>Név: *</td><td><input class='inputbox' style='width:250px;' type='text' name='nev' placeholder='Paciens neve' value='{$_POST["nev"]}'></td></tr>";
+            echo "<tr><td>E-mail: *</td><td><input class='inputbox' autocomplete='off' style='width:250px;' type='text' name='email' placeholder='Paciens e-mail címe' value='{$_POST["email"]}'></td></tr>";
+            echo "<tr><td>Mobil telefonszám: *</td><td><input class='inputbox' style='width:250px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='Formátum pl: 06301234567' ></td></tr>";
+            echo "<tr><td></td><td style='color:#888;'>A felhasználó a telefonszámával és a TAJ számával fog tudni bejelentkezni a felületre, ezért nagyon fontos a mobil telefonszámának is a pontos megadása.</td></tr>";
+            echo "<tr><td>Születési dátum: *</td><td>";
             echo $this->utils->datumSelector($_POST["szuldatum"],"szuldatum");
             //echo "<input class='inputbox' style='width:120px;' type='text' name='szuldatum' placeholder='éééé-hh-nn' value='{$_POST["szuldatum"]}'>";
             echo "</td></tr>";
@@ -266,19 +266,19 @@ class AdminPatientsPage extends AdminCorePage {
             if (!isset($_POST["szulhely"])) $_POST["szulhely"]="";
             if (!isset($_POST["anyjaneve"])) $_POST["anyjaneve"]="";
 
-            echo "<tr><td width='100'>Születési hely: *</td><td><input class='inputbox' style='width:250px;' type='text' name='szulhely' value='{$_POST["szulhely"]}' placeholder='' ></td></tr>";
-            echo "<tr><td width='100'>Anyja neve: *</td><td><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='{$_POST["anyjaneve"]}' placeholder='' ></td></tr>";
-            echo "<tr><td width=100>Neme:</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> Férfi&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> Nő</td></tr>";
-            echo "<tr><td width='100'>Irányítószám:</td><td><input class='inputbox' style='width:60px;' maxlength='4' type='text' name='irsz' value='{$_POST["irsz"]}'></td></tr>";
-            echo "<tr><td width='100'>Város:</td><td><input class='inputbox' style='width:250px;' type='text' name='varos' value='{$_POST["varos"]}'></td></tr>";
-            echo "<tr><td width='100'>Utca, házszám:</td><td><input class='inputbox' style='width:250px;' type='text' name='utca' value='{$_POST["utca"]}'></td></tr>";
-            //echo "<tr><td width='100'>Munkáltató:</td><td><input class='inputbox' style='width:250px;' type='text' name='munkaltato' value='{$_POST["munkaltato"]}'></td></tr>";
-            echo "<tr><td width='100'>Munkakör: </td><td><input class='inputbox' style='width:250px;' type='text' name='munkakor' value='{$_POST["munkakor"]}'></td></tr>";
-            echo "<tr><td width='100'>Törzsszám: </td><td><input class='inputbox' style='width:250px;' type='text' name='torzsszam' value='{$_POST["torzsszam"]}'></td></tr>";
+            echo "<tr><td>Születési hely: *</td><td><input class='inputbox' style='width:250px;' type='text' name='szulhely' value='{$_POST["szulhely"]}' placeholder='' ></td></tr>";
+            echo "<tr><td>Anyja neve: *</td><td><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='{$_POST["anyjaneve"]}' placeholder='' ></td></tr>";
+            echo "<tr><td>Neme:</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> Férfi&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> Nő</td></tr>";
+            echo "<tr><td>Irányítószám:</td><td><input class='inputbox' style='width:60px;' maxlength='4' type='text' name='irsz' value='{$_POST["irsz"]}'></td></tr>";
+            echo "<tr><td>Város:</td><td><input class='inputbox' style='width:250px;' type='text' name='varos' value='{$_POST["varos"]}'></td></tr>";
+            echo "<tr><td>Utca, házszám:</td><td><input class='inputbox' style='width:250px;' type='text' name='utca' value='{$_POST["utca"]}'></td></tr>";
+            //echo "<tr><td>Munkáltató:</td><td><input class='inputbox' style='width:250px;' type='text' name='munkaltato' value='{$_POST["munkaltato"]}'></td></tr>";
+            echo "<tr><td>Munkakör: </td><td><input class='inputbox' style='width:250px;' type='text' name='munkakor' value='{$_POST["munkakor"]}'></td></tr>";
+            echo "<tr><td>Törzsszám: </td><td><input class='inputbox' style='width:250px;' type='text' name='torzsszam' autocomplete='false' value='{$_POST["torzsszam"]}'></td></tr>";
             if ($_GET["fszerk"]==0) {
-                echo "<tr><td width='100'>Jelszó: </td><td><input class='inputbox' style='width:300px;' type='password' name='jelszo' value='' placeholder='Adja meg, hogy a paciens be tudjon jelentkezni'/></td></tr>";
+                echo "<tr><td>Jelszó: </td><td><input class='inputbox' style='width:250px;' type='text' name='jelszo' value='' placeholder='Adja meg, hogy a paciens be tudjon jelentkezni'/></td></tr>";
             } else {
-                echo "<tr><td width='100'>Jelszó: </td><td><input class='inputbox' style='width:300px;' type='password' name='jelszo' value='' placeholder='Csak akkor töltse ki, ha meg akarja változtatni.'/></td></tr>";
+                echo "<tr><td>Jelszó: </td><td><input class='inputbox' style='width:250px;' type='text' name='jelszo' value='' placeholder='Csak akkor töltse ki, ha meg akarja változtatni.'/></td></tr>";
             }
 
             echo "</table>";
@@ -308,98 +308,39 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<h1>{$row["nev"]} ".($row["validated"]==1?"<span style='font-size:12px;color:#0a0;'>(aktíválva)</span>":"<span style='font-size:12px;color:#f00;border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód: {$row["rkod"]}'>(nem aktív)</span>")."</h1>";
 
 
-            $ver = 2;
+            if($row['cegid'] == 104) {
+                require_once("Classes/PHPExcel.php");
+                $tmpfname    = "templates/debrecen.xlsx";
+                $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
+                $excelObj    = $excelReader->load( $tmpfname );
+                $worksheet   = $excelObj->getSheet(0);
+                //$lastRow   = $excelObj->getHighestRow();
+                $lastRow     = $excelObj->setActiveSheetIndex(0)->getHighestRow();
+                $protocolid  = "";
 
-            if($ver==1) {
-                if($row['cegid'] == 98) {
-                    require_once("Classes/PHPExcel.php");
-                    $tmpfname 	 = "templates/tatabányaRAW3.xlsx";
-                    $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
-                    $excelObj 	 = $excelReader->load( $tmpfname );
-                    $worksheet 	 = $excelObj->getSheet(0);
-                    //$lastRow 	 = $excelObj->getHighestRow();
-                    $lastRow = $excelObj->setActiveSheetIndex(0)->getHighestRow();
-                    $protocolid = "";
-                    $excelArray = array();
-
-                    for($sor = 1; $sor <= $lastRow; $sor++) {
-                        $excelArray[] = array(
-                            "nev"      => $worksheet->getCell('A'.$sor)->getValue(),
-                            "belgyogy" => $worksheet->getCell('B'.$sor)->getValue(),
-                            "hasiuh"   => $worksheet->getCell('D'.$sor)->getValue(),
-                            "pajzsuh"  => $worksheet->getCell('F'.$sor)->getValue(),
-                            "emlouh"   => $worksheet->getCell('H'.$sor)->getValue(),
-                            "arterio"  => $worksheet->getCell('E'.$sor)->getValue(),
-                            "abi"	  => $worksheet->getCell('N'.$sor)->getValue(),
-                            "csontsur" => $worksheet->getCell('L'.$sor)->getValue(),
-                            "szivuh"   => $worksheet->getCell('M'.$sor)->getValue(),
-                            "szemesz"  => $worksheet->getCell('K'.$sor)->getValue(),
-                            "borgyogy" => $worksheet->getCell('I'.$sor)->getValue(),
-                            "nrutin"   => $worksheet->getCell('O'.$sor)->getValue(),
-                            "krutin"   => $worksheet->getCell('C'.$sor)->getValue(),
-                            "tumor"    => $worksheet->getCell('J'.$sor)->getValue()
-                        );
-                    }
-                    $key = array_search( $row['nev'], array_column( $excelArray, 'nev' ));
-                    if($key !== FALSE) {
-                        //Nagyrutin
-                        if($excelArray[$key]['nrutin'] != "") $protocolid = 10;
-                        //Kisrutin
-                        if($excelArray[$key]['krutin'] != "") $protocolid = 7;
-                        //Tumormarker férfi
-                        if($excelArray[$key]['tumor']  != "" && $row['neme'] == 1) $protocolid = 8;
-                        //Tumormarker női
-                        if($excelArray[$key]['tumor']  != "" && $row['neme'] == 2) $protocolid = 9;
-                        //Nagyrutin + tumor(férfi)
-                        if($excelArray[$key]['nrutin'] != "" && $excelArray[$key]['tumor'] != "" && $row['neme'] == 1) $protocolid = 46;
-                        //Nagy rutin + tumor(női)
-                        if($excelArray[$key]['nrutin'] != "" && $excelArray[$key]['tumor'] != "" && $row['neme'] == 2) $protocolid = 47;
-                        //Kisrutin + tumor(férfi)
-                        if($excelArray[$key]['krutin'] != "" && $excelArray[$key]['tumor'] != "" && $row['neme'] == 1) $protocolid = 48;
-                        //Kisrutin + tumor(női)
-                        if($excelArray[$key]['krutin'] != "" && $excelArray[$key]['tumor'] != "" && $row['neme'] == 2) $protocolid = 49;
-                    }
-                    else $protocolid = "";
+                for ($sor = 5; $sor <= $lastRow; $sor++) {
+                    $excelArray[] = array(
+                        "nev"      			 => $worksheet->getCell('A'.$sor)->getValue(),
+                        "neme" 	  			 => $worksheet->getCell('B'.$sor)->getValue(),
+                        "csomag_1"   		 => $worksheet->getCell('C'.$sor)->getValue(),
+                        "csomag_2"  			 => $worksheet->getCell('D'.$sor)->getValue(),
+                        "nap"   				 => $worksheet->getCell('E'.$sor)->getValue(),
+                        "alap_tumor_no"  	 => $worksheet->getCell('F'.$sor)->getValue(),
+                        "alap_tumor_ferfi"	 => $worksheet->getCell('G'.$sor)->getValue(),
+                        "abi" 				 => $worksheet->getCell('H'.$sor)->getValue(),
+                        "kieg. nagylabor"   	 => $worksheet->getCell('I'.$sor)->getValue(),
+                        "kieg. tumor_csg2"  	 => $worksheet->getCell('J'.$sor)->getValue(),
+                        "telj. tumor_csg1" 	 => $worksheet->getCell('K'.$sor)->getValue(),
+                        "pajzsmirigy_labor"   => $worksheet->getCell('L'.$sor)->getValue(),
+                        "pajzsmirigy_uh"   	 => $worksheet->getCell('M'.$sor)->getValue(),
+                        "kedv. 01"    		 => $worksheet->getCell('N'.$sor)->getValue(),
+                        "kedv. 02"    		 => $worksheet->getCell('O'.$sor)->getValue(),
+                        "carotis_vizsg"    	 => $worksheet->getCell('Q'.$sor)->getValue(),
+                        "fizetendo"			 => $worksheet->getCell('P'.$sor)->getValue()
+                    );
                 }
-                else $protocolid = "";
+                $key = array_search( $row['nev'], array_column( $excelArray, 'nev' ));
             }
-
-            if($ver==2) {
-                if($row['cegid'] == 104) {
-                    require_once("Classes/PHPExcel.php");
-                    $tmpfname 	 = "templates/debrecen.xlsx";
-                    $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
-                    $excelObj 	 = $excelReader->load( $tmpfname );
-                    $worksheet 	 = $excelObj->getSheet(0);
-                    //$lastRow 	 = $excelObj->getHighestRow();
-                    $lastRow = $excelObj->setActiveSheetIndex(0)->getHighestRow();
-                    $protocolid = "";
-
-                    for($sor = 5; $sor <= $lastRow; $sor++) {
-                        $excelArray[] = array(
-                            "nev"      			 => $worksheet->getCell('A'.$sor)->getValue(),
-                            "neme" 	  			 => $worksheet->getCell('B'.$sor)->getValue(),
-                            "csomag_1"   		 => $worksheet->getCell('C'.$sor)->getValue(),
-                            "csomag_2"  			 => $worksheet->getCell('D'.$sor)->getValue(),
-                            "nap"   				 => $worksheet->getCell('E'.$sor)->getValue(),
-                            "alap_tumor_no"  	 => $worksheet->getCell('F'.$sor)->getValue(),
-                            "alap_tumor_ferfi"	 => $worksheet->getCell('G'.$sor)->getValue(),
-                            "abi" 				 => $worksheet->getCell('H'.$sor)->getValue(),
-                            "kieg. nagylabor"   	 => $worksheet->getCell('I'.$sor)->getValue(),
-                            "kieg. tumor_csg2"  	 => $worksheet->getCell('J'.$sor)->getValue(),
-                            "telj. tumor_csg1" 	 => $worksheet->getCell('K'.$sor)->getValue(),
-                            "pajzsmirigy_labor"   => $worksheet->getCell('L'.$sor)->getValue(),
-                            "pajzsmirigy_uh"   	 => $worksheet->getCell('M'.$sor)->getValue(),
-                            "kedv. 01"    		 => $worksheet->getCell('N'.$sor)->getValue(),
-                            "kedv. 02"    		 => $worksheet->getCell('O'.$sor)->getValue(),
-                            "carotis_vizsg"    	 => $worksheet->getCell('Q'.$sor)->getValue(),
-                            "fizetendo"			 => $worksheet->getCell('P'.$sor)->getValue()
-                        );
-                    }
-                    $key = array_search( $row['nev'], array_column( $excelArray, 'nev' ));
-                }
-            }
-
 
             echo "<div style=''>Cég: {$row["cegnev"]} ({$row["munkakor"]})</div>";
             echo "<div style=''>TAJ: {$row["taj"]}</div>";
@@ -409,17 +350,12 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<div style=''>Telefon: {$row["telefon"]} E-mail: <a href='mailto:{$row["email"]}'>{$row["email"]}</a></div>";
             echo "<div>[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&fszerk={$_GET["szerk"]}&back=szerk'>adatok módosítása</a>]</div>";
 
-            if ($ver==1) {
-                echo "<div style = 'margin-top:20px'><a href = '/admin/templates/labor_protocol.php?szerk={$_GET["szerk"]}&protocolid={$protocolid}' class = 'ujbutton' target='_blank'><i class='fas fa-print'></i> Labor igénylő nyomtatása</a></div>";
-                echo "<div style = 'margin-top:20px'><a href = '/admin/templates/setalolap.php?szerk={$_GET["szerk"]}' class = 'ujbutton' target='_blank'><i class='fas fa-print'></i> Sétálólap nyomatása</a> ".($protocolid == ""?"<span style = 'font-weight:bold;font-size:16px'>Nincs labor választva a sétálólapon!</span>":"")."</div>";
-            }
+            //echo "<div style='margin-top:20px'>";
+            //echo "<a href='/admin/templates/labor_protocol_02.php?szerk={$_GET["szerk"]}' class='printbutton' target='_blank'>Labor igénylő nyomtatása</a> ";
+            //echo "<a href='/admin/templates/setalolap_02.php?szerk={$_GET["szerk"]}' class='printbutton' target='_blank'>Sétálólap nyomtatása</a>";
+            //echo "</div>";
 
-            if ($ver==2) {
-                echo "<div style = 'margin-top:20px'><a href = '/admin/templates/labor_protocol_02.php?szerk={$_GET["szerk"]}' class = 'ujbutton' target='_blank'><i class='fas fa-print'></i> Labor igénylő nyomtatása</a></div>";
-                echo "<div style = 'margin-top:20px'><a href = '/admin/templates/setalolap_02.php?szerk={$_GET["szerk"]}' class = 'ujbutton' target='_blank'><i class='fas fa-print'></i> Sétálólap nyomatása</a></div>";
-            }
-
-            $resf=sql_query("SELECT t.`megnev` AS szurestipus,c.`megnev` AS cegnev,o.`nev` AS orvos,h.`cim` AS helyszin,f.*,b.naploszam,b.megj as beutalomegj FROM foglalasok f
+            $resf = sql_query("SELECT t.`megnev` AS szurestipus,c.`megnev` AS cegnev,o.`nev` AS orvos,h.`cim` AS helyszin,f.*,b.naploszam,b.megj as beutalomegj FROM foglalasok f
             LEFT JOIN szurestipusok t ON t.`id`=f.`szurestipusid`
             LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
             left join beutalok b on b.foglalasid=f.id

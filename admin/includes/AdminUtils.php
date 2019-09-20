@@ -374,6 +374,168 @@ class AdminUtils {
     }
 
 
+    public function showAdminNaptarIdopont($idopont) {
+        if (!isset($_SESSION["helyszin"])) {
+            return "A munkamenet lejárt, kérjük frissítsd az oldalt!";
+        }
+
+
+        $helyszin=intval($_SESSION["helyszin"]);
+
+        $szuresTipusData=sql_fetch_array(sql_query("select * from szurestipusok where id=?",array($_SESSION["naptarszurestipus"])));
+
+        $htmlout="";
+        $htmlout.="<div style='display:table;'>";
+        $htmlout.="<div style='display:table-row;'>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'><div style='font-size:28px;padding:0px 15px 0px 0px;'>".datumprint($idopont)."</div></div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'><a class='ujbutton' onclick=\"addIdopontNaptar('{$idopont}',{$_SESSION["naptarszurestipus"]});return false;\" href='#'>+ foglalás</a></div>";
+        $htmlout.="</div>";
+        $htmlout.="</div>";
+
+        $htmlout.="<div style='font-weight:bold;'>{$szuresTipusData["megnev"]} beosztások:</div>";
+        if ($beoData=getBeosztasok($idopont,$helyszin,$_SESSION["naptarszurestipus"])) {
+            foreach ($beoData as &$beo) {
+                //if (!isset($doks["{$beo["orvosid"]}{$beo["tol"]}{$beo["ig"]}"])) {
+                $doks["{$beo["orvosid"]}{$beo["tol"]}{$beo["ig"]}"][]=$beo;
+                //}
+                //if (!isset($doks) || !in_array($beo["orvosid"],$doks)) {
+                //	$doks[]=$beo["orvosid"];
+                //	echo "<div>{$beo["tol"]}-{$beo["ig"]} {$beo["orvosnev"]}</div>";
+                //}
+
+
+            }
+
+            //ksort($doks);
+            foreach ($doks as &$dok) {
+                $htmlout.= "<div>{$dok[0]["tol"]}-{$dok[0]["ig"]} {$dok[0]["orvosnev"]} ";
+                if (count($dok)==1) {
+                    $htmlout.= substr_jns($dok[0]["cegnev"],0,20);
+                } else {
+                    $htmlout.= "<a href='#' onclick='$(\"#orvosceg{$dok[0]["id"]}\").slideToggle();return false;'>".count($dok)." cég</a></div>";
+                }
+
+                $htmlout.= "<div id='orvosceg{$dok[0]["id"]}' style='width:300px;font-size:10px;color:#888;display:none;'>";
+
+                $cegeknev="";
+                foreach ($dok as &$ceg) {
+                    $cegeknev.=", {$ceg["cegnev"]}";
+                }
+                $htmlout.= substr($cegeknev,2);
+
+                $htmlout.= "</div>";
+
+            }
+
+        }
+
+
+        $res=sql_query("select f.*,t.megnev as sztipus,c.megnev as cegnev,o.nev as orvosnev from foglalasok f
+        left join szurestipusok t on t.id=f.szurestipusid
+        left join orvosok o on o.id=f.orvosassigned
+        left join cegek c on c.id=f.cegid
+        where datum=? and f.aktiv=1 and f.helyszinid=?
+        order by f.szurestipusid<>?",array($idopont,$helyszin,$_SESSION["naptarszurestipus"]));
+
+        if (sql_num_rows($res)==0) {
+            $htmlout.="<div style='margin-top:20px;font-weight:bold;color:#f00;'>Nincs foglalás erre az időpontra</div>";
+        } else {
+            while ($row=sql_fetch_array($res)) {
+
+                if ($row["szurestipusid"]==0) {
+                    //0 szurestipusid javítás
+                    sql_query("update foglalasok set szurestipusid=? where id=?",array($_SESSION["naptarszurestipus"],$row["id"]));
+                    $row["szurestipusid"]=$_SESSION["naptarszurestipus"];
+                }
+
+
+                if (!isset($first) && $row["szurestipusid"]!=$_SESSION["naptarszurestipus"]) {
+                    $htmlout.="<div style='margin-top:20px;font-weight:bold;color:#f00;'>Nincs {$szuresTipusData["megnev"]} foglalás erre az időpontra</div>";
+                }
+                $first=true;
+
+                $htmlout.= "<div style='background:#eee;border-radius:5px;padding:15px 15px 20px 15px;margin-top:20px;'>";
+
+                $htmlout.= "<div style='font-size:20px;font-weight:bold;'>{$row["sztipus"]}</div>";
+
+                $htmlout.= "<div style='font-size:20px;'>{$row["cegnev"]}</div>";
+                if ($row["foglalta"]!="") $htmlout.= "<div style=''>Foglalta: {$row["foglalta"]}</div>";
+                if ($row["orvosassigned"]!=0) $htmlout.= "<div style=''>Orvos: {$row["orvosnev"]}".($row["ertesitve"]==1?" (értesítve)":"")."</div>";
+
+                //fview begin
+                $htmlout.= "<div style='margin-top:20px;' id='fview{$row["id"]}'>";
+                if ($row["nev"]!="nincs név") $htmlout.= "<div style=''><b>{$row["nev"]}</b></div>";
+                if ($row["munkakor"]!="") $htmlout.= "<div style=''>{$row["munkakor"]}</div>";
+                if ($row["nszam"]!="") $htmlout.= "<div style='margin-bottom:10px;'>Naplószám: {$row["nszam"]}</div>";
+                if ($row["taj"]!="") $htmlout.= "<div style='margin-bottom:10px;'>TAJ: {$row["taj"]}</div>";
+                if ($row["szuldatum"]!="") $htmlout.= "<div>Születési dátum: {$row["szuldatum"]}</div>";
+                if ($row["irsz"]!="") $htmlout.= "<div>Cím: {$row["irsz"]} {$row["varos"]} {$row["utca"]}</div>";
+                if ($row["telefon"]!="") $htmlout.= "<div>Tel: {$row["telefon"]}</div>";
+                if ($row["email"]!="") $htmlout.= "<div>E-mail: <a href='mailto:{$row["email"]}'>{$row["email"]}</a></div>";
+
+                if ($row["nev"]!="nincs név") {
+                    $htmlout.="<div id='eljottcheck{$row["id"]}' style='margin-top:10px;'>";
+                    $htmlout.=showEljottCheckBox($row);
+                    $htmlout.="</div>";
+                }
+
+                $htmlout.="<div id='alkalmassagstatus{$row["id"]}'>";
+                $htmlout.=showAlkalmassagStatus($row);
+                $htmlout.="</div>";
+
+                $htmlout.="<div style='margin-top:10px;'>";
+                //if ($row["munkaltato"]!="") echo "<div>Munkáltató: {$row["munkaltato"]}</div>";
+                //if ($row["munkakor"]!="") echo "<div>Munkakör: {$row["munkakor"]}</div>";
+                if ($row["megj"]!="") $htmlout.= "<div>Megjegyzés: {$row["megj"]}</div>";
+                $htmlout.= "</div>";
+
+                $files=showPaciensFiles($row["id"]);
+                if ($files!="") $htmlout.= "<div style='margin-top:5px;width:280px;'>{$files}</div>";
+
+
+
+                $htmlout.="<div style='margin-top:20px;'>";
+                $htmlout.="<a class='ujbutton' onclick='showIdopontEditor(\"bnaptar\",\"{$row["pass"]}\",{$row["id"]});return false;' href='#'>Szerkesztés</a>&nbsp;&nbsp;";
+                if ($row["nev"]!="nincs név") $htmlout.="<a class='ujbutton' onclick='foglalasOrvosErtesitesOnly({$row["id"]});return false;' href='#'>Orvos értesítése</a>&nbsp;&nbsp;";
+                $htmlout.="<a class='ujbutton' onclick='removeIdopontNaptar({$row["id"]},\"{$idopont}\");return false;' href='#'>Törlés</a>";
+                $htmlout.="</div>";
+                $htmlout.="</div>";
+                // fview end
+
+
+                $htmlout.="</div>";
+            }
+        }
+
+        return $htmlout;
+    }
+
+
+    public function availableDoctorsForTime($nap,$ora,$beosztas) {
+        foreach ($beosztas as &$beo) {
+            if (strtotime(date("Y-m-d {$ora}")) >= strtotime(date("Y-m-d {$beo["tol"]}")) && strtotime(date("Y-m-d {$ora}")) < strtotime(date("Y-m-d {$beo["ig"]}"))) {
+                if (!isset($doks) || !in_array($beo["orvosid"],$doks)) {
+                    $szabinVan = false;
+                    if (isset($GLOBALS["szabidata"][$beo["orvosid"]])) {
+                        foreach ($GLOBALS["szabidata"][$beo["orvosid"]] as $orvosSzabi) {
+                            if (strtotime(date("{$nap} {$ora}")) >= strtotime(date("{$orvosSzabi["datumtol"]} 00:00:00")) && strtotime(date("{$nap} {$ora}")) <= strtotime(date("{$orvosSzabi["datumig"]} 23:59:59"))) {
+                                $szabinVan = true;
+                            }
+                        }
+                    }
+                    if (!$szabinVan) {
+                        $doks[] = $beo["orvosid"];
+                    }
+                }
+            }
+        }
+
+        if (!isset($doks)) {
+            return false;
+        }
+        return $doks;
+    }
+
 
     public function getCegList($c) {
         $cl="0";

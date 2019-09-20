@@ -10,8 +10,10 @@ class RegistrationPage extends CorePage {
         $webText = $this->lang->webText;
 
         if (isset($_POST["regisztracio"])) {
-            if (isset($_POST["szuldatumev"])) {
+            if (isset($_POST["szuldatumev"]) && $_POST["szuldatumev"] != "0") {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
+            } else {
+                $_POST["szuldatum"] = "";
             }
 
             $_POST["telefon"] = $this->utils->fixPhoneNumber($_POST["telefon"]);
@@ -22,8 +24,8 @@ class RegistrationPage extends CorePage {
             if (!isset($_POST["munkakor"])) $_POST["munkakor"] = "";
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
 
-            if ($_POST["taj"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $this->formError .= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->formError .= "{$webText["tajformat"]}<br/>";
+            if ($_POST["taj"] == "") $this->formError .= "{$webText["tajkotelezo"]}<br/>";
+            if (!ctype_digit($_POST["taj"]) && !empty($_POST["taj"])) $this->formError .= "{$webText["tajformat"]}<br/>";
             if ($_POST["taj"] != "" && sql_fetch_array(sql_query("select taj from felhasznalok where taj=? and cegid=?", array($_POST["taj"], $_SESSION["helyszindata"]["id"])))) $this->formError .= "{$webText["tajletezik"]}<br/>";
 
             if ($_POST["email"] == "") $this->formError .= "{$webText["emailkotelezo"]}<br/>";
@@ -37,17 +39,16 @@ class RegistrationPage extends CorePage {
             if ($_POST["nev"] == "") $this->formError .= "{$webText["nevkotelezo"]}<br/>";
             if ($_POST["telefon"] == "") $this->formError .= "{$webText["telkotelezo"]}<br/>";
             if (!ctype_digit($_POST["telefon"]) && $_POST["telefon"] != "") $this->formError .= "{$webText["telformat"]}<br/>";
-            if ($_POST["szuldatum"] == "" && $_SESSION["helyszindata"]["tajnotreq"] == 0) $this->formError .= "{$webText["szulkotelezo"]}<br/>";
-            if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d") && $_SESSION["helyszindata"]["tajnotreq"] == 0) $this->formError .= "{$webText["szulformat"]}<br/>";
-            //if (isset($_POST["munkakor"]) && $_POST["munkakor"]=="" && $_SESSION["helyszindata"]["tajnotreq"]==0) $this->formError.="A munkakör megadása kötelező! {$_SESSION["helyszindata"]["tajnotreq"]}<br/>";
-            if (!isset($_POST["neme"]) && $_SESSION["helyszindata"]["tajnotreq"] == 0) $this->formError .= "{$webText["nemekotelezo"]}<br/>";
+            if (!empty($_POST["szuldatum"]) && !$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->formError .= "{$webText["szulformat"]}<br/>";
 
             if (!isset($_POST["neme"])) $_POST["neme"] = 0;
 
             if (!isset($_POST["aszf"])) $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
 
 
-            if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
+            if (isset($_POST["g-recaptcha-response"])) {
+                $captcha = $_POST["g-recaptcha-response"];
+            }
             if (isset($captcha)) {
                 if (!$captcha) {
                     $this->formError .= "{$webText["captchaerror1"]}<br/>";
@@ -119,37 +120,29 @@ class RegistrationPage extends CorePage {
         echo $this->displayFejlec($webText["regisztracio"]);
         echo $this->showFormErrors();
 
-        echo $this->showPageDescription("Regisztráljon, hogy kényelmesebben foglalhasson időpontot, valamint kiegészítő szolgáltatásokat érhessen el. A regisztráció után nem kell minden foglalásnál kitöltenie az adatait, megtekintheti előző foglalásait, megnézheti a leleteit, és az egyéb vizsgálatokkal kapcsolatos dokumentumokat.<br/>Adja meg az adatait az alábbi form kitöltésével.");
+        echo $this->showPageDescription($this->lang->getText("page.reg.description","Regisztráljon, hogy kényelmesebben foglalhasson időpontot, valamint kiegészítő szolgáltatásokat érhessen el. A regisztráció után nem kell minden foglalásnál kitöltenie az adatait, megtekintheti előző foglalásait, megnézheti a leleteit, és az egyéb vizsgálatokkal kapcsolatos dokumentumokat.<br/>Adja meg az adatait az alábbi form kitöltésével."));
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
         echo "<input type='hidden' name='regisztracio' value='1'/>";
         echo "<table>";
-
         echo "<tr><td width='100'>{$webText["email"]}: *</td><td><input class='inputbox' autocomplete='off' style='width:250px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
         echo "<tr><td>{$webText["jelszo"]}: *</td><td><input style='display:none;' type='text' autocomplete='off' name='dummyname' value=''><input style='display:none;' type='password' autocomplete='off' name='dummypass' value=''> <input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
         echo "<tr><td>{$webText["jelszoujra"]}: *</td><td><input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo2' value='{$_POST["jelszo2"]}'></td></tr>";
         echo "<tr><td colspan='2'><div style='border-top:1px solid #ccc;padding-top:10px;margin-top:10px;'></div></td></tr>";
-
-        echo "<tr><td>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
+        echo "<tr><td>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
         echo "<tr><td>{$webText["nev"]}: *</td><td><input class='inputbox' style='width:270px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
         echo "<tr><td>{$webText["mobil"]}: *</td><td><input class='inputbox' style='width:270px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='{$webText["mobilformat"]}' ></td></tr>";
         echo "<tr><td></td><td style='color:#888;'>{$webText["mobiltip"]}</td></tr>";
-        echo "<tr><td>{$webText["szuletesidatum"]}: *</td><td>".$this->utils->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
-        echo "<tr><td>{$webText["neme"]}: *</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]}</td></tr>";
+        echo "<tr><td>{$webText["szuletesidatum"]}:</td><td>".$this->utils->datumSelector($_POST["szuldatum"],"szuldatum")." {$_POST["szuldatum"]}</td></tr>";
+        echo "<tr><td>{$webText["neme"]}:</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]}</td></tr>";
         echo "<tr><td>{$webText["irsz"]}:</td><td><input class='inputbox' style='width:60px;' maxlength='4' type='text' name='irsz' value='{$_POST["irsz"]}'></td></tr>";
         echo "<tr><td>{$webText["varos"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='varos' value='{$_POST["varos"]}'></td></tr>";
         echo "<tr><td>{$webText["utca"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='utca' value='{$_POST["utca"]}'></td></tr>";
-
-        if (false) echo "<tr><td>{$webText["munkakor"]}: *</td><td><input class='inputbox' style='width:250px;' type='text' name='munkakor' value='{$_POST["munkakor"]}'></td></tr>";
-        //if ($_SESSION["helyszindata"]["id"]==15) echo "<tr><td>Törzsszám: </td><td><input class='inputbox' style='width:120px;' type='text' id='torzsszam' name='torzsszam' value='{$_POST["torzsszam"]}'></td></tr>";
-
         echo "<tr><td></td><td><div style='margin-top:5px;' class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-
-        echo "<tr><td width='100'><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
-
+        echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
         echo "<tr><td></td><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["regisztracio"]}</a></td></tr>";
-
         echo "</table>";
         echo "</form>";
     }
 }
+

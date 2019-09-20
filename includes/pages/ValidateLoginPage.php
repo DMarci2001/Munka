@@ -35,13 +35,15 @@ class ValidateLoginPage extends CorePage {
         echo $this->displayFejlec($webText["bejelentkezes"]);
         echo $this->showFormErrors();
 
+        echo $this->showPageDescription("A regisztrációja aktiválásához egy kódot küldtünk a megadott telefonszámára. Kérjük adja meg az alábbi mezőbe a kapott kódot.");
+
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";
 
         echo "<table>";
-        echo "<tr><td width=150>SMS-ben kapott kód: *</td><td><input class='inputbox' style='width:100px;' type='text' name='smskod' value='{$_POST["smskod"]}'></td></tr>";
+        echo "<tr><td width='150'>SMS-ben kapott kód: *</td><td><input class='inputbox' style='width:100px;' type='text' name='smskod' value='{$_POST["smskod"]}'><input type='hidden' name='validatelogin' value='1' /></td></tr>";
         echo "</table>";
 
-        echo "<br><br><input type='submit' name='validatelogin' value='Regisztráció érvényesítése'> ";
+        echo "<br><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Regisztráció aktiválása</a>";
         echo "</form>";
     }
 }

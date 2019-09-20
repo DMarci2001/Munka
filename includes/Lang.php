@@ -3,6 +3,8 @@
 class Lang {
     public $webText;
 
+    public $validLanguages = ["hu","en","de"];
+
     public function __construct()
     {
         if (!isset($_COOKIE["lang"])) {
@@ -24,6 +26,20 @@ class Lang {
             }
         }
         return $webText;
+    }
+
+    public function getText($key, $default = "") {
+        if (isset($this->webText[$key])) {
+            return $this->webText[$key];
+        }
+        if (!empty($default)) {
+            $this->webText[$key] = $default;
+            foreach ($this->validLanguages as $lang) {
+                sql_query("insert into langtext set langid=?, kulcs=?, szoveg=?", array($lang, $key, $default));
+            }
+            return $default;
+        }
+        return "";
     }
 
     public static function getLangLink($langCode) {

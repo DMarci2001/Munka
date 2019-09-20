@@ -45,7 +45,8 @@ class CronService {
 
 
     private function _tesztStuff() {
-        $this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
+        //$this->_sendAlkExcel();
+        //$this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
         echo "teszt\n";
         die();
     }

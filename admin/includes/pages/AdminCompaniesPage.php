@@ -4,6 +4,17 @@ class AdminCompaniesPage extends AdminCorePage {
 
     private $bookingService;
 
+    private $optionalFields = [
+        "szuldatum" => "Születési dátum",
+        "szulhely"  => "Születési hely",
+        "anyjaneve" => "Anyja neve",
+        "neme"      => "Neme",
+        "irsz"      => "Irányítószám",
+        "varos"     => "Város",
+        "utca"      => "Utca",
+        "munkakor"  => "Munkakör"
+    ];
+
     public function __construct()
     {
         parent::__construct();
@@ -70,6 +81,19 @@ class AdminCompaniesPage extends AdminCorePage {
                     $sor++;
                 }
 
+                $fieldOptions = [];
+                foreach ($this->optionalFields as $field => $name) {
+                    if (isset($_POST["fieldoption_{$field}"])) {
+                        $option = $_POST["fieldoption_{$field}"];
+                        if ($option == 0) {
+                            $fieldOptions[] = "notreq_{$field}";
+                        }
+                        if ($option == 2) {
+                            $fieldOptions[] = "hidden_{$field}";
+                        }
+                    }
+                }
+
                 if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
                 if (!isset($_POST["foglalasemail"])) $_POST["foglalasemail"]=0;
                 if (!isset($_POST["onlyreg"])) $_POST["onlyreg"]=0;
@@ -80,8 +104,8 @@ class AdminCompaniesPage extends AdminCorePage {
                 if (!isset($_POST["alksend"])) $_POST["alksend"]=0;
                 if (!isset($_POST["alkertsend"])) $_POST["alkertsend"]=0;
 
-                sql_query("update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=? where id=?"
-                    ,array($_POST["megnev"],$_POST["domain"],$_POST["email"],$_POST["foglalasemail"],$_POST["onlyreg"],$_POST["nocim"],$_POST["visszaigazolas"],$_POST["onlybeutalo"],$_POST["tudoszuroopcio"],$_POST["smshour"],$_POST["beutaloszoveg"],$_POST["beutaloszoveg_de"],$_POST["beutaloszoveg_en"],$_POST["protokoll"],$_POST["aktiv"],$_POST["noregsms"],$_POST["alksend"],$_POST["alkertsend"],$_POST["alksendint"],$_POST["sendmail"],$_POST["nofoglalas_hu"],$_POST["nofoglalas_en"],$_POST["nofoglalas_de"],$id));
+                sql_query("update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=?,fieldoptions=? where id=?"
+                    ,array($_POST["megnev"],$_POST["domain"],$_POST["email"],$_POST["foglalasemail"],$_POST["onlyreg"],$_POST["nocim"],$_POST["visszaigazolas"],$_POST["onlybeutalo"],$_POST["tudoszuroopcio"],$_POST["smshour"],$_POST["beutaloszoveg"],$_POST["beutaloszoveg_de"],$_POST["beutaloszoveg_en"],$_POST["protokoll"],$_POST["aktiv"],$_POST["noregsms"],$_POST["alksend"],$_POST["alkertsend"],$_POST["alksendint"],$_POST["sendmail"],$_POST["nofoglalas_hu"],$_POST["nofoglalas_en"],$_POST["nofoglalas_de"], implode(",",$fieldOptions),$id));
 
                 logActivity("ceg",$id,$_POST["megnev"]." adatlap",print_r($_POST,true));
             }
@@ -115,6 +139,8 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<tr><td>Figyelmeztető szöveg (angol):</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg_en' value='{$_POST["beutaloszoveg_en"]}'></td></tr>";
             echo "<tr><td>Protokoll:</td><td><textarea class='inputbox' style='width:600px;height:80px;' type='text' name='protokoll'>{$_POST["protokoll"]}</textarea></td></tr>";
 
+            echo "<tr><td colspan='2'><div style='margin-top:10px;padding-top:10px;border-top:1px solid #ccc;'></div></td></tr>";
+
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='onlyreg'".($_POST["onlyreg"]==1?" checked":"")."> Csak regisztrációval lehessen foglalni</td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='visszaigazolas'".($_POST["visszaigazolas"]==1?" checked":"")."> Vissza kell igazolni a foglalást</td></tr>";
@@ -132,6 +158,12 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "</select></td></tr>";
             echo "<tr><td>Fogadó email(ek): </td><td ><textarea class='inputbox' name='sendmail' style='width:600px;height:80px;'>".(isset($_POST["sendmail"])?$_POST["sendmail"]:"")."</textarea>";
             echo "</td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalás mező paraméterek</div></td></tr>";
+
+            foreach ($this->optionalFields as $field => $name) {
+                echo $this->_fieldOptionsRow($field);
+            }
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Cég egységek</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addcegvar' value='+ Egység hozzáadása'></td></tr>";
@@ -315,6 +347,24 @@ class AdminCompaniesPage extends AdminCorePage {
         $options = str_replace("'","", $options);
         $options = str_replace(",",", ", $options);
         return $options;
+    }
+
+    private function _fieldOptionsRow($field) {
+        $html ="<tr><td>".$this->optionalFields[$field].":</td><td>";
+
+        $option = 1;
+        if (substr_count($_POST["fieldoptions"],"notreq_{$field}")) {
+            $option = 0;
+        }
+        if (substr_count($_POST["fieldoptions"],"hidden_{$field}")) {
+            $option = 2;
+        }
+
+        $html.="<input name='fieldoption_{$field}' value='1' type='radio' ".($option==1?"checked":"")."/> kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='0' type='radio' ".($option==0?"checked":"")."/> nem kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='2' type='radio' ".($option==2?"checked":"")."/> elrejtés ";
+        $html.="</td></tr>";
+        return $html;
     }
 }
 

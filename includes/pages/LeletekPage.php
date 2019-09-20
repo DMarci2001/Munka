@@ -14,7 +14,7 @@ class LeletekPage extends CorePage {
 
         echo $this->displayFejlec($webText["leletek"]);
         echo $this->showFormErrors();
-        echo $this->showPageDescription("Itt találja a leleteit.<br/>Kattintson a dokumentumra a nyomtatáshoz, vagy megtekintéshez.");
+        echo $this->showPageDescription($this->lang->getText("page.lelet.description","Itt találja a leleteit.<br/>Kattintson a dokumentumra a nyomtatáshoz, vagy megtekintéshez."));
 
         $request_leletek = sql_query( "SELECT * FROM paciens_leletek pl
                            LEFT JOIN lelet_mintak lm ON lm.lm_id = pl.lelet_type
@@ -36,7 +36,7 @@ class LeletekPage extends CorePage {
                 echo "<div><a onClick='open_zaro({$zaro["zaro_id"]});return false;' href='#'>Záró lelet - ".date("Y-m-d",strtotime($zaro['kelte']))."</a></div>";
             }
         } else {
-            echo "<div>Nincs még lelet kiállítva.</div>";
+            echo "<div>".$this->lang->getText("emptyleletlist","Nincs még lelet kiállítva.")."</div>";
         }
 
         echo "<div class ='target-lelet' style='color:#000'></div>";

@@ -266,10 +266,13 @@ class BookingPage extends CorePage {
         echo $this->displayFejlec();
         echo $this->showFormErrors();
 
+        if ($_SESSION["helyszindata"]["onlybeutalo"]==1) {
+            $_SESSION["helyszindata"]["onlyreg"] = 1;
+        }
+
         if ($_SESSION["helyszindata"]["onlybeutalo"]==1 && isset($_SESSION["user"]) && !isset($_SESSION["beutaloid"])) {
             echo "<div style=''>{$webText["csakbeutalodesc"]}</div>";
             echo "<div style='margin-top:10px;'><a class='simabutton' href='index.php?page=beutalok'>{$webText["showbeutalobutton"]}</a></div>";
-            //echo "</div>";
             return;
         }
 
@@ -277,22 +280,20 @@ class BookingPage extends CorePage {
             if (!$beutalodata=sql_fetch_array(sql_query("select * from beutalok where id='".intval($_SESSION["beutaloid"])."' and foglalasid=0"))) {
                 echo "<div style=''>A beutalóval probléma adodott!</div>";
                 echo "<div style='margin-top:10px;'><a class='simabutton' href='index.php?page=beutalok'>{$webText["showbeutalobutton"]}</a></div>";
-                //echo "</div>";
                 return;
             }
         }
 
         if ($_SESSION["helyszindata"]["onlyreg"]==1 && !isset($_SESSION["user"])) {
-            $btext=$webText["mainudvozles"];
+            $btext = $webText["mainudvozles"];
 
             if ($rowsz=sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'",array($_SESSION["helyszindata"]["id"])))) {
-                $btext=$rowsz["szoveg"];
+                $btext = $rowsz["szoveg"];
             }
 
             echo "<div style=''>{$btext}</div>";
 
             echo "<div style='margin-top:20px;'><a href='index.php?page=reg' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
-            //echo "</div>";
             return;
         }
 

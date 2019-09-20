@@ -15,9 +15,13 @@ class DocumentsPage extends CorePage {
 
         echo $this->displayFejlec($webText["dokumentumok"]);
         echo $this->showFormErrors();
-        echo $this->showPageDescription("Itt találja a rendszerbe feltöltött dokumentumait.<br/>Kattintson a dokumentumra a letöltéshez, vagy megtekintéshez.");
+        echo $this->showPageDescription($this->lang->getText("page.documents.description","Itt találja a rendszerbe feltöltött dokumentumait.<br/>Kattintson a dokumentumra a letöltéshez, vagy megtekintéshez."));
 
         $res=sql_query("SELECT d.* FROM dokumentumok d WHERE userid=? and userid<>0 order by datum desc",array($_SESSION["user"]["id"]));
+
+        if (sql_num_rows($res) == 0) {
+            echo "<div>".$this->lang->getText("emptydocumentlist","Önnek még nincs dokumentuma")."</div>";
+        }
 
         echo "<div style='display:inline-block'>";
         echo "<table>";
