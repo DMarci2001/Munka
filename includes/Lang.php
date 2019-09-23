@@ -51,7 +51,7 @@ class Lang {
         }
 
         if (substr_count($link,"?page=") == 0 && substr_count($link,"&page=") == 0) {
-            if (isset($_GET["page"]) && in_array($_GET["page"],array("main","welcome","idopontfoglalas"))) {
+            if (isset($_GET["page"]) && in_array($_GET["page"],array("main","welcome","booking"))) {
                 $link.="page={$_GET["page"]}&";
             }
         }
@@ -66,6 +66,14 @@ class Lang {
             setcookie("lang", $lang, $exp, "/");
             $_COOKIE["lang"] = $lang;
         }
+    }
+
+    public static function multiLangField($array, $field) {
+        $return = $array[$field];
+        if ($_COOKIE["lang"]!="hu" && trim($array["{$field}_{$_COOKIE["lang"]}"])!="") {
+            $return = $array["{$field}_{$_COOKIE["lang"]}"];
+        }
+        return $return;
     }
 
 }

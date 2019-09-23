@@ -303,6 +303,7 @@ input:not([type]), input[type="text"] , input[type="password"]{
 }
 
 .ujbutton {
+    display:inline-block;
     margin-left:20px;
     padding:5px 10px 5px 10px;
     color:#fff;

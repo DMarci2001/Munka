@@ -21,7 +21,7 @@ class Utils {
     }
 
     public function isTesztIP() {
-        return in_array($_SERVER["REMOTE_ADDR"],array("88.151.97.121","81.182.23.124","5.204.54.10","81.182.23.106"));
+        return in_array($_SERVER["REMOTE_ADDR"],array("88.151.97.121","81.182.23.124","5.204.54.10","81.182.23.106","194.143.226.42"));
     }
 
     public function sendEljottMail($foglalasData) {

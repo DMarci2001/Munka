@@ -242,26 +242,31 @@ class BookingPage extends CorePage {
     public function showPage() {
         $webText = $this->lang->webText;
 
+        if (!isset($_POST["helyszin"])) {
+            $_POST["helyszin"] = $_POST["szurestipus"] = "";
+        }
         if (!isset($_POST["email"])) {
-            $_POST["helyszin"]=$_POST["datum"]=$_POST["szurestipus"]=$_POST["email"]=$_POST["nev"]=$_POST["telefon"]=$_POST["szuldatum"]=$_POST["taj"]=$_POST["irsz"]=$_POST["varos"]=$_POST["utca"]=$_POST["munkaltato"]=$_POST["munkakor"]=$_POST["nev"]=$_POST["nev"]=$_POST["megj"]=$_POST["captcha"]=$_POST["szulhely"]=$_POST["anyjaneve"]=$_POST["telephely"]="";
-            $_POST["rinterval"]=0;
+            $_POST["datum"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
+            $_POST["rinterval"] = 0;
             if (isset($_SESSION["user"])) {
-                $_POST["taj"]=$_SESSION["user"]["taj"];
-                $_POST["email"]=$_SESSION["user"]["email"];
-                $_POST["nev"]=$_SESSION["user"]["nev"];
-                $_POST["telefon"]=$_SESSION["user"]["telefon"];
-                $_POST["szuldatum"]=$_SESSION["user"]["szuldatum"];
-                $_POST["szulhely"]=$_SESSION["user"]["szulhely"];
-                $_POST["anyjaneve"]=$_SESSION["user"]["anyjaneve"];
-                $_POST["irsz"]=$_SESSION["user"]["irsz"];
-                $_POST["varos"]=$_SESSION["user"]["varos"];
-                $_POST["utca"]=$_SESSION["user"]["utca"];
-                $_POST["munkakor"]=$_SESSION["user"]["munkakor"];
-                $_POST["neme"]=$_SESSION["user"]["neme"];
+                $_POST["taj"]       = $_SESSION["user"]["taj"];
+                $_POST["email"]     = $_SESSION["user"]["email"];
+                $_POST["nev"]       = $_SESSION["user"]["nev"];
+                $_POST["telefon"]   = $_SESSION["user"]["telefon"];
+                $_POST["szuldatum"] = $_SESSION["user"]["szuldatum"];
+                $_POST["szulhely"]  = $_SESSION["user"]["szulhely"];
+                $_POST["anyjaneve"] = $_SESSION["user"]["anyjaneve"];
+                $_POST["irsz"]      = $_SESSION["user"]["irsz"];
+                $_POST["varos"]     = $_SESSION["user"]["varos"];
+                $_POST["utca"]      = $_SESSION["user"]["utca"];
+                $_POST["munkakor"]  = $_SESSION["user"]["munkakor"];
+                $_POST["neme"]      = $_SESSION["user"]["neme"];
             }
         }
 
-        if (!isset($_POST["neme"])) $_POST["neme"]="";
+        if (!isset($_POST["neme"])) {
+            $_POST["neme"] = "";
+        }
 
         echo $this->displayFejlec();
         echo $this->showFormErrors();
@@ -294,6 +299,12 @@ class BookingPage extends CorePage {
             echo "<div style=''>{$btext}</div>";
 
             echo "<div style='margin-top:20px;'><a href='index.php?page=reg' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
+            return;
+        }
+
+
+        if (isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]))) {
+            echo $this->_preSelectForm();
             return;
         }
 
@@ -461,6 +472,56 @@ class BookingPage extends CorePage {
     }
 
 
+    private function _preSelectForm() {
+        $webText = $this->lang->webText;
+
+        $html = "";
+
+        $resh = sql_query("SELECT h.* FROM orvos_beosztas b
+        LEFT JOIN helyszinek h ON h.id = b.helyszinid
+        WHERE b.cegid=? AND b.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
+
+        while ($helyszin = sql_fetch_array($resh)) {
+            $html.= "<h2>{$helyszin["cim"]}</h2>";
+
+            $rest = sql_query("SELECT b.* FROM orvos_beosztas b
+            WHERE b.cegid=? AND b.aktiv=1 AND b.`helyszinid`=?
+            GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
+            $tipusok = array(0);
+            while ($tipusData = sql_fetch_array($rest)) {
+                $tids = explode("|", $tipusData["tipusok"]);
+                foreach ($tids as $tid) {
+                    if (!empty($tid)) {
+                        $tipusok[] = $tid;
+                    }
+                }
+            }
+
+            $tipusok = array_unique($tipusok);
+
+            $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
+            while ($tipusData = sql_fetch_array($res)) {
+                $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
+
+                $html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
+                $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
+
+                /* orvos kijelzés -----
+                $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
+                LEFT JOIN orvosok o ON o.id = b.orvosid
+                WHERE b.cegid=? AND b.aktiv=? AND b.helyszinid=1 AND INSTR(b.tipusok,?)
+                GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"], "|{$tipusData["id"]}|"));
+                while ($orvosData = sql_fetch_array($reso)) {
+                    $html.= "<div>".$orvosData["nev"]."</div>";
+                }
+                */
+            }
+
+        }
+        $html.= "";
+
+        return $html;
+    }
 
 }
 

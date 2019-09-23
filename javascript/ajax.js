@@ -854,3 +854,8 @@ function kuponCheck(coupon,version,foglalas,szurestipus)
         }
     });
 }
+
+
+function extendedReservationSelect(t, h) {
+    $.redirectPost("index.php?page=booking", { szurestipus: t, helyszin: h });
+}
