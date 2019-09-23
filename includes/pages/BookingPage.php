@@ -477,6 +477,18 @@ class BookingPage extends CorePage {
 
         $html = "";
 
+        $html.="<div>";
+        $html.="<h2 style='text-transform: uppercase;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
+
+        $html.=$this->lang->getText("miert.bennunket.description","Egészségmegőrző tevékenységünk alappillérei a gondosan és szakmailag igényesen kidolgozott szűrőprogramok, melyeket azonos adottságú csoportokra terveztünk meg.<br/>
+        Célkitűzéseink szerint folyamatosan figyelünk megvizsgált partnereink egészségére, támogatást nyújtva az egészséges életmód kialakításához.<br/>
+        <br/>
+        Vizsgálatainkat szervezetten, magas szakmai színvonalon, kiváló szakemberekkel végezzük, exkluzív környezetben. A vizsgálatsorozatokat angolul is beszélő orvosaink menedzselik.<br/>
+        <br/>
+        Kattintson a szakrendelés nevére a foglalás indításához!
+        ");
+        $html.="</div>";
+
         $resh = sql_query("SELECT h.* FROM orvos_beosztas b
         LEFT JOIN helyszinek h ON h.id = b.helyszinid
         WHERE b.cegid=? AND b.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
@@ -504,17 +516,20 @@ class BookingPage extends CorePage {
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
                 $html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
+                $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'>";
 
-                /* orvos kijelzés -----
                 $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
                 LEFT JOIN orvosok o ON o.id = b.orvosid
                 WHERE b.cegid=? AND b.aktiv=? AND b.helyszinid=1 AND INSTR(b.tipusok,?)
-                GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"], "|{$tipusData["id"]}|"));
+                and (nap<10 OR b.beonap >= DATE(NOW()))
+                GROUP BY b.orvosid", array($_SESSION["helyszindata"]["id"], $helyszin["id"], "|{$tipusData["id"]}|"));
                 while ($orvosData = sql_fetch_array($reso)) {
                     $html.= "<div>".$orvosData["nev"]."</div>";
                 }
-                */
+
+                $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
+                $html.= "</div>";
+
             }
 
         }
