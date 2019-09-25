@@ -51,9 +51,10 @@ class Page {
         echo "<body>";
 
         echo "<div class='pagecontainer'>";
-        echo $this->_pageHeader();
+        echo $this->_pageMenu();
 
         echo "<div class='contentcontainer'>";
+        //echo $this->_pageHead();
         echo "<div style='padding:20px;'>";
         $this->page->showPage();
         echo "</div>";
@@ -65,7 +66,11 @@ class Page {
     }
 
 
-    private function _pageHeader() {
+    private function _pageHead() {
+        return "<div class='fejlecdiv'></div>";
+    }
+
+    private function _pageMenu() {
         $webText = $this->lang->webText;
 
         $html = "";
@@ -78,15 +83,21 @@ class Page {
         $html.= "<div style='display:table;width:100%;'>";
         $html.= "<div style='display:table-row;'>";
         $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
-        $html.= "<a href='/index.php'><img width='30' src='".Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
+
+        if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
+            $html.= "<a href='/index.php'><img width='120' src='/images/logo-retina.png' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:20px;' /></a>";
+        } else {
+            $html.= "<a href='/index.php'><img width='30' src='".Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
+        }
+
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align:middle;'>";
 
 
         if (isset($_SESSION["user"])) {
-            $rowb=sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
-            $rowd=sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
-            $rowf=sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
+            $rowb = sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
+            $rowd = sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
+            $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
 
             $html.= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
             $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";

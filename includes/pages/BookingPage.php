@@ -303,7 +303,7 @@ class BookingPage extends CorePage {
         }
 
 
-        if (isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]))) {
+        if ($this->isExtendedForm()) {
             echo $this->_preSelectForm();
             return;
         }
@@ -477,6 +477,7 @@ class BookingPage extends CorePage {
 
         $html = "";
 
+        $html.="<div style='padding:10px 0px;'>";
         $html.="<div>";
         $html.="<h2 style='text-transform: uppercase;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
 
@@ -494,8 +495,6 @@ class BookingPage extends CorePage {
         WHERE b.cegid=? AND b.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
 
         while ($helyszin = sql_fetch_array($resh)) {
-            $html.= "<h2>{$helyszin["cim"]}</h2>";
-
             $rest = sql_query("SELECT b.* FROM orvos_beosztas b
             WHERE b.cegid=? AND b.aktiv=1 AND b.`helyszinid`=?
             GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
@@ -510,13 +509,12 @@ class BookingPage extends CorePage {
             }
 
             $tipusok = array_unique($tipusok);
+            $orvosok = [];
+            $tipusdb = [];
 
             $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
             while ($tipusData = sql_fetch_array($res)) {
-                $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-
-                $html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'>";
+                $tipusdb[] = $tipusData;
 
                 $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
                 LEFT JOIN orvosok o ON o.id = b.orvosid
@@ -524,16 +522,31 @@ class BookingPage extends CorePage {
                 and (nap<10 OR b.beonap >= DATE(NOW()))
                 GROUP BY b.orvosid", array($_SESSION["helyszindata"]["id"], $helyszin["id"], "|{$tipusData["id"]}|"));
                 while ($orvosData = sql_fetch_array($reso)) {
-                    $html.= "<div>".$orvosData["nev"]."</div>";
+                    $orvosok[$tipusData["id"]][] = $orvosData;
                 }
-
-                $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
-                $html.= "</div>";
 
             }
 
+            if (!empty($orvosok)) {
+                $html.= "<h2>{$helyszin["cim"]}</h2>";
+
+                foreach ($tipusdb as $tipusData) {
+                    $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
+
+                    $html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
+                    $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'>";
+
+                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
+                        $html.= "<div>".$orvosData["nev"]."</div>";
+                    }
+
+                    $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
+                    $html.= "</div>";
+                }
+            }
+
         }
-        $html.= "";
+        $html.= "</div>";
 
         return $html;
     }

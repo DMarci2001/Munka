@@ -1,7 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800,900');
 
 body {
-    background-color:#83c1c0;
+    /*    background-color:#83c1c0;
+
+     */
+    background-color: #eeeeee;
     padding:0px;
     margin:0px;
     color:#444;
@@ -18,10 +21,10 @@ a:hover {
 }
 
 .toplink {
-    color:white;
+    color:black;
 }
 .toplink:hover {
-    color:white;
+    color:#a90000;
 }
 
 .td {
@@ -35,7 +38,7 @@ a:hover {
 .headercontainer {
     margin:20px 0px;
     padding:0px 40px;
-    color: white;
+    color: #888;
 }
 .contentcontainer {
     margin:20px;
@@ -44,7 +47,8 @@ a:hover {
     border-radius:5px;
 }
 .footercontainer {
-    background:#3786be;
+    /* background:#3786be; */
+    background: #b90000;
     color:#fff;
     padding:20px;
     border-bottom-left-radius:5px;
@@ -321,12 +325,35 @@ input:not([type]), input[type="text"] , input[type="password"]{
 }
 
 .fejlecdiv {
-    font-family:robotobold;
-    color:#3786be;
-    font-size:28px;
+    font-family:robotolight;
+    color:#000;
+    font-size:32px;
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid #ccc;
+}
+
+.fejlecdiv_hmm {
+    /*background-image:url(https://www.hungariamed.hu/images/slide004.jpg);*/
+    background-image:url(/images/house.jpg);
+    background-position: center top;
+    background-size:cover;
+    font-family:robotolight;
+    color:#000;
+    font-size:32px;
+    height:300px;
+    border-bottom: 5px solid #a90000;
+    display:table-cell;
+    vertical-align: middle;
+}
+
+.hmm_inner_text {
+    margin:20px 20px 20px 20px;
+    padding:20px;
+    font-size: 28px;
+    font-family: robotolight;
+    display:inline-block;
+    background-color: rgba(255,255,255,.5);
 }
 
 .foglaltbutton {
@@ -388,7 +415,8 @@ input:not([type]), input[type="text"] , input[type="password"]{
 
 .newbutton {
     display:inline-block;
-    background:#3786be;
+    /* background:#3786be; */
+    background: #b90000;
     padding:8px 15px;
     font-size:13px;
     font-weight:bold;
@@ -402,7 +430,7 @@ input:not([type]), input[type="text"] , input[type="password"]{
 }
 .newbutton:hover {
     text-decoration:none;
-    background:#3280b8;
+    background:#a90000;
     color:#fff;
 }
 

@@ -34,7 +34,20 @@ class CorePage {
         if ($_SESSION['helyszindata']['id'] == 91) {
             $img = "<img src='images/hungarian_crest.png' height='30' />";
         }
-        return "<div class='fejlecdiv'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
+        //$GLOBALS["pagetitle"] = "{$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "");
+
+        if ($this->isExtendedForm()) {
+
+            $html = "<div style='display:table;width:100%;'>";
+            $html.= "<div class='fejlecdiv_hmm'>";
+            $html.= "<div class='hmm_inner_text'>HMM Időpont foglalás v2<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>Küldetésünk az egészség!</span></div><br/>";
+            //$html.= "<div class='hmm_inner_text' style='font-size:16px;'></div>";
+            $html.= "</div>";
+            $html.= "</div>";
+            return $html;
+        } else {
+            return "<div class='fejlecdiv'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
+        }
     }
 
     public function showFormErrors() {
@@ -57,6 +70,9 @@ class CorePage {
         return $html;
     }
 
+    public function isExtendedForm() {
+        return $_GET["page"] == "booking" && isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]));
+    }
 
     private function setLang() {
         $exp = time() + 60 * 60 * 24 * 365;
