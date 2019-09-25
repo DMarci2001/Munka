@@ -321,7 +321,6 @@ class BookingPage extends CorePage {
         }
 
 
-
         if (isset($beutalodata)) {
             //beutalóval fix választás
 
@@ -377,17 +376,8 @@ class BookingPage extends CorePage {
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
-        if ($nofoglalasText == "") {
-            echo "<tr><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>";
-            echo "<div style='display:table-cell;vertical-align: middle;'>";
-            echo "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-            echo "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' 
-            style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' 
-            type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
-            echo "</div><div style='display:table-cell;vertical-align: middle;'>";
-            echo "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div><div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
-            echo "</div>";
-            echo "</td></tr>";
+        if (empty($nofoglalasText)) {
+            echo "<tr><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>".$this->_reservationTimeSelector()."</td></tr>";
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
             echo "<tr><td></td><td>{$nofoglalasText}</td></tr>";
@@ -447,9 +437,6 @@ class BookingPage extends CorePage {
 
         if (!isset($_SESSION["user"])) {
             echo "<tr><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-        }
-
-        if (!isset($_SESSION["user"])) {
             echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
@@ -471,6 +458,20 @@ class BookingPage extends CorePage {
         echo "</form>";
     }
 
+    private function _reservationTimeSelector() {
+        $webText = $this->lang->webText;
+        $html = "";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'>";
+        $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
+        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' 
+            style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' 
+            type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
+        $html.= "</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'>";
+        $html.= "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div><div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
+        $html.= "</div>";
+        return $html;
+    }
 
     private function _preSelectForm() {
         $webText = $this->lang->webText;
@@ -524,7 +525,6 @@ class BookingPage extends CorePage {
                 while ($orvosData = sql_fetch_array($reso)) {
                     $orvosok[$tipusData["id"]][] = $orvosData;
                 }
-
             }
 
             if (!empty($orvosok)) {
