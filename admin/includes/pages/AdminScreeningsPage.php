@@ -113,7 +113,7 @@ class AdminScreeningsPage extends AdminCorePage
                 while ($rowc = sql_fetch_array($resc)) {
                     echo "<option value='{$rowc["id"]}'" . ($rowc["id"] == $rowb["szurestipusid"] ? " selected" : "") . ">{$rowc["megnev"]}</option>";
                 }
-                echo "</select> <a href='index.php?page={$_GET["page"]}&szerk={$_GET["csszerk"]}&delcskapcs={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd a csomagból?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
+                echo "</select> <a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delcskapcs={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd a csomagból?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
                 echo "</div>";
                 echo "</td></tr>";
                 $sor++;

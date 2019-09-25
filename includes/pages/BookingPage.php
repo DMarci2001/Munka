@@ -309,7 +309,7 @@ class BookingPage extends CorePage {
         }
 
 
-        echo "<form name='iform' method='post' enctype='multipart/form-data'>";
+        echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
         echo "<table>";
 
         echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
@@ -463,9 +463,7 @@ class BookingPage extends CorePage {
         $html = "";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>";
         $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' 
-            style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' 
-            type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
+        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>";
         $html.= "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div><div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";

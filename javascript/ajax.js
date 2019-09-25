@@ -15,22 +15,6 @@ $(document).ready(function() {
 
 var respo="";
 
-function showIdoPontValaszto(honnan) {
-    if ($("#helyszin").val()=="0") {
-        myAlert("Az időpont kiválasztásához válassza ki a helyszínt!");
-        return;
-    }
-    if ($("#szurestipus").val()=="0") {
-        myAlert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
-        return;
-    }
-    if ($("#tajszam").val().trim()=="") {
-        myAlert("Időpont kiválasztásához adja meg a TAJ számát!");
-        return;
-    }
-
-    $("#idopontvalasztodiv").load("index.php?showidopontvalaszto&honnan="+honnan+"&helyszin="+$("#helyszin").val()+"&szurestipus="+$("#szurestipus").val()+"&taj="+encodeURIComponent($("#tajszam").val()));
-}
 
 function myAlert(szoveg,tipus) {
     tipus = tipus || "info";
@@ -43,18 +27,13 @@ function myAlert(szoveg,tipus) {
 }
 
 function showIdoPontValasztoV2(honnan, orvosid) {
-    if (orvosid === undefined) orvosid = 0;
-    if ($("#helyszin").val()=="0") {
-        myAlert("Az időpont kiválasztásához válassza ki a helyszínt!");
-        return;
+    if (orvosid === undefined) {
+        orvosid = 0;
     }
-    if ($("#szurestipus").val()=="0") {
-        myAlert("Az időpont kiválasztásához válassza ki a szűrés tipusát!");
-        return;
-    }
-    if ($("#tajszam").val().trim()=="") {
-        //myAlert("Időpont kiválasztásához adja meg a TAJ számát!");
-        //return;
+
+    let neme = $('input[name="neme"]:checked', '#iform').val();
+    if (neme == undefined) {
+        neme = 0;
     }
 
     $("#loadingspinner").show();
@@ -62,10 +41,14 @@ function showIdoPontValasztoV2(honnan, orvosid) {
     $.ajax({
         method:"GET",
         url:"index.php",
-        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val() ,szurestipus:$("#szurestipus").val(), selectoid:orvosid }
-    }).done(function(msg) {
-        $("#idopontvalasztodiv").html(msg);
-        $("#idopontvalasztodiv").slideDown();
+        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val(), szurestipus:$("#szurestipus").val(), selectoid:orvosid, neme:neme }
+    }).done(function(data) {
+        if (data.error != "") {
+            myAlert(data.error);
+        } else {
+            $("#idopontvalasztodiv").html(data.html);
+            $("#idopontvalasztodiv").slideDown();
+        }
         $("#loadingspinner").hide();
     });
 
