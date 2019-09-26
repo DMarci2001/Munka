@@ -4,11 +4,11 @@ class BookingService {
     private $lang;
     private $utils;
     private $packContentTypes = [];
-    private $szuresTipusData;
     private $honnan;
     private $neme;
     public $helyszin = 0;
     public $szuresTipus = 0;
+    public $szuresTipusData;
 
     public function __construct()
     {
@@ -123,11 +123,15 @@ class BookingService {
 
                 $napHTML="";
                 $napHTML.="<input type='hidden' id='rinterval-{$nap}' value='{$binterval}' />";
-                for ($o=0; $o<=200; $o++) {
-                    $ora = date("H:i",mktime($beginora,$beginperc+$o*$binterval,0,date("m"),date("d"),date("Y")));
+
+                $step = 0;
+                $timeLoopEnd = false;
+                while (!$timeLoopEnd) {
+                    $ora = date("H:i",mktime($beginora,$beginperc+$step*$binterval,0,date("m"),date("d"),date("Y")));
                     if (strtotime($ora)>=strtotime($rowmax["maxrendeles"])) {
                         break;
                     }
+                    $step ++;
 
                     $napHTML.="<div style='text-align:center;'>";
 
@@ -198,15 +202,17 @@ class BookingService {
                         if (empty($availableData["error"])) {
                             $buttonTitle = "";
                             $buttonClass = "foglalhatobtn";
+                            $buttonJava = "chooseIdoPont(\"{$nap}\",{$_SESSION["orvosselected"]});return false;";
                         } else {
                             $buttonTitle = "";
                             $buttonClass = "foglaltbtn";
                             $buttonJava  = "nemfog();return false;";
                         }
                         $ora = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
-                        $o = 1000;
+                        $timeLoopEnd = true;
                         $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
-                        //$btn.= print_r($availableData, true);
+                        $btn.= implode(",", $this->packContentTypes);
+                        $btn.= print_r($availableData, true);
                     }
 
                     $napHTML.=$btn;
@@ -236,7 +242,10 @@ class BookingService {
             header("Pragma: no-cache");
             header("Expires: 0");
 
-            if (!$odata = $this->selectOrvosForIdopont($_POST["idopont"],$_POST["helyszin"],$_POST["szurestipusid"],$_POST["orvos"])) {
+            $this->helyszin    = intval($_POST["helyszin"]);
+            $this->szuresTipus = intval($_POST["szurestipusid"]);
+
+            if (!$odata = $this->selectOrvosForIdopont($_POST["idopont"], $_POST["orvos"])) {
                 die("Ezt az időpontot időközben lefoglalták!");
             }
 
@@ -273,32 +282,7 @@ class BookingService {
         $error = "";
         $timeTableForPackage = [];
 
-        $typeWhere = "instr(tipusok, '|{$this->szuresTipus}|')";
-        foreach ($this->packContentTypes as $packTypeId) {
-            $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
-        }
-
-        /*
-        $res = sql_query("SELECT * FROM orvos_beosztas b 
-        LEFT JOIN orvosok o ON o.id=b.orvosid 
-        WHERE b.helyszinid=?
-        AND ({$typeWhere})
-        AND b.cegid = ?
-        AND (nap=WEEKDAY('{$day}')+1 or beonap='{$day}')
-        AND b.aktiv=1
-        AND o.aktiv=1", array($this->helyszin, $_SESSION["helyszindata"]["id"], ));
-
-        $requiredDoctorsForPack = [];
-        while ($row = sql_fetch_array($res)) {
-            $requiredDoctorsForPack[] = $row["orvosid"];
-        }
-        $requiredDoctorsForPack = array_unique($requiredDoctorsForPack);
-        */
-
-
-
-        foreach ($this->packContentTypes as $packTypeId) {
-
+         foreach ($this->packContentTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
                     $interval  = $beoData["binterval"];
@@ -318,18 +302,58 @@ class BookingService {
                             $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "orvosid" => $beoData["orvosid"]];
                             break 2;
                         }
-
                     }
-
-            //        if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $this->helyszin)) {
-
-            //        }
                 }
             }
         }
 
+        if (count($timeTableForPackage) < count($this->packContentTypes)) {
+            $error = "Nincs időpont erre a napra!";
+        }
+
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
     }
+
+    public function selectOrvosForIdopont($idopont, $orvos=0) {
+        $nap   = substr($idopont,0,10);
+        $ora   = substr($idopont,11,5);
+        $cegid = $_SESSION["helyszindata"]["id"];
+        $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
+
+        if ($this->szuresTipusData["ispack"] == 1) {
+            $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
+
+            $packTimeData = $this->getPackageAvailabilityForDay($nap);
+            if (empty($packTimeData["error"])) {
+                return array("onlytel" => 0, "tel" => "");
+            } else {
+                return false;
+            }
+        }
+
+        //időpontra beosztott orvosok kiolvasása
+        $resb=sql_query("SELECT * FROM orvos_beosztas b 
+		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
+		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(ig)>TIME(?) AND INSTR(b.tipusok,?)
+		".($orvos==0?"":"and b.orvosid='{$orvos}'")." 
+		ORDER BY o.onlytel,b.cegid DESC,o.id", array($this->helyszin, $cegid, $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
+
+        while ($rowb=sql_fetch_array($resb)) {
+            //orvos foglalt-e?
+            if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum=? AND cegid=? AND helyszinid=? AND orvosassigned=?", array($idopont, $cegid, $this->helyszin, $rowb["orvosid"])))) {
+                //nap foglalt-e
+                if (!sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? and (szurestipusid=0 or szurestipusid=?)",array($this->helyszin, $cegid, $nap, $this->szuresTipus)))) {
+                    //orvos szabad ->
+                    if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", array($rowb["orvosid"], $nap, $nap)))) {
+                        //+nincs szabadságon
+                        return $rowb;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 
     private function getSzunnapok() {
         $szunnapok[]="";
@@ -526,35 +550,6 @@ class BookingService {
         return true;
     }
 
-    function selectOrvosForIdopont($idopont,$helyszinid,$szurestipusid,$orvos=0) {
-        $nap=substr($idopont,0,10);
-        $ora=substr($idopont,11,5);
-        $helyszinid=intval($helyszinid);
-        $cegid=$_SESSION["helyszindata"]["id"];
-
-        //időpontra beosztott orvosok kiolvasása
-        $resb=sql_query("SELECT * FROM orvos_beosztas b 
-		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		WHERE b.`helyszinid`='{$helyszinid}' and (b.cegid='{$cegid}' or b.cegid=0) AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}') AND INSTR(b.tipusok,'|".intval($szurestipusid)."|')
-		".($orvos==0?"":"and b.orvosid='{$orvos}'")." 
-		ORDER BY o.onlytel,b.cegid DESC,o.id");
-
-        while ($rowb=sql_fetch_array($resb)) {
-            //orvos foglalt-e?
-            if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum='".addslashes($idopont)."' AND cegid='{$cegid}' AND helyszinid='{$helyszinid}' AND orvosassigned='{$rowb["orvosid"]}'"))) {
-                //nap foglalt-e
-                if (!sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? and (szurestipusid=0 or szurestipusid=?)",array($helyszinid,$cegid,$nap,$szurestipusid)))) {
-                    //orvos szabad ->
-                    if (!sql_fetch_array(sql_query("select * from szabadsag where oid='{$rowb["orvosid"]}' and datumtol<='{$nap}' and datumig>='{$nap}'"))) {
-                        //+nincs szabadságon
-                        return $rowb;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
 
     public function szuresTipusValasztoNew($helyszinid, $selected=0, $onlyselected=0) {
         $tipusok = array();
@@ -649,14 +644,13 @@ class BookingService {
         return $h;
     }
 
-    public function checkIdopontSzabad($data)
-    {
+    public function checkIdopontSzabad($data) {
         //TODO: időpont szabadság vizsgálása még kell ide..
         //$_POST["datum"]
         //$_POST["helyszin"]
         //$_POST["szurestipus"]
 
-        if ($this->selectOrvosForIdopont($data["datum"], $data["helyszin"], $data["szurestipus"], $data["orvosselected"])) {
+        if ($this->selectOrvosForIdopont($data["datum"], $data["orvosselected"])) {
             return true;
         }
         return false;
@@ -997,6 +991,114 @@ END:VCALENDAR";
         return;
     }
 
+
+    public function addReservation($data) {
+        $cegId = $_SESSION["helyszindata"]["id"];
+
+        if (!isset($data["tudoszuro"])) {
+            $data["tudoszuro"] = 0;
+        }
+
+        $rn = rand(1000000, 9999999);
+
+        $paciensId = 0;
+
+        if (isset($_SESSION["user"]["id"])) {
+            $paciensId = intval($_SESSION["user"]["id"]);
+        } else {
+            if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($data['taj'], $data['email'], $cegId)))) {
+                $paciensId = $userInfo['id'];
+            } else {
+                sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['tel'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
+                $paciensId = sql_insert_id();
+            }
+        }
+
+        sql_query("insert into foglalasok set 
+            regdatum=now(),
+            paciensid=?,
+            cegid=?,
+            datum=?,
+            rinterval=?,
+            telephely=?,
+            helyszinid=?,
+            szurestipusid=?,
+            nev=?,
+            email=?,
+            telefon=?,
+            szuldatum=?,
+            szulhely=?,
+            anyjaneve=?,
+            neme=?,
+            taj=?,
+            irsz=?,
+            varos=?,
+            utca=?,
+            megj=?,
+            munkakor=?,
+            tudoszuro=?,
+            rlang=?,
+            rkod=?"
+        , array(
+            $paciensId,
+            $cegId,
+            $data["datum"],
+            intval($data["rinterval"]),
+            $data["telephely"],
+            $data["helyszin"],
+            $data["szurestipus"],
+            $data["nev"],
+            $data["email"],
+            $data["telefon"],
+            $data["szuldatum"],
+            $data["szulhely"],
+            $data["anyjaneve"],
+            $data["neme"],
+            $data["taj"],
+            $data["irsz"],
+            $data["varos"],
+            $data["utca"],
+            $data["megj"],
+            $data["munkakor"],
+            $data["tudoszuro"],
+            $_COOKIE["lang"],
+            $rn));
+
+        $fid = sql_insert_id();
+        $this->updateFoglalasData($fid);
+
+        $oid = $this->selectFreeOrvosForIdopont($fid);
+        sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
+
+        if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
+            sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));
+            sql_query("update fogalalasok set megj=? where id=?", array($rowb["megj"], $fid));
+            unset($_SESSION["beutaloid"]);
+        }
+
+        //altipusok tárolása
+        $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]));
+        while ($row = sql_fetch_array($res)) {
+            if (isset($data["altipus{$row["id"]}"])) {
+                sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
+            }
+        }
+
+        if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
+            //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
+            $forwardURL = "index.php?page=bookingvalidate&id={$fid}&rk={$rn}";
+        } else {
+            //visszaigazolást kérünk
+            $this->bookingService->sendVisszaIgazolas($fid);
+            $forwardURL = "index.php?page=bookingsuccessful";
+        }
+
+        return $forwardURL;
+    }
+
+    public function addSubReservation() {
+
+    }
 
 }
 

@@ -45,25 +45,9 @@ class RegistrationPage extends CorePage {
 
             if (!isset($_POST["aszf"])) $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
 
+            $this->formError.= $this->utils->checkCaptcha();
 
-            if (isset($_POST["g-recaptcha-response"])) {
-                $captcha = $_POST["g-recaptcha-response"];
-            }
-            if (isset($captcha)) {
-                if (!$captcha) {
-                    $this->formError .= "{$webText["captchaerror1"]}<br/>";
-                } else {
-                    $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                    if ($response["success"] == false) {
-                        $this->formError .= "{$webText["captchaerror2"]}<br/>";
-                    }
-                }
-            } else {
-                $this->formError .= "{$webText["captchaerror3"]}<br/>";
-            }
-
-
-            if ($this->formError == "") {
+            if (empty($this->formError)) {
                 $rn = rand(11000, 98000);
 
                 sql_query("insert into felhasznalok set

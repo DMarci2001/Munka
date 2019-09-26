@@ -884,4 +884,27 @@ class Utils {
         return $hidden;
     }
 
+    public function checkCaptcha() {
+        $lang = new Lang();
+        $webText = $lang->webText;
+
+        $error = "";
+        if (isset($_POST["g-recaptcha-response"])) {
+            $captcha = $_POST["g-recaptcha-response"];
+        }
+        if (isset($captcha)) {
+            if (!$captcha) {
+                $error = "{$webText["captchaerror1"]}<br/>";
+            } else {
+                $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
+                if ($response["success"] == false) {
+                    $error = "{$webText["captchaerror2"]}<br/>";
+                }
+            }
+        } else {
+            $error = "{$webText["captchaerror3"]}<br/>";
+        }
+        return $error;
+    }
+
 }

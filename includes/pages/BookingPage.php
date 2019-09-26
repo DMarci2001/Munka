@@ -84,6 +84,9 @@ class BookingPage extends CorePage {
             if ($_POST["datum"] == "") $this->formError .= "{$webText["idopontkotelezo"]}<br/>";
             if ($_POST["szurestipus"] == "0") $this->formError .= "{$webText["szurestipuskotelezo"]}<br/>";
 
+            $this->bookingService->szuresTipus = intval($_POST["szurestipus"]);
+            $this->bookingService->helyszin = intval($_POST["helyszin"]);
+            $this->bookingService->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
                 if (empty($_POST["email"])) {
@@ -162,76 +165,14 @@ class BookingPage extends CorePage {
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
             if (!isset($_SESSION["user"])) {
-                if (isset($_POST["g-recaptcha-response"])) $captcha = $_POST["g-recaptcha-response"];
-                if (isset($captcha)) {
-                    if (!$captcha) {
-                        $this->formError .= "{$webText["captchaerror1"]}<br/>";
-                    } else {
-                        $response = json_decode(file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=6LfCaTIUAAAAAF1-t94n7TBAsKov_dglwP6b8Luo&response=" . urlencode($captcha) . "&remoteip=" . $_SERVER["REMOTE_ADDR"]), true);
-                        if ($response["success"] == false) {
-                            $this->formError .= "{$webText["captchaerror2"]}<br/>";
-                        }
-                    }
-                } else {
-                    $this->formError .= "{$webText["captchaerror3"]}<br/>";
-                }
+                $this->formError.= $this->utils->checkCaptcha();
             }
 
 
-            if ($this->formError == "") {
-                if (!isset($_POST["tudoszuro"])) {
-                    $_POST["tudoszuro"] = 0;
-                }
+            if (empty($this->formError)) {
+                $forwardURL = $this->bookingService->addReservation($_POST);
 
-                $rn = rand(1000000, 9999999);
-
-                $paciensId = 0;
-
-                if (!isset($_SESSION["user"]["id"])) {
-                    if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($_REQUEST['taj'], $_REQUEST['email'], $_SESSION["helyszindata"]["id"])))) {
-                        $paciensId = $userInfo['id'];
-                    } else {
-                        sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($_SESSION["helyszindata"]["id"], $_REQUEST['taj'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['tel'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum']));
-                        $paciensId = sql_insert_id();
-                    }
-                }
-
-                if (isset($_SESSION["user"]["id"])) {
-                    $paciensId = intval($_SESSION["user"]["id"]);
-                }
-
-                sql_query("insert into foglalasok set regdatum=now(),paciensid=?,cegid=?,datum=?,rinterval=?,telephely=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,megj=?,munkakor=?,tudoszuro=?,rlang=?,rkod=?"
-                    , array($paciensId, $_SESSION["helyszindata"]["id"], $_POST["datum"], intval($_POST["rinterval"]), $_POST["telephely"], $_POST["helyszin"], $_POST["szurestipus"], $_POST["nev"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"], $_POST["neme"], $_POST["taj"], $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["megj"], $_POST["munkakor"], $_POST["tudoszuro"], $_COOKIE["lang"], $rn));
-
-                $fid = sql_insert_id();
-                $this->bookingService->updateFoglalasData($fid);
-
-                $oid = $this->bookingService->selectFreeOrvosForIdopont($fid);
-                sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
-
-                if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
-                    sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));
-                    sql_query("update fogalalasok set megj=? where id=?", array($rowb["megj"], $fid));
-                    unset($_SESSION["beutaloid"]);
-                }
-
-                //altipusok tárolása
-                $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $_POST["szurestipus"]));
-                while ($row = sql_fetch_array($res)) {
-                    if (isset($_POST["altipus{$row["id"]}"])) {
-                        sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
-                    }
-                }
-
-                if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
-                    //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
-                    header("location:index.php?page=bookingvalidate&id={$fid}&rk={$rn}");
-                } else {
-                    //visszaigazolást kérünk
-                    $this->bookingService->sendVisszaIgazolas($fid);
-                    header("location:index.php?page=bookingsuccessful");
-                }
-
+                header("location:{$forwardURL}");
                 die();
             }
         }

@@ -69,6 +69,7 @@ function nemfogs2() {
 function clearIdopontValaszto() {
     $("#datum").val("");
     $("#idopontvalasztodiv").html("");
+    $("#datum").css("background-image","");
 }
 
 function showTipusMegj(tipusid) {
@@ -94,6 +95,7 @@ function showTipusMegj(tipusid) {
 function clearSzuresTipus(hid) {
     $("#szurestipusvalaszto").load("index.php?szurestipusrefresh="+hid);
     $("#szurestipusmegj").html("");
+    $("#datum").css("background-image","");
     //showTipusMegj($("#szurestipus").val());
 }
 
@@ -110,7 +112,24 @@ function chooseIdoPont(idopont,orvos) {
             $("#datum").val(idopont);
             $("#rinterval").val(rinterval);
             $("#orvosselected").val(orvos);
-            $("#idopontvalasztodiv").slideUp(400, function() {
+            animateIdoPontValaszto();
+            $("#warnidopontpress").show();
+            return;
+        }
+        myAlert(msg);
+    });
+}
+
+function animateIdoPontValaszto() {
+    $("#idopontvalasztodiv").slideUp(400, function() {
+        $("#datum").animate({
+            backgroundColor: '#41b6c6',
+            color: '#fff'
+        }, 100, function() {
+            $("#datum").animate({
+                backgroundColor: '#fff',
+                color: '#555'
+            }, 100, function() {
                 $("#datum").animate({
                     backgroundColor: '#41b6c6',
                     color: '#fff'
@@ -119,33 +138,13 @@ function chooseIdoPont(idopont,orvos) {
                         backgroundColor: '#fff',
                         color: '#555'
                     }, 100, function() {
-                        $("#datum").animate({
-                            backgroundColor: '#41b6c6',
-                            color: '#fff'
-                        }, 100, function() {
-                            $("#datum").animate({
-                                backgroundColor: '#fff',
-                                color: '#555'
-                            }, 100, function() {
-                                $("#datum").css("background-image","url(images/check.png)");
-                            });
-                        });
+                        $("#datum").css("background-image","url(images/check.png)");
                     });
                 });
             });
-            $("#warnidopontpress").show();
-
-
-
-
-
-            return;
-        }
-        myAlert(msg);
+        });
     });
-
 }
-
 
 function rendelesreszlet(oid) {
     if ($("#rendelesreszlet"+oid).is(":visible")) {
