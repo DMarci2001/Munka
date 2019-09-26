@@ -4,10 +4,11 @@ class BookingService {
     private $lang;
     private $utils;
     private $packContentTypes = [];
-    private $helyszin;
-    private $szuresTipus;
+    private $szuresTipusData;
     private $honnan;
     private $neme;
+    public $helyszin = 0;
+    public $szuresTipus = 0;
 
     public function __construct()
     {
@@ -28,13 +29,14 @@ class BookingService {
         if (isset($_GET["showidopontvalasztov2"])) {
             $webText = $this->lang->webText;
 
-            $html = "";
             header('Content-Type: application/json');
 
-            $this->helyszin    = intval($_GET["helyszin"]);
-            $this->szuresTipus = intval($_GET["szurestipus"]);
-            $this->neme        = intval($_GET["neme"]);
-            $this->honnan      = intval($_GET["honnan"]);
+            $html                  = "";
+            $this->helyszin        = intval($_GET["helyszin"]);
+            $this->szuresTipus     = intval($_GET["szurestipus"]);
+            $this->neme            = intval($_GET["neme"]);
+            $this->honnan          = intval($_GET["honnan"]);
+            $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
 
             if ($this->helyszin == 0) {
                 echo json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
@@ -51,7 +53,7 @@ class BookingService {
                 die;
             }
 
-            if (!$rowmax = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and instr(tipusok,?) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"], "|{$this->szuresTipus}|")))) {
+            if (!$rowmax = $this->getMinMax($this->szuresTipus, $this->packContentTypes)) {
                 echo json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
                 die;
             }
@@ -143,7 +145,6 @@ class BookingService {
                     if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
                         //szabad orvos kiválasztása
                         foreach ($beos as &$beoData) {
-                            $vanRendeles = true;
                             if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $this->helyszin)) {
                                 $numRendeles++;
                                 $orvosNevek[] = $beoData["orvosnev"];
@@ -189,6 +190,23 @@ class BookingService {
                         $buttonJava = "nemfogs2();return false;";
                         $buttonClass.=" halv";
                         $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
+                    }
+
+                    //csomag override
+                    if (!empty($this->packContentTypes)) {
+                        $availableData = $this->getPackageAvailabilityForDay($nap);
+                        if (empty($availableData["error"])) {
+                            $buttonTitle = "";
+                            $buttonClass = "foglalhatobtn";
+                        } else {
+                            $buttonTitle = "";
+                            $buttonClass = "foglaltbtn";
+                            $buttonJava  = "nemfog();return false;";
+                        }
+                        $ora = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
+                        $o = 1000;
+                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
+                        //$btn.= print_r($availableData, true);
                     }
 
                     $napHTML.=$btn;
@@ -241,6 +259,77 @@ class BookingService {
 
     }
 
+
+    private function getMinMax($szuresTipus, $packContentTypes = []) {
+        $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
+        foreach ($packContentTypes as $packTypeId) {
+            $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
+        }
+
+        return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+    }
+
+    public function getPackageAvailabilityForDay($day) {
+        $error = "";
+        $timeTableForPackage = [];
+
+        $typeWhere = "instr(tipusok, '|{$this->szuresTipus}|')";
+        foreach ($this->packContentTypes as $packTypeId) {
+            $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
+        }
+
+        /*
+        $res = sql_query("SELECT * FROM orvos_beosztas b 
+        LEFT JOIN orvosok o ON o.id=b.orvosid 
+        WHERE b.helyszinid=?
+        AND ({$typeWhere})
+        AND b.cegid = ?
+        AND (nap=WEEKDAY('{$day}')+1 or beonap='{$day}')
+        AND b.aktiv=1
+        AND o.aktiv=1", array($this->helyszin, $_SESSION["helyszindata"]["id"], ));
+
+        $requiredDoctorsForPack = [];
+        while ($row = sql_fetch_array($res)) {
+            $requiredDoctorsForPack[] = $row["orvosid"];
+        }
+        $requiredDoctorsForPack = array_unique($requiredDoctorsForPack);
+        */
+
+
+
+        foreach ($this->packContentTypes as $packTypeId) {
+
+            if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
+                foreach ($beos as &$beoData) {
+                    $interval  = $beoData["binterval"];
+                    $step      = 0;
+                    $beoMinMax = $this->getMinMax($packTypeId);
+                    $beginora  = intval(substr($beoMinMax["minrendeles"],0,2));
+                    $beginperc = intval(substr($beoMinMax["minrendeles"],3,2));
+
+                    while (true) {
+                        $ora = date("H:i", mktime($beginora, $beginperc + $step * $interval, 0, date("m"), date("d"), date("Y")));
+                        if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
+                            break;
+                        }
+                        $step++;
+
+                        if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $this->helyszin)) {
+                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "orvosid" => $beoData["orvosid"]];
+                            break 2;
+                        }
+
+                    }
+
+            //        if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $this->helyszin)) {
+
+            //        }
+                }
+            }
+        }
+
+        return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
+    }
 
     private function getSzunnapok() {
         $szunnapok[]="";
@@ -309,9 +398,13 @@ class BookingService {
 
     private function getPackContentTypes($szuresTipusId) {
         $types = [];
-        $res = sql_query("select * from szurescsomagok_kapcs where csomagid=?", array($szuresTipusId));
-        while ($row = sql_fetch_array($res)) {
-            $types[] = $row["szurestipusid"];
+        if ($this->szuresTipusData["ispack"] == 1) {
+            $res = sql_query("select * from szurescsomagok_kapcs where csomagid=?", array($szuresTipusId));
+            while ($row = sql_fetch_array($res)) {
+                if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme) {
+                    $types[] = $row["szurestipusid"];
+                }
+            }
         }
         return $types;
     }
