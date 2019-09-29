@@ -3,12 +3,14 @@
 class BookingService {
     private $lang;
     private $utils;
-    private $packContentTypes = [];
+    public $packContentTypes = [];
     private $honnan;
     private $neme;
     public $helyszin = 0;
     public $szuresTipus = 0;
     public $szuresTipusData;
+
+    public $szuresTipusMap = [];
 
     public function __construct()
     {
@@ -271,9 +273,9 @@ class BookingService {
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
-        foreach ($packContentTypes as $packTypeId) {
-            $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
-        }
+        //foreach ($packContentTypes as $packTypeId) {
+        //    $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
+        //}
 
         return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
     }
@@ -282,7 +284,17 @@ class BookingService {
         $error = "";
         $timeTableForPackage = [];
 
-         foreach ($this->packContentTypes as $packTypeId) {
+        $checkForTypes = $this->packContentTypes;
+        $checkForTypes[] = $this->szuresTipus; //csekkoljuk magát csomagot is, hogy van-e benne hely
+
+        if (empty($this->szuresTipusMap)) {
+            $res = sql_query("select * from szurestipusok");
+            while ($row = sql_fetch_array($res)) {
+                $this->szuresTipusMap[] = $row;
+            }
+        }
+
+        foreach ($checkForTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
                     $interval  = $beoData["binterval"];
@@ -305,10 +317,13 @@ class BookingService {
                     }
                 }
             }
+            if (!isset($timeTableForPackage[$packTypeId])) {
+                $error.="nincs időpont erre: {$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+            }
         }
 
         if (count($timeTableForPackage) < count($this->packContentTypes)) {
-            $error = "Nincs időpont erre a napra!";
+            //$error = "Nincs időpont erre a napra!";
         }
 
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
@@ -768,6 +783,22 @@ class BookingService {
 
             $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
 
+            $packText = "";
+            $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f
+            LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid
+            WHERE parentid=?", array($id));
+            while ($rowcs = sql_fetch_array($rescs)) {
+                if ($row["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
+                if ($row["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
+                if (empty($packText)) {
+                    $packText.="<br/>Csomag tartalma:<br/>";
+                }
+                $packText.="{$rowcs["megnev"]}<br/>";
+            }
+            if (!empty($packText)) {
+                $packText.="<br/>";
+            }
+
             sql_query("update foglalasok set userertesitve=1 where id='{$id}'");
 
             $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
@@ -788,6 +819,7 @@ class BookingService {
             $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
             $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
             $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
+            $mbody .= "{$packText}";
             $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
 
             while ($rowv = sql_fetch_array($resv)) {
@@ -832,28 +864,35 @@ class BookingService {
         }
     }
 
-    public function sendToCegAndOrvos($id, $force=0) {
+    public function sendToCegAndOrvos($id, $force = 0, $test = 0) {
         $row = sql_fetch_array(sql_query("SELECT * FROM foglalasok f WHERE f.id=?",array($id)));
 
-        if ($row["ertesitve"] == 1 && $force == 0) return;
+        if ($row["ertesitve"] == 1 && $force == 0) {
+            return;
+        }
+
+        $fids[] = $id;
+        $res = sql_query("select id from foglalasok where parentid=?", array($id));
+        while ($row = sql_fetch_array($res)) {
+            $fids[] = $row["id"];
+        }
 
         //orvos kikeresése és értesítése
-        if ($rowf = sql_fetch_array(sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.calendaritem FROM foglalasok f
+        $resf = sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.calendaritem FROM foglalasok f
 		LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
 		LEFT JOIN cegek c on c.id=f.cegid
 		LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-		WHERE f.id=?",array($id)))) {
+		WHERE f.id in (".implode(",", $fids).")");
 
+        while ($rowf = sql_fetch_array($resf)) {
             $cegId = $rowf["cegid"];
-            //$reso=selectOrvosForFoglalas($id);
-
-            //ha cégnek is a foglalás nyelvén menjen az értesítés, akkor majd kell a következő 2 sor
-            //if ($rowf["rlang"] == "en" && $rowf["szurestipus_en"] != "") $rowf["szurestipus"] = $rowf["szurestipus_en"];
-            //if ($rowf["rlang"] == "de" && $rowf["szurestipus_de"] != "") $rowf["szurestipus"] = $rowf["szurestipus_de"];
 
             if ($rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($rowf["orvosassigned"])))) {
                 $resp = sql_query("select * from smsphones where orvosid=? and smsfoglalas=1 and smsgroupfoglalas=0 and instr(cegek,'|{$cegId}|')",array($rowo["id"]));
                 while ($rowp = sql_fetch_array($resp)) {
+                    if ($test == 1) {
+                        $rowp["tel"] = "062099961833";
+                    }
                     $this->utils->sendSMS(trim($rowp["tel"]),Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
                 }
 
@@ -862,7 +901,7 @@ class BookingService {
 
                     $mail = new PHPMailer();
                     $mail->FromName = Booking_Constants::COMPANY_NAME;
-                    if ($_SERVER["REMOTE_ADDR"] == "84.2.96.42") {
+                    if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
                         $mail->AddAddress($rowo["email"]);
@@ -870,11 +909,11 @@ class BookingService {
 
                     if ($rowo["visszaigazol"]==1 && $rowo["visszaigazolemail"]!="") {
                         $mbody.="Kedves {$rowo["nev"]}!<br>
-                    <br>
-                    Foglalása érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
-                    <br>
-                    <hr>
-                    <br>";
+                            <br>
+                            Foglalása érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
+                            <br>
+                            <hr>
+                            <br>";
                         $mail->From=$rowo["visszaigazolemail"];
                         $mail->AddReplyTo($rowo["visszaigazolemail"]);
                     } else {
@@ -917,12 +956,33 @@ class BookingService {
         WHERE f.id='{$id}'");
         if ($row=sql_fetch_array($res)) {
             if ($row["foglalasemail"] == 1) {
+
+                $packText = "";
+                $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f
+                    LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid
+                    WHERE parentid=?", array($id));
+                while ($rowcs = sql_fetch_array($rescs)) {
+                    if ($row["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
+                    if ($row["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
+                    if (empty($packText)) {
+                        $packText.="<br/>Csomag tartalma:<br/>";
+                    }
+                    $packText.="{$rowcs["megnev"]}<br/>";
+                }
+                if (!empty($packText)) {
+                    $packText.="<br/>";
+                }
+
                 $mail = new PHPMailer();
                 $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
                 $mail->FromName = Booking_Constants::COMPANY_NAME;
-                $mail->AddAddress($row["cegemail"]);
-                if ($row["hmedemail"] != "") {
-                    $mail->AddAddress($row["hmedemail"]);
+                if ($test == 1) {
+                    $mail->AddAddress("jns@jns.hu");
+                } else {
+                    $mail->AddAddress($row["cegemail"]);
+                    if ($row["hmedemail"] != "") {
+                        $mail->AddAddress($row["hmedemail"]);
+                    }
                 }
                 $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                 $mail->IsHTML(true);
@@ -936,6 +996,7 @@ class BookingService {
                 $mbody.="Telefon: {$row["telefon"]}<br><br>";
                 $mbody.="<b>Időpont: {$row["datum"]}</b><br><br>";
                 $mbody.="Szűréstípus: {$row["szurestipus"]}<br>";
+                $mbody.=$packText;
                 $mbody.="Helyszín: {$row["helyszin"]}<br>";
                 if ($row["megj"]!="") $mbody.="Megjegyzés: {$row["megj"]}<br>";
                 $mbody.="<br/>";
@@ -1084,20 +1145,95 @@ END:VCALENDAR";
             }
         }
 
+        $this->addSubReservation($data, $fid);
+
         if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
             //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
             $forwardURL = "index.php?page=bookingvalidate&id={$fid}&rk={$rn}";
         } else {
             //visszaigazolást kérünk
-            $this->bookingService->sendVisszaIgazolas($fid);
+            $this->sendVisszaIgazolas($fid);
             $forwardURL = "index.php?page=bookingsuccessful";
         }
 
         return $forwardURL;
     }
 
-    public function addSubReservation() {
+    public function addSubReservation($data, $parentId) {
+        if ($this->szuresTipusData["ispack"] == 1) {
+            $map = $this->getPackageAvailabilityForDay($data["datum"]);
 
+            $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?",array($parentId)));
+
+            foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
+                if ($parentReservationData["szurestipusid"] == $subTypeId) {
+                    //a parent tipus időpontját pontosítjuk
+                    sql_query("update foglalasok set datum=?, orvosassigned=? where id=?", array($subData["idopont"], $subData["orvosid"], $parentId));
+                    continue;
+                }
+
+                $rn = rand(1000000, 9999999);
+
+                sql_query("insert into foglalasok set 
+                        parentid=?,
+                        orvosassigned=?,
+                        regdatum=now(),
+                        paciensid=?,
+                        cegid=?,
+                        datum=?,
+                        rinterval=?,
+                        telephely=?,
+                        helyszinid=?,
+                        szurestipusid=?,
+                        nev=?,
+                        email=?,
+                        telefon=?,
+                        szuldatum=?,
+                        szulhely=?,
+                        anyjaneve=?,
+                        neme=?,
+                        taj=?,
+                        irsz=?,
+                        varos=?,
+                        utca=?,
+                        megj=?,
+                        munkakor=?,
+                        tudoszuro=?,
+                        rlang=?,
+                        rkod=?"
+                    , array(
+                        $parentId,
+                        $subData["orvosid"],
+                        $parentReservationData["paciensid"],
+                        $parentReservationData["cegid"],
+                        $subData["idopont"],
+                        0,
+                        $data["telephely"],
+                        $data["helyszin"],
+                        $subTypeId,
+                        $data["nev"],
+                        $data["email"],
+                        $data["telefon"],
+                        $data["szuldatum"],
+                        $data["szulhely"],
+                        $data["anyjaneve"],
+                        $data["neme"],
+                        $data["taj"],
+                        $data["irsz"],
+                        $data["varos"],
+                        $data["utca"],
+                        $data["megj"],
+                        $data["munkakor"],
+                        $data["tudoszuro"],
+                        $_COOKIE["lang"],
+                        $rn));
+
+            }
+
+            $fid = sql_insert_id();
+            sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)) where id=? and pass=''",array($fid));
+
+        }
     }
 
 }

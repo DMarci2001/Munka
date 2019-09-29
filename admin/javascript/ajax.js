@@ -1,6 +1,3 @@
-var rendelestimer=10;
-
-
 $(document).ready(function() {
     $("#loginbox").css("margin-top",$(window).height()/2 - $("#loginbox").height()/2);
     //$("#loginbox").css("margin-left",-$("#loginbox").width()/2);
@@ -110,80 +107,6 @@ function saveTipusList(beosztasid) {
     });
 
 
-}
-
-
-(function($){
-
-    $.extend({
-        playSound: function(){
-            return $("<embed src='"+arguments[0]+"' hidden='true' autostart='true' loop='false' class='playSound'>").appendTo('body');
-        }
-    });
-
-})(jQuery);
-
-function toggleFSzerk(id) {
-    if ($("#fszerk"+id).is(":visible")) {
-        $("#fszerk"+id).hide();
-        $("#fview"+id).show();
-
-    } else {
-        $("#fszerk"+id).show();
-        $("#fview"+id).hide();
-    }
-}
-
-
-function rendelesreszlet(oid) {
-    if ($("#rendelesreszlet"+oid).is(":visible")) {
-        $("#rendelesreszlet"+oid).hide();
-    } else {
-        $("#rendelesreszlet"+oid).show();
-        $("#rendelesreszlet"+oid).load("index.php?rendelesreszlet="+oid);
-        $("#rendelesfej"+oid).attr('class', 'rendeles_megnezett');
-    }
-}
-
-//self.setInterval("rtimer()",1000);
-
-
-function rtimer() {
-    rendelestimer--;
-    if (rendelestimer<0) {
-        rendelestimer=60;
-        ujrendeles_lekerdezes();
-    }
-    $("#szamlalo").html(rendelestimer);
-}
-
-
-function ujrendeles_lekerdezes() {
-    $("#querystatus").html("lekérdezés folyamatban...");
-
-    $("#querystatus").load("index.php?checkneworder",null,
-
-        function(responseText){
-
-            if (responseText!="0") {
-                $("#statussor").html(responseText+" rendelés érkezett!");
-                $("#querystatus").html("");
-                $("#statussor").show();
-                //playSound();
-                //alert("Response:\n" + responseText);
-            }
-        });
-
-}
-
-
-function playSound() {
-    var flashvars = {};
-    var params = {};
-    params.wmode="transparent";
-    params.align="right";
-    var attributes = {};
-    swfobject.embedSWF("hangflash.swf", "sound", "1", "1", "8.0.0","swf/expressInstall.swf",flashvars, params, attributes);
 }
 
 var actualprefix=0

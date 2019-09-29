@@ -86,7 +86,7 @@ class BookingPage extends CorePage {
 
             $this->bookingService->szuresTipus = intval($_POST["szurestipus"]);
             $this->bookingService->helyszin = intval($_POST["helyszin"]);
-            $this->bookingService->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
+            $this->bookingService->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->bookingService->szuresTipus)));
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
                 if (empty($_POST["email"])) {
@@ -167,7 +167,6 @@ class BookingPage extends CorePage {
             if (!isset($_SESSION["user"])) {
                 $this->formError.= $this->utils->checkCaptcha();
             }
-
 
             if (empty($this->formError)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
