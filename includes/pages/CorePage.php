@@ -71,7 +71,7 @@ class CorePage {
     }
 
     public function isExtendedForm() {
-        return $_GET["page"] == "booking" && isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]));
+        return !isset($_SESSION["beutaloid"]) && $_GET["page"] == "booking" && isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]));
     }
 
     private function setLang() {

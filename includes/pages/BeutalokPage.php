@@ -10,6 +10,7 @@ class BeutalokPage extends CorePage {
         $webText = $this->lang->webText;
         $this->bookingService = new BookingService();
 
+        unset($_SESSION["beutaloid"]);
 
         if (isset($_GET["deltime"])) {
             $this->bookingService->deleteReservation($_GET["id"], $_GET["rk"]);
@@ -59,21 +60,29 @@ class BeutalokPage extends CorePage {
         echo "<div style='display:inline-block'>";
 
         while ($row=sql_fetch_array($res)) {
-            if ($_COOKIE["lang"]!="hu" && trim($row["tipusnev_{$_COOKIE["lang"]}"])!="") $row["tipusnev"]=$row["tipusnev_{$_COOKIE["lang"]}"];
+            if ($_COOKIE["lang"]!="hu" && trim($row["tipusnev_{$_COOKIE["lang"]}"])!="") {
+                $row["tipusnev"] = $row["tipusnev_{$_COOKIE["lang"]}"];
+            }
 
             echo "<div class='beutalobox'>";
             echo "<div style='font-size:24px;'>{$row["tipusnev"]} {$webText["beutalo"]}</div>";
             echo "<div style='font-size:14px;'>{$row["helyszinnev"]}</div>";
-            if ($row["naploszam"]!="") echo "<div style='font-size:14px;'>{$webText["naploszam"]}: {$row["naploszam"]}</div>";
+            if ($row["naploszam"] != "") {
+                echo "<div style='font-size:14px;'>{$webText["naploszam"]}: {$row["naploszam"]}</div>";
+            }
             echo "<div style='margin-top:0px;'>{$webText["kiadva"]}: ".substr($row["datum"],0,16)."</div>";
-            if ($row["foglalasid"]==0) {
-                echo "<div style='margin-top:10px;margin-bottom:5px;'><a href='index.php?page={$_GET["page"]}&page=booking&setbeutalo={$row["id"]}' class='newbutton blueversion'>{$webText["idopontfoglalasa"]}</a>";
-                if ($row["selfcreated"]==1) echo "&nbsp;&nbsp;<a onclick='return confirm(\"{$webText["biztostorlibeutalo"]}\");' href='index.php?page={$_GET["page"]}&delbeutalo={$row["id"]}' class='newbutton redversion'>{$webText["beutorlese"]}</a>";
+            if ($row["foglalasid"] == 0) {
+                echo "<div style='margin-top:10px;margin-bottom:5px;'><a href='index.php?page={$_GET["page"]}&page=booking&setbeutalo={$row["id"]}' class='newbutton'>{$webText["idopontfoglalasa"]}</a>";
+                if ($row["selfcreated"] == 1) {
+                    echo "&nbsp;&nbsp;<a onclick='return confirm(\"{$webText["biztostorlibeutalo"]}\");' href='index.php?page={$_GET["page"]}&delbeutalo={$row["id"]}' class='newbutton'>{$webText["beutorlese"]}</a>";
+                }
                 echo "</div>";
             } else {
-                if ($rowf=sql_fetch_array(sql_query("select * from foglalasok where id='{$row["foglalasid"]}'"))) {
+                if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id='{$row["foglalasid"]}'"))) {
                     echo "<div style='margin-top:10px;'><b>Időpont foglalva: ".substr($rowf["datum"],0,16)."</b>";
-                    if (strtotime("now")<strtotime($rowf["datum"])) echo " <a onclick='return confirm(\"{$webText["idopontdelconfirm"]}\");' href='index.php?page={$_GET["page"]}&deltime&id={$rowf["id"]}&rk={$rowf["rkod"]}' class='newbutton redversion' style='padding:2px 5px;font-size:12px;'>{$webText["idoponttorlese"]}</a>";
+                    if (strtotime("now") < strtotime($rowf["datum"])) {
+                        echo " <a onclick='return confirm(\"{$webText["idopontdelconfirm"]}\");' href='index.php?page={$_GET["page"]}&deltime&id={$rowf["id"]}&rk={$rowf["rkod"]}' class='newbutton' style='padding:2px 5px;font-size:12px;'>{$webText["idoponttorlese"]}</a>";
+                    }
                     echo "</div>";
                 }
             }

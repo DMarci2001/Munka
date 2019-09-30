@@ -3,6 +3,7 @@
 class BookingPage extends CorePage {
 
     private $bookingService;
+    public $beutaloData = null;
 
     public function __construct()
     {
@@ -222,7 +223,7 @@ class BookingPage extends CorePage {
         }
 
         if (isset($_SESSION["beutaloid"])) {
-            if (!$beutalodata=sql_fetch_array(sql_query("select * from beutalok where id='".intval($_SESSION["beutaloid"])."' and foglalasid=0"))) {
+            if (!$beutalodata = sql_fetch_array(sql_query("select * from beutalok where id=? and foglalasid=0", array($_SESSION["beutaloid"])))) {
                 echo "<div style=''>A beutalóval probléma adodott!</div>";
                 echo "<div style='margin-top:10px;'><a class='simabutton' href='index.php?page=beutalok'>{$webText["showbeutalobutton"]}</a></div>";
                 return;
@@ -242,12 +243,10 @@ class BookingPage extends CorePage {
             return;
         }
 
-
         if ($this->isExtendedForm()) {
             echo $this->_preSelectForm();
             return;
         }
-
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
         echo "<table>";
