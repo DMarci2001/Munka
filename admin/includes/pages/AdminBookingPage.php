@@ -56,6 +56,13 @@ class AdminBookingPage extends AdminCorePage
 
                 if ($this->adminUtils->isCegAdmin()) $cegId = $_SESSION["adminuser"]["cegid"];
 
+                if ($this->adminUtils->isCegAdmin()) {
+                    $cegIds = explode("|",$_SESSION["adminuser"]["cegjog"]);
+                    if (isset($cegIds[1])) {
+                        $cegId = intval($cegIds[1]);
+                    }
+                }
+
                 if ($_SESSION["adminuser"]["jog_nofoglimitset"]==0) {
                     if (!$this->bookingService->isOrvosAvailable($_GET["addidopont"], $_SESSION["helyszin"], $szuresTipusId)) {
                         die("errorNincs szabad orvos a megjelölt időpontra!");
@@ -308,10 +315,10 @@ class AdminBookingPage extends AdminCorePage
             }
 
             $beoRes=sql_query("SELECT b.*,min(tol) as mintol,max(ig) as maxig,o.nev as orvosnev,c.megnev as cegnev,group_concat(distinct c.megnev separator ', ') as cegek FROM orvos_beosztas b 
-		left join orvosok o on o.id=b.orvosid 
-		left join cegek c on c.id=b.cegid
-		WHERE b.helyszinid='".intval($_SESSION["helyszin"])."' and INSTR(tipusok,'|{$szuresTipus["id"]}|') AND (nap='{$wd}' OR (nap=10 AND beonap='{$nap}')) {$wCeg} and tol<>0 and ig<>0 
-		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 group by b.orvosid order by o.nev,nap,tol");
+            left join orvosok o on o.id=b.orvosid 
+            left join cegek c on c.id=b.cegid
+            WHERE b.helyszinid='".intval($_SESSION["helyszin"])."' and INSTR(tipusok,'|{$szuresTipus["id"]}|') AND (nap='{$wd}' OR (nap=10 AND beonap='{$nap}')) {$wCeg} and tol<>0 and ig<>0 
+            AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 group by b.orvosid order by o.nev,nap,tol");
             $beosztasok = $beoRes->fetchAll();
 
             $intervals = $this->_getIntervals($beosztasok);
@@ -365,11 +372,9 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<td valign='top' style='padding-right:10px;'><div style='font-size:16px;font-weight:bold;'>{$szuresTipus["megnev"]}</div>{$orvosok}</td>";
 
                 if ($minTol != "24:00") {
+                    $wfCeg = "";
+
                     $htmlout .= "<td valign='top'>";
-
-                    $wfCeg = $this->adminUtils->cegSQLFilter("f.cegid");
-                    //echo $wfCeg;
-
                     $htmlout .= "<table cellpadding='0' cellspacing='0'>";
                     for ($o = 0; $o < 3600; $o += $binterval) {
                         $ora = date("H:i", strtotime("{$minTol}:00 +{$o} minute"));
@@ -397,6 +402,10 @@ class AdminBookingPage extends AdminCorePage
                         $lastIdopont = "";
                         $foglalasButtonVolt = 0;
                         while ($rowf = sql_fetch_array($resf)) {
+                            $jogosult = true;
+                            if ($this->adminUtils->isCegAdmin() && substr_count($_SESSION["adminuser"]["cegjog"], "|{$rowf["cegid"]}|") == 0) {
+                                $jogosult = false;
+                            }
 
                             //itt csekkoljuk, hogy a megfelelő táblázatba tartozik-e a foglalás
                             if ($multiIntervalMode) {
@@ -426,43 +435,49 @@ class AdminBookingPage extends AdminCorePage
                             }
                             $htmlout .= "</td>";
                             $htmlout .= "<td valign='top'>";
-                            $htmlout .= "<a onclick='removeIdopont({$rowf["id"]});return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
-                            $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
-                            $htmlout .= "</td>";
-                            $htmlout .= "<td valign='top'>";
-                            $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
-
-                            $orvNev = "";
-                            if ($rowf["cegid"] == 0 && $rowf["orvosassigned"] == 0 && $orvosokNum > 1) $orvNev = "minden orvos";
-                            if ($rowf["orvosassigned"] != 0) $orvNev = trim($rowf["orvosnev"]);
-
-                            $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
-                            if ($orvNev != "" && $cegNev != "") $htmlout .= " &#187; ";
-                            $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
-                            if ($orvNev == "" && $cegNev == "") $htmlout .= "???";
-                            $htmlout .= "&nbsp;&nbsp;";
-
-                            $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"],  1) . "</div>";
-
-                            $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok kk LEFT JOIN kupon_lista kl ON kl.kuponid=kk.id WHERE kl.foglalasid = {$rowf["id"]}"));
-                            $kuponNotification = "";
-                            $help = "";
-                            if ($kupon['kedvezmeny_tipus'] == "szazalek") {
-                                $start = date("Y-m-d", strtotime($kupon["event_start"]));
-                                $end = date("Y-m-d", strtotime($kupon["event_end"]));
-                                $help = "title='{$start}->{$end}&nbsp;{$kupon["leiras"]}'";
-                                $kuponNotification = "[{$kupon['megnev']}:&nbsp;{$kupon['kedvezmeny']}%]";
+                            if ($jogosult) {
+                                $htmlout .= "<a onclick='removeIdopont({$rowf["id"]});return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
+                                $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
+                            } else {
+                                $htmlout .= "<span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;";
                             }
-                            if ($kupon['kedvezmeny_tipus'] == "fix") {
-                                $help = "title='{$kupon["event_start"]}->{$kupon["event_end"]}'";
-                                $kuponNotification = "[{$kupon['megnev']}:&nbsp;{$kupon['kedvezmeny']}Ft]";
-                            }
+                            $htmlout .= "</td>";
+                            if ($jogosult) {
+                                $htmlout .= "<td valign='top'>";
+                                $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
 
-                            $htmlout .= "</td>";
-                            $htmlout .= "<td valign='top'>";
-                            $htmlout .= $rowf["megj"] . "&nbsp;";
-                            $htmlout .= "<span {$help} style='color:#5e11a1;font-weight:bold'>{$kuponNotification}</span>";
-                            $htmlout .= "</td>";
+                                $orvNev = "";
+                                if ($rowf["cegid"] == 0 && $rowf["orvosassigned"] == 0 && $orvosokNum > 1) $orvNev = "minden orvos";
+                                if ($rowf["orvosassigned"] != 0) $orvNev = trim($rowf["orvosnev"]);
+
+                                $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
+                                if ($orvNev != "" && $cegNev != "") $htmlout .= " &#187; ";
+                                $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
+                                if ($orvNev == "" && $cegNev == "") $htmlout .= "???";
+                                $htmlout .= "&nbsp;&nbsp;";
+
+                                $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"], 1) . "</div>";
+
+                                $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok kk LEFT JOIN kupon_lista kl ON kl.kuponid=kk.id WHERE kl.foglalasid = {$rowf["id"]}"));
+                                $kuponNotification = "";
+                                $help = "";
+                                if ($kupon['kedvezmeny_tipus'] == "szazalek") {
+                                    $start = date("Y-m-d", strtotime($kupon["event_start"]));
+                                    $end = date("Y-m-d", strtotime($kupon["event_end"]));
+                                    $help = "title='{$start}->{$end}&nbsp;{$kupon["leiras"]}'";
+                                    $kuponNotification = "[{$kupon['megnev']}:&nbsp;{$kupon['kedvezmeny']}%]";
+                                }
+                                if ($kupon['kedvezmeny_tipus'] == "fix") {
+                                    $help = "title='{$kupon["event_start"]}->{$kupon["event_end"]}'";
+                                    $kuponNotification = "[{$kupon['megnev']}:&nbsp;{$kupon['kedvezmeny']}Ft]";
+                                }
+
+                                $htmlout .= "</td>";
+                                $htmlout .= "<td valign='top'>";
+                                $htmlout .= $rowf["megj"] . "&nbsp;";
+                                $htmlout .= "<span {$help} style='color:#5e11a1;font-weight:bold'>{$kuponNotification}</span>";
+                                $htmlout .= "</td>";
+                            }
                             $htmlout .= "</tr>";
                             $lastIdopont = $idopontShow;
                         }

@@ -62,7 +62,9 @@ class AdminArrivalsPage extends AdminCorePage
                 $resa=sql_query("SELECT * FROM arak WHERE INSTR(cegid,?) AND tipusid=? and csomag=0",array("|{$rowf["cegid"]}|",$rowf["szurestipusid"]));
                 while ($rowa=sql_fetch_array($resa)) {
                     if ($rowa["megnev"]=="") $rowa["megnev"]="Név nélküli kezelés";
-                    echo "<div><a href='#' onclick='addFizSzolg({$rowf["id"]},{$rowa["id"]});return false;'>+ {$rowa["megnev"]} (".number_format($rowa["price"])." Ft)</a></div>";
+                    echo "<div><a href='#' onclick='addFizSzolg({$rowf["id"]},{$rowa["id"]});return false;'>+ {$rowa["megnev"]}";
+                    //echo " (".number_format($rowa["price"])." Ft)";
+                    echo "</a></div>";
                 }
                 echo "<div><a href='#' onclick='addFizSzolg({$rowf["id"]},0);return false;'>Mégse</a></div>";
                 echo "</div>";

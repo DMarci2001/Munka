@@ -36,9 +36,8 @@ class CorePage {
         }
         //$GLOBALS["pagetitle"] = "{$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "");
 
-        if ($this->isExtendedForm()) {
-
-            $html = "<div style='display:table;width:100%;'>";
+        if ($this->isExtendedForm() && !isset($_SESSION["user"])) {
+            $html = "<div style='display:table;width:100%;padding-bottom:10px;'>";
             $html.= "<div class='fejlecdiv_hmm'>";
             $html.= "<div class='hmm_inner_text'>HMM Időpont foglalás v2<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>Küldetésünk az egészség!</span></div><br/>";
             //$html.= "<div class='hmm_inner_text' style='font-size:16px;'></div>";

@@ -334,8 +334,8 @@ input:not([type]), input[type="text"] , input[type="password"]{
 }
 
 .fejlecdiv_hmm {
-    /*background-image:url(https://www.hungariamed.hu/images/slide004.jpg);*/
-    background-image:url(/images/house.jpg);
+    background-image:url(https://www.hungariamed.hu/images/slide004.jpg);
+    /*background-image:url(/images/house.jpg);*/
     background-position: center top;
     background-size:cover;
     font-family:robotolight;

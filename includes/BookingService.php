@@ -94,12 +94,7 @@ class BookingService {
                 $wd  = date("N",strtotime("this week monday +{$fix} day"));  //day of week
 
                 $html.= "<td valign='top'>";
-
-                if ($nap == date("Y-m-d")) {
-                    $html.= "<div style='background:#607d8b;margin:0px 1px;padding:12px 10px 12px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
-                } else {
-                    $html.= "<div style='background:#607d8b;margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
-                }
+                $html.= "<div style='background:#607d8b;".($nap == date("Y-m-d")?"margin:0px 1px;padding:12px 10px 12px 10px":"margin:8px 1px;padding:4px 10px 4px 10px;").";color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
 
                 if (!$napiBeos = $this->getBeosztasok("{$nap}",$this->helyszin,$this->szuresTipus,$_SESSION["orvosselected"])) {
                     $html.= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$webText["nincsrendeles"]}</div>";
@@ -200,6 +195,7 @@ class BookingService {
 
                     //csomag override
                     if (!empty($this->packContentTypes)) {
+                        $btn = "";
                         $availableData = $this->getPackageAvailabilityForDay($nap);
                         if (empty($availableData["error"])) {
                             $buttonTitle = "";
@@ -212,9 +208,10 @@ class BookingService {
                         }
                         $ora = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
                         $timeLoopEnd = true;
-                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
-                        $btn.= implode(",", $this->packContentTypes);
-                        $btn.= print_r($availableData, true);
+                        $btn.= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                        $btn.= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
+                        //$btn.= implode(",",$this->packContentTypes);
+                        //$btn.= print_r($availableData, true);
                     }
 
                     $napHTML.=$btn;
@@ -290,7 +287,7 @@ class BookingService {
         if (empty($this->szuresTipusMap)) {
             $res = sql_query("select * from szurestipusok");
             while ($row = sql_fetch_array($res)) {
-                $this->szuresTipusMap[] = $row;
+                $this->szuresTipusMap[$row["id"]] = $row;
             }
         }
 
@@ -318,12 +315,20 @@ class BookingService {
                 }
             }
             if (!isset($timeTableForPackage[$packTypeId])) {
-                $error.="nincs időpont erre: {$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+                $text = "nincs időpont:<br/>";
+                if (substr_count($error, $text) == 0) {
+                    $error.= $text;
+                }
+                $error.="{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
             }
         }
 
         if (count($timeTableForPackage) < count($this->packContentTypes)) {
             //$error = "Nincs időpont erre a napra!";
+        }
+
+        if (strtotime("now")>strtotime("{$day} 00:00:00")) {
+            $error= "Erre a napra már nem lehet foglalni<br/>";
         }
 
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
@@ -1048,6 +1053,7 @@ END:VCALENDAR";
         if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and rkod=? and datum>now() and eljott=0", array($id, $kod)))) {
             sql_query("update beutalok set foglalasid='0' where foglalasid='{$row["id"]}'");
             sql_query("delete from foglalasok WHERE id='{$row["id"]}'");
+            sql_query("delete from foglalasok WHERE parentid='{$row["id"]}' and parentid<>0");
         }
         return;
     }

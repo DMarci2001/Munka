@@ -415,7 +415,7 @@ class BookingPage extends CorePage {
 
         $html = "";
 
-        $html.="<div style='padding:10px 0px;'>";
+        $html.="<div style='padding:0px 0px 10px 0px;;'>";
         $html.="<div>";
         $html.="<h2 style='text-transform: uppercase;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
 
