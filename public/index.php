@@ -2,7 +2,7 @@
 
 session_start();
 
-require_once "config.php";
+require_once "../autoload.php";
 
 $page = new Page();
 $page->showPage();

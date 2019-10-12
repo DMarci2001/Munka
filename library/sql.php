@@ -1,5 +1,10 @@
 <?php
 
+sql_connect();
+sql_query("SET NAMES utf8");
+sql_query("SET CHARACTER SET utf8");
+sql_query("SET COLLATION_CONNECTION='utf8_unicode_ci'");
+
 function sql_connect() {
     try {
         $GLOBALS["db"] = new PDO("mysql:host=".Booking_Constants::SQL_HOST.";dbname=".Booking_Constants::SQL_DB.";charset=utf8", Booking_Constants::SQL_USER, Booking_Constants::SQL_PASS);

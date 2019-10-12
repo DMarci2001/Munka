@@ -405,7 +405,7 @@ class BookingPage extends CorePage {
         $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>";
-        $html.= "<a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div><div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' />";
+        $html.= "idopontvalasztas\\";
         $html.= "</div>";
         return $html;
     }
