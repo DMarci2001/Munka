@@ -4,7 +4,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once(__DIR__ . "/library/BookingConstants_" .getConfigFile().".php");
+require_once(__DIR__ . "/library/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
 require_once(__DIR__ . "/library/Lang.php");
 require_once(__DIR__ . "/library/Settings.php");
@@ -38,30 +38,33 @@ require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
 
 //admin...
-require_once(__DIR__ . "/library/AdminPage.php");
-require_once(__DIR__ . "/library/AdminUser.php");
-require_once(__DIR__ . "/library/AdminUtils.php");
-require_once(__DIR__ . "/library/AdminBookingEditor.php");
-require_once(__DIR__ . "/library/AdminLeletService.php");
-require_once(__DIR__ . "/library/AdminProtocolService.php");
 
-require_once(__DIR__."/library/pages_admin/AdminCorePage.php");
-require_once(__DIR__."/library/pages_admin/AdminCalendarPage.php");
-require_once(__DIR__."/library/pages_admin/AdminBookingPage.php");
-require_once(__DIR__."/library/pages_admin/AdminLoginPage.php");
-require_once(__DIR__."/library/pages_admin/AdminArrivalsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminPlacesPage.php");
-require_once(__DIR__."/library/pages_admin/AdminScreeningsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminPatientsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminCompaniesPage.php");
-require_once(__DIR__."/library/pages_admin/AdminDoctorsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminLangSettingsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminSettingsPage.php");
-require_once(__DIR__."/library/pages_admin/AdminLogPage.php");
-require_once(__DIR__."/library/pages_admin/AdminStatPage.php");
-require_once(__DIR__."/library/pages_admin/AdminUsersPage.php");
-require_once(__DIR__."/library/pages_admin/AdminErrorPage.php");
+if (isset($GLOBALS["admin"])) {
+    require_once(__DIR__ . "/library/AdminPage.php");
+    require_once(__DIR__ . "/library/AdminUser.php");
+    require_once(__DIR__ . "/library/AdminUtils.php");
+    require_once(__DIR__ . "/library/AdminBookingEditor.php");
+    require_once(__DIR__ . "/library/AdminLeletService.php");
+    require_once(__DIR__ . "/library/AdminProtocolService.php");
+    require_once(__DIR__ . "/library/AdminCalendarService.php");
 
+    require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminCalendarPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminArrivalsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminPlacesPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminScreeningsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminPatientsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminCompaniesPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminDoctorsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLangSettingsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminSettingsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLogPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminStatPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminUsersPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");
+}
 
 function getConfigFile() {
     $config = "";

@@ -398,11 +398,17 @@ class AdminBookingEditor {
 
             $html.= "</table>";
 
+            if (isset($_POST["page"])) {
+                $_GET["page"] = $_POST["page"];
+            }
             $html.= "<br><input type='button' onclick='foglalasMentes(\"{$_GET["page"]}\");' value='Mentés'/>&nbsp;&nbsp;";
             $html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
-            $html.= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/> ";
+            $html.= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
 
-            if ($row["foglalta"]!="") $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}";
+            if ($row["foglalta"]!="") {
+                $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
+            }
+            $html.="<input onclick='removeIdopont({$row["id"]},\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>";
 
             $html.= "</form>";
 

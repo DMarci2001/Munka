@@ -7,7 +7,7 @@ $(document).ready(function() {
 
 
 function setHelyszin(h) {
-    window.location.href='index.php?sethelyszin='+h;
+    window.location.href='index.php?page=calendar&sethelyszin='+h;
 }
 
 function setHelyszin2(h) {
@@ -15,7 +15,7 @@ function setHelyszin2(h) {
 }
 
 function setNaptarSzuresTipus(t) {
-    window.location.href='index.php?setnaptarszurestipus='+t;
+    window.location.href='index.php?page=calendar&setnaptarszurestipus='+t;
 }
 
 
@@ -408,11 +408,14 @@ function addIdopont(idopont,szt) {
 
 
 function refreshNaptar(idopont) {
-    $("#foglalasnaptar").load("index.php?loadnaptar",null,
-        function(responseText) {
-            setIdoPontCell(idopont);
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:'calendar', loadnaptar:'1'},
+        success:function(data){
+            $("#foglalasnaptar").html(data);
         }
-    );
+    });
 }
 
 
@@ -423,7 +426,7 @@ function addIdopontNaptar(idopont,szt) {
     if (foglalasSelected!=0) {
         if (confirm("Biztos áthelyezed ide a kijelölt foglalást: "+idopont+"?")) {
 
-            $("#foglalasnaptaridopont").load("index.php?page=bnaptar&szt="+encodeURIComponent(szt)+"&moveidopont="+encodeURIComponent(idopont)+"&fid="+encodeURIComponent(foglalasSelected),null,
+            $("#foglalasnaptaridopont").load("index.php?page=calendar&szt="+encodeURIComponent(szt)+"&moveidopont="+encodeURIComponent(idopont)+"&fid="+encodeURIComponent(foglalasSelected),null,
                 function(responseText){
                     showIdopontEditor('bnaptar',foglalasSelectedPass,foglalasSelected);
                     cancelFoglalasMove();
@@ -435,47 +438,47 @@ function addIdopontNaptar(idopont,szt) {
         return;
     }
 
-    $("#foglalasnaptaridopont").load("index.php?page=bnaptar&szt="+encodeURIComponent(szt)+"&addidopont="+encodeURIComponent(idopont),null,
-        function(responseText) {
-            refreshNaptar(idopont);
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:'calendar', szt:szt, addidopont:idopont, rinterval: selectedInterval},
+        success:function(data){
+            if (data.substring(0, 5)=='error') {
+                alert(data.substring(5));
+            } else {
+                $("#foglalasnaptar").html(data);
+                //refreshNaptar(idopont);
+            }
             $("#naptarloading").hide();
         }
-    );
+    });
 }
 
 
 
-function removeIdopont(id) {
-    if (!confirm("Biztos törlöd ezt az időpontot?")) return;
+function removeIdopont(id, page) {
+    if (!confirm("Biztos törlöd ezt az időpontot?")) {
+        return;
+    }
 
-    $("#elojegyzestable").load("index.php?page=booking&removeidopont="+encodeURIComponent(id),null,
-        function(responseText){
-            if (foglalasDisplayed==id) {
-                cancelFoglalasMove();
-                $("#idoponteditor").slideUp();
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:page, removeidopont:id},
+        success:function(data){
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            if (page == "booking") {
+                $("#elojegyzestable").html(data);
+            }
+            if (page == "calendar") {
+                $("#foglalasnaptar").html(data);
             }
         }
-    );
+    });
 
 }
 
-function removeIdopontNaptar(id,idopont) {
-    if (!confirm("Biztos törlöd ezt az időpontot?")) return;
-
-    $("#naptarloading").show();
-
-    $("#foglalasnaptaridopont").load("index.php?page=calendar&removeidopont="+encodeURIComponent(id)+"&idopont="+encodeURIComponent(idopont),null,
-        function(responseText){
-            if (foglalasDisplayed==id) {
-                cancelFoglalasMove();
-                $("#idoponteditor").slideUp();
-            }
-            refreshNaptar(idopont);
-            $("#naptarloading").hide();
-        }
-    );
-
-}
 
 function showIdopontEditor(page,p,id) {
     cancelFoglalasMove();
@@ -572,7 +575,7 @@ function cancelFoglalasMove() {
 
 
 function foglalasMentes(page) {
-    var data=$("#iform").serialize()+"&foglalasmentesnaptar2=1";
+    var data = $("#iform").serialize()+"&page="+page+"&foglalasmentesnaptar2=1";
     $("#naptarloading").show();
 
     $.ajax({
@@ -581,9 +584,9 @@ function foglalasMentes(page) {
         data: data,
         success: function(response)	{
             $("#idoponteditor").html(response);
-            if (page=="bnaptar") {
+            if (page == "calendar") {
                 refreshNaptar($("#idopontmarker").val());
-                sF2($("#idopontmarker").val());
+                //sF2($("#idopontmarker").val());
                 $("#naptarloading").hide();
                 return;
             }
@@ -650,7 +653,6 @@ function setIdoPontCell(i) {
 function sF2(i) {
     setIdoPontCell(i);
 
-
     $("#foglalasnaptaridopont").load("index.php?shownaptaridopont="+encodeURIComponent(i),null,
         function(responseText){
         }
@@ -659,7 +661,7 @@ function sF2(i) {
 
 function naptarMove(d) {
     $("#naptarloading").show();
-    $("#foglalasnaptar").load("index.php?loadnaptar&shift="+encodeURIComponent(d),null,
+    $("#foglalasnaptar").load("index.php?page=calendar&loadnaptar&shift="+encodeURIComponent(d),null,
         function(responseText){
             $("#foglalasnaptaridopont").html("");
             $("#naptarloading").hide();

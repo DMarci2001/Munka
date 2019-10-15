@@ -419,15 +419,43 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	background: #0f0;
 }
 
+.calendardayheader {
+	background:#eee;
+	padding:10px 0px;
+	color:#444;
+	text-align:center;
+	width:150px;
+	font-size:14px;
+	margin-bottom:5px;
+}
+.calendarday {
+	font-size: 22px;
+}
+
 .ipcell {
 	text-align:left;
-	margin-right:3px;
-	padding:2px;
-	border-radius:5px;
 	background:#fff;
 	transition: all .05s linear;
 	-webkit-transform: translateZ(0);
+	width:150px;
+	overflow: hidden;
 }
+
+.reservedcell {
+	background:#1796b0;
+	color:#fff;
+	padding:4px;
+	margin-bottom:5px;
+}
+.freecell {
+	color:#000;
+	padding:4px;
+	margin-bottom:5px;
+}
+.calendaritemlink {
+	color:#ffc;
+}
+
 
 .tdsepdiv {
 	background:#bbb;

@@ -43,79 +43,24 @@ class AdminBookingPage extends AdminCorePage
 
         if (isset($_GET["showelojegyzestable"])) {
             if (isset($_GET["day"])) $_SESSION["setday"] = $_GET["day"];
-            echo $this->_showElojegyzesTable($_SESSION["setday"]);
+            echo $this->showElojegyzesTable($_SESSION["setday"]);
             die();
         }
 
-
         if (isset($_GET["addidopont"])) {
-            if (isset($_SESSION["helyszin"])) {
-                $szuresTipusId = intval($_GET["szt"]);
-                $cegId = 0;
-                $orvosId = 0;
-
-                if ($this->adminUtils->isCegAdmin()) $cegId = $_SESSION["adminuser"]["cegid"];
-
-                if ($this->adminUtils->isCegAdmin()) {
-                    $cegIds = explode("|",$_SESSION["adminuser"]["cegjog"]);
-                    if (isset($cegIds[1])) {
-                        $cegId = intval($cegIds[1]);
-                    }
-                }
-
-                if ($_SESSION["adminuser"]["jog_nofoglimitset"]==0) {
-                    if (!$this->bookingService->isOrvosAvailable($_GET["addidopont"], $_SESSION["helyszin"], $szuresTipusId)) {
-                        die("errorNincs szabad orvos a megjelölt időpontra!");
-                    }
-                }
-
-                $settings = new Booking_Settings();
-                if (in_array(date("Y-m-d", strtotime($_GET["addidopont"])), $settings->getMunkaszunetiNapok())) {
-                    die("errorMunkaszüneti napra nem lehet foglalni!");
-                }
-
-                sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?",array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $orvosId, $_GET["addidopont"]));
-
-                $fid = sql_insert_id();
-                $this->bookingService->updateFoglalasData($fid);
-
-                logActivity("foglalas",$fid,"foglalás hozzáadása {$_GET["addidopont"]}",print_r($_POST,true));
-
-
-                if ($orvosId==0 && $cegId!=0) {
-                    $oid = $this->bookingService->selectFreeOrvosForIdopont($fid);
-                    //echo $oid;
-                    sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0",array($oid, $fid));
-                }
-            }
-
-            if ($_GET["page"]=="bnaptar") {
-                echo showAdminNaptarIdopont($_GET["addidopont"]);
-                die();
-            }
+            $this->bookingService->addIdoPont();
 
             if (isset($_SESSION["setday"])) {
-                echo $this->_showElojegyzesTable($_SESSION["setday"]);
+                echo $this->showElojegyzesTable($_SESSION["setday"]);
             }
             die();
         }
 
         if (isset($_GET["removeidopont"])) {
-            $rowf = sql_fetch_array(sql_query("select * from foglalasok where id=?",array($_GET["removeidopont"])));
-            logActivity("foglalas",$rowf["id"],"{$rowf["nev"]} foglalás törlése {$rowf["datum"]}",print_r($_POST,true));
-
-            sql_query("delete from foglalasok where id=? limit 1",array($_GET["removeidopont"]));
-            sql_query("delete from fizkapcs where fid=?",array($_GET["removeidopont"]));
-
-            if ($_GET["page"] == "bnaptar") {
-                echo showAdminNaptarIdopont($_GET["idopont"]);
-                die();
-            }
-
-            echo $this->_showElojegyzesTable($_SESSION["setday"]);
+            $this->bookingService->removeIdopont($_GET["removeidopont"]);
+            echo $this->showElojegyzesTable($_SESSION["setday"]);
             die();
         }
-
 
         if (isset($_GET["moveidopont"])) {
             if (isset($_SESSION["helyszin"])) {
@@ -195,7 +140,7 @@ class AdminBookingPage extends AdminCorePage
             //    die();
             //}
 
-            echo $this->_showElojegyzesTable($_SESSION["setday"]);
+            echo $this->showElojegyzesTable($_SESSION["setday"]);
             die();
         }
 
@@ -229,12 +174,12 @@ class AdminBookingPage extends AdminCorePage
             return;
         }
 
-        echo "<div id='elojegyzestable'>".$this->_showElojegyzesTable($this->setDay)."</div>";
+        echo "<div id='elojegyzestable'>".$this->showElojegyzesTable($this->setDay)."</div>";
         echo "<div id='idoponteditor' style='position:fixed;bottom:0px;right:0px;background:#e0e0e0;display:none;'></div>";
     }
 
 
-    private function _showElojegyzesTable($setDay) {
+    public function showElojegyzesTable($setDay) {
         $settings = new Booking_Settings();
 
         $htmlout = "";
@@ -436,7 +381,7 @@ class AdminBookingPage extends AdminCorePage
                             $htmlout .= "</td>";
                             $htmlout .= "<td valign='top'>";
                             if ($jogosult) {
-                                $htmlout .= "<a onclick='removeIdopont({$rowf["id"]});return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
+                                $htmlout .= "<a onclick='removeIdopont({$rowf["id"]},\"booking\");return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
                                 $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
                             } else {
                                 $htmlout .= "<span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;";
