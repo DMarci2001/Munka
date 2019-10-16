@@ -428,6 +428,18 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	font-size:14px;
 	margin-bottom:5px;
 }
+.calendardayheadertoday {
+	background:#ccc;
+	padding:10px 0px;
+	color:#000;
+	text-align:center;
+	width:150px;
+	font-size:14px;
+	margin-bottom:5px;
+}
+
+
+
 .calendarday {
 	font-size: 22px;
 }

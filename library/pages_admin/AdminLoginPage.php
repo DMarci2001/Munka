@@ -12,29 +12,13 @@ class AdminLoginPage extends AdminCorePage {
         $this->adminUser = new AdminUser();
 
         if (isset( $_REQUEST["logintry"])) {
-            //Belépési adatok:
-            $username = $_REQUEST["loginusername"];
-            $password = $_REQUEST["loginpassword"];
-            $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array( $username, $password, $password ));
-
-            //Ha talál eredményt és a mezők nem üresek:
-            if ($row = sql_fetch_array($resq) and trim($username) != "" and trim($password) != "" ) {
-                $_SESSION["pid"] = $row["id"];
-                setcookie("pid", $row["id"], time() + 3600 * 3);
-
-                //Utolsó belépési adatok frissítése:
-                sql_query("UPDATE users SET lastlogin=NOW(), codetry=0 WHERE id=?" ,array($_SESSION["pid"]));
-
-                //Átirányítás a kezdő oldalra:
+            $result = $this->adminUser->adminLogin($_REQUEST["loginusername"], $_REQUEST["loginpassword"]);
+            if ($result == "") {
+                //sikeres bejelentkezés
                 header("Location:index.php");
                 die();
             }
-
-            //Ha a belépési adatok nem megfelelők v. hiányosak akkor hiba üzenet küldése:
-            $_SESSION["error"] = "A megadott név és jelszó nem található!";
-            if ($username == "" || $password == "") {
-                $_SESSION["error"] = "Adja meg a belépési adatait!";
-            }
+            $_SESSION["error"] = $result;
         }
 
         if (isset($_POST["passwordsend"])) {

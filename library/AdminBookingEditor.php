@@ -408,7 +408,7 @@ class AdminBookingEditor {
             if ($row["foglalta"]!="") {
                 $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
             }
-            $html.="<input onclick='removeIdopont({$row["id"]},\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>";
+            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>";
 
             $html.= "</form>";
 

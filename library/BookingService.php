@@ -3,7 +3,6 @@
 class BookingService {
     private $lang;
     private $utils;
-    private $adminUtils;
     public $packContentTypes = [];
     private $honnan;
     private $neme;
@@ -17,7 +16,6 @@ class BookingService {
     {
         $this->lang = new Lang();
         $this->utils = new Utils();
-        $this->adminUtils = new adminUtils();
 
         if (isset($_GET["szurestipusrefresh"])) {
             echo $this->szuresTipusValasztoNew($_GET["szurestipusrefresh"],0);
@@ -1054,10 +1052,10 @@ class BookingService {
         if ($interval == 0) {
             $interval = 15;
         }
-        $dateStart = date("Ymd",strtotime("{$foglalasData["datum"]} -2 hour"));
-        $timeStart = date("His",strtotime("{$foglalasData["datum"]} -2 hour"));
-        $dateEnd = date("Ymd",strtotime("{$foglalasData["datum"]} -2 hour + {$interval} minute"));
-        $timeEnd = date("His",strtotime("{$foglalasData["datum"]} -2 hour + {$interval} minute"));
+        $dateStart = date("Ymd",strtotime("{$foglalasData["datum"]} -1 hour"));
+        $timeStart = date("His",strtotime("{$foglalasData["datum"]} -1 hour"));
+        $dateEnd = date("Ymd",strtotime("{$foglalasData["datum"]} -1 hour + {$interval} minute"));
+        $timeEnd = date("His",strtotime("{$foglalasData["datum"]} -1 hour + {$interval} minute"));
 
         $ical="BEGIN:VCALENDAR
 VERSION:2.0
@@ -1078,12 +1076,13 @@ END:VCALENDAR";
     }
 
 
-    public function deleteReservation($id, $kod)
+    public function deleteReservation($id, $code)
     {
-        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and rkod=? and datum>now() and eljott=0", array($id, $kod)))) {
-            sql_query("update beutalok set foglalasid='0' where foglalasid='{$row["id"]}'");
-            sql_query("delete from foglalasok WHERE id='{$row["id"]}'");
-            sql_query("delete from foglalasok WHERE parentid='{$row["id"]}' and parentid<>0");
+        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and datum>now() and eljott=0", array($id, $code, $code)))) {
+            sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
+            sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
+            sql_query("delete from foglalasok WHERE parentid=? and parentid<>0", array($row["id"]));
+            sql_query("delete from fizkapcs where fid=?", array($row["id"]));
         }
         return;
     }
@@ -1274,15 +1273,17 @@ END:VCALENDAR";
 
     public function addIdoPont() {
         if (isset($_SESSION["helyszin"])) {
+            $adminUtils = new AdminUtils();
+
             $szuresTipusId = intval($_GET["szt"]);
             $cegId = 0;
             $orvosId = 0;
 
-            if ($this->adminUtils->isCegAdmin()) {
+            if ($adminUtils->isCegAdmin()) {
                 $cegId = $_SESSION["adminuser"]["cegid"];
             }
 
-            if ($this->adminUtils->isCegAdmin()) {
+            if ($adminUtils->isCegAdmin()) {
                 $cegIds = explode("|",$_SESSION["adminuser"]["cegjog"]);
                 if (isset($cegIds[1])) {
                     $cegId = intval($cegIds[1]);
@@ -1325,13 +1326,12 @@ END:VCALENDAR";
         }
     }
 
-    public function removeIdopont($id, $code = null) {
+    public function removeIdopont($id, $code) {
         //todo: kód bevezetése hiánytik innen
-        if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=?",array($id)))) {
+        if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?",array($id, $code)))) {
             logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", print_r($_POST, true));
 
-            sql_query("delete from foglalasok where id=? limit 1", array($id));
-            sql_query("delete from fizkapcs where fid=?", array($id));
+            $this->deleteReservation($id, $code);
         }
     }
 }

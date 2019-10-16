@@ -57,7 +57,7 @@ class AdminBookingPage extends AdminCorePage
         }
 
         if (isset($_GET["removeidopont"])) {
-            $this->bookingService->removeIdopont($_GET["removeidopont"]);
+            $this->bookingService->removeIdopont($_GET["removeidopont"], $_GET["p"]);
             echo $this->showElojegyzesTable($_SESSION["setday"]);
             die();
         }
@@ -381,7 +381,7 @@ class AdminBookingPage extends AdminCorePage
                             $htmlout .= "</td>";
                             $htmlout .= "<td valign='top'>";
                             if ($jogosult) {
-                                $htmlout .= "<a onclick='removeIdopont({$rowf["id"]},\"booking\");return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
+                                $htmlout .= "<a onclick='removeIdopont({$rowf["id"]},\"{$rowf["pass"]}\",\"booking\");return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;";
                                 $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
                             } else {
                                 $htmlout .= "<span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;";

@@ -49,8 +49,8 @@ class AdminCalendarPage extends AdminCorePage
         echo "<div>";
         if (isset($_SESSION["helyszin"]) && $_SESSION["helyszin"]!=0) {
             $dayDisplay = 7;
-            echo "<a onclick='naptarMove(-{$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/prev.png' title='Lapozás vissza'/></a>";
-            echo "<a onclick='naptarMove({$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/next.png' title='Lapozás előre'/></a>";
+            echo "<a onclick='naptarMove(-{$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/prev.png' title='Előző hét'/></a>";
+            echo "<a onclick='naptarMove({$dayDisplay});return false;' href='#'><img style='height:20px;margin-right:10px;' src='images/next.png' title='következő hét'/></a>";
         }
         echo "</div>";
         echo "</td>";

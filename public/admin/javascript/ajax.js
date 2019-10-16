@@ -456,7 +456,7 @@ function addIdopontNaptar(idopont,szt) {
 
 
 
-function removeIdopont(id, page) {
+function removeIdopont(id, p, page) {
     if (!confirm("Biztos törlöd ezt az időpontot?")) {
         return;
     }
@@ -464,7 +464,7 @@ function removeIdopont(id, page) {
     $.ajax({
         url:'index.php',
         type:'GET',
-        data:{page:page, removeidopont:id},
+        data:{page:page, removeidopont:id, p:p},
         success:function(data){
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();

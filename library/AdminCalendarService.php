@@ -82,7 +82,7 @@ class AdminCalendarService {
         }
 
         if (isset($_GET["removeidopont"])) {
-            $this->bookingService->removeIdopont($_GET["removeidopont"]);
+            $this->bookingService->removeIdopont($_GET["removeidopont"], $_GET["p"]);
             echo $this->showAdminNaptar();
             die();
         }
@@ -145,12 +145,12 @@ class AdminCalendarService {
         for ($i=0; $i<7; $i++) {
             $dd = $i+$shift;
 
-            $nap    = date("Y-m-d",strtotime("now +{$dd} day"));
-            $wd     = date("N",strtotime("now +{$dd} day")); //day of week
-            $month  = date("n",strtotime("now +{$dd} day")); //month
-            $dayOfMonth = date("j",strtotime("now +{$dd} day")); //month
-            $year = date("Y",strtotime("now +{$dd} day")); //month
-            $wn     = date("W",strtotime("now +{$dd} day")); //number of week
+            $firstDay   = strtotime("this week monday +{$dd} day");
+            $nap        = date("Y-m-d", $firstDay);
+            $wd         = date("N", $firstDay); //day of week
+            $month      = date("n", $firstDay);
+            $dayOfMonth = date("j", $firstDay);
+            $year       = date("Y", $firstDay);
 
             $napDisplay = "<div style='font-size:16px;font-weight:bold;'>".$this->adminUtils->settings->hetnap[$wd]."</div>";
             if (date("Y") != $year) {
@@ -159,15 +159,19 @@ class AdminCalendarService {
             $napDisplay.= $this->adminUtils->settings->honaptext[$month];
             $napDisplay.= "<br clear='all'/><div class='calendarday'>{$dayOfMonth}</div>";
 
-            $dbg = "#fff";
+            $hClass = "calendardayheader";
+            if ($nap == date("Y-m-d")) {
+                $hClass = "calendardayheadertoday";
+            }
+
             if (in_array($nap, $foglaltnapok)) {
-                $dbg="#ccc;";
+                //ha foglalt
             }
 
             $htmlout.= "<td valign='top'><div style='padding:0px 2px;border-left:1px solid #ccc;'></div></td>";
             $htmlout.= "<td valign='top' sytle=''>";
 
-            $htmlout.= "<div class='calendardayheader'>{$napDisplay}</div>";
+            $htmlout.= "<div class='{$hClass}'>{$napDisplay}</div>";
 
 
             if (in_array($nap, $foglaltnapok)) {
@@ -242,7 +246,7 @@ class AdminCalendarService {
                                 if ($foglalasData["cegid"] == 0 && $foglalasData["orvosassigned"] == 0) {
                                     $foglalasData["nev"] = "foglalt";
                                 }
-                                $title.= "<div><a class='calendaritemlink' href='#' onclick=\"showIdopontEditor('calendar','{$foglalasData["pass"]}',{$foglalasData["id"]})\">{$foglalasData["nev"]}</a></div>";
+                                $title.= "<div><a class='calendaritemlink' href='#' onclick=\"showIdopontEditor('calendar','{$foglalasData["pass"]}',{$foglalasData["id"]});return false;\">{$foglalasData["nev"]}</a></div>";
                             }
                         }
                     }
