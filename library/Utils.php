@@ -502,6 +502,8 @@ class Utils {
         }
         */
 
+        $v = "ver".date("Ymd");
+
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
         $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
         $favicon="/images/".Booking_Constants::SITE_FAVICON;
@@ -511,9 +513,9 @@ class Utils {
         $htmlout.='<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>';
         $htmlout.='<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>';
         $htmlout.= '<script type="text/javascript" src="/public/javascript/sweetalert/sweetalert2.min.js"></script>';
-        $htmlout.='<script type="text/javascript" src="javascript/ajax.js"></script>';
+        $htmlout.='<script type="text/javascript" src="javascript/ajax.js?v={$v}"></script>';
         $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
-        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css' />";
+        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css?v={$v}' />";
         $htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
         $htmlout.= '<link rel="stylesheet" href="/public/javascript/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";

@@ -104,7 +104,7 @@ class AdminCalendarService {
             }
         }
 
-        $foglaltidopontok[] = "";
+        $foglaltData = [];
 
         //el kell dönteni, hogy csak a cég foglaltjait mutassa, vagy az összes kiválasztott címre foglaltakat!
         //$res=sql_query("select datum,nev,eljott from foglalasok where helyszinid='{$helyszin}' and cegid='{$helyszinceg}' and aktiv=1");
@@ -112,20 +112,17 @@ class AdminCalendarService {
         if ($_SESSION["naptarszurestipus"] != 0) {
             $wf.= " and szurestipusid='".intval($_SESSION["naptarszurestipus"])."'";
         }
-        $res=sql_query("select datum,nev,eljott,cegid,orvosassigned,id,pass from foglalasok where helyszinid='{$helyszin}' and aktiv=1 {$wf}");
-        while ($row=sql_fetch_array($res)) {
-            $ido=substr($row["datum"],0,16);
+        $res = sql_query("select datum,nev,eljott,cegid,orvosassigned,id,pass from foglalasok where helyszinid='{$helyszin}' and aktiv=1 {$wf}");
+        while ($row = sql_fetch_array($res)) {
+            $ido = substr($row["datum"],0,16);
             $foglaltData[$ido][]=$row;
         }
 
-        //print_r($foglaltidopontok);
-
-        $foglaltnapok[]="";
-        $res=sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and (szurestipusid=0 or szurestipusid=?)",array($helyszin,$helyszinceg,$_SESSION["naptarszurestipus"]));
-        while ($row=sql_fetch_array($res)) {
-            $foglaltnapok[]=$row["nap"];
+        $foglaltnapok = [];
+        $res = sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and (szurestipusid=0 or szurestipusid=?)",array($helyszin,$helyszinceg,$_SESSION["naptarszurestipus"]));
+        while ($row = sql_fetch_array($res)) {
+            $foglaltnapok[] = $row["nap"];
         }
-
 
         $szunnapok = [];
         $rows = sql_fetch_array(sql_query("select * from settings"));
@@ -133,7 +130,6 @@ class AdminCalendarService {
         for ($i=0;$i<count($n);$i++) {
             $szunnapok[] = trim($n[$i]);
         }
-
 
         $resSzabi = sql_query("SELECT * FROM szabadsag WHERE datumtol>DATE_SUB(NOW(),INTERVAL 30 DAY)");
         while ($szData = sql_fetch_array($resSzabi)) {
@@ -164,15 +160,10 @@ class AdminCalendarService {
                 $hClass = "calendardayheadertoday";
             }
 
-            if (in_array($nap, $foglaltnapok)) {
-                //ha foglalt
-            }
-
             $htmlout.= "<td valign='top'><div style='padding:0px 2px;border-left:1px solid #ccc;'></div></td>";
             $htmlout.= "<td valign='top' sytle=''>";
 
             $htmlout.= "<div class='{$hClass}'>{$napDisplay}</div>";
-
 
             if (in_array($nap, $foglaltnapok)) {
                 $htmlout.= "<div style='text-align:center;'>erre a napra<br>foglalás tiltva</div>";
@@ -180,8 +171,6 @@ class AdminCalendarService {
             } else {
                 $htmlout.= "<div style='text-align:center;margin-bottom:10px;'><a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&disablenap=".urlencode("{$nap}")."'>nap tiltása</a></div>";
             }
-
-
 
             $minrendeles = 0;
             $maxrendeles = 0;
@@ -246,7 +235,20 @@ class AdminCalendarService {
                                 if ($foglalasData["cegid"] == 0 && $foglalasData["orvosassigned"] == 0) {
                                     $foglalasData["nev"] = "foglalt";
                                 }
-                                $title.= "<div><a class='calendaritemlink' href='#' onclick=\"showIdopontEditor('calendar','{$foglalasData["pass"]}',{$foglalasData["id"]});return false;\">{$foglalasData["nev"]}</a></div>";
+                                if ($foglalasData["nev"] == "nincs név") {
+                                    $foglalasData["nev"] = "foglalt";
+                                }
+
+                                $jogosult = true;
+                                if ($this->adminUtils->isCegAdmin() && substr_count($_SESSION["adminuser"]["cegjog"], "|{$foglalasData["cegid"]}|") == 0) {
+                                    $jogosult = false;
+                                }
+
+                                if ($jogosult) {
+                                    $title .= "<div><a class='calendaritemlink' href='#' onclick=\"showIdopontEditor('calendar','{$foglalasData["pass"]}',{$foglalasData["id"]});return false;\">{$foglalasData["nev"]}</a></div>";
+                                } else {
+                                    $title .= "<div>más cég foglalása</div>";
+                                }
                             }
                         }
                     }
