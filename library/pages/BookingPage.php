@@ -79,11 +79,11 @@ class BookingPage extends CorePage {
             $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
             $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
 
-            if ($_POST["taj"] == "") $this->formError .= "{$webText["tajkotelezo"]}<br/>";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->formError .= "{$webText["tajformat"]}<br/>";
-            if ($_POST["helyszin"] == "0") $this->formError .= "{$webText["helyszinkotelezo"]}<br/>";
-            if ($_POST["datum"] == "") $this->formError .= "{$webText["idopontkotelezo"]}<br/>";
-            if ($_POST["szurestipus"] == "0") $this->formError .= "{$webText["szurestipuskotelezo"]}<br/>";
+            if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
+            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
+            if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";
+            if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
+            if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
 
             $this->bookingService->szuresTipus = intval($_POST["szurestipus"]);
             $this->bookingService->helyszin = intval($_POST["helyszin"]);
@@ -91,85 +91,85 @@ class BookingPage extends CorePage {
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
                 if (empty($_POST["email"])) {
-                    $this->formError .= "{$webText["emailkotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["emailkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("nev") && $this->utils->getFieldRequired("nev")) {
                 if (empty($_POST["nev"])) {
-                    $this->formError .= "{$webText["nevkotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["nevkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
                 if (empty($_POST["telefon"])) {
-                    $this->formError .= "{$webText["telkotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["telkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
                 if (empty($_POST["szulhely"])) {
-                    $this->formError .= "{$webText["szuletesidatum"]}!<br/>";
+                    $this->errors[] = "{$webText["szuletesidatum"]}!";
                 }
             }
             if (!$this->utils->getFieldHidden("szuldatum") && $this->utils->getFieldRequired("szuldatum")) {
                 if (empty($_POST["szuldatum"])) {
-                    $this->formError .= "{$webText["szulkotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["szulkotelezo"]}";
                 }
                 if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) {
-                    $this->formError .= "{$webText["szulformat"]}<br/>";
+                    $this->errors[] = "{$webText["szulformat"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("irsz") && $this->utils->getFieldRequired("irsz")) {
                 if (empty($_POST["irsz"])) {
-                    $this->formError.="Az irányítószám megadása kötelező!<br/>";
+                    $this->errors[] ="Az irányítószám megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("varos") && $this->utils->getFieldRequired("varos")) {
                 if (empty($_POST["varos"])) {
-                    $this->formError.="A város megadása kötelező!<br/>";
+                    $this->errors[] ="A város megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("utca") && $this->utils->getFieldRequired("utca")) {
                 if (empty($_POST["utca"])) {
-                    $this->formError.="Az utca megadása kötelező!<br/>";
+                    $this->errors[] ="Az utca megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("munkakor") && $this->utils->getFieldRequired("munkakor")) {
                 if (empty($_POST["munkakor"])) {
-                    $this->formError .= "{$webText["munkakorkotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["munkakorkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("anyjaneve") && $this->utils->getFieldRequired("anyjaneve")) {
                 if (empty($_POST["anyjaneve"])) {
-                    $this->formError .= "{$webText["anyjaneve"]}!<br/>";
+                    $this->errors[] = "{$webText["anyjaneve"]}!";
                 }
             }
             if (!$this->utils->getFieldHidden("neme") && $this->utils->getFieldRequired("neme")) {
                 if (empty($_POST["neme"])) {
-                    $this->formError .= "{$webText["nemekotelezo"]}<br/>";
+                    $this->errors[] = "{$webText["nemekotelezo"]}";
                 }
             }
             if (!isset($_POST["aszf"])) {
-                $this->formError .= "{$webText["aszfkotelezo"]}<br/>";
+                $this->errors[] = "{$webText["aszfkotelezo"]}";
             }
 
             if (isset($_POST["telephely"]) && empty(trim($_POST["telephely"]))) {
-                $this->formError .= "{$webText["telephelykotelezo"]}<br/>";
+                $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
             //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
-            //	$this->formError.="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
+            //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
             if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
-                $this->formError .= "{$webText["idopontlefoglaltak"]}<br>";
+                $this->errors[] = "{$webText["idopontlefoglaltak"]}";
             }
             if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
             if (!isset($_SESSION["user"])) {
-                $this->formError.= $this->utils->checkCaptcha();
+                $this->errors[] = $this->utils->checkCaptcha();
             }
 
-            if (empty($this->formError)) {
+            if (empty($this->errors)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
 
                 header("location:{$forwardURL}");
@@ -210,7 +210,7 @@ class BookingPage extends CorePage {
         }
 
         echo $this->displayFejlec();
-        echo $this->showFormErrors();
+        echo $this->showErrors();
 
         if ($_SESSION["helyszindata"]["onlybeutalo"]==1) {
             $_SESSION["helyszindata"]["onlyreg"] = 1;
@@ -282,35 +282,13 @@ class BookingPage extends CorePage {
             }
         } else {
             //beutaló nélkül szabad választás
-
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
-            echo "<tr><td>{$webText["helyszin"]}: *</td><td>";
-
-            echo "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();clearSzuresTipus(this.value);'>";
-            $res=sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
-            LEFT JOIN orvos_beosztas b ON b.`helyszinid`=h.id 
-            LEFT JOIN orvosok o on b.orvosid=o.id
-            WHERE h.aktiv=1 AND o.aktiv=1 AND b.`helyszinid` IS NOT NULL and b.cegid='{$_SESSION["helyszindata"]["id"]}' GROUP BY h.id ORDER BY cim");
-
-            $numOfH=sql_num_rows($res);
-
-            echo "<option value='0'>{$webText["valasszhelyszint"]}</option>";
-            while ($rowt = sql_fetch_array($res)) {
-                if ($_SESSION["helyszindata"]["nocim"] == 1) {
-                    $rowt["cim"] = $rowt["megnev"];
-                }
-
-                echo "<option value='{$rowt["id"]}'".($_POST["helyszin"]==$rowt["id"] || $numOfH==1?" selected":"").">{$rowt["cim"]}</option>";
-                if ($numOfH == 1) {
-                    $_POST["helyszin"] = $rowt["id"];
-                    //$_POST["szurestipus"] = 0;
-                }
-            }
-            echo "</select>";
-            echo "</td></tr>";
-
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"]);
+
+            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
+                echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
+            }
+            echo "<tr><td>{$webText["helyszin"]}: *</td><td>".$this->_reservationPlaceSelector()."</td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
         }
 
@@ -399,16 +377,48 @@ class BookingPage extends CorePage {
 
     private function _reservationTimeSelector() {
         $webText = $this->lang->webText;
+
+        $dateStyle = (!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
+        $dateVal = substr($_POST["datum"], 0, 16);
+
         $html = "";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>";
         $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='".(!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;' type='text' name='datum' id='datum' value='" . substr($_POST["datum"], 0, 16) . "' />";
+        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
         $html.= "</div>";
-        $html.= "<div style='display:table-cell;vertical-align: middle;'>";
-        $html.= "idopontvalasztas\\";
-        $html.= "</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         return $html;
     }
+
+    private function _reservationPlaceSelector() {
+        $webText = $this->lang->webText;
+
+        $html = "";
+        $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();clearSzuresTipus(this.value);'>";
+        $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
+            LEFT JOIN orvos_beosztas b ON b.`helyszinid`=h.id 
+            LEFT JOIN orvosok o on b.orvosid=o.id
+            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.`helyszinid` IS NOT NULL and b.cegid=? GROUP BY h.id ORDER BY cim", array($_SESSION["helyszindata"]["id"]));
+
+        $numOfH = sql_num_rows($res);
+
+        $html.= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
+        while ($rowt = sql_fetch_array($res)) {
+            if ($_SESSION["helyszindata"]["nocim"] == 1) {
+                $rowt["cim"] = $rowt["megnev"];
+            }
+
+            $html.= "<option value='{$rowt["id"]}'".($_POST["helyszin"]==$rowt["id"] || $numOfH==1?" selected":"").">{$rowt["cim"]}</option>";
+            if ($numOfH == 1) {
+                $_POST["helyszin"] = $rowt["id"];
+                //$_POST["szurestipus"] = 0;
+            }
+        }
+        $html.= "</select>";
+        return $html;
+    }
+
 
     private function _preSelectForm() {
         $webText = $this->lang->webText;

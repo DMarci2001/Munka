@@ -5,6 +5,8 @@ class CorePage {
     public $lang;
     public $formError = "";
 
+    public $errors = [];
+
     public function __construct()
     {
         $this->utils = new Utils();
@@ -47,6 +49,14 @@ class CorePage {
         } else {
             return "<div class='fejlecdiv'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
         }
+    }
+
+    public function showErrors($title = "") {
+        $html = "";
+        if (!empty($this->errors)) {
+            $html.= "<div style='margin:0px 0px 20px 0px;background:#f77;color:#fff;border-radius:5px;padding:10px;'>".implode("<br/>", $this->errors)."</div>";
+        }
+        return $html;
     }
 
     public function showFormErrors() {
