@@ -24,7 +24,7 @@ class RegistrationPage extends CorePage {
             if (!isset($_POST["munkakor"])) $_POST["munkakor"] = "";
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
 
-            if ($_POST["taj"] == "") $this->formError .= "{$webText["tajkotelezo"]}<br/>";
+            //if ($_POST["taj"] == "") $this->formError .= "{$webText["tajkotelezo"]}<br/>";
             if (!ctype_digit($_POST["taj"]) && !empty($_POST["taj"])) $this->formError .= "{$webText["tajformat"]}<br/>";
             if ($_POST["taj"] != "" && sql_fetch_array(sql_query("select taj from felhasznalok where taj=? and cegid=?", array($_POST["taj"], $_SESSION["helyszindata"]["id"])))) $this->formError .= "{$webText["tajletezik"]}<br/>";
 
@@ -113,7 +113,7 @@ class RegistrationPage extends CorePage {
         echo "<tr><td>{$webText["jelszo"]}: *</td><td><input style='display:none;' type='text' autocomplete='off' name='dummyname' value=''><input style='display:none;' type='password' autocomplete='off' name='dummypass' value=''> <input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
         echo "<tr><td>{$webText["jelszoujra"]}: *</td><td><input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo2' value='{$_POST["jelszo2"]}'></td></tr>";
         echo "<tr><td colspan='2'><div style='border-top:1px solid #ccc;padding-top:10px;margin-top:10px;'></div></td></tr>";
-        echo "<tr><td>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
+        echo "<tr><td>{$webText["tajszam"]}:</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
         echo "<tr><td>{$webText["nev"]}: *</td><td><input class='inputbox' style='width:270px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
         echo "<tr><td>{$webText["mobil"]}: *</td><td><input class='inputbox' style='width:270px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='{$webText["mobilformat"]}' ></td></tr>";
         echo "<tr><td></td><td style='color:#888;'>{$webText["mobiltip"]}</td></tr>";

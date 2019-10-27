@@ -61,6 +61,7 @@ class BookingPage extends CorePage {
 
         if (isset($_POST["idopontfoglalas"])) {
             //nem kötelező mezők létrehozása ha nincsenek
+            if (!isset($_POST["taj"]))       $_POST["taj"] = "";
             if (!isset($_POST["szulhely"]))  $_POST["szulhely"] = "";
             if (!isset($_POST["anyjaneve"])) $_POST["anyjaneve"] = "";
             if (!isset($_POST["irsz"]))      $_POST["irsz"] = "";
@@ -79,7 +80,13 @@ class BookingPage extends CorePage {
             $_POST["taj"] = str_replace("-", "", $_POST["taj"]);
             $_POST["taj"] = trim(str_replace(" ", "", $_POST["taj"]));
 
-            if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
+            if (!$this->utils->getFieldHidden("taj") && $this->utils->getFieldRequired("taj")) {
+                if (empty($_POST["taj"])) {
+                    $this->errors[] = "{$webText["tajkotelezo"]}";
+                }
+            }
+
+            //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
             if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
             if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";
             if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
@@ -166,7 +173,10 @@ class BookingPage extends CorePage {
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
             if (!isset($_SESSION["user"])) {
-                $this->errors[] = $this->utils->checkCaptcha();
+                $captchaError = $this->utils->checkCaptcha();
+                if (!empty($captchaError)) {
+                    $this->errors[] = $captchaError;
+                }
             }
 
             if (empty($this->errors)) {
@@ -251,7 +261,8 @@ class BookingPage extends CorePage {
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
         echo "<table>";
 
-        echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' onchange='clearIdopontValaszto();'  value='{$_POST["taj"]}'></td></tr>";
+        echo $this->utils->dataField("taj");
+        //echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 

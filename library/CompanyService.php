@@ -22,12 +22,12 @@ class CompanyService {
             $d = "bejelentkezes";
         }
 
-        if ($d!="admin") {
+        //if ($d!="admin") {
             if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array($d,$d)))) {
                 unset($_SESSION["helyszindata"]);
                 die("Domain nem található!");
             }
-        }
+        //}
     }
 
     private function _getSubDomain() {

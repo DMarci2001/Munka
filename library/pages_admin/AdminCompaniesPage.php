@@ -5,6 +5,7 @@ class AdminCompaniesPage extends AdminCorePage {
     private $bookingService;
 
     private $optionalFields = [
+        "taj"       => "TAJ szám",
         "szuldatum" => "Születési dátum",
         "szulhely"  => "Születési hely",
         "anyjaneve" => "Anyja neve",
