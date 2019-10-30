@@ -402,7 +402,7 @@ class AdminBookingPage extends AdminCorePage
                                 if ($orvNev != "" && $cegNev != "") $htmlout .= " &#187; ";
                                 $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
                                 if ($orvNev == "" && $cegNev == "") $htmlout .= "???";
-								if ($telephelyNev!="") $htmlout .= "<span style='color:#003366'>{$telephelyNev}</span>";
+								if ($telephelyNev!="") $htmlout .= "&nbsp;<span style='color:#003366'>{$telephelyNev}</span>";
                                 $htmlout .= "&nbsp;&nbsp;";
 
                                 $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"], 1) . "</div>";
