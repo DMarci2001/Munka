@@ -38,6 +38,7 @@ class BookingService {
             $this->neme            = intval($_GET["neme"]);
             $this->honnan          = intval($_GET["honnan"]);
             $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
+            $elsoIdopont           = [];
 
             if ($this->helyszin == 0) {
                 echo json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
@@ -62,12 +63,10 @@ class BookingService {
             //orvosválasztó
             $html.= $this->displayDoctorSelector();
 
-
             $html.= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
             $html.= "<div>{$webText["valasszidopontot"]}:</div>";
 
             $html.= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:showIdoPontValasztoV2(".($this->honnan-7).")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:showIdoPontValasztoV2(".($this->honnan+7).")'>{$webText["kov7"]}</a></td></tr></table>";
-            //$html.= "<div style='margin-top:5px;'> | </div>";
 
             $html.= "<table cellpadding='0' cellspacing='0'><tr>";
 
@@ -84,7 +83,6 @@ class BookingService {
                 //36 - dr Bodonyi Melinda
                 $distFullDay = "2 day";
             }
-
 
             for ($i=0; $i<=6; $i++) {
                 $fix = $i+$this->honnan;
@@ -114,8 +112,8 @@ class BookingService {
                     $binterval = $beoData["binterval"];
                 }
 
-                $beginora=round(substr($rowmax["minrendeles"],0,2));
-                $beginperc=round(substr($rowmax["minrendeles"],3,2));
+                $beginHour   = round(substr($rowmax["minrendeles"],0,2));
+                $beginMinute = round(substr($rowmax["minrendeles"],3,2));
 
                 $napHTML="";
                 $napHTML.="<input type='hidden' id='rinterval-{$nap}' value='{$binterval}' />";
@@ -123,7 +121,7 @@ class BookingService {
                 $step = 0;
                 $timeLoopEnd = false;
                 while (!$timeLoopEnd) {
-                    $ora = date("H:i",mktime($beginora,$beginperc+$step*$binterval,0,date("m"),date("d"),date("Y")));
+                    $ora = date("H:i",mktime($beginHour,$beginMinute+$step*$binterval,0,date("m"),date("d"),date("Y")));
                     if (strtotime($ora)>=strtotime($rowmax["maxrendeles"])) {
                         break;
                     }
@@ -293,14 +291,14 @@ class BookingService {
         foreach ($checkForTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
-                    $interval  = $beoData["binterval"];
-                    $step      = 0;
-                    $beoMinMax = $this->getMinMax($packTypeId);
-                    $beginora  = intval(substr($beoMinMax["minrendeles"],0,2));
-                    $beginperc = intval(substr($beoMinMax["minrendeles"],3,2));
+                    $interval    = $beoData["binterval"];
+                    $step        = 0;
+                    $beoMinMax   = $this->getMinMax($packTypeId);
+                    $beginHour   = intval(substr($beoMinMax["minrendeles"],0,2));
+                    $beginMinute = intval(substr($beoMinMax["minrendeles"],3,2));
 
                     while (true) {
-                        $ora = date("H:i", mktime($beginora, $beginperc + $step * $interval, 0, date("m"), date("d"), date("Y")));
+                        $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $interval, 0, date("m"), date("d"), date("Y")));
                         if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
                             break;
                         }
@@ -1052,23 +1050,43 @@ class BookingService {
         if ($interval == 0) {
             $interval = 15;
         }
-        $dateStart = date("Ymd",strtotime("{$foglalasData["datum"]} -1 hour"));
-        $timeStart = date("His",strtotime("{$foglalasData["datum"]} -1 hour"));
-        $dateEnd = date("Ymd",strtotime("{$foglalasData["datum"]} -1 hour + {$interval} minute"));
-        $timeEnd = date("His",strtotime("{$foglalasData["datum"]} -1 hour + {$interval} minute"));
+        $dateStart = date("Ymd",strtotime("{$foglalasData["datum"]} -0 hour"));
+        $timeStart = date("His",strtotime("{$foglalasData["datum"]} -0 hour"));
+        $dateEnd = date("Ymd",strtotime("{$foglalasData["datum"]} -0 hour + {$interval} minute"));
+        $timeEnd = date("His",strtotime("{$foglalasData["datum"]} -0 hour + {$interval} minute"));
 
-        $ical="BEGIN:VCALENDAR
+        $ical = "BEGIN:VCALENDAR
 VERSION:2.0
-PRODID://Drupal iCal API//EN
+PRODID:-//ical.marudot.com//iCal Event Maker
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+TZURL:http://tzurl.org/zoneinfo-outlook/Europe/Berlin
+X-LIC-LOCATION:Europe/Berlin
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
 BEGIN:VEVENT
-UID:http://www.icalmaker.com/event/d8fefcc9-a576-4432-8b20-40e90889affd
 DTSTAMP:".date("Ymd")."T".date("His")."Z
-DTSTART:{$dateStart}T{$timeStart}Z
-DTEND:{$dateEnd}T{$timeEnd}Z
+UID:".date("Ymd")."T".date("His")."Z-".$foglalasData["id"]."@marudot.com
+DTSTART;TZID=Europe/Berlin:{$dateStart}T{$timeStart}
+DTEND;TZID=Europe/Berlin:{$dateEnd}T{$timeEnd}
 SUMMARY:{$webTextLocal["idopontfoglalas"]} - {$foglalasData["nev"]}
-LOCATION:{$foglalasData["helyszin"]}
 DESCRIPTION:{$foglalasData["szurestipus"]}
-ORGANIZER;CN=\"".Booking_Constants::COMPANY_NAME."\":mailto:".Booking_Constants::RESERVATION_TO_ADDRESS."
+LOCATION:{$foglalasData["helyszin"]}
+ORGANIZER;CN=\"Hungária Med - m Kft . \":mailto:info@hungariamed.hu
 END:VEVENT
 END:VCALENDAR";
 
