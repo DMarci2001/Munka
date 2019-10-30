@@ -400,7 +400,7 @@ class AdminBookingPage extends AdminCorePage
 
                                 $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
                                 if ($orvNev != "" && $cegNev != "") $htmlout .= " &#187; ";
-                                $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
+                                $htmlout .= " <span style='color:#080;'>{$orvNev} - {$rowf['telephely']}</span>";
                                 if ($orvNev == "" && $cegNev == "") $htmlout .= "???";
 								if ($telephelyNev!="") $htmlout .= "<span style='color:#003366'>{$telephelyNev}</span>";
                                 $htmlout .= "&nbsp;&nbsp;";
