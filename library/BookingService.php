@@ -93,7 +93,7 @@ class BookingService {
                 $wd  = date("N",strtotime("this week monday +{$fix} day"));  //day of week
 
                 $html.= "<td valign='top'>";
-                $html.= "<div style='background:#607d8b;".($nap == date("Y-m-d")?"margin:0px 1px;padding:12px 10px 12px 10px":"margin:8px 1px;padding:4px 10px 4px 10px;").";color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
+                $html.= "<div style='".($nap == date("Y-m-d")?"background:#405d5b;":"background:#607d8b;")."margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
 
                 if (!$napiBeos = $this->getBeosztasok("{$nap}",$this->helyszin,$this->szuresTipus,$_SESSION["orvosselected"])) {
                     $html.= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$webText["nincsrendeles"]}</div>";
@@ -277,6 +277,7 @@ class BookingService {
     }
 
     public function getPackageAvailabilityForDay($day) {
+        $vanFixError = false;
         $error = "";
         $timeTableForPackage = [];
 
@@ -313,7 +314,13 @@ class BookingService {
                     }
                 }
             }
-            if (!isset($timeTableForPackage[$packTypeId])) {
+
+            if (!isset($timeTableForPackage[$packTypeId]) && $packTypeId == $this->szuresTipus) {
+                $error = "Erre a napra elfogytak az időpontok!";
+                $vanFixError = true;
+            }
+
+            if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
                 $text = "nincs időpont:<br/>";
                 if (substr_count($error, $text) == 0) {
                     $error.= $text;
