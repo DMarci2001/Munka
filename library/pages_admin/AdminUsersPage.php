@@ -23,7 +23,7 @@ class AdminUsersPage extends AdminCorePage {
 
             if ($_POST["password"]!="") sql_query("update users set password=md5(?)	where id=?",array($_POST["password"], $id));
 
-            if ($user["jogosultsag"]>=2 && $user['jog_jogset']==1) {
+            if ($_SESSION["adminuser"]["jogosultsag"]>=2 && $_SESSION["adminuser"]['jog_jogset']==1) {
                 if (!isset($_POST["jog_jogset"])) $_POST["jog_jogset"]=0;
                 if (!isset($_POST["jog_cegset"])) $_POST["jog_cegset"]=0;
                 if (!isset($_POST["jog_helyszinset"])) $_POST["jog_helyszinset"]=0;
@@ -44,17 +44,18 @@ class AdminUsersPage extends AdminCorePage {
 
                 if (!isset($_POST["auth2fac"])) $_POST["auth2fac"]=0;
                 if (!isset($_POST["localeaccess"])) $_POST["localeaccess"]=0;
+                if (!isset($_POST["status"])) $_POST["status"]=0;
 
                 sql_query("UPDATE users 
 				   SET jog_jogset 	   = ?, jog_cegset 	      = ?, jog_helyszinset = ?, jog_orvosset   = ?, jog_beosztasset = ?, jog_szurestipusset = ?, 
 					   jog_szabi  	   = ?, jog_zarolista 	  = ?, jog_zaroszerk   = ?, jog_leletlatas = ?, jog_leletszerk  = ?, jog_gdprhferes 	= ?, 
 					   jog_kuponlista  = ?, jog_kuponkeszites = ?, auth2fac	  	   = ?, localeaccess   = ?, localeip        = ?, jogosultsag        = ?,
-					   jog_beallitasok = ?, jog_nofoglimitset = ?, jog_statisztika = ?, jog_vizsg_stat = ?
+					   jog_beallitasok = ?, jog_nofoglimitset = ?, jog_statisztika = ?, jog_vizsg_stat = ?, status          = ?
 				   WHERE id = ?",
                     array( $_POST["jog_jogset"], $_POST["jog_cegset"], $_POST["jog_helyszinset"], $_POST["jog_orvosset"], $_POST["jog_beosztasset"], $_POST["jog_szurestipusset"],
                         $_POST["jog_szabi"],  $_POST['jog_zarolista'], $_POST['jog_zaroszerk'], $_POST['jog_leletlatas'], $_POST['jog_leletszerk'], $_POST['jog_gdprhferes'],
                         $_POST['jog_kuponlista'], $_POST['jog_kuponkeszites'], $_POST["auth2fac"],   $_POST["localeaccess"],    $_POST["localeip"],     $_POST["jogosultsag"],
-                        $_POST['jog_beallitasok'], $_POST['jog_nofoglimitset'], $_POST['jog_statisztika'],$_POST['jog_vizsg_stat'],$id)
+                        $_POST['jog_beallitasok'], $_POST['jog_nofoglimitset'], $_POST['jog_statisztika'],$_POST['jog_vizsg_stat'],$_POST['status'],$id)
                 );
 
                 $jogs = "";

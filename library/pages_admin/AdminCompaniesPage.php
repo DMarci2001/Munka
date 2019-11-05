@@ -132,7 +132,7 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<table style='font-size:12px;'>";
 
             echo "<tr><td width='150'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev' value='{$_POST["megnev"]}'></td></tr>";
-            echo "<tr><td>Domain:</td><td>".Booking_Constants::SITE_PROTOCOL.":// <input class='inputbox' style='width:100px;' type='text' name='domain' value='{$_POST["domain"]}'> .keltexmed.hu</td></tr>";
+            echo "<tr><td>Domain:</td><td>".Booking_Constants::SITE_PROTOCOL.":// <input class='inputbox' style='width:100px;' type='text' name='domain' value='{$_POST["domain"]}'> .".Booking_Constants::SITE_DOMAIN."</td></tr>";
             echo "<tr><td>E-mail:</td><td><input class='inputbox' style='width:300px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td>SMS a pacinenseknek:</td><td><input class='inputbox' style='width:20px;' type='text' name='smshour' value='{$_POST["smshour"]}'> órával előtte</td></tr>";
             echo "<tr><td>Figyelmeztető szöveg:</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg' value='{$_POST["beutaloszoveg"]}'></td></tr>";

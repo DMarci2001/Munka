@@ -88,20 +88,12 @@ class AdminDoctorsPage extends AdminCorePage {
             die();
         }
 
-        if (isset($_GET["toggleinterval"])) {
-            $beosztasid = intval($_GET["toggleinterval"]);
+        if (isset($_GET["changeinterval"])) {
+            $beosztasid = intval($_GET["changeinterval"]);
             if ($row = sql_fetch_array(sql_query("select binterval from orvos_beosztas where id=?", array($beosztasid)))) {
-                $i = $row["binterval"];
-                if ($this->adminUtils->beosztasModJog()) {
-                    $i+=5;
-                    if ($i==25) $i=30;
-                    //if ($i==35) $i=45;
-                    if ($i==50) $i=60;
-                    if ($i>60) $i=5;
-                    sql_query("update orvos_beosztas set binterval=? where id=?", array($i, $beosztasid));
-                }
+                $i = intval($_GET["interval"]);
+                sql_query("update orvos_beosztas set binterval=? where id=?", array($i, $beosztasid));
             }
-            echo "<a href='#' class='tlink' onclick='toggleIntervals({$beosztasid});return false;'>{$i} perc</a> ";
             die();
         }
 
@@ -475,10 +467,18 @@ class AdminDoctorsPage extends AdminCorePage {
                     $titl=$rowtt["megnevek"];
                 }
 
-                //audi
-                //if ($_SESSION["orvosbeosztascegfilter"]==15 || $_SESSION["orvosbeosztascegfilter"]==42) {
-                echo "<span title='egy kezelés időtartama' id='intervalchooser{$rowb["id"]}'><a href='#' class='tlink' onclick='toggleIntervals({$rowb["id"]});return false;'>{$rowb["binterval"]} perc</a></span> ";
-                //}
+                echo "<select title='egy kezelés időtartama' id='intervalchooser{$rowb["id"]}' onclick='changeInterval({$rowb["id"]}, this.value);'>";
+                echo $this->intervalOption(3, $rowb);
+                echo $this->intervalOption(5, $rowb);
+                echo $this->intervalOption(8, $rowb);
+                echo $this->intervalOption(10, $rowb);
+                echo $this->intervalOption(15, $rowb);
+                echo $this->intervalOption(20, $rowb);
+                echo $this->intervalOption(30, $rowb);
+                echo $this->intervalOption(40, $rowb);
+                echo $this->intervalOption(45, $rowb);
+                echo $this->intervalOption(60, $rowb);
+                echo "</select> ";
 
                 echo "<span id='tipusstatus{$rowb["id"]}'><a href='#' class='tlink' title='{$titl}' onclick='showTipusValaszto({$rowb["id"]});return false;'>{$num} tipus</a></span> ";
 
@@ -749,6 +749,10 @@ class AdminDoctorsPage extends AdminCorePage {
         $htmlout.="<div style='margin-top:5px;'><input onclick='addSMSPhone({$oid})' type='button' name='addsmstel' value='+ SMS telefonszám hozzáadása'></div>";
         $htmlout.="</div>";
         return $htmlout;
+    }
+
+    private function intervalOption($interval, $data) {
+        return "<option value='{$interval}'".($data["binterval"]==$interval?" selected":"").">{$interval} perc</option>";
     }
 }
 

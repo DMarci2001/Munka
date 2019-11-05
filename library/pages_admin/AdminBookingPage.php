@@ -394,11 +394,15 @@ class AdminBookingPage extends AdminCorePage
                                 $orvNev = "";
                                 if ($rowf["cegid"] == 0 && $rowf["orvosassigned"] == 0 && $orvosokNum > 1) $orvNev = "minden orvos";
                                 if ($rowf["orvosassigned"] != 0) $orvNev = trim($rowf["orvosnev"]);
+								
+								$telephelyNev = "";
+								if($rowf['telephely']!="") $telephelyNev = $rowf['telephely'];
 
                                 $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
                                 if ($orvNev != "" && $cegNev != "") $htmlout .= " &#187; ";
                                 $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
                                 if ($orvNev == "" && $cegNev == "") $htmlout .= "???";
+								if ($telephelyNev!="") $htmlout .= "&nbsp;<span style='color:#003366'>{$telephelyNev}</span>";
                                 $htmlout .= "&nbsp;&nbsp;";
 
                                 $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"], 1) . "</div>";

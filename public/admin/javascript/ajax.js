@@ -65,9 +65,12 @@ function startKepImport(id) {
 
 }
 
-
-function toggleIntervals(beosztasid) {
-    $("#intervalchooser"+beosztasid).load("index.php?page=doctors&toggleinterval="+beosztasid);
+function changeInterval(beosztasid, interval) {
+    let request = $.ajax({
+        url: "index.php",
+        type: "get",
+        data: "page=doctors&changeinterval="+beosztasid+"&interval="+interval
+    });
 }
 
 function showTipusValaszto(beosztasid) {
