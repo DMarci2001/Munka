@@ -28,10 +28,12 @@ require_once(__DIR__ . "/library/pages/ValidationSuccessfulPage.php");
 require_once(__DIR__ . "/library/pages/DocumentsPage.php");
 require_once(__DIR__ . "/library/pages/BeutalokPage.php");
 require_once(__DIR__ . "/library/pages/LeletekPage.php");
+require_once(__DIR__ . "/library/pages/AlkalmassagiTajekoztatoPage.php");
 require_once(__DIR__ . "/library/Page.php");
 require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");
 require_once(__DIR__ . "/library/PrintService.php");
+require_once(__DIR__ . "/library/ZeusService.php");
 
 require_once(__DIR__ . "/library/other/phpmailer/class.phpmailer.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");

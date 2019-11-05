@@ -288,21 +288,28 @@ class Utils {
         return $q;
     }
 
-    public function datumSelector($date,$prefix) {
+    public function datumSelector($date, $prefix, $future = 0) {
         $lang = new Lang();
         $webText = $lang->webText;
 
         $h="";
 
-        $ev=substr($date,0,4);
-        $ho=substr($date,5,2);
-        $nap=substr($date,8,2);
+        $ev  = substr($date,0,4);
+        $ho  = substr($date,5,2);
+        $nap = substr($date,8,2);
 
         $h.= "<select name='{$prefix}ev'>";
         $h.= "<option value='0'>{$webText["ev"]}</option>";
-        for ($i=date("Y");$i>date("Y")-100;$i--) {
-            $h.= "<option value='{$i}'".($ev==$i?" selected":"").">{$i}</option>";
+        if ($future == 0) {
+            for ($i = date("Y"); $i > date("Y") - 100; $i--) {
+                $h .= "<option value='{$i}'" . ($ev == $i ? " selected" : "") . ">{$i}</option>";
+            }
+        } else {
+            for ($i = date("Y"); $i < date("Y") + $future; $i++) {
+                $h .= "<option value='{$i}'" . ($ev == $i ? " selected" : "") . ">{$i}</option>";
+            }
         }
+
         $h.= "</select> ";
 
         $h.= "<select name='{$prefix}ho'>";

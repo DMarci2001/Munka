@@ -29,7 +29,7 @@ class CorePage {
 
     }
 
-    public function displayFejlec($title = "")
+    public function displayFejlec($title = "", $custom = false)
     {
         $webText = $this->lang->webText;
         $img = "";
@@ -47,7 +47,11 @@ class CorePage {
             $html.= "</div>";
             return $html;
         } else {
-            return "<div class='fejlecdiv'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
+            $text = trim("{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}".($title != "" ? " - {$title}" : ""));
+            if ($custom) {
+                $text = $title;
+            }
+            return "<div class='fejlecdiv'>{$text}</div>";
         }
     }
 
