@@ -44,4 +44,15 @@ class ZeusService {
         return $this->db->lastInsertId();
     }
 
+    public function getPaciensByMask($mask) {
+        return $this->sql_fetch_array($this->sql_query("select * from paciensek where mask=?", array($mask)));
+    }
+
+    public function getVizsgalatiLapByPaciens($paciensId) {
+        return $this->sql_fetch_array($this->sql_query("SELECT * FROM vizsgalatilapok WHERE vizsgalatid=16 AND pid=?", array($paciensId)));
+    }
+
+    public function addLejaratiIdo($userId, $lejarat) {
+        $this->sql_query("INSERT INTO vizsgalatilapok SET pid=?,kelte=NOW(),alk_kelte=NOW(),alk_visszarendeles=?,alk_tipus='predata',alk_statusz='alkalmas',vizsgalatid=16,publisher=1", array($userId, $lejarat));
+    }
 }
