@@ -418,7 +418,7 @@ class BookingService {
         }
 
         //feltétel ami alapján kirakjuk az orvosválasztót
-        if (count($orvosAvailable)>1) {
+        if (count($orvosAvailable)>1 && $_SESSION["helyszindata"]["no_doctor_select"] == 0) {
             $html.= "<div style='margin:10px 0px 10px 0px;'>{$webText["valasszorvost"]}:</div>";
             foreach ($orvosAvailable as $orvosData) {
                 $s="border:1px solid #fff;";
