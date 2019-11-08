@@ -29,7 +29,7 @@ class Page {
             $_GET["page"] = "booking";
         }
 
-        $pageName = ucfirst($_GET["page"])."Page";
+        $pageName = ucfirst(str_replace("_","",$_GET["page"]))."Page";
         if (class_exists($pageName)) {
             $page = new $pageName;
         } else {

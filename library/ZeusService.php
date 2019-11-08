@@ -6,6 +6,8 @@ class ZeusService {
     const SQL_HOST_ZEUS = "localhost";
     const SQL_DB_ZEUS   = "zeus";
 
+    const VIZSGALAT_FOGLEU_ID = 16;
+
     private $db;
 
     public function __construct()
@@ -49,10 +51,10 @@ class ZeusService {
     }
 
     public function getVizsgalatiLapByPaciens($paciensId) {
-        return $this->sql_fetch_array($this->sql_query("SELECT * FROM vizsgalatilapok WHERE vizsgalatid=16 AND pid=?", array($paciensId)));
+        return $this->sql_fetch_array($this->sql_query("SELECT * FROM vizsgalatilapok WHERE vizsgalatid=? AND pid=?", array(self::VIZSGALAT_FOGLEU_ID, $paciensId)));
     }
 
     public function addLejaratiIdo($userId, $lejarat) {
-        $this->sql_query("INSERT INTO vizsgalatilapok SET pid=?,kelte=NOW(),alk_kelte=NOW(),alk_visszarendeles=?,alk_tipus='predata',alk_statusz='alkalmas',vizsgalatid=16,publisher=1", array($userId, $lejarat));
+        $this->sql_query("INSERT INTO vizsgalatilapok SET pid=?,kelte=NOW(),alk_kelte=NOW(),alk_visszarendeles=?,alk_tipus='predata',alk_statusz='alkalmas',vizsgalatid=?,publisher=1", array($userId, $lejarat, self::VIZSGALAT_FOGLEU_ID));
     }
 }
