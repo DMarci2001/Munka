@@ -4,6 +4,9 @@ class LeletekPage extends CorePage {
 
     public function __construct()
     {
+		header("Location:index.php");
+		die();
+		
         parent::__construct();
         $webText = $this->lang->webText;
 

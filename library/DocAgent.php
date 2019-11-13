@@ -5,6 +5,8 @@ class DocAgent {
 
     public function __construct()
     {
+		header("Location:index.php");
+		die();
     }
 
     private function _getDocPath($fileId) {
