@@ -270,7 +270,7 @@ class AdminUtils {
         return $htmlout;
     }
 
-    public function getAdminMenu() {
+    public function getAdminMenu($full = 0) {
         $adminMenu = [];
         if (isset($_SESSION["adminuser"])) {
             $res = sql_query("select * from adminmenu where aktiv=1 order by sorrend, megnev");
@@ -278,7 +278,7 @@ class AdminUtils {
                 if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
                     continue;
                 }
-                if ($menuData["jogszint"] > $_SESSION["adminuser"]["jogosultsag"]) {
+                if ($menuData["jogszint"] > $_SESSION["adminuser"]["jogosultsag"] && $full != 1) {
                     continue;
                 }
                 $adminMenu[] = $menuData;

@@ -9,6 +9,7 @@ class AdminPage {
     private $lang;
     private $bookingEditor;
     public $page;
+    public $pageData;
 
     private $skipFrame = false;
     private $adminMenu = [];
@@ -39,6 +40,8 @@ class AdminPage {
         if (!isset($_SESSION["helyid"])) {
             $_SESSION["helyid"] = 1;
         }
+
+        $this->pageData = sql_fetch_array(sql_query("select * from adminmenu where pageid=?", array($_GET["page"])));
 
         $pageName = "Admin".ucfirst($_GET["page"])."Page";
         if (class_exists($pageName)) {
@@ -87,9 +90,11 @@ class AdminPage {
         echo "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr>";
 
-        echo "<td valign='top' width='150' class='menuoszlop'>";
-        echo $this->_menuColumn();
-        echo "</td>";
+        if ($this->pageData["skipmenu"] == 0) {
+            echo "<td valign='top' width='150' class='menuoszlop'>";
+            echo $this->_menuColumn();
+            echo "</td>";
+        }
 
         echo "<td valign='top' style='background-color:#fff;box-shadow:-0px 0px 10px #bbb;'>";
         echo "<div style='margin:20px;min-height:400px;'>";
@@ -100,7 +105,11 @@ class AdminPage {
 
         echo "</tr>";
 
-        echo "<tr><td></td><td>";
+        echo "<tr>";
+        if ($this->pageData["skipmenu"] == 0) {
+            echo "<td></td>";
+        }
+        echo "<td>";
         echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT."</div>";
         echo "</td></tr>";
 
@@ -113,6 +122,9 @@ class AdminPage {
     private function _statusRow() {
         $html = "";
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
+        if ($_SESSION["adminuser"]["username"] == "jns") {
+            $html.= "<div style='display: table-cell;'><a href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
+        }
         if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
             $html.= "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";
             $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
@@ -148,7 +160,9 @@ class AdminPage {
 
     private function _contentHeader() {
         $html = "";
-        foreach ($this->adminMenu as $menu) {
+        $adminMenu = $this->adminUtils->getAdminMenu(1);
+
+        foreach ($adminMenu as $menu) {
             if ($_GET["page"] == $menu["pageid"]) {
                 $html.= "<div class='pagehead'>";
                 $html.= "<div style='display:table-cell;vertical-align:middle;'>{$menu["megnev"]}".($_GET["page"]=="elojegyzestdfdabla"?"&nbsp;&nbsp;<span style='background:#0a0;color:#fff;font-size:16px;font-weight:bold;padding:3px 8px;border-radius:10px;'>BÉTA</span>":"")."</div>";
