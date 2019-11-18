@@ -1148,3 +1148,40 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	font-size:22px;
 	padding:20px;
 }
+
+
+.scheduleday {
+	display:inline-block;
+	min-width:350px;
+	min-height:500px;
+	border:1px solid #888;
+}
+
+.sch_rendelooszlop {
+	display:table-cell;
+}
+
+.sch_orvososzlop {
+	display:table-cell;
+}
+
+.sch_noveroszlop {
+	display:table-cell;
+}
+
+.sch_oszlopdatacell {
+	padding:0px 5px;
+}
+
+.sch_oszlopfejcell {
+	text-align: center;
+}
+
+.sch_dialog {
+	display: inline-block;
+	position: fixed;
+	min-width:100px;
+	min-height: 100px;
+	background:#eee;
+	box-shadow: 5px 5px 10px rgba(10,10,10, .3);
+}
