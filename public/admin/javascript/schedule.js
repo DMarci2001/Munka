@@ -5,6 +5,7 @@ $().ready(function() {
 
 Schedule = {
     URL: "index.php?page=workschedule",
+    DialogCloseHTML: "<div id='dialogclose' style='width:20px;height:20px;float:right;'></div>",
 
     Init: function(){
 
@@ -15,17 +16,19 @@ Schedule = {
         $(".sch_dialog").draggable();
 
     },
-    ShowAddDoctorDialog: function(el) {
-
+    ShowAddWorkerDialog: function(el) {
+        let roleid = $(el).data("roleid");
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: "adddoctors=1&tipua=1",
+            data: "addworker=1&tipus="+roleid,
             success: function(data)	{
                 let position = $(el).offset();
                 let left = position.left + 15;
 
                 $(".sch_dialogcontent").html(data);
+                $(".sch_dialogtop").html($(el).data("tipusnev")+Schedule.DialogCloseHTML);
+                Schedule.Init();
                 $(".sch_dialog").show();
 
                 let width = $(".sch_dialog").width();

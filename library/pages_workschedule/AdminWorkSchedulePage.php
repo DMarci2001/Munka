@@ -13,10 +13,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $this->workScheduleService = new WorkScheduleService();
         $this->settings = new Booking_Settings();
 
-        if (isset($_POST["adddoctors"])) {
+        if (isset($_POST["addworker"])) {
             echo "<div style='display:table-cell;vertical-align: top;padding-right: 10px;'>";
             echo "<select size='6' id='orvosselector' style='width:250px;'>";
-            $res = sql_query("select * from orvosok order by nev");
+            $res = sql_query("select * from schedule_workers where roleid=? order by nev", array($_POST["tipus"]));
             while ($orvosData = sql_fetch_array($res)) {
                 echo "<option value='{$orvosData["id"]}'>{$orvosData["nev"]}</option>";
             }
@@ -40,7 +40,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             }
             echo "</select> ";
 
-            echo "<div style='padding-top:10px;'><input type='button' name='addtipmegj' value='+ orvos hozzáadása'></div>";
+            echo "<div style='padding-top:10px;'><input type='button' name='addtipmegj' value='+ hozzáadás'></div>";
 
             echo "</div>";
 
@@ -52,6 +52,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $GLOBALS["javascript"][] = "schedule.js";
     }
 
+    private $thisDay;
+    private $napszak;
+
     public function showPage() {
         if (!$this->adminUtils->helyszinModJog()) {
             return;
@@ -62,12 +65,14 @@ class AdminWorkSchedulePage extends AdminCorePage {
         for ($i = 0; $i < 7; $i++) {
             $weekStart = strtotime("this week monday + {$i} day");
 
-            $thisDay = date("Y-m-d", $weekStart);
+            $this->thisDay = date("Y-m-d", $weekStart);
             //$weekDayKey = ;
             $weekDay = $this->settings->hetnap[date("N", $weekStart)];
 
             echo "<div class='scheduleday'>";
-            echo "<div class='scheduledayhead'>{$thisDay} {$weekDay}</div>";
+            echo "<div class='scheduledayhead'>{$this->thisDay} {$weekDay}</div>";
+
+            $this->napszak = 0;
             echo "<div class='schedulenapszakhead'>Délelőtt</div>";
 
             echo "<div style='display:table-row;'>";
@@ -76,7 +81,25 @@ class AdminWorkSchedulePage extends AdminCorePage {
             echo "<div class='sch_noveroszlop'>".$this->_noverFejCell()."</div>";
             echo "</div>";
 
-            $resTipus = sql_query("select * from schedule_tipusok order by sorrend");
+            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
+            while ($tipusData = sql_fetch_array($resTipus)) {
+                echo "<div style='display:table-row;'>";
+                echo "<div class='sch_rendelooszlop'>".$this->_rendeloCell($tipusData)."</div>";
+                echo "<div class='sch_orvososzlop'>".$this->_orvosCell($tipusData)."</div>";
+                echo "<div class='sch_noveroszlop'>".$this->_noverCell($tipusData)."</div>";
+                echo "</div>";
+            }
+
+            $this->napszak = 1;
+            echo "<div class='schedulenapszakhead'>Délután</div>";
+
+            echo "<div style='display:table-row;'>";
+            echo "<div class='sch_rendelooszlop'>".$this->_rendeloFejCell()."</div>";
+            echo "<div class='sch_orvososzlop'>".$this->_orvosFejCell()."</div>";
+            echo "<div class='sch_noveroszlop'>".$this->_noverFejCell()."</div>";
+            echo "</div>";
+
+            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
             while ($tipusData = sql_fetch_array($resTipus)) {
                 echo "<div style='display:table-row;'>";
                 echo "<div class='sch_rendelooszlop'>".$this->_rendeloCell($tipusData)."</div>";
@@ -90,7 +113,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         echo "</div>";
 
-        echo "<div id='schdialog' class='sch_dialog'><div class='sch_dialogtop' onmousedown=\"mydragg.startMoving(this,'schdialog',event);\" onmouseup=\"mydragg.stopMoving('schdialog');\"><div id='dialogclose' style='width:20px;height:20px;float:right;'></div></div><div class='sch_dialogcontent'></div></div>";
+        echo "<div id='schdialog' class='sch_dialog'><div class='sch_dialogtop'></div><div class='sch_dialogcontent'></div></div>";
 
     }
 
@@ -121,9 +144,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
     private function _orvosCell($tipusData) {
         $html="";
         $html.="<div class='sch_oszlopdatacell'>";
-
-        if (true) {
-            $html .= "[<a onclick='Schedule.ShowAddDoctorDialog(this);return false;' href='#'>add</a>]";
+        if (isset($this->workScheduleService->scheduleMapping["{$this->thisDay}_{$this->napszak}_{$tipusData["id"]}"])) {
+            $mappings = $this->workScheduleService->scheduleMapping["{$this->thisDay}_{$this->napszak}_{$tipusData["id"]}"];
+            foreach ($mappings as $mapping) {
+                $html .= "<div><a data-roleid='{$tipusData["roleid"]}' data-tipusnev='{$tipusData["megnev"]}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>{$mapping["workernev"]}</a></div>";
+            }
+        } else {
+            $html .= "[<a data-roleid='{$tipusData["roleid"]}' data-tipusnev='{$tipusData["megnev"]}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>add</a>]";
         }
 
         $html.="</div>";
@@ -132,7 +159,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
     private function _noverCell($tipusData) {
         $html="";
-        $html.="<div class='sch_oszlopdatacell'>Nővér</div>";
+        $html.="<div class='sch_oszlopdatacell'>";
+        if ($tipusData["roleid"] == 1) {
+            $html .= "[<a data-roleid='2' data-tipusnev='{$tipusData["megnev"]} - nővér' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>add</a>]";
+        }
+        $html.="</div>";
         return $html;
     }
 

@@ -122,7 +122,7 @@ class AdminPage {
     private function _statusRow() {
         $html = "";
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
-        if ($_SESSION["adminuser"]["username"] == "jns") {
+        if ($_SESSION["adminuser"]["jog_schedule"] == 1) {
             $html.= "<div style='display: table-cell;'><a href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
         }
         if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {

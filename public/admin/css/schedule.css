@@ -18,6 +18,7 @@
 
 .scheduleday {
     display:inline-block;
+    vertical-align: top;
     min-width:350px;
     min-height:500px;
     border:1px solid #888;
@@ -48,8 +49,8 @@
 }
 
 .sch_dialog {
-    display: inline-block;
-    position: fixed;
+    display: none;
+    position: absolute;
     min-width:100px;
     min-height: 100px;
     background:#eee;
@@ -62,13 +63,12 @@
 
 .sch_dialogtop {
     background-color: #a00;
-    padding:3px;
+    padding:5px 5px 5px 8px;
     color:#fff;
-    height: 20px;
-    background-image: url(https://entertainment.ie/images/close-button.png);
+    background-image: url(/admin/images/close-button.png);
     background-repeat: no-repeat;
-    background-size:14px;
-    background-position: right 5px center;
+    background-size:12px;
+    background-position: right 8px center;
     cursor: pointer;
 }
 
