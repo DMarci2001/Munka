@@ -522,9 +522,21 @@ class Utils {
         $htmlout.= '<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.='<script type="text/javascript" src="javascript/ajax.js?v={$v}"></script>';
         $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
-        $htmlout.="<link rel='stylesheet' type='text/css' href='index.css?v={$v}' />";
+        $htmlout.="<link rel='stylesheet' type='text/css' href='css/index.css?v={$v}' />";
+
+        if (isset($GLOBALS["css"])) {
+            foreach ($GLOBALS["css"] as $css) {
+                $htmlout.="<link rel='stylesheet' type='text/css' href='css/{$css}?v={$v}' />";
+            }
+        }
+        if (isset($GLOBALS["javascript"])) {
+            foreach ($GLOBALS["javascript"] as $js) {
+                $htmlout.="<script type='text/javascript' src='javascript/{$js}?v={$v}'></script>";
+            }
+        }
+
         $htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
-        $htmlout.= '<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
+        $htmlout.='<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";

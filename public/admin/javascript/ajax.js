@@ -1518,9 +1518,3 @@ function showLogDetail(id) {
     return false;
 }
 
-function showAddDoctorDialog(el) {
-    var position = $(el).offset();
-    $(".sch_dialog").css("top", position.top + 15);
-    $(".sch_dialog").css("left", position.left + 15);
-    $(".sch_dialog").show();
-}

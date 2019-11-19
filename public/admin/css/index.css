@@ -179,7 +179,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .pagehead {
 	margin-bottom:20px;
 	padding:15px;
-	background:url(../admin/images/fejlecminta.png);
+	background:url(../images/fejlecminta.png);
 	font-size:24px;
 	border-bottom:4px solid #ccc;
 	text-transform:uppercase;
@@ -486,7 +486,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	cursor:pointer;
 }
 .nagychecked {
-	background-image:url(../admin/images/check.png);
+	background-image:url(../images/check.png);
 	background-repeat:no-repeat;
 	background-position:center;
 	background-size:10px;
@@ -494,7 +494,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 
 .eljottjelzes {
 	display:inline-block;
-	background-image:url(../admin/images/check.png);
+	background-image:url(../images/check.png);
 	background-repeat:no-repeat;
 	background-position:center;
 	background-size:10px;
@@ -560,7 +560,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 
 .printbutton {
 	background-color:#aaa;
-	background-image:url(../admin/images/print-icon.png);
+	background-image:url(../images/print-icon.png);
 	background-repeat:no-repeat;
 	background-position:5px center;
 	background-size:14px;
@@ -1149,39 +1149,3 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	padding:20px;
 }
 
-
-.scheduleday {
-	display:inline-block;
-	min-width:350px;
-	min-height:500px;
-	border:1px solid #888;
-}
-
-.sch_rendelooszlop {
-	display:table-cell;
-}
-
-.sch_orvososzlop {
-	display:table-cell;
-}
-
-.sch_noveroszlop {
-	display:table-cell;
-}
-
-.sch_oszlopdatacell {
-	padding:0px 5px;
-}
-
-.sch_oszlopfejcell {
-	text-align: center;
-}
-
-.sch_dialog {
-	display: inline-block;
-	position: fixed;
-	min-width:100px;
-	min-height: 100px;
-	background:#eee;
-	box-shadow: 5px 5px 10px rgba(10,10,10, .3);
-}
