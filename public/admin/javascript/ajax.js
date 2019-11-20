@@ -228,7 +228,7 @@ window.setInterval( function() {
     $.ajax({
         cache: false,
         type: "GET",
-        url: "/includes/refreshsession.php",
+        url: "/admin/refreshsession.php",
         success: function(data) {
         }
     });
