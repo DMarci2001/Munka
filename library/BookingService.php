@@ -1352,10 +1352,9 @@ END:VCALENDAR";
     }
 
     public function removeIdopont($id, $code) {
-        //todo: kód bevezetése hiánytik innen
+        //todo: kód bevezetése hiányzik innen
         if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?",array($id, $code)))) {
             logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", print_r($_POST, true));
-
             $this->deleteReservation($id, $code);
         }
     }
