@@ -17,7 +17,6 @@ class DocAgent {
 
     public function getDoc($fileId) {
         $fileName = $this->_getDocPath($fileId);
-		return false;
         //return file_get_contents($fileName);
     }
 
