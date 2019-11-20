@@ -71,7 +71,7 @@ class DocAgent {
     }
 
     public function showDocBinary($id, $code) {
-        /*error_reporting(0);
+        error_reporting(0);
         if (!$fileData = sql_fetch_array(sql_query("select * from dokumentumok where id=? and kod=?",array($id, $code)))) {
             die("error 2");
         }
@@ -99,7 +99,7 @@ class DocAgent {
         if ($fileData["tipus"]=="xlsx") header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         if ($fileData["tipus"]=="jpg" || $fileData["tipus"]=="jpeg") header("Content-Type: image/jpeg");
         if ($fileData["tipus"]=="png") header("Content-Type: image/png");
-        echo $file;*/
+        echo $file;
         die();
     }
 
