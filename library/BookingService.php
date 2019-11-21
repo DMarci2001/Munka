@@ -342,7 +342,9 @@ class BookingService {
         $nap   = substr($idopont,0,10);
         $ora   = substr($idopont,11,5);
         $cegid = $_SESSION["helyszindata"]["id"];
-        $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
+        if (!$this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)))) {
+            return false;
+        }
 
         if ($this->szuresTipusData["ispack"] == 1) {
             $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
@@ -358,8 +360,7 @@ class BookingService {
         //időpontra beosztott orvosok kiolvasása
         $resb=sql_query("SELECT * FROM orvos_beosztas b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(ig)>TIME(?) AND INSTR(b.tipusok,?)
-		".($orvos==0?"":"and b.orvosid='{$orvos}'")." 
+		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(ig)>TIME(?) AND INSTR(b.tipusok,?) ".($orvos==0?"":"and b.orvosid='{$orvos}'")." and b.aktiv=1 
 		ORDER BY o.onlytel,b.cegid DESC,o.id", array($this->helyszin, $cegid, $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
 
         while ($rowb=sql_fetch_array($resb)) {

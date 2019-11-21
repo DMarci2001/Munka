@@ -451,11 +451,13 @@ class BookingPage extends CorePage {
 
         $resh = sql_query("SELECT h.* FROM orvos_beosztas b
         LEFT JOIN helyszinek h ON h.id = b.helyszinid
-        WHERE b.cegid=? AND b.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
+        LEFT JOIN orvosok o on o.id = b.orvosid
+        WHERE b.cegid=? AND b.aktiv=1 AND b.helyszinid=1 AND o.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
 
         while ($helyszin = sql_fetch_array($resh)) {
             $rest = sql_query("SELECT b.* FROM orvos_beosztas b
-            WHERE b.cegid=? AND b.aktiv=1 AND b.`helyszinid`=?
+            LEFT JOIN orvosok o on o.id = b.orvosid
+            WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
             GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
             $tipusok = array(0);
             while ($tipusData = sql_fetch_array($rest)) {
@@ -477,9 +479,9 @@ class BookingPage extends CorePage {
 
                 $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
                 LEFT JOIN orvosok o ON o.id = b.orvosid
-                WHERE b.cegid=? AND b.aktiv=? AND b.helyszinid=1 AND INSTR(b.tipusok,?)
+                WHERE b.cegid=:cegId AND b.aktiv=1 AND b.helyszinid=1 AND INSTR(b.tipusok,:tipusok)
                 and (nap<10 OR b.beonap >= DATE(NOW()))
-                GROUP BY b.orvosid", array($_SESSION["helyszindata"]["id"], $helyszin["id"], "|{$tipusData["id"]}|"));
+                GROUP BY b.orvosid", array("cegId" => $_SESSION["helyszindata"]["id"], "tipusok" => "|{$tipusData["id"]}|"));
                 while ($orvosData = sql_fetch_array($reso)) {
                     $orvosok[$tipusData["id"]][] = $orvosData;
                 }
