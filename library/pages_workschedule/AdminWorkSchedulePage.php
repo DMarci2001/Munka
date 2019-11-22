@@ -6,6 +6,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
     private $workScheduleService;
     private $settings;
 
+    private $napszakok = ["Délelőtt", "Délután"];
+
     public function __construct()
     {
         parent::__construct();
@@ -13,38 +15,82 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $this->workScheduleService = new WorkScheduleService();
         $this->settings = new Booking_Settings();
 
+
         if (isset($_POST["addworker"])) {
+            $result = ["status" => "ok", "message" => ""];
+
+            if (!isset($_POST["workerselector"])) {
+                $result = ["status" => "error", "message" => "Válassz dolgozót!"];
+            }
+
+            if ($result["status"] == "ok") {
+                $timeStart  = $_POST["workertol"] == 0?"00:00:00":$_POST["workertol"].":00";
+                $timeEnd    = $_POST["workerig"] == 0?"00:00:00":$_POST["workerig"].":00";
+                $datumStart = "{$_POST["datum"]} {$timeStart}";
+                $datumEnd   = "{$_POST["datum"]} {$timeEnd}";
+
+                $params = [
+                    "datumFrom" => $datumStart,
+                    "datumTo"   => $datumEnd,
+                    "napszak"   => $_POST["napszak"],
+                    "tipusId"   => $_POST["tipusid"],
+                    "roleId"    => $_POST["roleid"],
+                    "workerId"  => $_POST["workerselector"]
+                ];
+
+                sql_query("insert into schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId", $params);
+
+                $this->workScheduleService->reloadScheduleMapping();
+                $result["message"] = $this->_scheduleDay($_POST["datum"]);
+            }
+
+            $this->utils->jsonOut($result);
+        }
+
+        if (isset($_POST["addworkerdialog"])) {
             echo "<div style='display:table-cell;vertical-align: top;padding-right: 10px;'>";
-            echo "<select size='6' id='orvosselector' style='width:250px;'>";
-            $res = sql_query("select * from schedule_workers where roleid=? order by nev", array($_POST["tipus"]));
+            echo "<input type='hidden' name='napszak' value='{$_POST["napszak"]}' />";
+            echo "<input type='hidden' name='roleid' value='{$_POST["roleid"]}' />";
+            echo "<input type='hidden' name='datum' value='{$_POST["datum"]}' />";
+            echo "<input type='hidden' name='tipusid' value='{$_POST["tipusid"]}' />";
+            echo "<select size='6' name='workerselector' id='workerselector' style='width:250px;'>";
+            $res = sql_query("select * from schedule_workers where roleid=? order by nev", array($_POST["roleid"]));
             while ($orvosData = sql_fetch_array($res)) {
                 echo "<option value='{$orvosData["id"]}'>{$orvosData["nev"]}</option>";
             }
             echo "</select>";
             echo "</div>";
 
+            $startHour = 6;
+            if ($_POST["napszak"] == 1) {
+                $startHour = 12;
+            }
+
+            $hour = $n = 0;
             echo "<div style='display:table-cell;vertical-align: top;'>";
-            echo "<select id='doctortol'>";
+            echo "<select id='doctortol' name='workertol'>";
             echo "<option value='0'>Kezdés?</option>";
-            for ($n=0; $n<=1000; $n+=15) {
-                $t = date("H:i",mktime(6,0+$n,0,1,1,2015));
+            while ($hour<23) {
+                $t = date("H:i",mktime($startHour,$n,0,1,1,2015));
+                $hour = date("H",mktime($startHour,$n,0,1,1,2015));
                 echo "<option value='{$t}'>{$t}</option>";
+                $n+=15;
             }
             echo "</select> - ";
 
-            echo "<select id='doctorig'>";
+            $hour = $n = 0;
+            echo "<select id='doctorig' name='workerig'>";
             echo "<option value='0'>Vége?</option>";
-            for ($n=0; $n<=1000; $n+=15) {
-                $t = date("H:i",mktime(6,0+$n,0,1,1,2015));
+            while ($hour<23) {
+                $t = date("H:i",mktime($startHour,$n,0,1,1,2015));
+                $hour = date("H",mktime($startHour,$n,0,1,1,2015));
                 echo "<option value='{$t}'>{$t}</option>";
+                $n+=15;
             }
             echo "</select> ";
 
-            echo "<div style='padding-top:10px;'><input type='button' name='addtipmegj' value='+ hozzáadás'></div>";
-
+            echo "<div style='padding-top:10px;'><input type='button' onclick='Schedule.Addworker();' value='+ hozzáadás'></div>";
             echo "</div>";
-
-
             die;
         }
 
@@ -63,58 +109,45 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "<div style='white-space: nowrap;'>";
 
         for ($i = 0; $i < 7; $i++) {
-            $weekStart = strtotime("this week monday + {$i} day");
-
-            $this->thisDay = date("Y-m-d", $weekStart);
-            //$weekDayKey = ;
-            $weekDay = $this->settings->hetnap[date("N", $weekStart)];
-
-            echo "<div class='scheduleday'>";
-            echo "<div class='scheduledayhead'>{$this->thisDay} {$weekDay}</div>";
-
-            $this->napszak = 0;
-            echo "<div class='schedulenapszakhead'>Délelőtt</div>";
-
-            echo "<div style='display:table-row;'>";
-            echo "<div class='sch_rendelooszlop'>".$this->_rendeloFejCell()."</div>";
-            echo "<div class='sch_orvososzlop'>".$this->_orvosFejCell()."</div>";
-            echo "<div class='sch_noveroszlop'>".$this->_noverFejCell()."</div>";
-            echo "</div>";
-
-            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
-            while ($tipusData = sql_fetch_array($resTipus)) {
-                echo "<div style='display:table-row;'>";
-                echo "<div class='sch_rendelooszlop'>".$this->_rendeloCell($tipusData)."</div>";
-                echo "<div class='sch_orvososzlop'>".$this->_orvosCell($tipusData)."</div>";
-                echo "<div class='sch_noveroszlop'>".$this->_noverCell($tipusData)."</div>";
-                echo "</div>";
-            }
-
-            $this->napszak = 1;
-            echo "<div class='schedulenapszakhead'>Délután</div>";
-
-            echo "<div style='display:table-row;'>";
-            echo "<div class='sch_rendelooszlop'>".$this->_rendeloFejCell()."</div>";
-            echo "<div class='sch_orvososzlop'>".$this->_orvosFejCell()."</div>";
-            echo "<div class='sch_noveroszlop'>".$this->_noverFejCell()."</div>";
-            echo "</div>";
-
-            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
-            while ($tipusData = sql_fetch_array($resTipus)) {
-                echo "<div style='display:table-row;'>";
-                echo "<div class='sch_rendelooszlop'>".$this->_rendeloCell($tipusData)."</div>";
-                echo "<div class='sch_orvososzlop'>".$this->_orvosCell($tipusData)."</div>";
-                echo "<div class='sch_noveroszlop'>".$this->_noverCell($tipusData)."</div>";
-                echo "</div>";
-            }
-
+            $thisDay = date("Y-m-d", strtotime("this week monday + {$i} day"));
+            echo "<div class='scheduleday' id='daycontainer{$thisDay}'>";
+            echo $this->_scheduleDay($thisDay);
             echo "</div>";
         }
 
         echo "</div>";
 
-        echo "<div id='schdialog' class='sch_dialog'><div class='sch_dialogtop'></div><div class='sch_dialogcontent'></div></div>";
+        echo "<div id='schdialog' class='sch_dialog'><div class='sch_dialogtop'></div><form name='dialogform' id='dialogform' method='post'><div class='sch_dialogcontent'></div></form></div>";
 
+    }
+
+    private function _scheduleDay($thisDay) {
+        $this->thisDay = $thisDay;
+        $weekDay = date("N", strtotime($thisDay));
+        $html = "";
+
+        $html.= "<div class='scheduledayhead'>{$this->thisDay} {$weekDay}</div>";
+
+        for ($this->napszak = 0; $this->napszak<=1; $this->napszak++) {
+            $html .= "<div class='schedulenapszakhead'>".$this->napszakok[$this->napszak]."</div>";
+
+            $html .= "<div style='display:table-row;'>";
+            $html .= "<div class='sch_rendelooszlop'>" . $this->_rendeloFejCell() . "</div>";
+            $html .= "<div class='sch_orvososzlop'>" . $this->_workerFejCell("Orvos") . "</div>";
+            $html .= "<div class='sch_noveroszlop'>" . $this->_workerFejCell("Nővér") . "</div>";
+            $html .= "</div>";
+
+            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
+            while ($tipusData = sql_fetch_array($resTipus)) {
+                $html .= "<div style='display:table-row;'>";
+                $html .= "<div class='sch_rendelooszlop'>" . $this->_rendeloCell($tipusData) . "</div>";
+                $html .= "<div class='sch_orvososzlop'>" . $this->_workerCell($tipusData) . "</div>";
+                $html .= "<div class='sch_noveroszlop'>" . $this->_workerCell($tipusData, 2) . "</div>";
+                $html .= "</div>";
+            }
+        }
+
+        return $html;
     }
 
     private function _rendeloFejCell() {
@@ -123,15 +156,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
         return $html;
     }
 
-    private function _orvosFejCell() {
+    private function _workerFejCell($title) {
         $html="";
-        $html.="<div class='sch_oszlopfejcell'>Orvos</div>";
-        return $html;
-    }
-
-    private function _noverFejCell() {
-        $html="";
-        $html.="<div class='sch_oszlopfejcell'>Nővér</div>";
+        $html.="<div class='sch_oszlopfejcell'>{$title}</div>";
         return $html;
     }
 
@@ -141,32 +168,37 @@ class AdminWorkSchedulePage extends AdminCorePage {
         return $html;
     }
 
-    private function _orvosCell($tipusData) {
+    private function _workerCell($tipusData, $roleFilter = 0) {
+        $roleId = $tipusData["roleid"];
+        $tipusName = $tipusData["megnev"];
+        if ($roleFilter != 0) {
+            $roleId = $roleFilter;
+        }
+        if ($roleId == 2) {
+            $tipusName.=" - nővér";
+        }
+        $workerExists = false;
+
         $html="";
         $html.="<div class='sch_oszlopdatacell'>";
         if (isset($this->workScheduleService->scheduleMapping["{$this->thisDay}_{$this->napszak}_{$tipusData["id"]}"])) {
             $mappings = $this->workScheduleService->scheduleMapping["{$this->thisDay}_{$this->napszak}_{$tipusData["id"]}"];
             foreach ($mappings as $mapping) {
-                $html .= "<div><a data-roleid='{$tipusData["roleid"]}' data-tipusnev='{$tipusData["megnev"]}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>{$mapping["workernev"]}</a></div>";
+                if ($mapping["roleid"] != $roleId) {
+                    continue;
+                }
+                $workerExists = true;
+                $html .= "<div><a data-datum='{$this->thisDay}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}' data-tipusnev='{$tipusName}' data-napszak='{$this->napszak}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>{$mapping["workernev"]}</a></div>";
             }
-        } else {
-            $html .= "[<a data-roleid='{$tipusData["roleid"]}' data-tipusnev='{$tipusData["megnev"]}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>add</a>]";
+        }
+
+        if (!$workerExists) {
+            $html .= "[<a data-datum='{$this->thisDay}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}' data-tipusnev='{$tipusName}' data-napszak='{$this->napszak}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>add</a>]";
         }
 
         $html.="</div>";
         return $html;
     }
-
-    private function _noverCell($tipusData) {
-        $html="";
-        $html.="<div class='sch_oszlopdatacell'>";
-        if ($tipusData["roleid"] == 1) {
-            $html .= "[<a data-roleid='2' data-tipusnev='{$tipusData["megnev"]} - nővér' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>add</a>]";
-        }
-        $html.="</div>";
-        return $html;
-    }
-
 
 }
 

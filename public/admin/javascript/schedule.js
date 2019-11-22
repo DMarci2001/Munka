@@ -6,6 +6,7 @@ $().ready(function() {
 Schedule = {
     URL: "index.php?page=workschedule",
     DialogCloseHTML: "<div id='dialogclose' style='width:20px;height:20px;float:right;'></div>",
+    DialogId: "",
 
     Init: function(){
 
@@ -17,11 +18,15 @@ Schedule = {
 
     },
     ShowAddWorkerDialog: function(el) {
-        let roleid = $(el).data("roleid");
+        Schedule.DialogId = el;
+        let roleid  = $(el).data("roleid");
+        let tipusid = $(el).data("tipusid");
+        let napszak = $(el).data("napszak");
+        let datum   = $(el).data("datum");
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: "addworker=1&tipus="+roleid,
+            data: "addworkerdialog=1&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum,
             success: function(data)	{
                 let position = $(el).offset();
                 let left = position.left + 15;
@@ -39,6 +44,23 @@ Schedule = {
 
                 $(".sch_dialog").css("top", position.top + 15);
                 $(".sch_dialog").css("left", left);
+            }
+        });
+
+    },
+    Addworker: function () {
+        let params = $("#dialogform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addworker=1&"+params,
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
+                $(".sch_dialog").hide();
             }
         });
 
