@@ -9,16 +9,36 @@ Schedule = {
     DialogId: "",
 
     Init: function(){
-
         $( "#dialogclose" ).click(function() {
+            console.log("clicked");
             $(".sch_dialog").hide();
         });
 
         $(".sch_dialog").draggable();
+        $(".workerlink").draggable({"revert":true, helper: 'clone'});
+        $(".sch_oszlopdatacell" ).droppable({
+            classes: {
+                "ui-droppable-hover": "sch_oszlopdatacell_hover"
+            },
+            accept: function(d) {
+                let sourceRole = $(d).find("a").data("roleid");
+                let targetRole = $(this).data("roleid");
+                let sourceType = $(d).find("a").data("tipusid");
+                let targetType = $(this).data("tipusid");
+                if(sourceRole == targetRole && sourceType != targetType) {
+                    return true;
+                }
+            },
+            drop: function(event, ui) {
+                let sourceId = $(ui.draggable).find("a").data("mapid");
+                Schedule.CopyWorker(sourceId, this);
+            }
+        });
 
     },
     ShowAddWorkerDialog: function(el) {
         Schedule.DialogId = el;
+        let mapid   = $(el).data("mapid");
         let roleid  = $(el).data("roleid");
         let tipusid = $(el).data("tipusid");
         let napszak = $(el).data("napszak");
@@ -26,7 +46,7 @@ Schedule = {
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: "addworkerdialog=1&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum,
+            data: "addworkerdialog=1&mapid="+mapid+"&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum,
             success: function(data)	{
                 let position = $(el).offset();
                 let left = position.left + 15;
@@ -46,9 +66,8 @@ Schedule = {
                 $(".sch_dialog").css("left", left);
             }
         });
-
     },
-    Addworker: function () {
+    AddWorker: function () {
         let params = $("#dialogform").serialize();
         $.ajax({
             type: "POST",
@@ -63,7 +82,43 @@ Schedule = {
                 $(".sch_dialog").hide();
             }
         });
+    },
+    DeleteWorker: function () {
+        let params = $("#dialogform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "deleteworker=1&"+params,
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
+                $(".sch_dialog").hide();
+            }
+        });
+    },
+    CopyWorker: function (sourceId, targetId) {
+        let roleid  = $(targetId).data("roleid");
+        let tipusid = $(targetId).data("tipusid");
+        let napszak = $(targetId).data("napszak");
+        let datum   = $(targetId).data("datum");
 
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "copyworker=1&sourceid="+sourceId+"&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum,
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+datum).html(data.message);
+                $(".sch_dialog").hide();
+                Schedule.Init();
+            }
+        });
     }
 };
 

@@ -39,13 +39,22 @@
 }
 
 .sch_oszlopdatacell {
+    display:table-cell;
+    vertical-align: top;
     padding:0px 5px;
+    min-width: 100px;
 }
 
 .sch_oszlopfejcell {
+    display:table-cell;
     padding:0px 5px;
     text-align:left;
     font-weight: bold;
+}
+
+.sch_oszlopdatacellbtn {
+    display:table-cell;
+    vertical-align: top;
 }
 
 .sch_dialog {
@@ -72,3 +81,15 @@
     cursor: pointer;
 }
 
+.sch_oszlopdatacell_hover {
+    background: #d3e7fc;
+    border:1px solid #888;
+    box-sizing: border-box;
+}
+
+.sch_plusbtn {
+    display:inline-block;
+    height:11px;
+    opacity:.7;
+    padding-top:2px;'
+}
