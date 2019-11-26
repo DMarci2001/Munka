@@ -91,7 +91,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 ];
 
                 sql_query("insert into schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId", $params);
-
+                if ($_POST["operation"] =="move") {
+                    sql_query("delete from schedule_mapping where id=?", [$_POST["sourceid"]]);
+                }
                 $this->workScheduleService->reloadScheduleMapping();
                 $result["message"] = $this->_scheduleDay($_POST["datum"]);
             }

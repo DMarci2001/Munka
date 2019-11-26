@@ -2,6 +2,15 @@ $().ready(function() {
     Schedule.Init();
 });
 
+let ctrlDown = false;
+$(window).on("keydown", function(event) {
+    if (event.which === 17) {
+        ctrlDown = true;
+    }
+}).on("keyup", function(event) {
+    ctrlDown = false;
+});
+
 
 Schedule = {
     URL: "index.php?page=workschedule",
@@ -21,11 +30,13 @@ Schedule = {
                 "ui-droppable-hover": "sch_oszlopdatacell_hover"
             },
             accept: function(d) {
+                let sourceDate = $(d).find("a").data("datum");
+                let targetDate = $(this).data("datum");
                 let sourceRole = $(d).find("a").data("roleid");
                 let targetRole = $(this).data("roleid");
                 let sourceType = $(d).find("a").data("tipusid");
                 let targetType = $(this).data("tipusid");
-                if(sourceRole == targetRole && sourceType != targetType) {
+                if(sourceRole == targetRole && (sourceType != targetType || sourceDate != targetDate)) {
                     return true;
                 }
             },
@@ -80,6 +91,7 @@ Schedule = {
                 }
                 $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
                 $(".sch_dialog").hide();
+                Schedule.Init();
             }
         });
     },
@@ -96,19 +108,21 @@ Schedule = {
                 }
                 $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
                 $(".sch_dialog").hide();
+                Schedule.Init();
             }
         });
     },
     CopyWorker: function (sourceId, targetId) {
-        let roleid  = $(targetId).data("roleid");
-        let tipusid = $(targetId).data("tipusid");
-        let napszak = $(targetId).data("napszak");
-        let datum   = $(targetId).data("datum");
+        let roleid    = $(targetId).data("roleid");
+        let tipusid   = $(targetId).data("tipusid");
+        let napszak   = $(targetId).data("napszak");
+        let datum     = $(targetId).data("datum");
+        let operation = ctrlDown ? "copy":"move";
 
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: "copyworker=1&sourceid="+sourceId+"&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum,
+            data: "copyworker=1&sourceid="+sourceId+"&roleid="+roleid+"&tipusid="+tipusid+"&napszak="+napszak+"&datum="+datum+"&operation="+operation,
             success: function(data)	{
                 if (data.status != "ok") {
                     alert(data.message);
