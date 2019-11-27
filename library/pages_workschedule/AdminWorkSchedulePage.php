@@ -69,7 +69,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }
 
         if (isset($_POST["copyworker"])) {
-            $result = ["status" => "ok", "message" => ""];
+            $result = ["status" => "ok", "message" => "", "messageSource" => ""];
 
             if (!$sourceData = sql_fetch_array(sql_query("select * from schedule_mapping where id=?", array($_POST["sourceid"])))) {
                 $result = ["status" => "error", "message" => "Másolás közben hiba történt!"];
@@ -96,6 +96,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 }
                 $this->workScheduleService->reloadScheduleMapping();
                 $result["message"] = $this->_scheduleDay($_POST["datum"]);
+
+                $sourceDate = date("Y-m-d", strtotime($sourceData["datumfrom"]));
+                if ($sourceDate != $_POST["datum"]) {
+                    $result["messageSource"] = $this->_scheduleDay($sourceDate);
+                }
             }
 
             $this->utils->jsonOut($result);
@@ -209,7 +214,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $html .= $this->_workerFejCell("Nővér");
             $html .= "</div>";
 
-            $resTipus = sql_query("select * from schedule_tipusok order by roleid, sorrend");
+            $resTipus = sql_query("select * from schedule_tipusok where kulso=0 order by roleid, sorrend");
             while ($tipusData = sql_fetch_array($resTipus)) {
                 $html .= "<div style='display:table-row;'>";
                 $html .= $this->_rendeloCell($tipusData);
@@ -218,6 +223,17 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 $html .= "</div>";
             }
         }
+
+        $html .= "<div class='scheduledayhead'>{$this->thisDay} ".$this->settings->hetnap[$weekDay]."<br/>Külső cégek</div>";
+        $resTipus = sql_query("select * from schedule_tipusok where kulso=1 order by roleid, sorrend");
+        while ($tipusData = sql_fetch_array($resTipus)) {
+            $html .= "<div style='display:table-row;'>";
+            $html .= $this->_rendeloCell($tipusData);
+            $html .= $this->_workerCell($tipusData);
+            $html .= $this->_workerCell($tipusData, 2);
+            $html .= "</div>";
+        }
+
 
         return $html;
     }

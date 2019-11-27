@@ -16,10 +16,10 @@ Schedule = {
     URL: "index.php?page=workschedule",
     DialogCloseHTML: "<div id='dialogclose' style='width:20px;height:20px;float:right;'></div>",
     DialogId: "",
+    CopySourceDate: "",
 
     Init: function(){
         $( "#dialogclose" ).click(function() {
-            console.log("clicked");
             $(".sch_dialog").hide();
         });
 
@@ -36,6 +36,7 @@ Schedule = {
                 let targetRole = $(this).data("roleid");
                 let sourceType = $(d).find("a").data("tipusid");
                 let targetType = $(this).data("tipusid");
+                Schedule.CopySourceDate = sourceDate;
                 if(sourceRole == targetRole && (sourceType != targetType || sourceDate != targetDate)) {
                     return true;
                 }
@@ -129,6 +130,9 @@ Schedule = {
                     return;
                 }
                 $("#daycontainer"+datum).html(data.message);
+                if (data.messageSource != "") {
+                    $("#daycontainer" + Schedule.CopySourceDate).html(data.messageSource);
+                }
                 $(".sch_dialog").hide();
                 Schedule.Init();
             }
