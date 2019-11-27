@@ -308,8 +308,9 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<h1>{$row["nev"]} ".($row["validated"]==1?"<span style='font-size:12px;color:#0a0;'>(aktíválva)</span>":"<span style='font-size:12px;color:#f00;border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód: {$row["rkod"]}'>(nem aktív)</span>")."</h1>";
 
 
+            /*
             if($row['cegid'] == 104) {
-                require_once("Classes/PHPExcel.php");
+                require_once("/var/www/onlinebejelentkezes_keltexmed/library/other/PHPExcel.php");
                 $tmpfname    = "templates/debrecen.xlsx";
                 $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
                 $excelObj    = $excelReader->load( $tmpfname );
@@ -341,6 +342,7 @@ class AdminPatientsPage extends AdminCorePage {
                 }
                 $key = array_search( $row['nev'], array_column( $excelArray, 'nev' ));
             }
+            */
 
             echo "<div style=''>Cég: {$row["cegnev"]} ({$row["munkakor"]})</div>";
             echo "<div style=''>TAJ: {$row["taj"]}</div>";
