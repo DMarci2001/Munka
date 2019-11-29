@@ -1,8 +1,8 @@
 <?php
 
 
-//error_reporting(E_ALL);
-//ini_set('display_errors', 1);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 require_once(__DIR__ . "/library/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
@@ -68,6 +68,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminUsersPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
+    require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
+    require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");
 }
 
 function getConfigFile() {

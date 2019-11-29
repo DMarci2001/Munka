@@ -14,6 +14,7 @@ $(window).on("keydown", function(event) {
 
 Schedule = {
     URL: "index.php?page=workschedule",
+    WorkerURL: "index.php?page=workschedule&subpage=workers",
     DialogCloseHTML: "<div id='dialogclose' style='width:20px;height:20px;float:right;'></div>",
     DialogId: "",
     CopySourceDate: "",
@@ -96,12 +97,12 @@ Schedule = {
             }
         });
     },
-    DeleteWorker: function () {
+    DeleteWorkerMap: function () {
         let params = $("#dialogform").serialize();
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: "deleteworker=1&"+params,
+            data: "deleteworkermap=1&"+params,
             success: function(data)	{
                 if (data.status != "ok") {
                     alert(data.message);
@@ -110,6 +111,33 @@ Schedule = {
                 $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
                 $(".sch_dialog").hide();
                 Schedule.Init();
+            }
+        });
+    },
+    DeleteWorker: function () {
+        if (!confirm("Biztos törli ezt a munkatársat?")) {
+            return;
+        }
+        let params = $("#workerform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "deleteworker=1&"+params,
+            success: function(data)	{
+                $("#workerlist").html(data);
+                $("#workerdetail").html("");
+            }
+        });
+    },
+    SaveWorker: function () {
+        let params = $("#workerform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "saveworker=1&"+params,
+            success: function(data)	{
+                $("#workerlist").html(data.list);
+                $("#workerdetail").html(data.detail);
             }
         });
     },
@@ -135,6 +163,27 @@ Schedule = {
                 }
                 $(".sch_dialog").hide();
                 Schedule.Init();
+            }
+        });
+    },
+    OpenWorkerDetail: function (id) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.WorkerURL,
+            data: "openworkerdetail=1&id="+id,
+            success: function(data)	{
+                $("#workerdetail").html(data);
+            }
+        });
+
+    },
+    AddNewWorker: function (roleId) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addnewworker=1&roleid="+roleId,
+            success: function(data)	{
+                $("#workerlist").html(data);
             }
         });
     }

@@ -5,6 +5,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
     private $bookingService;
     private $workScheduleService;
     private $settings;
+    private $workersSubPage;
+    private $workplacesSubPage;
+    private $subPage = "beosztasok";
 
     private $napszakok = ["Délelőtt", "Délután"];
 
@@ -13,8 +16,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         parent::__construct();
 
         $this->workScheduleService = new WorkScheduleService();
+        $this->workersSubPage = new WorkersSubPage($this->workScheduleService);
+        $this->workplacesSubPage = new WorkplacesSubPage($this->workScheduleService);
         $this->settings = new Booking_Settings();
 
+        if (isset($_GET["subpage"])) {
+            $this->subPage = $_GET["subpage"];
+        }
 
         if (isset($_POST["addworker"])) {
             $result = ["status" => "ok", "message" => ""];
@@ -52,7 +60,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut($result);
         }
 
-        if (isset($_POST["deleteworker"])) {
+        if (isset($_POST["deleteworkermap"])) {
             $result = ["status" => "ok", "message" => ""];
 
             if (!$mappingData = sql_fetch_array(sql_query("select * from schedule_mapping where id=?", [$_POST["mapid"]]))) {
@@ -164,7 +172,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $buttonText = $mapId == 0?"+ hozzáadás":"mentés";
             echo "<input type='button' onclick='Schedule.AddWorker();' value='{$buttonText}'>";
             if ($mapId != 0) {
-                echo " <input type='button' onclick='Schedule.DeleteWorker();' value='Törlés'>";
+                echo " <input type='button' onclick='Schedule.DeleteWorkerMap();' value='Törlés'>";
             }
             echo "</div>";
             echo "</div>";
@@ -183,19 +191,36 @@ class AdminWorkSchedulePage extends AdminCorePage {
             return;
         }
 
-        echo "<div style='white-space: nowrap;'>";
+        echo "<div id='menusor'>";
+        echo "<a href='index.php?page={$_GET["page"]}'>Beosztások</a> &bull; ";
+        echo "<a href='index.php?page={$_GET["page"]}&subpage=workers'>Munkatársak</a> &bull; ";
+        echo "<a href='index.php?page={$_GET["page"]}&subpage=workplaces'>Munkahelyek</a>";
+        echo "</div>";
 
-        for ($i = 0; $i < 7; $i++) {
-            $thisDay = date("Y-m-d", strtotime("this week monday + {$i} day"));
-            echo "<div class='scheduleday' id='daycontainer{$thisDay}'>";
-            echo $this->_scheduleDay($thisDay);
+        if ($this->subPage == "beosztasok") {
+            echo "<div style='white-space: nowrap;margin-top:10px;'>";
+            for ($i = 0; $i < 7; $i++) {
+                $thisDay = date("Y-m-d", strtotime("this week monday + {$i} day"));
+                echo "<div class='scheduleday' id='daycontainer{$thisDay}'>";
+                echo $this->_scheduleDay($thisDay);
+                echo "</div>";
+            }
             echo "</div>";
         }
 
-        echo "</div>";
+        if ($this->subPage == "workers") {
+            echo "<div id='workersubpage' style='margin-top:10px;'>";
+            echo $this->workersSubPage->showPage();
+            echo "</div>";
+        }
+
+        if ($this->subPage == "workplaces") {
+            echo "<div id='workersubpage' style='margin-top:10px;'>";
+            echo $this->workplacesSubPage->showPage();
+            echo "</div>";
+        }
 
         echo "<div id='schdialog' class='sch_dialog'><div class='sch_dialogtop'></div><form name='dialogform' id='dialogform' method='post'><div class='sch_dialogcontent'></div></form></div>";
-
     }
 
     private function _scheduleDay($thisDay) {
@@ -209,7 +234,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $html .= "<div class='schedulenapszakhead'>".$this->napszakok[$this->napszak]."</div>";
 
             $html .= "<div style='display:table-row;'>";
-            $html .= $this->_rendeloFejCell();
+            $html .= $this->_rendeloFejCell("Rendelő");
             $html .= $this->_workerFejCell("Orvos");
             $html .= $this->_workerFejCell("Nővér");
             $html .= "</div>";
@@ -225,6 +250,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }
 
         $html .= "<div class='scheduledayhead'>{$this->thisDay} ".$this->settings->hetnap[$weekDay]."<br/>Külső cégek</div>";
+        $html .= "<div style='display:table-row;'>";
+        $html .= $this->_rendeloFejCell("Cégek");
+        $html .= $this->_workerFejCell("Orvos");
+        $html .= $this->_workerFejCell("Nővér");
+        $html .= "</div>";
         $resTipus = sql_query("select * from schedule_tipusok where kulso=1 order by roleid, sorrend");
         while ($tipusData = sql_fetch_array($resTipus)) {
             $html .= "<div style='display:table-row;'>";
@@ -238,9 +268,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
         return $html;
     }
 
-    private function _rendeloFejCell() {
+    private function _rendeloFejCell($text) {
         $html="";
-        $html.="<div class='sch_oszlopfejcell'>Rendelő</div>";
+        $html.="<div class='sch_oszlopfejcell'>{$text}</div>";
         return $html;
     }
 

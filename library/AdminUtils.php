@@ -287,11 +287,16 @@ class AdminUtils {
         return $adminMenu;
     }
 
-    public function magyarDatum($datum) {
+    public function magyarDatum($datum, $weekDay = true) {
         $m = date("n",strtotime($datum));
         $n = date("Y-m-d",strtotime($datum));
         $w = date("N",strtotime($datum));
-        return substr($datum,0,4)." ".ucfirst($GLOBALS["honaptext"][$m])." ".intval(substr($n,8,2)).". ".$GLOBALS["hetnap"][$w]." ".substr($datum,11,5);
+        $date = substr($datum,0,4)." ".ucfirst($GLOBALS["honaptext"][$m])." ".intval(substr($n,8,2)).".";
+        if ($weekDay) {
+            $date.= " ".$GLOBALS["hetnap"][$w];
+        }
+        $date.= " ".substr($datum,11,5);
+        return trim($date);
     }
 
     public function cegSQLFilter($key) {
