@@ -43,14 +43,15 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "napszak"   => $_POST["napszak"],
                     "tipusId"   => $_POST["tipusid"],
                     "roleId"    => $_POST["roleid"],
-                    "workerId"  => $_POST["workerselector"]
+                    "workerId"  => $_POST["workerselector"],
+                    "megj"  => $_POST["megj"]
                 ];
 
                 if ($_POST["mapid"] == 0) {
-                    sql_query("insert into schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId", $params);
+                    sql_query("insert into schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId, megj=:megj", $params);
                 } else {
                     $params["id"] = $_POST["mapid"];
-                    sql_query("update schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId where id=:id", $params);
+                    sql_query("update schedule_mapping set datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId, megj=:megj where id=:id", $params);
                 }
 
                 $this->workScheduleService->reloadScheduleMapping();
@@ -145,7 +146,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
             $hour = $n = 0;
             echo "<div style='display:table-cell;vertical-align: top;'>";
-            echo "<select id='doctortol' name='workertol'>";
+            echo "<select id='doctortol' name='workertol' style='width:80px;'>";
             echo "<option value='0'>Kezdés?</option>";
             while ($hour<23) {
                 $d = (isset($mapData["datumfrom"])?date("H:i", strtotime($mapData["datumfrom"])):"");
@@ -157,7 +158,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             echo "</select> - ";
 
             $hour = $n = 0;
-            echo "<select id='doctorig' name='workerig'>";
+            echo "<select id='doctorig' name='workerig' style='width:80px;'>";
             echo "<option value='0'>Vége?</option>";
             while ($hour<23) {
                 $d = (isset($mapData["datumto"])?date("H:i", strtotime($mapData["datumto"])):"");
@@ -167,6 +168,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 $n+=15;
             }
             echo "</select> ";
+
+            echo "<div style='padding-top:10px;'>";
+            $megj = (isset($mapData)?$mapData["megj"]:"");
+            echo "<input type='text' id='megj' name='megj' placeholder='megjegyzés' value='{$megj}' style='width:164px;'/>";
+            echo "</div>";
 
             echo "<div style='padding-top:10px;'>";
             $buttonText = $mapId == 0?"+ hozzáadás":"mentés";
@@ -198,7 +204,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "</div>";
 
         if ($this->subPage == "beosztasok") {
-            echo "<div style='white-space: nowrap;margin-top:10px;'>";
+            echo "<div id='schedulesubpage' style='white-space: nowrap;margin-top:20px;'>";
             for ($i = 0; $i < 7; $i++) {
                 $thisDay = date("Y-m-d", strtotime("this week monday + {$i} day"));
                 echo "<div class='scheduleday' id='daycontainer{$thisDay}'>";
@@ -209,13 +215,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }
 
         if ($this->subPage == "workers") {
-            echo "<div id='workersubpage' style='margin-top:10px;'>";
+            echo "<div id='workersubpage' style='margin-top:20px;'>";
             echo $this->workersSubPage->showPage();
             echo "</div>";
         }
 
         if ($this->subPage == "workplaces") {
-            echo "<div id='workersubpage' style='margin-top:10px;'>";
+            echo "<div id='workersubpage' style='margin-top:20px;'>";
             echo $this->workplacesSubPage->showPage();
             echo "</div>";
         }
@@ -228,7 +234,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $weekDay = date("N", strtotime($thisDay));
         $html = "";
 
-        $html.= "<div class='scheduledayhead'>{$this->thisDay} ".$this->settings->hetnap[$weekDay]."</div>";
+        $html.= "<div class='scheduledayhead'>".$this->adminUtils->magyarDatum($this->thisDay)."</div>";
 
         for ($this->napszak = 0; $this->napszak<=1; $this->napszak++) {
             $html .= "<div class='schedulenapszakhead'>".$this->napszakok[$this->napszak]."</div>";
@@ -316,12 +322,14 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 if ($mapping["roleid"] != $roleId) {
                     continue;
                 }
-                $workerExists = true;
                 $html .= "<div class='workerlink'>";
                 $html .= "<a data-mapid='{$mapping["id"]}' data-datum='{$this->thisDay}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}' data-tipusnev='{$tipusName}' data-napszak='{$this->napszak}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'>";
                 $html .= "{$mapping["workernev"]} ";
                 $html .= "</a>";
                 $html .= $this->_workInterval($mapping);
+                $html .= "</div>";
+                $html .= "<div class='workermegj'>";
+                $html .= "<div class='sch_mappingmegj'>{$mapping["megj"]}</div>";
                 $html .= "</div>";
             }
         }
