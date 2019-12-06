@@ -1136,58 +1136,15 @@ END:VCALENDAR";
             }
         }
 
-        sql_query("insert into foglalasok set 
-            regdatum=now(),
-            paciensid=?,
-            cegid=?,
-            datum=?,
-            rinterval=?,
-            telephely=?,
-            helyszinid=?,
-            szurestipusid=?,
-            nev=?,
-            email=?,
-            telefon=?,
-            szuldatum=?,
-            szulhely=?,
-            anyjaneve=?,
-            neme=?,
-            taj=?,
-            irsz=?,
-            varos=?,
-            utca=?,
-            megj=?,
-            munkakor=?,
-            tudoszuro=?,
-            rlang=?,
-            rkod=?"
-        , array(
-            $paciensId,
-            $cegId,
-            $data["datum"],
-            intval($data["rinterval"]),
-            $data["telephely"],
-            $data["helyszin"],
-            $data["szurestipus"],
-            $data["nev"],
-            $data["email"],
-            $data["telefon"],
-            $data["szuldatum"],
-            $data["szulhely"],
-            $data["anyjaneve"],
-            $data["neme"],
-            $data["taj"],
-            $data["irsz"],
-            $data["varos"],
-            $data["utca"],
-            $data["megj"],
-            $data["munkakor"],
-            $data["tudoszuro"],
-            $_COOKIE["lang"],
-            $rn));
+        $data["paciensid"] = $paciensId;
+        $data["rn"] = $rn;
+        $data["aktiv"] = 0;
+        $data["parentid"] = 0;
+        $data["cegid"] = $cegId;
+        $data["lang"] = $_COOKIE["lang"];
+        $data["orvosid"] = 0;
 
-        $fid = sql_insert_id();
-        $this->updateFoglalasData($fid);
+        $fid = $this->addReservationQuery($data);
 
         $oid = $this->selectFreeOrvosForIdopont($fid);
         sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
@@ -1233,68 +1190,82 @@ END:VCALENDAR";
                     continue;
                 }
 
-                $rn = rand(1000000, 9999999);
+                $data["paciensid"] = $parentReservationData["paciensid"];
+                $data["rn"] = rand(1000000, 9999999);
+                $data["aktiv"] = $parentReservationData["aktiv"];
+                $data["parentid"] = $parentId;
+                $data["cegid"] = $parentReservationData["cegid"];
+                $data["lang"] = $parentReservationData["rlang"];
+                $data["orvosid"] = $subData["orvosid"];
+                $data["szurestipus"] = $subTypeId;
+                $data["rinterval"] = 0;
 
-                sql_query("insert into foglalasok set 
-                        parentid=?,
-                        orvosassigned=?,
-                        regdatum=now(),
-                        paciensid=?,
-                        cegid=?,
-                        datum=?,
-                        rinterval=?,
-                        telephely=?,
-                        helyszinid=?,
-                        szurestipusid=?,
-                        nev=?,
-                        email=?,
-                        telefon=?,
-                        szuldatum=?,
-                        szulhely=?,
-                        anyjaneve=?,
-                        neme=?,
-                        taj=?,
-                        irsz=?,
-                        varos=?,
-                        utca=?,
-                        megj=?,
-                        munkakor=?,
-                        tudoszuro=?,
-                        rlang=?,
-                        rkod=?"
-                    , array(
-                        $parentId,
-                        $subData["orvosid"],
-                        $parentReservationData["paciensid"],
-                        $parentReservationData["cegid"],
-                        $subData["idopont"],
-                        0,
-                        $data["telephely"],
-                        $data["helyszin"],
-                        $subTypeId,
-                        $data["nev"],
-                        $data["email"],
-                        $data["telefon"],
-                        $data["szuldatum"],
-                        $data["szulhely"],
-                        $data["anyjaneve"],
-                        $data["neme"],
-                        $data["taj"],
-                        $data["irsz"],
-                        $data["varos"],
-                        $data["utca"],
-                        $data["megj"],
-                        $data["munkakor"],
-                        $data["tudoszuro"],
-                        $_COOKIE["lang"],
-                        $rn));
-
+                $this->addReservationQuery($data);
             }
-
-            $fid = sql_insert_id();
-            sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)) where id=? and pass=''",array($fid));
-
         }
+    }
+
+    public function addReservationQuery($data) {
+        sql_query("insert into foglalasok set 
+            regdatum=now(),
+            parentid=?,
+            paciensid=?,
+            cegid=?,
+            datum=?,
+            rinterval=?,
+            telephely=?,
+            helyszinid=?,
+            szurestipusid=?,
+            nev=?,
+            email=?,
+            telefon=?,
+            szuldatum=?,
+            szulhely=?,
+            anyjaneve=?,
+            neme=?,
+            taj=?,
+            irsz=?,
+            varos=?,
+            utca=?,
+            megj=?,
+            munkakor=?,
+            tudoszuro=?,
+            rlang=?,
+            orvosassigned=?,
+            aktiv=?,
+            rkod=?"
+        , array(
+            $data["parentid"],
+            $data["paciensid"],
+            $data["cegid"],
+            $data["datum"],
+            intval($data["rinterval"]),
+            $data["telephely"],
+            $data["helyszin"],
+            $data["szurestipus"],
+            $data["nev"],
+            $data["email"],
+            $data["telefon"],
+            $data["szuldatum"],
+            $data["szulhely"],
+            $data["anyjaneve"],
+            $data["neme"],
+            $data["taj"],
+            $data["irsz"],
+            $data["varos"],
+            $data["utca"],
+            $data["megj"],
+            $data["munkakor"],
+            $data["tudoszuro"],
+            $data["lang"],
+            $data["orvosid"],
+            $data["aktiv"],
+            $data["rn"]));
+
+        $fid = sql_insert_id();
+        $this->updateFoglalasData($fid);
+
+        return $fid;
     }
 
     public function addIdoPont() {
