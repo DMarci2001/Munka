@@ -1,5 +1,6 @@
 RewriteEngine on
 
+RewriteCond %{HTTP_HOST} ^hungariamed\.hu [NC]
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 #deflate

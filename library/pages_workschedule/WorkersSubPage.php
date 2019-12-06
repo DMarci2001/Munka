@@ -11,7 +11,7 @@ class WorkersSubPage extends AdminCorePage {
         $this->service = $service;
 
         if (isset($_POST["openworkerdetail"])) {
-            $_SESSION["worderdetail"] = $_POST["id"];
+            $_SESSION["workerdetail"] = $_POST["id"];
             echo $this->workerDetail($_POST["id"]);
             die;
         }
@@ -35,13 +35,13 @@ class WorkersSubPage extends AdminCorePage {
     public function showPage() {
         $html = "";
 
-        $html.= "<div id='workerlist' style='display:table-cell;vertical-align:top;padding-right:10px;border-right:1px solid #ccc;'>";
+        $html.= "<div id='workerlist' style='display:table-cell;vertical-align:top;padding-right:20px;border-right:1px solid #ccc;'>";
         $html.= $this->workerList();
         $html.= "</div>";
 
-        $html.= "<div id='workerdetail' style='display:table-cell;vertical-align:top;padding-left:10px;'>";
-        if (isset($_SESSION["worderdetail"])) {
-            $html.= $this->workerDetail($_SESSION["worderdetail"]);
+        $html.= "<div id='workerdetail' style='display:table-cell;vertical-align:top;padding-left:20px;'>";
+        if (isset($_SESSION["workerdetail"])) {
+            $html.= $this->workerDetail($_SESSION["workerdetail"]);
         }
         $html.= "</div>";
 

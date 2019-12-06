@@ -15,6 +15,7 @@ $(window).on("keydown", function(event) {
 Schedule = {
     URL: "index.php?page=workschedule",
     WorkerURL: "index.php?page=workschedule&subpage=workers",
+    WorkplaceURL: "index.php?page=workschedule&subpage=workplaces",
     DialogCloseHTML: "<div id='dialogclose' style='width:20px;height:20px;float:right;'></div>",
     DialogId: "",
     CopySourceDate: "",
@@ -129,6 +130,21 @@ Schedule = {
             }
         });
     },
+    DeleteWorkplace: function () {
+        if (!confirm("Biztos törli ezt a munkahelyet?")) {
+            return;
+        }
+        let params = $("#workplaceform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "deleteworkplace=1&"+params,
+            success: function(data)	{
+                $("#workplacelist").html(data);
+                $("#workplacedetail").html("");
+            }
+        });
+    },
     SaveWorker: function () {
         let params = $("#workerform").serialize();
         $.ajax({
@@ -138,6 +154,18 @@ Schedule = {
             success: function(data)	{
                 $("#workerlist").html(data.list);
                 $("#workerdetail").html(data.detail);
+            }
+        });
+    },
+    SaveWorkplace: function () {
+        let params = $("#workplaceform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "saveworkplace=1&"+params,
+            success: function(data)	{
+                $("#workplacelist").html(data.list);
+                $("#workplacedetail").html(data.detail);
             }
         });
     },
@@ -180,10 +208,31 @@ Schedule = {
     AddNewWorker: function (roleId) {
         $.ajax({
             type: "POST",
-            url: Schedule.URL,
+            url: Schedule.WorkerURL,
             data: "addnewworker=1&roleid="+roleId,
             success: function(data)	{
                 $("#workerlist").html(data);
+            }
+        });
+    },
+    OpenWorkplaceDetail: function (id) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.WorkplaceURL,
+            data: "openworkplacedetail=1&id="+id,
+            success: function(data)	{
+                $("#workplacedetail").html(data);
+            }
+        });
+
+    },
+    AddNewWorkplace: function (roleId, kulso) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.WorkplaceURL,
+            data: "addnewworkplace=1&roleid="+roleId+"&kulso="+kulso,
+            success: function(data)	{
+                $("#workplacelist").html(data);
             }
         });
     }
