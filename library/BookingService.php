@@ -76,6 +76,10 @@ class BookingService {
                 //jász utca bármikor foglalható
                 $dist = "0 hour";
             }
+            if (in_array($_SESSION["orvosselected"], [74])) {
+                //74 - Dr. Kővári Gábor
+                $dist = "24 hour";
+            }
 
             //ennyi napon belül kell foglalni
             $distFullDay = "0 day";
