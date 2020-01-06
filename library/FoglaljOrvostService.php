@@ -2,9 +2,15 @@
 
 
 class FoglaljOrvostService {
+    const API_URL = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms/";
+    const API_PASSWORD = "wzUpTVrpexTh";
+
     const API_TEST_URL = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms/";
     const API_TEST_PASSWORD = "wzUpTVrpexTh";
+
     const IFC_NAME = "HUNGARIAMED";
+
+    private $testing = true;
 
     private $method;
     private $logId;
@@ -144,17 +150,20 @@ class FoglaljOrvostService {
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
-                    IFCNAME="'.self::IFC_NAME.'"
+                    IFCNAME="#ifcname#"
                     MESSAGETYPE="HEARTBEAT"
                     ACTION="SEND"
-                    ROTATE_HASH="1c7dcf26d679dd69b3504baa0a6bb355" />
+                    ROTATE_HASH="#rotatehash#" />
             </MESSAGE>';
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
     private function sendMessageToFoglaljOrvost($xml) {
+        $xml = str_replace("#rotatehash#", $this->generateRotateHash(), $xml);
+        $xml = str_replace("#ifcname#", self::IFC_NAME, $xml);
+
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, self::API_TEST_URL);
+        curl_setopt($ch, CURLOPT_URL, $this->getApiURL());
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
@@ -163,11 +172,30 @@ class FoglaljOrvostService {
         $result = curl_exec($ch);
         curl_close($ch);
         return $result;
-        $a = self::IFC_NAME;
     }
 
     private function saveLogResult() {
 
+    }
+
+    private function getApiURL() {
+        $url = self::API_URL;
+        if ($this->testing) {
+            $url = self::API_TEST_URL;
+        }
+        return $url;
+    }
+
+    private function getApiPassword() {
+        $password = self::API_PASSWORD;
+        if ($this->testing) {
+            $password = self::API_TEST_PASSWORD;
+        }
+        return $password;
+    }
+
+    private function generateRotateHash() {
+        return md5(sha1("fo|".$this->getApiPassword()."|".date("Y.m.d"."$")));
     }
 
 }
