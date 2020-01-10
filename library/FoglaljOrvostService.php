@@ -16,6 +16,8 @@ class FoglaljOrvostService {
     private $logId;
     private $bookingService;
 
+    private $soapServer;
+
     public function __construct()
     {
         $this->method = $_SERVER["REQUEST_METHOD"];
@@ -24,45 +26,37 @@ class FoglaljOrvostService {
 
     public function processInput() {
         $body = file_get_contents('php://input');
-        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?",array($body, $_SERVER["REMOTE_ADDR"], $_SERVER["HTTP_USER_AGENT"]));
+        $userAgent = isset($_SERVER["HTTP_USER_AGENT"])?$_SERVER["HTTP_USER_AGENT"]:"";
+        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?",array($body, $_SERVER["REMOTE_ADDR"], $userAgent));
         $this->logId = sql_insert_id();
 
         $this->tesztKuldesek($body); // -----
 
-        if ($this->method != "POST") {
-            $this->messageOutput("WRONG METHOD", "Method not supported");
-        }
-        if (!$xml = simplexml_load_string($body)) {
-            $this->messageOutput("WRONG XML", "Error parsing xml");
-        }
+        $namespace = "https://bejelentkezes.hungariamed.hu/foApi.php";
 
-        $ifcName     = $xml->MSGINFO["IFCNAME"];
-        $messageType = $xml->MSGINFO["MESSAGETYPE"];
-        $action      = $xml->MSGINFO["ACTION"];
+        $this->soapServer = new soap_server();
+        $this->soapServer->configureWSDL("FoApi", $namespace);
+        $this->soapServer->register('EnqueueMessage'
+            ,array('pMessage' => 'xsd:string', "pCallerID" => 'xsd:string')
+            ,array('return' => 'xsd:string')
+            ,$namespace,false
+            ,'rpc'
+            ,'encoded'
+            ,'Message processing'
+        );
 
-        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTNEW") {
-            $this->appointmentNew($xml);
-        }
-        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTMOD") {
-            $this->appointmentMod($xml);
-        }
-
-
-        $this->messageOutput("ACTION_NOT_FOUND", "Action not supported");
+        $POST_DATA = isset($GLOBALS['HTTP_RAW_POST_DATA']) ? $GLOBALS['HTTP_RAW_POST_DATA'] : '';
+        $this->soapServer->service($POST_DATA);
+        exit();
     }
 
-    private function messageOutput($code, $message) {
-        header("content-type:text/xml");
-
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+    public function messageOutput($code, $message) {
+        return '<?xml version="1.0" encoding="UTF-8"?>
         <MESSAGE>
             <RETURN
                 RETCODE="'.$code.'"
                 RETMESSAGE="'.$message.'" />
         </MESSAGE>';
-
-        echo $xml;
-        die;
     }
 
     private function appointmentNew(SimpleXMLElement $xml) {
@@ -96,14 +90,14 @@ class FoglaljOrvostService {
             "tudoszuro" => 0,
             "lang" => "hu",
             "orvosid" => (string)$xml->DOCTOR["OUTERSYS_ID"],
-            "aktiv" => 1,
+            "aktiv" => 0,
             "rn" => rand(1000000, 9999999)];
 
         $_REQUEST["rinterval"] = $data["rinterval"]; //fix
 
         $fid = $this->bookingService->addReservationQuery($data);
 
-        $this->messageOutput("0",$fid);
+        return $this->messageOutput("0",$fid);
     }
 
     private function appointmentMod(SimpleXMLElement $xml) {
@@ -127,7 +121,7 @@ class FoglaljOrvostService {
             sql_query("update foglalasok set datum=?, rinterval=?, nev=?, email=?, telefon=?, szuldatum=?, megj=?, orvosassigned=? where id=?", $params);
         }
 
-        $this->messageOutput("0", $fid);
+        return $this->messageOutput("0", $fid);
     }
 
 
@@ -139,14 +133,25 @@ class FoglaljOrvostService {
         }
 
         if ($action == "tesztfoglalas") {
-
+            $result = $this->sendReservation(11111);
+            echo $result;
+            die;
         }
-
     }
 
-
-
     private function sendPing() {
+        $xml='<?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="#ifcname#"
+                    MESSAGETYPE="HEARTBEAT"
+                    ACTION="SEND"
+                    ROTATE_HASH="#rotatehash#" />
+            </MESSAGE>';
+        return $this->sendMessageToFoglaljOrvost($xml);
+    }
+
+    private function sendReservation($fid) {
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -162,16 +167,8 @@ class FoglaljOrvostService {
         $xml = str_replace("#rotatehash#", $this->generateRotateHash(), $xml);
         $xml = str_replace("#ifcname#", self::IFC_NAME, $xml);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->getApiURL());
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: text/xml"));
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
-        $result = curl_exec($ch);
-        curl_close($ch);
-        return $result;
+        $client = new SoapClient($this->getApiURL());
+        return $client->EnqueueMessage($xml, self::IFC_NAME);
     }
 
     private function saveLogResult() {
@@ -198,4 +195,34 @@ class FoglaljOrvostService {
         return md5(sha1("fo|".$this->getApiPassword()."|".date("Y.m.d"."$")));
     }
 
+    private $requestCode;
+
+    public function startSoapProcess($body, $code)
+    {
+        @$xml = simplexml_load_string($body);
+        if ($xml === false) {
+            return $this->messageOutput("WRONG XML", "Error parsing xml");
+        }
+        $this->requestCode = $code;
+
+        $ifcName     = $xml->MSGINFO["IFCNAME"];
+        $messageType = $xml->MSGINFO["MESSAGETYPE"];
+        $action      = $xml->MSGINFO["ACTION"];
+
+        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTNEW") {
+            return $this->appointmentNew($xml);
+        }
+        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTMOD") {
+            return $this->appointmentMod($xml);
+        }
+
+        return $this->messageOutput("ACTION NOT FOUND", "Action not found");
+    }
+
+}
+
+//SOAP api belépési pont
+function EnqueueMessage($body, $code) {
+    $service = new FoglaljOrvostService();
+    return $service->startSoapProcess($body, $code);
 }
