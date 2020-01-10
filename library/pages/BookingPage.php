@@ -249,7 +249,7 @@ class BookingPage extends CorePage {
 
             echo "<div style=''>{$btext}</div>";
 
-            echo "<div style='margin-top:20px;'><a href='index.php?page=reg' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
+            echo "<div style='margin-top:20px;'><a href='index.php?page=registration' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
             return;
         }
 
