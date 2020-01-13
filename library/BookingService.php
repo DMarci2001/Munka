@@ -1194,6 +1194,7 @@ END:VCALENDAR";
                     continue;
                 }
 
+                $data["datum"] = $subData["idopont"];
                 $data["paciensid"] = $parentReservationData["paciensid"];
                 $data["rn"] = rand(1000000, 9999999);
                 $data["aktiv"] = $parentReservationData["aktiv"];
