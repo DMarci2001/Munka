@@ -50,7 +50,7 @@ class BookingService {
             }
 
             $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
-            if (count($this->packContentTypes) != 0 && $this->neme == 0) {
+            if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
                 echo json_encode(array("error" => "Szűréscsomag választása esetén előbb adja meg a nemét!", "html" => ""));
                 die;
             }
@@ -198,6 +198,7 @@ class BookingService {
                     if (!empty($this->packContentTypes)) {
                         $btn = "";
                         $availableData = $this->getPackageAvailabilityForDay($nap);
+                        //$btn.= print_r($availableData, true);
                         if (empty($availableData["error"])) {
                             $buttonTitle = "";
                             $buttonClass = "foglalhatobtn";
@@ -271,11 +272,18 @@ class BookingService {
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
-        //foreach ($packContentTypes as $packTypeId) {
-        //    $typeWhere.= " or instr(tipusok, '|{$packTypeId}|')";
-        //}
-
         return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+    }
+
+    private function getMinMaxPack($szuresTipus, $nap) {
+        $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
+
+        return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles 
+        FROM orvos_beosztas b
+        WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1
+        AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}')  
+		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2)) 
+        HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
     }
 
     public function getPackageAvailabilityForDay($day) {
@@ -298,11 +306,15 @@ class BookingService {
                 foreach ($beos as &$beoData) {
                     $interval    = $beoData["binterval"];
                     $step        = 0;
-                    $beoMinMax   = $this->getMinMax($packTypeId);
+                    $beoMinMax   = $this->getMinMaxPack($packTypeId, $day);
                     $beginHour   = intval(substr($beoMinMax["minrendeles"],0,2));
                     $beginMinute = intval(substr($beoMinMax["minrendeles"],3,2));
 
                     while (true) {
+                        if ($beoData["nap"] == 10 & $day != $beoData["beonap"]) {
+                            break;
+                        }
+
                         $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $interval, 0, date("m"), date("d"), date("Y")));
                         if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
                             break;
@@ -455,6 +467,19 @@ class BookingService {
             $res = sql_query("select * from szurescsomagok_kapcs where csomagid=?", array($szuresTipusId));
             while ($row = sql_fetch_array($res)) {
                 if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme) {
+                    $types[] = $row["szurestipusid"];
+                }
+            }
+        }
+        return $types;
+    }
+
+    private function getGenderPackContentTypes($szuresTipusId) {
+        $types = [];
+        if ($this->szuresTipusData["ispack"] == 1) {
+            $res = sql_query("select * from szurescsomagok_kapcs where csomagid=?", array($szuresTipusId));
+            while ($row = sql_fetch_array($res)) {
+                if ($row["nemerequired"] != 0 && $row["nemerequired"] != $this->neme) {
                     $types[] = $row["szurestipusid"];
                 }
             }
