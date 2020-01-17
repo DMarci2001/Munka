@@ -34,6 +34,7 @@ require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");
 require_once(__DIR__ . "/library/PrintService.php");
 require_once(__DIR__ . "/library/ZeusService.php");
+require_once(__DIR__ . "/library/FoglaljOrvostService.php");
 
 require_once(__DIR__ . "/library/other/phpmailer/class.phpmailer.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");

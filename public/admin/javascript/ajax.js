@@ -1518,3 +1518,15 @@ function showLogDetail(id) {
     return false;
 }
 
+function startFODoctorSync(oid) {
+    $.ajax({
+        type:'POST',
+        url:'index.php',
+        data:{page:"doctors", fosync:1, oid:oid},
+        success:function(data){
+            if(data != '') {
+                $("#fosyncbutton").html(data);
+            }
+        }
+    })
+}

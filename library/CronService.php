@@ -22,6 +22,7 @@ class CronService {
             $this->_deleteNotActivatedReservations();
             $this->_smsAlertBeforeReservation();
             $this->_updateNaploszam();
+            $this->_sendFoglaljOrvostHeartBeat();
             //$this->checkGDPRFiles(); //kell ez?
         }
 
@@ -256,5 +257,11 @@ class CronService {
         }
     }
 
+    private function _sendFoglaljOrvostHeartBeat() {
+        if (date("i") == 45) {
+            $foService = new FoglaljOrvostService();
+            $foService->sendPing();
+        }
+    }
 
 }

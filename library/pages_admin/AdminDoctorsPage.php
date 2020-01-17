@@ -261,6 +261,19 @@ class AdminDoctorsPage extends AdminCorePage {
             die();
         }
 
+        if (isset($_POST["fosync"])) {
+            $foService = new FoglaljOrvostService();
+            $oid = intval($_POST["oid"]);
+            $message = "";
+
+            if ($result = $foService->sendDoctor($oid)) {
+                $xml = simplexml_load_string($result);
+                $message = $xml->RETURN["RETMESSAGE"];
+            }
+
+            echo $this->foglaljOrvostSyncButton($oid, $message);
+            die;
+        }
 
     }
 
@@ -297,7 +310,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<table style='font-size:12px;'>";
 
             echo "<tr><td width='130'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
-            echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'></td></tr>";
+            echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
             echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'> <input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
 
@@ -753,6 +766,27 @@ class AdminDoctorsPage extends AdminCorePage {
 
     private function intervalOption($interval, $data) {
         return "<option value='{$interval}'".($data["binterval"]==$interval?" selected":"").">{$interval} perc</option>";
+    }
+
+    private function foglaljOrvostSyncButton($oid, $message = "") {
+        $html = "";
+        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
+
+            if (trim($orvosData["pecsetszam"]) != "") {
+                $html .= " <a class='ujbutton' style='padding:3px 10px;' href='#' onclick='startFODoctorSync({$oid});return false;'>FoglaljOrvost Sync</a> ";
+
+                if ($message != "") {
+                    $html.= $message;
+                } else {
+                    if ($orvosData["foid"] != 0) {
+                        $html.= "<span style='color:#080;'>FoglalOrvost.hu kapcsolat aktív</span>";
+                    }
+                }
+
+            }
+        }
+
+        return $html;
     }
 }
 

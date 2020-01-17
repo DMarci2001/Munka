@@ -13,10 +13,7 @@ class FoglaljOrvostService {
     private $testing = true;
 
     private $method;
-    private $logId;
     private $bookingService;
-
-    private $soapServer;
 
     public function __construct()
     {
@@ -25,33 +22,35 @@ class FoglaljOrvostService {
     }
 
     public function processTestInput() {
-        $action = file_get_contents('php://input');
+        if (isset($_GET["tesztaction"])) {
+            $action = $_GET["tesztaction"];
 
-        if ($action == "tesztping") {
-            $result = $this->sendPing();
-        }
-        if ($action == "tesztorvosnew") {
-            $result = $this->sendDoctor(71);
-        }
-        if ($action == "tesztgetallfields") {
-            $result = $this->getAllFields();
-        }
-        if ($action == "tesztgetfieldsbyclinic") {
-            $result = $this->getFieldsByClinic();
-        }
-        if ($action == "tesztgetfieldsbydoctor") {
-            $result = $this->getFieldsByDoctor(71);
-        }
-        if ($action == "tesztsendreservation") {
-            $result = $this->sendReservation(119440);
+            if ($action == "ping") {
+                $result = $this->sendPing();
+            }
+            if ($action == "orvos") {
+                $result = $this->sendDoctor(71);
+            }
+            if ($action == "getallfields") {
+                $result = $this->getAllFields();
+            }
+            if ($action == "getfieldsbyclinic") {
+                $result = $this->getFieldsByClinic();
+            }
+            if ($action == "getfieldsbydoctor") {
+                $result = $this->getFieldsByDoctor(71);
+            }
+            if ($action == "sendreservation") {
+                $result = $this->sendReservation(119440);
+            }
         }
         if (isset($result)) {
-            echo $result;
+            print_r($result);
             die;
         }
     }
 
-    private function sendReservation($fid) {
+    public function sendReservation($fid) {
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -76,7 +75,7 @@ class FoglaljOrvostService {
         return false;
     }
 
-    private function getAllFields() {
+    public function getAllFields() {
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -88,7 +87,7 @@ class FoglaljOrvostService {
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
-    private function getFieldsByClinic() {
+    public function getFieldsByClinic() {
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -100,7 +99,7 @@ class FoglaljOrvostService {
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
-    private function getFieldsByDoctor($oid) {
+    public function getFieldsByDoctor($oid) {
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -118,9 +117,8 @@ class FoglaljOrvostService {
         return false;
     }
 
-    private function sendDoctor($oid) {
+    public function sendDoctor($oid) {
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
-
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -138,7 +136,7 @@ class FoglaljOrvostService {
         return false;
     }
 
-    private function sendPing() {
+    public function sendPing() {
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -155,14 +153,18 @@ class FoglaljOrvostService {
         $xml = str_replace("#rotatehash#", $this->generateRotateHash(), $xml);
         $xml = str_replace("#ifcname#", self::IFC_NAME, $xml);
 
-        //echo $xml;die;
+        $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
+        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?", array($xml, $_SERVER["REMOTE_ADDR"], $userAgent));
+        $logId = sql_insert_id();
 
-        $client = new SoapClient($this->getApiURL());
-        return $client->EnqueueMessage($xml, self::IFC_NAME);
-    }
-
-    private function saveLogResult() {
-
+        try {
+            $client = new SoapClient($this->getApiURL());
+            $result = $client->EnqueueMessage($xml, self::IFC_NAME);
+            sql_query("update webservicelog set response=? where id=?", [$result, $logId]);
+            return $result;
+        } catch (SoapFault $exception) {
+            return false;
+        }
     }
 
     private function getApiURL() {
