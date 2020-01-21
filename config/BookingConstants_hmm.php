@@ -3,6 +3,7 @@
 //A hungariamed beállításokat tartalmazó osztály
 
 class Booking_Constants {
+    const IS_DEMO                   = false;
     const SITE_NAME                 = 'Hungáriamed időpontfoglalás';
     const SITE_LOGO                 = 'images/hmm_logo.png';
     const SITE_ADMIN_LOGO           = 'hmm_logo_nagy.png';
@@ -28,4 +29,7 @@ class Booking_Constants {
     const SQL_PASS                  = "hmedpass";
     const SQL_HOST                  = "localhost";
     const SQL_DB                    = "hungariamed";
+
+    const SOAP_API_NAMESPACE        = "https://bejelentkezes.hungariamed.hu/foApi.php";
+    const SOAP_API_PASSWORD         = "WieGie2M";
 }

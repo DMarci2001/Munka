@@ -933,6 +933,10 @@ class BookingService {
     }
 
     public function sendToCegAndOrvos($id, $force = 0, $test = 0) {
+        if (Booking_Constants::IS_DEMO) {
+            return;
+        }
+
         $row = sql_fetch_array(sql_query("SELECT * FROM foglalasok f WHERE f.id=?",array($id)));
 
         if ($row["ertesitve"] == 1 && $force == 0) {

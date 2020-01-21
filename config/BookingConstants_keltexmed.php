@@ -3,6 +3,7 @@
 //A keltexmed beállításokat tartalmazó osztály
 
 class Booking_Constants {
+    const IS_DEMO                   = false;
     const SITE_NAME                 = 'KeltexMed időpontfoglalás';
     const SITE_LOGO                 = 'images/hmm_logo.png';
     const SITE_ADMIN_LOGO           = 'keltexmed_logo.png';
@@ -28,4 +29,7 @@ class Booking_Constants {
     const SQL_PASS                  = "hmedpass";
     const SQL_HOST                  = "localhost";
     const SQL_DB                    = "keltexmed";
+
+    const SOAP_API_NAMESPACE        = "https://bejelentkezes.keltexmed.hu/foApi.php";
+    const SOAP_API_PASSWORD         = "Maexa4iu";
 }

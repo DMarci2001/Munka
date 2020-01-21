@@ -22,7 +22,7 @@ class FoglaljOrvostSoapServer {
             $this->logId = sql_insert_id();
         }
 
-        $namespace = "https://bejelentkezes.hungariamed.hu/foApi.php";
+        $namespace = Booking_Constants::SOAP_API_NAMESPACE;
 
         $this->soapServer = new soap_server();
         $this->soapServer->soap_defencoding = "utf-8";
@@ -180,12 +180,11 @@ class FoglaljOrvostSoapServer {
         return $message;
     }
 
-    private $apiPassword = "AMCMeed88f";
     private function checkRotateHash($hash) {
-        if (md5(sha1("fo|".$this->apiPassword."|".date("Y.m.d"."$"))) == $hash) {
+        if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d"."$"))) == $hash) {
             return true;
         }
-        return true;
+        return false;
     }
 
     public function startMessageProcess($body, $code) {
@@ -232,7 +231,7 @@ function EnqueueMessage($body, $code) {
 
 //soap teszteléshez
 if (isset($_GET["tesztapi"])) {
-    $client = new SoapClient("https://bejelentkezes.hungariamed.hu/foApi.php?wsdl", array('soap_version' => SOAP_1_1, 'trace' => true, 'cache_wsdl' => WSDL_CACHE_NONE));
+    $client = new SoapClient(Booking_Constants::SOAP_API_NAMESPACE."/foApi.php?wsdl", array('soap_version' => SOAP_1_1, 'trace' => true, 'cache_wsdl' => WSDL_CACHE_NONE));
 
     $body = '<?xml version="1.0" encoding="UTF-8"?>
 <MESSAGE>
@@ -240,7 +239,7 @@ if (isset($_GET["tesztapi"])) {
         IFCNAME="FOGLALJORVOST"
         MESSAGETYPE="APPOINTMENT"
         ACTION="NEW"
-        ROTATE_HASH="dfcff922546f512bc75c15adbf6bab8a" />   
+        ROTATE_HASH="'.generateFORotateHash().'" />   
     <DOCTOR
         OWN_ID="71"
         OUTERSYS_ID="123232" />
@@ -264,4 +263,8 @@ if (isset($_GET["tesztapi"])) {
 
     echo $client->EnqueueMessage($body, "HUN");
     die;
+}
+
+function generateFORotateHash() {
+    return md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d"."$")));
 }

@@ -4,7 +4,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once(__DIR__ . "/library/BookingConstants_".getConfigFile().".php");
+require_once(__DIR__ . "/config/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
 require_once(__DIR__ . "/library/Lang.php");
 require_once(__DIR__ . "/library/Settings.php");
@@ -85,6 +85,9 @@ function getConfigFile() {
 
         if (substr_count($host, "hungariamed.hu")) {
             $config = "hmm";
+            if (substr_count($host, "demo.hungariamed.hu")) {
+                $config = "demo";
+            }
         }
         if (substr_count($host, "keltexmed.")) {
             $config = "keltexmed";

@@ -18,7 +18,7 @@ class CompanyService {
             return;
         }
 
-        if ($d == "keltexmed" || $d == "bejelentkezesuj") {
+        if ($d == "keltexmed" || $d == "bejelentkezesuj" || $d == "demo") {
             $d = "bejelentkezes";
         }
 
