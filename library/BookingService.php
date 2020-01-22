@@ -769,6 +769,9 @@ class BookingService {
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->AddAddress($row["email"]);
+            if (!empty(Booking_Constants::USER_BCC_MAIL)) {
+                $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
+            }
             $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
@@ -875,6 +878,9 @@ class BookingService {
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->AddAddress($row["email"]);
+            if (!empty(Booking_Constants::USER_BCC_MAIL)) {
+                $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
+            }
             $mail->CharSet = "UTF-8";
             $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);

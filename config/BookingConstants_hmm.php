@@ -24,6 +24,7 @@ class Booking_Constants {
 
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
     const RESERVATION_TO_ADDRESS    = "bejelentkezes@hungariamed.hu";
+    const USER_BCC_MAIL             = "usermail@hungariamed.hu";
 
     const SQL_USER                  = "hungariamed";
     const SQL_PASS                  = "hmedpass";
