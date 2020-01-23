@@ -33,4 +33,9 @@ class Booking_Constants {
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.keltexmed.hu/foApi.php";
     const SOAP_API_PASSWORD         = "Maexa4iu";
+
+    const FO_CONNECTION_ENABLED     = false;
+    const FO_API_PASSWORD           = "wzUpTVrpexTh";
+    const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
+    const FO_IFC_NAME               = "HUNGARIAMED";
 }

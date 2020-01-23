@@ -1143,7 +1143,10 @@ END:VCALENDAR";
 
     public function deleteReservation($id, $code)
     {
-        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and datum>now() and eljott=0", array($id, $code, $code)))) {
+        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
+            $foService = new FoglaljOrvostService();
+            $foService->deleteReservation($row["id"]);
+
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE parentid=? and parentid<>0", array($row["id"]));
@@ -1212,6 +1215,10 @@ END:VCALENDAR";
             $this->sendVisszaIgazolas($fid);
             $forwardURL = "index.php?page=bookingsuccessful";
         }
+
+        //Foglaljorvost.hu-nak átküldés
+        $foService = new FoglaljOrvostService();
+        $foService->newReservation($fid);
 
         return $forwardURL;
     }
@@ -1360,6 +1367,10 @@ END:VCALENDAR";
                 //echo $oid;
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0",array($oid, $fid));
             }
+
+            //Foglaljorvost.hu-nak átküldés
+            $foService = new FoglaljOrvostService();
+            $foService->newReservation($fid);
         }
     }
 

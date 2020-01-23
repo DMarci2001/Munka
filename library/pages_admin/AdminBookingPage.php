@@ -97,7 +97,7 @@ class AdminBookingPage extends AdminCorePage
                         alkalmassagikhet=?,
                         tudoszuroervenyesseg=?,
                         tudoszuro=?,
-                        smssent=1
+                        smssent=1                       
         			",array(
                         $rowf["cegid"],
                         $rowf["paciensid"],
@@ -124,26 +124,29 @@ class AdminBookingPage extends AdminCorePage
                     ));
 
                     $newfid = sql_insert_id();
+                } else {
+                    //move, előző foglalás törlése a foglaljorvostról.
+                    $foService = new FoglaljOrvostService();
+                    $foService->deleteReservation($fid);
                 }
 
                 logActivity("foglalas",$newfid,"{$rowf["nev"]} foglalás ".(isset($copy)?"másolása":"mozgatása")." {$rowf["datum"]} -> {$_GET["moveidopont"]}","");
 
-                sql_query("update foglalasok set aktiv=1,foglalta=?,helyszinid=?,szurestipusid=?,datum=?,rinterval=?,orvosassigned=0 where id=?",array($_SESSION["adminuser"]["nev"],$_SESSION["helyszin"],$szuresTipusId,$_GET["moveidopont"],intval($_GET["rinterval"]),$newfid));
+
+                sql_query("update foglalasok set aktiv=1,foglalta=?,helyszinid=?,szurestipusid=?,datum=?,rinterval=?,orvosassigned=0,fofid=0 where id=?",array($_SESSION["adminuser"]["nev"],$_SESSION["helyszin"],$szuresTipusId,$_GET["moveidopont"],intval($_GET["rinterval"]),$newfid));
                 $this->bookingService->updateFoglalasData($newfid);
 
                 $oid = $this->bookingService->selectFreeOrvosForIdopont($newfid);
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $newfid));
-            }
 
-            //if ($_GET["page"]=="bnaptar") {
-            //    echo showAdminNaptarIdopont($_GET["moveidopont"]);
-            //    die();
-            //}
+                //új foglalás átküldése foglaljorvost.hu-nak
+                $foService = new FoglaljOrvostService();
+                $foService->newReservation($newfid);
+            }
 
             echo $this->showElojegyzesTable($_SESSION["setday"]);
             die();
         }
-
 
     }
 

@@ -40,8 +40,8 @@ class AdminPatientsPage extends AdminCorePage {
         if (isset($_GET["deletefoglalas"])) {
             $id = $_GET["deletefoglalas"];
             if (sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and eljott=0",array($id, $_GET["p"])))) {
-                sql_query("delete from foglalasok where id=? and pass=? and eljott=0",array($id, $_GET["p"]));
-                sql_query("update beutalok set foglalasid=0 where foglalasid=?",array($id));
+                $bookingService = new BookingService();
+                $bookingService->deleteReservation($row["id"], $row["rkod"]);
             }
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();

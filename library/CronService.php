@@ -5,6 +5,7 @@ class CronService {
 
     private $interval = null;
     private $utils;
+    private $bookingService;
 
     public function __construct()
     {
@@ -14,6 +15,7 @@ class CronService {
             $this->interval = "perc";
         }
         $this->utils = new Utils();
+        $this->bookingService = new BookingService();
     }
 
     public function run() {
@@ -138,8 +140,7 @@ class CronService {
         $res = sql_query("select * from foglalasok where regdatum<date_sub(now(),interval 1 hour) and aktiv=0");
         while ($row = sql_fetch_array($res)) {
             $this->utils->sendNotConfirmedReservationMessages($row["id"]);
-            sql_query("update beutalok set foglalasid='0' where foglalasid='{$row["id"]}'");
-            sql_query("delete from foglalasok where id='{$row["id"]}'");
+            $this->bookingService->deleteReservation($row["id"], $row["rkod"]);
         }
     }
 

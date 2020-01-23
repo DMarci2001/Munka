@@ -33,4 +33,9 @@ class Booking_Constants {
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.hungariamed.hu/foApi.php";
     const SOAP_API_PASSWORD         = "WieGie2M";
+
+    const FO_CONNECTION_ENABLED     = true;
+    const FO_API_PASSWORD           = "wzUpTVrpexTh";
+    const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
+    const FO_IFC_NAME               = "HUNGARIAMED";
 }
