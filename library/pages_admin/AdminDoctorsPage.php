@@ -688,11 +688,16 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr>";
             echo "<td nowrap valign='top'><div class='{$tc}'>";
             echo "<a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}&sp'>{$row["nev"]}</a>";
+
+            if ($row["foid"] != 0) {
+                echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["foid"]}'>FOGLALJORVOST</span>";
+            }
+
             if (isset($tipusok)) echo "<div>".implode("<br/>",array_unique($tipusok))."</div>";
             echo "</div></td>";
             //echo "<td nowrap valign=top><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
             //echo "<td nowrap valign=top><div class='{$tc}'>{$row["cegek"]}</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>";
+            echo "<td valign='top'><div class='{$tc}' style='min-width:300px;'>";
             if ($row["cimek"]!="") {
                 echo "{$row["cimek"]}";
             } else {
@@ -707,7 +712,7 @@ class AdminDoctorsPage extends AdminCorePage {
             }
             echo "</div></td>";
             echo "<td nowrap valign='top'><div class={$tc} style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
-            echo "<td nowrap valign='top'><div class={$tc} style='min-width:100px;'>{$row["email"]}</div></td>";
+            //echo "<td nowrap valign='top'><div class={$tc} style='min-width:100px;'>{$row["email"]}</div></td>";
             echo "<td nowrap valign='top'><div class={$tc} style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
             echo "<td nowrap valign='top'><div class={$tc}>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";

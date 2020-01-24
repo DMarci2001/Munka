@@ -1149,3 +1149,18 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	padding:20px;
 }
 
+.fo_badge {
+	background:#48f;
+	color:#fff;
+	padding:2px 5px;
+	border-radius: 3px;
+	font-size:11px;
+}
+
+.pack_badge {
+	background:#f00;
+	color:#fff;
+	padding:2px 5px;
+	border-radius: 3px;
+	font-size:11px
+}

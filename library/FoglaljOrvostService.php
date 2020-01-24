@@ -7,12 +7,10 @@ class FoglaljOrvostService {
 
     private $testing = true;
 
-    private $method;
     private $bookingService;
 
     public function __construct()
     {
-        $this->method = $_SERVER["REQUEST_METHOD"];
         $this->bookingService = new BookingService();
     }
 
@@ -349,7 +347,8 @@ class FoglaljOrvostService {
         $xml = str_replace("#ifcname#", Booking_Constants::FO_IFC_NAME, $xml);
 
         $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
-        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?", array($xml, $_SERVER["REMOTE_ADDR"], $userAgent));
+        $remoteAddr = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "";
+        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?", array($xml, $remoteAddr, $userAgent));
         $logId = sql_insert_id();
 
         try {

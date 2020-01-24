@@ -34,6 +34,28 @@ class AdminScreeningsPage extends AdminCorePage
             sql_query("insert into arak set tipusid=?, csomag=0", array($_GET["szerk"]));
         }
 
+        if (isset($_GET["syncfofields"])) {
+            $foService = new FoglaljOrvostService();
+            if ($result = $foService->getAllFields()) {
+                $xml = simplexml_load_string($result);
+
+                foreach ($xml->FIELDS->FIELD as $field) {
+                    if (!empty($field["NAME"])) {
+                        //echo $field["OUTERSYS_ID"] . " " . $field["NAME"] . "\n";
+                        sql_query("update szurestipusok set fotid=? where megnev=? and megnev<>''", [$field["OUTERSYS_ID"], $field["NAME"]]);
+
+                        if (isset($field->SERVICES->SERVICE)) {
+                            foreach ($field->SERVICES->SERVICE as $service) {
+                                //todo altipusokkal mi legyen?
+                                //echo "   " . $service["OUTERSYS_ID"] . " " . $service["NAME"] . "\n";
+                            }
+                        }
+                    }
+                }
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
 
         if (isset($_POST["szurestipusmentes"])) {
             if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
@@ -222,6 +244,11 @@ class AdminScreeningsPage extends AdminCorePage
         GROUP BY t.id
         ORDER BY !instr(megnev,'Új tétel'),megnev");
 
+        $foStat = sql_fetch_array(sql_query("select count(*) as hany from szurestipusok where fotid<>0"));
+        if (sql_num_rows($res) > 0 && Booking_Constants::FO_CONNECTION_ENABLED) {
+            echo "<div style='margin-bottom: 10px;'>{$foStat["hany"]} típus szinkronizálva a foglaljorvost.hu-val - <a href='index.php?page={$_GET["page"]}&syncfofields'>frissítés</a></div>";
+        }
+
         echo "<table cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr><td colspan='7' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px;'>Szűrések</td></tr>";
         while ($row = sql_fetch_array($res)) {
@@ -237,7 +264,10 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<td valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a>";
 
             if ($row["ispack"] == 1) {
-                echo "&nbsp;&nbsp;<span style='background:#f00;color:#fff;padding:2px 5px;border-radius: 3px;'>CSOMAG</span>";
+                echo "&nbsp;&nbsp;<span class='pack_badge'>CSOMAG</span>";
+            }
+            if ($row["fotid"] != 0) {
+                echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["fotid"]}'>FOGLALJORVOST</span>";
             }
             $resa = sql_query("select a.*,c.megnev as cegnev from arak a left join cegek c on c.id=a.cegid where tipusid='{$row["id"]}' and price<>0 and a.csomag=0");
             $arak = "";
