@@ -16,7 +16,7 @@ class CorePage {
 
         //tiltott oldalak
         if (!isset($_SESSION["user"]) && isset($_GET["page"])) {
-            if (in_array($_GET["page"], array("beutalok", "documents", "bookinglist"))) {
+            if (in_array($_GET["page"], array("beutalok", "documents", "bookinglist","registration","login"))) {
                 header("location:/");
                 die();
             }
