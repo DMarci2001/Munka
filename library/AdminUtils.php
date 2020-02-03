@@ -140,6 +140,7 @@ class AdminUtils {
 				//Ha nem volt még értesítve, vagy post tartalmazza a megerősítési kérelmet:
 				if($request['userertesitve']==0 || (isset($_GET['status']) && $_GET['status']==true)){
 					//Lekérdezés ellenőrzése
+					if($request['userertesitve']==1) sql_query("UPDATE foglalasok SET userertesitve=0 WHERE id=?",array($_GET['id']));
 					$service = new BookingService();
 					$service->sendToUser($_GET['id']);
 					die(json_encode(array("status"=>true,"text"=>"Sikeres értesítő küldés!")));
