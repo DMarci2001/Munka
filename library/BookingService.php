@@ -265,8 +265,6 @@ class BookingService {
             }
             die();
         }
-
-
     }
 
 
@@ -824,6 +822,9 @@ class BookingService {
             $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
             //$mail->AddAttachment("");
             $mail->Send();
+			
+			$this->createNotificationRecord($id,$mbody,$row["email"],"vissza_igazolas");
+			
         }
     }
 
@@ -1381,6 +1382,13 @@ END:VCALENDAR";
             $this->deleteReservation($id, $code);
         }
     }
+	
+	public function createNotificationRecord($id,$text,$email,$subject){
+		
+		$data = array($id,$text,$email,(isset($_SESSION["adminuser"]["id"])?$_SESSION["adminuser"]["id"]:null),$subject);
+		
+		sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?",$data);
+	}
 }
 
 

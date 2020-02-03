@@ -1530,3 +1530,28 @@ function startFODoctorSync(oid) {
         }
     })
 }
+
+function manualNotificationSend(id,pass){
+	$.ajax({
+		method:'post',
+		url:'index.php',
+		data:{manualNotificationSend:true,id:id},
+		success:function(data){
+			if(data.status==true )alert(data.text);
+			if(data.status=="error")alert(data.text);
+			if(data.status==false){
+				var choice = confirm(data.text);
+				//Ha mégis elakarja küldeni az értesítést:
+				if(choice==true){
+					$.ajax({
+						method:'post',
+						url:'index.php',
+						data:{manualNotificationSend:true,id:id,status:true},
+						success:function(data){
+							if(data.status==true )alert(data.text);
+						}
+					});
+				}
+			}
+		})
+}
