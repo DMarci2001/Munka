@@ -1553,5 +1553,6 @@ function manualNotificationSend(id,pass){
 					});
 				}
 			}
-		})
+		}
+	});
 }
