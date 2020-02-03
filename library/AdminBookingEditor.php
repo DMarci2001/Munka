@@ -250,7 +250,7 @@ class AdminBookingEditor {
 			$request = sql_fetch_array(sql_query("SELECT userertesitve,email FROM foglalasok where id=?",array($_POST['id'])));
 			
 			//Ha hibás e-mail van megadva akkor hibára fut:
-			if((!filter_var($request["email"]), FILTER_VALIDATE_EMAIL)){
+			if(!filter_var($request["email"], FILTER_VALIDATE_EMAIL)){
 				die(json_encode(array("status"=>"error","text"=>"Nincs megadott helyes e-mail cím!")));
 			}
 			else{
