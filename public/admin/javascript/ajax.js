@@ -1537,7 +1537,8 @@ function manualNotificationSend(id,pass){
 		url:'index.php',
 		data:{manualNotificationSend:true,id:id},
 		success:function(data){
-			if(data.status==true )alert(data.text);
+			console.log('a hívás lefut a php oldalon.');
+			/*if(data.status==true )alert(data.text);
 			if(data.status=="error")alert(data.text);
 			if(data.status==false){
 				var choice = confirm(data.text);
@@ -1552,7 +1553,7 @@ function manualNotificationSend(id,pass){
 						}
 					});
 				}
-			}
+			}*/
 		}
 	});
 }
