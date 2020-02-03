@@ -1387,7 +1387,7 @@ END:VCALENDAR";
 		
 		$data = array($id,$text,$email,(isset($_SESSION["adminuser"]["id"])?$_SESSION["adminuser"]["id"]:null),$subject);
 		
-		sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?",$data);
+		sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?,datum=NOW()",$data);
 	}
 }
 

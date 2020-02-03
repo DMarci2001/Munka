@@ -145,7 +145,7 @@ class AdminUtils {
 					die(json_encode(array("status"=>true,"text"=>"Sikeres értesítő küldés!")));
 				}
 				else{
-					$notification = sql_fetch_array(sql_query("SELECT MAX(datum) FROM ertesites_log WHERE foglid=? GROUP BY foglid",array($_GET['id'])));
+					$notification = sql_fetch_array(sql_query("SELECT MAX(datum) as datum FROM ertesites_log WHERE foglid=? GROUP BY foglid",array($_GET['id'])));
 					if(count($notification)>0){
 						die(json_encode(array("status"=>false,"text"=>"A páciens részére már volt értesítés küldve {$notification['datum']}-kor! Biztosan küldeni akarsz egyet ismét?")));
 					}
