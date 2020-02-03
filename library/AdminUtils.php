@@ -141,7 +141,7 @@ class AdminUtils {
 				if($request['userertesitve']==0 || (isset($_GET['status']) && $_GET['status']==true)){
 					//Lekérdezés ellenőrzése
 					$service = new BookingService();
-					$service->sendVisszaIgazolas($_GET['id']);
+					$service->sendToUser($_GET['id']);
 					die(json_encode(array("status"=>true,"text"=>"Sikeres értesítő küldés!")));
 				}
 				else{

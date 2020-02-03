@@ -823,7 +823,7 @@ class BookingService {
             //$mail->AddAttachment("");
             $mail->Send();
 			
-			$this->createNotificationRecord($id,$mbody,$row["email"],"vissza_igazolas");
+			$this->createNotificationRecord($id,$mbody,$row["email"],"megerosito");
 			
         }
     }
@@ -935,6 +935,8 @@ class BookingService {
             }
 
             $mail->Send();
+			
+			$this->createNotificationRecord($id,$mbody,$row["email"],"vissza_igazolas");
 
         }
     }
