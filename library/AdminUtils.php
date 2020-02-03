@@ -130,7 +130,7 @@ class AdminUtils {
 			$status = "";
 			$error  = "";
 			
-			$request = sql_fetch_array(sql_query("SELECT userertesitve,email FROM foglalasok where id=?",array($_POST['id'])));
+			$request = sql_fetch_array(sql_query("SELECT userertesitve,email FROM foglalasok where id=?",array($_GET['id'])));
 			
 			//Ha hibás e-mail van megadva akkor hibára fut:
 			if(!filter_var($request["email"], FILTER_VALIDATE_EMAIL)){
@@ -138,14 +138,14 @@ class AdminUtils {
 			}
 			else{
 				//Ha nem volt még értesítve, vagy post tartalmazza a megerősítési kérelmet:
-				if($request['userertesitve']==0 || (isset($_POST['status']) && $_POST['status']==true)){
+				if($request['userertesitve']==0 || (isset($_GET['status']) && $_GET['status']==true)){
 					//Lekérdezés ellenőrzése
 					$service = new BookingService();
-					$service->sendVisszaIgazolas($_POST['id']);
+					$service->sendVisszaIgazolas($_GET['id']);
 					die(json_encode(array("status"=>true,"text"=>"Sikeres értesítő küldés!")));
 				}
 				else{
-					$notification = sql_fetch_array(sql_query("SELECT MAX(datum) FROM ertesitesi_log WHERE foglid=? GROUP BY foglid",array($_POST['id'])));
+					$notification = sql_fetch_array(sql_query("SELECT MAX(datum) FROM ertesitesi_log WHERE foglid=? GROUP BY foglid",array($_GET['id'])));
 					if(count($notification)>0){
 						die(json_encode(array("status"=>false,"text"=>"A páciens részére már volt értesítés küldve {$notification['datum']}-kor! Biztosan küldeni akarsz egyet ismét?")));
 					}
