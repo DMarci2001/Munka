@@ -242,35 +242,7 @@ class AdminBookingEditor {
         }
 		
 		
-		if(isset($_POST['manualNotificationSend']) && $_POST['manualNotificationSend']==true){
-			header('Content-Type: application/json');
-			$status = "";
-			$error  = "";
-			
-			$request = sql_fetch_array(sql_query("SELECT userertesitve,email FROM foglalasok where id=?",array($_POST['id'])));
-			
-			//Ha hibás e-mail van megadva akkor hibára fut:
-			if(!filter_var($request["email"], FILTER_VALIDATE_EMAIL)){
-				die(json_encode(array("status"=>"error","text"=>"Nincs megadott helyes e-mail cím!")));
-			}
-			else{
-				//Ha nem volt még értesítve, vagy post tartalmazza a megerősítési kérelmet:
-				if($request['userertesitve']==0 || (isset($_POST['status']) && $_POST['status']==true)){
-					//Lekérdezés ellenőrzése
-					$service = new BookingService();
-					$service->sendVisszaIgazolas($_POST['id']);
-					die(json_encode(array("status"=>true,"text"=>"Sikeres értesítő küldés!")));
-				}
-				else{
-					$notification = sql_fetch_array(sql_query("SELECT MAX(datum) FROM ertesitesi_log WHERE foglid=? GROUP BY foglid",array($_POST['id'])));
-					if(count($notification)>0){
-						die(json_encode(array("status"=>false,"text"=>"A páciens részére már volt értesítés küldve {$notification['datum']}-kor! Biztosan küldeni akarsz egyet ismét?")));
-					}
-					else die(json_encode(array("status"=>false,"text"=>"A páciens részére már volt értesítés küldve! Biztosan küldeni akarsz egyet ismét?")));
-				}
-			}
-			die();
-		}
+		
 
     }
 
@@ -439,8 +411,8 @@ class AdminBookingEditor {
             if ($row["foglalta"]!="") {
                 $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
             }
-            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>";
-			$html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffdb3b'>";
+            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>&nbsp;&nbsp;";
+			$html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffdb3b'>&nbsp;&nbsp;";
            
 		   $html.= "</form>";
 
