@@ -1533,19 +1533,18 @@ function startFODoctorSync(oid) {
 
 function manualNotificationSend(id,pass){
 	$.ajax({
-		method:'post',
+		method:'get',
 		url:'index.php',
 		data:{manualNotificationSend:true,id:id},
 		success:function(data){
-			console.log('a hívás lefut a php oldalon.');
-			/*if(data.status==true )alert(data.text);
+			if(data.status==true )alert(data.text);
 			if(data.status=="error")alert(data.text);
 			if(data.status==false){
 				var choice = confirm(data.text);
 				//Ha mégis elakarja küldeni az értesítést:
 				if(choice==true){
 					$.ajax({
-						method:'post',
+						method:'get',
 						url:'index.php',
 						data:{manualNotificationSend:true,id:id,status:true},
 						success:function(data){
@@ -1553,7 +1552,7 @@ function manualNotificationSend(id,pass){
 						}
 					});
 				}
-			}*/
+			}
 		}
 	});
 }

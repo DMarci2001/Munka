@@ -125,8 +125,8 @@ class AdminUtils {
             die();
         }
 
-		if(isset($_POST['manualNotificationSend']) && $_POST['manualNotificationSend']==true){
-			/*header('Content-Type: application/json');
+		if(isset($_GET['manualNotificationSend']) && $_GET['manualNotificationSend']==true){
+			header('Content-Type: application/json');
 			$status = "";
 			$error  = "";
 			
@@ -151,7 +151,7 @@ class AdminUtils {
 					}
 					else die(json_encode(array("status"=>false,"text"=>"A páciens részére már volt értesítés küldve! Biztosan küldeni akarsz egyet ismét?")));
 				}
-			}*/
+			}
 			die();
 		}
     }
