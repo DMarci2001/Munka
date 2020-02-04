@@ -1533,7 +1533,7 @@ function startFODoctorSync(oid) {
 
 function manualNotificationSend(id,pass){
 	$.ajax({
-		method:'post',
+		method:'get',
 		url:'index.php',
 		data:{manualNotificationSend:true,id:id},
 		success:function(data){
@@ -1544,7 +1544,7 @@ function manualNotificationSend(id,pass){
 				//Ha mégis elakarja küldeni az értesítést:
 				if(choice==true){
 					$.ajax({
-						method:'post',
+						method:'get',
 						url:'index.php',
 						data:{manualNotificationSend:true,id:id,status:true},
 						success:function(data){
