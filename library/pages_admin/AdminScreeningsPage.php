@@ -65,7 +65,7 @@ class AdminScreeningsPage extends AdminCorePage
             if ($this->adminUtils->szuresTipusModJog()) {
                 $sor=1;
                 while (isset($_POST["cskapcsid{$sor}"])) {
-                    sql_query("update szurescsomagok_kapcs set szurestipusid=?,nemerequired=? where id=?", array($_POST["cskapcstipid{$sor}"], $_POST["cskapcsnemerequired{$sor}"], $_POST["cskapcsid{$sor}"]));
+                    sql_query("update szurescsomagok_kapcs set szurestipusid=?,nemerequired=?,noreservation=? where id=?", array($_POST["cskapcstipid{$sor}"], $_POST["cskapcsnemerequired{$sor}"], $_POST["noreservation{$sor}"], $_POST["cskapcsid{$sor}"]));
                     $sor++;
                 }
 
@@ -136,11 +136,18 @@ class AdminScreeningsPage extends AdminCorePage
                     echo "<option value='{$rowc["id"]}'" . ($rowc["id"] == $rowb["szurestipusid"] ? " selected" : "") . ">{$rowc["megnev"]}</option>";
                 }
                 echo "</select> ";
+
                 echo "<select name='cskapcsnemerequired{$sor}'>";
                 echo "<option value='0'>Neme szükséges?</option>";
                 echo "<option value='1'" . (1 == $rowb["nemerequired"] ? " selected" : "") . ">Csak férfiaknak</option>";
                 echo "<option value='2'" . (2 == $rowb["nemerequired"] ? " selected" : "") . ">Csak nőknek</option>";
                 echo "</select> ";
+
+                echo "<select name='noreservation{$sor}'>";
+                echo "<option value='0'" . (0 == $rowb["noreservation"] ? " selected" : "") . ">Foglalás szükséges</option>";
+                echo "<option value='1'" . (1 == $rowb["noreservation"] ? " selected" : "") . ">Foglalás nem szükséges</option>";
+                echo "</select> ";
+
                 echo "<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delcskapcs={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd a csomagból?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
                 echo "</div>";
                 echo "</td></tr>";

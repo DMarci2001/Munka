@@ -462,7 +462,7 @@ class BookingService {
     private function getPackContentTypes($szuresTipusId) {
         $types = [];
         if ($this->szuresTipusData["ispack"] == 1) {
-            $res = sql_query("select * from szurescsomagok_kapcs where csomagid=?", array($szuresTipusId));
+            $res = sql_query("select * from szurescsomagok_kapcs where csomagid=? and noreservation=0", array($szuresTipusId));
             while ($row = sql_fetch_array($res)) {
                 if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme) {
                     $types[] = $row["szurestipusid"];
@@ -855,21 +855,7 @@ class BookingService {
 
             $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
 
-            $packText = "";
-            $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f
-            LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid
-            WHERE parentid=?", array($id));
-            while ($rowcs = sql_fetch_array($rescs)) {
-                if ($row["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
-                if ($row["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
-                if (empty($packText)) {
-                    $packText.="<br/>Csomag tartalma:<br/>";
-                }
-                $packText.="{$rowcs["megnev"]}<br/>";
-            }
-            if (!empty($packText)) {
-                $packText.="<br/>";
-            }
+            $packText = $this->_getPackText($row);
 
             sql_query("update foglalasok set userertesitve=1 where id='{$id}'");
 
@@ -1038,21 +1024,7 @@ class BookingService {
         if ($row=sql_fetch_array($res)) {
             if ($row["foglalasemail"] == 1) {
 
-                $packText = "";
-                $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f
-                    LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid
-                    WHERE parentid=?", array($id));
-                while ($rowcs = sql_fetch_array($rescs)) {
-                    if ($row["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
-                    if ($row["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
-                    if (empty($packText)) {
-                        $packText.="<br/>Csomag tartalma:<br/>";
-                    }
-                    $packText.="{$rowcs["megnev"]}<br/>";
-                }
-                if (!empty($packText)) {
-                    $packText.="<br/>";
-                }
+                $packText = $this->_getPackText($row);
 
                 $mail = new PHPMailer();
                 $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
@@ -1093,6 +1065,35 @@ class BookingService {
         sql_query("update foglalasok set ertesitve=1 where id='{$id}'");
     }
 
+    private function _getPackText($reservationData) {
+        $packText = "";
+
+        $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=?", array($reservationData["id"]));
+        while ($rowcs = sql_fetch_array($rescs)) {
+            if ($reservationData["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
+            if ($reservationData["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
+            if (empty($packText)) {
+                $packText.="<br/>Csomag tartalma:<br/>";
+            }
+            $packText.="{$rowcs["megnev"]}<br/>";
+        }
+
+        $rescs = sql_query("SELECT t.* FROM szurescsomagok_kapcs k LEFT JOIN szurestipusok t ON t.id=k.szurestipusid WHERE k.csomagid=? AND k.noreservation=1", [$reservationData["id"]]);
+        while ($rowcs = sql_fetch_array($rescs)) {
+            if ($reservationData["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
+            if ($reservationData["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
+            if (empty($packText)) {
+                $packText.="<br/>Csomag tartalma:<br/>";
+            }
+            $packText.="{$rowcs["megnev"]}<br/>";
+        }
+
+        if (!empty($packText)) {
+            $packText.="<br/>";
+        }
+
+        return $packText;
+    }
     private function getCalendarItem($foglalasData) {
         $webTextLocal = $this->lang->getWebTexts($foglalasData["rlang"]);
 
