@@ -4,12 +4,11 @@ class BookingService {
     private $lang;
     private $utils;
     public $packContentTypes = [];
-    private $honnan;
+    private $honnan = 0;
     private $neme;
     public $helyszin = 0;
     public $szuresTipus = 0;
     public $szuresTipusData;
-
     public $szuresTipusMap = [];
 
     public function __construct()
@@ -32,13 +31,12 @@ class BookingService {
 
             header('Content-Type: application/json');
 
-            $html                  = "";
-            $this->helyszin        = intval($_GET["helyszin"]);
-            $this->szuresTipus     = intval($_GET["szurestipus"]);
-            $this->neme            = intval($_GET["neme"]);
-            $this->honnan          = intval($_GET["honnan"]);
-            $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)));
-            $elsoIdopont           = [];
+            $html = "";
+            $this->setHelyszin($_GET["helyszin"]);
+            $this->setSzuresTipus($_GET["szurestipus"]);
+            $this->setNeme($_GET["neme"]);
+            $this->honnan = intval($_GET["honnan"]);
+            $elsoIdopont = [];
 
             if ($this->helyszin == 0) {
                 echo json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
@@ -49,7 +47,6 @@ class BookingService {
                 die;
             }
 
-            $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
             if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
                 echo json_encode(array("error" => "Szűréscsomag választása esetén előbb adja meg a nemét!", "html" => ""));
                 die;
@@ -243,8 +240,8 @@ class BookingService {
             header("Pragma: no-cache");
             header("Expires: 0");
 
-            $this->helyszin    = intval($_POST["helyszin"]);
-            $this->szuresTipus = intval($_POST["szurestipusid"]);
+            $this->setHelyszin($_POST["helyszin"]);
+            $this->setSzuresTipus($_POST["szurestipusid"]);
 
             if (!$odata = $this->selectOrvosForIdopont($_POST["idopont"], $_POST["orvos"])) {
                 die("Ezt az időpontot időközben lefoglalták!");
@@ -267,6 +264,19 @@ class BookingService {
         }
     }
 
+    public function setHelyszin($helyszinId) {
+        $this->helyszin = intval($helyszinId);
+    }
+
+    public function setSzuresTipus($szuresTipusId) {
+        $this->szuresTipus = intval($szuresTipusId);
+        $this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($szuresTipusId)));
+        $this->packContentTypes = $this->getPackContentTypes($szuresTipusId);
+    }
+
+    public function setNeme($neme) {
+        $this->neme = intval($neme);
+    }
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
@@ -607,7 +617,8 @@ class BookingService {
 
 
     public function szuresTipusValasztoNew($helyszinid, $selected=0, $onlyselected=0) {
-        $tipusok = array();
+        $tipusok = [];
+        $tipusnevek = [];
 
         $rest = sql_query("select * from szurestipusok");
         while ($rowt = sql_fetch_array($rest)) {
@@ -651,9 +662,12 @@ class BookingService {
             }
         }
 
-        $htmlout.="</select><div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
+        $htmlout.="</select>";
+        $htmlout.="<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
 
-        if (trim($helyszinid)=="" || $helyszinid==0) $htmlout="Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
+        if (trim($helyszinid)=="" || $helyszinid==0) {
+            $htmlout="Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
+        }
 
         return $htmlout;
     }
@@ -1170,25 +1184,24 @@ END:VCALENDAR";
         $rn = rand(1000000, 9999999);
 
         $paciensId = 0;
-
         if (isset($_SESSION["user"]["id"])) {
             $paciensId = intval($_SESSION["user"]["id"]);
         } else {
             if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($data['taj'], $data['email'], $cegId)))) {
                 $paciensId = $userInfo['id'];
             } else {
-                sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['tel'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
+                sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['telefon'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
                 $paciensId = sql_insert_id();
             }
         }
 
         $data["paciensid"] = $paciensId;
-        $data["rn"] = $rn;
-        $data["aktiv"] = 0;
-        $data["parentid"] = 0;
-        $data["cegid"] = $cegId;
-        $data["lang"] = $_COOKIE["lang"];
-        $data["orvosid"] = 0;
+        $data["rn"]        = $rn;
+        $data["aktiv"]     = 0;
+        $data["parentid"]  = 0;
+        $data["cegid"]     = $cegId;
+        $data["lang"]      = $_COOKIE["lang"];
+        $data["orvosid"]   = 0;
 
         $fid = $this->addReservationQuery($data);
 

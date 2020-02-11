@@ -348,7 +348,7 @@ class FoglaljOrvostService {
 
         $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
         $remoteAddr = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "";
-        sql_query("insert into webservicelog set tipus=10, datum=now(), keres=?, ip=?, useragent=?", array($xml, $remoteAddr, $userAgent));
+        sql_query("insert into webservicelog set tipus=11, datum=now(), keres=?, ip=?, useragent=?", array($xml, $remoteAddr, $userAgent));
         $logId = sql_insert_id();
 
         try {

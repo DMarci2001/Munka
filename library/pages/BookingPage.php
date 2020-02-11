@@ -92,9 +92,9 @@ class BookingPage extends CorePage {
             if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
             if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
 
-            $this->bookingService->szuresTipus = intval($_POST["szurestipus"]);
-            $this->bookingService->helyszin = intval($_POST["helyszin"]);
-            $this->bookingService->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->bookingService->szuresTipus)));
+            $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
+            $this->bookingService->setHelyszin($_POST["helyszin"]);
+            $this->bookingService->setNeme($_POST["neme"]);
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
                 if (empty($_POST["email"])) {
