@@ -140,14 +140,17 @@ class AdminDoctorsPage extends AdminCorePage {
             if ($this->adminUtils->orvosModJog()) {
                 if ($this->adminUtils->beosztasModJog()) {
                     while (isset($_POST["beosztasid{$sor}"])) {
-                        $sorban=$aktiv=0;
-                        if (isset($_POST["aktiv{$sor}"])) $aktiv=1;
-                        if (isset($_POST["csaksorban{$sor}"])) $sorban=1;
-                        if (isset($_POST["csakvsorban{$sor}"])) $sorban=2;
+                        $aktiv  = isset($_POST["aktiv{$sor}"])?1:0;
+                        $sorban = isset($_POST["csaksorban{$sor}"])?1:0;
+                        $sorban = isset($_POST["csakvsorban{$sor}"])?2:$sorban;
+                        $potig = $_POST["potig{$sor}"];
 
-                        //cegid='".addslashes($_POST["cegid{$sor}"])."',
-                        sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=? where id=?"
-                            ,array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $_POST["beosztasid{$sor}"]));
+                        if (!preg_match("/(2[0-3]|[01][0-9]):([0-5][0-9])/", $potig)) {
+                            $potig = "";
+                        }
+
+                        $params = array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $_POST["beosztasid{$sor}"]);
+                        sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=? where id=?", $params);
                         $sor++;
                     }
                 }
@@ -448,17 +451,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 }
                 echo "</select> ";
 
-                /*
-                echo "<select name='cegid{$sor}' style='width:200px;'>";
-
-                $resh=sql_query("select * from cegek where true {$wc} order by megnev");
-
-                if (sql_num_rows($resh)>1) echo "<option value='0'>Összes cég</option>";
-                while ($rowh=sql_fetch_array($resh)) {
-                    echo "<option value='{$rowh["id"]}'".($rowb["cegid"]==$rowh["id"]?" selected":"").">{$rowh["megnev"]}</option>";
-                }
-                echo "</select> ";
-                */
+                echo "<input placeholder='pótidőpontok' title='Pótidőpontok eddig adhatók. Hagyd üresen ha nem akarsz pótidőpontokat.'  type='text' name='potig{$sor}' style='width:37px;' value='{$rowb["potig"]}' /> ";
 
                 echo "<input type='hidden' name='tipusidk{$sor}' id='tipusidk{$sor}' value='{$rowb["tipusok"]}' />";
 
