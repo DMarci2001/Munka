@@ -620,7 +620,7 @@ class BookingService {
         $cegid            = $_SESSION["helyszindata"]["id"];
 
         //időpontra beosztott számának megállapítása
-        $resb = sql_query("SELECT b.orvosid, o.* FROM orvos_beosztas b left join orvosok o on o.id = b.orvosid WHERE b.`helyszinid`='{$helyszinid}' AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}') AND INSTR(b.tipusok,'|".intval($szurestipusid)."|') and b.aktiv=1 GROUP BY b.orvosid");
+        $resb = sql_query("SELECT b.orvosid, o.* FROM orvos_beosztas b left join orvosok o on o.id = b.orvosid WHERE b.`helyszinid`='{$helyszinid}' AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig<>'',potig,ig))>TIME('{$ora}') AND INSTR(b.tipusok,'|".intval($szurestipusid)."|') and b.aktiv=1 GROUP BY b.orvosid");
         while ($rowb = sql_fetch_array($resb)) {
             //nap foglalt-e?
             if (!sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? and (szurestipusid=0 or szurestipusid=?)",array($helyszinid, $cegid, $nap, $szurestipusid)))) {
