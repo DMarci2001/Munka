@@ -262,7 +262,7 @@ class AdminBookingPage extends AdminCorePage
                 }
             }
 
-            $beoRes=sql_query("SELECT b.*,min(tol) as mintol,max(ig) as maxig,o.nev as orvosnev,c.megnev as cegnev,group_concat(distinct c.megnev separator ', ') as cegek FROM orvos_beosztas b 
+            $beoRes=sql_query("SELECT b.*,min(tol) as mintol,max(ig) as maxig,MAX(potig) as maxpotig,o.nev as orvosnev,c.megnev as cegnev,group_concat(distinct c.megnev separator ', ') as cegek FROM orvos_beosztas b 
             left join orvosok o on o.id=b.orvosid 
             left join cegek c on c.id=b.cegid
             WHERE b.helyszinid='".intval($_SESSION["helyszin"])."' and INSTR(tipusok,'|{$szuresTipus["id"]}|') AND (nap='{$wd}' OR (nap=10 AND beonap='{$nap}')) {$wCeg} and tol<>0 and ig<>0 
@@ -273,11 +273,12 @@ class AdminBookingPage extends AdminCorePage
             $multiIntervalMode = count($intervals) > 1;
 
             foreach ($intervals as $binterval) {
-                $minTol="24:00";
-                $maxIg="00:00";
-                $orvosok="";
-                $orvosIds=[];
-                $orvosokNum=0;
+                $minTol     = "24:00";
+                $maxIg      = "00:00";
+                $maxPotIg   = "00:00";
+                $orvosok    = "";
+                $orvosIds   = [];
+                $orvosokNum = 0;
 
                 foreach ($beosztasok as $beosztas) {
                     if ($beosztas["binterval"] != $binterval) continue;
@@ -286,14 +287,23 @@ class AdminBookingPage extends AdminCorePage
                     if (!sql_fetch_array(sql_query("select id from szabadsag where datumtol<=? and datumig>=? and oid=?", array($nap, $nap, $beosztas["orvosid"])))) {
                         $szabiURL = " | <a onclick='return confirm(\"Biztos beállítod szabadságra erre a napra?\");' href='{$_SERVER['PHP_SELF']}?page={$_GET["page"]}&szabira={$nap}&orvosid={$beosztas["orvosid"]}'>szabadságra</a>";
                         $orvosokNum++;
-                        if (strtotime($minTol) > strtotime($beosztas["mintol"])) $minTol = $beosztas["mintol"];
-                        if (strtotime($maxIg) < strtotime($beosztas["maxig"])) $maxIg = $beosztas["maxig"];
-                    }
-                    //$binterval = $beosztas["binterval"];
+                        if (strtotime($minTol) > strtotime($beosztas["mintol"])) {
+                            $minTol = $beosztas["mintol"];
+                        }
+                        if (strtotime($maxIg) < strtotime($beosztas["maxig"])) {
+                            $maxIg = $beosztas["maxig"];
+                        }
+                        if (strtotime($maxPotIg) < strtotime($beosztas["maxpotig"])) {
+                            $maxPotIg = $beosztas["maxpotig"];
+                        }
 
+                    }
                     $orvosok .= "<div style='width:250px;'><a target='_blank' href='{$_SERVER['PHP_SELF']}?page=orvosok&szerk={$beosztas["orvosid"]}'>{$beosztas["orvosnev"]}</a> - " . (substr_count($beosztas["cegek"], ",") > 0 ? "<a onclick='$(\"#beocegek{$beosztas["id"]}\").slideToggle();return false;' href='#'>" . (substr_count($beosztas["cegek"], ",") + 1) . " cég</a>" : $this->utils->substr_jns($beosztas["cegek"], 0, 20)) . "{$szabiURL}</div>";
                     $orvosok .= "<div id='beocegek{$beosztas["id"]}' style='width:250px;display:none;font-size:10px;color:#888;'>{$beosztas["cegek"]}</div>";
                     $orvosIds[] = $beosztas["orvosid"];
+                }
+                if ($maxPotIg == "00:00") {
+                    $maxPotIg = $maxIg;
                 }
 
                 $minrendeles = 0;
@@ -326,7 +336,13 @@ class AdminBookingPage extends AdminCorePage
                     $htmlout .= "<table cellpadding='0' cellspacing='0'>";
                     for ($o = 0; $o < 3600; $o += $binterval) {
                         $ora = date("H:i", strtotime("{$minTol}:00 +{$o} minute"));
-                        if (strtotime($maxIg) <= strtotime($ora)) break;
+                        if (strtotime($maxPotIg) <= strtotime($ora)) {
+                            break;
+                        }
+                        $potIdopont = false;
+                        if (strtotime($ora) >= strtotime($maxIg)) {
+                            $potIdopont = true;
+                        }
 
                         $idopontStyle = '';
 
@@ -375,7 +391,7 @@ class AdminBookingPage extends AdminCorePage
                             $idopontShow = substr($rowf["datum"], 11, 5);
 
                             $htmlout .= "<tr style='{$idopontStyle}'>";
-                            $htmlout .= "<td valign='top'>" . ($idopontShow != $lastIdopont ? $idopontShow : "") . "&nbsp;&nbsp;</td>";
+                            $htmlout .= "<td valign='top'>" . ($idopontShow != $lastIdopont ? $idopontShow.($potIdopont?" <span title='pótidőpont'>(p)</span>":"") : "") . "&nbsp;&nbsp;</td>";
                             $htmlout .= "<td valign='top'>";
                             if ($foglalasButtonVolt == 0 && "{$nap} {$idopontShow}" == "{$nap} {$ora}") {
                                 $htmlout .= "<a onclick='{$addIdopontJavaScript}' class='kisbutton' title='foglalás' href='#'>+</a>&nbsp;&nbsp;";
@@ -437,7 +453,7 @@ class AdminBookingPage extends AdminCorePage
                         if ($lastIdopont == "") {
                             //nem volt foglalás, üres időpont kirakás
                             $htmlout .= "<tr style='{$idopontStyle}'>";
-                            $htmlout .= "<td valign='top'>{$ora}&nbsp;&nbsp;</td>";
+                            $htmlout .= "<td valign='top'>{$ora}".($potIdopont?" <span title='pótidőpont'>(p)</span>":"")."&nbsp;&nbsp;</td>";
                             $htmlout .= "<td valign='top'><a onclick='{$addIdopontJavaScript}' class='kisbutton' title='foglalás' href='#'>+</a>&nbsp;&nbsp;</td>";
                             $htmlout .= "</tr>";
                         }

@@ -122,6 +122,9 @@ class BookingService {
 
                 $step = 0;
                 $timeLoopEnd = false;
+
+                $freeTimes = 0;
+
                 while (!$timeLoopEnd) {
                     $ora = date("H:i",mktime($beginHour,$beginMinute+$step*$binterval,0,date("m"),date("d"),date("Y")));
                     if (strtotime($ora)>=strtotime($rowmax["maxrendeles"])) {
@@ -133,6 +136,9 @@ class BookingService {
 
                     if (isset($beos)) {
                         unset($beos);
+                    }
+                    if (isset($beoData)) {
+                        unset($beoData);
                     }
 
                     $numRendeles = 0;
@@ -146,18 +152,27 @@ class BookingService {
                         //szabad orvos kiválasztása
                         foreach ($beos as &$beoData) {
                             if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $this->helyszin)) {
-                                $numRendeles++;
-                                $orvosNevek[] = $beoData["orvosnev"];
-                                $buttonClass = "foglalhatobtn";
-                                $buttonTitle = "{$numRendeles} hely (".implode(", ", $orvosNevek).")";
-                                $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]});return false;";
-                                //break;
+                                $free = true;
+
+                                if ($beoData["ispotig"] == 1 && $freeTimes != 0) {
+                                    $free = false;
+                                }
+
+                                if ($free) {
+                                    $freeTimes++;
+                                    $numRendeles++;
+                                    $orvosNevek[] = $beoData["orvosnev"];
+                                    $buttonClass = "foglalhatobtn";
+                                    $buttonTitle = "{$numRendeles} hely (" . implode(", ", $orvosNevek) . ")";
+                                    $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]});return false;";
+                                    //break;
+                                }
                             }
                         }
                     }
 
                     //csak sorban foglalható időpontok intézése
-                    if ($beoData["csaksorban"]==1 && isset($elsoIdopont[$nap]) && $buttonClass=="foglalhatobtn") {
+                    if (isset($beoData) && $beoData["csaksorban"]==1 && isset($elsoIdopont[$nap]) && $buttonClass=="foglalhatobtn") {
                         $buttonJava="nemfogs(\"{$elsoIdopont[$nap]}\");return false;";
                         $buttonClass.=" halv";
                     }
@@ -184,8 +199,12 @@ class BookingService {
 
                     $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
 
+                    if (isset($beoData) && $beoData["ispotig"] == 1) {
+                        //$btn.="pot";
+                    }
+
                     //csak fordított sorrendben időpontok intézése
-                    if ($beoData["csaksorban"]==2 && $buttonClass=="foglalhatobtn") {
+                    if (isset($beoData) && $beoData["csaksorban"]==2 && $buttonClass=="foglalhatobtn") {
                         $lastButton = $btn;
                         $buttonJava = "nemfogs2();return false;";
                         $buttonClass.=" halv";
@@ -210,16 +229,14 @@ class BookingService {
                         $timeLoopEnd = true;
                         $btn.= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
                         $btn.= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
-                        //$btn.= implode(",",$this->packContentTypes);
-                        //$btn.= print_r($availableData, true);
                     }
 
                     $napHTML.=$btn;
                     $napHTML.="</div>";
                 }
 
-                if (isset($lastButton)) {
-                    $napHTML=str_replace($btn, $lastButton, $napHTML);
+                if (isset($lastButton) && isset($btn)) {
+                    $napHTML = str_replace($btn, $lastButton, $napHTML);
                     unset($lastButton);
                 }
 
@@ -285,7 +302,11 @@ class BookingService {
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
-        return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+        $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+        if ($minMaxData["maxpotigrendeles"] > $minMaxData["maxrendeles"]) {
+            $minMaxData["maxrendeles"] = $minMaxData["maxpotigrendeles"];
+        }
+        return $minMaxData;
     }
 
     private function getMinMaxPack($szuresTipus, $nap) {
@@ -389,7 +410,7 @@ class BookingService {
         //időpontra beosztott orvosok kiolvasása
         $resb=sql_query("SELECT * FROM orvos_beosztas b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(ig)>TIME(?) AND INSTR(b.tipusok,?) ".($orvos==0?"":"and b.orvosid='{$orvos}'")." and b.aktiv=1 
+		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) ".($orvos==0?"":"and b.orvosid='{$orvos}'")." and b.aktiv=1 
 		ORDER BY o.onlytel,b.cegid DESC,o.id", array($this->helyszin, $cegid, $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
 
         while ($rowb=sql_fetch_array($resb)) {
@@ -556,7 +577,7 @@ class BookingService {
 
         $wora = $wceg = "";
         if (!empty($ora)) {
-            $wora = "AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}')";
+            $wora = "AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig='', ig, potig))>TIME('{$ora}')";
         }
 
         //admin esetén lazább szűrés
@@ -569,9 +590,12 @@ class BookingService {
         }
 
         //időpontra beosztott orvosok kiolvasása
-        $resb = sql_query("SELECT b.*,o.id as orvosid,o.nev as orvosnev,o.onlytel,c.megnev as cegnev FROM orvos_beosztas b 
+        $resb = sql_query("SELECT 
+        IF(potig<>'' and TIME('{$ora}')>=TIME(ig),1,0) as ispotig, 
+        b.*,o.id as orvosid,o.nev as orvosnev,o.onlytel,c.megnev as cegnev 
+        FROM orvos_beosztas b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		left join cegek c on c.id=b.cegid
+		LEFT JOIN cegek c ON c.id=b.cegid
 		WHERE b.`helyszinid`='{$helyszin}' {$wceg} AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') {$wora} AND INSTR(b.tipusok,'|{$szuresTipus}|') 
 		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1
 		ORDER BY b.cegid<>'{$cegId}',o.nev,o.onlytel,b.cegid DESC,o.id");
@@ -601,7 +625,7 @@ class BookingService {
         $cegid            = $_SESSION["helyszindata"]["id"];
 
         //időpontra beosztott számának megállapítása
-        $resb = sql_query("SELECT b.orvosid, o.* FROM orvos_beosztas b left join orvosok o on o.id = b.orvosid WHERE b.`helyszinid`='{$helyszinid}' AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}') AND INSTR(b.tipusok,'|".intval($szurestipusid)."|') and b.aktiv=1 GROUP BY b.orvosid");
+        $resb = sql_query("SELECT b.orvosid, o.* FROM orvos_beosztas b left join orvosok o on o.id = b.orvosid WHERE b.`helyszinid`='{$helyszinid}' AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig<>'',potig,ig))>TIME('{$ora}') AND INSTR(b.tipusok,'|".intval($szurestipusid)."|') and b.aktiv=1 GROUP BY b.orvosid");
         while ($rowb = sql_fetch_array($resb)) {
             //nap foglalt-e?
             if (!sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? and (szurestipusid=0 or szurestipusid=?)",array($helyszinid, $cegid, $nap, $szurestipusid)))) {
