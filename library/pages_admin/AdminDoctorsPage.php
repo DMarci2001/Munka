@@ -2,6 +2,7 @@
 
 class AdminDoctorsPage extends AdminCorePage {
 
+
     private $bookingService;
 
     public function __construct()
@@ -113,12 +114,37 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</div>";
             die();
         }
-
-        if (isset($_GET["savebeosztastipusok"])) {
+		
+		if (isset($_GET["savebeosztastipusok"])) {
             $bid = intval($_GET["savebeosztastipusok"]);
             sql_query("update orvos_beosztas set tipusok=? where id=?", array($_GET["value"], $bid));
             die();
         }
+		
+		if (isset($_GET["showcegvalasztov2"])) {
+            if (!$this->adminUtils->beosztasModJog()) die();
+            $restrictid = intval($_GET["showcegvalasztov2"]);
+            $rowo = sql_fetch_array(sql_query("SELECT * FROM foglalas_korlatozasok WHERE id=?", array($restrictid)));
+			
+			//Kilistázom az összes céget amihez van beoja:
+			$res=sql_query("SELECT beo.*,c.megnev,c.id AS cegid FROM orvos_beosztas beo LEFT JOIN cegek c ON c.id=beo.cegid WHERE beo.orvosid=? GROUP BY beo.cegid ORDER BY c.megnev ASC",array(intval($rowo['orvosid'])));
+
+            echo "<div style='width:750px;'>";
+            while ($row=sql_fetch_array($res)) {
+                echo "<label><input onchange='saveceglistav2({$restrictid})' type='checkbox' name='cegvalasztov2{$restrictid}_{$row["cegid"]}' value='{$row["megnev"]}' ".(substr_count($rowo["cegek"],"|{$row["cegid"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
+            }
+
+            echo "<div style=''><input type='button' onclick='showcegvalasztov2({$restrictid});' value='OK'></div>";
+            echo "</div>";
+            die();
+        }
+		
+		if (isset($_GET["savecegekv2"])) {
+            sql_query("UPDATE foglalas_korlatozasok SET cegek=? WHERE id=?", array($_GET["value"], intval($_GET["savecegekv2"])));
+            die();
+        }
+
+      
 
         if (isset($_POST['checkSzabiData'])) {
             $_POST['end'] = date("Y-m-d",strtotime($_POST['end'].' + 1 day'));
@@ -131,13 +157,29 @@ class AdminDoctorsPage extends AdminCorePage {
             echo $data;
             die();
         }
+		
+		if(isset($_POST['restricttobooking'])){
+			sql_query("INSERT INTO foglalas_korlatozasok SET orvosid=?,uid=?,datum=?",array(intval($_GET['szerk']),intval($_SESSION['adminuser']['id']),date("Y-m-d H:i:s")));
+			$_POST["orvosmentes"]=1;
+		}
+		if (isset($_GET["delrestriction"])) {
+            sql_query("DELETE FROM foglalas_korlatozasok WHERE id=? AND orvosid=?",array($_GET['delrestriction'],$_GET["szerk"]));
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+		
 
         if (isset($_POST["orvosmentes"]) || isset($_POST["orvosform"])) {
             $sor = 1;
+			$restrict = 1;
             $oid = intval($_GET["szerk"]);
             $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
-
+			
+		
+			
+			
             if ($this->adminUtils->orvosModJog()) {
+				
                 if ($this->adminUtils->beosztasModJog()) {
                     while (isset($_POST["beosztasid{$sor}"])) {
                         $sorban=$aktiv=0;
@@ -149,6 +191,20 @@ class AdminDoctorsPage extends AdminCorePage {
                         sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=? where id=?"
                             ,array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $_POST["beosztasid{$sor}"]));
                         $sor++;
+                    }
+
+					//korlátozások mentése:
+					while (isset($_POST["restrictid{$restrict}"])) {
+                        $aktiv=0;
+                        if (isset($_POST["restrictionstatus{$restrict}"])) $aktiv=1;
+						
+						//echo "helyszinid=".$_POST['restrict_helyszin'.$restrict].", datasource=".$_POST['datasource'.$restrict].", restrict_time=".$_POST['restrict_time'.$restrict].", aktiv=".$_POST['restrictionstatus'.$restrict];
+						
+						$columns = "helyszinid=?, datasource=?, restrict_time=?, aktiv=?";
+						$data    = array($_POST["restrict_helyszin{$restrict}"],$_POST["datasource{$restrict}"],$_POST["restrict_time{$restrict}"],$aktiv,$_POST["restrictid{$restrict}"]);
+                        //cegid='".addslashes($_POST["cegid{$sor}"])."',
+                        sql_query("UPDATE foglalas_korlatozasok SET {$columns} WHERE id=?",$data);
+                        $restrict++;
                     }
                 }
 
@@ -274,6 +330,8 @@ class AdminDoctorsPage extends AdminCorePage {
             echo $this->foglaljOrvostSyncButton($oid, $message);
             die;
         }
+		
+		
 
     }
 
@@ -527,6 +585,47 @@ class AdminDoctorsPage extends AdminCorePage {
             }
             echo "<div><input class='inputbox' style='width:100px;' type='text' name='szabadsagtol' value='' placeholder='-tól dátum'> - <input class='inputbox' style='width:100px;' type='text' name='szabadsagig' value='' placeholder='-ig dátum'> <input type='submit' onClick='return checkSzabiData()' name='addszabadsag' value='+ szabadság hozzáadása'></div>";
             echo "</td></tr>";
+
+			echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalások korlátozása</div></td></tr>";
+			
+			$resb = sql_query("SELECT * FROM foglalas_korlatozasok WHERE orvosid=? ORDER BY datum",array($_GET['szerk']));
+			$sor = 1;
+			while($rowb = sql_fetch_array($resb)){	
+				echo "<tr><td colspan='2'>";
+				echo "<input type='hidden' name='restrictid{$sor}' value='{$rowb["id"]}'/>";
+				echo "<div>";
+				echo "<input type='checkbox' name='restrictionstatus{$sor}' ".($rowb["aktiv"]>0?"checked":"")." value='1' />";
+				//echo "<select type='text' name=''> value=''/> Forrás<>";
+				echo "<strong>Adatforrás:&nbsp;&nbsp;</strong><select name='datasource{$sor}'>";
+				echo "	<option value='bejelentkezo'>Bejelentkező</option>";
+				echo "	<option value='zeus'>Zeus</option>";
+				echo "</select>&nbsp;&nbsp;";
+				echo "<strong>Korlátozás:&nbsp;&nbsp;</strong><select name='restrict_time{$sor}'>";
+				echo "	<option value='1month' ".($rowb['restrict_time']=="1month"?"selected":"")." >1 hónap</option>";
+				echo "	<option value='2month' ".($rowb['restrict_time']=="2month"?"selected":"").">2 hónap</option>";
+				echo "	<option value='3month' ".($rowb['restrict_time']=="3month"?"selected":"").">3 hónap</option>";
+				echo "</select>&nbsp;&nbsp;";
+				echo "<select name='restrict_helyszin{$sor}'>";
+				echo "	<option>Válassz címet!</option>";
+				//Kilistázom az összes olyan címhelyet ahol rendel a doki
+				$resa = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas beo LEFT JOIN helyszinek h ON h.id=beo.helyszinid WHERE beo.orvosid=? GROUP BY beo.helyszinid",array($_GET['szerk']));
+				while($rowa=sql_fetch_array($resa)){
+					echo "<option ".($rowb['helyszinid']==$rowa['helyszinid']?"selected":"")." value='{$rowa['helyszinid']}'>{$rowa['cim']}</option>";
+				}
+				echo "</select>&nbsp;&nbsp;";
+				$cegdb = (empty($rowb['cegek'])?0:count(explode(",",str_replace(array("||","|"),array(",",""),$rowb['cegek']))));
+		
+				$cegek = (empty($rowb['cegek'])?"":implode("",sql_fetch_row(sql_query("SELECT group_concat(' ',megnev) FROM cegek WHERE id IN(".str_replace(array("||","|"),array(",",""),$rowb['cegek']).")"))));
+				echo "<span id='cegstatusz{$rowb['id']}'><a class='tlink' href='#' title='{$cegek}' onClick='showcegvalasztov2({$rowb['id']})'>{$cegdb} cég</a></span>";
+				//cégek listája
+				echo "&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delrestriction={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
+				echo "</div>";
+				echo "<div id='cegvalasztov2{$rowb['id']}'></div>";
+				echo "</td></tr>";
+				$row++;
+			}
+			
+			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";
 
             if( $_SESSION['adminuser']['jog_orvosset'] == 1 )
             {

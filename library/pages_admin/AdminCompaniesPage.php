@@ -50,6 +50,16 @@ class AdminCompaniesPage extends AdminCorePage {
             sql_query("insert into cegbeosztasok set cegid='".intval($_GET["szerk"])."'");
             $_POST["cegmentes"]=1;
         }
+		
+		/*if(isset($_POST['restricttobooking'])){
+			sql_query("INSERT INTO foglalas_korlatozasok set cegid=?,uid=?,datum=?",array(intval($_GET['szerk']),intval($_SESSION['adminuser']['id']),date("Y-m-d H:i:s")));
+			$_POST["cegmentes"]=1;
+		}
+		if (isset($_GET["delrestriction"])) {
+            sql_query("DELETE FROM foglalas_korlatozasok WHERE id=? AND cegid=?",array($_GET['delrestriction'],$_GET["szerk"]));
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }*/
 
         if (isset($_POST["cegmentes"])) {
             $id=intval($_GET["szerk"]);
@@ -153,7 +163,8 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='alkertsend'".($_POST["alkertsend"]==1?" checked":"")."> Alkalmassági lejártáról értesítés a pácienseknek</td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='alksend'".($_POST["alksend"]==1?" checked":"")."> Alkalmassági lista küldése</td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='no_doctor_select'".($_POST["no_doctor_select"]==1?" checked":"")."> Ne legyen orvos választás a foglalási folyamatban</td></tr>";
-
+			//echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='bound_booking'".($_POST["bound_booking"]==1?" checked":"")."> Foglalások korlátozása egy kiválasztott parameter alapján </td></tr>";
+			
             echo "<tr><td>Rendszeresség: </td><td><select name='alksendint'>";
             echo "<option ".($_POST["alksendint"]=="napi"?" selected":"")." value='napi'>Napi</option>";
             echo "<option ".($_POST["alksendint"]=="heti"?" selected":"")." value='heti'>Heti</option>";
@@ -167,7 +178,45 @@ class AdminCompaniesPage extends AdminCorePage {
             foreach ($this->optionalFields as $field => $name) {
                 echo $this->_fieldOptionsRow($field);
             }
-
+			
+			/*echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalások korlátozása</div></td></tr>";
+			
+			//Korlátozás alkalmasságihoz kötve:
+			//mi kell a beállításhoz?
+			//Forrás megadása,
+			//Mennyivel lehessen 
+			
+			$resb = sql_query("SELECT * FROM foglalas_korlatozasok WHERE cegid=? ORDER BY datum",array($_GET['szerk']));
+			$sor = 1;
+			while($rowb = sql_fetch_array($resb)){	
+				echo "<tr><td colspan='2'>";
+				echo "<input type='hidden' name='restrictid{$sor}' value='{$rowb["id"]}'/>";
+				echo "<div>";
+				//echo "<select type='text' name=''> value=''/> Forrás<>";
+				echo "<strong>Forrás</strong> <select name='datasource'>";
+				echo "	<option value='bejelentkezo'>Bejelentkező</option>";
+				echo "	<option value='zeus'>Zeus</option>";
+				echo "</select>&nbsp;&nbsp;";
+				echo "<strong>Idő korlát </strong><select name='timerestrict'>";
+				echo "	<option value='1month'>1 hónap</option>";
+				echo "	<option value='2month'>2 hónap</option>";
+				echo "	<option value='3month'>3 hónap</option>";
+				echo "</select>";
+				echo "<select>";
+				//Orvosok v. helyszin
+				echo "</select>";
+				echo "<select>";
+				//beosztás ha 
+				echo "</select>";
+				
+				echo "&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delrestriction={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
+				echo "</div>";
+				echo "</td></tr>";
+			}
+			
+			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";*/
+			 
+			 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Cég egységek</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addcegvar' value='+ Egység hozzáadása'></td></tr>";
 

@@ -29,6 +29,12 @@ function sql_fetch_array($stmt) {
     return $row;
 }
 
+function sql_fetch_row( $stmt ) {
+	//return mysqli_fetch_assoc($stmt);
+	$row = $stmt->fetch( PDO::FETCH_NUM );
+	return $row;
+}
+
 function sql_num_rows($stmt) {
     return $stmt->rowCount();
 }

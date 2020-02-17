@@ -36,6 +36,7 @@ class BookingService {
             $this->setSzuresTipus($_GET["szurestipus"]);
             $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
+			$this->setRestrictIntval($_GET['taj']);
             $elsoIdopont = [];
 
             if ($this->helyszin == 0) {
@@ -277,6 +278,10 @@ class BookingService {
     public function setNeme($neme) {
         $this->neme = intval($neme);
     }
+	
+	public function setRestrictIntval($taj){
+		
+	}
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";

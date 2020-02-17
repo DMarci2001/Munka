@@ -11,6 +11,10 @@ class BookingPage extends CorePage {
 
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
+		
+		echo "<pre>";
+		print_r($_SESSION);
+		echo "</pre>";
 
         if (isset($_GET["showpaciensfiles"])) {
             echo $this->utils->showPaciensFiles();
