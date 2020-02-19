@@ -816,19 +816,6 @@ class BookingService {
 
             $mbody = "";
 
-            if ($row["rlang"] == "hu") {
-                $mbody = "<h2>Már majdnem kész!</h2>
-                Ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
-                {$webTextLocal["nev"]}: {$row["nev"]}<br>
-                {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
-                <b>Időpont: {$row["datum"]}</b><br>
-                {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
-                {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
-                <br/>
-                Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
-                <br/>
-                Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
-            }
             if ($row["rlang"] == "de") {
                 $mbody = "<h2>Már majdnem kész!</h2>
                 Ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
@@ -854,6 +841,20 @@ class BookingService {
                 To confirm your reservation <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>click here</a><br>
                 <br/>
                 Regards<br>".Booking_Constants::COMPANY_NAME;
+            }
+
+            if ($mbody == "") {
+                $mbody = "<h2>Már majdnem kész!</h2>
+                Ha nem erősíti meg <b>1 órán belül</b>, a foglalása automatikusan <b>törlődik.</b><br/>
+                {$webTextLocal["nev"]}: {$row["nev"]}<br>
+                {$webTextLocal["telefon"]}: {$row["telefon"]}<br>
+                <b>Időpont: {$row["datum"]}</b><br>
+                {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
+                {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
+                <br/>
+                Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
+                <br/>
+                Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
             }
 
             $mail->Subject = $t;
@@ -930,7 +931,7 @@ class BookingService {
 
             $mbody .= "<hr>";
 
-            if ($row["rlang"] == "hu") {
+            if ($row["rlang"] != "de" && $row["rlang"] != "en") {
                 $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
                 $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
                 $mbody .= "<br/>";
@@ -1219,12 +1220,17 @@ END:VCALENDAR";
             }
         }
 
+        $lang = "hu";
+        if (isset($_COOKIE["lang"]) && !empty($_COOKIE["lang"])) {
+            $lang = $_COOKIE["lang"];
+        }
+
         $data["paciensid"] = $paciensId;
         $data["rn"]        = $rn;
         $data["aktiv"]     = 0;
         $data["parentid"]  = 0;
         $data["cegid"]     = $cegId;
-        $data["lang"]      = $_COOKIE["lang"];
+        $data["lang"]      = $lang;
         $data["orvosid"]   = 0;
 
         $fid = $this->addReservationQuery($data);
