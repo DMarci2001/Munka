@@ -303,8 +303,12 @@ class BookingPage extends CorePage {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>".$this->_reservationPlaceSelector()."</td></tr>";
+			
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
+			
+			//Ide kell bevinni a checkboxot!
+			echo "<tr><td></td><td><input type='checkbox' name='betegallomanynyilatkozat'><strong>Nyilatkozom, hogy tartós betegállományból térek vissza az aktív munkába.</strong></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);

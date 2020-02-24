@@ -594,9 +594,9 @@ class AdminDoctorsPage extends AdminCorePage {
 				echo "	<option value='zeus'>Zeus</option>";
 				echo "</select>&nbsp;&nbsp;";
 				echo "<strong>Korlátozás:&nbsp;&nbsp;</strong><select name='restrict_time{$sor}'>";
-				echo "	<option value='1month' ".($rowb['restrict_time']=="1month"?"selected":"")." >1 hónap</option>";
-				echo "	<option value='2month' ".($rowb['restrict_time']=="2month"?"selected":"").">2 hónap</option>";
-				echo "	<option value='3month' ".($rowb['restrict_time']=="3month"?"selected":"").">3 hónap</option>";
+				echo "	<option value='1' ".($rowb['restrict_time']=="1"?"selected":"")." >1 hónap</option>";
+				echo "	<option value='2' ".($rowb['restrict_time']=="2"?"selected":"").">2 hónap</option>";
+				echo "	<option value='3' ".($rowb['restrict_time']=="3"?"selected":"").">3 hónap</option>";
 				echo "</select>&nbsp;&nbsp;";
 				echo "<select name='restrict_helyszin{$sor}'>";
 				echo "	<option>Válassz címet!</option>";

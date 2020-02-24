@@ -34,11 +34,13 @@ function showIdoPontValasztoV2(honnan, orvosid) {
     }
 
     $("#loadingspinner").show();
-
+	
+	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val())
+	
     $.ajax({
         method:"GET",
         url:"index.php",
-        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val(), szurestipus:$("#szurestipus").val(), selectoid:orvosid, neme:neme }
+        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val(), szurestipus:$("#szurestipus").val(), selectoid:orvosid, neme:neme, taj:$("input[name='taj']").val() }
     }).done(function(data) {
         if (data.error != "") {
             myAlert(data.error);

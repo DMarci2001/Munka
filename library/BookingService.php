@@ -10,6 +10,7 @@ class BookingService {
     public $szuresTipus = 0;
     public $szuresTipusData;
     public $szuresTipusMap = [];
+	public $restrictParameters = [];
 
     public function __construct()
     {
@@ -36,7 +37,9 @@ class BookingService {
             $this->setSzuresTipus($_GET["szurestipus"]);
             $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
-			$this->setRestrictIntval($_GET['taj']);
+			$this->taj = intval((!isset($_GET['taj'])?0:$_GET['taj']));
+			
+			//108682375 - Kormányos Gergő teszt alany, 2019.03.28-án volt vizsgálaton, 2020.03.28-ig alaklmas, 2020.02.28-tól foglalhat vizsgálatra időpontot!
             $elsoIdopont = [];
 
             if ($this->helyszin == 0) {
@@ -57,6 +60,19 @@ class BookingService {
                 echo json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
                 die;
             }
+			
+			//Foglalás korlátozáshoz szükséges a TAJ szám, ez alapján ellenőrzi vissza, hogy mikortól jelentkezhet vizsgálatra:
+			//Először meg kell néznem, hogy az adott helyszínhez tartozik-e (emelett az orvost és céget is meg kell néznem) korlátozás:
+			if($this->checkBookingRestrictionProtocol()){
+				//Ha nem adott meg tajszámot:
+				if ($this->taj == 0) {
+					echo json_encode(array("error" => "Időpontválasztás előtt kérem adja meg a TAJ számát!", "html" => ""));
+					die;
+				}
+				
+				//Paraméterek beállítása a korlátozáshoz:
+				$restrictParameters = $this->setRestrictParameters($this->helyszin);
+			}
 
             //orvosválasztó
             $html.= $this->displayDoctorSelector();
@@ -196,6 +212,20 @@ class BookingService {
                         $buttonClass = "foglaltbtn";
                         $buttonJava  = "nemfog();return false;";
                     }
+					
+					//Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
+					if (count($restrictParameters)!=0){
+						$orvosok = $restrictParameters['orvosok'];
+						$oid = array_search($_SESSION['orvosselected'],array_column($orvosok,"orvosid"));
+						if($oid!==false){
+							if(strtotime("{$nap} {$ora}")<=strtotime($restrictParameters['datum'])){
+								$buttonTitle = "";
+								$buttonClass = "foglaltbtn";
+								$buttonJava  = "nemfog();return false;";
+							}
+						}
+					}
+					
 
                     $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
 
@@ -230,6 +260,8 @@ class BookingService {
                         $btn.= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
                         $btn.= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
                     }
+					
+					
 
                     $napHTML.=$btn;
                     $napHTML.="</div>";
@@ -281,6 +313,53 @@ class BookingService {
             die();
         }
     }
+	
+	
+	public function checkBookingRestrictionProtocol(){
+		$resk = sql_query("SELECT * FROM foglalas_korlatozasok 
+						   WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ",array($this->helyszin));
+		if(sql_num_rows($resk)>0) $a = true;
+		else $a = false;
+		
+		return $a;
+	}
+	
+	public function setRestrictParameters($helyszinId){
+		$korlatozottOrvosok = [];
+		$korlatozottDatum = "";
+		
+		//Orvos->korlátozás idő
+		$request = sql_query("SELECT orvosid,restrict_time FROM foglalas_korlatozasok WHERE helyszinid=?",array($helyszinId));
+		while($result=sql_fetch_array($request)){
+			array_push($korlatozottOrvosok,array("orvosid"=>$result['orvosid'],"restrict_time"=>$result['restrict_time']));
+		}
+		
+		$oid = array_search($_SESSION['orvosselected'],array_column($korlatozottOrvosok,"orvosid"));
+		
+		//Páciens utolsó alkalmasságija:
+		$pdata = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj=? AND datum < NOW() ORDER BY datum desc LIMIT 1",array($this->taj)));
+		$korlatozottDatum = date("Y-m-d",strtotime("{$pdata['datum']} + ".($pdata['alkalmassagido']-$korlatozottOrvosok[$oid]['restrict_time'])." months"));
+		
+		return array("orvosok"=>$korlatozottOrvosok,"datum"=>$korlatozottDatum);
+	}
+	
+	/*public function checkBookingRestriction($time,$orvosid){
+		//Ez addig jó is míg csak egy korlátozás van :P
+		$resd = sql_query("SELECT * FROM foglalas_korlatozasok 
+						   WHERE helyszinid=? AND orvosid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%'",array($this->helyszin,$orvosid));
+		if(sql_num_rows($resd)>0){
+			//$resg=sql_fetch_array($resd);
+			//Ellenőrízzük le a páciens utolsó alkalmassági eredményét (logikusan a jelentől hátrébb keresendő a legfrissebb :P)!
+			
+			//Ez lesz a minimum dátum, ahonnan fölfele tud foglalást kezdeményezni:
+			$minDate = date("Y-m-d",strtotime("{$resp['datum']} + ".($resp['alkalmassagido']-$resg['restrict_time'])." months"));
+			
+			if(strtotime($time)>=strtotime($minDate)) $r = false;
+			else $r = true;
+			return $r;
+		}
+		
+	}*/
 
     public function setHelyszin($helyszinId) {
         $this->helyszin = intval($helyszinId);
@@ -296,9 +375,6 @@ class BookingService {
         $this->neme = intval($neme);
     }
 	
-	public function setRestrictIntval($taj){
-		
-	}
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
