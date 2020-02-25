@@ -35,12 +35,12 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     $("#loadingspinner").show();
 	
-	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").val());
+	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").prop("checked"));
 	
     $.ajax({
         method:"GET",
         url:"index.php",
-        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val(), szurestipus:$("#szurestipus").val(), selectoid:orvosid, neme:neme, taj:$("input[name='taj']").val() }
+        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:$("#helyszin").val(), szurestipus:$("#szurestipus").val(), selectoid:orvosid, neme:neme, taj:$("input[name='taj']").val(),betegallomany:$("#betegallomanynyilatkozat").prop("checked") }
     }).done(function(data) {
         if (data.error != "") {
             myAlert(data.error);

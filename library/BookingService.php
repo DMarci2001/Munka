@@ -10,6 +10,7 @@ class BookingService {
     public $szuresTipus = 0;
     public $szuresTipusData;
     public $szuresTipusMap = [];
+	public $betegallomany = false;
 	public $restrictParameters = [];
 
     public function __construct()
@@ -46,6 +47,7 @@ class BookingService {
             $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
 			$this->taj = (!isset($_GET['taj'])?0:$_GET['taj']);
+			$this->setBetegallomany((!isset($_GET['betegallomany'])?false:$_GET['betegallomany']));
 			
 			//108682375 - Kormányos Gergő teszt alany, 2019.03.28-án volt vizsgálaton, 2020.03.28-ig alaklmas, 2020.02.28-tól foglalhat vizsgálatra időpontot!
             $elsoIdopont = [];
@@ -79,8 +81,8 @@ class BookingService {
 				}
 				
 				//Paraméterek beállítása a korlátozáshoz:
-				$restrictParameters = $this->setRestrictParameters($this->helyszin);
-		
+				$this->restrictParameters = $this->setRestrictParameters($this->helyszin);
+				
 			}
 
             //orvosválasztó
@@ -223,11 +225,11 @@ class BookingService {
                     }
 					
 					//Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
-					if (count($restrictParameters)!=0){
-						$orvosok = $restrictParameters['orvosok'];
+					if (count($this->restrictParameters)!=0 && $this->betegallomany!=true){
+						$orvosok = $this->restrictParameters['orvosok'];
 						$oid = array_search($_SESSION['orvosselected'],array_column($orvosok,"orvosid"));
 						if($oid!==false){
-							if(strtotime("{$nap} {$ora}")<=strtotime($restrictParameters['datum'])){
+							if(strtotime("{$nap} {$ora}")<=strtotime($this->restrictParameters['datum'])){
 								$buttonTitle = "";
 								$buttonClass = "foglaltbtn";
 								$buttonJava  = "nemfog();return false;";
@@ -384,6 +386,13 @@ class BookingService {
     public function setNeme($neme) {
         $this->neme = intval($neme);
     }
+	
+	public function setBetegallomany($betegallomany) {
+		if($betegallomany!="true") $betegallomany=false;
+		else $betegallomany=true;
+	
+		$this->betegallomany = $betegallomany;
+	}
 	
 
     private function getMinMax($szuresTipus, $packContentTypes = []) {
