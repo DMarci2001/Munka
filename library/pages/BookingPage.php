@@ -308,7 +308,13 @@ class BookingPage extends CorePage {
             echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
 			
 			//Ide kell bevinni a checkboxot!
-			echo "<tr><td></td><td><input type='checkbox' name='betegallomanynyilatkozat'><strong>Nyilatkozom, hogy tartós betegállományból térek vissza az aktív munkába.</strong></td></tr>";
+			
+				echo "<tr><td></td><td><div id='tappenzcheck'>";
+				if ($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin'])){
+					echo $webText["betegallomanynyilatkozat"];
+				}
+				echo "</div></td></tr>";
+			
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);

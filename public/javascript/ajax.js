@@ -35,7 +35,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     $("#loadingspinner").show();
 	
-	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val())
+	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").val());
 	
     $.ajax({
         method:"GET",
@@ -95,7 +95,14 @@ function clearSzuresTipus(hid) {
     $("#szurestipusvalaszto").load("index.php?szurestipusrefresh="+hid);
     $("#szurestipusmegj").html("");
     $("#datum").css("background-image","");
+	$("#tappenzcheck").load("index.php?tappenzcheckrefresh="+hid);
     //showTipusMegj($("#szurestipus").val());
+}
+
+function toggleCheckBox(id){
+	var checkbox = $(id);
+	checkbox.prop("checked", !checkbox.prop("checked"));
+	return;
 }
 
 function chooseIdoPont(idopont,orvos) {

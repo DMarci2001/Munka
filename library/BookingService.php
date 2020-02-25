@@ -21,6 +21,14 @@ class BookingService {
             echo $this->szuresTipusValasztoNew($_GET["szurestipusrefresh"],0);
             die();
         }
+		
+		if (isset($_GET["tappenzcheckrefresh"])) {
+			$webText = $this->lang->webText;
+			if ($this->checkBookingRestrictionProtocol($_GET["tappenzcheckrefresh"])){
+				echo $webText["betegallomanynyilatkozat"];
+			}
+            die();
+        }
 
         if (isset($_POST["gettipusmegj"])) {
             echo $this->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["tid"], $_POST["hid"]);
@@ -37,7 +45,7 @@ class BookingService {
             $this->setSzuresTipus($_GET["szurestipus"]);
             $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
-			$this->taj = intval((!isset($_GET['taj'])?0:$_GET['taj']));
+			$this->taj = (!isset($_GET['taj'])?0:$_GET['taj']);
 			
 			//108682375 - Kormányos Gergő teszt alany, 2019.03.28-án volt vizsgálaton, 2020.03.28-ig alaklmas, 2020.02.28-tól foglalhat vizsgálatra időpontot!
             $elsoIdopont = [];
@@ -63,7 +71,7 @@ class BookingService {
 			
 			//Foglalás korlátozáshoz szükséges a TAJ szám, ez alapján ellenőrzi vissza, hogy mikortól jelentkezhet vizsgálatra:
 			//Először meg kell néznem, hogy az adott helyszínhez tartozik-e (emelett az orvost és céget is meg kell néznem) korlátozás:
-			if($this->checkBookingRestrictionProtocol()){
+			if($this->checkBookingRestrictionProtocol($this->helyszin)){
 				//Ha nem adott meg tajszámot:
 				if ($this->taj == 0) {
 					echo json_encode(array("error" => "Időpontválasztás előtt kérem adja meg a TAJ számát!", "html" => ""));
@@ -72,6 +80,7 @@ class BookingService {
 				
 				//Paraméterek beállítása a korlátozáshoz:
 				$restrictParameters = $this->setRestrictParameters($this->helyszin);
+		
 			}
 
             //orvosválasztó
@@ -315,9 +324,9 @@ class BookingService {
     }
 	
 	
-	public function checkBookingRestrictionProtocol(){
+	public function checkBookingRestrictionProtocol($helyszinId){
 		$resk = sql_query("SELECT * FROM foglalas_korlatozasok 
-						   WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ",array($this->helyszin));
+						   WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ",array($helyszinId));
 		if(sql_num_rows($resk)>0) $a = true;
 		else $a = false;
 		
@@ -338,6 +347,7 @@ class BookingService {
 		
 		//Páciens utolsó alkalmasságija:
 		$pdata = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj=? AND datum < NOW() ORDER BY datum desc LIMIT 1",array($this->taj)));
+		
 		$korlatozottDatum = date("Y-m-d",strtotime("{$pdata['datum']} + ".($pdata['alkalmassagido']-$korlatozottOrvosok[$oid]['restrict_time'])." months"));
 		
 		return array("orvosok"=>$korlatozottOrvosok,"datum"=>$korlatozottDatum);
