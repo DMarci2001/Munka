@@ -609,7 +609,7 @@ class AdminDoctorsPage extends AdminCorePage {
 				$cegdb = (empty($rowb['cegek'])?0:count(explode(",",str_replace(array("||","|"),array(",",""),$rowb['cegek']))));
 		
 				$cegek = (empty($rowb['cegek'])?"":implode("",sql_fetch_row(sql_query("SELECT group_concat(' ',megnev) FROM cegek WHERE id IN(".str_replace(array("||","|"),array(",",""),$rowb['cegek']).")"))));
-				echo "<span id='cegstatusz{$rowb['id']}'><a class='tlink' href='#' title='{$cegek}' onClick='showcegvalasztov2({$rowb['id']})'>{$cegdb} cég</a></span>";
+				echo "<span id='cegstatusz{$rowb['id']}'><a class='tlink' href='#' title='{$cegek}' onClick='showcegvalasztov2({$rowb['id']});return false'>{$cegdb} cég</a></span>";
 				//cégek listája
 				echo "&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delrestriction={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
 				echo "</div>";
