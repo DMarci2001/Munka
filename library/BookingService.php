@@ -1427,7 +1427,8 @@ END:VCALENDAR";
             rlang=?,
             orvosassigned=?,
             aktiv=?,
-            rkod=?"
+            rkod=?,
+			tappenzcheck=?"
         , array(
             $data["parentid"],
             $data["paciensid"],
@@ -1454,7 +1455,8 @@ END:VCALENDAR";
             $data["lang"],
             $data["orvosid"],
             $data["aktiv"],
-            $data["rn"]));
+            $data["rn"],
+			$data["betegallomanynyilatkozat"]));
 
         $fid = sql_insert_id();
         $this->updateFoglalasData($fid);

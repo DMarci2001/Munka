@@ -76,6 +76,7 @@ class BookingPage extends CorePage {
             if (!isset($_POST["nev"]))       $_POST["nev"] = "";
             if (!isset($_POST["telefon"]))   $_POST["telefon"] = "";
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
+			if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
 
             if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
