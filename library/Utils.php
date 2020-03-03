@@ -18,42 +18,6 @@ class Utils {
             $printService->start();
             die;
         }
-		
-		if (isset($_GET['test_function'])&&$_GET['test_function']==true){
-			
-			
-			//Debughoz próba:
-			/*$result = sql_fetch_array(sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl 
-												 LEFT JOIN cegek c ON c.id=fogl.cegid
-												 LEFT JOIN helyszinek h ON h.id=fogl.helyszinid 
-												 LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
-												 LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-												 WHERE fogl.id=?",array(128492)));*/
-			
-			//$this->reservationReminder($result);
-			
-			//Ki kell gyűjtenem a holnapi napra cég adat alapján azokat a foglalásokat, amik másnapra szólnak és délelőtt 10kor kiküldöm.
-			$request = sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl
-								  LEFT JOIN cegek c ON c.id=fogl.cegid
-								  LEFT JOIN helyszinek h ON h.id=fogl.helyszinid 
-								  LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
-								  LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-								  WHERE c.emlekezteto_email_kuldes=1 
-								  AND (fogl.emlekezteto_mail IS NULL OR fogl.emlekezteto_mail <> 1)
-								  AND fogl.datum LIKE '".date("Y-m-d",strtotime("Now + 1 day"))."%'
-								  ");
-			
-			$data = array();
-			/*while($result=sql_fetch_array($request)){
-				echo "<pre>";
-				print_r($result);
-				echo "</pre>";
-			}*/
-			
-			//while($result=sql_fetch_array($request)) $this->reservationReminder($result);
-			
-			die();
-		}
     }
 
     public function isTesztIP() {
@@ -973,7 +937,7 @@ class Utils {
 	
 	public function reservationReminder($data){
 		
-		$data["email"]="marton.gergely@hungariamed.hu";
+		//$data["email"]="marton.gergely@hungariamed.hu";
 		//id=128492
 		//Adott cégeknél ha benvan kapcsolva küldjön 1 nappal a foglalás előtt egy emlékeztető levelet!
 		//A küldő funkciót külön fogom kezelni, és foglalás azonosítóval fogom meghívni, abból fogja kiolvasni a szükséges infokat, magát a szelektálást 
