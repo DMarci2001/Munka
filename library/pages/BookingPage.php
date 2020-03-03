@@ -101,6 +101,10 @@ class BookingPage extends CorePage {
                 if (empty($_POST["email"])) {
                     $this->errors[] = "{$webText["emailkotelezo"]}";
                 }
+				if(!empty($_POST["email"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)){
+					$this->errors[] = "{$webText["hibasemail"]}";
+				}
+				
             }
             if (!$this->utils->getFieldHidden("nev") && $this->utils->getFieldRequired("nev")) {
                 if (empty($_POST["nev"])) {

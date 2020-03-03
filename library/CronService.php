@@ -25,6 +25,7 @@ class CronService {
             $this->_smsAlertBeforeReservation();
             $this->_updateNaploszam();
             $this->_sendFoglaljOrvostHeartBeat();
+			$this->sendReservationReminders();
             //$this->checkGDPRFiles(); //kell ez?
         }
 
@@ -43,6 +44,10 @@ class CronService {
         if ($this->interval == "abi_upload") {
             $this->_abiUpload();
         }
+		
+		if ($this->interval == "ertesito_teszt") {
+			$this->reservationReminder();
+		}
 
     }
 
@@ -264,5 +269,21 @@ class CronService {
             $foService->sendPing();
         }
     }
-
+	
+	private function sendReservationReminders() {
+		if (date("G:i") == "15:28") {
+			$request = sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl
+								  LEFT JOIN cegek c ON c.id=fogl.cegid
+								  LEFT JOIN helyszinek h ON h.id=fogl.helyszinid 
+								  LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
+								  LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+								  WHERE c.emlekezteto_email_kuldes=1 
+								  AND (fogl.emlekezteto_mail IS NULL OR fogl.emlekezteto_mail <> 1)
+								  AND fogl.datum LIKE '".date("Y-m-d",strtotime("Now + 1 day"))."%'
+								  ");
+								  
+			$data = array();
+			while($result=sql_fetch_array($request)) $utils->reservationReminder($result);
+		}
+	}
 }
