@@ -271,7 +271,7 @@ class CronService {
     }
 	
 	private function sendReservationReminders() {
-		if (date("G:i") == "15:28") {
+		if (date("G:i") == "15:30") {
 			$request = sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl
 								  LEFT JOIN cegek c ON c.id=fogl.cegid
 								  LEFT JOIN helyszinek h ON h.id=fogl.helyszinid 
