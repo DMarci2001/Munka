@@ -975,11 +975,13 @@ class BookingService {
     {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
-        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain 
+        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain,o.nev as orvosnev 
         FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
+		LEFT JOIN orvosok o ON o.id=f.`orvosassigned` 
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+		
         WHERE f.id=? and f.userertesitve=0",array($id));
 
         if ($row = sql_fetch_array($res)) {
@@ -1022,6 +1024,7 @@ class BookingService {
             $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
             $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
             $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
+			$mbody .= ($row["cegid"]==6?"Ellátó orvos: {$row["orvosnev"]}<br>":"");
             $mbody .= "{$packText}";
             $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
 
