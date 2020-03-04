@@ -892,9 +892,10 @@ class BookingService {
         $h = "cim";
         if ($_SESSION["helyszindata"]["nocim"] == 1) $h = "megnev";
 
-        $res = sql_query("SELECT h.{$h} AS helyszin,sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        $res = sql_query("SELECT h.{$h} AS helyszin,sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,o.nev as orvosnev FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
+		LEFT JOIN orvosok o ON o.id=orvosassigned
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
         WHERE f.id='{$id}'");
         if ($row = sql_fetch_array($res)) {
@@ -924,6 +925,7 @@ class BookingService {
                 <b>Időpont: {$row["datum"]}</b><br>
                 {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
                 {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
+				".($row["cegid"]==6?"Ellátó orvos: {$row["orvosnev"]}<br>":"")."
                 <br/>
                 Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
                 <br/>
@@ -951,6 +953,7 @@ class BookingService {
                 <b>Időpont: {$row["datum"]}</b><br>
                 {$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>
                 {$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>
+				".($row["cegid"]==6?"Ellátó orvos: {$row["orvosnev"]}<br>":"")."
                 <br/>
                 Az időpont foglalásának megerősítéséhez <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingvalidate&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>kattintson ide</a><br>
                 <br/>
