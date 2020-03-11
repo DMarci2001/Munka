@@ -64,7 +64,7 @@ class AlkalmassagiTajekoztatoPage extends CorePage {
 
         echo $this->showErrors();
         echo $this->showPageDescription("Az alábbi információ megadásával, tudunk küldeni az ön részére egy emlékeztető üzenetet, hogy időben megjelenhessen az éves vizsgálatán!");
-
+		if(!isset($_POST["lejarat"]) || $_POST["lejarat"]=="")$_POST["lejarat"]=date("Y-m-d");
         echo "<div>";
         echo "<form method='post' id='fitness-expiry-request'>";
 	    echo "<div>Alkalmassági vizsgálat érvényessége (-ig):</div>";
