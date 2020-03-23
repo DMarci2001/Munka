@@ -18,7 +18,13 @@ class Utils {
             $printService->start();
             die;
         }
-		
+
+        if (isset($_GET["simpletest"])) {
+            $simpleService = new SimplePayService();
+            $simpleService->startPay(131688);
+            die;
+        }
+
 		if (isset($_GET["sendingService"]) && $_GET["sendingService"] == "beuertkuldes" && $_GET["SecureCode"]=="7ae70e2062e5f193016d5885aaa868786649") {
 			
 			//SC: 7ae70e2062e5f193016d5885aaa868786649

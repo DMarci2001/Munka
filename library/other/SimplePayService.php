@@ -2,51 +2,67 @@
 
 class SimplePayService {
 
-    const MERCHANT_ID = "PUBLICTESTHUF";
-    const MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
+    const PROVIDER_NAME = "simplePay";
+    private $orderId;
 
     public function __construct()
     {
 
 
-
     }
 
+    public function startPay($id) {
+        $this->setOrderId($id);
 
-    public function start() {
         $request = [
-            "salt" => "126dac8a12693a6475c7c24143024ef8",
-            "merchant" => self::MERCHANT_ID,
-            "orderRef" => "ee44mmf",
+            "salt" => $this->getSalt(),
+            "merchant" => Booking_Constants::SIMPLEPAY_MERCHANT_ID,
+            "orderRef" => $this->orderId,
             "currency" => "HUF",
             "customerEmail" => "sdk_test@otpmobil.com",
             "language" => "HU",
             "sdkVersion" => "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e",
             "methods" => ["CARD"],
-            "total" => "25",
-            "timeout" => "2019-09-11T19:14:08+00:00",
-            "url" => "https://sdk.simplepay.hu/back.php",
-            "invoice" => [
-                "name" => "SimplePay V2 Tester",
-                "company" => "",
-                "country" => "hu",
-                "state" => "Budapest",
-                "city" => "Budapest",
-                "zip" => "1111",
-                "address" => "Address 1",
-                "address2" => "Address 2",
-                "phone" => "06203164978"
-            ]
-
+            "total" => "250",
+            "timeout" => date("c", strtotime("now + 30 minute")),
+            "url" => "https://".$_SERVER["HTTP_HOST"]."/simplePayAck.php"
         ];
 
+        /*
+        "invoice" => [
+            "name" => "SimplePay V2 Tester",
+            "company" => "",
+            "country" => "hu",
+            "state" => "Budapest",
+            "city" => "Budapest",
+            "zip" => "1111",
+            "address" => "Address 1",
+            "address2" => "Address 2",
+            "phone" => "06203164978"
+        ]
+        */
+
         $result = $this->apiCall("POST", "https://sandbox.simplepay.hu/payment/v2/start", $request);
+
+        //print_r($result["response"]);
+        //die;
+        if (isset($result["response"]["paymentUrl"])) {
+            $this->setTransactionLog($result["response"]["transactionId"], "", $result["response"]["total"]);
+            header("location:" . $result["response"]["paymentUrl"]);
+            die;
+        }
+
+        print_r($result["response"]);
+        die;
+    }
+
+    public function setOrderId($id) {
+        $this->orderId = $id;
     }
 
 
     protected function apiCall($method, $url, $requestData = null) {
         $signature = $this->generateSignature(json_encode($requestData));
-        //$signature = "rV2AffURYaUFMDhZgwN7fYZha0XGFCqsvBlRotCWg4MZ5e/EBZIVU3Vn8yypimPy";
 
         $header = ["Content-Type: application/json; charset=utf8", "Signature: {$signature}"];
         $ch = curl_init();
@@ -68,8 +84,40 @@ class SimplePayService {
         return $return;
     }
 
-    private function generateSignature($message) {
-        return base64_encode(hash_hmac('sha384', $message, self::MERCHANT_SECRET, true));
+    public function generateSignature($message) {
+        return base64_encode(hash_hmac('sha384', $message, Booking_Constants::SIMPLEPAY_MERCHANT_SECRET, true));
     }
+
+    private function getSalt($length = 32) {
+        $saltBase = '';
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for ($i=1; $i < $length; $i++) {
+            $saltBase .= substr($chars, rand(1, strlen($chars)), 1);
+        }
+        return hash('md5', $saltBase);
+    }
+
+    public function setTransactionLog($transid, $event, $price = 0) {
+        if ($transData = sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? and transid=?", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId, $transid]))) {
+            $id = $transData["id"];
+        } else {
+            sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, transid=?", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId, $transid]);
+            $id = sql_insert_id();
+        }
+        sql_query("update banktransactions set datum=now(), result=? where id=?", [$event, $id]);
+
+        if ($price != 0) {
+            sql_query("update banktransactions set osszeg=? where id=?", [$price, $id]);
+        }
+    }
+
+    public function getTransactionLog($foglalasId) {
+        return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $foglalasId]));
+    }
+
+    public function simpleLogo() {
+        return '<a href="http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf" target="_blank"> <img width="400" src="/images/simplepay_bankcard_logos_left.jpg" title=" SimplePay - Online bankkártyás fizetés" alt=" SimplePay vásárlói tájékoztató"> </a>';
+    }
+
 
 }

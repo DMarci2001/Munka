@@ -38,4 +38,7 @@ class Booking_Constants {
     const FO_API_PASSWORD           = "wzUpTVrpexTh";
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
     const FO_IFC_NAME               = "HUNGARIAMED";
+
+    const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";
+    const SIMPLEPAY_MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
 }
