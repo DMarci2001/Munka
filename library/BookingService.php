@@ -323,6 +323,12 @@ class BookingService {
             }
             die();
         }
+
+        if (isset($_GET["simpletest"])) {
+            $simpleService = new SimplePayService();
+            $simpleService->start();
+            die;
+        }
     }
 	
 	
