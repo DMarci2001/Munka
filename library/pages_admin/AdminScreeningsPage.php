@@ -4,6 +4,18 @@ class AdminScreeningsPage extends AdminCorePage
 {
 
     private $bookingService;
+	
+	private $optionalFields = [
+        "taj"       => "TAJ szám",
+        "szuldatum" => "Születési dátum",
+        "szulhely"  => "Születési hely",
+        "anyjaneve" => "Anyja neve",
+        "neme"      => "Neme",
+        "irsz"      => "Irányítószám",
+        "varos"     => "Város",
+        "utca"      => "Utca",
+        "munkakor"  => "Munkakör"
+    ];
 
     public function __construct()
     {
@@ -61,6 +73,10 @@ class AdminScreeningsPage extends AdminCorePage
             if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
             if (!isset($_POST["infopage"])) $_POST["infopage"]=0;
             if (!isset($_POST["ispack"])) $_POST["ispack"]=0;
+			if (!isset($_POST["noreservation"])) $_POST['noreservation']=0;
+			if (!isset($_POST['simplepayaktiv'])) $_POST['simplepayaktiv']=0;
+			if ($_POST['simplepayaktiv']==0) $_POST['onlysimplepay']=0;
+			if (!isset($_POST["customform"])) $_POST["customform"]=0;
 
             if ($this->adminUtils->szuresTipusModJog()) {
                 $sor=1;
@@ -84,7 +100,7 @@ class AdminScreeningsPage extends AdminCorePage
                     $sor++;
                 }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_GET["szerk"]));
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],$_GET["szerk"]));
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -116,8 +132,22 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2' valign='top'>";
             echo "<input type='checkbox' value='1' name='aktiv'" . ($_POST["aktiv"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='infopage'" . ($_POST["infopage"] == 1 ? " checked" : "") . "> Info oldalon megjelenik&nbsp;&nbsp;";
+			echo "<input type='checkbox' value='1' name='simplepayaktiv'" . ($_POST["simplepayaktiv"] == 1 ? " checked" : "") . "> Simplepay fizetés&nbsp;&nbsp;";
+			if($_POST["simplepayaktiv"] == 1 ){
+				echo "<input type='checkbox' value='1' name='onlysimplepay'" . ($_POST["onlysimplepay"] == 1 ? " checked" : "") . "> Kötelező simplepay fizetés&nbsp;&nbsp;";
+			}
+			echo "<input type='checkbox' value='1' name='noreservation'" . ($_POST["noreservation"] == 1 ? " checked" : "") . "> Nincs időpontfoglalás&nbsp;&nbsp;"; 
+			echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.egyeniadatsor').show() } else { $('.egyeniadatsor').hide() }\" ".($_POST["customform"] == 1 ? " checked" : "")." name='customform'" . ($_POST["customform"] == 1 ? " checked" : "") . "> Egyéni adatmezők&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='ispack' onchange=\"if (this.checked) { $('.csomagsor').show() } else { $('.csomagsor').hide() }\" ".($_POST["ispack"] == 1 ? " checked" : "")."> Ez egy szűréscsomag";
-            echo "</td></tr>";
+            
+			echo "</td></tr>";
+			
+			
+			echo "<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Egyéni adatmezők</div></td></tr>";
+			foreach ($this->optionalFields as $field => $name) {
+				echo $this->_fieldOptionsRow($field);
+			}
+            echo "<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addkerdes' value='+ hozzáadás'></td></tr>";
 
             echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Csomag tartalma</div></td></tr>";
             echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addcsomagkapcs' value='+ hozzáadás'></td></tr>";
@@ -294,6 +324,24 @@ class AdminScreeningsPage extends AdminCorePage
         }
         echo "</table>";
 
+    }
+	
+	 private function _fieldOptionsRow($field) {
+        $html ="<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td>".$this->optionalFields[$field].":</td><td>";
+
+        $option = 1;
+        if (substr_count($_POST["custominputs"],"notreq_{$field}")) {
+            $option = 0;
+        }
+        if (substr_count($_POST["custominputs"],"hidden_{$field}")) {
+            $option = 2;
+        }
+
+        $html.="<input name='fieldoption_{$field}' value='1' type='radio' ".($option==1?"checked":"")."/> kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='0' type='radio' ".($option==0?"checked":"")."/> nem kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='2' type='radio' ".($option==2?"checked":"")."/> elrejtés ";
+        $html.="</td></tr>";
+        return $html;
     }
 
 }
