@@ -111,6 +111,11 @@ class SimplePayService {
         }
     }
 
+    public function setAckLog($transid, $json) {
+        sql_query("update banktransactions set ackdate=now(), ack=? where merchant=? and provider=? and transid=? ", [$json, Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $transid]);
+    }
+
+
     public function getTransactionLog($foglalasId) {
         return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $foglalasId]));
     }
