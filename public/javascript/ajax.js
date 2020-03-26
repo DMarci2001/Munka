@@ -476,6 +476,8 @@ function kuponCheck(coupon,version,foglalas,szurestipus)
 }
 
 
-function extendedReservationSelect(t, h) {
-    $.redirectPost("index.php?page=booking", { szurestipus: t, helyszin: h });
+function extendedReservationSelect(t, h, r) {
+	if(r==1) var page="remoteBooking";
+	else var page="booking";
+    $.redirectPost("index.php?page="+page, { szurestipus: t, helyszin: h });
 }

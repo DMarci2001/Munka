@@ -4,6 +4,21 @@ class AdminScreeningsPage extends AdminCorePage
 {
 
     private $bookingService;
+	
+	private $optionalFields = [
+		"nev"			 => "Teljesnév",
+		"telefon"		 => "Telefonszám",
+		"email"			 => "E-mail cím",
+        "taj"        	 => "TAJ szám",
+        "szuldatum"      => "Születési dátum",
+        "szulhely"  	 => "Születési hely",
+        "anyjaneve" 	 => "Anyja neve",
+        "neme"      	 => "Neme",
+        "irsz"      	 => "Irányítószám",
+        "varos"     	 => "Város",
+        "utca"      	 => "Utca",
+        "munkakor"  	 => "Munkakör",
+    ];
 
     public function __construct()
     {
@@ -27,6 +42,37 @@ class AdminScreeningsPage extends AdminCorePage
         if (isset($_POST["addcsomagkapcs"]) && isset($_GET["szerk"])) {
             sql_query("insert into szurescsomagok_kapcs set csomagid=?", array($_GET["szerk"]));
         }
+		
+		//Kérdés hozzáadása:
+		if(isset($_POST['addkerdes']) && isset($_GET['szerk'])){
+			$rowk=sql_fetch_array(sql_query("SELECT *FROM szurestipusok WHERE id=?",array($_GET['szerk'])));
+			if(empty($rowk['askandanswers'])){
+				$questionArr[]=array("question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array());
+				sql_query("update szurestipusok SET askandanswers=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_GET['szerk']));
+			}
+			else{
+				$questionArr=json_decode($rowk['askandanswers'],true);
+				array_push($questionArr,array("question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array()));
+				sql_query("update szurestipusok SET askandanswers=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_GET['szerk']));
+			}
+		}
+		
+		if (isset($_GET["delkerdes"]) && isset($_GET['szerk'])) {
+			
+			echo "itt vagyok!";
+            $rowk = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_GET["szerk"])));
+			$questionArr=json_decode($rowk['askandanswers'],true);
+			
+			if(isset($questionArr[$_GET['delkerdes']])){
+				unset($questionArr[$_GET['delkerdes']]);
+				$questionArr = array_values($questionArr);
+			}
+			
+			sql_query("update szurestipusok SET askandanswers=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_GET['szerk']));
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+		
         if (isset($_POST["addtipmegj"]) && isset($_GET["szerk"])) {
             sql_query("insert into szurestipusok_megj set tipusid=?, csomag=0", array($_GET["szerk"]));
         }
@@ -58,9 +104,31 @@ class AdminScreeningsPage extends AdminCorePage
         }
 
         if (isset($_POST["szurestipusmentes"])) {
+			
+			
             if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
             if (!isset($_POST["infopage"])) $_POST["infopage"]=0;
             if (!isset($_POST["ispack"])) $_POST["ispack"]=0;
+			if (!isset($_POST["noreservation"])) $_POST['noreservation']=0;
+			if (!isset($_POST['simplepayaktiv'])) $_POST['simplepayaktiv']=0;
+			if (!isset($_POST['askandansweraktiv'])) $_POST['askandansweraktiv']=0;
+			if ($_POST['simplepayaktiv']==0) $_POST['onlysimplepay']=0;
+			if (!isset($_POST["customform"])) $_POST["customform"]=0;
+			$questionArr=array();
+			//Post catcher
+			
+			
+			if(isset($_POST['kerdes-0'])){
+				$sor=0;
+				do{
+					if(!isset($_POST["valaszopciok-{$sor}"])) $_POST["valaszopciok-{$sor}"]=array();
+					else {
+						$_POST["valaszopciok-{$sor}"]=$options=explode(";",$_POST["valaszopciok-{$sor}"]);
+					}
+					$questionArr[]=array("question"=>$_POST["kerdes-{$sor}"],"answertype"=>$_POST["valasztipus-{$sor}"],"answeroptions"=>$_POST["valaszopciok-{$sor}"]);
+					$sor++;
+				}while(isset($_POST["kerdes-{$sor}"]));
+			}
 
             if ($this->adminUtils->szuresTipusModJog()) {
                 $sor=1;
@@ -83,8 +151,24 @@ class AdminScreeningsPage extends AdminCorePage
                     sql_query("update arak set megnev=?,price=? where id=?",array($_POST["megnev{$sor}"],$_POST["price{$sor}"],$_POST["arid{$sor}"]));
                     $sor++;
                 }
+				
+				$fieldOptions = [];
+                foreach ($this->optionalFields as $field => $name) {
+                    if (isset($_POST["fieldoption_{$field}"])) {
+                        $option = $_POST["fieldoption_{$field}"];
+						if($option == 1) {
+							$fieldOptions[] = "req_{$field}";
+						}
+                        if ($option == 0) {
+                            $fieldOptions[] = "notreq_{$field}";
+                        }
+                        if ($option == 2) {
+                            $fieldOptions[] = "hidden_{$field}";
+                        }
+                    }
+                }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_GET["szerk"]));
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_GET["szerk"]));
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -104,7 +188,9 @@ class AdminScreeningsPage extends AdminCorePage
         if (isset($_GET["szerk"])) {
             $row = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($_GET["szerk"])));
             $_POST = $row;
-
+			
+			
+			
             echo "<div style='background-color:#fff;padding:0px;'>";
             echo "<form name='iform' method='post' enctype='multipart/form-data'>";
             echo "<table style='font-size:12px;'>";
@@ -116,10 +202,58 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2' valign='top'>";
             echo "<input type='checkbox' value='1' name='aktiv'" . ($_POST["aktiv"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='infopage'" . ($_POST["infopage"] == 1 ? " checked" : "") . "> Info oldalon megjelenik&nbsp;&nbsp;";
+			echo "<input type='checkbox' value='1' name='simplepayaktiv'" . ($_POST["simplepayaktiv"] == 1 ? " checked" : "") . "> Simplepay fizetés&nbsp;&nbsp;";
+			if($_POST["simplepayaktiv"] == 1 ){
+				echo "<input type='checkbox' value='1' name='onlysimplepay'" . ($_POST["onlysimplepay"] == 1 ? " checked" : "") . "> Kötelező simplepay fizetés&nbsp;&nbsp;";
+			}
+			echo "<input type='checkbox' value='1' name='noreservation'" . ($_POST["noreservation"] == 1 ? " checked" : "") . "> Nincs időpontfoglalás&nbsp;&nbsp;"; 
+			echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.kerdezfeleleksor').show() } else { $('.egyeniadatsor').hide() }\" name='askandansweraktiv'" . ($_POST["askandansweraktiv"] == 1 ? " checked" : "") . "> Kérdez / Felelek&nbsp;&nbsp;"; 
+			echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.egyeniadatsor').show() } else { $('.egyeniadatsor').hide() }\" ".($_POST["customform"] == 1 ? " checked" : "")." name='customform'" . ($_POST["customform"] == 1 ? " checked" : "") . "> Egyéni adatmezők&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='ispack' onchange=\"if (this.checked) { $('.csomagsor').show() } else { $('.csomagsor').hide() }\" ".($_POST["ispack"] == 1 ? " checked" : "")."> Ez egy szűréscsomag";
-            echo "</td></tr>";
+            
+			echo "</td></tr>";
+			
+			
+			echo "<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Egyéni adatmezők</div></td></tr>";
+			foreach ($this->optionalFields as $field => $name) {
+				echo $this->_fieldOptionsRow($field);
+			}
+			
+            //echo "<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addkerdes' value='+ hozzáadás'></td></tr>";
 
-            echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Csomag tartalma</div></td></tr>";
+            echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Kérdez / Felelek</div></td></tr>";
+			echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2'>";
+			echo "<div><table id='questions'>";
+			$rowk = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_GET['szerk'])));
+			$sor = 0;
+			
+			//Kérdez felelek rész!
+			if(!empty($rowk['askandanswers']))
+			{	
+				$questionArr=json_decode($rowk['askandanswers'],true);
+				
+				foreach($questionArr as $each){
+					echo "	<tr>";
+					echo "		<td><input style='padding:5px;width:300px' type='textbox' name='kerdes-{$sor}' value='{$each['question']}' placeholder='Kérdés...'/></td>";
+					echo "		<td><select style='padding:5px' onchange=\" if( $(this).val()!='textarea' ) { $('#valaszopciok-{$sor}').prop('disabled',false) } else { $('#valaszopciok-{$sor}').prop('disabled',true) } \" name='valasztipus-{$sor}'>";
+					echo "				<option ".($each['answertype']=='textarea'?'selected':'')." value='textarea'>Szövegmező</option>";
+					echo "				<option ".($each['answertype']=='radio'?'selected':'')." value='radio'>Rádió gomb</option>";
+					echo "				<option ".($each['answertype']=='checkbox'?'selected':'')." value='checkbox'>Checkbox</option>";
+					echo "		</select></td>";
+					echo "		<td><input style='padding:5px;width:300px' type='textbox' ".($each['answertype']=="textarea"?"disabled":"")." id='valaszopciok-{$sor}' name='valaszopciok-{$sor}' value='".(count($each['answeroptions'])>0?implode(";",$each['answeroptions']):"")."' placeholder='Válaszok;...'/></td>";
+					echo "		<td><a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delkerdes={$sor}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a></td>";
+					echo "	</tr>";
+					$sor++;
+				}
+			}
+			
+			//Ezt a részt kell beillesztenem és meghívnom és manipulálnom az információkat benne:
+			
+			echo "</table></div>";
+			echo "</td></tr>";
+			echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addkerdes' value='+ kérdés hozzáadása'></td></tr>";
+			
+			echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Csomag tartalma</div></td></tr>";
             echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addcsomagkapcs' value='+ hozzáadás'></td></tr>";
 
             $resb = sql_query("select * from szurescsomagok_kapcs where csomagid=? order by id", array($_GET["szerk"]));
@@ -294,6 +428,24 @@ class AdminScreeningsPage extends AdminCorePage
         }
         echo "</table>";
 
+    }
+	
+	 private function _fieldOptionsRow($field) {
+        $html ="<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td>".$this->optionalFields[$field].":</td><td>";
+
+        $option = 1;
+        if (substr_count($_POST["custominputs"],"notreq_{$field}")) {
+            $option = 0;
+        }
+        if (substr_count($_POST["custominputs"],"hidden_{$field}")) {
+            $option = 2;
+        }
+
+        $html.="<input name='fieldoption_{$field}' value='1' type='radio' ".($option==1?"checked":"")."/> kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='0' type='radio' ".($option==0?"checked":"")."/> nem kötelező ";
+        $html.="<input name='fieldoption_{$field}' value='2' type='radio' ".($option==2?"checked":"")."/> elrejtés ";
+        $html.="</td></tr>";
+        return $html;
     }
 
 }

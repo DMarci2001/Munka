@@ -18,7 +18,13 @@ class Utils {
             $printService->start();
             die;
         }
-		
+
+        if (isset($_GET["simpletest"])) {
+            $simpleService = new SimplePayService();
+            $simpleService->startPay(131688);
+            die;
+        }
+
 		if (isset($_GET["sendingService"]) && $_GET["sendingService"] == "beuertkuldes" && $_GET["SecureCode"]=="7ae70e2062e5f193016d5885aaa868786649") {
 			
 			//SC: 7ae70e2062e5f193016d5885aaa868786649
@@ -359,7 +365,7 @@ class Utils {
         return $q;
     }
 
-    public function datumSelector($date, $prefix, $future = 0) {
+    public function datumSelector($date, $prefix, $future = 0, $class = null) {
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -369,7 +375,7 @@ class Utils {
         $ho  = substr($date,5,2);
         $nap = substr($date,8,2);
 
-        $h.= "<select name='{$prefix}ev'>";
+        $h.= "<select {$class} name='{$prefix}ev'>";
         $h.= "<option value='0'>{$webText["ev"]}</option>";
         if ($future == 0) {
             for ($i = date("Y"); $i > date("Y") - 100; $i--) {
@@ -383,14 +389,14 @@ class Utils {
 
         $h.= "</select> ";
 
-        $h.= "<select name='{$prefix}ho'>";
+        $h.= "<select {$class} name='{$prefix}ho'>";
         $h.= "<option value='0'>{$webText["ho"]}</option>";
         for ($i=1;$i<=12;$i++) {
             $h.= "<option value='{$i}'".($ho==$i?" selected":"").">{$webText["honaptext"][$i]}</option>";
         }
         $h.= "</select> ";
 
-        $h.= "<select name='{$prefix}nap'>";
+        $h.= "<select {$class} name='{$prefix}nap'>";
         $h.= "<option value='0'>{$webText["nap"]}</option>";
         for ($i=1;$i<=31;$i++) {
             $h.= "<option value='{$i}'".($nap==$i?" selected":"").">{$i}</option>";
@@ -946,9 +952,12 @@ class Utils {
                     $hidden = true;
                 }
         }
-
-        $required = $this->getFieldRequired($field);
-        $hidden = $this->getFieldHidden($field);
+		
+		$required = $this->getFieldRequired($field);
+		$hidden = $this->getFieldHidden($field);
+		
+		
+        
 
         if (!$hidden) {
             if (empty($extraHTML)) {
@@ -965,17 +974,19 @@ class Utils {
 
     public function getFieldRequired($field) {
         $required = true;
-        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "notreq_{$field}") || $this->getFieldHidden($field)) {
-            $required = false;
-        }
+		if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "notreq_{$field}") || $this->getFieldHidden($field)) {
+			$required = false;
+		}
+		
         return $required;
     }
 
     public function getFieldHidden($field) {
         $hidden = false;
-        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "hidden_{$field}")) {
-            $hidden = true;
-        }
+		if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "hidden_{$field}")) {
+			$hidden = true;
+		}
+		
         return $hidden;
     }
 
