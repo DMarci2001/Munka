@@ -1210,7 +1210,7 @@ class BookingService {
         sql_query("update foglalasok set ertesitve=1 where id='{$id}'");
     }
 
-    private function _getPackText($reservationData) {
+    public function _getPackText($reservationData) {
         $packText = "";
 
         $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=?", array($reservationData["id"]));
@@ -1223,7 +1223,7 @@ class BookingService {
             $packText.="{$rowcs["megnev"]}<br/>";
         }
 
-        $rescs = sql_query("SELECT t.* FROM szurescsomagok_kapcs k LEFT JOIN szurestipusok t ON t.id=k.szurestipusid WHERE k.csomagid=? AND k.noreservation=1", [$reservationData["id"]]);
+        $rescs = sql_query("SELECT t.* FROM szurescsomagok_kapcs k LEFT JOIN szurestipusok t ON t.id=k.szurestipusid WHERE k.csomagid=? AND k.noreservation=1", [$reservationData["szurestipusid"]]);
         while ($rowcs = sql_fetch_array($rescs)) {
             if ($reservationData["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
             if ($reservationData["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
