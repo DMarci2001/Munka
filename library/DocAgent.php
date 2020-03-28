@@ -31,7 +31,7 @@ class DocAgent {
             $fileSize = $uploadedFile["size"];
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
-            if (in_array($extension, array("pdf","doc","xls","docx","xlsx"))) {
+            if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
                 sql_query("insert into dokumentumok set 
                     beutaloid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
                     array($fileData["beutaloid"], $fileData["userid"], $fileData["megnev"], $fileName, $fileSize, $extension));
@@ -45,7 +45,7 @@ class DocAgent {
                 @move_uploaded_file($uploadedFile["tmp_name"], $destinationFile);
                 return "0";
             } else {
-                return "A feltöltött file formátuma nem megfelelő (csak pdf, és word dokumentumot lehet feltölteni)";
+                return "A feltöltött file formátuma nem megfelelő (csak jpg, pdf, és word dokumentumot lehet feltölteni)";
             }
 
 

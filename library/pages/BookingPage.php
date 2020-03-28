@@ -451,6 +451,10 @@ class BookingPage extends CorePage {
 
 
     private function _preSelectForm() {
+        if (isset($_GET["enabletest"])) {
+            $_SESSION["enabletest"] = 1;
+        }
+
         $webText = $this->lang->webText;
 
         $html = "";
@@ -471,7 +475,7 @@ class BookingPage extends CorePage {
         $resh = sql_query("SELECT h.* FROM orvos_beosztas b
         LEFT JOIN helyszinek h ON h.id = b.helyszinid
         LEFT JOIN orvosok o on o.id = b.orvosid
-        WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
+        WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.helyszinid=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
 
         while ($helyszin = sql_fetch_array($resh)) {
             $rest = sql_query("SELECT b.* FROM orvos_beosztas b
@@ -483,6 +487,9 @@ class BookingPage extends CorePage {
                 $tids = explode("|", $tipusData["tipusok"]);
                 foreach ($tids as $tid) {
                     if (!empty($tid)) {
+                        if ($tid == 114 && !isset($_SESSION["enabletest"])) {
+                            continue;
+                        }
                         $tipusok[] = $tid;
                     }
                 }
@@ -498,7 +505,7 @@ class BookingPage extends CorePage {
 
                 $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
                 LEFT JOIN orvosok o ON o.id = b.orvosid
-                WHERE b.cegid=:cegId AND b.aktiv=1 AND INSTR(b.tipusok,:tipusok)
+                WHERE b.cegid=:cegId AND b.aktiv=1 AND b.helyszinid=1 AND INSTR(b.tipusok,:tipusok)
                 and (nap<10 OR b.beonap >= DATE(NOW()))
                 GROUP BY b.orvosid", array("cegId" => $_SESSION["helyszindata"]["id"], "tipusok" => "|{$tipusData["id"]}|"));
 				
@@ -524,7 +531,7 @@ class BookingPage extends CorePage {
                         $html.= "<div>".$orvosData["nev"]."</div>";
                     }
 
-                    $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]})' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
+                    $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
                     $html.= "</div>";
                 }
             }

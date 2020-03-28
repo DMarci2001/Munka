@@ -1315,14 +1315,16 @@ END:VCALENDAR";
         $rn = rand(1000000, 9999999);
 
         $paciensId = 0;
-        if (isset($_SESSION["user"]["id"])) {
-            $paciensId = intval($_SESSION["user"]["id"]);
-        } else {
-            if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($data['taj'], $data['email'], $cegId)))) {
-                $paciensId = $userInfo['id'];
+        if (isset($data["taj"])) {
+            if (isset($_SESSION["user"]["id"])) {
+                $paciensId = intval($_SESSION["user"]["id"]);
             } else {
-                sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['telefon'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
-                $paciensId = sql_insert_id();
+                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($data['taj'], $data['email'], $cegId)))) {
+                    $paciensId = $userInfo['id'];
+                } else {
+                    sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['telefon'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
+                    $paciensId = sql_insert_id();
+                }
             }
         }
 
@@ -1406,6 +1408,25 @@ END:VCALENDAR";
     }
 
     public function addReservationQuery($data) {
+        if (!isset($data["szulhely"])) $data["szulhely"] = "";
+        if (!isset($data["telephely"])) $data["telephely"] = "";
+        if (!isset($data["anyjaneve"])) $data["anyjaneve"] = "";
+        if (!isset($data["taj"])) $data["taj"] = "";
+        if (!isset($data["rinterval"])) $data["rinterval"] = 0;
+        if (!isset($data["helyszin"])) $data["helyszin"] = 0;
+        if (!isset($data["irsz"])) $data["irsz"] = "";
+        if (!isset($data["varos"])) $data["varos"] = "";
+        if (!isset($data["utca"])) $data["utca"] = "";
+        if (!isset($data["megj"])) $data["megj"] = "";
+        if (!isset($data["munkakor"])) $data["munkakor"] = "";
+        if (!isset($data["betegallomanynyilatkozat"])) $data["betegallomanynyilatkozat"] = 0;
+
+        if (!isset($data["questions"])) $data["questions"] = "";
+        if (!isset($data["simplepay"])) $data["simplepay"] = 0;
+        if (!isset($data["noreservation"])) $data["noreservation"] = 0;
+        if (!isset($data["totalprice"])) $data["totalprice"] = 0;
+        if (!isset($data["currency"])) $data["currency"] = 0;
+
         sql_query("insert into foglalasok set 
             regdatum=now(),
             parentid=?,
@@ -1434,7 +1455,12 @@ END:VCALENDAR";
             orvosassigned=?,
             aktiv=?,
             rkod=?,
-			tappenzcheck=?"
+			tappenzcheck=?,
+			simplepay=?,
+			noreservation=?,
+			questions=?,
+			totalprice=?,
+			currency=?"
         , array(
             $data["parentid"],
             $data["paciensid"],
@@ -1462,7 +1488,12 @@ END:VCALENDAR";
             $data["orvosid"],
             $data["aktiv"],
             $data["rn"],
-			$data["betegallomanynyilatkozat"]));
+			$data["betegallomanynyilatkozat"],
+            $data["simplepay"],
+            $data["noreservation"],
+            $data["questions"],
+            $data["totalprice"],
+            $data["currency"]));
 
         $fid = sql_insert_id();
         $this->updateFoglalasData($fid);

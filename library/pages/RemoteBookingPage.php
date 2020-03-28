@@ -1,24 +1,27 @@
 <?php
 class RemoteBookingPage extends CorePage{
-	
+
+    private $arData;
+    private $szuresData;
+
 	public function __construct()
     {
         parent::__construct();
         $webText = $this->lang->webText;
-		
-		if(isset($_POST['saveForm'])){
-			
+
+        $bookingService = new BookingService();
+
+        $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
+        $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
+
+        if(isset($_POST['saveForm'])){
 			//Végig kell futni a szurestipus parameterein, abban megtalálunk minden szükséges információt ami kellhet.
-			$columns=$questions="";
-			$actualInput=$inputArr=$data=array();
-			$szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
-			
 			if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"]."-".substr("00".$_POST["szuldatumho"],-2)."-".substr("00".$_POST["szuldatumnap"],-2);
             }
 			
 			//Egyéni mezők ellenőrzése:
-			$custominputs = explode(",",$szuresData['custominputs']);
+			$custominputs = explode(",",$this->szuresData['custominputs']);
 			foreach($custominputs as $input){
 				$actualInput = explode("_",$input);
 				if($actualInput[0]=="hidden") continue;
@@ -26,9 +29,6 @@ class RemoteBookingPage extends CorePage{
 				if($_POST[$actualInput[1]]==""){
 					$this->errors[] = $webText[$actualInput[1]."kotelezo"];
 				}
-				$columns.=$actualInput[1]."=?,";
-				array_push($data,$_POST[$actualInput[1]]);
-				//array_push($inputArr,array("requirment"=>$actualInput[0],"name"=>$actualInput[1]));
 			}
 			//Speciális mezők ellenőrzése:
 			if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) $this->errors[] = $webText["hibasemail"];
@@ -36,13 +36,15 @@ class RemoteBookingPage extends CorePage{
 			if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->errors[] = $webText["szulformat"];
 			if (!isset($_POST["aszf"])) $this->errors[] = $webText["aszfkotelezo"];
 			if (!isset($_POST["simplepay"])) $this->errors[] = "A simplepay felhasználási feltételeit a vásárláshoz el kell elfogadnia!";
+
 			$captchaError = $this->utils->checkCaptcha();
             if (!empty($captchaError)) {
                 $this->errors[] = $captchaError;
             }
-			
+
 			//Kérdések ellenőrzése:
-			$questionArr=json_decode($szuresData['askandanswers'],true);
+			$questionArr=json_decode($this->szuresData['askandanswers'],true);
+			$questions = "";
 			$sor=0;
 			do{
 				if(empty($_POST["kerdes-{$sor}"])) $this->errors[] = "Kérem válaszoljon a ".($sor+1).". kérdésre!";
@@ -51,21 +53,21 @@ class RemoteBookingPage extends CorePage{
 			}while(isset($_POST["kerdes-{$sor}"]));
 			
 			//Egyéb mezők hozzáadása a queryhez:
-			$columns.="regdatum=NOW(),simplepay=1,noreservation=1,questions=?";
-			$data[]=$questions;
-			
+			$_POST["questions"] = $questions;
+			$_POST["simplepay"] = 1;
+			$_POST["noreservation"] = 1;
+            $_POST["datum"] = date("Y-m-d H:i:s");
+            $_POST["totalprice"] = $this->arData["price"];
+            $_POST["currency"] = $this->arData["penznem"];
+
 			if (empty($this->errors)) {
-				
-				if($query=sql_query("INSERT INTO foglalasok SET {$columns}",$data)){
-					echo "Sikeres adatrögzítés!";
-				}
-				else echo "Sikertelen adatrögzítés!";
-				
+                $forwardURL = $bookingService->addReservation($_POST);
+                header("location:{$forwardURL}");
 				die();
 			}
 		}
     }
-	
+
 	public function showPage() {
 		//BACK - END
 		$webText = $this->lang->webText;
@@ -87,12 +89,9 @@ class RemoteBookingPage extends CorePage{
 		//--Ezután a kérdez/felelek modul jön, amit szint úgy a vizsgálat mögé rakok egy text mezőben. még a formulát ki kell találni!
 		//--Kelleni fognak leíró szöveg modulok, amik további információkat nyújtanak a vizsgálattal kapcsolatban.
 		//A form jóváhagyó gomb definiálása is szükséges lépés lesz, ezt már a Jani fogja intézni, a simplepay-el fogja párhuzamosítani.
-		
-		$szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
-		$arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ",array($_POST['szurestipus'])));
-		
+
 		//Megjelenítendő mezők:
-		$custominputs = explode(",",$szuresData['custominputs']);
+		$custominputs = explode(",",$this->szuresData['custominputs']);
 		
 		
 		//Szabadon választott törzsadatok beillesztése:
@@ -104,7 +103,7 @@ class RemoteBookingPage extends CorePage{
 		}
 		
 		//Kérdez/felelek opciók beillesztése:
-		$questionArr=json_decode($szuresData['askandanswers'],true);
+		$questionArr=json_decode($this->szuresData['askandanswers'],true);
 		
 		
 		
@@ -112,7 +111,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//FRONT-END
 		
-		echo $this->displayFejlec($szuresData['megnev'],true);
+		echo $this->displayFejlec($this->szuresData['megnev'],true);
 		
 		echo $this->showErrors();
 		
@@ -141,12 +140,12 @@ class RemoteBookingPage extends CorePage{
 		$html.= "<tr><td style='height:30px'></td></tr>";
 		$html.= "<tr><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
-		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' /> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a Simplepay feltételeit.</div></td></tr>";
+		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' /> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
 		//Jóváhagyó gombok helye:
 		
 		//Itt több opciónak is meg kell majd jelennie a vizsgálat beállításainak megfelelően:
 		$html.= "<input type='hidden' name='szurestipus' value='{$_POST['szurestipus']}'/>";
-		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek ({$arData['price']}{$arData['penznem']})'/><div></td></tr>";
+		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
 		$html.= "<tr><td align='center'><a href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'><img src='images/simplepay_bankcard_logos_left.jpg' style='max-width:40%;width:auto'></a></td></tr>";
 		
 		$html.= "</table>";
@@ -195,6 +194,3 @@ class RemoteBookingPage extends CorePage{
 	
 	
 }
-
-
-?>

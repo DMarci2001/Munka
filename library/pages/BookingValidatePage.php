@@ -2,21 +2,43 @@
 
 class BookingValidatePage extends CorePage {
 
+    private $id;
+    private $rk;
+    private $foglalasData;
+
     public function __construct()
     {
         parent::__construct();
 
-        if (isset($_GET["pay"])) {
-            $id = intval($_GET["id"]);
-            $rk = intval($_GET["rk"]);
+        if (!isset($_GET["id"]) || !isset($_GET["rk"])) {
+            die("error 488");
+        }
 
-            if ($row = sql_fetch_array(sql_query("SELECT f.* FROM foglalasok f WHERE f.id=? and f.rkod=?", array($id, $rk)))) {
-                $simpleService = new SimplePayService();
-                $simpleService->startPay($id);
-                die;
+        $simpleService = new SimplePayService();
+
+        $this->id = intval($_GET["id"]);
+        $this->rk = $_GET["rk"];
+        $this->foglalasData = sql_fetch_array(sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,f.* FROM foglalasok f
+            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+            LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+            WHERE f.id=? and f.rkod=?", array($this->id, $this->rk)));
+
+        //ha simple fizetésre van jelölve, és még nem indult fizetés, akkor indítjuk
+        if (isset($this->foglalasData["simplepay"]) && $this->foglalasData["simplepay"] == 1 && !$simpleService->getTransactionLog($this->id)) {
+            $startPay = true;
+        }
+
+        //ha a fizetés újraindítására nyomott
+        if (isset($_GET["pay"])) {
+            if ($row = sql_fetch_array(sql_query("SELECT f.* FROM foglalasok f WHERE f.id=? and f.rkod=?", array($this->id, $this->rk)))) {
+                $startPay = true;
             }
         }
 
+        if (isset($startPay)) {
+            $simpleService->startPay($this->id);
+            die;
+        }
     }
 
     public function showPage() {
@@ -26,23 +48,16 @@ class BookingValidatePage extends CorePage {
 
         echo $this->displayFejlec();
 
-        $id = intval($_GET["id"]);
-        $rk = intval($_GET["rk"]);
+        if (!empty($this->foglalasData)) {
+            sql_query("update foglalasok set aktiv=1 where id=?", array($this->foglalasData["id"]));
+            sql_query("update foglalasok set aktiv=1 where parentid=? and parentid<>0", array($this->foglalasData["id"]));
 
-        if ($row = sql_fetch_array(sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,f.* FROM foglalasok f
-            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-            LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-            WHERE f.id=? and f.rkod=?", array($id, $rk)))) {
-
-            sql_query("update foglalasok set aktiv=1 where id=?", array($row["id"]));
-            sql_query("update foglalasok set aktiv=1 where parentid=? and parentid<>0", array($row["id"]));
-
-            if ($transactionData = $simpleService->getTransactionLog($id)) {
+            if ($transactionData = $simpleService->getTransactionLog($this->id)) {
                 //fizetős foglalást
 
                 if ($transactionData["result"] == "CANCEL") {
                     echo "<h2>A fizetési folyamatot megszakította</h2>";
-                    echo "{$webText["kedves"]} {$row["nev"]}!<br>";
+                    echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br>Megrendelése még nem fejeződött be, mert a fizetési folyamatot megszakította. Ha újra meg akarja próbálni, kattintson a fizetés gombra.<br/><br/>";
                     echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
@@ -50,7 +65,7 @@ class BookingValidatePage extends CorePage {
 
                 if ($transactionData["result"] == "TIMEOUT") {
                     echo "<h2>A fizetési folyamat időtúllépés miatt megszakadt</h2>";
-                    echo "{$webText["kedves"]} {$row["nev"]}!<br>";
+                    echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br>Megrendelése még nem fejeződött be, mert túllépte a tranzakció elindításának lehetséges maximális idejét. Ha újra meg akarja próbálni, kattintson a fizetés gombra.<br/><br/>";
                     echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
@@ -58,7 +73,7 @@ class BookingValidatePage extends CorePage {
 
                 if ($transactionData["result"] == "FAIL") {
                     echo "<h2>A fizetés nem sikerült</h2>";
-                    echo "{$webText["kedves"]} {$row["nev"]}!<br>";
+                    echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br/>A fizetési folyamat sikertelenül zárult. Ha meg szeretné próbálni újra, kattintson a fizetés gombra.<br/><br/>";
                     echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
@@ -67,26 +82,26 @@ class BookingValidatePage extends CorePage {
 
                 if (in_array($transactionData["result"], ["SUCCESS", "FINISHED"])) {
                     echo "<h2>Sikeres megrendelés és fizetés</h2>";
-                    echo "{$webText["kedves"]} {$row["nev"]}!<br>";
+                    echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk a figyelmét, hogy ha a megrendelését nem tudjuk teljesíteni, a pénzt visszatérítjük.<br/><br/>";
                     echo "<hr>Sikeres tranzakció.<br/>SimplePay tranzakció azonosító: {$transactionData["transid"]}<hr>";
                 }
 
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";
 
-                $bookingService->sendToCegAndOrvos($id);
-                $bookingService->sendToUser($id);
+                $bookingService->sendToCegAndOrvos($this->id);
+                $bookingService->sendToUser($this->id);
 
             } else {
                 echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
-                echo "{$webText["kedves"]} {$row["nev"]}!<br>
+                echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>
                 <br>
                 {$webText["foglalassuccesstext"]}
                 
                 <a href='/'>{$webText["visszafooldal"]}</a>";
 
-                $bookingService->sendToCegAndOrvos($id);
-                $bookingService->sendToUser($id);
+                $bookingService->sendToCegAndOrvos($this->id);
+                $bookingService->sendToUser($this->id);
             }
         } else {
             echo "Sajnáljuk!<br>
