@@ -1164,3 +1164,22 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	border-radius: 3px;
 	font-size:11px
 }
+.transactions_table{
+	border-collapse:collapse;
+}
+.transactions_table td{
+	border:1px solid black;
+	padding:5px;
+}
+.transactions_table tr:first-child td{
+	font-size:16px;
+	font-weight:bold;
+	text-align:center;
+}
+.retransfer_button{
+	color:#b90000;
+	cursor:pointer;
+}
+.retransfer_button:hover{
+	text-decoration: underline;
+}

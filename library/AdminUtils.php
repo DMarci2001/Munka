@@ -181,6 +181,16 @@ class AdminUtils {
         if ($_SESSION["adminuser"]["jog_szurestipusset"]==1 || $_SESSION["adminuser"]["jog_jogset"]==1) return true;
         return false;
     }
+	
+	public function tranzakciolatasModJog() {
+        if ($_SESSION["adminuser"]["jog_tranzakciolatas"]==1 || $_SESSION["adminuser"]["jog_tranzakciolatas"]==1) return true;
+        return false;
+    }
+	
+	public function tranzakciokezelesModJog() {
+        if ($_SESSION["adminuser"]["jog_tranzakciokezeles"]==1 || $_SESSION["adminuser"]["jog_tranzakciokezeles"]==1) return true;
+        return false;
+    }
 
     public function helyszinModJog() {
         if ($_SESSION["adminuser"]["jog_helyszinset"]==1 || $_SESSION["adminuser"]["jog_jogset"]==1) return true;
