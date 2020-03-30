@@ -115,6 +115,7 @@ class AdminPage {
 
         echo "</table>";
 
+        echo "<div id='generalpopup'></div>";
         echo "</body>";
         echo "</html>";
     }

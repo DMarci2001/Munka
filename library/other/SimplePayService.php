@@ -3,7 +3,13 @@
 class SimplePayService {
 
     const PROVIDER_NAME = "simplePay";
+    const SDK_VERSION = "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e";
+    const API_URL = "https://sandbox.simplepay.hu";
+    //sandbox : https://sandbox.simplepay.hu
+    //live:     https://secure.simplepay.hu
+
     private $orderId;
+    private $order;
 
     public function __construct()
     {
@@ -14,16 +20,22 @@ class SimplePayService {
     public function startPay($id) {
         $this->setOrderId($id);
 
+        if (empty($this->order)) {
+            die("no reservation");
+        }
+
+        $logId = $this->addNewTransactionLog();
+
         $request = [
             "salt" => $this->getSalt(),
             "merchant" => Booking_Constants::SIMPLEPAY_MERCHANT_ID,
-            "orderRef" => $this->orderId,
+            "orderRef" => $logId,
             "currency" => "HUF",
-            "customerEmail" => "sdk_test@otpmobil.com",
+            "customerEmail" => $this->order["email"],
             "language" => "HU",
-            "sdkVersion" => "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e",
+            "sdkVersion" => self::SDK_VERSION,
             "methods" => ["CARD"],
-            "total" => "250",
+            "total" => $this->order["totalprice"],
             "timeout" => date("c", strtotime("now + 30 minute")),
             "url" => "https://".$_SERVER["HTTP_HOST"]."/simplePayAck.php"
         ];
@@ -42,12 +54,12 @@ class SimplePayService {
         ]
         */
 
-        $result = $this->apiCall("POST", "https://sandbox.simplepay.hu/payment/v2/start", $request);
+        $result = $this->apiCall("POST", self::API_URL."/payment/v2/start", $request);
 
         //print_r($result["response"]);
         //die;
         if (isset($result["response"]["paymentUrl"])) {
-            $this->setTransactionLog($result["response"]["transactionId"], "", $result["response"]["total"]);
+            $this->setTransactionLog($logId, $result["response"]["transactionId"], "PENDING", $result["response"]["total"]);
             header("location:" . $result["response"]["paymentUrl"]);
             die;
         }
@@ -58,6 +70,7 @@ class SimplePayService {
 
     public function setOrderId($id) {
         $this->orderId = $id;
+        $this->order = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$id]));
     }
 
 
@@ -97,24 +110,21 @@ class SimplePayService {
         return hash('md5', $saltBase);
     }
 
-    public function setTransactionLog($transid, $event, $price = 0) {
-        if ($transData = sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? and transid=?", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId, $transid]))) {
-            $id = $transData["id"];
-        } else {
-            sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, transid=?", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId, $transid]);
-            $id = sql_insert_id();
-        }
-        sql_query("update banktransactions set datum=now(), result=? where id=?", [$event, $id]);
+    public function addNewTransactionLog() {
+        sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, result='PENDING'", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId]);
+        return sql_insert_id();
+    }
 
+    public function setTransactionLog($logId, $transid, $event, $price = 0) {
+        sql_query("update banktransactions set datum=now(), result=?, transid=? where id=?", [$event, $transid, $logId]);
         if ($price != 0) {
-            sql_query("update banktransactions set osszeg=? where id=?", [$price, $id]);
+            sql_query("update banktransactions set osszeg=? where id=?", [$price, $logId]);
         }
     }
 
-    public function setAckLog($transid, $json) {
-        sql_query("update banktransactions set ackdate=now(), ack=? where merchant=? and provider=? and transid=? ", [$json, Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $transid]);
+    public function setAckLog($id, $json) {
+        sql_query("update banktransactions set ackdate=now(), ack=? where id=? ", [$json, $id]);
     }
-
 
     public function getTransactionLog($foglalasId) {
         return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $foglalasId]));
@@ -124,5 +134,57 @@ class SimplePayService {
         return '<a href="http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf" target="_blank"> <img width="400" src="/images/simplepay_bankcard_logos_left.jpg" title=" SimplePay - Online bankkártyás fizetés" alt=" SimplePay vásárlói tájékoztató"> </a>';
     }
 
+    public function showRefundWindow($id) {
+        $return["status"] = "ok";
+        if ($transactionData = sql_fetch_array(sql_query("select * from banktransactions where id=?", [$id]))) {
+            $html = "";
+            $html.= "<div style='color:#444;text-align:center;'>";
+            $html.= "<div id='loginbox' class='loginbox'>";
+            $html.= "<div class='loginhead'>simplePay visszautalás</div>";
+
+            $html.= "<div style='padding:20px;text-align:center;'>";
+            $html.= "<div style='font-size:18px;'>Tranzakció: {$transactionData["transid"]} - {$transactionData["osszeg"]} Ft</div>";
+
+            if ($foglalasData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$transactionData["foglalasid"]]))) {
+                $html.= "<div style='margin-top:10px;'>Ügyfél: {$foglalasData["nev"]} / {$foglalasData["telefon"]}</div>";
+            }
+
+            $html.= "<div style='margin-top:10px;'>Adja meg az összeget amit vissza akar utalni:<br/>(részösszeg is visszautalható)</div>";
+            $html.= "<div style='padding-top:5px;'><input type='text' style='width:100px;' id='refundprice' placeholder='' value='{$transactionData["osszeg"]}' /></div>";
+            $html.= "<div style='margin-top:10px;display:none;' id='transferresult'></div>";
+
+            $html.= "<div id='refunbuttonsor' style='padding-top:10px;'><input onclick='startSimpleRefund(".intval($id).", $(\"#refundprice\").val());return false;' type='button' id='simplerefundbutton' value='Visszautalás' /> <input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+            $html.= "</div>";
+
+            $return["html"] = $html;
+        } else {
+            $return["status"] = "Hiba!";
+        }
+
+        $utils = new Utils();
+        $utils->jsonOut($return);
+        die;
+    }
+
+    public function startRefund($id, $osszeg) {
+        $request = [
+            "salt" => $this->getSalt(),
+            "orderRef" => $id,
+            "merchant" => Booking_Constants::SIMPLEPAY_MERCHANT_ID,
+            "currency" => "HUF",
+            "refundTotal" => intval($osszeg),
+            "sdkVersion" => "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e"
+        ];
+
+        $result = $this->apiCall("POST", self::API_URL."/payment/v2/refund", $request);
+
+        $return["html"] = print_r($request, true)."<br><br>".print_r($result, true);
+        $utils = new Utils();
+        $utils->jsonOut($return);
+        die;
+    }
 
 }

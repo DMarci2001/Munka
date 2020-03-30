@@ -25,15 +25,15 @@ if (isset($_GET["ack"])) {
     ];
 
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$result->orderRef]))) {
+    if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$result->orderRef]))) {
         die("reservation not found");
     }
 
     $jsonResponse = json_encode($response);
 
-    $simpleService->setOrderId($result->orderRef);
-    $simpleService->setTransactionLog($result->transactionId, $result->status);
-    $simpleService->setAckLog($result->transactionId, $json);
+    $simpleService->setOrderId($foglalasData["id"]);
+    $simpleService->setTransactionLog($result->orderRef, $result->transactionId, $result->status);
+    $simpleService->setAckLog($result->orderRef, $json);
 
     header('Content-Type: application/json; charset=utf-8');
     header('Signature: ' . $simpleService->generateSignature($jsonResponse));
@@ -58,14 +58,14 @@ if (isset($_GET["r"]) && isset($_GET["s"])) {
     $transId  = $data->t;
     $event    = $data->e;
     $merchant = $data->m;
-    $foglId   = $data->o;
+    $orderRef = $data->o;
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$foglId]))) {
+    if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
         die("reservation not found");
     }
 
-    $simpleService->setOrderId($foglId);
-    $simpleService->setTransactionLog($transId, $event);
+    $simpleService->setOrderId($foglalasData["id"]);
+    $simpleService->setTransactionLog($orderRef, $transId, $event);
 
     header("location:index.php?page=bookingvalidate&id={$foglalasData["id"]}&rk={$foglalasData["rkod"]}&setlang={$foglalasData["rlang"]}");
     die;
