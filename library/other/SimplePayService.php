@@ -170,6 +170,9 @@ class SimplePayService {
     }
 
     public function startRefund($id, $osszeg) {
+        $transactionData = sql_fetch_array(sql_query("select * from banktransactions where id=?", [$id]));
+
+        $html = "";
         $request = [
             "salt" => $this->getSalt(),
             "orderRef" => $id,
@@ -181,7 +184,23 @@ class SimplePayService {
 
         $result = $this->apiCall("POST", self::API_URL."/payment/v2/refund", $request);
 
-        $return["html"] = print_r($request, true)."<br><br>".print_r($result, true);
+        if ($result["httpCode"] == 200) {
+            if (empty($result["response"]["errorCodes"])) {
+                //siker
+                $html.= "<span style='font-weight: bold;color:#080;'>A visszautalás sikerült</span>";
+                $logId = $this->addNewTransactionLog();
+                $this->setTransactionLog($logId, $result["response"]["refundTransactionId"], "REFUND", -intval($result["response"]["refundTotal"]));
+                $this->setAckLog($logId, json_encode($result["response"]));
+                sql_query("update banktransactions set foglalasid=?, parenttransid=? where id=?", [$transactionData["foglalasid"], $id, $logId]);
+            } else {
+                //sikertelen
+                $html.= "<span style='font-weight: bold;color:#080;'>A visszautalás nem sikerült (hibakód: {$result["response"]["errorCodes"][0]})</span>";
+            }
+        } else {
+            $html.= "<span style='font-weight: bold;color:#080;'>A visszautalás indítása sikertelen</span>";
+        }
+
+        $return["html"] = $html;
         $utils = new Utils();
         $utils->jsonOut($return);
         die;

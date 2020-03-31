@@ -1621,6 +1621,7 @@ function startSimpleRefund(id) {
             $("#simplerefundbutton").hide();
             $("#transferresult").show();
             $("#transferresult").html(data.html);
+            popUpPosition();
         }
     });
 }

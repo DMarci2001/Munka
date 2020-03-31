@@ -49,8 +49,6 @@ if (isset($_GET["ack"])) {
 if (isset($_GET["r"]) && isset($_GET["s"])) {
     $data = json_decode(base64_decode($_GET["r"]));
 
-    print_r($data);
-
     if ($simpleService->generateSignature(base64_decode($_GET["r"])) != $_GET["s"]) {
         die("signature error");
     }
