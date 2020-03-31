@@ -1168,8 +1168,9 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	border-collapse:collapse;
 }
 .transactions_table td{
-	border:1px solid black;
-	padding:5px;
+	border-bottom:1px solid black;
+	border-top:1px solid black;
+	padding:8px 8px 8px 0px;
 }
 .transactions_table tr:first-child td{
 	font-size:16px;
@@ -1182,8 +1183,4 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 .retransfer_button:hover{
 	text-decoration: underline;
-}
-
-#generalpopup {
-	position: fixed;
 }
