@@ -41,7 +41,7 @@ class CorePage {
         if ($this->isExtendedForm() && !isset($_SESSION["user"])) {
             $html = "<div style='display:table;width:100%;padding-bottom:10px;'>";
             $html.= "<div class='fejlecdiv_hmm'>";
-            $html.= "<div class='hmm_inner_text'>HMM Időpont foglalás v2<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>Küldetésünk az egészség!</span></div><br/>";
+            $html.= "<div class='hmm_inner_text'>HUNGÁRIA MED-M<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>Küldetésünk az egészség!</span></div><br/>";
             //$html.= "<div class='hmm_inner_text' style='font-size:16px;'></div>";
             $html.= "</div>";
             $html.= "</div>";

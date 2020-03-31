@@ -10,6 +10,8 @@ class RemoteBookingPage extends CorePage{
         $webText = $this->lang->webText;
 
         $bookingService = new BookingService();
+		
+		if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
 
         $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
         $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
@@ -71,6 +73,8 @@ class RemoteBookingPage extends CorePage{
 	public function showPage() {
 		//BACK - END
 		$webText = $this->lang->webText;
+		
+		
 		
 		if(!isset($_POST['szurestipus'])) header("Location:index.php");
        
@@ -145,7 +149,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Itt több opciónak is meg kell majd jelennie a vizsgálat beállításainak megfelelően:
 		$html.= "<input type='hidden' name='szurestipus' value='{$_POST['szurestipus']}'/>";
-		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
+		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Küldés (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
 		$html.= "<tr><td align='center'><a href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'><img src='images/simplepay_bankcard_logos_left.jpg' style='max-width:40%;width:auto'></a></td></tr>";
 		
 		$html.= "</table>";
