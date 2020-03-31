@@ -59,7 +59,7 @@ class BookingValidatePage extends CorePage {
                     echo "<h2>A fizetési folyamatot megszakította</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br>Megrendelése még nem fejeződött be, mert a fizetési folyamatot megszakította. Ha újra meg akarja próbálni, kattintson a fizetés gombra.<br/><br/>";
-                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
+                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$this->foglalasData["totalprice"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
                 }
 
@@ -67,7 +67,7 @@ class BookingValidatePage extends CorePage {
                     echo "<h2>A fizetési folyamat időtúllépés miatt megszakadt</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br>Megrendelése még nem fejeződött be, mert túllépte a tranzakció elindításának lehetséges maximális idejét. Ha újra meg akarja próbálni, kattintson a fizetés gombra.<br/><br/>";
-                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
+                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$this->foglalasData["totalprice"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
                 }
 
@@ -75,7 +75,7 @@ class BookingValidatePage extends CorePage {
                     echo "<h2>A fizetés nem sikerült</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br/>A fizetési folyamat sikertelenül zárult. Ha meg szeretné próbálni újra, kattintson a fizetés gombra.<br/><br/>";
-                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$transactionData["osszeg"]} Ft)</a><br/><br/>";
+                    echo "<a href='index.php?page={$_GET["page"]}&id={$_GET["id"]}&rk={$_GET["rk"]}&setslang={$_GET["setslang"]}&pay' class='newbutton' >Fizetés ({$this->foglalasData["totalprice"]} Ft)</a><br/><br/>";
                     echo $simpleService->simpleLogo();
                     echo "<hr>Sikertelen tranzakció.<br/>SimplePay tranzakció azonosító: {$transactionData["transid"]}<br/>Kérjük, ellenőrizze a tranzakció során megadott adatok helyességét.<br/>Amennyiben minden adatot helyesen adott meg, a visszautasítás okának kivizsgálása érdekében kérjük, szíveskedjen kapcsolatba lépni kártyakibocsátó bankjával.<hr>";
                 }

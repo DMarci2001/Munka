@@ -476,12 +476,14 @@ class BookingPage extends CorePage {
         LEFT JOIN helyszinek h ON h.id = b.helyszinid
         LEFT JOIN orvosok o on o.id = b.orvosid
         WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.helyszinid=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
+		//WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.helyszinid=1 GROUP BY b.helyszinid", array(11));
 
         while ($helyszin = sql_fetch_array($resh)) {
             $rest = sql_query("SELECT b.* FROM orvos_beosztas b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
-            GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
+			GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
+            //GROUP BY b.tipusok", array(11, $helyszin["id"]));
             $tipusok = array(0);
             while ($tipusData = sql_fetch_array($rest)) {
                 $tids = explode("|", $tipusData["tipusok"]);
@@ -498,6 +500,7 @@ class BookingPage extends CorePage {
             $tipusok = array_unique($tipusok);
             $orvosok = [];
             $tipusdb = [];
+			//$tipusok[] = 114;
 			
             $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
             while ($tipusData = sql_fetch_array($res)) {
@@ -507,34 +510,67 @@ class BookingPage extends CorePage {
                 LEFT JOIN orvosok o ON o.id = b.orvosid
                 WHERE b.cegid=:cegId AND b.aktiv=1 AND b.helyszinid=1 AND INSTR(b.tipusok,:tipusok)
                 and (nap<10 OR b.beonap >= DATE(NOW()))
-                GROUP BY b.orvosid", array("cegId" => $_SESSION["helyszindata"]["id"], "tipusok" => "|{$tipusData["id"]}|"));
+                GROUP BY b.orvosid", array("cegId" => 11, "tipusok" => "|{$tipusData["id"]}|"));
 				
                 while ($orvosData = sql_fetch_array($reso)) {
                     $orvosok[$tipusData["id"]][] = $orvosData;
                 }
             }
 			
-			
+			$html.= "<div style='text-align:center;'>";
 
             if (!empty($orvosok)) {
-                $html.= "<h2>{$helyszin["cim"]}</h2>";
-
+                
+				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+				$html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
+				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-
+					if($tipusData['noreservation']!=0) continue;
 					//itt kéne az új classra az átirányítást beilleszteni:
+					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
 					
-                    $html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                    $html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style='display:none;padding:10px 0px;'>";
+					
+					
+                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
+                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
 
                     foreach ($orvosok[$tipusData["id"]] as $orvosData) {
-                        $html.= "<div>".$orvosData["nev"]."</div>";
+                        //$html.= "<div>".$orvosData["nev"]."</div>";
                     }
+					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
 
-                    $html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]} - {$webText["idopontfoglalas"]}</a></div>";
-                    $html.= "</div>";
+                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
+                    //$html.= "</div>";
                 }
+				$html.= "</table>";
+				
+				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+				$html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
+				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
+                foreach ($tipusdb as $tipusData) {
+                    $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
+					if($tipusData['noreservation']!=1) continue;
+					//itt kéne az új classra az átirányítást beilleszteni:
+					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
+					
+					
+					
+                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
+                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
+
+                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
+                        //$html.= "<div>".$orvosData["nev"]."</div>";
+                    }
+					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
+
+                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
+                    //$html.= "</div>";
+                }
+				$html.= "</table>";
             }
+			
+			$html.= "</div>";
 
         }
         $html.= "</div>";

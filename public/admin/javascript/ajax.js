@@ -1593,3 +1593,61 @@ function manualNotificationSend(id,pass){
 		}
 	});
 }
+
+function retranserOperation(id) {
+    $.ajax({
+        type:'post',
+        url:'index.php',
+        data:{showrefund:id},
+        success:function(data){
+            if (data.status == "ok") {
+                showGeneralPopup(data.html);
+            } else {
+                alert(data.status);
+            }
+        }
+    });
+}
+
+function startSimpleRefund(id) {
+    let osszeg = $("#refundprice").val();
+    $("#refunbuttonsor").hide();
+    $.ajax({
+        type:'post',
+        url:'index.php',
+        data:{startsimplerefund:id, osszeg:osszeg},
+        success:function(data){
+            $("#refunbuttonsor").show();
+            $("#simplerefundbutton").hide();
+            $("#transferresult").show();
+            $("#transferresult").html(data.html);
+            popUpPosition();
+        }
+    });
+}
+
+
+$(window).resize(function() {
+    popUpPosition();
+});
+
+function showGeneralPopup(html) {
+    $("#generalpopup").html(html);
+    $("#generalpopup").show();
+    popUpPosition();
+}
+
+
+function hideGeneralPopup() {
+    $("#generalpopup").hide();
+}
+
+function popUpPosition() {
+    let ww = $(window).width();
+    let wh = $(window).height();
+    let bw = $("#generalpopup").width();
+    let bh = $("#generalpopup").height();
+
+    $("#generalpopup").css("left", ww/2 - bw/2);
+    $("#generalpopup").css("top", wh/2 - bh/2);
+}

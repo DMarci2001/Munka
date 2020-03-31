@@ -323,6 +323,19 @@ class BookingService {
             }
             die();
         }
+
+        if (isset($_POST["showrefund"]) && isset($_SESSION["adminuser"])) {
+            $simpleService = new SimplePayService();
+            echo $simpleService->showRefundWindow($_POST["showrefund"]);
+            die;
+        }
+
+        if (isset($_POST["startsimplerefund"]) && isset($_SESSION["adminuser"])) {
+            $simpleService = new SimplePayService();
+            echo $simpleService->startRefund($_POST["startsimplerefund"], $_POST["osszeg"]);
+            die;
+        }
+
     }
 	
 	

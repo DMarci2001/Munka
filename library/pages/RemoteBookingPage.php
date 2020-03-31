@@ -153,7 +153,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Itt több opciónak is meg kell majd jelennie a vizsgálat beállításainak megfelelően:
 		$html.= "<input type='hidden' name='szurestipus' value='{$_POST['szurestipus']}'/>";
-		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
+		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Küldés (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
 		$html.= "<tr><td align='center'><a href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'><img src='images/simplepay_bankcard_logos_left.jpg' style='max-width:40%;width:auto'></a></td></tr>";
 		
 		$html.= "</table>";
