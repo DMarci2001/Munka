@@ -434,6 +434,27 @@ input:not([type]), input[type="text"] , input[type="password"]{
     color:#fff;
 }
 
+.newbuttongray {
+    display:inline-block;
+    /* background:#3786be; */
+    background: #808080;
+    padding:8px 15px;
+    font-size:13px;
+    font-weight:bold;
+    text-transform:uppercase;
+    color:#fff;
+    cursor:pointer;
+    -moz-border-radius:3px;
+    border-radius:3px;
+    text-decoration:none;
+    cursor: pointer;
+}
+.newbuttongray:hover {
+    text-decoration:none;
+    background:#666666;
+    color:#fff;
+}
+
 .redversion {
     opacity:.5;
     background:#a00;
