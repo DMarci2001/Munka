@@ -36,6 +36,14 @@ class BookingService {
             die();
         }
 
+        if (isset($_GET["mailtest"])) {
+
+            //$this->sendToUser(132112);
+            $this->sendToCegAndOrvos(132112, 1, 1);
+
+            die("sent");
+        }
+
         if (isset($_GET["showidopontvalasztov2"])) {
             $webText = $this->lang->webText;
 
@@ -984,6 +992,101 @@ class BookingService {
     }
 
 
+    private function userMailTemplate($row) {
+        $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
+        $packText = $this->_getPackText($row);
+
+        $extraMsg = "";
+
+        if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
+            if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
+                $c = explode(",", $row["domain"]);
+                $extraMsg = "A kiállított leleteit és dokumentumait a ".Booking_Constants::SITE_PROTOCOL."://{$c[0]}.".Booking_Constants::SITE_DOMAIN." oldalon a taj számával megtekintheti online.<br/>";
+            }
+        }
+
+        $mbody = "";
+        $mbody .= "<h1>{$row["datum"]} - {$row["helyszin"]}</h1>";
+        $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
+        $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
+        $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
+        $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
+        $mbody .= ($row["cegid"]==6?"Ellátó orvos: {$row["orvosnev"]}<br>":"");
+        $mbody .= "{$packText}";
+        $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
+
+        $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
+        while ($rowv = sql_fetch_array($resv)) {
+            $maplink = "";
+            if ($rowv["mapurl"] != "") $maplink = "<a href='{$rowv["mapurl"]}'>Az útvonal térképen megjelenítéséhez kattintson ide.</a>";
+            $rowv["szoveg"] = str_replace("#maplink#", $maplink, $rowv["szoveg"]);
+            $mbody .= "<hr>" . nl2br($rowv["szoveg"]);
+        }
+
+        $mbody .= "<hr>";
+
+        if ($row["rlang"] != "de" && $row["rlang"] != "en") {
+            $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
+            $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
+            $mbody .= "<br/>";
+            $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
+        }
+        if ($row["rlang"] == "de") {
+            $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
+            $mbody .= "Wenn Sie möchten Ihre Reservierung Verändern ,bitte Streichen Sie aus den anderen Zeitpunkt, dannach registrieren bitte nochmal.<br>";
+            $mbody .= "<br/>";
+            $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
+        }
+        if ($row["rlang"] == "en") {
+            $mbody .= "If you wish to cancel this appointment, please click on link: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
+            $mbody .= "If you would like to modify your appointment, first cancel your old appointment then register it again.<br>";
+            $mbody .= "<br/>";
+            $mbody .= "Regards:<br>".Booking_Constants::COMPANY_NAME;
+        }
+
+        $template["subject"] = "{$webTextLocal["sikeresidopontreg"]}";
+        $template["body"] = $mbody;
+        return $template;
+    }
+
+    private function userMailTemplateWebDoctor($row) {
+        $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
+
+        $mbody = "<b>Kedves {$row["nev"]}!</b><br/>
+        <br/>
+        Köszönjük, hogy megtisztelt minket bizalmával és a Hungária Med-M WEB-Doktor
+        szolgáltatását választotta.<br/>
+        A szolgáltatás költségének térítése sikeresen megtörtént (sikeres tranzakció)
+        Az Ön által választott szakorvos 24 órán belül elektronikus úton válaszol kérdésére.<br/>
+        Amennyiben 1 napon belül nem kerülne továbbításra a szakorvosi vélemény kérjük,
+        ellenőrizze Spam /Promóciók mappában is. Abban az esetben, ha leletét nem találja előbb
+        említett mappákban sem kérjük, jelezze a problémát ügyfélkapcsolati munkatársunknál.<br/>
+        <br/>
+        <b>100% garancia</b><br/>
+        <br/>
+        Elégedettsége fontos számunkra, így abban az esetben, ha panaszára a WEB-Doktor
+        szolgáltatás keretén belül nem tudunk megfelelő megoldást nyújtani, úgy a teljes összeg
+        visszautalásra kerül<br/>
+        <br/>
+        Telefonos ügyfélkapcsolat:<br/>
+        +36 1 / 800 9333<br/>
+        +36 30 / 633 0961<br/>
+        Ügyfélkapcsolat:<br/>
+        ugyfelkapcsolat@hungariamed.hu<br/>
+        (Hétfőtől- Péntekig 8:00- 16:00 rendelési időben)<br/>
+        <br/>
+        <p>
+        <b>További jó egészséget kívánunk!</b>
+        <br/>
+        <img src='https://bejelentkezes.hungariamed.hu/images/logo-retina.png' width='200'>
+        </p>";
+
+        $template["subject"] = "WebDoktor szolgáltatás megrendelése";
+        $template["body"] = $mbody;
+        return $template;
+    }
+
+
     public function sendToUser($id)
     {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
@@ -994,29 +1097,23 @@ class BookingService {
         LEFT JOIN cegek c on c.id=f.cegid
 		LEFT JOIN orvosok o ON o.id=f.`orvosassigned` 
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-		
-        WHERE f.id=? and f.userertesitve=0",array($id));
+        WHERE f.id=?",array($id));
 
         if ($row = sql_fetch_array($res)) {
+            if ($row["userertesitve"] == 1 && !isset($_GET["mailtest"])) {
+                return;
+            }
+
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
-            $extraMsg = "";
-
-            if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
-                if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
-                    $c = explode(",", $row["domain"]);
-                    $extraMsg = "A kiállított leleteit és dokumentumait a ".Booking_Constants::SITE_PROTOCOL."://{$c[0]}.".Booking_Constants::SITE_DOMAIN." oldalon a taj számával megtekintheti online.<br/>";
-                }
-            }
-
-            $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
-
-            $packText = $this->_getPackText($row);
-
             sql_query("update foglalasok set userertesitve=1 where id='{$id}'");
 
-            $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
+            if ($row["noreservation"] == 0) {
+                $mailTemplate = $this->userMailTemplate($row);
+            } else {
+                $mailTemplate = $this->userMailTemplateWebDoctor($row);
+            }
 
             $mail = new PHPMailer();
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
@@ -1029,60 +1126,87 @@ class BookingService {
             $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
 
-            $t = "{$webTextLocal["sikeresidopontreg"]}";
-
-            $mbody = "";
-            $mbody .= "<h1>{$row["datum"]} - {$row["helyszin"]}</h1>";
-            $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
-            $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
-            $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
-            $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
-			$mbody .= ($row["cegid"]==6?"Ellátó orvos: {$row["orvosnev"]}<br>":"");
-            $mbody .= "{$packText}";
-            $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
-
-            while ($rowv = sql_fetch_array($resv)) {
-                $maplink = "";
-                if ($rowv["mapurl"] != "") $maplink = "<a href='{$rowv["mapurl"]}'>Az útvonal térképen megjelenítéséhez kattintson ide.</a>";
-                $rowv["szoveg"] = str_replace("#maplink#", $maplink, $rowv["szoveg"]);
-                $mbody .= "<hr>" . nl2br($rowv["szoveg"]);
-            }
-
-            $mbody .= "<hr>";
-
-            if ($row["rlang"] != "de" && $row["rlang"] != "en") {
-                $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
-                $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
-                $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
-            }
-            if ($row["rlang"] == "de") {
-                $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
-                $mbody .= "Wenn Sie möchten Ihre Reservierung Verändern ,bitte Streichen Sie aus den anderen Zeitpunkt, dannach registrieren bitte nochmal.<br>";
-                $mbody .= "<br/>";
-                $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
-            }
-            if ($row["rlang"] == "en") {
-                $mbody .= "If you wish to cancel this appointment, please click on link: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
-                $mbody .= "If you would like to modify your appointment, first cancel your old appointment then register it again.<br>";
-                $mbody .= "<br/>";
-                $mbody .= "Regards:<br>".Booking_Constants::COMPANY_NAME;
-            }
-
-            $mail->Subject = $t;
-            //$mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
-            $mail->Body = $mbody;
+            $mail->Subject = $mailTemplate["subject"];
+            $mail->Body = $mailTemplate["body"];
             //$mail->AddAttachment("");
 
-            if (true) {
+            if ($row["noreservation"] == 0) {
+                //csak ha nem webdoctor
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
 
             $mail->Send();
 			
-			$this->createNotificationRecord($id,$mbody,$row["email"],"vissza_igazolas");
-
+			$this->createNotificationRecord($id,$mailTemplate["body"],$row["email"],"vissza_igazolas");
         }
+    }
+
+
+    private function orvosMailTemplate($rowf, $rowo) {
+        $mbody = "";
+
+        $from = Booking_Constants::NO_REPLY_ADDRESS;;
+
+        if ($rowo["visszaigazol"]==1 && $rowo["visszaigazolemail"]!="") {
+            $mbody.="Kedves {$rowo["nev"]}!<br>
+                            <br>
+                            Foglalása érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
+                            <br>
+                            <hr>
+                            <br>";
+            $from = $rowo["visszaigazolemail"];
+        }
+
+        $mbody.="Név: {$rowf["nev"]}<br>";
+        $mbody.="Cég: {$rowf["cegnev"]}<br>";
+        $mbody.="TAJ: {$rowf["taj"]}<br>";
+        $mbody.="Munkakor: {$rowf["munkakor"]}<br>";
+        $mbody.="Telefon: {$rowf["telefon"]}<br><br>";
+        $mbody.="<b>Időpont: {$rowf["datum"]}</b><br><br>";
+        $mbody.="Szűréstípus: {$rowf["szurestipus"]}<br>";
+        $mbody.="Helyszín: {$rowf["helyszin"]}<br>";
+        if ($rowf["megj"]!="") $mbody.="Megjegyzés: {$rowf["megj"]}<br>";
+        $mbody.="<br/>";
+
+        $template["subject"] = iconv("UTF-8","ISO-8859-2","{$rowf["cegnev"]} - időpont regisztráció {$rowo["nev"]} részére");
+        $template["body"] = $mbody;
+        $template["from"] = $from;
+        return $template;
+    }
+
+    private function orvosMailTemplateRemote($rowf, $rowo) {
+        $mbody = "";
+
+        $from = Booking_Constants::NO_REPLY_ADDRESS;;
+
+        $mbody.="Kedves {$rowo["nev"]}!<br>
+        <br>
+        WebDoctor megrendelése érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal:<br>
+        
+        <hr>";
+
+        $mbody.="Név: {$rowf["nev"]}<br>";
+        $mbody.="TAJ: {$rowf["taj"]}<br>";
+        $mbody.="Email: {$rowf["email"]}<br>";
+        $mbody.="Telefon: {$rowf["telefon"]}<br>";
+        $mbody.="Cím: {$rowf["irsz"]} {$rowf["varos"]}, {$rowf["utca"]}<br>";
+        $mbody.="Szűréstípus: {$rowf["szurestipus"]}<br><hr>";
+        $mbody.="{$rowf["questions"]}<br>";
+
+        $mbody.="<br/>";
+
+        $template["subject"] = "{$rowf["cegnev"]} - WebDoktor megrendelés: {$rowf["nev"]}";
+        $template["body"] = $mbody;
+        $template["from"] = $from;
+
+        $docAgent = new DocAgent();
+        $res = sql_query("select * from dokumentumok where foglalasid=?", [$rowf["id"]]);
+        while ($docData = sql_fetch_array($res)) {
+            $docData["raw"] = $docAgent->getDoc($docData["id"]);
+            $template["docs"][] = $docData;
+        }
+
+        return $template;
     }
 
     public function sendToCegAndOrvos($id, $force = 0, $test = 0) {
@@ -1111,65 +1235,50 @@ class BookingService {
 
         while ($rowf = sql_fetch_array($resf)) {
             $cegId = $rowf["cegid"];
-
             if ($rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($rowf["orvosassigned"])))) {
                 $resp = sql_query("select * from smsphones where orvosid=? and smsfoglalas=1 and smsgroupfoglalas=0 and instr(cegek,'|{$cegId}|')",array($rowo["id"]));
                 while ($rowp = sql_fetch_array($resp)) {
                     if ($test == 1) {
-                        $rowp["tel"] = "062099961833";
+                        $rowp["tel"] = "06209996183";
                     }
                     $this->utils->sendSMS(trim($rowp["tel"]),Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása érkezett: ".substr($rowf["datum"],0,16)." {$rowf["helyszin"]}");
                 }
 
-                if (!empty(trim($rowo["email"]))) {
-                    $mbody = "";
+                if (!empty(trim($rowo["email"])) || $test == 1) {
+
+                    if ($rowf["noreservation"] == 0) {
+                        $mailTemplate = $this->orvosMailTemplate($rowf, $rowo);
+                    } else {
+                        $mailTemplate = $this->orvosMailTemplateRemote($rowf, $rowo);
+                    }
 
                     $mail = new PHPMailer();
                     $mail->FromName = Booking_Constants::COMPANY_NAME;
                     if ($test == 1) {
-                        $mail->AddAddress("jns@jns.hu");
+                        $mail->AddAddress("jnsmobil@gmail.com");
                     } else {
                         $mail->AddAddress($rowo["email"]);
                     }
 
-                    if ($rowo["visszaigazol"]==1 && $rowo["visszaigazolemail"]!="") {
-                        $mbody.="Kedves {$rowo["nev"]}!<br>
-                            <br>
-                            Foglalása érkezett a ".Booking_Constants::COMPANY_NAME_SHORT." foglalási rendszerén keresztül az alábbi adatokkal. Kérjük erre az levélre válaszolva jelezze, hogy tudja-e fogadni a pacienst. Köszönjük!<br>
-                            <br>
-                            <hr>
-                            <br>";
-                        $mail->From=$rowo["visszaigazolemail"];
-                        $mail->AddReplyTo($rowo["visszaigazolemail"]);
-                    } else {
-                        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                    }
+                    $mail->From = $mailTemplate["from"];
+                    $mail->AddReplyTo($mailTemplate["from"]);
                     $mail->IsHTML(true);
+                    $mail->CharSet = "UTF-8";
+                    $mail->Subject = $mailTemplate["subject"];
+                    $mail->Body = $mailTemplate["body"];
 
-                    $t = iconv("UTF-8","ISO-8859-2","{$rowf["cegnev"]} - időpont regisztráció {$rowo["nev"]} részére");
+                    if (isset($mailTemplate["docs"])) {
+                        foreach ($mailTemplate["docs"] as $docData) {
+                            $mail->addStringAttachment($docData["raw"], $docData["filename"]);
+                        }
+                    }
 
-                    $mbody.="Név: {$rowf["nev"]}<br>";
-                    $mbody.="Cég: {$rowf["cegnev"]}<br>";
-                    $mbody.="TAJ: {$rowf["taj"]}<br>";
-                    $mbody.="Munkakor: {$rowf["munkakor"]}<br>";
-                    $mbody.="Telefon: {$rowf["telefon"]}<br><br>";
-                    $mbody.="<b>Időpont: {$rowf["datum"]}</b><br><br>";
-                    $mbody.="Szűréstípus: {$rowf["szurestipus"]}<br>";
-                    $mbody.="Helyszín: {$rowf["helyszin"]}<br>";
-                    if ($rowf["megj"]!="") $mbody.="Megjegyzés: {$rowf["megj"]}<br>";
-                    $mbody.="<br/>";
-
-                    $mail->Subject=$t;
-                    $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
-
-                    if (true) {
+                    if ($rowf["noreservation"] == 0) {
                         $mail->addStringAttachment($this->getCalendarItem($rowf),'foglalas.ics','base64','text/calendar');
                     }
 
                     $mail->Send();
                 }
-
             }
         }
 

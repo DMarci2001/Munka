@@ -88,10 +88,6 @@ class BookingValidatePage extends CorePage {
                 }
 
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";
-
-                $bookingService->sendToCegAndOrvos($this->id);
-                $bookingService->sendToUser($this->id);
-
             } else {
                 echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
                 echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>

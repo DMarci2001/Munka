@@ -24,12 +24,17 @@ if (isset($_GET["ack"])) {
         "receiveDate" => date("c")
     ];
 
-
     if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$result->orderRef]))) {
         die("reservation not found");
     }
 
     $jsonResponse = json_encode($response);
+
+    if ($result->status == "FINISHED") {
+        $bookingService = new BookingService();
+        $bookingService->sendToUser($foglalasData["id"]);
+        $bookingService->sendToCegAndOrvos($foglalasData["id"]);
+    }
 
     $simpleService->setOrderId($foglalasData["id"]);
     $simpleService->setTransactionLog($result->orderRef, $result->transactionId, $result->status);
