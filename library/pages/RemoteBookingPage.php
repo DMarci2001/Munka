@@ -10,6 +10,8 @@ class RemoteBookingPage extends CorePage{
         $webText = $this->lang->webText;
 
         $bookingService = new BookingService();
+		
+		if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
 
         $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
         $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
@@ -19,6 +21,9 @@ class RemoteBookingPage extends CorePage{
 			if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"]."-".substr("00".$_POST["szuldatumho"],-2)."-".substr("00".$_POST["szuldatumnap"],-2);
             }
+			
+			//Orvos választás:
+			$_POST['orvosassigned']=64;
 			
 			//Egyéni mezők ellenőrzése:
 			$custominputs = explode(",",$this->szuresData['custominputs']);
@@ -36,6 +41,7 @@ class RemoteBookingPage extends CorePage{
 			if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->errors[] = $webText["szulformat"];
 			if (!isset($_POST["aszf"])) $this->errors[] = $webText["aszfkotelezo"];
 			if (!isset($_POST["simplepay"])) $this->errors[] = "A simplepay felhasználási feltételeit a vásárláshoz el kell elfogadnia!";
+			
 
 			$captchaError = $this->utils->checkCaptcha();
             if (!empty($captchaError)) {
@@ -71,6 +77,8 @@ class RemoteBookingPage extends CorePage{
 	public function showPage() {
 		//BACK - END
 		$webText = $this->lang->webText;
+		
+		
 		
 		if(!isset($_POST['szurestipus'])) header("Location:index.php");
        
