@@ -1052,11 +1052,11 @@ class BookingService {
     private function userMailTemplateWebDoctor($row) {
         $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
 
-        $mbody = "<b>Kedves {$row["nev"]}!</b><br/>
+        $mbody = "<b>Kedves Páciensünk,</b><br/>
         <br/>
         Köszönjük, hogy megtisztelt minket bizalmával és a Hungária Med-M Web-Doktor
         szolgáltatását választotta.<br/>
-        A szolgáltatás költségének térítése sikeresen megtörtént (sikeres tranzakció).<br/>
+        A szolgáltatás költségének térítése sikeresen megtörtént (sikeres tranzakció).<br/><br/>
         Az Ön által választott szakorvos 24 órán belül elektronikus úton válaszol megkeresésére.<br/><br/>
         Amennyiben 1 napon belül nem kerülne továbbításra a szakorvosi vélemény, kérjük,
         ellenőrizze Spam /Promóciók mappában is. <br>
@@ -1069,7 +1069,7 @@ class BookingService {
         szolgáltatás keretén belül nem tudunk megoldást nyújtani, úgy a teljes összeg
         visszautalásra kerül.<br/>
         <br/>
-        Telefonos ügyfélkapcsolat: (Hétfőtől- Péntekig 8:00- 16:00 rendelési időben)<br/><br/>
+        Telefonos ügyfélkapcsolat: (Hétfőtől- Péntekig 8:00- 16:00 rendelési időben)<br/>
         +36 1 800 9333<br/>
         +36 30 633 0961<br/>
         Ügyfélkapcsolat:<br/>
