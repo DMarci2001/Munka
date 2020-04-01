@@ -43,6 +43,7 @@ class RemoteBookingPage extends CorePage{
 			//Speciális mezők ellenőrzése:
 			if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) $this->errors[] = $webText["hibasemail"];
 			if ($_POST['szuldatum']=="0-00-00") $this->errors[] = "A születési dátum megadása kötelező!";
+			if (strlen($_POST['taj'])>9) $this->errors[] = "Helytelen TAJ szám!";
 			if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->errors[] = $webText["szulformat"];
 			if (!isset($_POST["aszf"])) $this->errors[] = $webText["aszfkotelezo"];
 			if (!isset($_POST["simplepay"])) $this->errors[] = "A simplepay felhasználási feltételeit a vásárláshoz el kell elfogadnia!";
@@ -59,6 +60,7 @@ class RemoteBookingPage extends CorePage{
 			$sor=0;
 			do{
 				if(empty($_POST["kerdes-{$sor}"])) $this->errors[] = "Kérem, válaszoljon a ".($sor+1).". kérdésre!";
+				if(strlen($_POST["kerdes-{$sor}"])>3000) $this->errors[] = "A ".($sor+1).". kérdés válasza maximum 3000 karakter hosszú lehet!";
 				$questions.="<p>{$questionArr[$sor]['question']}</p><p>".$_POST["kerdes-{$sor}"]."</p><br>";
 				$sor++;
 			}while(isset($_POST["kerdes-{$sor}"]));
