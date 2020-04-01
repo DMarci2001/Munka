@@ -11,8 +11,13 @@ class RemoteBookingPage extends CorePage{
 
         $bookingService = new BookingService();
 		
+		
+		
 		if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
-
+		if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
+		
+		
+		
         $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
         $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
 
@@ -78,7 +83,13 @@ class RemoteBookingPage extends CorePage{
 		//BACK - END
 		$webText = $this->lang->webText;
 		
+		echo $this->displayFejlec($this->szuresData['megnev'],true);
 		
+		if(isset($_COOKIE['lang']) && $_COOKIE['lang']!="hu"){
+			echo "This medical service only available on hungarian language for more details please contact us (ugyfelszolgalat@hungariamed.hu)<br>";
+			echo "<a href='https://bejelentkezes.hungariamed.hu'>Return to the mainpage</a>";
+			return;
+		}
 		
 		if(!isset($_POST['szurestipus'])) header("Location:index.php");
        
@@ -119,7 +130,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//FRONT-END
 		
-		echo $this->displayFejlec($this->szuresData['megnev'],true);
+		
 		
 		echo $this->showErrors();
 		
