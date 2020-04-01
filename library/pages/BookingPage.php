@@ -489,9 +489,9 @@ class BookingPage extends CorePage {
                 $tids = explode("|", $tipusData["tipusok"]);
                 foreach ($tids as $tid) {
                     if (!empty($tid)) {
-                        if ($tid == 114 && !isset($_SESSION["enabletest"])) {
+                        /*if ($tid == 114 && !isset($_SESSION["enabletest"])) {
                             continue;
-                        }
+                        }*/
                         $tipusok[] = $tid;
                     }
                 }
