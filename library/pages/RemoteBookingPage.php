@@ -58,7 +58,7 @@ class RemoteBookingPage extends CorePage{
 			$questions = "";
 			$sor=0;
 			do{
-				if(empty($_POST["kerdes-{$sor}"])) $this->errors[] = "Kérem válaszoljon a ".($sor+1).". kérdésre!";
+				if(empty($_POST["kerdes-{$sor}"])) $this->errors[] = "Kérem, válaszoljon a ".($sor+1).". kérdésre!";
 				$questions.="<p>{$questionArr[$sor]['question']}</p><p>".$_POST["kerdes-{$sor}"]."</p><br>";
 				$sor++;
 			}while(isset($_POST["kerdes-{$sor}"]));
