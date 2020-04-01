@@ -109,7 +109,7 @@ class Page {
             $html.= "<a class='toplink' href='index.php?page=profile'>".ucfirst($webText["adatmodositas"])."</a> &bull; ";
             $html.= "<a class='toplink' href='index.php?logout'>".ucfirst($webText["kijelentkezes"])."</a>";
         } else {
-            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a>";
+            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["fooldal"])."</a>";
             //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>";
             //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
         }
