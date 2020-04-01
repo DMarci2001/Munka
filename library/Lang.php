@@ -56,7 +56,7 @@ class Lang {
             }
         }
 		
-		if($_GET['page']=="removeBooking") return;
+		if($_GET['page']=="remoteBooking") return;
 
         $langLink = "<a class='toplink' style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
         return $langLink;
