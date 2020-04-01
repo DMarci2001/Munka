@@ -150,7 +150,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Képfeltöltés:
 		$html.= "<tr><td>";
-        $html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetektől.</div>";
+        $html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetekről.</div>";
         $html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
         $html.= "</td></tr>";
         $html.= "<tr><td><div id='paciensfilediv'>".$this->utils->showPaciensFiles()."</div></td></tr>";
