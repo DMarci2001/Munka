@@ -1054,26 +1054,27 @@ class BookingService {
 
         $mbody = "<b>Kedves {$row["nev"]}!</b><br/>
         <br/>
-        Köszönjük, hogy megtisztelt minket bizalmával és a Hungária Med-M WEB-Doktor
+        Köszönjük, hogy megtisztelt minket bizalmával és a Hungária Med-M Web-Doktor
         szolgáltatását választotta.<br/>
-        A szolgáltatás költségének térítése sikeresen megtörtént (sikeres tranzakció)
-        Az Ön által választott szakorvos 24 órán belül elektronikus úton válaszol kérdésére.<br/>
-        Amennyiben 1 napon belül nem kerülne továbbításra a szakorvosi vélemény kérjük,
-        ellenőrizze Spam /Promóciók mappában is. Abban az esetben, ha leletét nem találja előbb
+        A szolgáltatás költségének térítése sikeresen megtörtént (sikeres tranzakció).<br/>
+        Az Ön által választott szakorvos 24 órán belül elektronikus úton válaszol megkeresésére.<br/><br/>
+        Amennyiben 1 napon belül nem kerülne továbbításra a szakorvosi vélemény, kérjük,
+        ellenőrizze Spam /Promóciók mappában is. <br>
+		Abban az esetben, ha leletét nem találja előbb
         említett mappákban sem kérjük, jelezze a problémát ügyfélkapcsolati munkatársunknál.<br/>
         <br/>
-        <b>100% garancia</b><br/>
+        <i>Pénzvisszafizetési garancia</i><br/>
         <br/>
-        Elégedettsége fontos számunkra, így abban az esetben, ha panaszára a WEB-Doktor
-        szolgáltatás keretén belül nem tudunk megfelelő megoldást nyújtani, úgy a teljes összeg
-        visszautalásra kerül<br/>
+        Elégedettsége fontos számunkra, így abban az esetben, ha panaszára a Web-Doktor
+        szolgáltatás keretén belül nem tudunk megoldást nyújtani, úgy a teljes összeg
+        visszautalásra kerül.<br/>
         <br/>
-        Telefonos ügyfélkapcsolat:<br/>
-        +36 1 / 800 9333<br/>
-        +36 30 / 633 0961<br/>
+        Telefonos ügyfélkapcsolat: (Hétfőtől- Péntekig 8:00- 16:00 rendelési időben)<br/><br/>
+        +36 1 800 9333<br/>
+        +36 30 633 0961<br/>
         Ügyfélkapcsolat:<br/>
-        ugyfelkapcsolat@hungariamed.hu<br/>
-        (Hétfőtől- Péntekig 8:00- 16:00 rendelési időben)<br/>
+        <a href='mailto:ugyfelkapcsolat@hungariamed.hu'>ugyfelkapcsolat@hungariamed.hu</a><br/>
+        
         <br/>
         <p>
         <b>További jó egészséget kívánunk!</b>
@@ -1081,7 +1082,7 @@ class BookingService {
         <img src='https://bejelentkezes.hungariamed.hu/images/logo-retina.png' width='200'>
         </p>";
 
-        $template["subject"] = "WebDoktor szolgáltatás megrendelése";
+        $template["subject"] = "Web-Doktor szolgáltatás megrendelése";
         $template["body"] = $mbody;
         return $template;
     }

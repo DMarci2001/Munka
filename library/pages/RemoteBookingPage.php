@@ -86,7 +86,7 @@ class RemoteBookingPage extends CorePage{
 		echo $this->displayFejlec($this->szuresData['megnev'],true);
 		
 		if(isset($_COOKIE['lang']) && $_COOKIE['lang']!="hu"){
-			echo "This medical service only available on hungarian language for more details please contact us (ugyfelszolgalat@hungariamed.hu)<br>";
+			echo "This medical service only available on Hungarian language for more details please contact us (ugyfelszolgalat@hungariamed.hu)<br>";
 			echo "<a href='https://bejelentkezes.hungariamed.hu'>Return to the mainpage</a>";
 			return;
 		}
