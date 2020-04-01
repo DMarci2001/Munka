@@ -1464,9 +1464,12 @@ END:VCALENDAR";
         $data["orvosid"]   = 0;
 
         $fid = $this->addReservationQuery($data);
-
-        $oid = $this->selectFreeOrvosForIdopont($fid);
-        sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
+		
+		if(isset($data['noreservation']) && $data['noreservation']!=1){
+			$oid = $this->selectFreeOrvosForIdopont($fid);
+			sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
+		}
+        
 
         if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
             sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));

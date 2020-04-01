@@ -23,7 +23,7 @@ class RemoteBookingPage extends CorePage{
             }
 			
 			//Orvos választás:
-			$_POST['orvosassigned']=64;
+			$_POST['orvosid']=64;
 			
 			//Egyéni mezők ellenőrzése:
 			$custominputs = explode(",",$this->szuresData['custominputs']);
