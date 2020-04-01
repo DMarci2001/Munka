@@ -1461,7 +1461,7 @@ END:VCALENDAR";
         $data["parentid"]  = 0;
         $data["cegid"]     = $cegId;
         $data["lang"]      = $lang;
-        $data["orvosid"]   = 0;
+        if(!isset($data['orvosid'])) $data["orvosid"] = 0;
 
         $fid = $this->addReservationQuery($data);
 		
