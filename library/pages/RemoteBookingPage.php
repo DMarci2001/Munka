@@ -147,7 +147,7 @@ class RemoteBookingPage extends CorePage{
 		//Captcha/ASZF:
 		$html.= "<tr><td style='height:30px'></td></tr>";
 		$html.= "<tr><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-        $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
+        $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszffizetos"]}</div></td></tr>";
 		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' /> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
 		//Jóváhagyó gombok helye:
 		
