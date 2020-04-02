@@ -1184,3 +1184,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .retransfer_button:hover{
 	text-decoration: underline;
 }
+
+#generalpopup {
+	position: fixed;
+}

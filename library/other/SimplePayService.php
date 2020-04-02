@@ -4,7 +4,7 @@ class SimplePayService {
 
     const PROVIDER_NAME = "simplePay";
     const SDK_VERSION = "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e";
-    const API_URL = "https://sandbox.simplepay.hu";
+    const API_URL = "https://secure.simplepay.hu";
     //sandbox : https://sandbox.simplepay.hu
     //live:     https://secure.simplepay.hu
 
