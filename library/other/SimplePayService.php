@@ -116,7 +116,7 @@ class SimplePayService {
     }
 
     public function setTransactionLog($logId, $transid, $event, $price = 0) {
-        sql_query("update banktransactions set datum=now(), result=?, transid=? where id=?", [$event, $transid, $logId]);
+        sql_query("update banktransactions set result=?, transid=? where id=?", [$event, $transid, $logId]);
         if ($price != 0) {
             sql_query("update banktransactions set osszeg=? where id=?", [$price, $logId]);
         }
