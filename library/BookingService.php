@@ -1188,6 +1188,8 @@ class BookingService {
 
         $mbody.="Név: {$rowf["nev"]}<br>";
         $mbody.="TAJ: {$rowf["taj"]}<br>";
+		$mbody.="Szül. dátum: {$rowf['szuldatum']}<br>";
+		$mbody.="Neme: ".($rowf['neme']==1?"Férfi":"Nő")."<br>";
         $mbody.="Email: {$rowf["email"]}<br>";
         $mbody.="Telefon: {$rowf["telefon"]}<br>";
         $mbody.="Cím: {$rowf["irsz"]} {$rowf["varos"]}, {$rowf["utca"]}<br>";
