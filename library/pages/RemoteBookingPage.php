@@ -70,7 +70,7 @@ class RemoteBookingPage extends CorePage{
             }
 
 			//Kérdések ellenőrzése:
-			$questionArr=json_decode($this->szuresData['askandanswers'],true);
+			$questionArr=json_decode($q['questions'],true);
 			$questions = "";
 			$sor=0;
 			do{
