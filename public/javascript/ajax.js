@@ -35,7 +35,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     $("#loadingspinner").show();
 	
-	console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").prop("checked"));
+	//console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").prop("checked"));
 	
     $.ajax({
         method:"GET",
@@ -45,6 +45,38 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         if (data.error != "") {
             myAlert(data.error);
         } else {
+            $("#idopontvalasztodiv").html(data.html);
+            $("#idopontvalasztodiv").slideDown();
+        }
+        $("#loadingspinner").hide();
+    });
+
+}
+
+function showIdoPontValasztoV3(honnan, orvosid, szurestipus,helyszin) {
+    if (orvosid === undefined) {
+        orvosid = 0;
+    }
+
+    let neme = $('input[name="neme"]:checked', '#remoteForm').val();
+    if (neme == undefined) {
+        neme = 0;
+    }
+
+    $("#loadingspinner").show();
+	
+	//console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").prop("checked"));
+	
+    $.ajax({
+        method:"GET",
+        url:"index.php",
+        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin, szurestipus, selectoid:orvosid, neme:neme, javascript:"showIdoPontValasztoV3" }
+    }).done(function(data) {
+		console.log(data);
+        if (data.error != "") {
+            myAlert(data.error);
+        } else {
+			
             $("#idopontvalasztodiv").html(data.html);
             $("#idopontvalasztodiv").slideDown();
         }
@@ -105,13 +137,13 @@ function toggleCheckBox(id){
 	return;
 }
 
-function chooseIdoPont(idopont,orvos) {
+function chooseIdoPont(idopont,orvos,helyszin,szurestipusid) {
     let rinterval = $("#rinterval-"+idopont.substring(0,10)).val();
     if (orvos === undefined) orvos = 0;
     $.ajax({
         method:"POST",
         url:"index.php",
-        data:{ checkrendeles:"1", idopont:idopont, helyszin:$("#helyszin").val(), taj:$("#tajszam").val(), szurestipusid:$("#szurestipus").val(),orvos:orvos }
+        data:{ checkrendeles:"1", idopont:idopont, helyszin, taj:$("#tajszam").val(), szurestipusid,orvos:orvos }
     }).done(function(msg) {
         if (msg=="ok") {
             $("#datum").css("background-image","");
@@ -473,6 +505,26 @@ function kuponCheck(coupon,version,foglalas,szurestipus)
 
         }
     });
+}
+
+function setQuestions(orvosid,szurestipus){
+	$.ajax({
+		type:'post',
+		url:'index.php?page=remotebooking',
+		data:{setQuestions:true,orvosid,szurestipus},
+		success:function(data){
+			$('#questions').html(data.questions);
+			$('#idopontvalasztodiv').html('');
+			console.log(data.reservationstatus);
+			console.log(orvosid);
+			if(data.reservationstatus==0){
+				$('#idopontvalasztotr').html('<td>Időpont:* </td><td id="idopontvalasztotd"></td>');
+				$('#idopontvalasztotd').html(data.bookingselector);
+				$('#datum').val('');
+			}
+			else $('#idopontvalasztotr').html('');
+		}
+	});
 }
 
 
