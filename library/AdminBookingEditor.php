@@ -385,7 +385,7 @@ class AdminBookingEditor {
             $html.= "</td>";
 
             $html.= "<td valign='top' style=''>";
-            $html.= "<div style='width:200px;overflow:hidden;'><div style='width:1000px;'>".$this->adminUtils->showPaciensFiles($row["id"])."</div></div>";
+            $html.= "<div style='width:200px;overflow:hidden;'><div style='width:1000px;'>".($row['noreservation']!=1?$this->adminUtils->showPaciensFiles($row["id"]):"")."</div></div>";
 
             if ($rowa = sql_fetch_array(sql_query("select * from arak WHERE INSTR(cegid,?) AND tipusid=? and csomag=0",array("|{$row["cegid"]}|",$row["szurestipusid"])))) {
                 $html.= "<div><a href='#' onclick='showFizSzolg({$row["id"]});return false;'>+ szolgáltatás hozzáadása</a><div>";

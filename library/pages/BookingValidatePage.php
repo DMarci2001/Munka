@@ -46,7 +46,7 @@ class BookingValidatePage extends CorePage {
         $bookingService = new BookingService();
         $simpleService = new SimplePayService();
 
-        echo $this->displayFejlec();
+        echo $this->displayFejlec("Hunágriamed - ".$this->foglalasData["szurestipus"],true);
 
         if (!empty($this->foglalasData)) {
             sql_query("update foglalasok set aktiv=1 where id=?", array($this->foglalasData["id"]));
@@ -83,7 +83,7 @@ class BookingValidatePage extends CorePage {
                 if (in_array($transactionData["result"], ["SUCCESS", "FINISHED"])) {
                     echo "<h2>Sikeres megrendelés és fizetés</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
-                    echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk a figyelmét, hogy ha a megrendelését nem tudjuk teljesíteni, a pénzt visszatérítjük.<br/><br/>";
+                    echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk figyelmét, hogy abban az esetben  ha panaszait nem tudjuk kezelni Web-Doktor szolgáltatásunkon keresztül, úgy a teljes összeg visszautalásra kerül.<br/><br/>";
                     echo "<hr>Sikeres tranzakció.<br/>SimplePay tranzakció azonosító: {$transactionData["transid"]}<hr>";
                 }
 

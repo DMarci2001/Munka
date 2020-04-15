@@ -257,7 +257,7 @@ class AdminArrivalsPage extends AdminCorePage
 
             if ($row["tudoszuro"]!=0) echo "<tr><td colspan='4'></td><td class='{$tc}' colspan='{$colspan}'><div style='background:#f00;color:#fff;display:inline-block;padding:2px 5px;'>Tüdőszűrés</div></td></tr>";
             if ($row["megj"]!="") echo "<tr><td colspan='4'></td><td class='{$tc}' colspan='{$colspan}'><div style='max-width:500px;'>{$row["megj"]}</div></td></tr>";
-            echo "<tr><td colspan='4'></td><td class='{$tc}' colspan='{$colspan}'>".$this->adminUtils->showPaciensFiles($row["id"])."</td></tr>";
+            echo "<tr><td colspan='4'></td><td class='{$tc}' colspan='{$colspan}'>".($row['noreservation']!=1?$this->adminUtils->showPaciensFiles($row["id"]):"")."</td></tr>";
 
             echo "<tr><td colspan='4'></td><td colspan='{$colspan}'><div id='fizszolglist{$row["id"]}'>".$this->adminUtils->showFizSzolg($row["id"])."</div></td></tr>";
             echo "<tr id='bmegj{$row["id"]}' style='display:none;'><td colspan='3'></td><td colspan='{$colspan}'><div style='display:inline-block;background:#eee;padding:5px;margin:0px 0px 10px 0px;'>".nl2br($row["beutalomegj"])."</div></td></tr>";
