@@ -489,9 +489,9 @@ class BookingPage extends CorePage {
                 $tids = explode("|", $tipusData["tipusok"]);
                 foreach ($tids as $tid) {
                     if (!empty($tid)) {
-                        /*if ($tid == 114 && !isset($_SESSION["enabletest"])) {
+                        if ($tid == 114 && !isset($_SESSION["enabletest"])) {
                             continue;
-                        }*/
+                        }
                         $tipusok[] = $tid;
                     }
                 }
@@ -500,7 +500,7 @@ class BookingPage extends CorePage {
             $tipusok = array_unique($tipusok);
             $orvosok = [];
             $tipusdb = [];
-			//$tipusok[] = 114;
+			$tipusok[] = 114;
 			
             $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
             while ($tipusData = sql_fetch_array($res)) {
@@ -526,7 +526,7 @@ class BookingPage extends CorePage {
 				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['noreservation']!=0) continue;
+					if($tipusData['webdoktor']!=0) continue;
 					//itt kéne az új classra az átirányítást beilleszteni:
 					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
 					
@@ -550,7 +550,7 @@ class BookingPage extends CorePage {
 				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['noreservation']!=1) continue;
+					if($tipusData['webdoktor']!=1) continue;
 					//itt kéne az új classra az átirányítást beilleszteni:
 					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
 					
