@@ -193,7 +193,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Képfeltöltés:
 		$html.= "<table><tr><td>";
-        $html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetektől.</div>";
+        //$html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetektől.</div>";
 		
 		$html.= "<div style='font-size:16px'>";
 		$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
