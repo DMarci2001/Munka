@@ -195,12 +195,21 @@ class RemoteBookingPage extends CorePage{
 		$html.= "<table><tr><td>";
         //$html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetektől.</div>";
 		
-		$html.= "<div style='font-size:16px'>";
-		$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
-		$html.= "-	Mellékeljen továbbá TÖBB közeli képet, melyeken az egyes bőrtünetek jól láthatók!<br>";
-		$html.= "-	Kérjük ügyeljen a fényviszonyokra és jó fotóminőségre.<br>";
-		$html.= "-	Amennyiben a tünetek több testrészt is érintenek, kérjük mellékeljen egész testes képet is.";
-		$html.= "</div>";
+		if($_POST['szurestipus']==114){
+			$html.= "<div style='font-size:16px'>";
+			$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
+			$html.= "-	Mellékeljen továbbá TÖBB közeli képet, melyeken az egyes bőrtünetek jól láthatók!<br>";
+			$html.= "-	Kérjük ügyeljen a fényviszonyokra és jó fotóminőségre.<br>";
+			$html.= "-	Amennyiben a tünetek több testrészt is érintenek, kérjük mellékeljen egész testes képet is.";
+			$html.= "</div>";
+		}
+		
+		if($_POST['szurestipus']==115){
+			$html.= "<div style='font-size:16px'>";
+			$html.= "Amennyiben rendelkezik jelen panaszával kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
+			$html.= "</div>";
+		}
+		
 		
         $html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
         $html.= "</td></tr>";
