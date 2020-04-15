@@ -264,7 +264,7 @@ class RemoteBookingPage extends CorePage{
 		$options=$html="";
 		$request=sql_query("SELECT o.id,o.nev FROM orvos_beosztas beo
 							LEFT JOIN orvosok o ON o.id=beo.orvosid
-							WHERE tipusok LIKE '%{$szurestipus}%' GROUP BY beo.orvosid ORDER BY o.nev");
+							WHERE tipusok LIKE '%{$szurestipus}%' AND aktiv=1 GROUP BY beo.orvosid ORDER BY o.nev");
 		
 		//if(sql_num_rows($request)>1) $options.="<option value='0'>Válasszon orvost!</option>";
 		while($result=sql_fetch_array($request)){
