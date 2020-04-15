@@ -11,15 +11,6 @@ class AdminLoginPage extends AdminCorePage {
 
         $this->adminUser = new AdminUser();
 
-        if (isset($_GET["tesztfff"])) {
-            $service = new BookingService();
-            $reservationData["rlang"] = "hu";
-            $reservationData["id"] = 123971;
-            $reservationData["szurestipusid"] = 35;
-            echo $service->_getPackText($reservationData);
-            die;
-        }
-
         if (isset( $_REQUEST["logintry"])) {
             $result = $this->adminUser->adminLogin($_REQUEST["loginusername"], $_REQUEST["loginpassword"]);
             if ($result == "") {

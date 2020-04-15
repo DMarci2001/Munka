@@ -185,14 +185,15 @@ class AdminDoctorsPage extends AdminCorePage {
                         $aktiv  = isset($_POST["aktiv{$sor}"])?1:0;
                         $sorban = isset($_POST["csaksorban{$sor}"])?1:0;
                         $sorban = isset($_POST["csakvsorban{$sor}"])?2:$sorban;
+						$noreservation = isset($_POST["noreservation{$sor}"])?1:0;
                         $potig = $_POST["potig{$sor}"];
 
                         if (!preg_match("/(2[0-3]|[01][0-9]):([0-5][0-9])/", $potig)) {
                             $potig = "";
                         }
 
-                        $params = array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $_POST["beosztasid{$sor}"]);
-                        sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=? where id=?", $params);
+                        $params = array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $noreservation, $_POST["beosztasid{$sor}"]);
+                        sql_query("update orvos_beosztas set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=? where id=?", $params);
                         $sor++;
                     }
 
@@ -334,7 +335,113 @@ class AdminDoctorsPage extends AdminCorePage {
             die;
         }
 		
+		if(isset($_POST['showQndA'])&&$_POST['showQndA']==true){
+			//ki kell nyernem az orvos QndA json adathalmazából a kiválasztott szűréstípusra vonatkozó kérdéseket.
+			
+			$orvos = sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($_POST['orvosid'])));
+			$szurestipus = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
+			
+			$sor=0;
+			$html = "";
+            $html.= "<div style='color:#444;text-align:center;'>";
+            $html.= "<div id='loginbox' class='loginbox'>";
+            $html.= "<div class='loginhead'>{$szurestipus['megnev']}</div>";
+
+            $html.= "<div style='padding:20px;text-align:center;'>";
+            //$html.= "<div style='font-size:18px;'>Tranzakció: Ft</div>";
+			
+			$html.= "<form id='questions'><table style='width:100%'>";
+			
+			if(!empty($orvos['questions']))
+			{
+				$questionArr=json_decode($orvos['questions'],true);
+				foreach($questionArr as $each){
+					if($each['servicetype']==$_POST['szurestipus']){
+						$html.= "	<tr>";
+						$html.= "		<td><input style='padding:5px;width:300px' type='textbox' name='kerdes-{$sor}' value='{$each['question']}' placeholder='Kérdés...'/></td>";
+						$html.= "		<td><select style='padding:5px' onchange=\" if( $(this).val()!='textarea' ) { $('#valaszopciok-{$sor}').prop('disabled',false) } else { $('#valaszopciok-{$sor}').prop('disabled',true) } \" name='valasztipus-{$sor}'>";
+						$html.= "				<option ".($each['answertype']=='textarea'?'selected':'')." value='textarea'>Szövegmező</option>";
+						$html.= "				<option ".($each['answertype']=='radio'?'selected':'')." value='radio'>Rádió gomb</option>";
+						$html.= "				<option ".($each['answertype']=='checkbox'?'selected':'')." value='checkbox'>Checkbox</option>";
+						$html.= "		</select></td>";
+						$html.= "		<td><input style='padding:5px;width:300px' type='textbox' ".($each['answertype']=="textarea"?"disabled":"")." id='valaszopciok-{$sor}' name='valaszopciok-{$sor}' value='".(count($each['answeroptions'])>0?implode(";",$each['answeroptions']):"")."' placeholder='Válaszok;...'/></td>";
+						$html.= "		<td><span style='cursor:pointer' onclick='delkerdes({$_POST['szurestipus']},{$_POST['orvosid']},{$sor})'><img src='images/trash.png' title='Sor törlése'/></span></td>";
+						$html.= "	</tr>";
+						$sor++;
+					}
+				}
+			}
+			
+			if($sor==0) $html.= "<tr><td align='center'>Még nincsen kérdés létrehozva!</td></tr>";
+			$html.= "</table></form>";
+
+            $html.= "<div id='refunbuttonsor' style='padding-top:10px;'>";
+			$html.= "<input onclick='saveQndA({$_POST['szurestipus']},{$_POST['orvosid']})' type='button' style='background:#f00;' value='Mentés' />&nbsp;";
+			$html.= "<input onclick='addkerdes({$_POST['szurestipus']},{$_POST['orvosid']})' type='button' value='Kérdés hozzáadása +' />&nbsp;";
+			$html.= "<input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' />";
+			$html.= "</div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+            $html.= "</div>";
+			
+			echo $html;
+			
+			//echo "{$_POST['szurestipus']} {$_POST['orvosid']}";
+			die();
+		}
 		
+		if(isset($_POST['addkerdes']) && isset($_POST['orvosid']) && isset($_POST['szurestipus'])){
+			$html="";
+			$sor=0;
+			$rowk=sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($_POST['orvosid'])));
+			if(empty($rowk['questions'])){
+				$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array());
+				sql_query("update orvosok SET questions=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['orvosid']));
+			}
+			else{
+				$questionArr=json_decode($rowk['questions'],true);
+				array_push($questionArr,array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array()));
+				sql_query("update orvosok SET questions=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['orvosid']));
+			}
+			
+			die("ok");
+		}
+		
+		if(isset($_POST['delkerdes']) && isset($_POST['orvosid']) && isset($_POST['szurestipus']) && isset($_POST['q'])){
+			$rowk=sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($_POST['orvosid'])));
+			$questionArr=json_decode($rowk['questions'],true);
+			if(isset($questionArr[$_POST['q']])){
+				unset($questionArr[$_POST['q']]);
+				$questionArr = array_values($questionArr);
+			}
+			
+			sql_query("UPDATE orvosok SET questions=? WHERE id=?",array((count($questionArr)>0?json_encode($questionArr,JSON_UNESCAPED_UNICODE):""),$_POST['orvosid']));
+			die("ok");
+		}
+		
+		if(isset($_POST['saveQndA']) && isset($_POST['orvosid']) && isset($_POST['szurestipus'])){
+			
+			
+			foreach($_POST['inputs'] as $input) $_POST[$input['name']]=$input['value'];
+			unset($_POST['inputs']);
+			$questionArr = array();
+			if(isset($_POST['kerdes-0'])){
+				$sor=0;
+				do{
+					if(!isset($_POST["valaszopciok-{$sor}"])) $_POST["valaszopciok-{$sor}"]=array();
+					else {
+						$_POST["valaszopciok-{$sor}"]=$options=explode(";",$_POST["valaszopciok-{$sor}"]);
+					}
+					$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>$_POST["kerdes-{$sor}"],"answertype"=>$_POST["valasztipus-{$sor}"],"answeroptions"=>$_POST["valaszopciok-{$sor}"]);
+					$sor++;
+				}while(isset($_POST["kerdes-{$sor}"]));
+			}
+			
+			sql_query("UPDATE orvosok SET questions=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['orvosid']));
+			
+			die("ok");
+		}
 
     }
 
@@ -545,10 +652,15 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "</select> ";
 
                 echo "<span id='tipusstatus{$rowb["id"]}'><a href='#' class='tlink' title='{$titl}' onclick='showTipusValaszto({$rowb["id"]});return false;'>{$num} tipus</a></span> ";
-
+				
+				//Ide rakjuk ki az orvos kérdez/felelek részét!
+				//echo "<span><a href='#' class='tlink' title='Itt lehet megadni a vizsgálathoz tartozó orvosi kérdéseket.' onClick='setQuestsAnswers();return false;'>Q&A</a></span>";
+				
                 echo "<span title='Csak sorban foglalható időpontok'><input onclick='cssClick(1,{$sor});' type='checkbox' value='1' id='csaksorban{$sor}' name='csaksorban{$sor}'".($rowb["csaksorban"]==1?" checked":"").">&darr;</span> ";
                 echo "<span title='Csak fordított sorrendben foglalható időpontok'><input onclick='cssClick(2,{$sor});' type='checkbox' value='2' id='csakvsorban{$sor}' name='csakvsorban{$sor}'".($rowb["csaksorban"]==2?" checked":"").">&uarr;</span> ";
-
+				
+				 echo "<span title='Nincs időpontfoglalás'><input value='1' type='checkbox' id='noreservation{$sor}' name='noreservation{$sor}'".($rowb["noreservation"]==1?" checked":"").">Nincs időpontfoglalás&nbsp;</span> ";
+				
                 echo "<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delbeosztas={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt a beosztás sort?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
 
                 echo "<div id='tipusvalaszto{$rowb["id"]}'></div>";
@@ -619,6 +731,23 @@ class AdminDoctorsPage extends AdminCorePage {
 			}
 			
 			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";
+			
+			echo "<tr><td colspan='2'><div class='tdsepdiv'>Orvosi kérdések szűrésípusokhoz</div></td></tr>";
+			//Itt akkor az összes vizsgálatot ami bevan állítva az emberhez meg kell hogy jeleníteni O.o....
+			$resq=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(tipusok) AS tipusok FROM orvos_beosztas WHERE orvosid=?",array($_GET['szerk'])));
+			
+			$tipusok=array_values(array_unique(explode("||",substr(str_replace(",","",$resq['tipusok']),1,-1))));
+			foreach($tipusok as $tipus){
+				$szurestipus=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($tipus)));
+				echo "<tr><td colspan='2'>";
+				echo "<div>";
+				echo "<input type='textbox' disabled='true' value='{$szurestipus['megnev']}'>&nbsp;&nbsp;";
+				echo "<span style='cursor:pointer' title='Szűrésípushoz tartozó kérdések szerkesztése.'><i onClick='setQndA({$_GET['szerk']},{$tipus})' class='fas fa-pen'></i></span>";
+				echo "</div>";
+				echo "</td></tr>";
+			}
+			
+			
 
             if( $_SESSION['adminuser']['jog_orvosset'] == 1 )
             {
