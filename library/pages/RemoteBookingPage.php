@@ -81,6 +81,7 @@ class RemoteBookingPage extends CorePage{
 			}while(isset($_POST["kerdes-{$sor}"]));
 			
 			//Egyéb mezők hozzáadása a queryhez:
+			$_POST['helyszinid'] = 1;
 			$_POST["questions"] = $questions;
 			$_POST["simplepay"] = 1;
 			$_POST["noreservation"] = 1;
