@@ -49,6 +49,8 @@ class BookingService {
 
             header('Content-Type: application/json');
 
+			//Átmeneti prefix:
+			//$_SESSION['helyszindata']['id']=11;
             $html = "";
             $this->setHelyszin($_GET["helyszin"]);
             $this->setSzuresTipus($_GET["szurestipus"]);
@@ -56,6 +58,10 @@ class BookingService {
             $this->honnan = intval($_GET["honnan"]);
 			$this->taj = (!isset($_GET['taj'])?0:$_GET['taj']);
 			$this->setBetegallomany((!isset($_GET['betegallomany'])?false:$_GET['betegallomany']));
+			$return = $this->getMinMax($this->szuresTipus, $this->packContentTypes);
+			
+			
+			if(!isset($_GET['javascript'])) $_GET['javascript']="showIdoPontValasztoV2";
 			
 			//108682375 - Kormányos Gergő teszt alany, 2019.03.28-án volt vizsgálaton, 2020.03.28-ig alaklmas, 2020.02.28-tól foglalhat vizsgálatra időpontot!
             $elsoIdopont = [];
@@ -94,12 +100,19 @@ class BookingService {
 			}
 
             //orvosválasztó
-            $html.= $this->displayDoctorSelector();
+			if($_GET['javascript']!="showIdoPontValasztoV3"){
+				 $html.= $this->displayDoctorSelector();
+			}
+			
+			if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"] != 0) {
+				$_SESSION["orvosselected"] = $_REQUEST["selectoid"];
+			}
+           
 
             $html.= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
             $html.= "<div>{$webText["valasszidopontot"]}:</div>";
 
-            $html.= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:showIdoPontValasztoV2(".($this->honnan-7).")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:showIdoPontValasztoV2(".($this->honnan+7).")'>{$webText["kov7"]}</a></td></tr></table>";
+            $html.= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(".($this->honnan-7).($_GET['javascript']=="showIdoPontValasztoV3"?",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}":"").")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(".($this->honnan+7).($_GET['javascript']=="showIdoPontValasztoV3"?",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}":"").")'>{$webText["kov7"]}</a></td></tr></table>";
 
             $html.= "<table cellpadding='0' cellspacing='0'><tr>";
 
@@ -199,7 +212,7 @@ class BookingService {
                                     $orvosNevek[] = $beoData["orvosnev"];
                                     $buttonClass = "foglalhatobtn";
                                     $buttonTitle = "{$numRendeles} hely (" . implode(", ", $orvosNevek) . ")";
-                                    $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]});return false;";
+                                    $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
                                     //break;
                                 }
                             }
