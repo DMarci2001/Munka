@@ -1594,6 +1594,104 @@ function manualNotificationSend(id,pass){
 	});
 }
 
+function formSerializer(selector,formula){
+	if(formula=='get'){
+		data="";
+		// look for every form field
+		selector.find('input, select, textarea').each(function(){
+			// serialize data
+			//Radio gomb kezelés:
+			if($(this).attr('type')=='radio' && $(this).prop('checked')!=true) return true;
+			//Checkbox kezelés:
+			if($(this).attr('type')=='checkbox' && $(this).prop('checked')!=true) return true;
+
+			//Normál kezelés:
+			data+=$(this).attr('name')+'='+$(this).val()+'&';
+		});
+		// remove the last & char
+		return data.replace(/&$/g,"");
+	}
+	
+	if(formula=='arr'){
+		data=[];
+		// look for every form field
+		selector.find('input, select, textarea').each(function(i){
+			// serialize data
+			//Radio gomb kezelés:
+			if($(this).attr('type')=='radio' && $(this).prop('checked')!=true) return true;
+			//Checkbox kezelés:
+			if($(this).attr('type')=='checkbox' && $(this).prop('checked')!=true) return true;
+
+			//Normál kezelés:
+			data[i] = {name:$(this).attr('name'),value:$(this).val()};
+		});
+		// remove the last & char
+		return data;
+	}
+  
+}
+
+function setQndA(orvosid,szurestipus){
+	$.ajax({
+        type:'post',
+        url:'index.php?page=doctors',
+        data:{showQndA:true,orvosid:orvosid,szurestipus:szurestipus},
+        success:function(data){
+			showGeneralPopup(data);
+            /*if (data.status == "ok") {
+                showGeneralPopup(data.html);
+            } else {
+                alert(data.status);
+            }*/
+        }
+    });
+}
+
+function addkerdes(szurestipus,orvosid){
+	$.ajax({
+        type:'post',
+        url:'index.php?page=doctors',
+        data:{addkerdes:true,orvosid:orvosid,szurestipus:szurestipus},
+        success:function(data){
+			if(data=="ok"){
+				setQndA(orvosid,szurestipus);
+			} 
+        }
+    });
+}
+
+function delkerdes(szurestipus,orvosid,q){
+	if(confirm('Biztos törlöd ezt az egységet?')){
+		$.ajax({
+			type:'post',
+			url:'index.php?page=doctors',
+			data:{delkerdes:true,orvosid:orvosid,szurestipus:szurestipus,q},
+			success:function(data){
+				console.log(data);
+				if(data=="ok"){
+					setQndA(orvosid,szurestipus);
+				} 
+			}
+		});
+	}
+}
+
+function saveQndA(szurestipus,orvosid){
+	var inputs = formSerializer($('#questions'),'arr');
+	
+	$.ajax({
+		type:'post',
+		url:'index.php?page=doctors',
+		data:{saveQndA:true,orvosid,szurestipus,inputs},
+		success:function(data){
+			if(data=="ok"){
+				setQndA(orvosid,szurestipus);
+			} 
+		}
+	});
+}
+
+
 function retranserOperation(id) {
     $.ajax({
         type:'post',
