@@ -219,6 +219,7 @@ class RemoteBookingPage extends CorePage{
 			
 			if ($_POST['szurestipus']==114) {
 				$html.= "<div style='font-size:16px'>";
+				$html.= "<strong><i>Kérjük mellékeljen bőrtünetéről képeket alábbi szempontok figyelembevételével:</i></strong>";
 				$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
 				$html.= "-	Mellékeljen továbbá TÖBB közeli képet, melyeken az egyes bőrtünetek jól láthatók!<br>";
 				$html.= "-	Kérjük ügyeljen a fényviszonyokra és jó fotóminőségre.<br>";
