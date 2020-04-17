@@ -167,7 +167,7 @@ class RemoteBookingPage extends CorePage{
 		
 		echo $this->showErrors();
 		
-		if($this->szuresData['id']=116){
+		if($this->szuresData['id']==116){
 			
 			$html.= "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
 			$html.= "<h3 align='center' style='color:#FFF'>Figyelem!</h3>";
