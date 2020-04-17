@@ -74,7 +74,7 @@ class RemoteBookingPage extends CorePage{
 			$questions = "";
 			$sor=0;
 			do{
-				if(empty($_POST["kerdes-{$sor}"])) $this->errors[] = "Kérem, válaszoljon a ".($sor+1).". kérdésre!";
+				if(empty($_POST["kerdes-{$sor}"]) && $questionArr[$sor]["priority"]==1) $this->errors[] = "Kérem, válaszoljon a ".($sor+1).". kérdésre!";
 				if(strlen($_POST["kerdes-{$sor}"])>3000) $this->errors[] = "A ".($sor+1).". kérdés válasza maximum 3000 karakter hosszú lehet!";
 				$questions.="<p>{$questionArr[$sor]['question']}</p><p>".$_POST["kerdes-{$sor}"]."</p><br>";
 				$sor++;
@@ -122,9 +122,8 @@ class RemoteBookingPage extends CorePage{
 		}
 		
 		if($_POST['szurestipus']==0) header("Location:index.php");
-		
-		if(isset($_SESSION['helyszindata']['id'])) $_SESSION['helyszindata']['id'];
        
+		
 		
 		
 		$inputs=$html="";
@@ -168,13 +167,34 @@ class RemoteBookingPage extends CorePage{
 		
 		echo $this->showErrors();
 		
+		if($this->szuresData['id']=116){
+			
+			$html.= "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
+			$html.= "<h3 align='center' style='color:#FFF'>Figyelem!</h3>";
+			$html.= "<p style=' text-align:center;font-size:16px;color:#FFF'>";
+			$html.= "A <strong>WEB-Recept szolgáltatás</strong> vagyis az orvosi vény felírása <strong>kizárólag visszatérő</strong>, korábban már a Hungária Med-M szolgáltatását igénybe <strong>vevő ügyfelek részére lehetséges ezen a felületen</strong>.";
+			$html.= "</p>";
+			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
+			$html.= "Amennyiben Ön korábban még nem vette igénybe szolgáltatásainkat, kérjük, olvassa el az erre vonatkozó információkat a honlap WEB-Recept felületén.";
+			$html.= "</p>";
+			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
+			$html.= "<strong>Köszönjük.</strong>";
+			$html.= "</p></div>";
+		}
+		
 		$html.= "<form method='POST' id='remoteForm' enctype='multipart/form-data'>";
 		
 		//Páciens adatok:
 		
 		$html.= "<h2>Szükséges adatok</h2>";
 		$html.= "<table>";
-		$html.=		$this->setOrvosList($_POST['szurestipus']);
+		if($this->szuresData['hideorvosvalaszto']!=1){
+			$html.=	$this->setOrvosList($_POST['szurestipus']);
+		}
+		else{
+			$html.="<tr><td colspan='2'><input type='hidden' value='{$oq['orvosid']}' name='selectorvos' id='selectorvos'/></td></tr>";
+		}
+		
 		//if($oq[''])
 		//Ha az orvos beojában a noreservation==1 akkor az időpontfoglalást ne jelenítse meg.
 		$html.= "<tr id='idopontvalasztotr'>";
@@ -195,25 +215,29 @@ class RemoteBookingPage extends CorePage{
 		$html.= "<table><tr><td>";
         //$html.= "<div style='font-size:16px'>Kérem, csatoljon 2-4 jó minőségű fényképet a tünetektől.</div>";
 		
-		if($_POST['szurestipus']==114){
-			$html.= "<div style='font-size:16px'>";
-			$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
-			$html.= "-	Mellékeljen továbbá TÖBB közeli képet, melyeken az egyes bőrtünetek jól láthatók!<br>";
-			$html.= "-	Kérjük ügyeljen a fényviszonyokra és jó fotóminőségre.<br>";
-			$html.= "-	Amennyiben a tünetek több testrészt is érintenek, kérjük mellékeljen egész testes képet is.";
-			$html.= "</div>";
+		if ($this->szuresData['disablefileupload']!=1) {
+			
+			if ($_POST['szurestipus']==114) {
+				$html.= "<div style='font-size:16px'>";
+				$html.= "-	Készítsen távoli képet, pl.: egész végtag, törzs, arc stb., hogy a bőrtünetek egyben jól láthatók legyenek!<br>";
+				$html.= "-	Mellékeljen továbbá TÖBB közeli képet, melyeken az egyes bőrtünetek jól láthatók!<br>";
+				$html.= "-	Kérjük ügyeljen a fényviszonyokra és jó fotóminőségre.<br>";
+				$html.= "-	Amennyiben a tünetek több testrészt is érintenek, kérjük mellékeljen egész testes képet is.";
+				$html.= "</div>";
+			}
+			
+			if ($_POST['szurestipus']==115) {
+				$html.= "<div style='font-size:16px'>";
+				$html.= "Amennyiben rendelkezik jelen panaszával kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
+				$html.= "</div>";
+			}
+		
+		
+			$html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+			$html.= "</td></tr>";
+			$html.= "<tr><td><div id='paciensfilediv'>".$this->utils->showPaciensFiles()."</div></td></tr>";
 		}
-		
-		if($_POST['szurestipus']==115){
-			$html.= "<div style='font-size:16px'>";
-			$html.= "Amennyiben rendelkezik jelen panaszával kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
-			$html.= "</div>";
-		}
-		
-		
-        $html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
-        $html.= "</td></tr>";
-        $html.= "<tr><td><div id='paciensfilediv'>".$this->utils->showPaciensFiles()."</div></td></tr>";
+        
 		
 		//Captcha/ASZF:
 		$html.= "<tr><td style='height:30px'></td></tr>";
@@ -264,7 +288,7 @@ class RemoteBookingPage extends CorePage{
 		
 		foreach($questionArr as $each){
 			if($each['servicetype']==$szurestipus){
-				$html.="<tr><td><strong>".($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
+				$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
 				$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:"")."</textarea></td></tr>";
 				$html.="<tr><td style='height:25px'></td></tr>";
 				$sor++;

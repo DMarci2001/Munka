@@ -115,6 +115,9 @@ class AdminScreeningsPage extends AdminCorePage
 			if ($_POST['simplepayaktiv']==0) $_POST['onlysimplepay']=0;
 			if (!isset($_POST["customform"])) $_POST["customform"]=0;
 			if (!isset($_POST['webdoktor'])) $_POST['webdoktor']=0;
+			if (!isset($_POST['custompatientemail_option'])) $_POST['custompatientemail_option']=0;
+			if (!isset($_POST['hideorvosvalaszto'])) $_POST['hideorvosvalaszto']=0;
+			if (!isset($_POST['disablefileupload'])) $_POST['disablefileupload']=0;
 			$questionArr=array();
 			//Post catcher
 			
@@ -169,7 +172,7 @@ class AdminScreeningsPage extends AdminCorePage
                     }
                 }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_GET["szerk"]));
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'],$_GET["szerk"]));
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -208,7 +211,10 @@ class AdminScreeningsPage extends AdminCorePage
 				echo "<input type='checkbox' value='1' name='onlysimplepay'" . ($_POST["onlysimplepay"] == 1 ? " checked" : "") . "> Kötelező simplepay fizetés&nbsp;&nbsp;";
 			}
 			echo "<input type='checkbox' value='1' name='noreservation'" . ($_POST["noreservation"] == 1 ? " checked" : "") . "> Nincs időpontfoglalás&nbsp;&nbsp;";
-			echo "<input type='checkbox' value='1' name='webdoktor'" . ($_POST["webdoktor"] == 1 ? " checked" : "") . "> Web-doktor vizsgálat&nbsp;&nbsp;"; 
+			echo "<input type='checkbox' value='1' name='webdoktor'" . ($_POST["webdoktor"] == 1 ? " checked" : "") . "> Web-doktor vizsgálat&nbsp;&nbsp;";
+			echo "<input type='checkbox' value='1' name='hideorvosvalaszto'" . ($_POST["hideorvosvalaszto"] == 1 ? " checked" : "") . "> Orvos választó elrejtése&nbsp;&nbsp;";
+			echo "<input type='checkbox' value='1' name='disablefileupload'" . ($_POST["disablefileupload"] == 1 ? " checked" : "") . "> Fájl feltöltés kikapcsolása&nbsp;&nbsp;"; 
+			echo "<input type='checkbox' value='1' name='custompatientemail_option'" . ($_POST["custompatientemail_option"] == 1 ? " checked" : "") . "> Egyéni e-mail szöveg&nbsp;&nbsp;"; 
 			//echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.kerdezfeleleksor').show() } else { $('.egyeniadatsor').hide() }\" name='askandansweraktiv'" . ($_POST["askandansweraktiv"] == 1 ? " checked" : "") . "> Kérdez / Felelek&nbsp;&nbsp;"; 
 			echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.egyeniadatsor').show() } else { $('.egyeniadatsor').hide() }\" ".($_POST["customform"] == 1 ? " checked" : "")." name='customform'" . ($_POST["customform"] == 1 ? " checked" : "") . "> Egyéni adatmezők&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='ispack' onchange=\"if (this.checked) { $('.csomagsor').show() } else { $('.csomagsor').hide() }\" ".($_POST["ispack"] == 1 ? " checked" : "")."> Ez egy szűréscsomag";
@@ -314,6 +320,9 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "</td></tr>";
                 $sor++;
             }
+			
+			echo "<tr><td colspan='2'><div class='tdsepdiv'>Egyéni e-mail szöveg a páciensnek</div></td></tr>";
+            echo "<tr><td colspan='2'><textarea name='custompatientemail_text' style='height:80px;width:500px;'>{$row["custompatientemail_text"]}</textarea></td></tr>";
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Árak</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addprice' value='+ ár hozzáadása'></td></tr>";
