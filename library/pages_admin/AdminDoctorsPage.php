@@ -643,6 +643,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<select title='egy kezelés időtartama' id='intervalchooser{$rowb["id"]}' onclick='changeInterval({$rowb["id"]}, this.value);'>";
                 echo $this->intervalOption(3, $rowb);
                 echo $this->intervalOption(5, $rowb);
+				echo $this->intervalOption(6, $rowb);
                 echo $this->intervalOption(8, $rowb);
                 echo $this->intervalOption(10, $rowb);
                 echo $this->intervalOption(15, $rowb);
