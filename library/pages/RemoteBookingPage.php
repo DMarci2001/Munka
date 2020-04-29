@@ -232,6 +232,13 @@ class RemoteBookingPage extends CorePage{
 				$html.= "Amennyiben rendelkezik jelen panaszával kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
 				$html.= "</div>";
 			}
+			
+			if ($_POST['szurestipus']==119 || $_POST['szurestipus']==118) {
+				$html.= "<div style='font-size:16px'>";
+				$html.= "Amennyiben rendelkezik jelen panaszával, kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
+				$html.= "</div>";
+			}
+			
 		
 		
 			$html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
