@@ -155,7 +155,7 @@ class RemoteBookingPage extends CorePage{
 		//Kérdez/felelek opciók beillesztése:
 		$oq=sql_fetch_array(sql_query("SELECT o.questions,o.id AS orvosid,beo.noreservation FROM orvos_beosztas beo
 									   LEFT JOIN orvosok o ON o.id=beo.orvosid
-									   WHERE tipusok LIKE '%{$_POST['szurestipus']}%' ".(isset($_POST['orvosid'])?"AND o.id={$_POST['orvosid']}":"")." GROUP BY beo.orvosid ORDER BY o.nev limit 1"));
+									   WHERE tipusok LIKE '%{$_POST['szurestipus']}%' ".(isset($_POST['orvosid'])?"AND o.id={$_POST['orvosid']}":"")." AND beo.aktiv=1 GROUP BY beo.orvosid ORDER BY o.nev limit 1"));
 		$questionArr=json_decode($oq['questions'],true);
 		
 		
