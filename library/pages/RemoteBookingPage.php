@@ -289,8 +289,19 @@ class RemoteBookingPage extends CorePage{
 		
 		foreach($questionArr as $each){
 			if($each['servicetype']==$szurestipus){
+				if(!isset($each['placeholder']))$each['placeholder']="";
 				$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
-				$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:"")."</textarea></td></tr>";
+				if($each['answertype']=="textarea"){
+					$each['placeholder']=str_replace("\\\\n","\n",$each['placeholder']);
+					$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:$each['placeholder'])."</textarea></td></tr>";
+				}
+				if($each['answertype']=="radio"){
+					$html.="<tr><td>";
+					foreach($each["answeroptions"] as $option){
+						$html.="<input type='radio' value='{$option}' name='kerdes-{$sor}'/>&nbsp; {$option}<br>";
+					}
+					$html.="</td></tr>";
+				}
 				$html.="<tr><td style='height:25px'></td></tr>";
 				$sor++;
 			}

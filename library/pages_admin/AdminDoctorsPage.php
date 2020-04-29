@@ -364,6 +364,7 @@ class AdminDoctorsPage extends AdminCorePage {
 						$html.= "				<option ".($each['answertype']=='radio'?'selected':'')." value='radio'>Rádió gomb</option>";
 						$html.= "				<option ".($each['answertype']=='checkbox'?'selected':'')." value='checkbox'>Checkbox</option>";
 						$html.= "		</select></td>";
+						$html.= "		<td><input style='padding:5px;width:300px' type='textbox' name='placeholder-{$sor}' value='{$each['placeholder']}' placeholder='Válasz mező szöveg...'/></td>";
 						$html.= "		<td><input type='checkbox' value='1' ".($each['priority']==1?"checked":"")." name='kotelezo-{$sor}' >&nbsp;Kötelező</td>";
 						$html.= "		<td><input style='padding:5px;width:300px' type='textbox' ".($each['answertype']=="textarea"?"disabled":"")." id='valaszopciok-{$sor}' name='valaszopciok-{$sor}' value='".(count($each['answeroptions'])>0?implode(";",$each['answeroptions']):"")."' placeholder='Válaszok;...'/></td>";
 						$html.= "		<td><span style='cursor:pointer' onclick='delkerdes({$_POST['szurestipus']},{$_POST['orvosid']},{$sor})'><img src='images/trash.png' title='Sor törlése'/></span></td>";
@@ -397,12 +398,12 @@ class AdminDoctorsPage extends AdminCorePage {
 			$sor=0;
 			$rowk=sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($_POST['orvosid'])));
 			if(empty($rowk['questions'])){
-				$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array());
+				$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","placeholder"=>"","answeroptions"=>array());
 				sql_query("update orvosok SET questions=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['orvosid']));
 			}
 			else{
 				$questionArr=json_decode($rowk['questions'],true);
-				array_push($questionArr,array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","answeroptions"=>array()));
+				array_push($questionArr,array("servicetype"=>$_POST['szurestipus'],"question"=>"placeholder","answertype"=>"textarea","placeholder"=>"","answeroptions"=>array()));
 				sql_query("update orvosok SET questions=? WHERE id=?",array(json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['orvosid']));
 			}
 			
@@ -435,7 +436,7 @@ class AdminDoctorsPage extends AdminCorePage {
 						$_POST["valaszopciok-{$sor}"]=$options=explode(";",$_POST["valaszopciok-{$sor}"]);
 					}
 					if(!isset($_POST["kotelezo-{$sor}"])) $_POST["kotelezo-{$sor}"]=0;
-					$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>$_POST["kerdes-{$sor}"],"answertype"=>$_POST["valasztipus-{$sor}"],"answeroptions"=>$_POST["valaszopciok-{$sor}"],"priority"=>$_POST["kotelezo-{$sor}"]);
+					$questionArr[]=array("servicetype"=>$_POST['szurestipus'],"question"=>$_POST["kerdes-{$sor}"],"answertype"=>$_POST["valasztipus-{$sor}"],"answeroptions"=>$_POST["valaszopciok-{$sor}"],"placeholder"=>$_POST["placeholder-{$sor}"],"priority"=>$_POST["kotelezo-{$sor}"]);
 					$sor++;
 				}while(isset($_POST["kerdes-{$sor}"]));
 			}
