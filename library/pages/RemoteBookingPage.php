@@ -34,7 +34,7 @@ class RemoteBookingPage extends CorePage{
 			//Orvos választás:
 			$_POST['orvosid']=$_POST['selectorvos'];
 			
-			$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation FROM orvosok o 
+			$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation,o.linked_assigment FROM orvosok o 
 										  LEFT JOIN orvos_beosztas beo ON beo.orvosid=o.id
 										  WHERE o.id=? AND beo.tipusok LIKE '%{$_POST['szurestipus']}%' GROUP BY beo.orvosid ORDER BY o.nev limit 1",array($_POST['orvosid'])));
 										  
@@ -85,6 +85,13 @@ class RemoteBookingPage extends CorePage{
 			$_POST["questions"] = $questions;
 			$_POST["simplepay"] = 1;
 			$_POST["noreservation"] = 1;
+			
+			if($q['linked_assigment']!=""){
+				$linkDoctor = json_decode($q['linked_assigment'],true);
+				$linkSzurestipus = json_decode($this->szuresData['linked_szurestipus'],true);
+				$exportData = array("target"=>$linkDoctor['target'],"targetorvos"=>$linkDoctor['targetorvos'],"targetszurestipus"=>$linkSzurestipus['targetszurestipus']);
+				$_POST['exportdata'] = json_encode($exportData,JSON_UNESCAPED_UNICODE);
+			}
 			
            
             $_POST["totalprice"] = $this->arData["price"];

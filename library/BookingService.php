@@ -1566,6 +1566,7 @@ END:VCALENDAR";
         if (!isset($data["simplepay"])) $data["simplepay"] = 0;
         if (!isset($data["noreservation"])) $data["noreservation"] = 0;
         if (!isset($data["totalprice"])) $data["totalprice"] = 0;
+		if (!isset($data["exportdata"])) $data["exportdata"] = "";
         if (!isset($data["currency"])) $data["currency"] = 0;
 
         sql_query("insert into foglalasok set 
@@ -1601,7 +1602,8 @@ END:VCALENDAR";
 			noreservation=?,
 			questions=?,
 			totalprice=?,
-			currency=?"
+			currency=?,
+			exportdata=?"
         , array(
             $data["parentid"],
             $data["paciensid"],
@@ -1634,7 +1636,8 @@ END:VCALENDAR";
             $data["noreservation"],
             $data["questions"],
             $data["totalprice"],
-            $data["currency"]));
+            $data["currency"],
+			$data["exportdata"]));
 
         $fid = sql_insert_id();
         $this->updateFoglalasData($fid);
