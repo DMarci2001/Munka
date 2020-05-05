@@ -155,7 +155,7 @@ class RemoteBookingPage extends CorePage{
 		//Kérdez/felelek opciók beillesztése:
 		$oq=sql_fetch_array(sql_query("SELECT o.questions,o.id AS orvosid,beo.noreservation FROM orvos_beosztas beo
 									   LEFT JOIN orvosok o ON o.id=beo.orvosid
-									   WHERE tipusok LIKE '%{$_POST['szurestipus']}%' ".(isset($_POST['orvosid'])?"AND o.id={$_POST['orvosid']}":"")." AND beo.aktiv=1 GROUP BY beo.orvosid ORDER BY o.nev limit 1"));
+									   WHERE tipusok LIKE '%{$_POST['szurestipus']}%' ".(isset($_POST['orvosid'])?"AND o.id={$_POST['orvosid']}":"")." GROUP BY beo.orvosid ORDER BY o.nev limit 1"));
 		$questionArr=json_decode($oq['questions'],true);
 		
 		
@@ -232,6 +232,13 @@ class RemoteBookingPage extends CorePage{
 				$html.= "Amennyiben rendelkezik jelen panaszával kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
 				$html.= "</div>";
 			}
+			
+			if ($_POST['szurestipus']==119 || $_POST['szurestipus']==118) {
+				$html.= "<div style='font-size:16px'>";
+				$html.= "Amennyiben rendelkezik jelen panaszával, kapcsolatos egészségügyi dokumentumokkal (pl. laborlelet, korábbi orvosi vizsgálatok eredményei stb.) kérem, mellékelje.";
+				$html.= "</div>";
+			}
+			
 		
 		
 			$html.= "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
@@ -249,7 +256,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Itt több opciónak is meg kell majd jelennie a vizsgálat beállításainak megfelelően:
 		$html.= "<input type='hidden' name='szurestipus' value='{$_POST['szurestipus']}'/>";
-		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".$this->arData['price']." ".$this->arData['penznem'].")'/><div></td></tr>";
+		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".number_format($this->arData['price'],0,",",".")." ".$this->arData['penznem'].")'/><div></td></tr>";
 		$html.= "<tr><td align='center'><a href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'><img src='images/simplepay_bankcard_logos_left.jpg' style='max-width:40%;width:auto'></a></td></tr>";
 		
 		$html.= "</table>";
@@ -289,8 +296,19 @@ class RemoteBookingPage extends CorePage{
 		
 		foreach($questionArr as $each){
 			if($each['servicetype']==$szurestipus){
+				if(!isset($each['placeholder']))$each['placeholder']="";
 				$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
-				$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:"")."</textarea></td></tr>";
+				if($each['answertype']=="textarea"){
+					$each['placeholder']=str_replace("\\\\n","\n",$each['placeholder']);
+					$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:$each['placeholder'])."</textarea></td></tr>";
+				}
+				if($each['answertype']=="radio"){
+					$html.="<tr><td>";
+					foreach($each["answeroptions"] as $option){
+						$html.="<input type='radio' value='{$option}' name='kerdes-{$sor}'/>&nbsp; {$option}<br>";
+					}
+					$html.="</td></tr>";
+				}
 				$html.="<tr><td style='height:25px'></td></tr>";
 				$sor++;
 			}
