@@ -261,7 +261,7 @@ class AdminBookingEditor {
                 left join cegek c on c.id=f.cegid
                 where f.id=? and f.pass=?",array($id, $p)))) {
 
-            $html.= "<div style='font-size:16px;font-weight:bold;padding:10px;background:#555;color:#fff;'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]} ";
+            $html.= "<div style='font-size:16px;font-weight:bold;padding:10px;background:#555;color:#fff;' title='Foglalás ideje:{$row['regdatum']}'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]} ";
             $html.= "<div style='margin-top:4px;'>";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
