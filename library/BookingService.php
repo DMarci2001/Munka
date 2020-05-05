@@ -544,7 +544,7 @@ class BookingService {
 
         while ($rowb=sql_fetch_array($resb)) {
             //orvos foglalt-e?
-            if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum=? AND cegid=? AND helyszinid=? AND orvosassigned=?", array($idopont, $cegid, $this->helyszin, $rowb["orvosid"])))) {
+            if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum=? AND orvosassigned=?", array($idopont, $rowb["orvosid"])))) {
                 //nap foglalt-e
                 if (!sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? and (szurestipusid=0 or szurestipusid=?)",array($this->helyszin, $cegid, $nap, $this->szuresTipus)))) {
                     //orvos szabad ->
@@ -1480,12 +1480,15 @@ END:VCALENDAR";
         if(!isset($data['orvosid'])) $data["orvosid"] = 0;
 
         $fid = $this->addReservationQuery($data);
-		
-		if(isset($data['noreservation']) && $data['noreservation']!=1){
+
+        if (!isset($data["noreservation"])) {
+            $data["noreservation"] = 0;
+        }
+
+		if ($data['noreservation']!=1){
 			$oid = $this->selectFreeOrvosForIdopont($fid);
 			sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
 		}
-        
 
         if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
             sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));
@@ -1566,6 +1569,7 @@ END:VCALENDAR";
         if (!isset($data["simplepay"])) $data["simplepay"] = 0;
         if (!isset($data["noreservation"])) $data["noreservation"] = 0;
         if (!isset($data["totalprice"])) $data["totalprice"] = 0;
+		if (!isset($data["exportdata"])) $data["exportdata"] = "";
         if (!isset($data["currency"])) $data["currency"] = 0;
 
         sql_query("insert into foglalasok set 
@@ -1601,7 +1605,8 @@ END:VCALENDAR";
 			noreservation=?,
 			questions=?,
 			totalprice=?,
-			currency=?"
+			currency=?,
+			exportdata=?"
         , array(
             $data["parentid"],
             $data["paciensid"],
@@ -1634,7 +1639,8 @@ END:VCALENDAR";
             $data["noreservation"],
             $data["questions"],
             $data["totalprice"],
-            $data["currency"]));
+            $data["currency"],
+			$data["exportdata"]));
 
         $fid = sql_insert_id();
         $this->updateFoglalasData($fid);

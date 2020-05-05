@@ -171,6 +171,11 @@ class BookingPage extends CorePage {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
+            $_POST["orvosselected"] = 0;
+            if (isset($_SESSION["orvosselected"])) {
+                $_POST["orvosselected"] = $_SESSION["orvosselected"];
+            }
+
             if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
                 $this->errors[] = "{$webText["idopontlefoglaltak"]}";
             }

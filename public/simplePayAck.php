@@ -33,7 +33,7 @@ if (isset($_GET["ack"])) {
     if ($result->status == "FINISHED") {
         $bookingService = new BookingService();
         $bookingService->sendToUser($foglalasData["id"]);
-        $bookingService->sendToCegAndOrvos($foglalasData["id"]);
+        //$bookingService->sendToCegAndOrvos($foglalasData["id"]);
     }
 
     $simpleService->setOrderId($foglalasData["id"]);
