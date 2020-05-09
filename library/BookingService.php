@@ -888,6 +888,8 @@ class BookingService {
         if (isset($_REQUEST["rinterval"])) $rInterval = intval($_REQUEST["rinterval"]);
 
         sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)), rinterval=? where id=? and pass=''",array($rInterval,$id));
+		
+		sql_query("UPDATE foglalasok SET aktiv=1 WHERE id=? AND webdoktor=1",array($id));
 
         if (isset($_SESSION["filefix"])) {
             sql_query("update dokumentumok set foglalasid=?,sess='validated' where sess=?",array($id,$_SESSION["filefix"].session_id()));
