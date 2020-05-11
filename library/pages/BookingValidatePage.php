@@ -46,7 +46,7 @@ class BookingValidatePage extends CorePage {
         $bookingService = new BookingService();
         $simpleService = new SimplePayService();
 
-        echo $this->displayFejlec("Hunágriamed - ".$this->foglalasData["szurestipus"],true);
+        echo $this->displayFejlec(Booking_Constants::FOOTER_COPYRIGHT." - ".$this->foglalasData["szurestipus"],true);
 
         if (!empty($this->foglalasData)) {
             sql_query("update foglalasok set aktiv=1 where id=?", array($this->foglalasData["id"]));
