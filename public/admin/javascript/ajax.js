@@ -1749,3 +1749,31 @@ function popUpPosition() {
     $("#generalpopup").css("left", ww/2 - bw/2);
     $("#generalpopup").css("top", wh/2 - bh/2);
 }
+
+function toggleCheckBox(id){
+	var checkbox = $(id);
+	checkbox.prop("checked", !checkbox.prop("checked"));
+	return;
+}
+
+function switchCheckBoxes(classname,func){
+	if(func=='disable'){
+		$('input.'+classname+'[type=checkbox]').each(function () {
+			if (this.checked) $(this).prop('checked',false);
+		});
+		
+		$('#checkBoxSwitcher').attr('onClick','switchCheckBoxes("'+classname+'","enable")');
+		$('#checkBoxSwitcher').text('Mindegyik');
+		return true;
+	}
+	
+	if(func=='enable'){
+		$('input.'+classname+'[type=checkbox]').each(function () {
+			if (!this.checked) $(this).prop('checked',true);
+		});
+		
+		$('#checkBoxSwitcher').attr('onClick','switchCheckBoxes("'+classname+'","disable")');
+		$('#checkBoxSwitcher').text('Egyikse');
+		return true;
+	}
+}

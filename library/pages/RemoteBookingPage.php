@@ -14,8 +14,47 @@ class RemoteBookingPage extends CorePage{
 		$this->bookingPage = new BookingPage();
 		
 		
-		if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
+		if(isset($_GET['szurestipus'])){
+			$count=0;
+			$request = sql_query("SELECT * FROM szurestipusok WHERE md5(id)=?",array($_GET['szurestipus']));
+			if( sql_num_rows( $request ) == 1 ){
+				$result = sql_fetch_array($request);
+				$_POST['szurestipus'] = $result['id'];
+				$count++;
+			}
+			else{
+				$request = sql_query("SELECT * FROM szurestipusok WHERE id = ?",array($_GET['szurestipus']));
+				if( sql_num_rows( $request ) == 1 ){
+					$result = sql_fetch_array($request);
+					$_POST['szurestipus'] = $result['id'];
+					$count++;
+				}
+			}
+			if($count<1) header("Location:index.php");
+			//else header("Location:index.php");
+		}
+		
 		if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
+		
+		if(isset($_GET['orvos'])){
+			$request = sql_query("SELECT * FROM orvosok WHERE md5(id)=?",array($_GET['orvos']));
+			if( sql_num_rows( $request ) == 1 ){
+				$aktivBeo=sql_query("SELECT * FROM orvos_beosztas WHERE tipusok LIKE '%{$_POST['szurestipus']}%' AND orvosid=? AND aktiv=1",array($_GET['orvos']));
+				if( sql_num_rows( $request ) == 1 ){
+					$result = sql_fetch_array($request);
+					$_POST['orvosid'] = $result['id'];
+				}
+			}
+			else header("Location:index.php");
+		} 
+		
+		//$request = sql_query("SELECT * FROM szurestipusok WHERE id=md5(?)",array($_GET['szurestipus']));
+		//if( sql_num_rows( $request ) == 1 )
+		//$result = sql_fetch_array($request);
+		
+		//if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
+		if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
+		
         $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
         $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
 		
@@ -34,7 +73,7 @@ class RemoteBookingPage extends CorePage{
 			//Orvos választás:
 			$_POST['orvosid']=$_POST['selectorvos'];
 			
-			$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation,o.linked_assigment FROM orvosok o 
+			$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation FROM orvosok o 
 										  LEFT JOIN orvos_beosztas beo ON beo.orvosid=o.id
 										  WHERE o.id=? AND beo.tipusok LIKE '%{$_POST['szurestipus']}%' GROUP BY beo.orvosid ORDER BY o.nev limit 1",array($_POST['orvosid'])));
 										  
@@ -85,13 +124,6 @@ class RemoteBookingPage extends CorePage{
 			$_POST["questions"] = $questions;
 			$_POST["simplepay"] = 1;
 			$_POST["noreservation"] = 1;
-			
-			if($q['linked_assigment']!=""){
-				$linkDoctor = json_decode($q['linked_assigment'],true);
-				$linkSzurestipus = json_decode($this->szuresData['linked_szurestipus'],true);
-				$exportData = array("target"=>$linkDoctor['target'],"targetorvos"=>$linkDoctor['targetorvos'],"targetszurestipus"=>$linkSzurestipus['targetszurestipus']);
-				$_POST['exportdata'] = json_encode($exportData,JSON_UNESCAPED_UNICODE);
-			}
 			
            
             $_POST["totalprice"] = $this->arData["price"];

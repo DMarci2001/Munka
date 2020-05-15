@@ -56,6 +56,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
+	require_once(__DIR__ . "/library/pages_admin/AdminReferralPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminCalendarPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
