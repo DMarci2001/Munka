@@ -53,7 +53,9 @@ class BookingService {
 			//$_SESSION['helyszindata']['id']=11;
             $html = "";
             $this->setHelyszin($_GET["helyszin"]);
-            $this->setSzuresTipus($_GET["szurestipus"]);
+            if (isset($_GET["szurestipus"])) {
+                $this->setSzuresTipus($_GET["szurestipus"]);
+            }
             $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
 			$this->taj = (!isset($_GET['taj'])?0:$_GET['taj']);
