@@ -37,6 +37,7 @@ require_once(__DIR__ . "/library/PrintService.php");
 require_once(__DIR__ . "/library/ZeusService.php");
 require_once(__DIR__ . "/library/FoglaljOrvostService.php");
 
+require_once(__DIR__ . "/library/other/mpdf_pack/autoload.php");
 require_once(__DIR__ . "/library/other/phpmailer/class.phpmailer.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
@@ -56,6 +57,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
+	require_once(__DIR__ . "/library/pages_admin/AdminReferralPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminCalendarPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
