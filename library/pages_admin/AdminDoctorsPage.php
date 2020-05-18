@@ -356,6 +356,7 @@ class AdminDoctorsPage extends AdminCorePage {
 			{
 				$questionArr=json_decode($orvos['questions'],true);
 				foreach($questionArr as $each){
+					if(!isset($each['placeholder'])) $each['placeholder']="";
 					if($each['servicetype']==$_POST['szurestipus']){
 						$html.= "	<tr>";
 						$html.= "		<td><input style='padding:5px;width:300px' type='textbox' name='kerdes-{$sor}' value='{$each['question']}' placeholder='Kérdés...'/></td>";
