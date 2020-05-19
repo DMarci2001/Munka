@@ -107,17 +107,22 @@ class RemoteBookingPage extends CorePage{
             if (!empty($captchaError)) {
                 $this->errors[] = $captchaError;
             }
-
+			
+			/*echo "<pre>";
+			print_r($_POST);
+			echo "</pre>";
+			die();*/
 			//Kérdések ellenőrzése:
 			$questionArr=json_decode($q['questions'],true);
 			$questions = "";
 			$sor=0;
 			do{
+				if(!isset($_POST["kerdes-{$sor}"])) $_POST["kerdes-{$sor}"] = "";
 				if(empty($_POST["kerdes-{$sor}"]) && $questionArr[$sor]["priority"]==1) $this->errors[] = "Kérem, válaszoljon a ".($sor+1).". kérdésre!";
 				if(strlen($_POST["kerdes-{$sor}"])>3000) $this->errors[] = "A ".($sor+1).". kérdés válasza maximum 3000 karakter hosszú lehet!";
 				$questions.="<p>{$questionArr[$sor]['question']}</p><p>".$_POST["kerdes-{$sor}"]."</p><br>";
 				$sor++;
-			}while(isset($_POST["kerdes-{$sor}"]));
+			}while(isset($questionArr[$sor]));
 			
 			//Egyéb mezők hozzáadása a queryhez:
 			$_POST['helyszinid'] = 1;
@@ -344,7 +349,7 @@ class RemoteBookingPage extends CorePage{
 				if($each['answertype']=="radio"){
 					$html.="<tr><td>";
 					foreach($each["answeroptions"] as $option){
-						$html.="<input type='radio' value='{$option}' name='kerdes-{$sor}'/>&nbsp; {$option}<br>";
+						$html.="<input type='radio' value='{$option}' ".(isset($_POST["kerdes-{$sor}"])&&$_POST["kerdes-{$sor}"]==$option?"checked":"")." name='kerdes-{$sor}'/>&nbsp; {$option}<br>";
 					}
 					$html.="</td></tr>";
 				}
