@@ -4,6 +4,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+require_once 'vendor/autoload.php';
+
 require_once(__DIR__ . "/config/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
 require_once(__DIR__ . "/library/Lang.php");
@@ -38,7 +40,7 @@ require_once(__DIR__ . "/library/ZeusService.php");
 require_once(__DIR__ . "/library/FoglaljOrvostService.php");
 
 require_once(__DIR__ . "/library/other/mpdf_pack/autoload.php");
-require_once(__DIR__ . "/library/other/phpmailer/class.phpmailer.php");
+//require_once(__DIR__ . "/library/other/phpmailer/class.phpmailer.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
 require_once(__DIR__ . "/library/other/PHPExcel.php");
