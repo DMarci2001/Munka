@@ -2,8 +2,13 @@
 
 
 class FoglaljOrvostService {
-    const API_URL      = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms/";
-    const API_TEST_URL = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms/";
+    const FO_API_URL      = "http://test.foglaljorvost.hu/dokucomms";
+    const FO_API_TEST_URL = "http://test.foglaljorvost.hu/dokucomms";
+
+    const UNION_API_URL      = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms";
+    const UNION_API_TEST_URL = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms";
+
+    private $currentService = "foglaljorvost";
 
     private $testing = true;
 
@@ -11,7 +16,14 @@ class FoglaljOrvostService {
 
     public function __construct()
     {
+        if (isset($_GET["testservicename"])) {
+            $this->currentService = $_GET["testservicename"];
+        }
         $this->bookingService = new BookingService();
+    }
+
+    public function setService($service) {
+        $this->currentService = $service;
     }
 
     public function processTestInput() {
@@ -211,7 +223,7 @@ class FoglaljOrvostService {
                 <DOCTOR OWN_ID="' . $orvosData["id"] . '"
                     OUTERSYS_ID="0"
                     NAME="' . $orvosData["nev"] . '"
-                    SEAL_NUMBER="' . $orvosData["pecsetszam"] . '" />
+                    SEAL_NUMBER="345678" />
             </MESSAGE>';
             return $this->sendMessageToFoglaljOrvost($xml);
         }
@@ -362,9 +374,15 @@ class FoglaljOrvostService {
     }
 
     private function getApiURL() {
-        $url = self::API_URL;
+        $url = self::FO_API_URL;
+        if ($this->currentService == "union") {
+            $url = self::UNION_API_URL;
+        }
         if ($this->testing) {
-            $url = self::API_TEST_URL;
+            $url = self::FO_API_TEST_URL;
+            if ($this->currentService == "union") {
+                $url = self::UNION_API_TEST_URL;
+            }
         }
         return $url;
     }
