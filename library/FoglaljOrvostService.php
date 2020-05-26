@@ -48,6 +48,9 @@ class FoglaljOrvostService {
             if ($action == "newreservation") {
                 $result = $this->newReservation(119440);
             }
+            if ($action == "newconsultation") {
+                $result = $this->newReservation(3123);
+            }
         }
         if (isset($result)) {
             print_r($result);
@@ -223,7 +226,7 @@ class FoglaljOrvostService {
                 <DOCTOR OWN_ID="' . $orvosData["id"] . '"
                     OUTERSYS_ID="0"
                     NAME="' . $orvosData["nev"] . '"
-                    SEAL_NUMBER="345678" />
+                    SEAL_NUMBER="' . $orvosData["pecsetszam"] . '" />
             </MESSAGE>';
             return $this->sendMessageToFoglaljOrvost($xml);
         }
@@ -275,6 +278,11 @@ class FoglaljOrvostService {
     */
 
     public function newConsultation($beoId) {
+        $beo = $this->getBeosztasData($beoId);
+        if (isset($beo["error"])) {
+            return $beo["error"];
+        }
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -283,19 +291,25 @@ class FoglaljOrvostService {
                     ACTION="NEW"
                     ROTATE_HASH="#rotatehash#" />
                 <DOCTOR
-                    OWN_ID="8"
-                    OUTERSYS_ID="3168" />
+                    OWN_ID="'.$beo["orvosid"].'"
+                    OUTERSYS_ID="'.$beo["foid"].'" />
                 <CONSULTATION
-                    OWN_ID="21"
+                    OWN_ID="'.$beo["id"].'"
                     OUTERSYS_ID="0"
-                    WEEK="2"
-                    STARTDATETIME="2015-11-24 10:00:00"
-                    STOPDATETIME="2015-11-24 18:00:00"
+                    WEEK="'.$beo["week"].'"
+                    STARTDATETIME="'.$beo["startTime"].'"
+                    STOPDATETIME="'.$beo["endTime"].'" />
             </MESSAGE>';
+
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
     public function modifyConsultation($beoId) {
+        $beo = $this->getBeosztasData($beoId);
+        if (isset($beo["error"])) {
+            return $beo["error"];
+        }
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -304,15 +318,16 @@ class FoglaljOrvostService {
                     ACTION="MOD"
                     ROTATE_HASH="#rotatehash#" />
                 <DOCTOR
-                    OWN_ID="8"
-                    OUTERSYS_ID="3168" />
+                    OWN_ID="'.$beo["orvosid"].'"
+                    OUTERSYS_ID="'.$beo["foid"].'" />
                 <CONSULTATION
-                    OWN_ID="21"
-                    OUTERSYS_ID="0"
-                    WEEK="2"
-                    STARTDATETIME="2015-11-24 10:00:00"
-                    STOPDATETIME="2015-11-24 18:00:00"
+                    OWN_ID="'.$beo["id"].'"
+                    OUTERSYS_ID="'.$beo["fobid"].'"
+                    WEEK="'.$beo["week"].'"
+                    STARTDATETIME="'.$beo["startTime"].'"
+                    STOPDATETIME="'.$beo["endTime"].'" />
             </MESSAGE>';
+
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
@@ -331,9 +346,48 @@ class FoglaljOrvostService {
                     OWN_ID="21"
                     OUTERSYS_ID="0"
                     WEEK="2"
-                    STARTDATE="2015-11-24 10:00:00"
+                    STARTDATE="2015-11-24 10:00:00" />
             </MESSAGE>';
         return $this->sendMessageToFoglaljOrvost($xml);
+    }
+
+    private function getBeosztasData($beoId) {
+        $res = sql_query("select b.*, o.foid from orvos_beosztas b left join orvosok o on o.id = b.orvosid where b.id=?", [$beoId]);
+        if (!$beo = sql_fetch_array($res)) {
+            $beo["error"] = "Beosztás nem található!";
+            return $beo;
+        }
+
+        $tipusok = array_values(array_filter(array_unique(explode("|", $beo["tipusok"]))));
+        foreach ($tipusok as $tipus) {
+            if ($szurestipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$tipus]))) {
+                if ($szurestipusData["fotid"] == 0) {
+                    $beo["error"] = "error: {$szurestipusData["megnev"]} tipus nincs a foglaljOrvos-al szinkronizálva!";
+                }
+
+                $beo["fotid"] = $szurestipusData["fotid"];
+            }
+        }
+
+        $beo["week"] = 1;
+        $beo["startTime"] = date("Y-m-d");
+        if ($beo["nap"] == 1) $beo["startTime"] = date("Y-m-d", strtotime("this week monday"));
+        if ($beo["nap"] == 2) $beo["startTime"] = date("Y-m-d", strtotime("this week tuesday"));
+        if ($beo["nap"] == 3) $beo["startTime"] = date("Y-m-d", strtotime("this week wednesday"));
+        if ($beo["nap"] == 4) $beo["startTime"] = date("Y-m-d", strtotime("this week thursday"));
+        if ($beo["nap"] == 5) $beo["startTime"] = date("Y-m-d", strtotime("this week friday"));
+        if ($beo["nap"] == 6) $beo["startTime"] = date("Y-m-d", strtotime("this week saturday"));
+        if ($beo["nap"] == 7) $beo["startTime"] = date("Y-m-d", strtotime("this week sunday"));
+        $beo["endTime"] = $beo["startTime"];
+        $beo["startTime"].=" ".$beo["tol"].":00";
+        $beo["endTime"].=" ".$beo["ig"].":00";
+
+        if ($beo["nap"] == 10) {
+            $beo["week"] = 0;
+            $beo["startTime"] = $beo["beonap"]." ".$beo["tol"].":00";
+            $beo["endTime"] = $beo["beonap"]." ".$beo["ig"].":00";
+        }
+        return $beo;
     }
 
     private function getReservationStatus($reservationData) {
@@ -369,6 +423,7 @@ class FoglaljOrvostService {
             sql_query("update webservicelog set response=? where id=?", [$result, $logId]);
             return $result;
         } catch (SoapFault $exception) {
+            sql_query("update webservicelog set exception=? where id=?", [$exception->getMessage(), $logId]);
             return false;
         }
     }

@@ -321,6 +321,13 @@ class AdminDoctorsPage extends AdminCorePage {
             die();
         }
 
+        if (isset($_POST["founsync"])) {
+            $oid = intval($_POST["oid"]);
+            sql_query("update orvosok set foid=0 where id=?", [intval($oid)]);
+            echo $this->foglaljOrvostSyncButton($oid);
+            die;
+        }
+
         if (isset($_POST["fosync"])) {
             $foService = new FoglaljOrvostService();
             $oid = intval($_POST["oid"]);
@@ -328,14 +335,49 @@ class AdminDoctorsPage extends AdminCorePage {
 
             if ($result = $foService->sendDoctor($oid)) {
                 $xml = simplexml_load_string($result);
-                $message = $xml->RETURN["RETMESSAGE"];
+                $message = (string)$xml->RETURN["RETMESSAGE"];
+
+                if (ctype_digit($message)) {
+                    sql_query("update orvosok set foid=0 where foid=?", [$message]);
+                    sql_query("update orvosok set foid=? where id=?", [$message, $oid]);
+                }
             }
 
             echo $this->foglaljOrvostSyncButton($oid, $message);
             die;
         }
-		
-		if(isset($_POST['showQndA'])&&$_POST['showQndA']==true){
+
+        if (isset($_POST["getfodata"])) {
+            $foService = new FoglaljOrvostService();
+            $oid = intval($_POST["oid"]);
+
+            if ($result = $foService->getFieldsByDoctor($oid)) {
+                echo "<div style='margin-top:10px;font-weight: bold'>Szolgáltatások</div>";
+                echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
+
+                echo "<div style='margin-top:10px;font-weight: bold'>Beosztás szinkron:</div>";
+                $res = sql_query("select b.* from orvos_beosztas b where orvosid=? and cegid=? order by b.nap desc", [$oid, 11]);
+                while ($beo = sql_fetch_array($res)) {
+                    if ($beo["fobid"] == 0) {
+                        $result = $foService->newConsultation($beo["id"]);
+                        $xml = simplexml_load_string($result);
+                        $message = (string)$xml->RETURN["RETMESSAGE"];
+
+                        if (ctype_digit($message)) {
+                            sql_query("update orvos_beosztas set fobid=? where id=?", [$message, $beo["id"]]);
+                        }
+                    } else {
+                        $result = $foService->modifyConsultation($beo["id"]);
+                    }
+                    echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
+                }
+            } else {
+                echo "hibás lekérdezés";
+            }
+            die;
+        }
+
+        if(isset($_POST['showQndA'])&&$_POST['showQndA']==true){
 			//ki kell nyernem az orvos QndA json adathalmazából a kiválasztott szűréstípusra vonatkozó kérdéseket.
 			
 			$orvos = sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($_POST['orvosid'])));
@@ -483,6 +525,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
             echo "<tr><td width='130'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
             echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
+            echo "<tr><td></td><td><div id='fodatadiv'></div></td></tr>";
             echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'> <input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
 
@@ -664,9 +707,13 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<span title='Csak sorban foglalható időpontok'><input onclick='cssClick(1,{$sor});' type='checkbox' value='1' id='csaksorban{$sor}' name='csaksorban{$sor}'".($rowb["csaksorban"]==1?" checked":"").">&darr;</span> ";
                 echo "<span title='Csak fordított sorrendben foglalható időpontok'><input onclick='cssClick(2,{$sor});' type='checkbox' value='2' id='csakvsorban{$sor}' name='csakvsorban{$sor}'".($rowb["csaksorban"]==2?" checked":"").">&uarr;</span> ";
 				
-				 echo "<span title='Nincs időpontfoglalás'><input value='1' type='checkbox' id='noreservation{$sor}' name='noreservation{$sor}'".($rowb["noreservation"]==1?" checked":"").">Nincs időpontfoglalás&nbsp;</span> ";
+                echo "<span title='Nincs időpontfoglalás'><input value='1' type='checkbox' id='noreservation{$sor}' name='noreservation{$sor}'".($rowb["noreservation"]==1?" checked":"").">Nincs időpontfoglalás&nbsp;</span> ";
 				
-                echo "<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delbeosztas={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt a beosztás sort?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
+                echo "<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delbeosztas={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt a beosztás sort?\")'><img align='baseline' src='/images/trash.png' title='Sor törlése'/></a>";
+
+                if ($rowb["fobid"] != 0) {
+                    echo " <span style='border:1px solid #080;color:#080;cursor:pointer;' title='id: {$rowb["fobid"]}'>FO</span>";
+                }
 
                 echo "<div id='tipusvalaszto{$rowb["id"]}'></div>";
 
@@ -1004,13 +1051,15 @@ class AdminDoctorsPage extends AdminCorePage {
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
 
             if (trim($orvosData["pecsetszam"]) != "") {
-                $html .= " <a class='ujbutton' style='padding:3px 10px;' href='#' onclick='startFODoctorSync({$oid});return false;'>FoglaljOrvost Sync</a> ";
+                if ($orvosData["foid"] == 0) {
+                    $html .= " <a class='ujbutton' style='padding:3px 10px;' href='#' onclick='startFODoctorSync({$oid});return false;'>FoglaljOrvost Sync</a> ";
+                }
 
-                if ($message != "") {
+                if ($message != "" && $orvosData["foid"] == 0) {
                     $html.= $message;
                 } else {
                     if ($orvosData["foid"] != 0) {
-                        $html.= "<span style='color:#080;'>FoglalOrvost.hu kapcsolat aktív</span>";
+                        $html.= "<span style='color:#080;'>FoglalOrvost.hu kapcsolat aktív</span> <a class='ujbutton' style='padding:3px 10px;' href='#' onclick='getFOData({$oid});return false;'>Lekérdezés</a>";
                     }
                 }
 

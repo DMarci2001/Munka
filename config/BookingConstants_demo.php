@@ -37,5 +37,13 @@ class Booking_Constants {
     const FO_CONNECTION_ENABLED     = true;
     const FO_API_PASSWORD           = "wzUpTVrpexTh";
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
-    const FO_IFC_NAME               = "HUNGARIAMED";
+    const FO_IFC_NAME               = "HUNGARIAMED_3608";
+
+    //simplePay public sandbox
+    //const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";
+    //const SIMPLEPAY_MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
+
+    //simplePay hmm sandbox
+    const SIMPLEPAY_MERCHANT_ID     = "S076901";
+    const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
 }
