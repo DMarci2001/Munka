@@ -103,7 +103,15 @@ class FoglaljOrvostService {
                     DESCRIPTION="'.$reservationData["megj"].'" />
             </MESSAGE>';
 
-            return $this->sendMessageToFoglaljOrvost($xml);
+            $result = $this->sendMessageToFoglaljOrvost($xml);
+
+            $xml = simplexml_load_string($result);
+            $message = (string)$xml->RETURN["RETMESSAGE"];
+            if (ctype_digit($message)) {
+                sql_query("update foglalasok set fofid=? where id=?", [$message, $fid]);
+            }
+
+            return $result;
         }
         return false;
     }
@@ -332,6 +340,11 @@ class FoglaljOrvostService {
     }
 
     public function deleteConsultation($beoId) {
+        $beo = $this->getBeosztasData($beoId);
+        if (isset($beo["error"])) {
+            return $beo["error"];
+        }
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -340,13 +353,13 @@ class FoglaljOrvostService {
                     ACTION="DEL"
                     ROTATE_HASH="#rotatehash#" />
                 <DOCTOR
-                    OWN_ID="8"
-                    OUTERSYS_ID="3168" />
+                    OWN_ID="'.$beo["orvosid"].'"
+                    OUTERSYS_ID="'.$beo["foid"].'" />
                 <CONSULTATION
-                    OWN_ID="21"
-                    OUTERSYS_ID="0"
-                    WEEK="2"
-                    STARTDATE="2015-11-24 10:00:00" />
+                    OWN_ID="'.$beo["id"].'"
+                    OUTERSYS_ID="'.$beo["fobid"].'"
+                    WEEK="'.$beo["week"].'"
+                    STARTDATE="'.$beo["startDate"].'" />
             </MESSAGE>';
         return $this->sendMessageToFoglaljOrvost($xml);
     }
@@ -378,12 +391,14 @@ class FoglaljOrvostService {
         if ($beo["nap"] == 5) $beo["startTime"] = date("Y-m-d", strtotime("this week friday"));
         if ($beo["nap"] == 6) $beo["startTime"] = date("Y-m-d", strtotime("this week saturday"));
         if ($beo["nap"] == 7) $beo["startTime"] = date("Y-m-d", strtotime("this week sunday"));
+        $beo["startDate"] = $beo["startTime"];
         $beo["endTime"] = $beo["startTime"];
         $beo["startTime"].=" ".$beo["tol"].":00";
         $beo["endTime"].=" ".$beo["ig"].":00";
 
         if ($beo["nap"] == 10) {
             $beo["week"] = 0;
+            $beo["startDate"] = $beo["beonap"];
             $beo["startTime"] = $beo["beonap"]." ".$beo["tol"].":00";
             $beo["endTime"] = $beo["beonap"]." ".$beo["ig"].":00";
         }

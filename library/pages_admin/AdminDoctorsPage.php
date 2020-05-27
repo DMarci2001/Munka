@@ -34,7 +34,12 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (isset($_GET["delbeosztas"])) {
             if ($this->adminUtils->beosztasModJog()) {
-                sql_query("delete from orvos_beosztas where id=? and orvosid=?",array($_GET["delbeosztas"],$_GET["szerk"]));
+                $oid = intval($_GET["szerk"]);
+                if ($beoData = sql_fetch_array(sql_query("select * from orvos_beosztas where id=? and orvosid=? and fobid<>0", array($_GET["delbeosztas"], $oid)))) {
+                    $foService = new FoglaljOrvostService();
+                    $result = $foService->deleteConsultation($beoData["id"]);
+                }
+                sql_query("delete from orvos_beosztas where id=? and orvosid=?", array($_GET["delbeosztas"], $oid));
             }
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
