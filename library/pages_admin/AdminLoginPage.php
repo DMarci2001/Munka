@@ -33,7 +33,7 @@ class AdminLoginPage extends AdminCorePage {
 
             $resp1 = sql_query("select * from users where email=? or (username=? and email<>'')",array($_POST["email"],$_POST["email"]));
 
-            if (sql_num_rows($resp1)==0 && sql_num_rows($resp2)==0) {
+            if (sql_num_rows($resp1)==0) {
                 $_SESSION["error"] = "A megadott e-mail címmel, vagy felhasználónévvel nem található regisztráció!";
                 return;
             }

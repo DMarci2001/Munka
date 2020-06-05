@@ -2,7 +2,6 @@
 
 class FoglaljOrvostSoapServer {
 
-    private $soapServer;
     private $method;
     private $bookingService;
     private $requestCode;
@@ -24,10 +23,10 @@ class FoglaljOrvostSoapServer {
 
         $namespace = Booking_Constants::SOAP_API_NAMESPACE;
 
-        $this->soapServer = new soap_server();
-        $this->soapServer->soap_defencoding = "utf-8";
-        $this->soapServer->configureWSDL("FoApi", $namespace);
-        $this->soapServer->register('EnqueueMessage'
+        $soapServer = new soap_server();
+        $soapServer->soap_defencoding = "utf-8";
+        $soapServer->configureWSDL("FoApi", $namespace);
+        $soapServer->register('EnqueueMessage'
             ,array('pMessage' => 'xsd:string', "pCallerID" => 'xsd:string')
             ,array('return' => 'xsd:string')
             ,$namespace,false
@@ -37,7 +36,7 @@ class FoglaljOrvostSoapServer {
         );
 
         $POST_DATA = isset($GLOBALS['HTTP_RAW_POST_DATA']) ? $GLOBALS['HTTP_RAW_POST_DATA'] : '';
-        $this->soapServer->service($POST_DATA);
+        $soapServer->service($POST_DATA);
         exit();
     }
 
@@ -194,22 +193,23 @@ class FoglaljOrvostSoapServer {
         }
         $this->requestCode = $code;
 
-        $ifcName     = $xml->MSGINFO["IFCNAME"];
-        $messageType = $xml->MSGINFO["MESSAGETYPE"];
-        $action      = $xml->MSGINFO["ACTION"];
-        $rotateHash  = $xml->MSGINFO["ROTATE_HASH"];
+        $ifcName     = (string)$xml->MSGINFO["IFCNAME"];
+        $messageType = (string)$xml->MSGINFO["MESSAGETYPE"];
+        $action      = (string)$xml->MSGINFO["ACTION"];
+        $status      = (string)$xml->APPOINTMENT["STATUS"];
+        $rotateHash  = (string)$xml->MSGINFO["ROTATE_HASH"];
 
         if (!$this->checkRotateHash($rotateHash)) {
             return $this->messageOutput("AUTH_FAILED", "Az api hívása nem engedélyezett");
         }
 
-        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTNEW") {
+        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_NEW_E") {
             return $this->appointmentNew($xml);
         }
-        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTMOD") {
+        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_MOD_E") {
             return $this->appointmentMod($xml);
         }
-        if ($ifcName.$messageType.$action == "FOGLALJORVOSTAPPOINTMENTMOD") {
+        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_MOD_L") {
             return $this->appointmentDel($xml);
         }
 

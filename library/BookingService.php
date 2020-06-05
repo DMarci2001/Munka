@@ -1,5 +1,8 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class BookingService {
     private $lang;
     private $utils;
@@ -38,7 +41,7 @@ class BookingService {
 
         if (isset($_GET["mailtest"])) {
 
-            //$this->sendToUser(132112);
+            $this->sendToUser(135442);
             $this->sendToCegAndOrvos(132112, 1, 1);
 
             die("sent");

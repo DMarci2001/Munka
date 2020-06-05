@@ -37,7 +37,7 @@ class Booking_Constants {
     const FO_CONNECTION_ENABLED     = true;
     const FO_API_PASSWORD           = "wzUpTVrpexTh";
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
-    const FO_IFC_NAME               = "HUNGARIAMED";
+    const FO_IFC_NAME               = "HUNGARIAMED_3608";
 
     //simplePay public sandbox
     //const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";

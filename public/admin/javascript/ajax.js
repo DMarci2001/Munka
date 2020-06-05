@@ -1568,6 +1568,19 @@ function startFODoctorSync(oid) {
     })
 }
 
+function getFOData(oid) {
+    $.ajax({
+        type:'POST',
+        url:'index.php',
+        data:{page:"doctors", getfodata:1, oid:oid},
+        success:function(data){
+            if(data != '') {
+                $("#fodatadiv").html(data);
+            }
+        }
+    })
+}
+
 function manualNotificationSend(id,pass){
 	$.ajax({
 		type:'post',
