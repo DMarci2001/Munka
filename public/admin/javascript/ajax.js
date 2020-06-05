@@ -1752,7 +1752,10 @@ function popUpPosition() {
 
 function toggleCheckBox(id){
 	var checkbox = $(id);
-	checkbox.prop("checked", !checkbox.prop("checked"));
+	console.log(checkbox.prop("checked"));
+	if(checkbox.prop("checked")==true) checkbox.prop("checked",false);
+	else checkbox.prop("checked",true);
+	//checkbox.prop("checked", !checkbox.prop("checked"));
 	return;
 }
 
@@ -1776,4 +1779,15 @@ function switchCheckBoxes(classname,func){
 		$('#checkBoxSwitcher').text('Egyikse');
 		return true;
 	}
+}
+
+function insertPaciensIntoDokirex(pid){
+	$.ajax({
+		type:'POST',
+		url: 'index.php',
+		data:{insertPaciensIntoDokirex:true,pid},
+		success:function(result){
+			showGeneralPopup(result);
+		}
+	});
 }

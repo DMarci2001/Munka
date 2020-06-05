@@ -155,6 +155,66 @@ class AdminUtils {
 			}
 			die();
 		}
+		
+		if(isset($_POST["insertPaciensIntoDokirex"]) && $_POST["insertPaciensIntoDokirex"]==true) {
+			
+			$html=$response="";
+			$error=array();
+			$dokirexService = new DokirexService();
+			
+			$params=sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.szuldatum AS 'SzuletesiDatum', fogl.taj AS 'Azonosito', fogl.neme AS 'Nem', 
+													  fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', fogl.nev AS 'SzuletesiNev', 
+													  fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon'
+											   FROM foglalasok fogl WHERE id=?",array($_POST["pid"])));
+											 
+			
+			foreach($params AS $index => $value) {
+				if ($value=="") {
+					$error[]="<span style='color:red'>*{$index} mező megadása kötelező!</span>";
+				}
+			}
+			
+			if (empty($error)) {
+				$response = $dokirexService->insertPaciensIntoDokirex($params);
+			}
+			
+			$html = "";
+			$html.= "<div style='color:#444;text-align:center;'>";
+			$html.= "<div id='loginbox' class='loginbox'>";
+			$html.= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
+
+			$html.= "<div style='padding:20px;text-align:center;'>";
+
+			if (count($error)>0) {
+				for($i=0;$i<count($error);$i++) {
+					$html.= "<div style='margin-top:10px;text-align:left'>{$error[$i]}</div>";
+				}
+			
+			} else {
+				$html.="<div style='margin-top:10px;'>";
+				if(is_array($response)) {
+					foreach($response as $index=>$value) {
+						$html.="$index = $value <br>";
+					}
+				} else {
+					$html.=$response;
+				}
+				
+				$html.="</div>";
+			}
+
+			//$html.= "<div style='padding-top:5px;'><input type='text' style='width:100px;' id='refundprice' placeholder='' value='{$transactionData["osszeg"]}' /></div>";
+			//$html.= "<div style='margin-top:10px;display:none;' id='transferresult'></div>";
+
+			$html.= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
+			$html.= "</div>";
+
+			$html.= "</div>";
+			$html.= "</div>";
+			
+			die($html);
+		}
+		
     }
 
     public function beosztasModJog() {
@@ -199,6 +259,11 @@ class AdminUtils {
 
     public function userModJog() {
         if ($_SESSION["adminuser"]["jog_jogset"]==1) return true;
+        return false;
+    }
+	
+	public function beutalokezelesJog() {
+        if ($_SESSION["adminuser"]["jog_beutalokezeles"]==1) return true;
         return false;
     }
 

@@ -411,9 +411,9 @@ class AdminBookingEditor {
             if ($row["foglalta"]!="") {
                 $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
             }
-            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00;'>&nbsp;&nbsp;";
-			$html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffdb3b'>&nbsp;&nbsp;";
-           
+            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
+			$html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
+			$html.="<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex' style='background:#008080'>&nbsp;&nbsp;";
 		   $html.= "</form>";
 
             $html.= "</div>";
