@@ -245,8 +245,14 @@ class AdminArrivalsPage extends AdminCorePage
             echo "<td nowrap valign=top><div class='{$tc}'>&nbsp;&nbsp;".substr($row["datum"],0,16)."&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}' style='width:20px;'>".($row["eljott"]==0?"":"<img height='15' src='images/check.png' alt='' title='Megérkezett' />")."</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>{$row["naploszam"]}&nbsp;&nbsp;</div></td>";
-            echo "<td nowrap valign=top><div class='{$tc}'><div>{$row["nev"]}&nbsp;&nbsp;</div><div>".($row["beutalomegj"]!=""?" [<a href='#' onclick='$(\"#bmegj{$row["id"]}\").toggle();return false;'>megj</a>]":"")."&nbsp;&nbsp;</div></div></td>";
-            echo "<td nowrap valign=top><div class='{$tc}'><div id='orvoschangediv{$row["id"]}'>{$row["orvosnev"]}&nbsp;".($this->adminUtils->orvosModJog()?"<a onclick='$(\"#orvoschangediv{$row["id"]}\").load(\"index.php?page={$_GET["page"]}&loadorvoschangecombo&fid={$row["id"]}\");return false;' href='#'><img style='height:10px;opacity: .5;' src='images/refresh.png' title='orvos csere'/></a>":"")."&nbsp;</div><div>{$row["szurestipus"]}&nbsp;&nbsp;{$szolg}</div></td>";
+            echo "<td nowrap valign=top><div class='{$tc}'><div>";
+            if ($row["paciensid"] == 0) {
+                echo "{$row["nev"]}";
+            } else {
+                echo "<a target='_blank' href='index.php?page=patients&szerk={$row["paciensid"]}'>{$row["nev"]}</a>";
+            }
+            echo "&nbsp;&nbsp;</div><div>".($row["beutalomegj"]!=""?" [<a href='#' onclick='$(\"#bmegj{$row["id"]}\").toggle();return false;'>megj</a>]":"")."&nbsp;&nbsp;</div></div></td>";
+            echo "<td nowrap valign=top><div class='{$tc}'><div id='orvoschangediv{$row["id"]}'><a target='_blank' href='index.php?page=doctors&szerk={$row["orvosassigned"]}&sp'>{$row["orvosnev"]}</a>&nbsp;".($this->adminUtils->orvosModJog()?"<a onclick='$(\"#orvoschangediv{$row["id"]}\").load(\"index.php?page={$_GET["page"]}&loadorvoschangecombo&fid={$row["id"]}\");return false;' href='#'><img style='height:10px;opacity: .5;' src='images/refresh.png' title='orvos csere'/></a>":"")."&nbsp;</div><div>{$row["szurestipus"]}&nbsp;&nbsp;{$szolg}</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'><div>{$row["cegnev"]}&nbsp;&nbsp;</div><div>{$row["helyszin"]}&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>";
             echo "[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&togglemegerkezett={$row["id"]}'>megérkezett</a>] ";

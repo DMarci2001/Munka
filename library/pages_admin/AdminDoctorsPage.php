@@ -581,11 +581,13 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<div id='bcopierdiv' style='font-size:12px;font-weight:normal;width:800px;padding:10px;display:none;'>";
             $resh=sql_query("select * from cegek where id<>? {$wc} order by id not in (".implode(",",$cegbeo)."),megnev",array($_SESSION["orvosbeosztascegfilter"]));
             while ($rowh=sql_fetch_array($resh)) {
-                echo "<div style='display:inline-block;'><input name='copyceg{$rowh["id"]}' type='checkbox' ".(in_array($rowh["id"],$cegbeo)?" checked":"")." value='1' /> {$rowh["megnev"]}</div/> ";
+                echo "<div style='display:inline-block;'><input class='copycegch' name='copyceg{$rowh["id"]}' type='checkbox' ".(in_array($rowh["id"],$cegbeo)?" checked":"")." value='1' /> {$rowh["megnev"]}</div/> ";
             }
             echo "<div style='padding-top:10px;'>";
             echo "<input type='hidden' id='orvosmentesandcopy' name='orvosmentesandcopy' value='0' />";
             echo "<a class='ujbutton' style='padding:3px 10px;font-weight:normal;' href='#' onclick='if (!confirm(\"Biztos másolod ezt a beosztást a kijelölt cégekhez?\")) {return false;} $(\"#orvosmentesandcopy\").val(1);document.iform.submit();'>Beosztás másolása a kijelölt cégekhez</a> <a class='ujbutton' style='padding:3px 10px;font-weight:normal;' href='#' onclick='$(\"#bcopierdiv\").slideToggle();'>Mégse</a>";
+
+            echo "&nbsp;&nbsp;<a href='#' onclick='selectAllCopyCompany();return false;'>összes cég kijelölése</a> | <a href='#' onclick='deselectAllCopyCompany();return false;'>kijelölések törlése</a>";
             echo "</div>";
 
 

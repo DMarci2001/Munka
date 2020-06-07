@@ -1794,6 +1794,13 @@ function switchCheckBoxes(classname,func){
 	}
 }
 
+function selectAllCopyCompany() {
+    $(".copycegch").prop('checked', true);
+}
+function deselectAllCopyCompany() {
+    $(".copycegch").prop('checked', false);
+}
+
 function insertPaciensIntoDokirex(pid){
 	$.ajax({
 		type:'POST',

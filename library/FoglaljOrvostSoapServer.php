@@ -35,8 +35,7 @@ class FoglaljOrvostSoapServer {
             ,'Message processing'
         );
 
-        $POST_DATA = isset($GLOBALS['HTTP_RAW_POST_DATA']) ? $GLOBALS['HTTP_RAW_POST_DATA'] : '';
-        $soapServer->service($POST_DATA);
+        $soapServer->service(file_get_contents("php://input"));
         exit();
     }
 
@@ -49,10 +48,7 @@ class FoglaljOrvostSoapServer {
     }
 
     private function checkField($fieldId) {
-        if ($row = sql_fetch_array(sql_query("select id from szurestipusok where id=?", [$fieldId]))) {
-            return true;
-        }
-        return false;
+        return sql_fetch_array(sql_query("select id from szurestipusok where fotid=? and fotid<>0", [$fieldId]));
     }
 
 
@@ -70,8 +66,8 @@ class FoglaljOrvostSoapServer {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
         }
 
-        if (!$this->checkField($fieldOwnId)) {
-            return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldOwnId})");
+        if (!$szuresTipusData = $this->checkField($fieldId)) {
+            return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldId})");
         }
 
         $data = [
@@ -82,7 +78,7 @@ class FoglaljOrvostSoapServer {
             "rinterval" => intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]),
             "telephely" => "",
             "helyszin" => 0,
-            "szurestipus" => 0,
+            "szurestipus" => $szuresTipusData["id"],
             "nev" => (string)$xml->APPOINTMENT["PATIENT_NAME"],
             "email" => (string)$xml->APPOINTMENT["PATIENT_EMAIL"],
             "telefon" => (string)$xml->APPOINTMENT["PATIENT_PHONE"],
@@ -114,7 +110,8 @@ class FoglaljOrvostSoapServer {
 
     private function appointmentMod(SimpleXMLElement $xml) {
         $status = (string)$xml->APPOINTMENT["STATUS"];
-        $appointmentId = (string)$xml->APPOINTMENT["OUTERSYS_ID"];
+        $appointmentId   = (string)$xml->APPOINTMENT["OWN_ID"];
+        $appointmentFoId = (string)$xml->APPOINTMENT["OUTERSYS_ID"];
 
         $fieldOwnId    = (string)$xml->FIELD["OWN_ID"];
         $fieldId       = (string)$xml->FIELD["OUTERSYS_ID"];
@@ -125,16 +122,17 @@ class FoglaljOrvostSoapServer {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
         }
 
-        if (!$this->checkField($fieldOwnId)) {
-            return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldOwnId})");
+        if (!$szuresTipusData = $this->checkField($fieldId)) {
+            return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldId})");
         }
 
-        if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where fofid=? and fofid<>0 limit 1", [$appointmentId]))) {
+        if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and fofid=? limit 1", [$appointmentId, $appointmentFoId]))) {
             if ($status == "L") {
                 //törlés
-                sql_query("delete from foglalasok where fofid=? and fofid<>0", [$appointmentId]);
+                sql_query("delete from foglalasok where id=? and fofid=?", [$appointmentId, $appointmentFoId]);
             } else {
-                $params = [(string)$xml->APPOINTMENT["APPOINTMENT"],
+                $params = [
+                    (string)$xml->APPOINTMENT["APPOINTMENT"],
                     intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]),
                     (string)$xml->APPOINTMENT["PATIENT_NAME"],
                     (string)$xml->APPOINTMENT["PATIENT_EMAIL"],
@@ -142,11 +140,12 @@ class FoglaljOrvostSoapServer {
                     isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".", "-", (string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00",
                     (string)$xml->APPOINTMENT["DESCRIPTION"],
                     $doctorOwnId,
-                    $fieldOwnId,
-                    $appointmentId];
+                    $szuresTipusData["id"],
+                    $appointmentId,
+                    $appointmentFoId
+                ];
 
-                //todo orvos outersys_id ellenőrzése!!!
-                sql_query("update foglalasok set datum=?, rinterval=?, nev=?, email=?, telefon=?, szuldatum=?, megj=?, orvosassigned=?, szurestipusid=? where fofid=? and fofid<>0", $params);
+                sql_query("update foglalasok set datum=?, rinterval=?, nev=?, email=?, telefon=?, szuldatum=?, megj=?, orvosassigned=?, szurestipusid=? where id=? and fofid=?", $params);
             }
 
             return $this->messageOutput("0", $reservationData["id"]);
@@ -180,7 +179,11 @@ class FoglaljOrvostSoapServer {
     }
 
     private function checkRotateHash($hash) {
-        if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d"."$"))) == $hash) {
+        //echo md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d")."$"));
+        //echo " ".$hash;
+        //die;s
+
+        if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d")."$")) == $hash) {
             return true;
         }
         return false;
