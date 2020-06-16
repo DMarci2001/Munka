@@ -127,6 +127,9 @@ class AdminBookingEditor {
                 $this->bookingService->sendToCegAndOrvos($fid,1);
             }
 
+            $foService = new FoglaljOrvostService();
+            $foService->modifyReservation($fid);
+
             echo $this->_showBookingEditor($fid, $_POST["p"]);
             die;
         }

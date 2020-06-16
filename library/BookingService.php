@@ -1440,7 +1440,8 @@ END:VCALENDAR";
 
     public function deleteReservation($id, $code)
     {
-        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
+        //if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
+        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and eljott=0", array($id, $code, $code)))) {
             $foService = new FoglaljOrvostService();
             $foService->deleteReservation($row["id"]);
 
