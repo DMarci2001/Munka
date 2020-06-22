@@ -27,12 +27,12 @@ class BookingDeletePage extends CorePage {
         echo $this->displayFejlec();
 
         $id=round($_GET["id"]);
-        $rk=round($_GET["rk"]);
+        $rk=$_GET["rk"];
 
         if ($row = sql_fetch_array(sql_query("SELECT ".$this->utils->cimLangQuery("helyszin").",sz.megnev AS szurestipus,f.* FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-        WHERE f.id=? and f.rkod=?",array($id, $rk)))) {
+        WHERE f.id=? and (f.rkod=? or f.pass=?)",array($id, $rk, $rk)))) {
             echo "{$webText["kedves"]} {$row["nev"]}!<br>
             <br>
             {$webText["torleskezd"]}:<br/>

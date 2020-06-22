@@ -645,6 +645,9 @@ class Utils {
         if (substr($num,0,2)=="06") {
             $num="36".substr($num,2);
         }
+        if (substr($num, 0, 2) != "36") {
+            $num = "36".$num;
+        }
 
         $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
 
