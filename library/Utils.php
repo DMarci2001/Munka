@@ -653,7 +653,7 @@ class Utils {
 
         try {
             $SeeMe->sendSMS($num, $szoveg);
-        } catch (Exception $e) {
+        } catch (SeeMeGatewayException $e) {
             //print_r($SeeMe->getResult());
             //die();
         }
