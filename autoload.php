@@ -38,6 +38,7 @@ require_once(__DIR__ . "/library/BookingService.php");
 require_once(__DIR__ . "/library/PrintService.php");
 require_once(__DIR__ . "/library/ZeusService.php");
 require_once(__DIR__ . "/library/FoglaljOrvostService.php");
+require_once(__DIR__ . "/library/ReservationExportService.php");
 require_once(__DIR__ . "/library/DokirexService.php");
 
 

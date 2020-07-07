@@ -16,6 +16,13 @@ class Page {
         $this->lang = new Lang();
 
         $this->page = $this->_getActualPage();
+
+        if (isset($_GET["exporttest"])) {
+            $exportService = new ReservationExportService();
+            $exportService->exportReservation(133405);
+            die("ok");
+        }
+
     }
 
     private function _getActualPage() {
