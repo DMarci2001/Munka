@@ -679,6 +679,30 @@ class BookingService {
                 }
             }
         }
+
+        if($oid==0){
+            $mail = new PHPMailer();
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->AddAddress("jnsmobil@gmail.com");
+            $mail->AddBCC("m.gergely9409@gmail.com");
+       
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+
+            //$webTextLocal = $this->lang->getWebTexts($row["rlang"]);
+            $t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Hibás időpontfoglalás szültett! 0-ás orvosassigned!!!" );
+
+            $mbody = "<p>A foglalás azonosítója: {$fid}</p>";
+
+           
+
+            $mail->Subject = $t;
+            $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
+            //$mail->AddAttachment("");
+            $mail->Send();
+        }
+        
         return $oid;
     }
 

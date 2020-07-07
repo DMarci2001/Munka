@@ -189,6 +189,7 @@ class BookingPage extends CorePage {
                 }
             }
 
+
             if (empty($this->errors)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
 
