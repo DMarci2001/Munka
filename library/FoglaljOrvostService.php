@@ -152,7 +152,7 @@ class FoglaljOrvostService {
                     ROTATE_HASH="#rotatehash#" />
                 <APPOINTMENT
                     OWN_ID="'.$reservationData["id"].'"
-                    OUTERSYS_ID="'.$reservationData["fofid"].'"
+                    OUTERSYS_ID="'.$reservationData["fofid"].'" />
             </MESSAGE>';
             return $this->sendMessageToFoglaljOrvost($xml);
         }
