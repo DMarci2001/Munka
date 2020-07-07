@@ -44,8 +44,14 @@ class Lang {
 
     public static function getLangLink($langCode) {
         $link = $_SERVER["PHP_SELF"];
-        if ($_SERVER["QUERY_STRING"]!="") {
-            $link.="?".$_SERVER["QUERY_STRING"]."&";
+        $queryString = $_SERVER["QUERY_STRING"];
+
+        if (substr_count($queryString, "slang=")) {
+            $queryString = substr($queryString, 0, strpos($queryString, "slang=")-1);
+        }
+
+        if ($queryString != "") {
+            $link.="?{$queryString}&";
         } else {
             $link.="?";
         }
@@ -56,7 +62,9 @@ class Lang {
             }
         }
 		
-		if($_GET['page']=="remoteBooking") return;
+		if ($_GET['page']=="remoteBooking") {
+		    return;
+        }
 
         $langLink = "<a class='toplink' style='".($_COOKIE["lang"] == $langCode ? "opacity:1":"opacity:.5")."' href='{$link}lang={$langCode}'>".strtoupper($langCode)."</a> ";
         return $langLink;
