@@ -526,52 +526,25 @@ class BookingPage extends CorePage {
 			$html.= "<div style='text-align:center;'>";
 
             if (!empty($orvosok)) {
-                
-				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+                $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
 				$html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
-				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=0) continue;
-					//itt kéne az új classra az átirányítást beilleszteni:
-					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
-					
-					
-					
-                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
-
-                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
-                        //$html.= "<div>".$orvosData["nev"]."</div>";
+					if($tipusData['webdoktor']!=0) {
+					    continue;
                     }
 					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
-
-                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "</div>";
                 }
 				$html.= "</table>";
 				
 				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
 				$html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
-				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=1) continue;
-					//itt kéne az új classra az átirányítást beilleszteni:
-					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
-					
-					
-					
-                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
-
-                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
-                        //$html.= "<div>".$orvosData["nev"]."</div>";
+					if($tipusData['webdoktor']!=1) {
+					    continue;
                     }
 					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
-
-                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "</div>";
                 }
 				$html.= "</table>";
             }
