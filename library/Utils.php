@@ -597,9 +597,9 @@ class Utils {
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) $favicon="/images/logo_{$subdomain}.png";
 
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-        $htmlout.='<script type="text/javascript" src="//code.jquery.com/jquery-latest.js"></script>';
-        $htmlout.='<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>';
-        $htmlout.= '<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/javascript/jquery/jquery.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/javascript/jquery/jquery-ui.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.='<script type="text/javascript" src="javascript/ajax.js?v={$v}"></script>';
 		
         $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
@@ -616,7 +616,7 @@ class Utils {
             }
         }
 		$htmlout.= '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">';
-        $htmlout.='<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">';
+        $htmlout.='<link rel="stylesheet" href="/javascript/jquery/jquery-ui.css">';
         $htmlout.='<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
