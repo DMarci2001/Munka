@@ -2,11 +2,6 @@
 
 class DokirexService {
 	
-	const LoginEmail    = "ugyfelkapcsolat@hungariamed.hu";
-	const LoginPassword = "HMMadmin12345.";
-	const dbName		= "hungaria";
-	
-	
 	private $testing = true;
     private $bookingService;
 	private $token;
@@ -27,7 +22,7 @@ class DokirexService {
 		
 		//További adatok a service-ből:
 		$params["token"]  = $this->token;
-		$params["dbName"] = self::dbName;
+		$params["dbName"] = Booking_Constants::DokiRex_dbName;
 		
 		//Alapértelmezett adatok beillesztése a paraméterekbe, ha nem lettek volna deklarálva.
 		foreach($this->defaultParams as $index => $value) {
@@ -77,7 +72,7 @@ class DokirexService {
 						"Allampolgarsag"=>"109",
 						"Telefon"=>"0630606922",
 						"Mobiltelefon"=>"0630606922",
-						"dbName"=>self::dbName
+						"dbName"=>Booking_Constants::DokiRex_dbName
 						);
 		
 		$curl = curl_init();
@@ -119,7 +114,7 @@ class DokirexService {
 		CURLOPT_FOLLOWLOCATION => true,
 		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 		CURLOPT_CUSTOMREQUEST => "POST",
-		CURLOPT_POSTFIELDS => array('Email' => self::LoginEmail,'Password' => self::LoginPassword),
+		CURLOPT_POSTFIELDS => array('Email' => Booking_Constants::DokiRex_Email,'Password' => Booking_Constants::DokiRex_Password),
 		));
 
 		$response = curl_exec($curl);

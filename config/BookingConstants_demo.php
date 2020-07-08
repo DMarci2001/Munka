@@ -39,6 +39,10 @@ class Booking_Constants {
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
     const FO_IFC_NAME               = "HUNGARIAMED_3608";
 
+    const DokiRex_Email             = "ugyfelkapcsolat@hungariamed.hu";
+	const DokiRex_Password          = "HMMadmin12345.";
+	const DokiRex_dbName		    = "hungaria";
+
     //simplePay public sandbox
     //const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";
     //const SIMPLEPAY_MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";

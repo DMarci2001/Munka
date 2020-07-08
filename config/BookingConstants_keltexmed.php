@@ -39,6 +39,10 @@ class Booking_Constants {
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
     const FO_IFC_NAME               = "HUNGARIAMED";
 
+    const DokiRex_Email             = "admin@keltexmed.hu";
+	const DokiRex_Password          = "KELTEXadmin123.";
+	const DokiRex_dbName		    = "BE602C35";
+
     //simplePay public sandbox
     //const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";
     //const SIMPLEPAY_MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
