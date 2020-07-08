@@ -1387,13 +1387,22 @@ class BookingService
                 } else {
                     $mail->AddAddress($row["cegemail"]);
                     if ($row["hmedemail"] != "") {
-                        $mail->AddAddress($row["hmedemail"]);
+                        //Kiveszem a fölösleges szóközöket:
+                        $row["hmedmail"] = str_replace(" ", "", $row["hmedmail"]);
+                        //Szét bontom a stringet, tömbbé konvertálom:
+                        $addresses = explode(",", $row["hmedmail"]);
+                        //Loopba rakom és meghívom az addAddress funkciót, hogy egyesével beillesszem a címzetteket:
+                        foreach ($addresses as $address) {
+                            $mail->AddAddress($address);
+                        }
                     }
                 }
                 $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
                 $mail->IsHTML(true);
+                $mail->CharSet = "UTF-8";
 
-                $t = iconv("UTF-8", "ISO-8859-2", "{$row["cegnev"]} - időpont regisztráció");
+                $t = "{$row["cegnev"]} - időpont regisztráció";
+                //$t = iconv("UTF-8", "ISO-8859-2", "{$row["cegnev"]} - időpont regisztráció");
 
                 $mbody = "Név: {$row["nev"]}<br>";
                 $mbody .= "Cég: {$row["cegnev"]}<br>";
@@ -1410,7 +1419,8 @@ class BookingService
                 if ($row["orvosnev"] != "" && $row["orvosemail"] != "") $mbody .= "Értesített orvos: {$row["orvosnev"]} ({$row["orvosemail"]})";
 
                 $mail->Subject = $t;
-                $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
+                //$mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
+                $mail->Body = $mbody;
                 $mail->Send();
             }
         }
