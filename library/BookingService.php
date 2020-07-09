@@ -1388,9 +1388,9 @@ class BookingService
                     $mail->AddAddress($row["cegemail"]);
                     if ($row["hmedemail"] != "") {
                         //Kiveszem a fölösleges szóközöket:
-                        $row["hmedmail"] = str_replace(" ", "", $row["hmedmail"]);
+                        $row["hmedemail"] = str_replace(" ", "", $row["hmedemail"]);
                         //Szét bontom a stringet, tömbbé konvertálom:
-                        $addresses = explode(",", $row["hmedmail"]);
+                        $addresses = explode(",", $row["hmedemail"]);
                         //Loopba rakom és meghívom az addAddress funkciót, hogy egyesével beillesszem a címzetteket:
                         foreach ($addresses as $address) {
                             $mail->AddAddress($address);
