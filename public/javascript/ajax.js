@@ -70,7 +70,7 @@ function showIdoPontValasztoV3(honnan, orvosid, szurestipus,helyszin) {
     $.ajax({
         method:"GET",
         url:"index.php",
-        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin, szurestipus, selectoid:orvosid, neme:neme, javascript:"showIdoPontValasztoV3" }
+        data:{ showidopontvalasztov2:"1", honnan:honnan, helyszin:helyszin, szurestipus:szurestipus, selectoid:orvosid, neme:neme, javascript:"showIdoPontValasztoV3" }
     }).done(function(data) {
 		console.log(data);
         if (data.error != "") {
