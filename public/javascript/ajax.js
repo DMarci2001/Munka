@@ -143,7 +143,7 @@ function chooseIdoPont(idopont,orvos,helyszin,szurestipusid) {
     $.ajax({
         method:"POST",
         url:"index.php",
-        data:{ checkrendeles:"1", idopont:idopont, helyszin, taj:$("#tajszam").val(), szurestipusid,orvos:orvos }
+        data:{ checkrendeles:"1", idopont:idopont, helyszin:helyszin, taj:$("#tajszam").val(), szurestipusid,orvos:orvos }
     }).done(function(msg) {
         if (msg=="ok") {
             $("#datum").css("background-image","");
