@@ -511,12 +511,10 @@ function setQuestions(orvosid,szurestipus){
 	$.ajax({
 		type:'post',
 		url:'index.php?page=remotebooking',
-		data:{setQuestions:true,orvosid,szurestipus},
+		data:{setQuestions:true,orvosid:orvosid,szurestipus:szurestipus},
 		success:function(data){
 			$('#questions').html(data.questions);
 			$('#idopontvalasztodiv').html('');
-			console.log(data.reservationstatus);
-			console.log(orvosid);
 			if(data.reservationstatus==0){
 				$('#idopontvalasztotr').html('<td>Időpont:* </td><td id="idopontvalasztotd"></td>');
 				$('#idopontvalasztotd').html(data.bookingselector);
