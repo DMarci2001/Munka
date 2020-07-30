@@ -163,7 +163,7 @@ class AdminUtils
             $error = array();
             $dokirexService = new DokirexService();
 
-            $required = array("Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon","Email");
+            $required = array("Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon");
 
             $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.szuldatum AS 'SzuletesiDatum', fogl.taj AS 'Azonosito', fogl.neme AS 'Nem', 
 													  fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', fogl.nev AS 'SzuletesiNev', 
