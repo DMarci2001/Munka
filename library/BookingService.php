@@ -586,11 +586,15 @@ class BookingService
 
     private function getSzunnapok()
     {
-        $szunnapok[] = "";
+        $szunnapok = [];
         $rows = sql_fetch_array(sql_query("select * from settings"));
         $n = explode(",", $rows["szunnapok"]);
         for ($i = 0; $i < count($n); $i++) {
-            $szunnapok[] = trim($n[$i]);
+            $nap = trim($n[$i]);
+            if (isset($_SESSION["helyszindata"]) && $_SESSION["helyszindata"]["id"] == 114) {
+                continue;
+            }
+            $szunnapok[] = $nap;
         }
         return $szunnapok;
     }
