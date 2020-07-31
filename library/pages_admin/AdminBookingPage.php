@@ -356,6 +356,10 @@ class AdminBookingPage extends AdminCorePage
                             $addIdopontJavaScript = "setSelectedInterval(0);".$addIdopontJavaScript;
                         }
 
+                        if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+                            $addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$addIdopontJavaScript} } return false;";
+                        }
+
                         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join orvosok o on o.id=f.orvosassigned

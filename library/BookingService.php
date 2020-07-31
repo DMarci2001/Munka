@@ -1780,7 +1780,7 @@ END:VCALENDAR";
 
             $settings = new Booking_Settings();
             if (in_array(date("Y-m-d", strtotime($_GET["addidopont"])), $settings->getMunkaszunetiNapok())) {
-                die("errorMunkaszüneti napra nem lehet foglalni!");
+                //die("errorMunkaszüneti napra nem lehet foglalni!");
             }
 
             sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $orvosId, $_GET["addidopont"]));
