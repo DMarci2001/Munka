@@ -1115,7 +1115,7 @@ function selectFolder(e) {
 	//iframe.src = iframe.src;
 }*/
 
-function syncFoglalasDataToUser(fogl){
+function syncFoglalasDataToUser(fogl, pass){
     var data = $("#iform").serialize()+"&syncFoglalasDataToUser=1";
     $.ajax({
         url:'index.php',
@@ -1125,7 +1125,8 @@ function syncFoglalasDataToUser(fogl){
             if (data.error != "") {
                 alert(data.error);
             } else {
-                $('input[name="paciensid"]').val(data.userId);
+                showIdopontEditor("booking", pass, fogl);
+                //$('input[name="paciensid"]').val(data.userId);
             }
         }
     });
