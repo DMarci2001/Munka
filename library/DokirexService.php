@@ -89,9 +89,12 @@ class DokirexService {
 						
 						"dbName"=>Booking_Constants::DokiRex_dbName
 						);
+
+		echo "<pre>";
+		print_r($params);
+		echo "</pre>";
 		
 		$curl = curl_init();
-
 		curl_setopt_array($curl, array(
 		CURLOPT_URL => "api.dokirex.hu/insertPaciens",
 		CURLOPT_RETURNTRANSFER => true,
