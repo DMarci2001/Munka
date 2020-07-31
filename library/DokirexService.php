@@ -68,7 +68,7 @@ class DokirexService {
 						"SzuletesiDatum"=>"1994-09-23",
 						"SzuletesiHely" => "Vác",
 						"AnyjaNeve" => "Kovács Ildikó",
-						"NemID" => '0',
+						"NemID" => '3',
 						"SzuletesiNev"=>"Márton Gergely",
 						"AllampolgarsagID"=>'109',
 						"Telefon"=>"0630606922",
