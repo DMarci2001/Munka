@@ -82,7 +82,7 @@ class DokirexService {
 						"KozgyogyIg"=>null,
 						"KozgyogySzam"=>null,
 						"FelvevoID"=>'3',
-						"UtolsomodositoID"=>'3',
+						"UtolsoModositoID"=>'3',
 						
 						
 						
