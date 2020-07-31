@@ -2,7 +2,7 @@
 
 class Booking_Settings
 {
-    private $munkaszunetiNapok;
+    private $munkaszunetiNapok      = [];
 
     public $honaptext               = array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
     public $hetnap                  = array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
@@ -18,7 +18,13 @@ class Booking_Settings
     public function __construct()
     {
         $rows = sql_fetch_array(sql_query("select * from settings"));
-        $this->munkaszunetiNapok = explode(",",$rows["szunnapok"]);
+        $munkaszunetiNapok = explode(",",$rows["szunnapok"]);
+        foreach ($munkaszunetiNapok as $nap) {
+            if (isset($_SESSION["helyszindata"]) && $_SESSION["helyszindata"]["id"] == 114) {
+                continue;
+            }
+            $this->munkaszunetiNapok[] = $nap;
+        }
 
         $GLOBALS["honaptext"] = $this->honaptext;
         $GLOBALS["hetnap"] = $this->hetnap;
