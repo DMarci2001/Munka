@@ -32,9 +32,10 @@ class DokirexService {
 		}
 		
 		$curl = curl_init();
-
+		//Régi: insertUpdatePaciens
+		//Új: insertPaciens
 		curl_setopt_array($curl, array(
-		CURLOPT_URL => "api.dokirex.hu/insertUpdatePaciens",
+		CURLOPT_URL => "api.dokirex.hu/insertPaciens",
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING => "",
 		CURLOPT_MAXREDIRS => 10,
@@ -61,24 +62,38 @@ class DokirexService {
 	public function test_run() {
 		
 		$params = array("token"=>$this->token,
-						"Nev"=>"Márton Gergely",
+						"Nev"=>"Teszt páciens",
+						"Azonosito"=>"0123456789",
+						"AzonositoTipusID" => 2,
 						"SzuletesiDatum"=>"1994-09-23",
-						"Azonosito"=>"0123456789234",
-						"Nem"=>"3",
+						"SzuletesiHely" => "Vác",
+						"Anyjaneve" => "Kovács Ildikó",
+						"NemID" => 0,
+						"SzuletesiNev"=>"Márton Gergely",
+						"Allampolgarsag"=>109,
+						"Telefon"=>"0630606922",
+						"Mobiltelefon"=>"0630606922",
 						"Iranyitoszam"=>"2162",
 						"Telepules"=>"Őrbottyán",
 						"Cim"=>"Puskás Ferenc u. 74",
-						"SzuletesiNev"=>"Márton Gergely",
-						"Allampolgarsag"=>"109",
-						"Telefon"=>"0630606922",
-						"Mobiltelefon"=>"0630606922",
+						"Email"=>"m.gergely9409@gmail.com",
+						"SzigSzam"=>null,
+						"KozgyogyTol"=>null,
+						"KozgyogyIg"=>null,
+						"KozgyogySzam"=>null,
+						"FelvevoID"=>3,
+						"UtolsomodositoID"=>3,
+						
+						
+						
+						
 						"dbName"=>Booking_Constants::DokiRex_dbName
 						);
 		
 		$curl = curl_init();
 
 		curl_setopt_array($curl, array(
-		CURLOPT_URL => "api.dokirex.hu/insertUpdatePaciens",
+		CURLOPT_URL => "api.dokirex.hu/insertPaciens",
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING => "",
 		CURLOPT_MAXREDIRS => 10,

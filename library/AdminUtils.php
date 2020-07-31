@@ -165,10 +165,14 @@ class AdminUtils
 
             $required = array("Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon");
 
-            $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.szuldatum AS 'SzuletesiDatum', fogl.taj AS 'Azonosito', fogl.neme AS 'Nem', 
-													  fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', fogl.nev AS 'SzuletesiNev', 
-													  fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon', fogl.email AS 'Email'
-											   FROM foglalasok fogl WHERE id=?", array($_POST["pid"])));
+            $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', 2 AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
+                                                        fogl.szulhely AS 'SzuletesiHely', fogl.anyjaneve AS 'AnyjaNeve', CASE WHEN fogl.neme = 0 THEN 3 ELSE fogl.neme END AS 'NemID',
+                                                        fogl.nev AS 'SzuletesiNev', 109 AS 'AllampolgarsagID', fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon',
+													    fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', 
+													    fogl.email AS 'Email', null AS 'SzigSzam', null AS 'KozgyogyTol', null AS 'KozgyogyIg', null AS 'KozgyogySzam', 
+                                                        3 AS 'FelvevoID', 3 AS 'UtolsoModositoID'
+                                                        
+											    FROM foglalasok fogl WHERE id=?", array($_POST["pid"])));
 
 
             foreach ($params as $index => $value) {
@@ -215,6 +219,13 @@ class AdminUtils
             $html .= "</div>";
 
             die($html);
+        }
+
+        if(isset($_GET["dokirexTest"]) && $_GET["dokirexTest"]=="buHL4tjsVkXt9K4M"){
+            //Dokirex tesztelés response outputtal
+            $dokirexService = new DokirexService();
+            echo $response = $dokirexService->test_run();
+            die();
         }
     }
 
