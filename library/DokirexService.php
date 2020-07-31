@@ -64,13 +64,13 @@ class DokirexService {
 		$params = array("token"=>$this->token,
 						"Nev"=>"Teszt páciens",
 						"Azonosito"=>"0123456789",
-						"AzonositoTipusID" => 2,
+						"AzonositoTipusID" => '2',
 						"SzuletesiDatum"=>"1994-09-23",
 						"SzuletesiHely" => "Vác",
-						"Anyjaneve" => "Kovács Ildikó",
-						"NemID" => 0,
+						"AnyjaNeve" => "Kovács Ildikó",
+						"NemID" => '0',
 						"SzuletesiNev"=>"Márton Gergely",
-						"Allampolgarsag"=>109,
+						"AllampolgarsagID"=>'109',
 						"Telefon"=>"0630606922",
 						"Mobiltelefon"=>"0630606922",
 						"Iranyitoszam"=>"2162",
@@ -81,8 +81,8 @@ class DokirexService {
 						"KozgyogyTol"=>null,
 						"KozgyogyIg"=>null,
 						"KozgyogySzam"=>null,
-						"FelvevoID"=>3,
-						"UtolsomodositoID"=>3,
+						"FelvevoID"=>'3',
+						"UtolsomodositoID"=>'3',
 						
 						
 						
