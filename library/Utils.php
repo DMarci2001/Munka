@@ -128,7 +128,6 @@ class Utils {
                 sql_query("update foglalasok set eljottmail=1 where id=?", array($foglalasData["id"]));
             }
         }
-        return;
     }
 
     public function sendUserSMSKod($userId)
@@ -281,67 +280,6 @@ class Utils {
         }
 
         return $szabad;
-    }
-
-    function szurestipusvalaszto($helyszinid, $selected = 0, $onlyselected = 0)
-    {
-        $tipusok = array();
-
-        $rest = sql_query("select * from szurestipusok");
-        while ($rowt = sql_fetch_array($rest)) {
-            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
-        }
-
-        $addJava = "";
-        if ($_SESSION["helyszindata"]["id"] == 11) {
-            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
-        }
-
-
-        $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();showTipusMegj(this.value);{$addJava}'>";
-        $htmlout .= "<option value='0'>{$webText["valasszon"]}!</option>";
-
-        /*
-        $res=sql_query("SELECT t.* FROM orvos_beosztas b
-            LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-            LEFT JOIN szurestipusok t ON t.`id`=o.`tipusid`
-            WHERE b.helyszinid='".addslashes($helyszinid)."'  AND b.cegid='{$_SESSION["helyszindata"]["id"]}' AND t.`megnev` IS NOT NULL
-            GROUP BY t.`id`");
-
-
-        if ($onlyselected==0) $htmlout.="<option value='0'>Válassz!</option>";
-        while ($rowt=sql_fetch_array($res)) {
-            $tipusok[]=$rowt["id"];
-            //$htmlout.="<option value='{$rowt["id"]}'".($selected==$rowt["id"]?" selected":"").">{$rowt["megnev"]}</option>";
-        }
-        */
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.helyszinid='" . addslashes($helyszinid) . "' AND b.cegid='{$_SESSION["helyszindata"]["id"]}'");
-        while ($row = sql_fetch_array($res)) {
-            $ta = explode("|", $row["tipusok"]);
-            for ($i = 0; $i < count($ta); $i++) {
-                if (trim($ta[$i]) != "" && !in_array($ta[$i], $tipusok)) {
-                    $tipusok[] = $ta[$i];
-                }
-            }
-        }
-
-        if (isset($tipusok)) {
-            for ($i = 0; $i < count($tipusok); $i++) {
-                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
-            }
-            if (isset($tipusdisplay)) {
-                asort($tipusdisplay);
-                foreach ($tipusdisplay as $key => $value) {
-                    if ($onlyselected == 1 && $key != $selected) continue;
-                    if (trim($value) == "") continue;
-                    $htmlout .= "<option value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
-                }
-            }
-        }
-
-        $htmlout .= "</select>";
-        return $htmlout;
     }
 
     public function showPaciensFiles()
@@ -589,7 +527,7 @@ class Utils {
         }
         */
 
-        $v = "ver".date("Ymd");
+        $v = "ver".date("YmdH");
 
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
         $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
@@ -1058,9 +996,9 @@ class Utils {
 		$mbody.= "<p style='font-family:calibri'>Szeretnénk emlékeztetni, hogy <strong>".date("Y.m.d H:i",strtotime($data["datum"]))."-ra</strong> időpontfoglalása van,<br><br>";
 		
 		$mbody.= "<table style='font-family:calibri'>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátás megnevezése:</td><td style='padding:0 10'>{$data["megnev"]},</td></tr>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Helyszín:</td><td style='padding:0 10'>{$data["cim"]},</td></tr>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátó orvos vagy<br> rendelő megnevezése:</td><td style='padding:0 10' valign='middle'>{$data["nev"]}</td></tr>";
+		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátás megnevezése:</td><td style='padding:0px 10px'>{$data["megnev"]},</td></tr>";
+		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Helyszín:</td><td style='padding:0px 10px'>{$data["cim"]},</td></tr>";
+		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátó orvos vagy<br> rendelő megnevezése:</td><td style='padding:0px 10px' valign='middle'>{$data["nev"]}</td></tr>";
 		$mbody.= "</table>";
 		
 		$mbody.= "<br><br>";

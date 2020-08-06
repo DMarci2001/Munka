@@ -1520,14 +1520,11 @@ END:VCALENDAR";
             $foService = new FoglaljOrvostService();
             $foService->deleteReservation($row["id"]);
 
-            if (intval($id) != 135616) {
-                sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
-                sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
-                sql_query("delete from foglalasok WHERE parentid=? and parentid<>0", array($row["id"]));
-                sql_query("delete from fizkapcs where fid=?", array($row["id"]));
-            }
+            sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
+            sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
+            sql_query("delete from foglalasok WHERE parentid=? and parentid<>0", array($row["id"]));
+            sql_query("delete from fizkapcs where fid=?", array($row["id"]));
         }
-        return;
     }
 
 
@@ -1581,7 +1578,7 @@ END:VCALENDAR";
 
         if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {
             sql_query("update beutalok set foglalasid=? where id=?", array($fid, $_SESSION["beutaloid"]));
-            sql_query("update fogalalasok set megj=? where id=?", array($rowb["megj"], $fid));
+            sql_query("update foglalasok set megj=? where id=?", array($rowb["megj"], $fid));
             unset($_SESSION["beutaloid"]);
         }
 
@@ -1778,11 +1775,6 @@ END:VCALENDAR";
                 }
             }
 
-            $settings = new Booking_Settings();
-            if (in_array(date("Y-m-d", strtotime($_GET["addidopont"])), $settings->getMunkaszunetiNapok())) {
-                //die("errorMunkaszüneti napra nem lehet foglalni!");
-            }
-
             sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $orvosId, $_GET["addidopont"]));
 
             $fid = sql_insert_id();
@@ -1804,7 +1796,6 @@ END:VCALENDAR";
 
     public function removeIdopont($id, $code)
     {
-        //todo: kód bevezetése hiányzik innen
         if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", array($id, $code)))) {
             logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", print_r($_POST, true));
             $this->deleteReservation($id, $code);

@@ -178,7 +178,7 @@ class AdminBookingPage extends AdminCorePage
         }
 
         echo "<div id='elojegyzestable'>".$this->showElojegyzesTable($this->setDay)."</div>";
-        echo "<div id='idoponteditor' style='position:fixed;bottom:0px;right:0px;background:#e0e0e0;display:none;'></div>";
+        echo "<div id='idoponteditor'></div>";
     }
 
 
