@@ -100,7 +100,7 @@ class FoglaljOrvostService {
                     APPOINTMENT="'.$reservationData["datum"].'"
                     STATUS="'.$this->getReservationStatus($reservationData).'"
                     APPOINTMENT_LONG="'.$reservationData["rinterval"].'"
-                    DESCRIPTION="'.$reservationData["megj"].'" />
+                    DESCRIPTION="'.$this->description($reservationData).'" />
             </MESSAGE>';
 
             $result = $this->sendMessageToFoglaljOrvost($xml);
@@ -134,7 +134,7 @@ class FoglaljOrvostService {
                     APPOINTMENT="'.$reservationData["datum"].'"
                     STATUS="'.$this->getReservationStatus($reservationData).'"
                     APPOINTMENT_LONG="'.$reservationData["rinterval"].'"
-                    DESCRIPTION="'.$reservationData["megj"].'" />
+                    DESCRIPTION="'.$this->description($reservationData).'" />
             </MESSAGE>';
             return $this->sendMessageToFoglaljOrvost($xml);
         }
@@ -470,4 +470,21 @@ class FoglaljOrvostService {
     }
 
 
+    private function description($reservationData) {
+        $description = "";
+
+        if (trim($reservationData["nev"]) != "") {
+            $description.= "név: {$reservationData["nev"]}\n";
+        }
+
+        if (trim($reservationData["telefon"]) != "") {
+            $description.= "telefon: {$reservationData["telefon"]}\n";
+        }
+
+        if (trim($reservationData["megj"]) != "") {
+            $description.= "megjegyzés: {$reservationData["megj"]}\n";
+        }
+
+        return $description;
+    }
 }

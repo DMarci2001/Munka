@@ -142,15 +142,15 @@ class AdminBookingEditor {
             if (empty($_REQUEST["taj"])) {
                 $error .= "A TAJ szám megadása kötelező!\n";
             }
-            if (empty($_REQUEST["torzsszam"])) {
-                $error .= "A törzsszám megadása kötelező!\n";
-            }
+            //if (empty($_REQUEST["torzsszam"])) {
+            //    $error .= "A törzsszám megadása kötelező!\n";
+            //}
             if (empty($_REQUEST["nev"])) {
                 $error .= "A név megadása kötelező!\n";
             }
-            if (empty($_REQUEST["email"])) {
-                $error .= "Az email cím megadása kötelező!\n";
-            }
+            //if (empty($_REQUEST["email"])) {
+            //    $error .= "Az email cím megadása kötelező!\n";
+            //}
             if (empty($_REQUEST["munkakor"])) {
                 $error .= "A munkakör megadása kötelező!\n";
             }
@@ -159,17 +159,20 @@ class AdminBookingEditor {
             }
 
             $userId = 0;
+            if (!isset($_REQUEST["torzsszam"])) {
+                $_REQUEST["torzsszam"] = "";
+            }
 
             if (empty($error)) {
                 $_REQUEST["szuldatum"] = $_REQUEST["szuldatumev"]."-".substr("00".$_REQUEST["szuldatumho"],-2)."-".substr("00".$_REQUEST["szuldatumnap"],-2);
 
-                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj=? OR email=?", array($_REQUEST['taj'], $_REQUEST['email'])))) {
+                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj=? OR szuldatum=?", array($_REQUEST['taj'], $_REQUEST['szuldatum'])))) {
                     sql_query("UPDATE felhasznalok set taj=?, cegid=?, email=?, nev=?, telefon=?, munkakor=?, irsz=?, varos=?, utca=?, szulhely=?, anyjaneve = ?, szuldatum=?, torzsszam=? WHERE  id=?",
-                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['tel'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam'], $userInfo['id']));
+                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['telefon'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam'], $userInfo['id']));
                     $userId = $userInfo["id"];
                 } else {
                     sql_query("INSERT INTO felhasznalok SET taj=?, cegid=?, email=?, nev=?, telefon=?, munkakor=?, irsz=?, varos=?, utca=?, szulhely=?, anyjaneve=?, szuldatum=?, torzsszam=?, validated=1",
-                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['tel'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam']));
+                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['telefon'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam']));
                     $userId = sql_insert_id();
                 }
                 sql_query("UPDATE foglalasok SET paciensid=? WHERE id=?", array($userId, $_REQUEST['fid']));
@@ -220,9 +223,7 @@ class AdminBookingEditor {
                 */
             }
 
-            header('Content-Type: application/json');
-            echo json_encode(array("error" => $error, "userId" => $userId));
-            die();
+            $this->utils->jsonOut(["error" => $error, "userId" => $userId]);
         }
 
 
@@ -264,12 +265,26 @@ class AdminBookingEditor {
                 left join cegek c on c.id=f.cegid
                 where f.id=? and f.pass=?",array($id, $p)))) {
 
-            $html.= "<div style='font-size:16px;font-weight:bold;padding:10px;background:#555;color:#fff;' title='Foglalás ideje:{$row['regdatum']}'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]} ";
+            $html.= "<div style='padding:10px;background:#555;color:#fff;'><span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]}</span>";
+            if ($row["foglalta"]!="") {
+                $html.= "<div>Foglalta: {$row["foglalta"]}</div>";
+            }
+
             $html.= "<div style='margin-top:4px;'>";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
             $html.= "<a class='middlebutton' href='#' onClick='startAutoFill({$row["id"]},\"{$row["pass"]}\");return false;'>mezők kitöltése</a> ";
-            $html.= "<a class='middlebutton' href='#' onClick='syncFoglalasDataToUser({$row['id']});return false;'>szinkronizálás</a> ";
+
+            if (!empty(trim($row["taj"])) && !empty($row["szuldatum"])) {
+                $btext = "paciens létrehozása";
+                $bstyle = "";
+                if ($row["paciensid"] != 0) {
+                    $btext = "paciens szinkronizálása";
+                    $bstyle= "background:#0a0;";
+                }
+                $html.= "<a class='middlebutton' style='{$bstyle}' href='#' onClick='syncFoglalasDataToUser({$row['id']},\"{$row["pass"]}\");return false;'>{$btext}</a> ";
+            }
+
             $html.= "</div>";
             $html.= "</div>";
             $html.= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
@@ -355,7 +370,6 @@ class AdminBookingEditor {
             $html.= "<tr><td width='60'>Munkakör:</td><td><input class='inputbox' style='width:200px;' type='text' name='munkakor' value='{$row["munkakor"]}'></td><td width='60'>Irsz:</td><td><input placeholder='Irsz' class='inputbox' style='width:40px;' type='text' name='irsz' value='{$row["irsz"]}'> <input placeholder='Város' class='inputbox' style='width:150px;' type='text' name='varos' value='{$row["varos"]}'></td></tr>";
             $html.= "<tr><td width='60'>Szül. dátum:</td><td>".$this->utils->datumSelector($row["szuldatum"],"szuldatum")."</td><td width='60'>Utca:</td><td><input class='inputbox' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
             $html.= "<tr><td width='60'>Szül. hely:</td><td><input class='inputbox' style='width:200px;' type='text' name='szulhely' value='{$row["szulhely"]}'></td><td width='60'>Naplószám:</td><td><input class='inputbox' style='width:200px;' type='text' name='nszam' value='{$row["nszam"]}'></td></tr>";
-            //$html.= "<tr><td width='60'>Anyja neve:</td><td><input class='inputbox' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td><td width='60'></td><td>".($row["ertesitve"]==1?" (orv. értesítve)":"")." <input type='checkbox' name='eljott' value='1' ".($row["eljott"]==1?"checked":"")." /> eljött <input type='checkbox' name='voltnalunk' value='1' ".($row["voltnalunk"]==1?"checked":"")." /> volt már</td></tr>";
             $html.= "<tr><td width='60'>Anyja neve:</td><td><input class='inputbox' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td><td width='60'>Kupon:</td><td><input type = 'text' style='width:140px' class='inputbox' name='kuponkod' value='{$result['kuponkod']}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"".date("Y-m-d",strtotime($row["datum"]))."\",{$row['szurestipusid']});return false'/></td></tr>";
             $html.= "<tr><td width='60'></td><td>".($row["ertesitve"]==1?" (orv. értesítve)":"")." <input type='checkbox' name='eljott' value='1' ".($row["eljott"]==1?"checked":"")." /> eljött <input type='checkbox' name='voltnalunk' value='1' ".($row["voltnalunk"]==1?"checked":"")." /> volt már </td><td></td><td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td></tr>";
             //$html.= "<tr><td width='60'>Munkáltató:</td><td><input class='inputbox' style='width:200px;' type='text' name='munkaltato' value='{$_POST["munkaltato"]}'></td></tr>";
@@ -411,9 +425,6 @@ class AdminBookingEditor {
             $html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
             $html.= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
 
-            if ($row["foglalta"]!="") {
-                $html.= "&nbsp;&nbsp;&nbsp;Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
-            }
             $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
 			$html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
 			$html.="<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex' style='background:#008080'>&nbsp;&nbsp;";

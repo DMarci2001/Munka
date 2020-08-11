@@ -178,7 +178,7 @@ class AdminBookingPage extends AdminCorePage
         }
 
         echo "<div id='elojegyzestable'>".$this->showElojegyzesTable($this->setDay)."</div>";
-        echo "<div id='idoponteditor' style='position:fixed;bottom:0px;right:0px;background:#e0e0e0;display:none;'></div>";
+        echo "<div id='idoponteditor'></div>";
     }
 
 
@@ -354,6 +354,10 @@ class AdminBookingPage extends AdminCorePage
                             $addIdopontJavaScript = "setSelectedInterval({$binterval});".$addIdopontJavaScript;
                         } else {
                             $addIdopontJavaScript = "setSelectedInterval(0);".$addIdopontJavaScript;
+                        }
+
+                        if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+                            $addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$addIdopontJavaScript} } return false;";
                         }
 
                         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 

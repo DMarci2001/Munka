@@ -74,7 +74,7 @@ class AdminCalendarPage extends AdminCorePage
 
         echo "</div>";
 
-        echo "<div id='idoponteditor' style='position:fixed;bottom:0px;right:0px;background:#e0e0e0;display:none;'></div>";
+        echo "<div id='idoponteditor'></div>";
     }
 
     private function companySelector() {
