@@ -1611,7 +1611,7 @@ END:VCALENDAR";
     public function addSubReservation($data, $parentId)
     {
         if ($this->szuresTipusData["ispack"] == 1) {
-            $map = $this->getPackageAvailabilityForDay($data["datum"]);
+            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])));
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
 
