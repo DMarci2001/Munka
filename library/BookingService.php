@@ -297,7 +297,7 @@ class BookingService
                         if (empty($availableData["error"])) {
                             $buttonTitle = "";
                             $buttonClass = "foglalhatobtn";
-                            $buttonJava = "chooseIdoPont(\"{$nap}\",{$_SESSION["orvosselected"]});return false;";
+                            $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
                         } else {
                             $buttonTitle = "";
                             $buttonClass = "foglaltbtn";
