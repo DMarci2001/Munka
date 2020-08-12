@@ -350,22 +350,24 @@ class AdminBookingPage extends AdminCorePage
                         $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + {$binterval} minute"));
 
                         $addIdopontJavaScript = "addIdopont(\"{$nap} {$ora}\",{$szuresTipus["id"]});return false;";
-                        if ($multiIntervalMode) {
+                        //if ($multiIntervalMode) {
                             $addIdopontJavaScript = "setSelectedInterval({$binterval});".$addIdopontJavaScript;
-                        } else {
-                            $addIdopontJavaScript = "setSelectedInterval(0);".$addIdopontJavaScript;
-                        }
+                        //} else {
+                        //    $addIdopontJavaScript = "setSelectedInterval(0);".$addIdopontJavaScript;
+                        //}
 
                         if (in_array($nap, $settings->getMunkaszunetiNapok())) {
                             $addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$addIdopontJavaScript} } return false;";
                         }
 
+                        $orvosFilter = $orvosIds;
+                        $orvosFilter[] = 0;
+
                         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
-                        where f.datum>=? and f.datum<? and f.helyszinid=? and f.szurestipusid=? {$wfCeg} group by f.id", array($timeFrom, $timeTo, $_SESSION["helyszin"], $szuresTipus["id"])); //
-
+                        where f.datum>=? and f.datum<? and f.helyszinid=? and f.szurestipusid=? {$wfCeg} and f.orvosassigned in (".implode(",", $orvosFilter).") group by f.id", array($timeFrom, $timeTo, $_SESSION["helyszin"], $szuresTipus["id"])); //
 
                         $lastIdopont = "";
                         $foglalasButtonVolt = 0;
@@ -379,7 +381,7 @@ class AdminBookingPage extends AdminCorePage
                             if ($multiIntervalMode) {
                                 if ($rowf["rinterval"] != 0) {
                                     if ($rowf["rinterval"] != $binterval) {
-                                        continue;
+                                        //continue;
                                     }
                                 }
                             }
