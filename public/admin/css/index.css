@@ -1196,3 +1196,8 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	background:#e0e0e0;
 	display:none;
 }
+
+.tdm {
+	display: table-cell;
+	vertical-align: middle;
+}

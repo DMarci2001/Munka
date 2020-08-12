@@ -14,9 +14,14 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (isset($_POST["addszabadsag"])) {
             if ($this->adminUtils->szabadsagJog()) {
-                $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-                sql_query("insert into szabadsag set datumtol=?,datumig=?,oid=?",array($_POST["szabadsagtol"],$_POST["szabadsagig"],$_GET["szerk"]));
-                logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság hozzáadva: ".$_POST["szabadsagtol"]." - ".$_POST["szabadsagig"],print_r($_POST,true));
+                $orvosId = intval($_GET["szerk"]);
+                $rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($orvosId)));
+                sql_query("insert into szabadsag set datumtol=?,datumig=?,oid=?",array($_POST["szabadsagtol"],$_POST["szabadsagig"], $orvosId));
+
+                $foService = new FoglaljOrvostService();
+                $foService->sendSzabadsag();
+
+                logActivity("orvos", $orvosId,"{$rowo["nev"]} szabadság hozzáadva: ".$_POST["szabadsagtol"]." - ".$_POST["szabadsagig"],print_r($_POST,true));
             }
             $_POST["orvosmentes"]=1;
         }
@@ -25,6 +30,10 @@ class AdminDoctorsPage extends AdminCorePage {
             if ($this->adminUtils->szabadsagJog()) {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
                 sql_query("delete from szabadsag where id=? and oid=?",array($_GET["delszabadsag"],$_GET["szerk"]));
+
+                $foService = new FoglaljOrvostService();
+                $foService->deleteSzabadsag($_GET["delszabadsag"]);
+
                 logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
             }
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
@@ -376,6 +385,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     }
                     echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
                 }
+
+                $result = $foService->sendSzabadsag();
+                echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
             } else {
                 echo "hibás lekérdezés";
             }
@@ -745,7 +757,10 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr><td colspan='2'>";
             $ressz=sql_query("select * from szabadsag where oid=? order by datumtol",array($_GET["szerk"]));
             while ($rowsz=sql_fetch_array($ressz)) {
-                echo "<div>{$rowsz["datumtol"]} - {$rowsz["datumig"]} <a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delszabadsag={$rowsz["id"]}' onclick='return confirm(\"Biztos törlöd ezt a szabadság sort?\")'><img src='images/trash.png' title='Sor törlése'/></a></div>";
+                echo "<div style='display:table-row;'>";
+                echo "<div style='display:table-cell;vertical-align:middle;'>{$rowsz["datumtol"]} - {$rowsz["datumig"]}</div>";
+                echo "<div style='display:table-cell;vertical-align:middle;padding-left:5px;'><a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delszabadsag={$rowsz["id"]}' onclick='return confirm(\"Biztos törlöd ezt a szabadság sort?\")'><img src='images/trash.png' title='Sor törlése'/></a></div>";
+                echo "</div>";
             }
             echo "<div><input class='inputbox' style='width:100px;' type='text' name='szabadsagtol' value='' placeholder='-tól dátum'> - <input class='inputbox' style='width:100px;' type='text' name='szabadsagig' value='' placeholder='-ig dátum'> <input type='submit' onClick='return checkSzabiData()' name='addszabadsag' value='+ szabadság hozzáadása'></div>";
             echo "</td></tr>";

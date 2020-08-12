@@ -487,4 +487,81 @@ class FoglaljOrvostService {
 
         return $description;
     }
+
+    public function sendSzabadsag() {
+        if (!Booking_Constants::FO_CONNECTION_ENABLED) {
+            return false;
+        }
+
+        $res = sql_query("SELECT sz.* FROM szabadsag sz
+        LEFT JOIN orvosok o ON o.id = sz.`oid`
+        WHERE o.`foid` <> 0 ORDER BY sz.datumig DESC");
+        while ($row = sql_fetch_array($res)) {
+            print_r($row);
+            return $this->newSzabadsag($row["id"]);
+            //die;
+        }
+    }
+
+    public function deleteSzabadsag($szid) {
+        if (!Booking_Constants::FO_CONNECTION_ENABLED) {
+            return false;
+        }
+
+        if ($szabadsagData = sql_fetch_array(sql_query("select * from szabadsag where id=? and foid<>0", [$szid]))) {
+            $xml = '<?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="#ifcname#"
+                    MESSAGETYPE="APPOINTMENT"
+                    ACTION="DEL"
+                    ROTATE_HASH="#rotatehash#" />
+                <APPOINTMENT
+                    OWN_ID="sz'.$szabadsagData["id"].'"
+                    OUTERSYS_ID="'.$szabadsagData["foid"].'" />
+            </MESSAGE>';
+            return $this->sendMessageToFoglaljOrvost($xml);
+        }
+        return false;
+    }
+
+    public function newSzabadsag($szid) {
+        if ($szabadsagData = sql_fetch_array(sql_query("select sz.*,o.foid as orvosfoid from szabadsag sz left join orvosok o on o.id=sz.oid where sz.id=? and o.foid<>0", [$szid]))) {
+
+            $diff = (strtotime($szabadsagData["datumig"]) - strtotime($szabadsagData["datumtol"])) / 86400;
+            $interval = $diff * 1440 + 1440;
+
+            $xml = '<?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="#ifcname#"
+                    MESSAGETYPE="APPOINTMENT"
+                    ACTION="NEW"
+                    ROTATE_HASH="#rotatehash#" />
+                <DOCTOR
+                    OWN_ID="'.$szabadsagData["oid"].'"
+                    OUTERSYS_ID="'.$szabadsagData["orvosfoid"].'" />
+                <APPOINTMENT
+                    OWN_ID="sz'.$szabadsagData["id"].'"
+                    OUTERSYS_ID="0"
+                    APPOINTMENT="'.$szabadsagData["datumtol"].' 00:00:00"
+                    STATUS="E"
+                    APPOINTMENT_LONG="'.$interval.'"
+                    DESCRIPTION="szabadság" />
+            </MESSAGE>';
+
+            $result = $this->sendMessageToFoglaljOrvost($xml);
+
+            $xml = simplexml_load_string($result);
+            $message = (string)$xml->RETURN["RETMESSAGE"];
+            if (ctype_digit($message)) {
+                sql_query("update szabadsag set foid=? where id=?", [$message, $szid]);
+            }
+
+            return $result;
+        }
+        return false;
+    }
+
+
 }

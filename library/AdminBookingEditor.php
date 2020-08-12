@@ -80,29 +80,24 @@ class AdminBookingEditor {
             }
 
             $request = sql_query("SELECT id FROM felhasznalok WHERE email = '{$_POST['email']}' AND taj = '{$_POST['taj']}' ");
-            if($request->rowCount() > 0 && $alkalmassagi != "")
-            {
+            if($request->rowCount() > 0 && $alkalmassagi != "") {
                 $result = sql_fetch_array( $request );
                 sql_query("UPDATE felhasznalok SET alklejarat = '{$alkalmassagi}' WHERE id = {$result['id']} ");
             }
 
-            if( $_POST['kuponkod'] != "" )
-            {
+            if( $_POST['kuponkod'] != "" ) {
                 $foglalas = sql_fetch_array(sql_query("SELECT fogl.datum, kl.foglalasid, fogl.szurestipusid FROM foglalasok fogl LEFT JOIN kupon_lista kl ON kl.foglalasid = fogl.id WHERE fogl.id = ? ", array( $fid )));
                 $check = kuponCheck($_POST['kuponkod'],3,date("Y-m-d",strtotime($foglalas['datum'])),$foglalas['szurestipusid']);
-                if( $check == "usable")
-                {
+                if( $check == "usable") {
                     $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok WHERE kod = ?", array($_POST['kuponkod'])));
                     sql_query("INSERT INTO kupon_lista SET kuponid = ?, kuponkod = ?, foglalasid = ?, jovahagyta = ?",
                         array( $kupon['id'], $kupon['kod'], $fid, $_SESSION['adminuser']['username'] ));
                 }
             }
 
-            if( $_POST['kuponkod'] == "" )
-            {
+            if( $_POST['kuponkod'] == "" ) {
                 $kupon = sql_query("SELECT * FROM kupon_lista WHERE foglalasid = {$fid}");
-                if( $kupon->rowCount() > 0 )
-                {
+                if( $kupon->rowCount() > 0 ) {
                     $result = sql_fetch_array($kupon);
                     //unlink using:
                     sql_query("DELETE FROM kupon_lista WHERE kuponkod = '{$result['kuponkod']}' AND foglalasid = {$fid} ");
@@ -121,7 +116,6 @@ class AdminBookingEditor {
                 //$rowo=sql_fetch_array(selectOrvosForFoglalas($fid));
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0",array($oid, $fid));
             }
-
 
             if (isset($_POST["foglalasmentesnaptaresertesites2"])) {
                 $this->bookingService->sendToCegAndOrvos($fid,1);
@@ -266,9 +260,18 @@ class AdminBookingEditor {
                 where f.id=? and f.pass=?",array($id, $p)))) {
 
             $html.= "<div style='padding:10px;background:#555;color:#fff;'><span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]}</span>";
+            $html.= "<div style='display: table-row;'>";
             if ($row["foglalta"]!="") {
-                $html.= "<div>Foglalta: {$row["foglalta"]}</div>";
+                $html.= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
             }
+            if (Booking_Constants::FO_CONNECTION_ENABLED) {
+                $foColor = "lightgreen";
+                if ($row["fofid"] == 0) {
+                    $foColor = "red";
+                }
+                $html.= "<div class='tdm' style='padding:2px 0px;'><a onclick='foReservationInfo({$row["id"]},\"{$row["pass"]}\");return false;' href='#' style='color:{$foColor};'>Foglaljorvost info</a></div>";
+            }
+            $html.= "</div>";
 
             $html.= "<div style='margin-top:4px;'>";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";

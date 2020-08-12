@@ -62,6 +62,19 @@ class FoglaljOrvostSoapServer {
         $doctorId      = (string)$xml->DOCTOR["OUTERSYS_ID"];
         $unionCode     = (string)$xml->APPOINTMENT["UNION_AUTHORIZATION_CODE"];
 
+        $reservationDate        = (string)$xml->APPOINTMENT["APPOINTMENT"];
+        $rinterval              = intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]);
+        $patientName            = (string)$xml->APPOINTMENT["PATIENT_NAME"];
+        $patientEmail           = (string)$xml->APPOINTMENT["PATIENT_EMAIL"];
+        $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
+        $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
+        $reservationDescription = (string)$xml->APPOINTMENT["DESCRIPTION"];
+        $locationId             = 1; //jász utca drótozva
+
+        if (empty(trim($patientName))) {
+            $patientName = "nincs név";
+        }
+
         if (!$this->checkDoctor($doctorOwnId)) {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
         }
@@ -74,15 +87,15 @@ class FoglaljOrvostSoapServer {
             "parentid" => 0,
             "paciensid" => 0,
             "cegid" => 0,
-            "datum" => (string)$xml->APPOINTMENT["APPOINTMENT"],
-            "rinterval" => intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]),
+            "datum" => $reservationDate,
+            "rinterval" => $rinterval,
             "telephely" => "",
-            "helyszin" => 0,
+            "helyszin" => $locationId,
             "szurestipus" => $szuresTipusData["id"],
-            "nev" => (string)$xml->APPOINTMENT["PATIENT_NAME"],
-            "email" => (string)$xml->APPOINTMENT["PATIENT_EMAIL"],
-            "telefon" => (string)$xml->APPOINTMENT["PATIENT_PHONE"],
-            "szuldatum" => isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00",
+            "nev" => $patientName,
+            "email" => $patientEmail,
+            "telefon" => $patientPhone,
+            "szuldatum" => $patientBirthDate,
             "szulhely" => "",
             "anyjaneve" => "",
             "neme" => 0,
@@ -90,7 +103,7 @@ class FoglaljOrvostSoapServer {
             "irsz" => "0000",
             "varos" => "",
             "utca" => "",
-            "megj" => (string)$xml->APPOINTMENT["DESCRIPTION"],
+            "megj" => $reservationDescription,
             "munkakor" => "",
             "tudoszuro" => 0,
             "lang" => "hu",
@@ -103,7 +116,7 @@ class FoglaljOrvostSoapServer {
         $fid = $this->bookingService->addReservationQuery($data);
 
         //set foglaljorvost id
-        sql_query("update foglalasok set fofid=? where id=?", [$appointmentId, $fid]);
+        sql_query("update foglalasok set fofid=?, foglalta='foglaljorvost' where id=?", [$appointmentId, $fid]);
 
         return $this->messageOutput("0",$fid);
     }

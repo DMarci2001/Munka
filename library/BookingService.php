@@ -1782,7 +1782,7 @@ END:VCALENDAR";
 
             logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));
 
-            if ($orvosId == 0 && $cegId != 0) {
+            if ($orvosId == 0) {
                 $oid = $this->selectFreeOrvosForIdopont($fid);
                 //echo $oid;
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $fid));

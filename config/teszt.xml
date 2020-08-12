@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="urn:SoapClinic" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body><ns1:EnqueueMessage>
+    <pMessage xsi:type="xsd:string"><?xml version="1.0" encoding="UTF-8"?>
+        <MESSAGE>
+            <MSGINFO
+                    IFCNAME="FOGLALJORVOST"
+                    MESSAGETYPE="APPOINTMENT"
+                    ROTATE_HASH="9a06e8566899f322436a150fde2dbcbd"
+                    ACTION="NEW"/>
+            <APPOINTMENT
+                    OUTERSYS_ID="3154344"
+                    APPOINTMENT="2020-06-10 09:00:00"
+                    APPOINTMENT_LONG="30"
+                    SRV_ID="29"
+                    STATUS="E"
+                    PATIENT_NAME="Tamás János"
+                    PATIENT_EMAIL="jns@jns.hu"
+                    PATIENT_PHONE="+36209996183"
+                    DESCRIPTION="teszt"
+                    UNION="0"/>
+            <DOCTOR
+                    OWN_ID="71"
+                    OUTERSYS_ID="9647"/>
+            <FIELD
+                    OWN_ID="0"
+                    OUTERSYS_ID="12"/>
+        </MESSAGE>
+    </pMessage>
+    <pCallerID xsi:type="xsd:string">HUNGARIAMED_3608</pCallerID>
+</ns1:EnqueueMessage>
+</SOAP-ENV:Body></SOAP-ENV:Envelope>
+
+
+        <?xml version="1.0" encoding="UTF-8"?>
+<MESSAGE>
+<MSGINFO
+        IFCNAME="FOGLALJORVOST"
+        MESSAGETYPE="APPOINTMENT"
+        ACTION="NEW"
+        ROTATE_HASH="dfcff922546f512bc75c15adbf6bab8a" />
+<DOCTOR
+        OWN_ID="1212"
+        OUTERSYS_ID="123232" />
+<FIELD
+        OWN_ID="0"
+        OUTERSYS_ID="18" />
+<APPOINTMENT
+        OUTERSYS_ID="223386"
+        APPOINTMENT="2019-05-05 07:00:00"
+        STATUS="E"
+        APPOINTMENT_LONG="30"
+        SRV_ID="50"
+        PATIENT_NAME="Kiss Géza"
+        PATIENT_PHONE="+36301234567"
+        PATIENT_EMAIL="kiss@geza.hu"
+        DESCRIPTION="próba"
+        UNION="0"
+        UNION_AUTHORIZATION_CODE="UE2342423"
+        DATE_OF_BIRTH="1975.12.11" />
+</MESSAGE>

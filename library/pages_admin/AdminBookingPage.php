@@ -148,6 +148,34 @@ class AdminBookingPage extends AdminCorePage
             die();
         }
 
+        if (isset($_POST["foReservationInfo"])) {
+            if ($foglalasData = sql_fetch_array(sql_query("select f.*,o.foid as oid, sz.fotid as tid  from foglalasok f 
+            left join orvosok o on o.id = f.orvosassigned
+            left join szurestipusok sz on sz.id = f.szurestipusid
+            where f.id=? and f.pass=?", [$_POST["fid"], $_POST["p"]]))) {
+                if ($foglalasData["fofid"] != 0) {
+                    $result = "Foglaljorvost szinkron sikeres!\n\n";
+                    $result.= "Foglalás azonosító: {$foglalasData["fofid"]}\n";
+                } else {
+                    $result = "Foglaljorvost szinkron sikertelen!\n\n";
+                }
+                if ($foglalasData["oid"] == 0) {
+                    $result .= "Orvos nincs összekötve\n";
+                } else {
+                    $result .= "Orvos azonosító: {$foglalasData["oid"]}\n";
+                }
+                if ($foglalasData["tid"] == 0) {
+                    $result.= "Tipus nincs összekötve";
+                } else {
+                    $result.= "Tipus azonosító: {$foglalasData["tid"]}";
+                }
+
+            } else {
+                $result = "error";
+            }
+            $this->utils->jsonOut(["result" => $result]);
+        }
+
     }
 
     public function showPage()
@@ -487,7 +515,9 @@ class AdminBookingPage extends AdminCorePage
     private function _getIntervals($beosztasok) {
         $intervals = [];
         foreach ($beosztasok as $beosztasData) {
-            if (!in_array($beosztasData["binterval"],$intervals)) $intervals[] = $beosztasData["binterval"];
+            if (!in_array($beosztasData["binterval"],$intervals)) {
+                $intervals[] = $beosztasData["binterval"];
+            }
         }
         return $intervals;
     }

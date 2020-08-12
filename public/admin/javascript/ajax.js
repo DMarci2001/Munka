@@ -613,6 +613,16 @@ function cancelFoglalasMove() {
     $("#autofill").slideUp();
 }
 
+function foReservationInfo(id, p) {
+    $.ajax({
+        type:'post',
+        url:'index.php',
+        data:{foReservationInfo:1, page:"booking", fid:id, p:p},
+        success:function(data){
+            alert(data.result);
+        }
+    });
+}
 
 function foglalasMentes(page) {
     var data = $("#iform").serialize()+"&page="+page+"&foglalasmentesnaptar2=1";
