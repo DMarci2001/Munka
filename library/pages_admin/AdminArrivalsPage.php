@@ -190,6 +190,7 @@ class AdminArrivalsPage extends AdminCorePage
             echo "<td nowrap valign=top><div class='{$tc}'>&nbsp;&nbsp;Időpont</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'></div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>Naplószám&nbsp;&nbsp;</div></td>";
+            echo "<td nowrap valign=top><div class='{$tc}'>TAJ szám&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>Paciens&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>Orvos&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>Helyszín&nbsp;&nbsp;</div></td>";
@@ -245,6 +246,7 @@ class AdminArrivalsPage extends AdminCorePage
             echo "<td nowrap valign=top><div class='{$tc}'>&nbsp;&nbsp;".substr($row["datum"],0,16)."&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}' style='width:20px;'>".($row["eljott"]==0?"":"<img height='15' src='images/check.png' alt='' title='Megérkezett' />")."</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>{$row["naploszam"]}&nbsp;&nbsp;</div></td>";
+            echo "<td nowrap valign=top><div class='{$tc}'>{$row["taj"]}&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'><div>";
             if ($row["paciensid"] == 0) {
                 echo "{$row["nev"]}";
