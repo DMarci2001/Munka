@@ -143,6 +143,17 @@ class BookingService
                 }
             }
 
+            if ($_SESSION["helyszindata"]["id"] == 46) {
+                //vodafone
+                $dist = "72 hour";
+                if (date("N") == 4) {
+                    $dist = "96 hour";
+                }
+                if (date("N") == 5) {
+                    $dist = "120 hour";
+                }
+            }
+
             //ennyi napon belül kell foglalni
             $distFullDay = "0 day";
             if ($_SESSION["orvosselected"] == 36) {
