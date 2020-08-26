@@ -274,7 +274,7 @@ class BookingPage extends CorePage {
         }
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
-        echo "<table>";
+        echo "<table cellpadding='3' cellspacing='0'>";
 
         echo $this->utils->dataField("taj");
         //echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
@@ -308,24 +308,13 @@ class BookingPage extends CorePage {
             }
         } else {
             //beutaló nélkül szabad választás
-            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"]);
-
             if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>".$this->_reservationPlaceSelector()."</td></tr>";
-			
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
-            echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
-			
-			//Ide kell bevinni a checkboxot!
-			
-				echo "<tr><td></td><td><div id='tappenzcheck'>";
-				if ($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin'])){
-					echo $webText["betegallomanynyilatkozat"];
-				}
-				echo "</div></td></tr>";
-			
+            echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
+            echo "<tr><td></td><td><div id='tappenzcheck'>".($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin']) ? $webText["betegallomanynyilatkozat"] : "")."</div></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
@@ -418,12 +407,16 @@ class BookingPage extends CorePage {
         $dateVal = substr($_POST["datum"], 0, 16);
 
         $html = "";
-        $html.= "<div style='display:table-cell;vertical-align: middle;'>";
+        $html.= "<div style='display:table;'>";
+        $html.= "<div style='display:table-row;'>";
+        $html.= "<div style='display:table-cell;'>";
         $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
         $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
+        $html.= "</div>";
+        $html.= "</div>";
         return $html;
     }
 

@@ -483,6 +483,13 @@ input:not([type]), input[type="text"] , input[type="password"]{
     background:#0168a6;
 }
 
+.tipusmegj {
+    background:#ff7777;
+    color:#fff;
+    padding:10px;
+    display:inline-block;
+    font-weight:bold;
+}
 
 .foglaltbtn {
     margin-top:3px;

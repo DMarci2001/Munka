@@ -83,21 +83,7 @@ class AdminScreeningsPage extends AdminCorePage
         if (isset($_GET["syncfofields"])) {
             $foService = new FoglaljOrvostService();
             if ($result = $foService->getAllFields()) {
-                $xml = simplexml_load_string($result);
-
-                foreach ($xml->FIELDS->FIELD as $field) {
-                    if (!empty($field["NAME"])) {
-                        //echo $field["OUTERSYS_ID"] . " " . $field["NAME"] . "\n";
-                        sql_query("update szurestipusok set fotid=? where megnev=? and megnev<>''", [$field["OUTERSYS_ID"], $field["NAME"]]);
-
-                        if (isset($field->SERVICES->SERVICE)) {
-                            foreach ($field->SERVICES->SERVICE as $service) {
-                                //todo altipusokkal mi legyen?
-                                //echo "   " . $service["OUTERSYS_ID"] . " " . $service["NAME"] . "\n";
-                            }
-                        }
-                    }
-                }
+                $foService->syncAllFieldsAndServices($result);
             }
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
@@ -308,7 +294,7 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "<input type='hidden' name='tipmegjid{$sor}' value='{$rowb["id"]}'/>";
                 echo "<div>";
                 echo "<select name='tipmegjceg{$sor}' style='width:500px;'>";
-                echo "<option value='0'>Válassz melyik céghez tartozik a megjegyzés!</option>";
+                echo "<option value='0'>Összes céghez megjelenítendő</option>";
                 $resc = sql_query("select * from cegek order by megnev");
                 while ($rowc = sql_fetch_array($resc)) {
                     echo "<option value='{$rowc["id"]}'" . ($rowc["id"] == $rowb["cegid"] ? " selected" : "") . ">{$rowc["megnev"]}</option>";
@@ -402,7 +388,7 @@ class AdminScreeningsPage extends AdminCorePage
         }
 
         echo "<table cellpadding='0' cellspacing='0' border='0'>";
-        echo "<tr><td colspan='7' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px;'>Szűrések</td></tr>";
+        echo "<tr><td colspan='8' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px;'>Szűrések</td></tr>";
         while ($row = sql_fetch_array($res)) {
             $tc = "tcella";
             if (!isset($first)) {
@@ -418,9 +404,6 @@ class AdminScreeningsPage extends AdminCorePage
             if ($row["ispack"] == 1) {
                 echo "&nbsp;&nbsp;<span class='pack_badge'>CSOMAG</span>";
             }
-            if ($row["fotid"] != 0) {
-                echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["fotid"]}'>FOGLALJORVOST</span>";
-            }
             $resa = sql_query("select a.*,c.megnev as cegnev from arak a left join cegek c on c.id=a.cegid where tipusid='{$row["id"]}' and price<>0 and a.csomag=0");
             $arak = "";
             while ($rowa = sql_fetch_array($resa)) {
@@ -432,10 +415,15 @@ class AdminScreeningsPage extends AdminCorePage
 
             echo "</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>" . ($row["tipusid"] != null ? "<div style='background:#f00;color:#fff;padding:0px 3px;font-weight:bold;'>M</div>" : "") . "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:10px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:10px;'>";
+            if ($row["fotid"] != 0) {
+                echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["fotid"]}'>FOGLALJORVOST</span>";
+            }
+            echo "</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
-            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         echo "</table>";
 

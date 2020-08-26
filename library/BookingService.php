@@ -386,14 +386,8 @@ class BookingService
     }
 
 
-    public function checkBookingRestrictionProtocol($helyszinId)
-    {
-        $resk = sql_query("SELECT * FROM foglalas_korlatozasok 
-						   WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", array($helyszinId));
-        if (sql_num_rows($resk) > 0) $a = true;
-        else $a = false;
-
-        return $a;
+    public function checkBookingRestrictionProtocol($helyszinId) {
+        return sql_num_rows(sql_query("SELECT * FROM foglalas_korlatozasok WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", array($helyszinId))) > 0;
     }
 
     public function setRestrictParameters($helyszinId)
@@ -619,6 +613,7 @@ class BookingService
             $_SESSION["orvosselected"] = 0;
         }
 
+        //$html.= print_r(array($this->helyszin, "|{$this->szuresTipus}|", $_SESSION['helyszindata']['id']), true);
         $orvosAvailable = [];
         $res = sql_query("select * from orvos_beosztas b 
                                 left join orvosok o on o.id=b.orvosid 
@@ -888,6 +883,9 @@ class BookingService
                     //if (count($tipusdisplay)==1) $selected=$key;
                     if ($onlyselected == 1 && $key != $selected) continue;
                     if (trim($value) == "") continue;
+                    if (count($tipusdisplay) == 1) {
+                        $selected = $_REQUEST["szurestipus"] = $_POST["szurestipus"] = $key;
+                    }
                     $htmlout .= "<option value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
                 }
             }
@@ -904,13 +902,13 @@ class BookingService
     }
 
 
-    public function getTipusMegj($cegid, $tid, $helyszinId = 1)
-    {
+    public function getTipusMegj($cegid, $tid, $helyszinId = 1) {
         $h = "";
-        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where cegid='" . intval($cegid) . "' and tipusid='" . intval($tid) . "' and csomag=0"))) {
-            if (trim($row["megj"]) != "") $h .= "<div style='background:#f00;color:#fff;padding:10px;display:inline-block;font-weight:bold;'>" . trim($row["megj"]) . "</div>";
+        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0", [$cegid, $tid]))) {
+            if (!empty(trim($row["megj"]))) {
+                $h .= "<div class='tipusmegj'>" . trim($row["megj"]) . "</div>";
+            }
         }
-
 
         $res = sql_query("SELECT o.* FROM orvos_beosztas b 
         LEFT JOIN orvosok o ON o.id=b.`orvosid`

@@ -386,8 +386,8 @@ class AdminDoctorsPage extends AdminCorePage {
                     echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
                 }
 
-                $result = $foService->sendSzabadsag();
-                echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
+                //$result = $foService->sendSzabadsag();
+                //echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
             } else {
                 echo "hibás lekérdezés";
             }

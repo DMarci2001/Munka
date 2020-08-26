@@ -48,7 +48,7 @@ function startKepImport(id) {
 
     if (respo!="") $("#importstatus").html("Importálás... még "+respo+" kép van hátra.");
 
-    request = $.ajax({
+    let request = $.ajax({
         url: "index.php",
         type: "get",
         data: "importoneimage=1&id="+encodeURIComponent(id)
@@ -407,7 +407,7 @@ function setListDay(day) {
 var foglalasSelected=0;
 var foglalasSelectedPass="";
 var foglalasDisplayed=0;
-var cpy=0;
+var cpy = 0;
 var selectedInterval = 0;
 
 function setSelectedInterval(i) {
@@ -415,19 +415,30 @@ function setSelectedInterval(i) {
 }
 
 function addIdopont(idopont,szt) {
-    if (foglalasSelected!=0) {
-        var msg="Biztos áthelyezed ide a kijelölt foglalást?";
-        if (cpy==1) {
+    if (foglalasSelected != 0) {
+        let msg="Biztos áthelyezed ide a kijelölt foglalást?";
+        if (cpy == 1) {
             msg="Biztos átmásolod ide a kijelölt foglalást?";
         }
 
         if (confirm(msg)) {
-            let params = "?page=booking&cpy="+cpy+"&szt="+encodeURIComponent(szt)+"&moveidopont="+encodeURIComponent(idopont)+"&fid="+encodeURIComponent(foglalasSelected)+"&rinterval="+selectedInterval;
-            $("#elojegyzestable").load("index.php"+params,null,
-                function(responseText){
-                    if (cpy==0) showIdopontEditor('booking',foglalasSelectedPass,foglalasSelected);
-                    if (cpy==0) cancelFoglalasMove();
-                });
+
+            $.ajax({
+                url:'index.php',
+                type:'GET',
+                data:{page:'booking', cpy:cpy, szt:szt, moveidopont:idopont, fid:foglalasSelected, rinterval:selectedInterval},
+                success:function(data){
+                    if (data.substring(0, 5) == "error") {
+                        alert(data.substring(5));
+                    } else {
+                        $("#elojegyzestable").html(data);
+                        if (cpy == 0) {
+                            showIdopontEditor('booking', foglalasSelectedPass, foglalasSelected);
+                            cancelFoglalasMove();
+                        }
+                    }
+                }
+            });
         }
         return;
     }
@@ -1329,7 +1340,7 @@ jQuery.fn.removeHighlight = function()
 function openSidePanel(select)
 {
     $('.WL-sidePanel').animate({width: 'toggle'});
-    $('.WL-sidePanel').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:50%;left:50;" src="images/loading.svg" />');
+    $('.WL-sidePanel').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:50%;left:50%;" src="images/loading.svg" />');
     if( $('.WL-sidePanel').css('display') == 'block' )
     {
         if($('.WL-sidePanel').data('examIndex')) var index = $('.WL-sidePanel').data('examIndex');

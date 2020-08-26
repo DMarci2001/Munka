@@ -68,7 +68,7 @@ class FoglaljOrvostSoapServer {
         $patientEmail           = (string)$xml->APPOINTMENT["PATIENT_EMAIL"];
         $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
         $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
-        $reservationDescription = (string)$xml->APPOINTMENT["DESCRIPTION"];
+        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId));
         $locationId             = 1; //jász utca drótozva
 
         if (empty(trim($patientName))) {
@@ -125,11 +125,19 @@ class FoglaljOrvostSoapServer {
         $status = (string)$xml->APPOINTMENT["STATUS"];
         $appointmentId   = (string)$xml->APPOINTMENT["OWN_ID"];
         $appointmentFoId = (string)$xml->APPOINTMENT["OUTERSYS_ID"];
+        $srvId           = (string)$xml->APPOINTMENT["SRV_ID"];
+        $fieldOwnId      = (string)$xml->FIELD["OWN_ID"];
+        $fieldId         = (string)$xml->FIELD["OUTERSYS_ID"];
+        $doctorOwnId     = (string)$xml->DOCTOR["OWN_ID"];
+        $doctorId        = (string)$xml->DOCTOR["OUTERSYS_ID"];
 
-        $fieldOwnId    = (string)$xml->FIELD["OWN_ID"];
-        $fieldId       = (string)$xml->FIELD["OUTERSYS_ID"];
-        $doctorOwnId   = (string)$xml->DOCTOR["OWN_ID"];
-        $doctorId      = (string)$xml->DOCTOR["OUTERSYS_ID"];
+        $reservationDate        = (string)$xml->APPOINTMENT["APPOINTMENT"];
+        $rinterval              = intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]);
+        $patientName            = (string)$xml->APPOINTMENT["PATIENT_NAME"];
+        $patientEmail           = (string)$xml->APPOINTMENT["PATIENT_EMAIL"];
+        $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
+        $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
+        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId));
 
         if (!$this->checkDoctor($doctorOwnId)) {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
@@ -145,13 +153,13 @@ class FoglaljOrvostSoapServer {
                 sql_query("delete from foglalasok where id=? and fofid=?", [$appointmentId, $appointmentFoId]);
             } else {
                 $params = [
-                    (string)$xml->APPOINTMENT["APPOINTMENT"],
-                    intval((string)$xml->APPOINTMENT["APPOINTMENT_LONG"]),
-                    (string)$xml->APPOINTMENT["PATIENT_NAME"],
-                    (string)$xml->APPOINTMENT["PATIENT_EMAIL"],
-                    (string)$xml->APPOINTMENT["PATIENT_PHONE"],
-                    isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".", "-", (string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00",
-                    (string)$xml->APPOINTMENT["DESCRIPTION"],
+                    $reservationDate,
+                    $rinterval,
+                    $patientName,
+                    $patientEmail,
+                    $patientPhone,
+                    $patientBirthDate,
+                    $reservationDescription,
                     $doctorOwnId,
                     $szuresTipusData["id"],
                     $appointmentId,
@@ -191,11 +199,15 @@ class FoglaljOrvostSoapServer {
         return $message;
     }
 
-    private function checkRotateHash($hash) {
-        //echo md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d")."$"));
-        //echo " ".$hash;
-        //die;s
+    private function getServiceString($srvId) {
+        $return = "";
+        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus='service' and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $srvId]))) {
+            $return = "Szolgáltatás: ".$data["megnev"];
+        }
+        return $return;
+    }
 
+    private function checkRotateHash($hash) {
         if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d")."$")) == $hash) {
             return true;
         }

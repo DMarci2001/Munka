@@ -1,29 +1,17 @@
 <?php
 
 
-class FoglaljOrvostService {
-    const FO_API_URL      = "http://test.foglaljorvost.hu/dokucomms";
-    const FO_API_TEST_URL = "http://test.foglaljorvost.hu/dokucomms";
-
-    const UNION_API_URL      = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms";
-    const UNION_API_TEST_URL = "http://foglaljorvost-test.digitalbeaver.hu/dokucomms";
-
-    private $currentService = "foglaljorvost";
-
-    private $testing = true;
+class FoglaljOrvostService extends FoGeneral {
+    const API_URL       = "https://test.foglaljorvost.hu/dokucomms";
+    const API_TEST_URL  = "https://test.foglaljorvost.hu/dokucomms";
+    const PROVIDER_NAME = "foglaljorvost";
+    const LOG_ID        = 11;
 
     private $bookingService;
 
     public function __construct()
     {
-        if (isset($_GET["testservicename"])) {
-            $this->currentService = $_GET["testservicename"];
-        }
         $this->bookingService = new BookingService();
-    }
-
-    public function setService($service) {
-        $this->currentService = $service;
     }
 
     public function processTestInput() {
@@ -364,62 +352,8 @@ class FoglaljOrvostService {
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
-    private function getBeosztasData($beoId) {
-        $res = sql_query("select b.*, o.foid from orvos_beosztas b left join orvosok o on o.id = b.orvosid where b.id=?", [$beoId]);
-        if (!$beo = sql_fetch_array($res)) {
-            $beo["error"] = "Beosztás nem található!";
-            return $beo;
-        }
 
-        $tipusok = array_values(array_filter(array_unique(explode("|", $beo["tipusok"]))));
-        foreach ($tipusok as $tipus) {
-            if ($szurestipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$tipus]))) {
-                if ($szurestipusData["fotid"] == 0) {
-                    $beo["error"] = "error: {$szurestipusData["megnev"]} tipus nincs a foglaljOrvos-al szinkronizálva!";
-                }
-
-                $beo["fotid"] = $szurestipusData["fotid"];
-            }
-        }
-
-        $beo["week"] = 1;
-        $beo["startTime"] = date("Y-m-d");
-        if ($beo["nap"] == 1) $beo["startTime"] = date("Y-m-d", strtotime("this week monday"));
-        if ($beo["nap"] == 2) $beo["startTime"] = date("Y-m-d", strtotime("this week tuesday"));
-        if ($beo["nap"] == 3) $beo["startTime"] = date("Y-m-d", strtotime("this week wednesday"));
-        if ($beo["nap"] == 4) $beo["startTime"] = date("Y-m-d", strtotime("this week thursday"));
-        if ($beo["nap"] == 5) $beo["startTime"] = date("Y-m-d", strtotime("this week friday"));
-        if ($beo["nap"] == 6) $beo["startTime"] = date("Y-m-d", strtotime("this week saturday"));
-        if ($beo["nap"] == 7) $beo["startTime"] = date("Y-m-d", strtotime("this week sunday"));
-        $beo["startDate"] = $beo["startTime"];
-        $beo["endTime"] = $beo["startTime"];
-        $beo["startTime"].=" ".$beo["tol"].":00";
-        $beo["endTime"].=" ".$beo["ig"].":00";
-
-        if ($beo["nap"] == 10) {
-            $beo["week"] = 0;
-            $beo["startDate"] = $beo["beonap"];
-            $beo["startTime"] = $beo["beonap"]." ".$beo["tol"].":00";
-            $beo["endTime"] = $beo["beonap"]." ".$beo["ig"].":00";
-        }
-        return $beo;
-    }
-
-    private function getReservationStatus($reservationData) {
-        //STATUS: Az előjegyzés státusza. Kötelező. A státuszjelzők a következők lehetnek:
-        //“E”: sima előjegyzés, foglalás, egyéb elfoglaltság, szabadság
-        //“J”: jelen, megjelent. A beteg megjelent a klinikán.
-        //“N”: nem jött, nem jelent meg előzetes lemondás nélkül.
-        //“L”: lemondta. A beteg lemondta az előjegyzését.
-
-        $status = "E";
-        if ($reservationData["eljott"] == 1) {
-            $status = "J";
-        }
-        return $status;
-    }
-
-    private function sendMessageToFoglaljOrvost($xml) {
+    private function sendMessageToFoglaljOrvost($xml, $logId = 0) {
         if (!Booking_Constants::FO_CONNECTION_ENABLED) {
             return false;
         }
@@ -429,63 +363,27 @@ class FoglaljOrvostService {
 
         $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
         $remoteAddr = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "";
-        sql_query("insert into webservicelog set tipus=11, datum=now(), keres=?, ip=?, useragent=?", array($xml, $remoteAddr, $userAgent));
-        $logId = sql_insert_id();
+        if (empty($logId)) {
+            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?", array(self::LOG_ID, $xml, $remoteAddr, $userAgent));
+            $logId = sql_insert_id();
+        }
 
         try {
             $client = new SoapClient($this->getApiURL());
             $result = $client->EnqueueMessage($xml, Booking_Constants::FO_IFC_NAME);
-            sql_query("update webservicelog set response=? where id=?", [$result, $logId]);
+            sql_query("update webservicelog set response=?, exception='' where id=?", [$result, $logId]);
             return $result;
         } catch (SoapFault $exception) {
-            sql_query("update webservicelog set exception=? where id=?", [$exception->getMessage(), $logId]);
+            sql_query("update webservicelog set retrycount=retrycount+1, exception=? where id=?", [$exception->getMessage(), $logId]);
             return false;
         }
     }
 
-    private function getApiURL() {
-        $url = self::FO_API_URL;
-        if ($this->currentService == "union") {
-            $url = self::UNION_API_URL;
+    public function retryFailedMessages() {
+        $res = sql_query("select * from webservicelog l where l.exception<>'' and datum>date_sub(now(), interval 2 hour) and tipus=? limit 10", [self::LOG_ID]);
+        while ($data = sql_fetch_array($res)) {
+            $this->sendMessageToFoglaljOrvost($data["keres"], $data["id"]);
         }
-        if ($this->testing) {
-            $url = self::FO_API_TEST_URL;
-            if ($this->currentService == "union") {
-                $url = self::UNION_API_TEST_URL;
-            }
-        }
-        return $url;
-    }
-
-    private function getApiPassword() {
-        $password = Booking_Constants::FO_API_PASSWORD;
-        if ($this->testing) {
-            $password = Booking_Constants::FO_API_TEST_PASSWORD;
-        }
-        return $password;
-    }
-
-    private function generateRotateHash() {
-        return md5(sha1("fo|".$this->getApiPassword()."|".date("Y.m.d"."$")));
-    }
-
-
-    private function description($reservationData) {
-        $description = "";
-
-        if (trim($reservationData["nev"]) != "") {
-            $description.= "név: {$reservationData["nev"]}\n";
-        }
-
-        if (trim($reservationData["telefon"]) != "") {
-            $description.= "telefon: {$reservationData["telefon"]}\n";
-        }
-
-        if (trim($reservationData["megj"]) != "") {
-            $description.= "megjegyzés: {$reservationData["megj"]}\n";
-        }
-
-        return $description;
     }
 
     public function sendSzabadsag() {
@@ -562,6 +460,5 @@ class FoglaljOrvostService {
         }
         return false;
     }
-
 
 }

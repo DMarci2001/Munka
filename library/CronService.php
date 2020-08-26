@@ -26,7 +26,9 @@ class CronService {
             $this->_updateNaploszam();
             $this->_sendFoglaljOrvostHeartBeat();
 			$this->sendReservationReminders();
-            //$this->checkGDPRFiles(); //kell ez?
+
+			$foService = new FoglaljOrvostService();
+			$foService->retryFailedMessages();
         }
 
         if ($this->interval == "1ora") {

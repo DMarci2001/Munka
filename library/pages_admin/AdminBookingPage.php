@@ -64,15 +64,14 @@ class AdminBookingPage extends AdminCorePage
 
         if (isset($_GET["moveidopont"])) {
             if (isset($_SESSION["helyszin"])) {
-                $fid            = intval($_GET["fid"]);
-                $newfid         = $fid;
+                $fid           = intval($_GET["fid"]);
+                $newfid        = $fid;
                 $szuresTipusId = intval($_GET["szt"]);
+                $copy          = !empty($_GET["cpy"]);
 
-                $rowf = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($fid)));
+                $reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($fid)));
 
-                if (isset($_GET["cpy"]) && $_GET["cpy"]==1) {
-                    $copy = 1;
-
+                if ($copy) {
                     sql_query("insert into foglalasok set
                         regdatum=now(),
                         cegid=?,
@@ -97,51 +96,75 @@ class AdminBookingPage extends AdminCorePage
                         alkalmassagikhet=?,
                         tudoszuroervenyesseg=?,
                         tudoszuro=?,
-                        smssent=1                       
+                        smssent=1,
+                        fofid=0
         			",array(
-                        $rowf["cegid"],
-                        $rowf["paciensid"],
-                        $rowf["nev"],
-                        $rowf["email"],
-                        $rowf["telefon"],
-                        $rowf["szuldatum"],
-                        $rowf["szulhely"],
-                        $rowf["anyjaneve"],
-                        $rowf["neme"],
-                        $rowf["taj"],
-                        $rowf["irsz"],
-                        $rowf["varos"],
-                        $rowf["utca"],
-                        $rowf["munkaltato"],
-                        $rowf["munkakor"],
+                        $reservationData["cegid"],
+                        $reservationData["paciensid"],
+                        $reservationData["nev"],
+                        $reservationData["email"],
+                        $reservationData["telefon"],
+                        $reservationData["szuldatum"],
+                        $reservationData["szulhely"],
+                        $reservationData["anyjaneve"],
+                        $reservationData["neme"],
+                        $reservationData["taj"],
+                        $reservationData["irsz"],
+                        $reservationData["varos"],
+                        $reservationData["utca"],
+                        $reservationData["munkaltato"],
+                        $reservationData["munkakor"],
                         rand(11000,98000),
-                        $rowf["megj"],
-                        $rowf["alkalmassag"],
-                        $rowf["alkalmassagido"],
-                        $rowf["alkalmassagikhet"],
-                        $rowf["tudoszuroervenyesseg"],
-                        $rowf["tudoszuro"]
+                        $reservationData["megj"],
+                        $reservationData["alkalmassag"],
+                        $reservationData["alkalmassagido"],
+                        $reservationData["alkalmassagikhet"],
+                        $reservationData["tudoszuroervenyesseg"],
+                        $reservationData["tudoszuro"]
                     ));
 
                     $newfid = sql_insert_id();
-                } else {
-                    //move, előző foglalás törlése a foglaljorvostról.
-                    $foService = new FoglaljOrvostService();
-                    $foService->deleteReservation($fid);
                 }
 
-                logActivity("foglalas",$newfid,"{$rowf["nev"]} foglalás ".(isset($copy)?"másolása":"mozgatása")." {$rowf["datum"]} -> {$_GET["moveidopont"]}","");
+                logActivity("foglalas", $newfid,"{$reservationData["nev"]} foglalás ".(!empty($_GET["cpy"])?"másolása":"mozgatása")." {$reservationData["datum"]} -> {$_GET["moveidopont"]}","");
 
+                sql_query("update foglalasok set 
+                      aktiv=1,
+                      foglalta=?,
+                      helyszinid=?,
+                      szurestipusid=?,
+                      datum=?,
+                      rinterval=?,
+                      orvosassigned=0
+                where id=?", [$_SESSION["adminuser"]["nev"], $_SESSION["helyszin"], $szuresTipusId, $_GET["moveidopont"], intval($_GET["rinterval"]), $newfid]);
 
-                sql_query("update foglalasok set aktiv=1,foglalta=?,helyszinid=?,szurestipusid=?,datum=?,rinterval=?,orvosassigned=0,fofid=0 where id=?",array($_SESSION["adminuser"]["nev"],$_SESSION["helyszin"],$szuresTipusId,$_GET["moveidopont"],intval($_GET["rinterval"]),$newfid));
                 $this->bookingService->updateFoglalasData($newfid);
 
                 $oid = $this->bookingService->selectFreeOrvosForIdopont($newfid);
+
+                if ($oid != $reservationData["orvosassigned"] && $reservationData["fofid"] != 0 && !$copy) {
+                    //foglaljorvos foglalás csak egy orvoson belül mozgatható, ha nem így van visszaállítjuk az adatokat
+                    sql_query("update foglalasok set 
+                        aktiv=?,
+                        foglalta=?,
+                        helyszinid=?,
+                        szurestipusid=?,
+                        datum=?,
+                        rinterval=?,
+                        orvosassigned=?
+                    where id=?", [$reservationData["aktiv"], $reservationData["foglalta"], $reservationData["helyszinid"], $reservationData["szuresTipusid"], $reservationData["datum"], $reservationData["rinterval"], $reservationData["orvosassigned"], $newfid]);
+                    die("errorFoglaljOrvost.hu foglalás nem helyezhető át másik orvoshoz!");
+                }
+
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $newfid));
 
-                //új foglalás átküldése foglaljorvost.hu-nak
                 $foService = new FoglaljOrvostService();
-                $foService->newReservation($newfid);
+                if ($copy) {
+                    //új foglalás átküldése foglaljorvost.hu-nak
+                    $foService->newReservation($newfid);
+                } else {
+                    $foService->modifyReservation($newfid);
+                }
             }
 
             echo $this->showElojegyzesTable($_SESSION["setday"]);
