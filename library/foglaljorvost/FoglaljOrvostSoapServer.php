@@ -108,7 +108,7 @@ class FoglaljOrvostSoapServer {
             "tudoszuro" => 0,
             "lang" => "hu",
             "orvosid" => $doctorOwnId,
-            "aktiv" => 0,
+            "aktiv" => 1,
             "rn" => rand(1000000, 9999999)];
 
         $_REQUEST["rinterval"] = $data["rinterval"]; //fix
@@ -231,13 +231,16 @@ class FoglaljOrvostSoapServer {
             return $this->messageOutput("AUTH_FAILED", "Az api hívása nem engedélyezett");
         }
 
-        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_NEW_E") {
+        $fullAction = "{$ifcName}_{$messageType}_{$action}_{$status}";
+        sql_query("update webservicelog set action=? where id=?", [$fullAction, $this->logId]);
+
+        if ($fullAction == "FOGLALJORVOST_APPOINTMENT_NEW_E") {
             return $this->appointmentNew($xml);
         }
-        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_MOD_E") {
+        if ($fullAction == "FOGLALJORVOST_APPOINTMENT_MOD_E") {
             return $this->appointmentMod($xml);
         }
-        if ("{$ifcName}_{$messageType}_{$action}_{$status}" == "FOGLALJORVOST_APPOINTMENT_MOD_L") {
+        if ($fullAction == "FOGLALJORVOST_APPOINTMENT_MOD_L") {
             return $this->appointmentDel($xml);
         }
 

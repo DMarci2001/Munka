@@ -8,10 +8,12 @@ class FoglaljOrvostService extends FoGeneral {
     const LOG_ID        = 11;
 
     private $bookingService;
+    private $currentAction;
 
     public function __construct()
     {
         $this->bookingService = new BookingService();
+        $this->currentAction = "";
     }
 
     public function processTestInput() {
@@ -71,6 +73,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function newReservation($fid) {
+        $this->currentAction = "APPOINTMENT_NEW";
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -105,6 +108,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function modifyReservation($fid) {
+        $this->currentAction = "APPOINTMENT_MOD";
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0 and f.fofid<>0", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -130,6 +134,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function deleteReservation($fid) {
+        $this->currentAction = "APPOINTMENT_DEL";
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0 and f.fofid<>0", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -158,6 +163,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function getAllFields() {
+        $this->currentAction = "ALLFIELDS_GET";
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -170,6 +176,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function getFieldsByClinic() {
+        $this->currentAction = "FIELDSBYCLINIC_GET";
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -182,6 +189,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function getFieldsByDoctor($oid) {
+        $this->currentAction = "FIELDSBYDOCTOR_GET";
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -211,6 +219,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function sendDoctor($oid) {
+        $this->currentAction = "DOCTOR_NEW";
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -240,6 +249,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function sendPing() {
+        $this->currentAction = "HEARTBEAT_SEND";
         $xml='<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -279,6 +289,7 @@ class FoglaljOrvostService extends FoGeneral {
             return $beo["error"];
         }
 
+        $this->currentAction = "CONSULTATION_NEW";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -306,6 +317,7 @@ class FoglaljOrvostService extends FoGeneral {
             return $beo["error"];
         }
 
+        $this->currentAction = "CONSULTATION_MOD";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -333,6 +345,7 @@ class FoglaljOrvostService extends FoGeneral {
             return $beo["error"];
         }
 
+        $this->currentAction = "CONSULTATION_DEL";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -364,7 +377,7 @@ class FoglaljOrvostService extends FoGeneral {
         $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
         $remoteAddr = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "";
         if (empty($logId)) {
-            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?", array(self::LOG_ID, $xml, $remoteAddr, $userAgent));
+            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID, $xml, $remoteAddr, $userAgent, $this->currentAction));
             $logId = sql_insert_id();
         }
 
@@ -406,6 +419,7 @@ class FoglaljOrvostService extends FoGeneral {
             return false;
         }
 
+        $this->currentAction = "APPOINTMENT_DEL";
         if ($szabadsagData = sql_fetch_array(sql_query("select * from szabadsag where id=? and foid<>0", [$szid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -429,6 +443,7 @@ class FoglaljOrvostService extends FoGeneral {
             $diff = (strtotime($szabadsagData["datumig"]) - strtotime($szabadsagData["datumtol"])) / 86400;
             $interval = $diff * 1440 + 1440;
 
+            $this->currentAction = "APPOINTMENT_NEW";
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
