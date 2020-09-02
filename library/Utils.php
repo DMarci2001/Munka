@@ -1026,4 +1026,8 @@ class Utils {
 		sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?,datum=NOW()",$data);
 	}
 
+	public static function isDemoSite() {
+        return Booking_Constants::IS_DEMO;
+    }
+
 }

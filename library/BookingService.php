@@ -64,12 +64,9 @@ class BookingService
             $this->honnan = intval($_GET["honnan"]);
             $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
             $this->setBetegallomany((!isset($_GET['betegallomany']) ? false : $_GET['betegallomany']));
-            $return = $this->getMinMax($this->szuresTipus, $this->packContentTypes);
-
 
             if (!isset($_GET['javascript'])) $_GET['javascript'] = "showIdoPontValasztoV2";
 
-            //108682375 - Kormányos Gergő teszt alany, 2019.03.28-án volt vizsgálaton, 2020.03.28-ig alaklmas, 2020.02.28-tól foglalhat vizsgálatra időpontot!
             $elsoIdopont = [];
 
             if ($this->helyszin == 0) {
@@ -458,7 +455,13 @@ class BookingService
     private function getMinMax($szuresTipus, $packContentTypes = [])
     {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
-        $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles FROM orvos_beosztas WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL", array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+        if (!empty($_SESSION["orvosselected"])) {
+            $typeWhere.= " and orvosid='".intval($_SESSION["orvosselected"])."'";
+        }
+        $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles 
+                                                    FROM orvos_beosztas 
+                                                    WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",
+                                                    [$this->helyszin, $_SESSION["helyszindata"]["id"]]));
         if ($minMaxData["maxpotigrendeles"] > $minMaxData["maxrendeles"]) {
             $minMaxData["maxrendeles"] = $minMaxData["maxpotigrendeles"];
         }
@@ -743,19 +746,26 @@ class BookingService
 
     public function orvosIdopontIsFree($idoPont, $orvosId, $helyszin = 0)
     {
-        $nap  = substr($idoPont, 0, 10);
-        $free = false;
+        $idoPont = $idoPont.":00";
+        $nap     = substr($idoPont, 0, 10);
+        $free    = false;
+        $wadd    = "";
 
-        $wadd = "";
         if ($helyszin != 0) {
             $wadd = "or (helyszinid='{$helyszin}' and cegid=0 and orvosassigned=0)";
         }
 
-        if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum=? AND (orvosassigned=? {$wadd})", array($idoPont . ":00", $orvosId)))) {
-            if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", array($orvosId, $nap, $nap)))) {
+        if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum>=? AND datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE) AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $orvosId]))) {
+            if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $nap, $nap]))) {
                 $free = true;
             }
         }
+
+        //if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum>=? and datum=? AND (orvosassigned=? {$wadd})", array($nap." 00:00:00", $idoPont, $orvosId)))) {
+        //    if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", array($orvosId, $nap, $nap)))) {
+        //        $free = true;
+        //    }
+        //}
         return $free;
     }
 
@@ -1309,7 +1319,7 @@ class BookingService
 
     public function sendToCegAndOrvos($id, $force = 0, $test = 0)
     {
-        if (Booking_Constants::IS_DEMO) {
+        if (Utils::isDemoSite()) {
             return;
         }
 
@@ -1756,6 +1766,9 @@ END:VCALENDAR";
             $szuresTipusId = intval($_GET["szt"]);
             $cegId = 0;
             $orvosId = 0;
+            if (!empty($_GET["orvosid"])) {
+                $orvosId = intval($_GET["orvosid"]);
+            }
 
             if ($adminUtils->isCegAdmin()) {
                 $cegId = $_SESSION["adminuser"]["cegid"];

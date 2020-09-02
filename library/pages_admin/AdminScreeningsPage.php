@@ -365,7 +365,7 @@ class AdminScreeningsPage extends AdminCorePage
                         continue;
                     }
                     echo "<tr>";
-                    echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page=orvosok&szerk={$row["orvosid"]}'>{$row["nev"]}</a></div></td>";
+                    echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page=doctors&szerk={$row["orvosid"]}'>{$row["nev"]}</a></div></td>";
                     echo "<td valign='top'><div class='{$tc}'>{$row["cegnev"]}</div></td>";
                     echo "</tr>";
                     echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";

@@ -409,9 +409,14 @@ var foglalasSelectedPass="";
 var foglalasDisplayed=0;
 var cpy = 0;
 var selectedInterval = 0;
+var selectedOrvos = 0;
 
 function setSelectedInterval(i) {
     selectedInterval = i;
+}
+
+function setSelectedOrvos(oId) {
+    selectedOrvos = oId;
 }
 
 function addIdopont(idopont,szt) {
@@ -446,7 +451,7 @@ function addIdopont(idopont,szt) {
     $.ajax({
         url:'index.php',
         type:'GET',
-        data:{page:'booking', szt:szt, addidopont:idopont, rinterval: selectedInterval},
+        data:{page:'booking', szt:szt, addidopont:idopont, rinterval: selectedInterval, orvosid: selectedOrvos},
         success:function(data){
             if (data.substring(0, 5)=='error') {
                 alert(data.substring(5));

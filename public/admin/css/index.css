@@ -1201,3 +1201,38 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	display: table-cell;
 	vertical-align: middle;
 }
+
+.etabletipushead {
+	margin: 20px 0px 5px 0px;
+	padding:5px 5px;
+	background:#f8f8f8;
+	border-bottom:2px solid #ccc;
+}
+
+.tipuslinksbox {
+	margin-top:5px;
+}
+
+.tipuslink {
+	margin-top:3px;
+	padding:3px 5px;
+	background:#f8f8f8;
+	color:#444;
+	text-decoration: none;
+	border-radius: 5px;
+	display: inline-block;
+}
+
+.tipuslink:hover {
+	background: #3a768f;
+	color:#fff;
+	text-decoration: none;
+}
+
+.stickytablefilter {
+	padding:10px 0px;
+	position: sticky;
+	top:0px;
+	background: #fff;
+	z-index: 100000;
+}
