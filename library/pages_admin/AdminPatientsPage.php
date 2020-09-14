@@ -637,8 +637,9 @@ class AdminPatientsPage extends AdminCorePage {
 
         //Ha olyan oldal szám szerepel az URL-ben ami irreleváns, akkor átirányít az első oldalra:
         if($_GET['scroll'] > count($page) || $_GET['scroll'] < 0) {
-            header("Location:index.php?page={$_GET["page"]}&scroll=1");
-            die;
+            $_GET["scroll"] = 1;
+            //header("Location:index.php?page={$_GET["page"]}&scroll=1");
+            //die;
         }
 
         echo "<a href='index.php?page={$_GET["page"]}&fszerk=0'>+ új felhasználó rögzitése</a>";

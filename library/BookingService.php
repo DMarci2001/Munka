@@ -23,6 +23,7 @@ class BookingService
         $this->utils = new Utils();
 
         if (isset($_GET["szurestipusrefresh"])) {
+            $_SESSION["orvosselected"] = 0;
             echo $this->szuresTipusValasztoNew($_GET["szurestipusrefresh"], 0);
             die();
         }
