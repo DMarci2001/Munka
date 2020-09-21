@@ -24,26 +24,31 @@ if (isset($_GET["ack"])) {
         "receiveDate" => date("c")
     ];
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$result->orderRef]))) {
-        die("reservation not found");
+    if (substr_count($result->orderRef, "gyor") == 0) {
+        if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$result->orderRef]))) {
+            die("reservation not found");
+        }
+        if ($result->status == "FINISHED") {
+            $bookingService = new BookingService();
+            $bookingService->sendToUser($foglalasData["id"]);
+            //$bookingService->sendToCegAndOrvos($foglalasData["id"]);
+        }
+
+        $simpleService->setOrderId($foglalasData["id"]);
+        $simpleService->setTransactionLog($result->orderRef, $result->transactionId, $result->status);
+        $simpleService->setAckLog($result->orderRef, $json);
+    } else {
+        //keresés a győri adatbázisban!
+        $result = file_get_contents("https://audi.hungariamed.hu/api/ackCheck.php?id={$result->orderRef}&status={$result->status}&transactionid={$result->transactionId}");
+        if (substr_count($result, "ok") == 0) {
+            die("reservation not found");
+        }
     }
-
-    $jsonResponse = json_encode($response);
-
-    if ($result->status == "FINISHED") {
-        $bookingService = new BookingService();
-        $bookingService->sendToUser($foglalasData["id"]);
-        //$bookingService->sendToCegAndOrvos($foglalasData["id"]);
-    }
-
-    $simpleService->setOrderId($foglalasData["id"]);
-    $simpleService->setTransactionLog($result->orderRef, $result->transactionId, $result->status);
-    $simpleService->setAckLog($result->orderRef, $json);
 
     header('Content-Type: application/json; charset=utf-8');
-    header('Signature: ' . $simpleService->generateSignature($jsonResponse));
+    header('Signature: ' . $simpleService->generateSignature(json_encode($response)));
 
-    echo $jsonResponse;
+    echo json_encode($response);
     die;
 }
 
