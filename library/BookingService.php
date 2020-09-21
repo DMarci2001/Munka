@@ -22,12 +22,6 @@ class BookingService
         $this->lang = new Lang();
         $this->utils = new Utils();
 
-        if (isset($_GET["szurestipusrefresh"])) {
-            $_SESSION["orvosselected"] = 0;
-            echo $this->szuresTipusValasztoNew($_GET["szurestipusrefresh"], 0);
-            die();
-        }
-
         if (isset($_GET["tappenzcheckrefresh"])) {
             $webText = $this->lang->webText;
             if ($this->checkBookingRestrictionProtocol($_GET["tappenzcheckrefresh"])) {
@@ -852,30 +846,9 @@ class BookingService
     }
 
 
-    public function szuresTipusValasztoNew($helyszinid, $selected = 0, $onlyselected = 0)
-    {
+    public function tipusExtract($resource) {
         $tipusok = [];
-        $tipusnevek = [];
-
-        $rest = sql_query("select * from szurestipusok");
-        while ($rowt = sql_fetch_array($rest)) {
-            if ($_COOKIE["lang"] != "hu" && trim($rowt["megnev_{$_COOKIE["lang"]}"]) != "") {
-                $rowt["megnev"] = $rowt["megnev_{$_COOKIE["lang"]}"];
-            }
-            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
-        }
-
-        $addJava = "";
-        if ($_SESSION["helyszindata"]["id"] == 11) {
-            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
-        }
-        $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
-        $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();showTipusMegj(this.value);{$megjBox};{$addJava}'>";
-        $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
-
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.helyszinid='" . addslashes($helyszinid) . "' AND b.cegid='{$_SESSION["helyszindata"]["id"]}'");
-        while ($row = sql_fetch_array($res)) {
+        while ($row = sql_fetch_array($resource)) {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {
                 if (trim($ta[$i]) != "" && !in_array($ta[$i], $tipusok)) {
@@ -883,35 +856,20 @@ class BookingService
                 }
             }
         }
-
-        if (isset($tipusok)) {
-            for ($i = 0; $i < count($tipusok); $i++) {
-                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
-            }
-            if (isset($tipusdisplay)) {
-                asort($tipusdisplay);
-                foreach ($tipusdisplay as $key => $value) {
-                    //if (count($tipusdisplay)==1) $selected=$key;
-                    if ($onlyselected == 1 && $key != $selected) continue;
-                    if (trim($value) == "") continue;
-                    if (count($tipusdisplay) == 1) {
-                        $selected = $_REQUEST["szurestipus"] = $_POST["szurestipus"] = $key;
-                    }
-                    $htmlout .= "<option value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
-                }
-            }
-        }
-
-        $htmlout .= "</select>";
-        $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
-
-        if (trim($helyszinid) == "" || $helyszinid == 0) {
-            $htmlout = "Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
-        }
-
-        return $htmlout;
+        return $tipusok;
     }
 
+    public function getAllReservationForDay($day, $helyszinId=0, $cegFilter = "") {
+        $tol = "{$day} 00:00:00";
+        $ig  = "{$day} 23:59:59";
+        $return = [];
+
+        $res = sql_query("select * from foglalasok b where datum>=? and datum<=? and helyszinid=? {$cegFilter}", [$tol, $ig, $helyszinId]);
+        while ($reservationData = sql_fetch_array($res)) {
+            $return[$reservationData["szurestipusid"]][$reservationData["id"]] = $reservationData;
+        }
+        return $return;
+    }
 
     public function getTipusMegj($cegid, $tid, $helyszinId = 1) {
         $h = "";

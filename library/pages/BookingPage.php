@@ -41,6 +41,12 @@ class BookingPage extends CorePage {
             die();
         }
 
+        if (isset($_GET["helyszinrefresh"])) {
+            $_POST["szurestipus"] = intval($_GET["helyszinrefresh"]);
+            echo $this->_reservationPlaceSelectorNew();
+            die;
+        }
+
         if (isset($_GET["remotereserve"])) {
             if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id=? and rkod=?",array($_GET["fid"], $_GET["fkod"])))) {
                 $_SESSION["remotebeutalo"] = $_GET["remotereserve"];
@@ -301,7 +307,7 @@ class BookingPage extends CorePage {
             echo "</select>";
             echo "</td></tr>";
 
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($beutalodata["helyszinid"],$beutalodata["szurestipusid"],1)."</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->_szuresTipusValasztoNew($beutalodata["helyszinid"],$beutalodata["szurestipusid"],1)."</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $beutalodata["szurestipusid"], $beutalodata["helyszinid"]);
             if (!empty($tipusMegj)) {
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
@@ -311,8 +317,8 @@ class BookingPage extends CorePage {
             if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
-            echo "<tr><td>{$webText["helyszin"]}: *</td><td>".$this->_reservationPlaceSelector()."</td></tr>";
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"]) . "</div></td></tr>";
+            echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
             echo "<tr><td></td><td><div id='tappenzcheck'>".($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin']) ? $webText["betegallomanynyilatkozat"] : "")."</div></td></tr>";
         }
@@ -420,15 +426,75 @@ class BookingPage extends CorePage {
         return $html;
     }
 
-    private function _reservationPlaceSelector() {
+    private function _szuresTipusValasztoNew($helyszinid, $selected = 0, $onlyselected = 0) {
+        $tipusok = [];
+        $tipusnevek = [];
+
+        $rest = sql_query("select * from szurestipusok");
+        while ($rowt = sql_fetch_array($rest)) {
+            if ($_COOKIE["lang"] != "hu" && trim($rowt["megnev_{$_COOKIE["lang"]}"]) != "") {
+                $rowt["megnev"] = $rowt["megnev_{$_COOKIE["lang"]}"];
+            }
+            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
+        }
+
+        $addJava = "";
+        if ($_SESSION["helyszindata"]["id"] == 11) {
+            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
+        }
+        $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
+        $htmlout = "";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
+        $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
+
+        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.cegid='{$_SESSION["helyszindata"]["id"]}'");
+        while ($row = sql_fetch_array($res)) {
+            $ta = explode("|", $row["tipusok"]);
+            for ($i = 0; $i < count($ta); $i++) {
+                if (trim($ta[$i]) != "" && !in_array($ta[$i], $tipusok)) {
+                    $tipusok[] = $ta[$i];
+                }
+            }
+        }
+
+        if (isset($tipusok)) {
+            for ($i = 0; $i < count($tipusok); $i++) {
+                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
+            }
+            if (isset($tipusdisplay)) {
+                asort($tipusdisplay);
+                foreach ($tipusdisplay as $key => $value) {
+                    //if (count($tipusdisplay)==1) $selected=$key;
+                    if ($onlyselected == 1 && $key != $selected) continue;
+                    if (trim($value) == "") continue;
+                    if (count($tipusdisplay) == 1) {
+                        $selected = $_REQUEST["szurestipus"] = $_POST["szurestipus"] = $key;
+                    }
+                    $htmlout .= "<option value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
+                }
+            }
+        }
+
+        $htmlout .= "</select>";
+        $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
+
+        if (trim($helyszinid) == "" || $helyszinid == 0) {
+            $htmlout = "Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
+        }
+
+        return $htmlout;
+    }
+
+    private function _reservationPlaceSelectorNew() {
+        $szuresTipus = $_POST["szurestipus"];
         $webText = $this->lang->webText;
 
         $html = "";
-        $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();clearSzuresTipus(this.value);'>";
+        $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
         $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
             LEFT JOIN orvos_beosztas b ON b.`helyszinid`=h.id 
             LEFT JOIN orvosok o on b.orvosid=o.id
-            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.`helyszinid` IS NOT NULL and b.cegid=? GROUP BY h.id ORDER BY cim", array($_SESSION["helyszindata"]["id"]));
+            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.`helyszinid` IS NOT NULL and b.cegid=? and instr(b.tipusok, ?) GROUP BY h.id ORDER BY cim", [$_SESSION["helyszindata"]["id"], $szuresTipus]);
 
         $numOfH = sql_num_rows($res);
 
