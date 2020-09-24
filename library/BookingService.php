@@ -141,6 +141,11 @@ class BookingService
                 }
             }
 
+            if ($_SESSION["helyszindata"]["id"] == 82) {
+                //waberers
+                $dist = "0 hour";
+            }
+
             if ($_SESSION["helyszindata"]["id"] == 46) {
                 //vodafone
                 $dist = "72 hour";
