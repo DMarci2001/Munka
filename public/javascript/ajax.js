@@ -123,11 +123,11 @@ function showTipusMegj(tipusid) {
 }
 
 
-function clearSzuresTipus(hid) {
-    $("#szurestipusvalaszto").load("index.php?szurestipusrefresh="+hid);
+function clearHelyszinSelector(tid) {
+    $("#helyszinvalaszto").load("index.php?page=booking&helyszinrefresh="+tid);
     $("#szurestipusmegj").html("");
     $("#datum").css("background-image","");
-	$("#tappenzcheck").load("index.php?tappenzcheckrefresh="+hid);
+    //$("#tappenzcheck").load("index.php?tappenzcheckrefresh="+tid);
     //showTipusMegj($("#szurestipus").val());
 }
 
