@@ -32,12 +32,12 @@ class Booking_Constants {
     const SQL_DB                    = "hungariamed";
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.hungariamed.hu/foApi.php";
-    const SOAP_API_PASSWORD         = "WieGie2M";
+    const SOAP_API_PASSWORD         = "Kceg8YTybJgqd0ZU";
 
     const FO_CONNECTION_ENABLED     = false;
-    const FO_API_PASSWORD           = "wzUpTVrpexTh";
+    const FO_API_PASSWORD           = "Kceg8YTybJgqd0ZU";
     const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
-    const FO_IFC_NAME               = "HUNGARIAMED_3608";
+    const FO_IFC_NAME               = "MINTA_ELES_3672";
 
     const DokiRex_Email             = "ugyfelkapcsolat@hungariamed.hu";
 	const DokiRex_Password          = "HMMadmin12345.";

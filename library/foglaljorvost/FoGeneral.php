@@ -17,7 +17,7 @@ class FoGeneral {
             $description.= "megjegyzés: {$reservationData["megj"]}\n";
         }
 
-        return $description;
+        return trim($description);
     }
 
     protected function getApiURL() {

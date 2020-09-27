@@ -2,7 +2,7 @@
 
 
 class FoglaljOrvostService extends FoGeneral {
-    const API_URL       = "https://test.foglaljorvost.hu/dokucomms";
+    const API_URL       = "https://foglaljorvost.hu/dokucomms";
     const API_TEST_URL  = "https://test.foglaljorvost.hu/dokucomms";
     const PROVIDER_NAME = "foglaljorvost";
     const LOG_ID        = 11;
