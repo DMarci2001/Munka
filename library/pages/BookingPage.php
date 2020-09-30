@@ -57,11 +57,6 @@ class BookingPage extends CorePage {
             header("location:index.php?page=booking");
             die();
         }
-		
-		if(isset($_GET['zip_test']) && $_GET['zip_test']==true){
-			
-			die();
-		}
 
 
         if (isset($_POST["idopontfoglalas"])) {
@@ -176,6 +171,11 @@ class BookingPage extends CorePage {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
+            $_POST["orvosselected"] = 0;
+            if (isset($_SESSION["orvosselected"])) {
+                $_POST["orvosselected"] = $_SESSION["orvosselected"];
+            }
+
             if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
                 $this->errors[] = "{$webText["idopontlefoglaltak"]}";
             }
@@ -188,6 +188,7 @@ class BookingPage extends CorePage {
                     $this->errors[] = $captchaError;
                 }
             }
+
 
             if (empty($this->errors)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
@@ -235,8 +236,6 @@ class BookingPage extends CorePage {
 
         echo $this->displayFejlec();
         echo $this->showErrors();
-		
-		$_SESSION['helyszindata']['id']=11;
 
         if ($_SESSION["helyszindata"]["onlybeutalo"]==1) {
             $_SESSION["helyszindata"]["onlyreg"] = 1;
@@ -275,7 +274,7 @@ class BookingPage extends CorePage {
         }
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
-        echo "<table>";
+        echo "<table cellpadding='3' cellspacing='0'>";
 
         echo $this->utils->dataField("taj");
         //echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
@@ -309,24 +308,13 @@ class BookingPage extends CorePage {
             }
         } else {
             //beutaló nélkül szabad választás
-            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"]);
-
             if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>".$this->_reservationPlaceSelector()."</td></tr>";
-			
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>".$this->bookingService->szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"])."</div></td></tr>";
-            echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
-			
-			//Ide kell bevinni a checkboxot!
-			
-				echo "<tr><td></td><td><div id='tappenzcheck'>";
-				if ($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin'])){
-					echo $webText["betegallomanynyilatkozat"];
-				}
-				echo "</div></td></tr>";
-			
+            echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
+            echo "<tr><td></td><td><div id='tappenzcheck'>".($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin']) ? $webText["betegallomanynyilatkozat"] : "")."</div></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
@@ -419,12 +407,16 @@ class BookingPage extends CorePage {
         $dateVal = substr($_POST["datum"], 0, 16);
 
         $html = "";
-        $html.= "<div style='display:table-cell;vertical-align: middle;'>";
+        $html.= "<div style='display:table;'>";
+        $html.= "<div style='display:table-row;'>";
+        $html.= "<div style='display:table-cell;'>";
         $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
         $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
         $html.= "</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
+        $html.= "</div>";
+        $html.= "</div>";
         return $html;
     }
 
@@ -507,10 +499,7 @@ class BookingPage extends CorePage {
             $tipusok = array_unique($tipusok);
             $orvosok = [];
             $tipusdb = [];
-			//$tipusok[] = 114;
-			$tipusok[] = 115;
-			$tipusok[] = 118;
-			$tipusok[] = 119;
+			$tipusok[] = 114;
 			
             $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
             while ($tipusData = sql_fetch_array($res)) {
@@ -530,52 +519,25 @@ class BookingPage extends CorePage {
 			$html.= "<div style='text-align:center;'>";
 
             if (!empty($orvosok)) {
-                
-				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+                $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
 				$html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
-				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=0) continue;
-					//itt kéne az új classra az átirányítást beilleszteni:
-					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
-					
-					
-					
-                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
-
-                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
-                        //$html.= "<div>".$orvosData["nev"]."</div>";
+					if($tipusData['webdoktor']!=0) {
+					    continue;
                     }
 					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
-
-                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "</div>";
                 }
 				$html.= "</table>";
 				
 				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
 				$html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
-				//Ezt a részt még annyira nem értem miért jó úgy ahogy van O.o...
                 foreach ($tipusdb as $tipusData) {
                     $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=1) continue;
-					//itt kéne az új classra az átirányítást beilleszteni:
-					//Ide inkább egy div kellene, amit megpróbálok vhogy responsive méretre állítani :P
-					
-					
-					
-                    //$html.= "<div style=''><a onclick=\"$('.tipr').slideUp();$('#tipr{$tipusData["id"]}_{$helyszin["id"]}').slideDown();return false;\" href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "<div id='tipr{$tipusData["id"]}_{$helyszin["id"]}' class='tipr' style=''>"; //display:none;padding:10px 0px;
-
-                    foreach ($orvosok[$tipusData["id"]] as $orvosData) {
-                        //$html.= "<div>".$orvosData["nev"]."</div>";
+					if($tipusData['webdoktor']!=1) {
+					    continue;
                     }
 					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
-
-                    //$html.= "<div style='margin-top:5px;'><a onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton' href='#'>{$tipusData["megnev"]}</a></div>";
-                    //$html.= "</div>";
                 }
 				$html.= "</table>";
             }
