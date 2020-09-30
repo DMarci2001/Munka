@@ -447,7 +447,7 @@ class BookingPage extends CorePage {
         $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
         $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.cegid='{$_SESSION["helyszindata"]["id"]}'");
+        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.cegid='{$_SESSION["helyszindata"]["id"]}' and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))");
         while ($row = sql_fetch_array($res)) {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {
@@ -476,10 +476,11 @@ class BookingPage extends CorePage {
         }
 
         $htmlout .= "</select>";
+        //$htmlout.= print_r($tipusok, true);
         $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
 
         if (trim($helyszinid) == "" || $helyszinid == 0) {
-            $htmlout = "Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
+            //$htmlout = "Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
         }
 
         return $htmlout;
