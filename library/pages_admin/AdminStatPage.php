@@ -51,7 +51,7 @@ class AdminStatPage extends AdminCorePage {
         $html = "";
 
         $cegid = intval($_GET["cegid"]);
-        $rowc = sql_fetch_array(sql_query("SELECT * from cegek	where id=? ORDER BY megnev", array($cegid)));
+        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
 
         $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a></div>";
         $html.= "<table cellpadding='0' cellspacing='4' border='0' style='margin-top:10px;'>";
@@ -132,11 +132,29 @@ class AdminStatPage extends AdminCorePage {
         return $html;
     }
 
+
+    private function _alkalmassagColumn($rows) {
+        $html = "";
+
+        if (in_array($rows["alkalmassag"], array_keys($this->adminUtils->settings->alkalmassagvariaciok))) {
+            $html.=$rows["alkalmassag"];
+        }
+
+        if (!empty($rows["alkalmassagido"])) {
+            $html.=" lejár: ".date("Y-m-d", strtotime("{$rows["datum"]} + {$rows["alkalmassagido"]} month"));
+        }
+
+        //if ($rows["alkalmassag"]=="I") {
+        //    $html.= $rows["alkalmassagido"];
+        //}
+        return $html;
+    }
+
     private function _showTetelStat() {
         $html = "";
         $cegid = intval($_GET["cegid"]);
 
-        $rowc = sql_fetch_array(sql_query("SELECT * from cegek	where id=? ORDER BY megnev", array($cegid)));
+        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
 
         $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a> | <a href='index.php?page={$_GET["page"]}&lista=tetel&cegid={$_GET["cegid"]}&downloadcsv'>Letöltés</a></div>";
         $html.= "<div style='margin-top:10px;'>* = Eljött. Alkalmasság: I = Alkalmas, N = Nem alkalmas, IK = Ideiglenesen nem alkalmas, K = Korlátozottan alkalmas</div>";
@@ -151,34 +169,29 @@ class AdminStatPage extends AdminCorePage {
         WHERE f.datum>? and f.datum<? and f.aktiv=1 AND f.cegid=? AND (f.taj<>'' OR f.nev<>'') AND f.nev<>'nincs név' order by datum", array($this->tol, $this->ig, $rowc["id"]));
 
         $html.= "<tr>";
-        $html.= "<td title='Eljött'>E</td>";
-        $html.= "<td title='Alkalmasság'>A</td>";
-        $html.= "<td>Foglalás időpontja</td>";
-        $html.= "<td>Név</td>";
-        $html.= "<td>Telefon</td>";
+        $html.= "<td nowrap title='Eljött'>E</td>";
+        $html.= "<td nowrap title='Alkalmasság'>Alkalmasság</td>";
+        $html.= "<td nowrap>Foglalás időpontja</td>";
+        $html.= "<td nowrap>Név</td>";
+        $html.= "<td nowrap>Telefon</td>";
+        $html.= "<td nowrap></td>";
+        $html.= "<td nowrap>TAJ szám</td>";
+        $html.= "<td nowrap>Orvos</td>";
         $html.= "<td></td>";
-        $html.= "<td>TAJ szám</td>";
-        $html.= "<td>Orvos</td>";
-        $html.= "<td></td>";
-        $html.= "<td>Regisztráció időpontja</td>";
+        $html.= "<td nowrap>Regisztráció időpontja</td>";
         $html.= "</tr>";
         while ($rows = sql_fetch_array($ress)) {
             $html.= "<tr>";
-            $html.= "<td>".($rows["eljott"]==1?"*":"")."</td>";
-            $html.= "<td>";
-            $html.= $rows["alkalmassag"];
-            if ($rows["alkalmassag"]=="I") {
-                $html.= $rows["alkalmassagido"];
-            }
-            $html.= "</td>";
-            $html.= "<td>".substr($rows["datum"],0,16)."</td>";
-            $html.= "<td>{$rows["nev"]}</td>";
-            $html.= "<td>{$rows["telefon"]}</td>";
-            $html.= "<td>{$rows["munkakor"]}</td>";
-            $html.= "<td>{$rows["taj"]}</td>";
-            $html.= "<td>{$rows["orvosnev"]}</td>";
-            $html.= "<td>{$rows["helyszincim"]}</td>";
-            $html.= "<td>".substr($rows["regdatum"],0,16)."</td>";
+            $html.= "<td nowrap>".($rows["eljott"]==1?"*":"")."</td>";
+            $html.= "<td nowrap>".$this->_alkalmassagColumn($rows)."&nbsp;</td>";
+            $html.= "<td nowrap>".substr($rows["datum"],0,16)."</td>";
+            $html.= "<td nowrap>{$rows["nev"]}</td>";
+            $html.= "<td nowrap>{$rows["telefon"]}</td>";
+            $html.= "<td nowrap>{$rows["munkakor"]}</td>";
+            $html.= "<td nowrap>{$rows["taj"]}</td>";
+            $html.= "<td nowrap>{$rows["orvosnev"]}</td>";
+            $html.= "<td nowrap>{$rows["helyszincim"]}</td>";
+            $html.= "<td nowrap>".substr($rows["regdatum"],0,16)."</td>";
 
             if ($rows["taj"] == "") {
                 $rows["taj"] = "000000000";
@@ -198,7 +211,7 @@ class AdminStatPage extends AdminCorePage {
     private function _showDefaultStat() {
         $html = "";
 
-        $res = sql_query("SELECT * from cegek ORDER BY megnev");
+        $res = sql_query("SELECT * from cegek c where true ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev");
 
         $html.= "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;'>";
         while ($row = sql_fetch_array($res)) {
@@ -232,7 +245,7 @@ class AdminStatPage extends AdminCorePage {
             $html.= "<div style='display:table-row;'>";
             $html.= "<div style='display:table-cell;'>Foglalások száma:&nbsp;&nbsp;</div><div style='display:table-cell;text-align:right;'>{$all}</div>";
             if ($all > 0) {
-                $html.= "<div style='display:table-cell;padding-left:20px;'>[<a href='index.php?page=stat&lista=tetel&cegid={$row["id"]}'>Tételes lista</a>] [<a href='index.php?page=stat&orvoslista&cegid={$row["id"]}'>Orvos lista</a>]</div>";
+                $html.= "<div style='display:table-cell;padding-left:20px;'>[<a href='index.php?page=stat&lista=tetel&cegid={$row["id"]}'>Tételes lista</a>] [<a href='index.php?page=stat&lista=orvos&cegid={$row["id"]}'>Orvos lista</a>]</div>";
             }
             $html.= "</div>";
             $html.= "<div style='display:table-row;'>";

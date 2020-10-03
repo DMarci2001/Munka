@@ -397,8 +397,11 @@ function removeFizSzolg(fid,id) {
 function setListDay(day) {
     //$("#querystatus").html("lekérdezés folyamatban...");
 
+    $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
+            initDateFilterPicker();
+            $("#napfilter").css("background-image","url('/images/empty-128.png')");
         }
     );
 }
@@ -427,11 +430,10 @@ function addIdopont(idopont,szt) {
         }
 
         if (confirm(msg)) {
-
             $.ajax({
                 url:'index.php',
                 type:'GET',
-                data:{page:'booking', cpy:cpy, szt:szt, moveidopont:idopont, fid:foglalasSelected, rinterval:selectedInterval},
+                data:{page:'booking', cpy:cpy, szt:szt, moveidopont:idopont, fid:foglalasSelected, rinterval:selectedInterval, orvosid: selectedOrvos},
                 success:function(data){
                     if (data.substring(0, 5) == "error") {
                         alert(data.substring(5));
@@ -535,18 +537,82 @@ function removeIdopont(id, p, page) {
 
 }
 
+function addTempDoctor(nap, helyszin, szt, sourceoid) {
+    let orvosNev = $("#orvosnev"+sourceoid).val();
+    let orvosMegj = $("#orvosmegj"+sourceoid).val();
+    let orvosTol = $("#orvostol"+sourceoid).val();
+    let orvosIg = $("#orvosig"+sourceoid).val();
+    let orvosInterval = $("#orvosinterval"+sourceoid).val();
+
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        data:{page:"booking", addtempdoctor:1, helyszin:helyszin, nap:nap, szt:szt, sourceoid:sourceoid, orvosNev:orvosNev, orvosMegj:orvosMegj, orvosTol:orvosTol, orvosIg:orvosIg, orvosInterval:orvosInterval},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+                return;
+            }
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(data.html);
+            scrollTo("orvosdiv"+data.newOrvosId);
+        }
+    });
+}
+
+function saveTempDoctor(oid) {
+    let orvosNev = $("#editorvosnev"+oid).val();
+    let orvosMegj = $("#editorvosmegj"+oid).val();
+
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        data:{page:"booking", savetempdoctor:1, oid:oid, orvosNev:orvosNev, orvosMegj:orvosMegj},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+                return;
+            }
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(data.html);
+        }
+    });
+}
+
+function removeTempDoctor(nap, oid) {
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:"booking", removetempdoctor:1, nap:nap, oid:oid},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+                return;
+            }
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(data.html);
+        }
+    });
+}
 
 function showIdopontEditor(page,p,id) {
     cancelFoglalasMove();
     $("#naptarloading").show();
 
-    $("#idoponteditor").load("index.php?page="+page+"&showidoponteditor="+encodeURIComponent(id)+"&p="+encodeURIComponent(p),null,
-        function(responseText){
-            foglalasDisplayed=id;
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:page, showidoponteditor:id, p:p},
+        success:function(data) {
+            $("#idoponteditor").html(data);
+            foglalasDisplayed = id;
             $("#idoponteditor").slideDown();
             $("#naptarloading").hide();
         }
-    );
+    });
 }
 
 function startFoglalasMove(id,p) {
@@ -685,7 +751,6 @@ function foglalasOrvosErtesitesOnly(fid) {
             alert(response);
         }
     });
-
 }
 
 
@@ -1299,6 +1364,16 @@ function scrollToTop()
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function scrollTo(id) {
+    let pos = $("#"+id).offset().top - ($("#stickytablefilter").height() + 20);
+    if (id == "filterbox") {
+        pos = 0;
+    }
+    $([document.documentElement, document.body]).animate({
+        scrollTop: pos
+    }, 500);
+}
+
 //Highlight
 jQuery.fn.highlight = function( c,target )
 {
@@ -1527,7 +1602,21 @@ function withdrawRemove(id)
         }
     })
 }
+
+function initDateFilterPicker() {
+    $('#napfilter').datepicker({
+        language: 'hu',
+        onSelect: function(formattedDate, date, inst) {
+            inst.hide();
+            setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+}
+
 $(document).ready(function(){
+    initDateFilterPicker();
+
     $(function(){
         $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
             dateFormat: 'yy-mm-dd',

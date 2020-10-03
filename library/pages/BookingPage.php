@@ -399,10 +399,6 @@ class BookingPage extends CorePage {
         echo "<input type='hidden' name='version2' value='1'/>";
         echo "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_SESSION["orvosselected"]}'/>";
 
-        //echo "<br/><br/><input type='submit' name='idopontfoglalas' value='Időpont foglalása'/> ";
-        //echo "<div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Időpont foglalása</a><div>";
-        //echo "<input type='submit' name='scancel' value='Vissza'> ";
-
         echo "</form>";
     }
 
@@ -476,12 +472,7 @@ class BookingPage extends CorePage {
         }
 
         $htmlout .= "</select>";
-        //$htmlout.= print_r($tipusok, true);
         $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
-
-        if (trim($helyszinid) == "" || $helyszinid == 0) {
-            //$htmlout = "Válassz előbb helyszínt!<input type='hidden' name='szurestipus' value='' />";
-        }
 
         return $htmlout;
     }
@@ -566,7 +557,7 @@ class BookingPage extends CorePage {
             $tipusok = array_unique($tipusok);
             $orvosok = [];
             $tipusdb = [];
-			$tipusok[] = 114;
+			//$tipusok[] = 114;
 			
             $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
             while ($tipusData = sql_fetch_array($res)) {

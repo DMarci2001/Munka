@@ -527,7 +527,7 @@ class Utils {
         }
         */
 
-        $v = "ver".date("YmdH");
+        $v = "ver".date("YmdHi");
 
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>{$pageTitle}</title>";
         $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
@@ -539,7 +539,13 @@ class Utils {
         $htmlout.='<script type="text/javascript" src="/javascript/jquery/jquery-ui.js"></script>';
         $htmlout.='<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.="<script type='text/javascript' src='javascript/ajax.js?v={$v}'></script>";
-		
+
+        if (isset($GLOBALS["admin"])) {
+            $htmlout .= '<link href="/javascript/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/datepicker.min.js"></script>';
+            $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
+        }
+
         $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
         $htmlout.="<link rel='stylesheet' type='text/css' href='css/index.css?v={$v}' />";
 

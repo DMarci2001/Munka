@@ -755,19 +755,37 @@ class BookingService
             $wadd = "or (helyszinid='{$helyszin}' and cegid=0 and orvosassigned=0)";
         }
 
-        if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum>=? AND datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE) AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $orvosId]))) {
-            if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $nap, $nap]))) {
+        if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $nap, $nap]))) {
+            if (!$reservationData = sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=? AND datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE) AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $orvosId]))) {
                 $free = true;
+            } else {
+                $this->reservedTimeId = $reservationData["id"];
             }
         }
 
-        //if (!sql_fetch_array(sql_query("SELECT datum FROM foglalasok WHERE datum>=? and datum=? AND (orvosassigned=? {$wadd})", array($nap." 00:00:00", $idoPont, $orvosId)))) {
-        //    if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", array($orvosId, $nap, $nap)))) {
-        //        $free = true;
-        //    }
-        //}
         return $free;
     }
+
+    private function shrinkReservation($idoPont, $orvosId, $rinterval) {
+
+        if (!empty($this->reservedTimeId)) {
+            if ($reservationData = sql_fetch_array(sql_query("select rinterval from foglalasok where id=?", [$this->reservedTimeId]))) {
+                sql_query("update foglalasok set rinterval=1 where id=?", [$this->reservedTimeId]);
+
+                for ($offset = 1; $offset <= $rinterval; $offset++) {
+                    $newTime = date("Y-m-d H:i", strtotime("{$idoPont} +{$offset} minute"));
+                    if ($this->orvosIdopontIsFree($newTime, $orvosId, 1)) {
+                        $this->newAddTime = $newTime;
+                        return;
+                    }
+                }
+
+                //nem sikerült beszúrni, visszaállítjuk...
+                sql_query("update foglalasok set rinterval=? where id=?", [$reservationData["rinterval"], $this->reservedTimeId]);
+            }
+        }
+    }
+
 
     public function getBeosztasok($idoPont, $helyszin, $szuresTipus, $orvos = 0)
     {
@@ -869,8 +887,12 @@ class BookingService
         $ig  = "{$day} 23:59:59";
         $return = [];
 
-        $res = sql_query("select * from foglalasok b where datum>=? and datum<=? and helyszinid=? {$cegFilter}", [$tol, $ig, $helyszinId]);
-        while ($reservationData = sql_fetch_array($res)) {
+        $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
+                        left join cegek c on c.id=f.cegid
+                        left join orvosok o on o.id=f.orvosassigned
+                        left join dokumentumok d on d.foglalasid=f.id
+                        where f.datum>=? and f.datum<=? and f.helyszinid=? {$cegFilter}", [$tol, $ig, $helyszinId]);
+        while ($reservationData = sql_fetch_array($resf)) {
             $return[$reservationData["szurestipusid"]][$reservationData["id"]] = $reservationData;
         }
         return $return;
@@ -932,7 +954,9 @@ class BookingService
     public function updateFoglalasData($id)
     {
         $rInterval = 0;
-        if (isset($_REQUEST["rinterval"])) $rInterval = intval($_REQUEST["rinterval"]);
+        if (isset($_REQUEST["rinterval"])) {
+            $rInterval = intval($_REQUEST["rinterval"]);
+        }
 
         sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)), rinterval=? where id=? and pass=''", array($rInterval, $id));
 
@@ -1722,16 +1746,31 @@ END:VCALENDAR";
         return $fid;
     }
 
+
+    private $reservedTimeId = 0;
+    private $newAddTime = null;
+    private $copyReservationData = [];
+    private $copy = false;
+
     public function addIdoPont()
     {
+        //ide már csak orvosid paraméterrel érkezhet hívás!
+        //input:
+        //$_GET["orvosid"]
+        //$_GET["szt"]
+        //$_GET["addidopont"]
+        //$_GET["rinterval"]
+
         if (isset($_SESSION["helyszin"])) {
+            $foService = new FoglaljOrvostService();
+
             $adminUtils = new AdminUtils();
 
             $szuresTipusId = intval($_GET["szt"]);
             $cegId = 0;
-            $orvosId = 0;
+            $orvosIds[0] = 0;
             if (!empty($_GET["orvosid"])) {
-                $orvosId = intval($_GET["orvosid"]);
+                $orvosIds = explode(",", $_GET["orvosid"]);
             }
 
             if ($adminUtils->isCegAdmin()) {
@@ -1745,38 +1784,113 @@ END:VCALENDAR";
                 }
             }
 
-            if ($_SESSION["adminuser"]["jog_nofoglimitset"] == 0) {
-                $orvosResult = $this->isOrvosAvailable($_GET["addidopont"], $_SESSION["helyszin"], $szuresTipusId);
-                if ($orvosResult["status"] != "ok") {
-                    $message = $orvosResult["error"];
-                    if (!empty($orvosResult["doctors"])) {
-                        $doctors = [];
-                        foreach ($orvosResult["doctors"] as $doctor) {
-                            $doctors[] = $doctor["nev"];
-                        }
-                        $message .= "\nElérhető orvosok:\n" . implode(", ", $doctors);
+            if (true) {
+                foreach ($orvosIds as $orvosId) {
+                    if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId)) {
+                        $selectedOrvosId = $orvosId;
+                        break;
                     }
-                    echo "error{$message}";
-                    die;
+                }
+                if (!isset($selectedOrvosId)) {
+                    die("errorOrvos nem elérhetős!".print_r($orvosIds, true));
+                }
+
+                /*
+                if (!$this->orvosIdopontIsFree($_GET["addidopont"], $orvosIds[0])) {
+                    //megpróbáljuk 1 perces időpontként hozzáadni
+
+                    $this->shrinkReservation($_GET["addidopont"], $orvosIds[0], $_GET["rinterval"]);
+                    if (empty($this->newAddTime)) {
+                        die("errorAz orvos nem elérhető!");
+                    }
+
+                    //shrink sikerült, a módosított foglalást FO-ra is küldjük
+                    $foService->modReservation($this->reservedTimeId);
+                    $_GET["addidopont"] = $this->newAddTime;
+                    $_GET["rinterval"] = 1;
+                }
+                */
+            } else {
+                $selectedOrvosId = $orvosIds[0];
+                if ($_SESSION["adminuser"]["jog_nofoglimitset"] == 0) {
+                    $orvosResult = $this->isOrvosAvailable($_GET["addidopont"], $_SESSION["helyszin"], $szuresTipusId);
+                    if ($orvosResult["status"] != "ok") {
+                        $message = $orvosResult["error"];
+                        if (!empty($orvosResult["doctors"])) {
+                            $doctors = [];
+                            foreach ($orvosResult["doctors"] as $doctor) {
+                                $doctors[] = $doctor["nev"];
+                            }
+                            $message .= "\nElérhető orvosok:\n" . implode(", ", $doctors);
+                        }
+                        echo "error{$message}";
+                        die;
+                    }
                 }
             }
 
-            sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $orvosId, $_GET["addidopont"]));
-
+            sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));
             $fid = sql_insert_id();
+
+            if (!empty($this->copyReservationData)) {
+                sql_query("update foglalasok set regdatum=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
+                    [$this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
+                logActivity("foglalas", $fid,"{$this->copyReservationData["nev"]} foglalás másolása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
+            } else {
+                logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));
+            }
+
             $this->updateFoglalasData($fid);
 
-            logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));
-
-            if ($orvosId == 0) {
+            if ($selectedOrvosId == 0) {
                 $oid = $this->selectFreeOrvosForIdopont($fid);
                 //echo $oid;
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $fid));
             }
 
             //Foglaljorvost.hu-nak átküldés
-            $foService = new FoglaljOrvostService();
             $foService->newReservation($fid);
+        }
+    }
+
+    public function moveIdopont() {
+        if (isset($_SESSION["helyszin"])) {
+            $fid           = intval($_GET["fid"]);
+            $newfid        = $fid;
+            $szuresTipusId = intval($_GET["szt"]);
+            $this->copy    = !empty($_GET["cpy"]);
+            $orvosId       = intval($_GET["orvosid"]);
+
+            $this->copyReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$fid]));
+
+            if ($this->copy) {
+                //ha másolás
+                $_GET["addidopont"] = $_GET["moveidopont"];
+                $this->addIdoPont();
+                return;
+            }
+
+            //ha mozgatás
+            if (!$this->orvosIdopontIsFree($_GET["moveidopont"], $orvosId)) {
+                die("errorAz orvos nem elérhető!");
+            }
+
+            sql_query("update foglalasok set aktiv=1, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=0
+                where id=?", [$_SESSION["adminuser"]["nev"], $_SESSION["helyszin"], $szuresTipusId, $_GET["moveidopont"], intval($_GET["rinterval"]), $newfid]);
+
+            if ($orvosId != $this->copyReservationData["orvosassigned"] && $this->copyReservationData["fofid"] != 0 && !$this->copy) {
+                //foglaljorvos foglalás csak egy orvoson belül mozgatható, ha nem így van visszaállítjuk az adatokat
+                sql_query("update foglalasok set aktiv=?, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=? where id=?",
+                    [$this->copyReservationDat["aktiv"], $this->copyReservationDat["foglalta"], $this->copyReservationDat["helyszinid"], $this->copyReservationDat["szuresTipusid"], $this->copyReservationDat["datum"], $this->copyReservationDat["rinterval"], $this->copyReservationDat["orvosassigned"], $newfid]);
+                die("errorFoglaljOrvost.hu foglalás nem helyezhető át másik orvoshoz!");
+            }
+
+            sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($orvosId, $newfid));
+
+            logActivity("foglalas", $newfid,"{$this->copyReservationData["nev"]} foglalás mozgatása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
+
+            $foService = new FoglaljOrvostService();
+            $foService->modifyReservation($newfid);
         }
     }
 

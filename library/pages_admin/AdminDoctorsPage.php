@@ -119,9 +119,9 @@ class AdminDoctorsPage extends AdminCorePage {
 
             $res=sql_query("select * from szurestipusok where true order by megnev");
 
-            echo "<div style='width:750px;'>";
+            echo "<div style='width:850px;'>";
             while ($row=sql_fetch_array($res)) {
-                echo "<label><input onchange='saveTipusList({$beosztasid})' type='checkbox' name='tipusvalaszto{$beosztasid}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["tipusok"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label>";
+                echo "<label style='white-space: nowrap;'><input onchange='saveTipusList({$beosztasid})' type='checkbox' name='tipusvalaszto{$beosztasid}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["tipusok"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label> ";
             }
 
             echo "<div style=''><input type='button' onclick='showTipusValaszto({$beosztasid});' value='OK'></div>";
@@ -614,7 +614,7 @@ class AdminDoctorsPage extends AdminCorePage {
             }
 
 
-            $resb = sql_query("select * from orvos_beosztas b where orvosid=? and (cegid=?) {$w} order by cegid,nap<>0,nap,tol",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
+            $resb = sql_query("select * from orvos_beosztas b where orvosid=? and (cegid=?) {$w} order by cegid, nap<>0, nap, beonap, tol",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
 
             $sor = 1;
             $hetBackgrounds=array("","#ffffbb","#bbffff");
@@ -705,17 +705,9 @@ class AdminDoctorsPage extends AdminCorePage {
                 }
 
                 echo "<select title='egy kezelés időtartama' id='intervalchooser{$rowb["id"]}' onclick='changeInterval({$rowb["id"]}, this.value);'>";
-                echo $this->intervalOption(3, $rowb);
-                echo $this->intervalOption(5, $rowb);
-				echo $this->intervalOption(6, $rowb);
-                echo $this->intervalOption(8, $rowb);
-                echo $this->intervalOption(10, $rowb);
-                echo $this->intervalOption(15, $rowb);
-                echo $this->intervalOption(20, $rowb);
-                echo $this->intervalOption(30, $rowb);
-                echo $this->intervalOption(40, $rowb);
-                echo $this->intervalOption(45, $rowb);
-                echo $this->intervalOption(60, $rowb);
+                foreach ($this->adminUtils->settings->validIntervals as $interval) {
+                    echo "<option value='{$interval}'".($rowb["binterval"]==$interval?" selected":"").">{$interval} perc</option>";
+                }
                 echo "</select> ";
 
                 echo "<span id='tipusstatus{$rowb["id"]}'><a href='#' class='tlink' title='{$titl}' onclick='showTipusValaszto({$rowb["id"]});return false;'>{$num} tipus</a></span> ";

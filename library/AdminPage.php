@@ -131,10 +131,10 @@ class AdminPage {
             $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
         }
         if ($_SESSION["adminuser"]["jogosultsag"] == 1) {
-            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#00a;padding:2px 5px;border-radius:2px;'>CÉG ADMIN</span></div>";
+            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#00a;padding:2px 5px;border-radius:2px;'>CÉG ADMIN</span>&nbsp;&nbsp;</div>";
         }
         if ($_SESSION["adminuser"]["jogosultsag"] == 0) {
-            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span></div>";
+            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span>&nbsp;&nbsp;</div>";
         }
         $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>{$_SESSION["adminuser"]["nev"]}</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
         $html.= "</div>";

@@ -527,6 +527,19 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	background:#aa0;
 }
 
+.orvosbutton {
+	background:#0a0;
+	color:#fff;
+	font-weight:normal;
+	font-size:12px;
+	border-radius:2px;
+	padding:2px 4px;
+	text-decoration:none;
+}
+
+.orvosbutton:hover {
+	text-decoration:none;
+}
 
 .kisbutton {
 	background:#f00;
@@ -1195,6 +1208,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	right:0px;
 	background:#e0e0e0;
 	display:none;
+	z-index:100001;
 }
 
 .tdm {
@@ -1235,4 +1249,17 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	top:0px;
 	background: #fff;
 	z-index: 100000;
+	border-bottom: 1px solid #888;
+}
+
+.napfilter {
+	font-size:18px;
+	background-image:url(/images/empty-128.png);
+	background-color:#fff;
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 16px;
+	border:1px solid #ccc;
+	width:200px;
+	cursor:pointer;
 }
