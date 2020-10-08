@@ -47,6 +47,11 @@ class BookingPage extends CorePage {
             die;
         }
 
+        if (isset($_GET["clearselecteddoctor"])) {
+            $_SESSION["orvosselected"] = 0;
+            die;
+        }
+
         if (isset($_GET["remotereserve"])) {
             if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id=? and rkod=?",array($_GET["fid"], $_GET["fkod"])))) {
                 $_SESSION["remotebeutalo"] = $_GET["remotereserve"];

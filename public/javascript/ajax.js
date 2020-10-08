@@ -97,7 +97,16 @@ function nemfogs2() {
     myAlert("Ezen a napon csak fordított sorrenben foglalhatók az időpontok!");
 }
 
+function clearSelectedDoctor() {
+    $.ajax({
+        method:"GET",
+        url:"index.php",
+        data:{ page:"booking", clearselecteddoctor:1 }
+    });
+}
+
 function clearIdopontValaszto() {
+    clearSelectedDoctor();
     $("#datum").val("");
     $("#idopontvalasztodiv").html("");
     $("#datum").css("background-image","");
