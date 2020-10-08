@@ -1,0 +1,96 @@
+body{
+	font-family: Arial, Helvetica, sans-serif;
+	background-image: url("hmm_06.jpg");
+	background-position: center;
+    background-size: cover;
+	text-align: center;
+	height:90vh;
+}
+
+.button-box {
+	text-align: center;
+}
+
+
+.logo-box{
+	position:absolute;
+	//border:1px solid black;
+	width:200px;
+	height:80px;
+	margin:auto;
+	right:20px;top:20px;
+}
+.top-bar{
+
+}
+
+.tcell {
+	vertical-align: top;
+	margin-bottom: 0px;
+}
+
+.top-bar span{
+	display:inline;
+	margin-left:0px;
+	padding:8px;
+	color:black;
+	font-size:16px;
+	border:1px solid #a30029;
+	background-color:#bc0030;
+	color:white;
+	border-radius:0px 0px 5px 5px;
+}
+
+.whitelink{
+	text-decoration:none;
+	color:#444;
+}
+
+.whihover:hover{
+	text-decoration:underline;
+}
+
+.bottom-bar{
+	position:absolute;
+	bottom:20px;
+	left:0px;
+	display:block;
+	width:100%;
+}
+.bottom-bar span{
+	display:inline;
+	position:absolute;
+	left:0;right:0;
+	bottom:0;
+	font-size:13px;
+	text-align:center;
+}
+
+.redbox {
+	width:400px;
+	display: inline-block;
+	border-top:2px solid #bc0030;
+	border-bottom:2px solid #bc0030;
+	color: #444;
+	padding:20px;
+	margin:0px 20px 0px 20px;
+}
+
+.bbutton {
+	display:inline-block;
+	width:300px;
+	padding:10px 20px;
+	background:#0ca3c9;
+	color:#fff;
+	border-radius: 5px;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.bbutton:hover {
+	background: #0c7089;
+}
+
+.minden {
+	margin:100px 0px 20px 0px;
+}
