@@ -454,14 +454,34 @@ class BookingService
 
     private function getMinMax($szuresTipus, $packContentTypes = [])
     {
+        $helyszin=$this->helyszin;
+        $orvosRestrict = "";
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
         if (!empty($_SESSION["orvosselected"])) {
             $typeWhere.= " and orvosid='".intval($_SESSION["orvosselected"])."'";
         }
+
+        //BP-s maszkolt beosztások
+        if($_SESSION["helyszindata"]["id"]==74){
+            //Ha a fantom helyszínt választják ki:
+            
+            //Ha a jász utcát:
+            if($helyszin==1){
+                $orvosRestrict=" AND orvosid NOT IN(282,285)";
+                $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
+            }
+
+            if($helyszin==98989898989898){
+                $orvosRestrict=" AND orvosid IN(282,285)";
+                $helyszin=1;
+                $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
+            }
+        }
+
         $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles 
                                                     FROM orvos_beosztas 
-                                                    WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 HAVING MAX(tol) IS NOT NULL",
-                                                    [$this->helyszin, $_SESSION["helyszindata"]["id"]]));
+                                                    WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 {$orvosRestrict} HAVING MAX(tol) IS NOT NULL",
+                                                    [$helyszin, $_SESSION["helyszindata"]["id"]]));
         if ($minMaxData["maxpotigrendeles"] > $minMaxData["maxrendeles"]) {
             $minMaxData["maxrendeles"] = $minMaxData["maxpotigrendeles"];
         }
@@ -551,9 +571,11 @@ class BookingService
 
     public function selectOrvosForIdopont($idopont, $orvos = 0)
     {
-        $nap   = substr($idopont, 0, 10);
-        $ora   = substr($idopont, 11, 5);
-        $cegid = $_SESSION["helyszindata"]["id"];
+        $nap           = substr($idopont, 0, 10);
+        $ora           = substr($idopont, 11, 5);
+        $cegid         = $_SESSION["helyszindata"]["id"];
+        $helyszin      = $this->helyszin;
+        $orvosRestrict = "";
         if (!$this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)))) {
             return false;
         }
@@ -569,11 +591,33 @@ class BookingService
             }
         }
 
+        //Ha a BP cég az aktuális cég:
+        if($_SESSION["helyszindata"]["id"]==74){
+            //Ha a fantom helyszínt választják ki:
+            
+            //Ha a jász utcát:
+            if($helyszin==1){
+                $orvosRestrict=" AND b.orvosid NOT IN(282,285)";
+                if(!empty($orvos)){
+                    $orvos="";
+                }
+            }
+
+            if($helyszin==98989898989898){
+                $orvosRestrict=" AND b.orvosid IN(282,285)";
+                $helyszin=1;
+                if(!empty($orvos)){
+                    $orvos="";
+                }
+            }
+        }
+
+
         //időpontra beosztott orvosok kiolvasása
         $resb = sql_query("SELECT * FROM orvos_beosztas b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) " . ($orvos == 0 ? "" : "and b.orvosid='{$orvos}'") . " and b.aktiv=1 
-		ORDER BY o.onlytel,b.cegid DESC,o.id", array($this->helyszin, $cegid, $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
+		WHERE b.`helyszinid`=? and (b.cegid=? or b.cegid=0) AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) " . ($orvos == 0 ? "" : "and b.orvosid='{$orvos}'") . " and b.aktiv=1 {$orvosRestrict}
+        ORDER BY o.onlytel,b.cegid DESC,o.id", array($helyszin, $cegid, $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
 
         while ($rowb = sql_fetch_array($resb)) {
             //orvos foglalt-e?
@@ -610,10 +654,26 @@ class BookingService
     private function displayDoctorSelector()
     {
         $webText = $this->lang->webText;
-        $html = "";
+        $html = $orvosRestrict = "";
+        $helyszin = $this->helyszin;
 
         if (!isset($_SESSION["orvosselected"])) {
             $_SESSION["orvosselected"] = 0;
+        }
+
+        //BP-s maszkolt beosztások
+        if($_SESSION["helyszindata"]["id"]==74){
+            //Ha a fantom helyszínt választják ki:
+            
+            //Ha a jász utcát:
+            if($helyszin==1){
+                $orvosRestrict=" AND b.orvosid NOT IN(282,285)";
+            }
+
+            if($helyszin==98989898989898){
+                $orvosRestrict=" AND b.orvosid IN(282,285)";
+                $helyszin=1;
+            }
         }
 
         //$html.= print_r(array($this->helyszin, "|{$this->szuresTipus}|", $_SESSION['helyszindata']['id']), true);
@@ -625,7 +685,7 @@ class BookingService
                                 and	b.cegid = ? 
                                 and (nap<10 or b.beonap >= date(now())) 
                                 and b.aktiv=1 
-                                and o.aktiv=1", array($this->helyszin, "|{$this->szuresTipus}|", $_SESSION['helyszindata']['id']));
+                                and o.aktiv=1 {$orvosRestrict}", array($helyszin, "|{$this->szuresTipus}|", $_SESSION['helyszindata']['id']));
         while ($beoData = sql_fetch_array($res)) {
             if ($beoData["csaksorban"] != 0) {
                 $vanCsakSorban = true;
@@ -798,7 +858,7 @@ class BookingService
             $cegId = $_SESSION["helyszinceg"];
         }
 
-        $wora = $wceg = "";
+        $wora = $wceg = $orvosRestrict = "";
         if (!empty($ora)) {
             $wora = "AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig='', ig, potig))>TIME('{$ora}')";
         }
@@ -811,6 +871,21 @@ class BookingService
         } else {
             $wceg = "and (b.cegid='{$cegId}' or b.cegid=0)";
         }
+        
+        //Ha a BP cég az aktuális cég:
+        if($_SESSION["helyszindata"]["id"]==74){
+            //Ha a fantom helyszínt választják ki:
+            
+            //Ha a jász utcát:
+            if($helyszin==1){
+                $orvosRestrict=" AND orvosid NOT IN(282,285)";
+            }
+
+            if($helyszin==98989898989898){
+                $orvosRestrict=" AND orvosid IN(282,285)";
+                $helyszin=1;
+            }
+        }
 
         //időpontra beosztott orvosok kiolvasása
         $resb = sql_query("SELECT 
@@ -820,8 +895,8 @@ class BookingService
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
 		LEFT JOIN cegek c ON c.id=b.cegid
 		WHERE b.`helyszinid`='{$helyszin}' {$wceg} AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') {$wora} AND INSTR(b.tipusok,'|{$szuresTipus}|') 
-		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1
-		ORDER BY b.cegid<>'{$cegId}',o.nev,o.onlytel,b.cegid DESC,o.id");
+		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$orvosRestrict}
+        ORDER BY b.cegid<>'{$cegId}',o.nev,o.onlytel,b.cegid DESC,o.id");
 
         while ($rowb = sql_fetch_array($resb)) {
             if (isset($GLOBALS["admin"]) || !sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? AND nap>=DATE(NOW()) and (szurestipusid=? or instr(szurestipusid,'|{$szuresTipus}|'))", array($helyszin, $cegId, $nap, $szuresTipus)))) {
@@ -944,6 +1019,8 @@ class BookingService
         //$_POST["datum"]
         //$_POST["helyszin"]
         //$_POST["szurestipus"]
+        //Teszt:
+        return $this->selectOrvosForIdopont($data["datum"], $data["orvosselected"]);
 
         if ($this->selectOrvosForIdopont($data["datum"], $data["orvosselected"])) {
             return true;
@@ -1580,7 +1657,7 @@ END:VCALENDAR";
 
         if ($data['noreservation'] != 1) {
             $oid = $this->selectFreeOrvosForIdopont($fid);
-            sql_query("update foglalasok set orvosassigned=? where id=?", array($oid, $fid));
+            sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $fid));
         }
 
         if (isset($_SESSION["beutaloid"]) && isset($_SESSION["user"]) && $rowb = sql_fetch_array(sql_query("select * from beutalok where id=?", array($_SESSION["beutaloid"])))) {

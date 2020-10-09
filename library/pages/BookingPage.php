@@ -104,9 +104,15 @@ class BookingPage extends CorePage {
             if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
             if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
 
+            if($_POST["helyszin"]==98989898989898){
+                $_POST["helyszin"]=1;
+            }
+
             $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
             $this->bookingService->setHelyszin($_POST["helyszin"]);
             $this->bookingService->setNeme($_POST["neme"]);
+
+            
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
                 if (empty($_POST["email"])) {
@@ -182,10 +188,14 @@ class BookingPage extends CorePage {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
-            $_POST["orvosselected"] = 0;
+            //$_POST["orvosselected"] = 0;
+            if($_POST["orvosselected"]!="") $_POST["orvosid"]=$_POST["orvosselected"];
             if (isset($_SESSION["orvosselected"])) {
-                $_POST["orvosselected"] = $_SESSION["orvosselected"];
+                $_POST["orvosid"] = $_SESSION["orvosselected"];
             }
+            //if($_POST["orvosselected"]!="") $_POST["orvosid"]=$_POST["orvosselected"];
+
+            //$this->error[]= $this->bookingService->checkIdopontSzabad($_POST);
 
             if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
                 $this->errors[] = "{$webText["idopontlefoglaltak"]}";
@@ -200,8 +210,10 @@ class BookingPage extends CorePage {
                 }
             }
 
+            
 
             if (empty($this->errors)) {
+
                 $forwardURL = $this->bookingService->addReservation($_POST);
 
                 header("location:{$forwardURL}");
@@ -486,6 +498,8 @@ class BookingPage extends CorePage {
         $szuresTipus = $_POST["szurestipus"];
         $webText = $this->lang->webText;
 
+        $_SESSION["orvosselected"]="";
+
         $html = "";
         $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
         $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
@@ -496,7 +510,9 @@ class BookingPage extends CorePage {
         $numOfH = sql_num_rows($res);
 
         $html.= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
+        $counter=0;
         while ($rowt = sql_fetch_array($res)) {
+            $counter++;
             if ($_SESSION["helyszindata"]["nocim"] == 1) {
                 $rowt["cim"] = $rowt["megnev"];
             }
@@ -506,6 +522,13 @@ class BookingPage extends CorePage {
                 $_POST["helyszin"] = $rowt["id"];
                 //$_POST["szurestipus"] = 0;
             }
+            if($_SESSION["helyszindata"]["id"]==74){
+                //Maszkolt extra címhely beállítása:
+                if($counter==1){
+                    $html.= "<option value='98989898989898' >Budapest (1135) Jász utca 33-35. (Haller Gardens irodaház orvosi rendelése helyett)</option>";
+                }
+            }
+            
         }
         $html.= "</select>";
         return $html;
