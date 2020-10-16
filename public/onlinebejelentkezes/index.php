@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <title>HMM - Bejelentkező</title>
 <head>
-<link rel="stylesheet" href="style.css" type="text/css" media="screen"/>
+<link rel="stylesheet" href="style.css?v2" type="text/css" media="screen"/>
 <meta charset="UTF-8"> 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css"/>
 <script src="https://code.jquery.com/jquery-latest.js"></script>
@@ -18,8 +18,8 @@
                 Tel.: +36 1 / 800 9333<br/><a class="whitelink" href = "https://www.goo.gl/m716T6">1135 Budapest, Jász u. 33-35. <i style = "" class="fa fa-map-marker"></i></a><br/>
             </div>
             <div class = "button-box">
-                <div onclick="window.href.location='http://fogleu.hungariamed.hu';" class="bbutton" style="margin-top:30px;">Foglalkozás Egészségügy</div><br/><br/>
-                <div onclick="window.href.location='http://bejelentkezes.hungariamed.hu';" class="bbutton" style="">Szakrendelések</div>
+                <div onclick="window.location.href='http://fogleu.hungariamed.hu';" class="bbutton" style="margin-top:30px;">Foglalkozás Egészségügy</div><br/><br/>
+                <div onclick="window.location.href='http://bejelentkezes.hungariamed.hu';" class="bbutton" style="">Szakrendelések</div>
             </div>
         </div>
     </div>
@@ -31,7 +31,7 @@
                 Tel.: +36 20 / 373 3343<br/><a class="whitelink" href = "https://www.goo.gl/m716T6">9021 Győr Bajcsy-Zsilinszky utca 30-32. <i style = "" class="fa fa-map-marker"></i></a>
             </div>
             <div class = "button-box">
-                <div onclick="window.href.location='http://gyor-bejelentkezes.hungariamed.hu';" class="bbutton" style="margin-top:30px;">Időpont foglalás - Győr</div>
+                <div onclick="window.location.href='http://gyor-bejelentkezes.hungariamed.hu';" class="bbutton" style="margin-top:30px;">Időpont foglalás - Győr</div>
             </div>
         </div>
     </div>
