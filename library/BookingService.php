@@ -23,10 +23,7 @@ class BookingService
         $this->utils = new Utils();
 
         if (isset($_GET["tappenzcheckrefresh"])) {
-            $webText = $this->lang->webText;
-            if ($this->checkBookingRestrictionProtocol($_GET["tappenzcheckrefresh"])) {
-                echo $webText["betegallomanynyilatkozat"];
-            }
+            echo $this->tappenzCheckHTML($_GET["tappenzcheckrefresh"]);
             die();
         }
 
@@ -115,48 +112,52 @@ class BookingService
 
             //ennyi órán belül kell foglalni
             $dist = "6 hour";
-            if ($this->helyszin == 1) {
-                //jász utca bármikor foglalható
-                $dist = "0 hour";
-            }
-            if (in_array($_SESSION["orvosselected"], [74])) {
-                //74 - Dr. Kővári Gábor
-                $dist = "24 hour";
-            }
-
-            if ($_SESSION["helyszindata"]["id"] == 6) {
-                //cib
-                $dist = "72 hour";
-                if (date("N") == 4) {
-                    $dist = "96 hour";
-                }
-                if (date("N") == 5) {
-                    $dist = "120 hour";
-                }
-            }
-
-            if ($_SESSION["helyszindata"]["id"] == 82) {
-                //waberers
-                $dist = "0 hour";
-            }
-
-            if ($_SESSION["helyszindata"]["id"] == 46) {
-                //vodafone
-                $dist = "72 hour";
-                if (date("N") == 4) {
-                    $dist = "96 hour";
-                }
-                if (date("N") == 5) {
-                    $dist = "120 hour";
-                }
-            }
-
-            //ennyi napon belül kell foglalni
             $distFullDay = "0 day";
-            if ($_SESSION["orvosselected"] == 36) {
-                //36 - dr Bodonyi Melinda
-                $distFullDay = "2 day";
+            //ennyi napon belül kell foglalni
+
+            if (Booking_Constants::SITE_DOMAIN == "hungariamed.hu") {
+                if ($this->helyszin == 1) {
+                    //jász utca bármikor foglalható
+                    $dist = "0 hour";
+                }
+                if (in_array($_SESSION["orvosselected"], [74])) {
+                    //74 - Dr. Kővári Gábor
+                    $dist = "24 hour";
+                }
+
+                if ($_SESSION["helyszindata"]["id"] == 6) {
+                    //cib
+                    $dist = "72 hour";
+                    if (date("N") == 4) {
+                        $dist = "96 hour";
+                    }
+                    if (date("N") == 5) {
+                        $dist = "120 hour";
+                    }
+                }
+
+                if ($_SESSION["helyszindata"]["id"] == 82) {
+                    //waberers
+                    $dist = "0 hour";
+                }
+
+                if ($_SESSION["helyszindata"]["id"] == 46) {
+                    //vodafone
+                    $dist = "72 hour";
+                    if (date("N") == 4) {
+                        $dist = "96 hour";
+                    }
+                    if (date("N") == 5) {
+                        $dist = "120 hour";
+                    }
+                }
+
+                if ($_SESSION["orvosselected"] == 36) {
+                    //36 - dr Bodonyi Melinda
+                    $distFullDay = "2 day";
+                }
             }
+
 
             for ($i = 0; $i <= 6; $i++) {
                 $fix = $i + $this->honnan;
@@ -384,6 +385,9 @@ class BookingService
 
 
     public function checkBookingRestrictionProtocol($helyszinId) {
+        if (empty($helyszinId)) {
+            return false;
+        }
         return sql_num_rows(sql_query("SELECT * FROM foglalas_korlatozasok WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", array($helyszinId))) > 0;
     }
 
@@ -1007,8 +1011,8 @@ class BookingService
                 $h .= "</div>";
             }
         }
-        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $helyszinId == 1 && $tid == 1) {
-            $h .= "<div><input type='checkbox' name = 'tudoszuro' value = '1' />Tüdőszűrővel nem rendelkezik</div>";
+        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $tid == 1) {
+            $h .= "<div><input type='checkbox' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"])?"checked":"")."/>Tüdőszűrővel nem rendelkezik</div>";
         }
         return $h;
     }
@@ -1861,49 +1865,19 @@ END:VCALENDAR";
                 }
             }
 
-            if (true) {
-                foreach ($orvosIds as $orvosId) {
-                    if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId)) {
-                        $selectedOrvosId = $orvosId;
-                        break;
-                    }
+            foreach ($orvosIds as $orvosId) {
+                if ($orvosId == 117) {
+                    //managerszűrés korlátlan
+                    $selectedOrvosId = $orvosId;
+                    break;
                 }
-                if (!isset($selectedOrvosId)) {
-                    die("errorOrvos nem elérhetős!".print_r($orvosIds, true));
+                if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId)) {
+                    $selectedOrvosId = $orvosId;
+                    break;
                 }
-
-                /*
-                if (!$this->orvosIdopontIsFree($_GET["addidopont"], $orvosIds[0])) {
-                    //megpróbáljuk 1 perces időpontként hozzáadni
-
-                    $this->shrinkReservation($_GET["addidopont"], $orvosIds[0], $_GET["rinterval"]);
-                    if (empty($this->newAddTime)) {
-                        die("errorAz orvos nem elérhető!");
-                    }
-
-                    //shrink sikerült, a módosított foglalást FO-ra is küldjük
-                    $foService->modReservation($this->reservedTimeId);
-                    $_GET["addidopont"] = $this->newAddTime;
-                    $_GET["rinterval"] = 1;
-                }
-                */
-            } else {
-                $selectedOrvosId = $orvosIds[0];
-                if ($_SESSION["adminuser"]["jog_nofoglimitset"] == 0) {
-                    $orvosResult = $this->isOrvosAvailable($_GET["addidopont"], $_SESSION["helyszin"], $szuresTipusId);
-                    if ($orvosResult["status"] != "ok") {
-                        $message = $orvosResult["error"];
-                        if (!empty($orvosResult["doctors"])) {
-                            $doctors = [];
-                            foreach ($orvosResult["doctors"] as $doctor) {
-                                $doctors[] = $doctor["nev"];
-                            }
-                            $message .= "\nElérhető orvosok:\n" . implode(", ", $doctors);
-                        }
-                        echo "error{$message}";
-                        die;
-                    }
-                }
+            }
+            if (!isset($selectedOrvosId)) {
+                die("errorOrvos nem elérhető!");
             }
 
             sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));
@@ -1985,5 +1959,15 @@ END:VCALENDAR";
         $data = array($id, $text, $email, (isset($_SESSION["adminuser"]["id"]) ? $_SESSION["adminuser"]["id"] : null), $subject);
 
         sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?,datum=NOW()", $data);
+    }
+
+    public function tappenzCheckHTML($val) {
+        $webText = $this->lang->webText;
+        $html = "";
+        if ($this->checkBookingRestrictionProtocol($val)) {
+            $html.= "<input type='checkbox' id='betegallomanynyilatkozat' value='1' name='betegallomanynyilatkozat'>";
+            $html.= "<span style='cursor:pointer' onClick='toggleCheckBox(\"#betegallomanynyilatkozat\");'><strong>".$webText["betegallomanynyilatkozat"]."</strong></span>";
+        }
+        return $html;
     }
 }

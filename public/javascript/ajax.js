@@ -105,11 +105,22 @@ function clearSelectedDoctor() {
     });
 }
 
+function tappenzCheckRefresh() {
+    $.ajax({
+        method:"GET",
+        url:"index.php",
+        data:{ page:"booking", tappenzcheckrefresh: $("#helyszin").val() }
+    }).done(function(msg) {
+        $("#tappenzcheck").html(msg);
+    });
+}
+
 function clearIdopontValaszto() {
     clearSelectedDoctor();
     $("#datum").val("");
     $("#idopontvalasztodiv").html("");
     $("#datum").css("background-image","");
+    tappenzCheckRefresh();
 }
 
 function showTipusMegj(tipusid) {

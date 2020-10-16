@@ -100,9 +100,12 @@ class AdminBookingPage extends AdminCorePage
             $oid           = intval($_POST["oid"]);
             $orvosNev      = $_POST["orvosNev"];
             $orvosMegj     = $_POST["orvosMegj"];
+            $orvosTol      = $_POST["orvosTol"];
+            $orvosIg       = $_POST["orvosIg"];
             $return        = ["error" => "", "html" => ""];
 
             sql_query("update orvosok set nev=?, description=? where id=?", [$orvosNev, $orvosMegj, $oid]);
+            sql_query("update orvos_beosztas set tol=?, ig=? where orvosid=? limit 1", [$orvosTol, $orvosIg, $oid]);
 
             $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
             $this->utils->jsonOut($return);
@@ -280,11 +283,14 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div id='editdoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Név:</div><div class='tdm' style='padding:2px 0px;'><input type='text' id='editorvosnev{$orvosId}' value='{$beosztas["orvosnev"]}'/></div></div>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='editorvosmegj{$orvosId}' style='width:300px;' value='{$beosztas["orvosdescription"]}' /></div></div>";
+                $htmlout .= "<div style='display:table-row;'><div class='tdm'>Rendelési idő: </div><div class='tdm' style='padding:2px 0px;'>".$this->rendIdoSelect("editorvostol{$orvosId}", $beosztas["tol"])." - ".$this->rendIdoSelect("editorvosig{$orvosId}", $beosztas["ig"])."</div></div>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick='saveTempDoctor({$orvosId});' type='button' value='Mentés' /> <input onclick=\"removeTempDoctor('{$nap}', {$orvosId});\" type='button' value='Orvos törlése' /> <input onclick=\"$('#editdoctordiv{$orvosId}').slideUp()\" type='button' value='mégsem' /></div></div>";
                 $htmlout .= "</div>";
 
-                $htmlout .= "<div style=''><a onclick='$(\"#beocegek{$rendelesek}\").slideToggle();return false;' href='#'>" . count($cegek) . " cég</a></div>";
-                $htmlout .= "<div id='beocegek{$rendelesek}' style='" . (count($cegek) > 10 ? "display:none;" : "") . "font-size:10px;color:#888;'>" . implode(", ", $cegek) . "</div>";
+                if (isset($cegek[0]) && !empty($cegek[0])) {
+                    $htmlout .= "<div style=''><a onclick='$(\"#beocegek{$rendelesek}\").slideToggle();return false;' href='#'>" . count($cegek) . " cég</a></div>";
+                    $htmlout .= "<div id='beocegek{$rendelesek}' style='" . (count($cegek) > 10 ? "display:none;" : "") . "font-size:10px;color:#888;'>" . implode(", ", $cegek) . "</div>";
+                }
                 $htmlout .= "</div>";
                 //$htmlout .= "</td>";
 

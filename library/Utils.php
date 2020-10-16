@@ -111,7 +111,7 @@ class Utils {
         $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
         $mail->FromName = Booking_Constants::COMPANY_NAME;
         //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
-        $mail->AddAddress("jns@jns.hu");
+        //$mail->AddAddress("jns@jns.hu");
         $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->IsHTML(true);
 
@@ -124,7 +124,7 @@ class Utils {
                 $mailSzoveg = str_replace("#nev#", $foglalasData["nev"], $mailSzoveg);
                 $mail->Subject = iconv("UTF-8", "ISO-8859-2", $mailSubject);
                 $mail->Body = iconv("UTF-8", "ISO-8859-2", $mailSzoveg);
-                $mail->Send();
+                //$mail->Send();
                 sql_query("update foglalasok set eljottmail=1 where id=?", array($foglalasData["id"]));
             }
         }

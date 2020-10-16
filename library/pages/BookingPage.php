@@ -338,7 +338,7 @@ class BookingPage extends CorePage {
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"]) . "</div></td></tr>";
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
-            echo "<tr><td></td><td><div id='tappenzcheck'>".($this->bookingService->checkBookingRestrictionProtocol($_POST['helyszin']) ? $webText["betegallomanynyilatkozat"] : "")."</div></td></tr>";
+            echo "<tr><td></td><td><div id='tappenzcheck'>".$this->bookingService->tappenzCheckHTML($_POST["helyszin"])."</div></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);

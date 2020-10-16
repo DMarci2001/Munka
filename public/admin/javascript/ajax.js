@@ -564,11 +564,13 @@ function addTempDoctor(nap, helyszin, szt, sourceoid) {
 function saveTempDoctor(oid) {
     let orvosNev = $("#editorvosnev"+oid).val();
     let orvosMegj = $("#editorvosmegj"+oid).val();
+    let orvosTol = $("#editorvostol"+oid).val();
+    let orvosIg = $("#editorvosig"+oid).val();
 
     $.ajax({
         url:'index.php',
         type:'POST',
-        data:{page:"booking", savetempdoctor:1, oid:oid, orvosNev:orvosNev, orvosMegj:orvosMegj},
+        data:{page:"booking", savetempdoctor:1, oid:oid, orvosNev:orvosNev, orvosMegj:orvosMegj, orvosTol:orvosTol, orvosIg:orvosIg},
         success:function(data) {
             if (data.error != "") {
                 alert(data.error);

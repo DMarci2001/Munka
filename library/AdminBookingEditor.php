@@ -61,6 +61,10 @@ class AdminBookingEditor {
                 megj='".addslashes($_POST["megj"])."'
             where id=?",array($fid));
 
+            if (!empty($_POST["paciensid"])) {
+                sql_query("update foglalasok set paciensid=? where id=? and paciensid=0", [$_POST["paciensid"], $fid]);
+            }
+
             $alkalmassagi = "";
             if($_POST['alkalmassag'] === "I") {
                 $alkalmassagi = date("Y-m-d",strtotime("Now + {$_POST['alkalmassagido']} months"));
