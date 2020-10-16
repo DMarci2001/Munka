@@ -642,50 +642,44 @@ function startAutoFill(id,p) {
     $("#autofill").slideDown();
 }
 
-function autoFill(taj,birth){
-    if(taj == "" && birth == ""){
-        if(taj == "")$('#user-taj').css('border','1px solid red');
-        if(birth == "")$('#user-szuldatum').css('border','1px solid red');
+function autoFill(){
+    let taj = $("#editortaj").val().trim();
+
+    if (taj == "") {
+        alert("Add meg a TAJ számot!");
+        return;
     }
 
-    else{
-        if(taj.length < 9 || taj.length > 9){
-            $('#user-taj').css('border','1px solid red');
-        }
-        else{
-            $('#user-taj').css('border','1px solid gray');
-            $.ajax({
-                url:'index.php',
-                type:'POST',
-                data:{AFForm:taj,
-                    birth:birth},
-                success:function(data){
-                    str = data.split('||');
-                    if(str[0] == 'success'){
-                        $('input[name="paciensid"]').val(str[1]);
-                        $('input[name="taj"]').val(str[3]);
-                        $('input[name="email"]').val(str[8]);
-                        $('input[name="nev"]').val(str[2]);
-                        $('input[name="telefon"]').val(str[9]);
-                        $('input[name="munkakor"]').val(str[4]);
-                        $('input[name="irsz"]').val(str[10]);
-                        $('input[name="varos"]').val(str[11]);
-                        $('input[name="utca"]').val(str[12]);
-                        $('select[name="cegid"]').val(str[13]);
-                        $('input[name="szulhely"]').val(str[6]);
-                        $('input[name="anyjaneve"]').val(str[7]);
-                        $('input[name="torzsszam"]').val(str[14]);
-                        $('#editorDate').load('index.php?DateSelector=' + str[5]);
-                        $('td[name="error-td"]').text(' ');
-                    }
-                    else{
-                        $('td[name="error-td"]').text('Nincs találat az adatbázisban!');
-                        return false;
-                    }
-                }
-            });
-        }
+    if (taj.length < 9 || taj.length > 9){
+        alert("A megadott TAJ szám formátuma nem megfelelő!");
+        return;
     }
+
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        data:{AFForm:taj},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+            } else {
+                $('input[name="paciensid"]').val(data.id);
+                $('input[name="taj"]').val(data.taj);
+                $('input[name="email"]').val(data.email);
+                $('input[name="nev"]').val(data.nev);
+                $('input[name="telefon"]').val(data.telefon);
+                $('input[name="munkakor"]').val(data.munkakor);
+                $('input[name="irsz"]').val(data.irsz);
+                $('input[name="varos"]').val(data.varos);
+                $('input[name="utca"]').val(data.utca);
+                $('select[name="cegid"]').val(data.cegid);
+                $('input[name="szulhely"]').val(data.szulhely);
+                $('input[name="anyjaneve"]').val(data.anyjaneve);
+                $('input[name="torzsszam"]').val(data.torzsszam);
+                $('#editorDate').load('index.php?DateSelector=' + data.szuldatum);
+            }
+        }
+    });
 }
 
 function cancelFoglalasMove() {

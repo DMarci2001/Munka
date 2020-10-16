@@ -222,20 +222,18 @@ class AdminBookingEditor {
 
 
         if (isset($_REQUEST['AFForm'])) {
-            $TAJ = $_REQUEST['AFForm'];
-            $szuldatum = $_REQUEST['birth'];
-            $request = sql_query("SELECT * FROM felhasznalok WHERE taj = ? AND szuldatum = ?",array($TAJ, $szuldatum));
-
-            if ($result = sql_fetch_array($request)) {
-                $returnString  = "success||".$result['id']."||".$result['nev']."||".$result['taj']."||";
-                $returnString .= $result['munkakor']."||".$result['szuldatum']."||".$result['szulhely']."||";
-                $returnString .= $result['anyjaneve']."||".$result['email']."||".$result['telefon']."||";
-                $returnString .= $result['irsz']."||".$result['varos']."||".$result['utca']."||".$result['cegid']."||".$result['torzsszam'];
-            } else {
-                $returnString = "failed";
+            if (!isset($_SESSION["adminuser"])) {
+                $this->utils->jsonOut(["error" => "error"]);
             }
 
-            echo $returnString;
+            $TAJ = $_REQUEST['AFForm'];
+            if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ?", [$TAJ]))) {
+                $data["error"] = "";
+            } else {
+                $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+            }
+
+            $this->utils->jsonOut($data);
             die();
         }
 		
@@ -276,7 +274,7 @@ class AdminBookingEditor {
             $html.= "<div style='margin-top:4px;'>";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
-            $html.= "<a class='middlebutton' href='#' onClick='startAutoFill({$row["id"]},\"{$row["pass"]}\");return false;'>mezők kitöltése</a> ";
+            $html.= "<a class='middlebutton' href='#' onClick='autoFill();return false;'>mezők kitöltése</a> ";
 
             if (!empty(trim($row["taj"])) && !empty($row["szuldatum"])) {
                 $btext = "paciens létrehozása";
@@ -292,21 +290,7 @@ class AdminBookingEditor {
             $html.= "</div>";
             $html.= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
             $html.= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
-            $html.= "<div id='autofill' style='display:none;background:#ff8;color:#555;padding:10px;cursor:pointer;'>";
-            $html.= "A mezők kitöltéséhez add meg a páciens TAJ számát és születési dátumát:<br/>
-				  <table>
-					<tr><td> TAJ:</td><td><input id = 'user-taj' type = 'textbox'/></td>
-						<td rowspan='2' style = 'color:red;font-weight:bold;padding-left:10px;' name='error-td'></td>
-					</tr>
-					<tr><td>Szül. dátum:</td><td><input id = 'user-szuldatum' style = '' type = 'textbox'/></td></tr>
-					<tr>
-						<td></td><td>
-							<a class='middlebutton' href='#' onClick='autoFill($(\"#user-taj\").val(),$(\"#user-szuldatum\").val());return false;' style='font-size:12px;padding:3px 5px;'>Kitöltés</a>
-							<a class='middlebutton' href='#' onClick='cancelFoglalasMove();return false;' style='font-size:12px;padding:3px 5px;'>Mégse</a>
-						</td>
-					</tr>
-				  </table>";
-            $html.="</div>";
+
             $html.= "<div style='padding:10px;'>";
 
             if ($row["nev"]!="" && $row["nev"]!="nincs név") {
@@ -321,6 +305,7 @@ class AdminBookingEditor {
 
             $html.= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
             $html.= "<input type='hidden' name='fid' value='{$row["id"]}'/>";
+            $html.= "<input type='hidden' name='paciensid' value='{$row["paciensid"]}'/>";
             $html.= "<input type='hidden' id='idopontmarker' value='".substr($row["datum"],0,16)."'/>";
             $html.= "<input type='hidden' name='p' value='{$row["pass"]}'/>";
             $html.= "<table style='font-size:12px;'>";
@@ -368,7 +353,7 @@ class AdminBookingEditor {
 
             $result = sql_fetch_array(sql_query("SELECT * FROM kupon_lista WHERE foglalasid={$row["id"]}"));
 
-            $html.= "<tr><td width='60'>Taj szám:</td><td><input class='inputbox' style='width:200px;' type='text' name='taj' value='{$row["taj"]}'></td><td width='60'>E-mail:</td><td><input class='inputbox' style='width:200px;' type='text' name='email' value='{$row["email"]}'></td></tr>";
+            $html.= "<tr><td width='60'>Taj szám:</td><td><input class='inputbox' style='width:200px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'></td><td width='60'>E-mail:</td><td><input class='inputbox' style='width:200px;' type='text' name='email' value='{$row["email"]}'></td></tr>";
             $html.= "<tr><td width='60'>Név:</td><td><input class='inputbox' style='width:200px;' type='text' name='nev' value='{$row["nev"]}'></td><td width='60'>Telefon:</td><td><input class='inputbox' style='width:200px;' type='text' name='telefon' value='{$row["telefon"]}'></td></tr>";
             $html.= "<tr><td width='60'>Munkakör:</td><td><input class='inputbox' style='width:200px;' type='text' name='munkakor' value='{$row["munkakor"]}'></td><td width='60'>Irsz:</td><td><input placeholder='Irsz' class='inputbox' style='width:40px;' type='text' name='irsz' value='{$row["irsz"]}'> <input placeholder='Város' class='inputbox' style='width:150px;' type='text' name='varos' value='{$row["varos"]}'></td></tr>";
             $html.= "<tr><td width='60'>Szül. dátum:</td><td>".$this->utils->datumSelector($row["szuldatum"],"szuldatum")."</td><td width='60'>Utca:</td><td><input class='inputbox' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
