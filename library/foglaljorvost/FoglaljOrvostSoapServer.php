@@ -47,8 +47,8 @@ class FoglaljOrvostSoapServer {
         return false;
     }
 
-    private function checkField($fieldId) {
-        return sql_fetch_array(sql_query("select id from szurestipusok where fotid=? and fotid<>0", [$fieldId]));
+    private function checkField($fieldId, $servId) {
+        return sql_fetch_array(sql_query("select id from szurestipusok where (fotid=? or fotid=?) and fotid<>0", [$fieldId, $servId]));
     }
 
 
@@ -79,7 +79,7 @@ class FoglaljOrvostSoapServer {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
         }
 
-        if (!$szuresTipusData = $this->checkField($fieldId)) {
+        if (!$szuresTipusData = $this->checkField($fieldId, $srvId)) {
             return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldId})");
         }
 
@@ -122,7 +122,7 @@ class FoglaljOrvostSoapServer {
     }
 
     private function appointmentMod(SimpleXMLElement $xml) {
-        $status = (string)$xml->APPOINTMENT["STATUS"];
+        $status          = (string)$xml->APPOINTMENT["STATUS"];
         $appointmentId   = (string)$xml->APPOINTMENT["OWN_ID"];
         $appointmentFoId = (string)$xml->APPOINTMENT["OUTERSYS_ID"];
         $srvId           = (string)$xml->APPOINTMENT["SRV_ID"];
@@ -143,7 +143,7 @@ class FoglaljOrvostSoapServer {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
         }
 
-        if (!$szuresTipusData = $this->checkField($fieldId)) {
+        if (!$szuresTipusData = $this->checkField($fieldId, $srvId)) {
             return $this->messageOutput("NO_FIELD", "A megadott FIELD nem található a klinika rendszerében ({$fieldId})");
         }
 

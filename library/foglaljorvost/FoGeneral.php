@@ -17,6 +17,7 @@ class FoGeneral {
             $description.= "megjegyzés: {$reservationData["megj"]}\n";
         }
 
+        $description = str_replace("&", "&amp;", $description);
         return trim($description);
     }
 
@@ -101,7 +102,7 @@ class FoGeneral {
         foreach ($xml->FIELDS->FIELD as $field) {
             if (!empty($field["NAME"])) {
                 //echo $field["OUTERSYS_ID"] . " " . $field["NAME"] . "\n";
-                sql_query("update szurestipusok set fotid=? where megnev=? and megnev<>''", [$field["OUTERSYS_ID"], $field["NAME"]]);
+                sql_query("update szurestipusok set fotid=? where megnev=? and megnev<>'' and fotid=0", [$field["OUTERSYS_ID"], $field["NAME"]]);
                 sql_query("insert ignore into remoteids set provider=?, tipus='service', remoteid=?, megnev=?", [static::PROVIDER_NAME, $field["OUTERSYS_ID"], $field["NAME"]]);
 
                 if (isset($field->SERVICES->SERVICE)) {

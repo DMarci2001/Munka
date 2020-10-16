@@ -1036,4 +1036,8 @@ class Utils {
         return Booking_Constants::IS_DEMO;
     }
 
+    public static function converResult($result) {
+        return htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))));
+    }
+
 }

@@ -367,24 +367,51 @@ class AdminDoctorsPage extends AdminCorePage {
 
             if ($result = $foService->getFieldsByDoctor($oid)) {
                 echo "<div style='margin-top:10px;font-weight: bold'>Szolgáltatások</div>";
-                echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
+                echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result)."</pre>";
 
+                //beosztások átküldése
+                // - csak a hungáriamed cég beosztásai mennek
+                // - multbéli beosztásokat nem küldjük
+                // - az inaktiv jelölésű beosztások törlésre kerülnek a foglaljorvosnál, ott nincs aktiv - inaktiv beállítás
                 echo "<div style='margin-top:10px;font-weight: bold'>Beosztás szinkron:</div>";
-                $res = sql_query("select b.* from orvos_beosztas b where orvosid=? and cegid=? order by b.nap desc", [$oid, 11]);
+                $res = sql_query("select b.* from orvos_beosztas b where orvosid=? and cegid=? and noreservation=0 AND (beonap>DATE(NOW()) OR nap<>10) order by b.nap desc", [$oid, 11]);
                 while ($beo = sql_fetch_array($res)) {
                     if ($beo["fobid"] == 0) {
-                        $result = $foService->newConsultation($beo["id"]);
-                        $xml = simplexml_load_string($result);
-                        $message = (string)$xml->RETURN["RETMESSAGE"];
+                        if ($beo["aktiv"] == 1) {
+                            $result = $foService->newConsultation($beo["id"]);
+                            $xml = simplexml_load_string($result);
+                            $message = (string)$xml->RETURN["RETMESSAGE"];
 
-                        if (ctype_digit($message)) {
-                            sql_query("update orvos_beosztas set fobid=? where id=?", [$message, $beo["id"]]);
+                            if (ctype_digit($message)) {
+                                sql_query("update orvos_beosztas set fobid=? where id=?", [$message, $beo["id"]]);
+                            }
                         }
                     } else {
-                        $result = $foService->modifyConsultation($beo["id"]);
+                        if ($beo["aktiv"] == 1) {
+                            $result = $foService->modifyConsultation($beo["id"]);
+                        } else {
+                            $foService->deleteConsultation($beo["id"]);
+                            sql_query("update orvos_beosztas set fobid=0 where id=?", [$beo["id"]]);
+                        }
                     }
-                    echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
+                    echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result)."</pre>";
                 }
+
+                echo "<div style='margin:10px 0px;font-weight: bold'>Foglalások</div>";
+
+                $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>NOW() ORDER BY datum", [$oid]);
+                while ($reservationData = sql_fetch_array($res)) {
+
+                    echo "<div>{$reservationData["datum"]} ".($reservationData["fofid"]==0?" <span style='color:#f00;'>nincs szinkronizálva</span>":" <span style='color:#0a0;'>szinkronizálva</span>")."</div>";
+
+                    if ($reservationData["fofid"] == 0) {
+                        $result = $foService->newReservation($reservationData["id"]);
+                        echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result)."</pre>";
+                    }
+
+                }
+                echo "<br/><br/>";
+
 
                 //$result = $foService->sendSzabadsag();
                 //echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
@@ -529,7 +556,7 @@ class AdminDoctorsPage extends AdminCorePage {
 		        left join helyszinek h on h.id=b.helyszinid
 	            WHERE orvosid=? AND helyszinid<>? AND nap=? AND tol<>0 AND ig<>0 AND ((TIME_TO_SEC(tol)>? AND TIME_TO_SEC(tol)<?) OR  (TIME_TO_SEC(ig)>? AND TIME_TO_SEC(ig)<?))",array($_GET["szerk"],$rowc["helyszinid"],$rowc["nap"],$rowc["tolsec"],$rowc["igsec"],$rowc["tolsec"],$rowc["igsec"]));
                 if ($rowe = sql_fetch_array($res)) {
-                    $hibak.="<div>Orvos két helyszínen van egyszerre: ".$GLOBALS["hetnap"][$rowe["nap"]]." <b>1.</b> {$rowe["tol"]}-{$rowe["ig"]} {$rowe["cegnev"]} {$rowe["helyszin"]} <b>2.</b> {$rowc["tol"]}-{$rowc["ig"]} {$rowc["cegnev"]} {$rowc["helyszin"]}</div>";
+                    //$hibak.="<div>Orvos két helyszínen van egyszerre: ".$GLOBALS["hetnap"][$rowe["nap"]]." <b>1.</b> {$rowe["tol"]}-{$rowe["ig"]} {$rowe["cegnev"]} {$rowe["helyszin"]} <b>2.</b> {$rowc["tol"]}-{$rowc["ig"]} {$rowc["cegnev"]} {$rowc["helyszin"]}</div>";
                 }
             }
 
@@ -942,7 +969,7 @@ class AdminDoctorsPage extends AdminCorePage {
         LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id`
         LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
         LEFT JOIN cegek c ON c.`id`=b.`cegid`
-        where true {$w}
+        where o.pecsetszam<>'temp' {$w}
         GROUP BY o.id
         ORDER BY nev<>'Új orvos',nev");
 
