@@ -14,14 +14,39 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (isset($_POST["addszabadsag"])) {
             if ($this->adminUtils->szabadsagJog()) {
-                $orvosId = intval($_GET["szerk"]);
-                $rowo = sql_fetch_array(sql_query("select * from orvosok where id=?",array($orvosId)));
-                sql_query("insert into szabadsag set datumtol=?,datumig=?,oid=?",array($_POST["szabadsagtol"],$_POST["szabadsagig"], $orvosId));
+                $orvosId   = intval($_GET["szerk"]);
+                $tol       = $_POST["szabadsagtol"];
+                $ig        = $_POST["szabadsagig"];
+                $startDate = $tol;
+                $groupId   = 0;
 
-                $foService = new FoglaljOrvostService();
-                $foService->sendSzabadsag();
+                if (strtotime($tol) > strtotime($ig)) {
+                    $_SESSION["doctorsaveerror"] = "A szabadság kezdő dátumának kisebbnek kell lennie mint a vég dátum!";
+                }
 
-                logActivity("orvos", $orvosId,"{$rowo["nev"]} szabadság hozzáadva: ".$_POST["szabadsagtol"]." - ".$_POST["szabadsagig"],print_r($_POST,true));
+                if (strtotime($ig) - strtotime($tol) > 86400*31) {
+                    $_SESSION["doctorsaveerror"] = "A szabadság nem lehet hozsszabb mint 1 hónap!";
+                }
+
+                if (!isset($_SESSION["doctorsaveerror"])) {
+                    $rowo = sql_fetch_array(sql_query("select * from orvosok where id=?", [$orvosId]));
+
+                    while (strtotime($startDate) <= strtotime($ig)) {
+                        sql_query("insert into szabadsag set datumtol=?, datumig=?, oid=?", [$startDate, $startDate, $orvosId]);
+                        $newId = sql_insert_id();
+                        if ($groupId == 0) {
+                            $groupId = $newId;
+                        }
+                        sql_query("update szabadsag set groupid=? where id=?", [$groupId, $newId]);
+
+                        $startDate = date("Y-m-d", strtotime("{$startDate} +1 day"));
+                    }
+
+                    $foService = new FoglaljOrvostService();
+                    $foService->sendSzabadsag($groupId);
+
+                    logActivity("orvos", $orvosId, "{$rowo["nev"]} szabadság hozzáadva: " . $tol . " - " . $ig, print_r($_POST, true));
+                }
             }
             $_POST["orvosmentes"]=1;
         }
@@ -29,7 +54,7 @@ class AdminDoctorsPage extends AdminCorePage {
         if (isset($_GET["delszabadsag"])) {
             if ($this->adminUtils->szabadsagJog()) {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-                sql_query("delete from szabadsag where id=? and oid=?",array($_GET["delszabadsag"],$_GET["szerk"]));
+                sql_query("delete from szabadsag where groupid=? and oid=? and groupid<>0", [$_GET["delszabadsag"], $_GET["szerk"]]);
 
                 $foService = new FoglaljOrvostService();
                 $foService->deleteSzabadsag($_GET["delszabadsag"]);
@@ -161,8 +186,10 @@ class AdminDoctorsPage extends AdminCorePage {
       
 
         if (isset($_POST['checkSzabiData'])) {
-            $_POST['end'] = date("Y-m-d",strtotime($_POST['end'].' + 1 day'));
-            $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN '{$_POST['start']}%' AND '{$_POST['end']}%' ", array($_POST['orvosid']));
+            $tol = date("Y-m-d 00:00:00", strtotime($_POST["start"]));
+            $ig  = date("Y-m-d 23:59:59", strtotime($_POST["end"]." +1 day"));
+
+            $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN ? AND ? limit 20", array($_POST['orvosid'], $tol, $ig));
             $data = "";
             while($result = sql_fetch_array($query)) {
                 $data.=$result['nev'].",".$result['datum']."|";
@@ -265,7 +292,6 @@ class AdminDoctorsPage extends AdminCorePage {
 
                 $vizsgtipusok.= $_POST['szak_urologia'].",".$_POST['szak_nogyogy'].",";
                 $vizsgtipusok.= $_POST['szak_tudogyogy'].",".$_POST['szak_ortopedia'];
-
 
                 sql_query("update orvosok set 
                     nev=?,
@@ -546,6 +572,12 @@ class AdminDoctorsPage extends AdminCorePage {
             $_POST = $row;
 
             $hibak="";
+
+            if (isset($_SESSION["doctorsaveerror"])) {
+                $hibak = $_SESSION["doctorsaveerror"];
+                unset($_SESSION["doctorsaveerror"]);
+            }
+
             $resc=sql_query("SELECT TIME_TO_SEC(tol) AS tolsec,TIME_TO_SEC(ig) AS igsec,b.*,c.megnev as cegnev,h.cim as helyszin FROM orvos_beosztas b 
 	        left join cegek c on c.id=b.cegid
 	        left join helyszinek h on h.id=b.helyszinid
@@ -774,11 +806,11 @@ class AdminDoctorsPage extends AdminCorePage {
             }
 
             echo "<tr><td colspan='2'>";
-            $ressz=sql_query("select * from szabadsag where oid=? order by datumtol",array($_GET["szerk"]));
+            $ressz=sql_query("select min(sz.datumtol) as datumtol, max(datumig) as datumig, groupid from szabadsag sz where oid=? group by sz.groupid order by datumtol", [$_GET["szerk"]]);
             while ($rowsz=sql_fetch_array($ressz)) {
                 echo "<div style='display:table-row;'>";
                 echo "<div style='display:table-cell;vertical-align:middle;'>{$rowsz["datumtol"]} - {$rowsz["datumig"]}</div>";
-                echo "<div style='display:table-cell;vertical-align:middle;padding-left:5px;'><a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delszabadsag={$rowsz["id"]}' onclick='return confirm(\"Biztos törlöd ezt a szabadság sort?\")'><img src='images/trash.png' title='Sor törlése'/></a></div>";
+                echo "<div style='display:table-cell;vertical-align:middle;padding-left:5px;'><a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delszabadsag={$rowsz["groupid"]}' onclick='return confirm(\"Biztos törlöd ezt a szabadság sort?\")'><img src='images/trash.png' title='Sor törlése'/></a></div>";
                 echo "</div>";
             }
             echo "<div><input class='inputbox' style='width:100px;' type='text' name='szabadsagtol' value='' placeholder='-tól dátum'> - <input class='inputbox' style='width:100px;' type='text' name='szabadsagig' value='' placeholder='-ig dátum'> <input type='submit' onClick='return checkSzabiData()' name='addszabadsag' value='+ szabadság hozzáadása'></div>";
