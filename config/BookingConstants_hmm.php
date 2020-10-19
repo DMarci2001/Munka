@@ -32,7 +32,7 @@ class Booking_Constants {
     const SQL_DB                    = "hungariamed";
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.hungariamed.hu/foApi.php";
-    const SOAP_API_PASSWORD         = "Kceg8YTybJgqd0ZU";
+    const SOAP_API_PASSWORD         = "lW3vfbmh0kekCiUq";
 
     const FO_CONNECTION_ENABLED     = true;
     const FO_API_PASSWORD           = "lW3vfbmh0kekCiUq";
