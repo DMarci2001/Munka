@@ -49,10 +49,10 @@ class BookingService
             //$_SESSION['helyszindata']['id']=11;
             $html = "";
             $this->setHelyszin($_GET["helyszin"]);
+            $this->setNeme($_GET["neme"]);
             if (isset($_GET["szurestipus"])) {
                 $this->setSzuresTipus($_GET["szurestipus"]);
             }
-            $this->setNeme($_GET["neme"]);
             $this->honnan = intval($_GET["honnan"]);
             $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
             $this->setBetegallomany((!isset($_GET['betegallomany']) ? false : $_GET['betegallomany']));
@@ -1024,7 +1024,7 @@ class BookingService
         //$_POST["helyszin"]
         //$_POST["szurestipus"]
         //Teszt:
-        return $this->selectOrvosForIdopont($data["datum"], $data["orvosselected"]);
+        //return $this->selectOrvosForIdopont($data["datum"], $data["orvosselected"]);
 
         if ($this->selectOrvosForIdopont($data["datum"], $data["orvosselected"])) {
             return true;
