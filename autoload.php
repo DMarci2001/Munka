@@ -12,6 +12,7 @@ require_once(__DIR__ . "/library/Lang.php");
 require_once(__DIR__ . "/library/Settings.php");
 require_once(__DIR__ . "/library/Utils.php");
 require_once(__DIR__ . "/library/User.php");
+require_once(__DIR__ . "/library/AjaxService.php");
 require_once(__DIR__ . "/library/CompanyService.php");
 require_once(__DIR__ . "/library/pages/CorePage.php");
 require_once(__DIR__ . "/library/pages/BookingPage.php");
@@ -54,6 +55,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminPage.php");
     require_once(__DIR__ . "/library/AdminUser.php");
     require_once(__DIR__ . "/library/AdminUtils.php");
+    require_once(__DIR__ . "/library/AdminAjaxService.php");
     require_once(__DIR__ . "/library/AdminBookingEditor.php");
     require_once(__DIR__ . "/library/AdminLeletService.php");
     require_once(__DIR__ . "/library/AdminProtocolService.php");

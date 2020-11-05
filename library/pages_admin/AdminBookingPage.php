@@ -83,7 +83,7 @@ class AdminBookingPage extends AdminCorePage
             $orvosInterval = $_POST["orvosInterval"];
             $return        = ["error" => "", "html" => "", "newOrvosId" => 0];
 
-            if ($beoData = sql_fetch_array(sql_query("SELECT min(tol) as tol, max(ig) as ig, binterval FROM orvos_beosztas WHERE orvosid=? AND helyszinid=? AND (nap=? OR (beonap=? and nap=10)) AND INSTR(tipusok, ?) AND aktiv=1", [$sourceOrvosId, $helyszinId, $weekDay, $nap, "|{$szuresTipusId}|"]))) {
+            if ($beoData = $this->bookingService->beosztasService->getBeosztasDataForDoctor($sourceOrvosId, $nap, $helyszinId, $szuresTipusId)) {
                 sql_query("insert into orvosok set nev=?, description=?, aktiv=1, pecsetszam='temp', created=now(), createdby=?", [$orvosNev, $orvosMegj, $_SESSION["adminuser"]["nev"]]);
                 $return["newOrvosId"] = $orvosId = sql_insert_id();
 
@@ -200,8 +200,8 @@ class AdminBookingPage extends AdminCorePage
         $nap           = date("Y-m-d", strtotime($setDay));
         $wd            = date("N", strtotime($setDay));
         $wCeg          = $this->adminUtils->cegSQLFilter("b.cegid");
-        $tipusok       = $this->bookingService->tipusExtract(sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.helyszinid=? {$wCeg} and b.tol<>0 and b.ig<>0", [$helyszin]));
-        $foglalasok    = $this->bookingService->getAllReservationForDay($nap, $helyszin, $wCeg);
+        $tipusok       = $this->bookingService->tipusExtract($this->bookingService->beosztasService->getTipusByHelyszin($helyszin));
+        $foglalasok    = $this->bookingService->getAllReservationForDay($nap, $helyszin);
         $isHoliday     = in_array($nap, $settings->getMunkaszunetiNapok());
         $maxOrvosId    = sql_query("select max(id)+1 from orvosok")->fetchColumn();
 
@@ -224,12 +224,10 @@ class AdminBookingPage extends AdminCorePage
         sql_query("SET SESSION group_concat_max_len = 10000");
         $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'menedzser'), megnev");
         while ($szuresTipus = sql_fetch_array($szuresTipusok)) {
-            $beoRes = sql_query("SELECT b.*, min(tol) as mintol, max(ig) as maxig, MAX(potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, c.megnev as cegnev, group_concat(distinct c.megnev separator ',') as cegek FROM orvos_beosztas b 
-            left join orvosok o on o.id=b.orvosid 
-            left join cegek c on c.id=b.cegid
-            WHERE b.helyszinid='".intval($_SESSION["helyszin"])."' and INSTR(tipusok,'|{$szuresTipus["id"]}|') AND (nap='{$wd}' OR (nap=10 AND beonap='{$nap}')) {$wCeg} and tol<>0 and ig<>0 
-            AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 group by b.orvosid order by o.nev,nap,tol");
-            $beosztasok = $beoRes->fetchAll();
+
+
+            $beosztasok = $this->bookingService->beosztasService->getBookingPageBeosztasok($nap, $_SESSION["helyszin"], $szuresTipus["id"]);
+
 
             foreach ($beosztasok as $beosztas) {
                 $rendelesek         ++;
@@ -270,7 +268,8 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;{$szuresTipus["megnev"]}&nbsp;&nbsp;{$addDoctorLink}</div>";
                 $htmlout .= "<div>{$beosztas["description"]}</div>";
                 if ($szabi) {
-                    $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Szabadságon {$szabi["datumtol"]} - {$szabi["datumig"]}</span></div>";
+                    $szabiData = sql_fetch_array(sql_query("select min(datumtol) as datumtol, max(datumig) as datumig from szabadsag where groupid=?", [$szabi["groupid"]]));
+                    $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Szabadságon {$szabiData["datumtol"]} - {$szabiData["datumig"]}</span></div>";
                 }
 
                 $htmlout .= "<div id='adddoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
@@ -483,13 +482,11 @@ class AdminBookingPage extends AdminCorePage
 
     private function cegFilter() {
         $html = "";
-        $rescf = sql_query("SELECT c.* FROM orvos_beosztas b 
-        LEFT JOIN cegek c ON c.`id`=b.`cegid`
-        WHERE helyszinid=? ".$this->adminUtils->cegSQLFilter("c.id")." GROUP BY c.megnev", [$_SESSION["helyszin"]]);
-
         $html.="<select name='ecegfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&ecegfilter='+this.value;\">";
         $html.="<option value='0'>Szűrés cégre</option>";
-        while ($rowcf = sql_fetch_array($rescf)) {
+
+        $cegek = $this->bookingService->beosztasService->getCegListByHelyszin($_SESSION["helyszin"]);
+        foreach ($cegek as $rowcf) {
             if (empty($rowcf["megnev"])) {
                 continue;
             }

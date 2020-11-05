@@ -22,10 +22,8 @@ class CorePage {
             }
         }
 
-        if (isset($_GET["phpinfo_jns"])) {
-            phpinfo();
-            die();
-        }
+        $ajaxService = new AjaxService();
+        $ajaxService->start();
 
     }
 

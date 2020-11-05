@@ -50,7 +50,6 @@ class BookingPage extends CorePage {
         if (isset($_GET["clearselecteddoctor"])) {
             $_SESSION["orvosselected"] = 0;
             die;
-            die();
         }
 
         if (isset($_GET["remotereserve"])) {
@@ -189,14 +188,12 @@ class BookingPage extends CorePage {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
-            //$_POST["orvosselected"] = 0;
-            if($_POST["orvosselected"]!="") $_POST["orvosid"]=$_POST["orvosselected"];
+            if ($_POST["orvosselected"]!="") {
+                $_POST["orvosid"]=$_POST["orvosselected"];
+            }
             if (isset($_SESSION["orvosselected"])) {
                 $_POST["orvosid"] = $_SESSION["orvosselected"];
             }
-            //if($_POST["orvosselected"]!="") $_POST["orvosid"]=$_POST["orvosselected"];
-
-            //$this->error[]= $this->bookingService->checkIdopontSzabad($_POST);
 
             if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
                 $this->errors[] = "{$webText["idopontlefoglaltak"]}";
@@ -211,18 +208,12 @@ class BookingPage extends CorePage {
                 }
             }
 
-            
-
             if (empty($this->errors)) {
-
                 $forwardURL = $this->bookingService->addReservation($_POST);
-
                 header("location:{$forwardURL}");
                 die();
             }
         }
-
-
     }
 
     public function showPage() {
@@ -496,40 +487,24 @@ class BookingPage extends CorePage {
     }
 
     private function _reservationPlaceSelectorNew() {
+        $html        = "";
         $szuresTipus = $_POST["szurestipus"];
-        $webText = $this->lang->webText;
+        $webText     = $this->lang->webText;
+        $helyszinek  = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"], $szuresTipus);
+        $numOfH      = count($helyszinek);
 
-        $_SESSION["orvosselected"]="";
+        $_SESSION["orvosselected"] = 0;
 
-        $html = "";
         $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
-        $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
-            LEFT JOIN orvos_beosztas b ON b.`helyszinid`=h.id 
-            LEFT JOIN orvosok o on b.orvosid=o.id
-            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.`helyszinid` IS NOT NULL and b.cegid=? and instr(b.tipusok, ?) GROUP BY h.id ORDER BY cim", [$_SESSION["helyszindata"]["id"], $szuresTipus]);
-
-        $numOfH = sql_num_rows($res);
-
         $html.= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
-        $counter=0;
-        while ($rowt = sql_fetch_array($res)) {
-            $counter++;
+        foreach ($helyszinek as $rowt) {
             if ($_SESSION["helyszindata"]["nocim"] == 1) {
                 $rowt["cim"] = $rowt["megnev"];
             }
-
             $html.= "<option value='{$rowt["id"]}'".($_POST["helyszin"]==$rowt["id"] || $numOfH==1?" selected":"").">{$rowt["cim"]}</option>";
             if ($numOfH == 1) {
                 $_POST["helyszin"] = $rowt["id"];
-                //$_POST["szurestipus"] = 0;
             }
-            if($_SESSION["helyszindata"]["id"]==74){
-                //Maszkolt extra címhely beállítása:
-                if($counter==1){
-                    $html.= "<option value='98989898989898' >Budapest (1135) Jász utca 33-35. (Haller Gardens irodaház orvosi rendelése helyett)</option>";
-                }
-            }
-            
         }
         $html.= "</select>";
         return $html;
@@ -558,13 +533,13 @@ class BookingPage extends CorePage {
         ");
         $html.="</div>";
 
-        $resh = sql_query("SELECT h.* FROM orvos_beosztas b
-        LEFT JOIN helyszinek h ON h.id = b.helyszinid
-        LEFT JOIN orvosok o on o.id = b.orvosid
-        WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.helyszinid=1 GROUP BY b.helyszinid", array($_SESSION["helyszindata"]["id"]));
-		//WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.helyszinid=1 GROUP BY b.helyszinid", array(11));
+        $helyszinek = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"]);
+        foreach ($helyszinek as $helyszin) {
+            if ($helyszin["id"] != 1) {
+                //csak jász utca
+                continue;
+            }
 
-        while ($helyszin = sql_fetch_array($resh)) {
             $rest = sql_query("SELECT b.* FROM orvos_beosztas b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
@@ -592,13 +567,8 @@ class BookingPage extends CorePage {
             while ($tipusData = sql_fetch_array($res)) {
                 $tipusdb[] = $tipusData;
 
-                $reso = sql_query("SELECT o.*,COUNT(*) FROM orvos_beosztas b
-                LEFT JOIN orvosok o ON o.id = b.orvosid
-                WHERE b.cegid=:cegId AND b.aktiv=1 AND b.helyszinid=1 AND INSTR(b.tipusok,:tipusok)
-                and (nap<10 OR b.beonap >= DATE(NOW()))
-                GROUP BY b.orvosid", array("cegId" => 11, "tipusok" => "|{$tipusData["id"]}|"));
-				
-                while ($orvosData = sql_fetch_array($reso)) {
+                $doctors = $this->bookingService->beosztasService->getDoctors(11, 1, $tipusData["id"]);
+                foreach ($doctors as $orvosData) {
                     $orvosok[$tipusData["id"]][] = $orvosData;
                 }
             }

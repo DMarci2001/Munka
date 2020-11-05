@@ -1,5 +1,8 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class AdminCorePage {
     public $utils;
     public $adminUtils;
@@ -19,6 +22,10 @@ class AdminCorePage {
                 die();
             }
         }
+
+        $adminAjaxService = new AdminAjaxService();
+        $adminAjaxService->start();
+
     }
 
     public function displayFejlec($title = "")

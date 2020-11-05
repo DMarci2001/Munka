@@ -16,373 +16,305 @@ class BookingService
     public $szuresTipusMap = [];
     public $betegallomany = false;
     public $restrictParameters = [];
+    public $beosztasService;
 
     public function __construct()
     {
-        $this->lang = new Lang();
         $this->utils = new Utils();
+        $this->beosztasService = new BeosztasService();
+    }
 
-        if (isset($_GET["tappenzcheckrefresh"])) {
-            echo $this->tappenzCheckHTML($_GET["tappenzcheckrefresh"]);
-            die();
+    public function showIdoPontValasztoV2() {
+        $this->lang = new Lang();
+        $webText = $this->lang->webText;
+
+        $html = "";
+        $this->setHelyszin($_GET["helyszin"]);
+        $this->setNeme($_GET["neme"]);
+        if (isset($_GET["szurestipus"])) {
+            $this->setSzuresTipus($_GET["szurestipus"]);
+        }
+        $this->honnan = intval($_GET["honnan"]);
+        $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
+        $this->setBetegallomany((!isset($_GET['betegallomany']) ? false : $_GET['betegallomany']));
+
+        if (!isset($_GET['javascript'])) $_GET['javascript'] = "showIdoPontValasztoV2";
+
+        if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"] != 0) {
+            $_SESSION["orvosselected"] = $_REQUEST["selectoid"];
         }
 
-        if (isset($_POST["gettipusmegj"])) {
-            echo $this->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["tid"], $_POST["hid"]);
-            die();
+        $elsoIdopont = [];
+
+        if ($this->helyszin == 0) {
+            return json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
+        }
+        if ($this->szuresTipus == 0) {
+            return json_encode(array("error" => "Az időpont kiválasztásához válassza ki a szűrés tipusát!", "html" => ""));
         }
 
-        if (isset($_GET["mailtest"])) {
-
-            $this->sendToUser(135442);
-            $this->sendToCegAndOrvos(132112, 1, 1);
-
-            die("sent");
+        if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
+            return json_encode(array("error" => "Szűréscsomag választása esetén előbb adja meg a nemét!", "html" => ""));
         }
 
-        if (isset($_GET["showidopontvalasztov2"])) {
-            $webText = $this->lang->webText;
+        if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
+            return json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
+        }
 
-            header('Content-Type: application/json');
-
-            //Átmeneti prefix:
-            //$_SESSION['helyszindata']['id']=11;
-            $html = "";
-            $this->setHelyszin($_GET["helyszin"]);
-            $this->setNeme($_GET["neme"]);
-            if (isset($_GET["szurestipus"])) {
-                $this->setSzuresTipus($_GET["szurestipus"]);
-            }
-            $this->honnan = intval($_GET["honnan"]);
-            $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
-            $this->setBetegallomany((!isset($_GET['betegallomany']) ? false : $_GET['betegallomany']));
-
-            if (!isset($_GET['javascript'])) $_GET['javascript'] = "showIdoPontValasztoV2";
-
-            $elsoIdopont = [];
-
-            if ($this->helyszin == 0) {
-                echo json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
-                die;
-            }
-            if ($this->szuresTipus == 0) {
-                echo json_encode(array("error" => "Az időpont kiválasztásához válassza ki a szűrés tipusát!", "html" => ""));
-                die;
+        //Foglalás korlátozáshoz szükséges a TAJ szám, ez alapján ellenőrzi vissza, hogy mikortól jelentkezhet vizsgálatra:
+        //Először meg kell néznem, hogy az adott helyszínhez tartozik-e (emelett az orvost és céget is meg kell néznem) korlátozás:
+        if ($this->checkBookingRestrictionProtocol($this->helyszin)) {
+            //Ha nem adott meg tajszámot:
+            if ($this->taj == 0) {
+                return json_encode(array("error" => "Időpontválasztás előtt kérem adja meg a TAJ számát!", "html" => ""));
             }
 
-            if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
-                echo json_encode(array("error" => "Szűréscsomag választása esetén előbb adja meg a nemét!", "html" => ""));
-                die;
+            //Paraméterek beállítása a korlátozáshoz:
+            $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
+        }
+
+        //orvosválasztó
+        if ($_GET['javascript'] != "showIdoPontValasztoV3") {
+            $html .= $this->displayDoctorSelector();
+        }
+
+        $html .= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
+        $html .= "<div>{$webText["valasszidopontot"]}:</div>";
+
+        $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
+
+        $html .= "<table cellpadding='0' cellspacing='0'><tr>";
+
+        //ennyi órán belül kell foglalni
+        $dist = "6 hour";
+        $distFullDay = "0 day";
+        //ennyi napon belül kell foglalni
+
+        if (Booking_Constants::SITE_DOMAIN == "hungariamed.hu") {
+            if ($this->helyszin == 1) {
+                //jász utca bármikor foglalható
+                $dist = "0 hour";
+            }
+            if (in_array($_SESSION["orvosselected"], [74])) {
+                //74 - Dr. Kővári Gábor
+                $dist = "24 hour";
             }
 
-            if (!$rowmax = $this->getMinMax($this->szuresTipus, $this->packContentTypes)) {
-                echo json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
-                die;
+            if ($_SESSION["helyszindata"]["id"] == 6) {
+                //cib
+                $dist = "72 hour";
+                if (date("N") == 4) {
+                    $dist = "96 hour";
+                }
+                if (date("N") == 5) {
+                    $dist = "120 hour";
+                }
             }
 
-            //Foglalás korlátozáshoz szükséges a TAJ szám, ez alapján ellenőrzi vissza, hogy mikortól jelentkezhet vizsgálatra:
-            //Először meg kell néznem, hogy az adott helyszínhez tartozik-e (emelett az orvost és céget is meg kell néznem) korlátozás:
-            if ($this->checkBookingRestrictionProtocol($this->helyszin)) {
-                //Ha nem adott meg tajszámot:
-                if ($this->taj == 0) {
-                    echo json_encode(array("error" => "Időpontválasztás előtt kérem adja meg a TAJ számát!", "html" => ""));
-                    die;
+            if ($_SESSION["helyszindata"]["id"] == 82) {
+                //waberers
+                $dist = "0 hour";
+            }
+
+            if ($_SESSION["helyszindata"]["id"] == 46) {
+                //vodafone
+                $dist = "72 hour";
+                if (date("N") == 4) {
+                    $dist = "96 hour";
+                }
+                if (date("N") == 5) {
+                    $dist = "120 hour";
+                }
+            }
+
+            if ($_SESSION["orvosselected"] == 36) {
+                //36 - dr Bodonyi Melinda
+                $distFullDay = "2 day";
+            }
+        }
+
+
+        for ($i = 0; $i <= 6; $i++) {
+            $fix = $i + $this->honnan;
+
+            $nap = date("Y-m-d", strtotime("this week monday +{$fix} day"));
+            $wd  = date("N", strtotime("this week monday +{$fix} day"));  //day of week
+
+            $html .= "<td valign='top'>";
+            $html .= "<div style='" . ($nap == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
+
+            if (!$napiBeos = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
+                $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$webText["nincsrendeles"]}</div>";
+                $html .= "</td>";
+                continue;
+            }
+
+            if (in_array($nap, $this->getSzunnapok())) {
+                $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Munkaszüneti<br/>nap</div>";
+                $html .= "</td>";
+                continue;
+            }
+
+            //get binterval;
+            $binterval = 15;
+            foreach ($napiBeos as &$beoData) {
+                //ütköző beosztások is lehetnek - nincs kezelve!
+                $binterval = $beoData["binterval"];
+            }
+
+            $rowmax = $this->getMinMax($this->szuresTipus, $nap);
+
+            $beginHour   = round(substr($rowmax["minrendeles"], 0, 2));
+            $beginMinute = round(substr($rowmax["minrendeles"], 3, 2));
+
+            $napHTML = "";
+            $napHTML .= "<input type='hidden' id='rinterval-{$nap}' value='{$binterval}' />";
+
+            $step = 0;
+            $timeLoopEnd = false;
+
+            $freeTimes = 0;
+
+            while (!$timeLoopEnd) {
+                $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
+                if (strtotime($ora) >= strtotime($rowmax["maxrendeles"])) {
+                    break;
+                }
+                $step++;
+
+                $napHTML .= "<div style='text-align:center;'>";
+
+                if (isset($beos)) {
+                    unset($beos);
+                }
+                if (isset($beoData)) {
+                    unset($beoData);
                 }
 
-                //Paraméterek beállítása a korlátozáshoz:
-                $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
-            }
+                $numRendeles = 0;
+                $orvosNevek  = [];
+                $buttonTitle = "";
+                $buttonClass = "foglaltbtn";
+                $buttonJava  = "nemfog();return false;";
 
-            //orvosválasztó
-            if ($_GET['javascript'] != "showIdoPontValasztoV3") {
-                $html .= $this->displayDoctorSelector();
-            }
+                //beosztások beolvasása
+                if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
+                    //szabad orvos kiválasztása
+                    foreach ($beos as &$beoData) {
+                        if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $this->helyszin)) {
+                            $free = true;
 
-            if (isset($_REQUEST["selectoid"]) && $_REQUEST["selectoid"] != 0) {
-                $_SESSION["orvosselected"] = $_REQUEST["selectoid"];
-            }
+                            if ($beoData["ispotig"] == 1 && $freeTimes != 0) {
+                                $free = false;
+                            }
 
-
-            $html .= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
-            $html .= "<div>{$webText["valasszidopontot"]}:</div>";
-
-            $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
-
-            $html .= "<table cellpadding='0' cellspacing='0'><tr>";
-
-            //ennyi órán belül kell foglalni
-            $dist = "6 hour";
-            $distFullDay = "0 day";
-            //ennyi napon belül kell foglalni
-
-            if (Booking_Constants::SITE_DOMAIN == "hungariamed.hu") {
-                if ($this->helyszin == 1) {
-                    //jász utca bármikor foglalható
-                    $dist = "0 hour";
-                }
-                if (in_array($_SESSION["orvosselected"], [74])) {
-                    //74 - Dr. Kővári Gábor
-                    $dist = "24 hour";
-                }
-
-                if ($_SESSION["helyszindata"]["id"] == 6) {
-                    //cib
-                    $dist = "72 hour";
-                    if (date("N") == 4) {
-                        $dist = "96 hour";
+                            if ($free) {
+                                $freeTimes++;
+                                $numRendeles++;
+                                $orvosNevek[] = $beoData["orvosnev"];
+                                $buttonClass = "foglalhatobtn";
+                                $buttonTitle = "{$numRendeles} hely (" . implode(", ", $orvosNevek) . ")";
+                                $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
+                                //break;
+                            }
+                        }
                     }
-                    if (date("N") == 5) {
-                        $dist = "120 hour";
-                    }
                 }
 
-                if ($_SESSION["helyszindata"]["id"] == 82) {
-                    //waberers
-                    $dist = "0 hour";
+                //csak sorban foglalható időpontok intézése
+                if (isset($beoData) && $beoData["csaksorban"] == 1 && isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
+                    $buttonJava = "nemfogs(\"{$elsoIdopont[$nap]}\");return false;";
+                    $buttonClass .= " halv";
+                }
+                if (!isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
+                    $elsoIdopont[$nap] = $ora;
                 }
 
-                if ($_SESSION["helyszindata"]["id"] == 46) {
-                    //vodafone
-                    $dist = "72 hour";
-                    if (date("N") == 4) {
-                        $dist = "96 hour";
-                    }
-                    if (date("N") == 5) {
-                        $dist = "120 hour";
-                    }
-                }
+                //teszt: minden időpont foglalható
+                //$buttonJava="chooseIdoPont(\"{$nap} {$ora}\");return false;";
 
-                if ($_SESSION["orvosselected"] == 36) {
-                    //36 - dr Bodonyi Melinda
-                    $distFullDay = "2 day";
-                }
-            }
-
-
-            for ($i = 0; $i <= 6; $i++) {
-                $fix = $i + $this->honnan;
-
-                $nap = date("Y-m-d", strtotime("this week monday +{$fix} day"));
-                $wd  = date("N", strtotime("this week monday +{$fix} day"));  //day of week
-
-                $html .= "<td valign='top'>";
-                $html .= "<div style='" . ($nap == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
-
-                if (!$napiBeos = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
-                    $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$webText["nincsrendeles"]}</div>";
-                    $html .= "</td>";
-                    continue;
-                }
-
-                if (in_array($nap, $this->getSzunnapok())) {
-                    $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Munkaszüneti<br/>nap</div>";
-                    $html .= "</td>";
-                    continue;
-                }
-
-                //get binterval;
-                $binterval = 15;
-                foreach ($napiBeos as &$beoData) {
-                    //ütköző beosztások is lehetnek - nincs kezelve!
-                    $binterval = $beoData["binterval"];
-                }
-
-                $beginHour   = round(substr($rowmax["minrendeles"], 0, 2));
-                $beginMinute = round(substr($rowmax["minrendeles"], 3, 2));
-
-                $napHTML = "";
-                $napHTML .= "<input type='hidden' id='rinterval-{$nap}' value='{$binterval}' />";
-
-                $step = 0;
-                $timeLoopEnd = false;
-
-                $freeTimes = 0;
-
-                while (!$timeLoopEnd) {
-                    $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
-                    if (strtotime($ora) >= strtotime($rowmax["maxrendeles"])) {
-                        break;
-                    }
-                    $step++;
-
-                    $napHTML .= "<div style='text-align:center;'>";
-
-                    if (isset($beos)) {
-                        unset($beos);
-                    }
-                    if (isset($beoData)) {
-                        unset($beoData);
-                    }
-
-                    $numRendeles = 0;
-                    $orvosNevek  = [];
+                if (strtotime("now + {$dist}") > strtotime("{$nap} {$ora}")) {
+                    //mégse foglalható, múltbéli dátum vagy túl közeli
                     $buttonTitle = "";
                     $buttonClass = "foglaltbtn";
                     $buttonJava  = "nemfog();return false;";
+                }
 
-                    //beosztások beolvasása
-                    if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
-                        //szabad orvos kiválasztása
-                        foreach ($beos as &$beoData) {
-                            if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $this->helyszin)) {
-                                $free = true;
+                if (strtotime("now + {$distFullDay}") > strtotime("{$nap} 23:59:59")) {
+                    //mégse foglalható, csak x napra előre foglalható
+                    $buttonTitle = "";
+                    $buttonClass = "foglaltbtn";
+                    $buttonJava  = "nemfog();return false;";
+                }
 
-                                if ($beoData["ispotig"] == 1 && $freeTimes != 0) {
-                                    $free = false;
-                                }
-
-                                if ($free) {
-                                    $freeTimes++;
-                                    $numRendeles++;
-                                    $orvosNevek[] = $beoData["orvosnev"];
-                                    $buttonClass = "foglalhatobtn";
-                                    $buttonTitle = "{$numRendeles} hely (" . implode(", ", $orvosNevek) . ")";
-                                    $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
-                                    //break;
-                                }
-                            }
-                        }
-                    }
-
-                    //csak sorban foglalható időpontok intézése
-                    if (isset($beoData) && $beoData["csaksorban"] == 1 && isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
-                        $buttonJava = "nemfogs(\"{$elsoIdopont[$nap]}\");return false;";
-                        $buttonClass .= " halv";
-                    }
-                    if (!isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
-                        $elsoIdopont[$nap] = $ora;
-                    }
-
-                    //teszt: minden időpont foglalható
-                    //$buttonJava="chooseIdoPont(\"{$nap} {$ora}\");return false;";
-
-                    if (strtotime("now + {$dist}") > strtotime("{$nap} {$ora}")) {
-                        //mégse foglalható, múltbéli dátum vagy túl közeli
-                        $buttonTitle = "";
-                        $buttonClass = "foglaltbtn";
-                        $buttonJava  = "nemfog();return false;";
-                    }
-
-                    if (strtotime("now + {$distFullDay}") > strtotime("{$nap} 23:59:59")) {
-                        //mégse foglalható, csak x napra előre foglalható
-                        $buttonTitle = "";
-                        $buttonClass = "foglaltbtn";
-                        $buttonJava  = "nemfog();return false;";
-                    }
-
-                    //Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
-                    if (count($this->restrictParameters) != 0 && $this->betegallomany != true) {
-                        $orvosok = $this->restrictParameters['orvosok'];
-                        $oid = array_search($_SESSION['orvosselected'], array_column($orvosok, "orvosid"));
-                        if ($oid !== false) {
-                            if (strtotime("{$nap} {$ora}") <= strtotime($this->restrictParameters['datum'])) {
-                                $buttonTitle = "";
-                                $buttonClass = "foglaltbtn";
-                                $buttonJava  = "nemfog();return false;";
-                            }
-                        }
-                    }
-
-
-                    $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
-
-                    if (isset($beoData) && $beoData["ispotig"] == 1) {
-                        //$btn.="pot";
-                    }
-
-                    //csak fordított sorrendben időpontok intézése
-                    if (isset($beoData) && $beoData["csaksorban"] == 2 && $buttonClass == "foglalhatobtn") {
-                        $lastButton = $btn;
-                        $buttonJava = "nemfogs2();return false;";
-                        $buttonClass .= " halv";
-                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
-                    }
-
-                    //csomag override
-                    if (!empty($this->packContentTypes)) {
-                        $btn = "";
-                        $availableData = $this->getPackageAvailabilityForDay($nap);
-                        //$btn.= print_r($availableData, true);
-                        if (empty($availableData["error"])) {
-                            $buttonTitle = "";
-                            $buttonClass = "foglalhatobtn";
-                            $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
-                        } else {
+                //Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
+                if (count($this->restrictParameters) != 0 && $this->betegallomany != true) {
+                    $orvosok = $this->restrictParameters['orvosok'];
+                    $oid = array_search($_SESSION['orvosselected'], array_column($orvosok, "orvosid"));
+                    if ($oid !== false) {
+                        if (strtotime("{$nap} {$ora}") <= strtotime($this->restrictParameters['datum'])) {
                             $buttonTitle = "";
                             $buttonClass = "foglaltbtn";
                             $buttonJava  = "nemfog();return false;";
                         }
-                        $ora = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
-                        $timeLoopEnd = true;
-                        $btn .= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
-                        $btn .= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
                     }
-
-
-
-                    $napHTML .= $btn;
-                    $napHTML .= "</div>";
                 }
 
-                if (isset($lastButton) && isset($btn)) {
-                    $napHTML = str_replace($btn, $lastButton, $napHTML);
-                    unset($lastButton);
+
+                $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
+
+                if (isset($beoData) && $beoData["ispotig"] == 1) {
+                    //$btn.="pot";
                 }
 
-                $html .= $napHTML;
-                $html .= "</td>";
+                //csak fordított sorrendben időpontok intézése
+                if (isset($beoData) && $beoData["csaksorban"] == 2 && $buttonClass == "foglalhatobtn") {
+                    $lastButton = $btn;
+                    $buttonJava = "nemfogs2();return false;";
+                    $buttonClass .= " halv";
+                    $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
+                }
+
+                //csomag override
+                if (!empty($this->packContentTypes)) {
+                    $btn = "";
+                    $availableData = $this->getPackageAvailabilityForDay($nap);
+                    //$btn.= print_r($availableData, true);
+                    if (empty($availableData["error"])) {
+                        $buttonTitle = "";
+                        $buttonClass = "foglalhatobtn";
+                        $buttonJava = "chooseIdoPont(\"{$nap} {$ora}\",{$_SESSION["orvosselected"]},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
+                    } else {
+                        $buttonTitle = "";
+                        $buttonClass = "foglaltbtn";
+                        $buttonJava  = "nemfog();return false;";
+                    }
+                    $ora = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
+                    $timeLoopEnd = true;
+                    $btn .= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                    $btn .= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
+                }
+
+
+
+                $napHTML .= $btn;
+                $napHTML .= "</div>";
             }
 
-            $html .= "</tr></table>";
-            $html .= "</div>";
-
-            echo json_encode(array("error" => "", "html" => $html));
-            die;
-        }
-
-
-
-        if (isset($_POST["checkrendeles"])) {
-            header("Cache-Control: no-cache, no-store, must-revalidate");
-            header("Pragma: no-cache");
-            header("Expires: 0");
-
-            $this->setHelyszin($_POST["helyszin"]);
-            $this->setSzuresTipus($_POST["szurestipusid"]);
-
-            if (!$odata = $this->selectOrvosForIdopont($_POST["idopont"], $_POST["orvos"])) {
-                die("Ezt az időpontot időközben lefoglalták!");
+            if (isset($lastButton) && isset($btn)) {
+                $napHTML = str_replace($btn, $lastButton, $napHTML);
+                unset($lastButton);
             }
 
-            if ($odata["onlytel"] == 1 && $odata["tel"] != "") {
-                echo "Erre a rendelésre az online bejelentkezés jelenleg nem üzemel kérjük jelentkezzen be ezen a telefon számon: " . $odata["tel"];
-                die();
-            }
-
-            $statement = $_SERVER['REQUEST_URI'];
-            if (isset($_REQUEST['version']) && $_REQUEST['version'] == "2") {
-                if ($statement == "/index.php?page=welcome" || ($statement == "/" && $_SESSION["helyszindata"]["id"] == 11)) echo "ok3";
-                if ($statement == "/index.php?page=idopontfoglalas") echo "ok2";
-                if ($statement == "/index.php") echo "ok3";
-            } else {
-                echo "ok";
-            }
-            die();
+            $html .= $napHTML;
+            $html .= "</td>";
         }
 
-        if (isset($_POST["showrefund"]) && isset($_SESSION["adminuser"])) {
-            $simpleService = new SimplePayService();
-            echo $simpleService->showRefundWindow($_POST["showrefund"]);
-            die;
-        }
+        $html .= "</tr></table>";
+        $html .= "</div>";
 
-        if (isset($_POST["startsimplerefund"]) && isset($_SESSION["adminuser"])) {
-            $simpleService = new SimplePayService();
-            echo $simpleService->startRefund($_POST["startsimplerefund"], $_POST["osszeg"]);
-            die;
-        }
+        return json_encode(array("error" => "", "html" => $html));
     }
-
 
     public function checkBookingRestrictionProtocol($helyszinId) {
         if (empty($helyszinId)) {
@@ -456,7 +388,7 @@ class BookingService
     }
 
 
-    private function getMinMax($szuresTipus, $packContentTypes = [])
+    private function getMinMax($szuresTipus, $nap = "")
     {
         $helyszin=$this->helyszin;
         $orvosRestrict = "";
@@ -482,8 +414,13 @@ class BookingService
             }
         }
 
+        if ($nap != "") {
+            $wd  = date("N", strtotime($nap));
+            $typeWhere.= " and (b.nap='{$wd}' or (b.nap=10 and b.beonap='{$nap}'))";
+        }
+
         $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles 
-                                                    FROM orvos_beosztas 
+                                                    FROM orvos_beosztas b
                                                     WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1 {$orvosRestrict} HAVING MAX(tol) IS NOT NULL",
                                                     [$helyszin, $_SESSION["helyszindata"]["id"]]));
         if ($minMaxData["maxpotigrendeles"] > $minMaxData["maxrendeles"]) {
@@ -657,6 +594,7 @@ class BookingService
 
     private function displayDoctorSelector()
     {
+        $this->lang = new Lang();
         $webText = $this->lang->webText;
         $html = $orvosRestrict = "";
         $helyszin = $this->helyszin;
@@ -961,16 +899,18 @@ class BookingService
         return $tipusok;
     }
 
-    public function getAllReservationForDay($day, $helyszinId=0, $cegFilter = "") {
-        $tol = "{$day} 00:00:00";
-        $ig  = "{$day} 23:59:59";
-        $return = [];
+    public function getAllReservationForDay($day, $helyszinId=0) {
+        $tol        = "{$day} 00:00:00";
+        $ig         = "{$day} 23:59:59";
+        $return     = [];
+        $adminUtils = new AdminUtils();
+        $wCeg       = $adminUtils->cegSQLFilter("b.cegid");
 
         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
-                        where f.datum>=? and f.datum<=? and f.helyszinid=? {$cegFilter}", [$tol, $ig, $helyszinId]);
+                        where f.datum>=? and f.datum<=? and f.helyszinid=? {$wCeg}", [$tol, $ig, $helyszinId]);
         while ($reservationData = sql_fetch_array($resf)) {
             $return[$reservationData["szurestipusid"]][$reservationData["id"]] = $reservationData;
         }
@@ -1080,6 +1020,7 @@ class BookingService
 
     public function sendVisszaIgazolas($id)
     {
+        $this->lang = new Lang();
         //Visszaigazolás a foglalásról, megerősítés kérése
         $h = "cim";
         if ($_SESSION["helyszindata"]["nocim"] == 1) $h = "megnev";
@@ -1164,6 +1105,7 @@ class BookingService
 
     private function userMailTemplate($row)
     {
+        $this->lang = new Lang();
         $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
         $packText = $this->_getPackText($row);
 
@@ -1222,7 +1164,8 @@ class BookingService
 
     private function userMailTemplateWebDoctor($row)
     {
-        $webTextLocal = $this->lang->getWebTexts($row["rlang"]);
+        //$this->lang = new Lang();
+        //$webTextLocal = $this->lang->getWebTexts($row["rlang"]);
 
         $mbody = "<b>Kedves Páciensünk,</b><br/>
         <br/>
@@ -1552,6 +1495,7 @@ class BookingService
     }
     private function getCalendarItem($foglalasData)
     {
+        $this->lang = new Lang();
         $webTextLocal = $this->lang->getWebTexts($foglalasData["rlang"]);
 
         $interval = (int) $foglalasData["rinterval"];
@@ -1932,7 +1876,7 @@ END:VCALENDAR";
             if ($orvosId != $this->copyReservationData["orvosassigned"] && $this->copyReservationData["fofid"] != 0 && !$this->copy) {
                 //foglaljorvos foglalás csak egy orvoson belül mozgatható, ha nem így van visszaállítjuk az adatokat
                 sql_query("update foglalasok set aktiv=?, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=? where id=?",
-                    [$this->copyReservationDat["aktiv"], $this->copyReservationDat["foglalta"], $this->copyReservationDat["helyszinid"], $this->copyReservationDat["szuresTipusid"], $this->copyReservationDat["datum"], $this->copyReservationDat["rinterval"], $this->copyReservationDat["orvosassigned"], $newfid]);
+                    [$this->copyReservationData["aktiv"], $this->copyReservationData["foglalta"], $this->copyReservationData["helyszinid"], $this->copyReservationData["szurestipusid"], $this->copyReservationData["datum"], $this->copyReservationData["rinterval"], $this->copyReservationData["orvosassigned"], $newfid]);
                 die("errorFoglaljOrvost.hu foglalás nem helyezhető át másik orvoshoz!");
             }
 
@@ -1962,6 +1906,7 @@ END:VCALENDAR";
     }
 
     public function tappenzCheckHTML($val) {
+        $this->lang = new Lang();
         $webText = $this->lang->webText;
         $html = "";
         if ($this->checkBookingRestrictionProtocol($val)) {
