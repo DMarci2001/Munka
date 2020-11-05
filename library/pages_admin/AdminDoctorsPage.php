@@ -54,11 +54,11 @@ class AdminDoctorsPage extends AdminCorePage {
         if (isset($_GET["delszabadsag"])) {
             if ($this->adminUtils->szabadsagJog()) {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-                sql_query("delete from szabadsag where groupid=? and oid=? and groupid<>0", [$_GET["delszabadsag"], $_GET["szerk"]]);
 
                 $foService = new FoglaljOrvostService();
                 $foService->deleteSzabadsag($_GET["delszabadsag"]);
 
+                sql_query("delete from szabadsag where groupid=? and oid=? and groupid<>0", [$_GET["delszabadsag"], $_GET["szerk"]]);
                 logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
             }
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");

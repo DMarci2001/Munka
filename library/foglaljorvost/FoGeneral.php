@@ -103,7 +103,7 @@ class FoGeneral {
             if (!empty($field["NAME"])) {
                 //echo $field["OUTERSYS_ID"] . " " . $field["NAME"] . "\n";
                 sql_query("update szurestipusok set fotid=? where megnev=? and megnev<>'' and fotid=0", [$field["OUTERSYS_ID"], $field["NAME"]]);
-                sql_query("insert ignore into remoteids set provider=?, tipus='service', remoteid=?, megnev=?", [static::PROVIDER_NAME, $field["OUTERSYS_ID"], $field["NAME"]]);
+                sql_query("insert ignore into remoteids set provider=?, tipus='field', remoteid=?, megnev=?", [static::PROVIDER_NAME, $field["OUTERSYS_ID"], $field["NAME"]]);
 
                 if (isset($field->SERVICES->SERVICE)) {
                     foreach ($field->SERVICES->SERVICE as $service) {

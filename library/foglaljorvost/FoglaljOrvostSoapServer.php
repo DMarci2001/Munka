@@ -48,6 +48,10 @@ class FoglaljOrvostSoapServer {
     }
 
     private function checkField($fieldId, $servId) {
+        //gyermek bőrgyógy
+        if ($fieldId == 98) {
+            $fieldId = 4;
+        }
         return sql_fetch_array(sql_query("select id from szurestipusok where (fotid=? or fotid=?) and fotid<>0", [$fieldId, $servId]));
     }
 
@@ -201,7 +205,7 @@ class FoglaljOrvostSoapServer {
 
     private function getServiceString($srvId) {
         $return = "";
-        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus='service' and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $srvId]))) {
+        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus in ('service','field') and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $srvId]))) {
             $return = "Szolgáltatás: ".$data["megnev"];
         }
         return $return;
