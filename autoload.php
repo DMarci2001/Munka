@@ -36,6 +36,7 @@ require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
 require_once(__DIR__ . "/library/Page.php");
 require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");
+require_once(__DIR__ . "/library/BeosztasService.php");
 require_once(__DIR__ . "/library/PrintService.php");
 require_once(__DIR__ . "/library/ZeusService.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoGeneral.php");
