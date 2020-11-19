@@ -74,7 +74,9 @@ class FoglaljOrvostService extends FoGeneral {
 
     public function newReservation($fid) {
         $this->currentAction = "APPOINTMENT_NEW";
-        if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0", [$fid]))) {
+        $results = [];
+        $res = sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where (f.id=? or f.parentid=?) and o.foid<>0", [$fid, $fid]);
+        while ($reservationData = sql_fetch_array($res)) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -101,10 +103,9 @@ class FoglaljOrvostService extends FoGeneral {
             if (ctype_digit($message)) {
                 sql_query("update foglalasok set fofid=? where id=?", [$message, $fid]);
             }
-
-            return $result;
+            $results[] = $result;
         }
-        return false;
+        return $results;
     }
 
     public function modifyReservation($fid) {
@@ -403,6 +404,7 @@ class FoglaljOrvostService extends FoGeneral {
         if (!Booking_Constants::FO_CONNECTION_ENABLED) {
             return false;
         }
+        $results = [];
         $szabadsagGroupId = intval($szabadsagGroupId);
         $this->currentAction = "APPOINTMENT_NEW";
 
@@ -436,13 +438,17 @@ class FoglaljOrvostService extends FoGeneral {
             if (ctype_digit($message)) {
                 sql_query("update szabadsag set foid=? where id=?", [$message, $szabadsagData["id"]]);
             }
+            $results[] = $result;
         }
+        return $results;
     }
 
     public function deleteSzabadsag($szabadsagGroupId) {
         if (!Booking_Constants::FO_CONNECTION_ENABLED) {
             return false;
         }
+
+        $result = null;
 
         $this->currentAction = "APPOINTMENT_DEL";
         $res = sql_query("select * from szabadsag where groupid=? and foid<>0", [$szabadsagGroupId]);
@@ -458,9 +464,9 @@ class FoglaljOrvostService extends FoGeneral {
                     OWN_ID="sz'.$szabadsagData["id"].'"
                     OUTERSYS_ID="'.$szabadsagData["foid"].'" />
             </MESSAGE>';
-            $this->sendMessageToFoglaljOrvost($xml);
+            $result = $this->sendMessageToFoglaljOrvost($xml);
         }
-        return;
+        return $result;
     }
 
 }

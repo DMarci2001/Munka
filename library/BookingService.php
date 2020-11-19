@@ -201,7 +201,7 @@ class BookingService
                 if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $_SESSION["orvosselected"])) {
                     //szabad orvos kiválasztása
                     foreach ($beos as &$beoData) {
-                        if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $this->helyszin)) {
+                        if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $binterval)) {
                             $free = true;
 
                             if ($beoData["ispotig"] == 1 && $freeTimes != 0) {
@@ -477,7 +477,7 @@ class BookingService
                         }
                         $step++;
 
-                        if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $this->helyszin)) {
+                        if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
                             $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "orvosid" => $beoData["orvosid"]];
                             break 2;
                         }
@@ -707,11 +707,7 @@ class BookingService
                     //print_r($beos);
                     //szabad orvos kiválasztása
                     foreach ($beos as &$beoData) {
-                        if ($this->orvosIdopontIsFree($idopont, $beoData["orvosid"])) {
-                            if ($foglalasData["rinterval"] != 0 && $foglalasData["rinterval"] != $beoData["binterval"]) {
-                                //ha intervallum is van a foglaláshoz, azt is csekkoljuk
-                                continue;
-                            }
+                        if ($this->orvosIdopontIsFree($idopont, $beoData["orvosid"], $beoData["binterval"])) {
                             $oid = $beoData["orvosid"];
                             break;
                         }
@@ -746,19 +742,22 @@ class BookingService
         return $oid;
     }
 
-    public function orvosIdopontIsFree($idoPont, $orvosId, $helyszin = 0)
+    public function orvosIdopontIsFree($idoPont, $orvosId, $interval = 15)
     {
         $idoPont = $idoPont.":00";
         $nap     = substr($idoPont, 0, 10);
         $free    = false;
         $wadd    = "";
 
-        if ($helyszin != 0) {
-            $wadd = "or (helyszinid='{$helyszin}' and cegid=0 and orvosassigned=0)";
-        }
+        //if ($helyszin != 0) {
+        //    $wadd = "or (helyszinid='{$helyszin}' and cegid=0 and orvosassigned=0)";
+        //}
 
         if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $nap, $nap]))) {
-            if (!$reservationData = sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=? AND datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE) AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $orvosId]))) {
+            //if (!$reservationData = sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=? AND datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE) AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $orvosId]))) {
+            if (!$reservationData = sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=?
+                                   AND ((datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE)) OR (datum>=? AND datum<DATE_ADD(?, INTERVAL ? MINUTE)))
+                                   AND (orvosassigned=? {$wadd})", [$nap." 00:00:00", $idoPont, $idoPont, $idoPont, $idoPont, $interval, $orvosId]))) {
                 $free = true;
             } else {
                 $this->reservedTimeId = $reservationData["id"];
@@ -776,7 +775,7 @@ class BookingService
 
                 for ($offset = 1; $offset <= $rinterval; $offset++) {
                     $newTime = date("Y-m-d H:i", strtotime("{$idoPont} +{$offset} minute"));
-                    if ($this->orvosIdopontIsFree($newTime, $orvosId, 1)) {
+                    if ($this->orvosIdopontIsFree($newTime, $orvosId, $rinterval)) {
                         $this->newAddTime = $newTime;
                         return;
                     }
@@ -904,7 +903,7 @@ class BookingService
         $ig         = "{$day} 23:59:59";
         $return     = [];
         $adminUtils = new AdminUtils();
-        $wCeg       = $adminUtils->cegSQLFilter("b.cegid");
+        $wCeg       = $adminUtils->cegSQLFilter("f.cegid");
 
         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
@@ -1815,7 +1814,7 @@ END:VCALENDAR";
                     $selectedOrvosId = $orvosId;
                     break;
                 }
-                if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId)) {
+                if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId, $_GET["rinterval"])) {
                     $selectedOrvosId = $orvosId;
                     break;
                 }
@@ -1866,7 +1865,7 @@ END:VCALENDAR";
             }
 
             //ha mozgatás
-            if (!$this->orvosIdopontIsFree($_GET["moveidopont"], $orvosId)) {
+            if (!$this->orvosIdopontIsFree($_GET["moveidopont"], $orvosId, $_GET["rinterval"])) {
                 die("errorAz orvos nem elérhető!");
             }
 

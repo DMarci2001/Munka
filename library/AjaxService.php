@@ -9,6 +9,11 @@ class AjaxService {
             die();
         }
 
+        if (isset($_GET["downloaddoc"]) && isset($_GET["f"]) && isset($_GET["k"])) {
+            $docAgent = new DocAgent();
+            $docAgent->showDocBinary($_GET["f"], $_GET["k"]);
+        }
+
         if (isset($_GET["tappenzcheckrefresh"])) {
             $bookingService = new BookingService();
             echo $bookingService->tappenzCheckHTML($_GET["tappenzcheckrefresh"]);

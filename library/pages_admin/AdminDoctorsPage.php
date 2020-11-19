@@ -432,7 +432,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
                     if ($reservationData["fofid"] == 0) {
                         $result = $foService->newReservation($reservationData["id"]);
-                        echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result)."</pre>";
+                        echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result[0])."</pre>";
                     }
 
                 }
