@@ -1547,9 +1547,12 @@ END:VCALENDAR";
 
     public function deleteReservation($id, $code)
     {
-        if ($row = sql_fetch_array(sql_query("select id from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
+        if ($row = sql_fetch_array(sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
             $foService = new FoglaljOrvostService();
             $foService->deleteReservation($row["id"]);
+
+            $api = new BookingSyncApi();
+            $api->deleteReservation($row);
 
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
@@ -1636,6 +1639,9 @@ END:VCALENDAR";
         $foService = new FoglaljOrvostService();
         $foService->newReservation($fid);
 
+        $api = new BookingSyncApi();
+        $api->newReservation($fid);
+
         return $forwardURL;
     }
 
@@ -1683,6 +1689,9 @@ END:VCALENDAR";
         if (!isset($data["megj"])) $data["megj"] = "";
         if (!isset($data["munkakor"])) $data["munkakor"] = "";
         if (!isset($data["betegallomanynyilatkozat"])) $data["betegallomanynyilatkozat"] = 0;
+        if (!isset($data["parentid"])) $data["parentid"] = 0;
+        if (!isset($data["externalid"])) $data["externalid"] = "";
+        if (!isset($data["pass"])) $data["pass"] = "";
 
         if (!isset($data["questions"])) $data["questions"] = "";
         if (!isset($data["simplepay"])) $data["simplepay"] = 0;
@@ -1726,7 +1735,9 @@ END:VCALENDAR";
 			questions=?,
 			totalprice=?,
 			currency=?,
-			exportdata=?",
+			exportdata=?,
+			externalid=?,
+			pass=?",
             array(
                 $data["parentid"],
                 $data["paciensid"],
@@ -1760,7 +1771,9 @@ END:VCALENDAR";
                 $data["questions"],
                 $data["totalprice"],
                 $data["currency"],
-                $data["exportdata"]
+                $data["exportdata"],
+                $data["externalid"],
+                $data["pass"]
             )
         );
 
@@ -1844,6 +1857,9 @@ END:VCALENDAR";
 
             //Foglaljorvost.hu-nak átküldés
             $foService->newReservation($fid);
+
+            $api = new BookingSyncApi();
+            $api->newReservation($fid);
         }
     }
 

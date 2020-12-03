@@ -128,6 +128,9 @@ class AdminBookingEditor {
             $foService = new FoglaljOrvostService();
             $foService->modifyReservation($fid);
 
+            $api = new BookingSyncApi();
+            $api->modifyReservation($fid);
+
             echo $this->_showBookingEditor($fid, $_POST["p"]);
             die;
         }

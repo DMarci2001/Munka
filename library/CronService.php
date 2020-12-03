@@ -157,7 +157,7 @@ class CronService {
             $res = sql_query("SELECT f.*,h.cim FROM foglalasok f 
             LEFT JOIN helyszinek h ON h.id=f.helyszinid
 		    LEFT JOIN cegek c ON c.`id`=f.`cegid`
-		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0");
+		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 AND f.externalid=''");
             while ($row = sql_fetch_array($res)) {
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
 
@@ -192,7 +192,7 @@ class CronService {
 
     private function _sendReviewMails() {
         //érkeztetett foglalásokra elégedettségi form kiküldése
-        $res = sql_query("SELECT * FROM foglalasok WHERE eljott=1 AND eljottmail=0 AND datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND datum<NOW() AND email<>''");
+        $res = sql_query("SELECT * FROM foglalasok WHERE eljott=1 AND eljottmail=0 AND datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND datum<NOW() AND email<>'' and externalid=''");
         while ($foglalasData=sql_fetch_array($res)) {
             $this->utils->sendEljottMail($foglalasData);
         }

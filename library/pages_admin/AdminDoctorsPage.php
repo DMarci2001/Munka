@@ -571,6 +571,13 @@ class AdminDoctorsPage extends AdminCorePage {
             $row = sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
             $_POST = $row;
 
+            //scan foglalások
+            $api = new BookingSyncApi();
+            $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>NOW() ORDER BY datum", [$oid]);
+            while ($reservationData = sql_fetch_array($res)) {
+                //$api->newReservation($reservationData["id"]);
+            }
+
             $hibak="";
 
             if (isset($_SESSION["doctorsaveerror"])) {
