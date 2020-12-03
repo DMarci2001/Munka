@@ -1,8 +1,4 @@
 <?php
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 class AdminReferralPage extends AdminCorePage {
 
     public function __construct()
@@ -89,8 +85,8 @@ class AdminReferralPage extends AdminCorePage {
 													   LEFT JOIN felhasznalok_teszt felh ON felh.id=beu.fid
 													   WHERE beu.id=?",array($selector)));
 					
-					$removeCharSheet  = array("á","é","ú","ó","ű","ü","ö","ő","í"," ");
-					$replaceCharSheet = array("a","e","u","o","u","u","o","o","i","_");
+					$removeCharSheet  = array("á","é","ú","ó","ű","ü","ö","ő","í"," ","-");
+					$replaceCharSheet = array("a","e","u","o","u","u","o","o","i","_","_");
 					$filename = strtolower(str_replace($removeCharSheet,$replaceCharSheet,$result["nev"]));
 					$filename.= "-".str_replace("-","",$result["szuldatum"]);
 					$setDate = date("Ymdhis");
@@ -113,7 +109,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
 					$mail->FromName = Booking_Constants::COMPANY_NAME;
 					if ( isset( $_POST['saveTest'] )) {
-						$mail->AddAddress( "m.gergely9409@gmail.com" ); 
+						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
 					} else {
 						$mail->AddAddress( $result["email"] ); 
 					}
@@ -123,10 +119,27 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
 					$mail->IsHTML(true);
 
-					$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Hamarosan lejár az alkalmassági igazolása!" );
 
+					$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "RE: Hamarosan lejár az alkalmassági igazolása!" );
+					//$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Hamarosan lejár az alkalmassági igazolása!" );
+
+					//$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
+					//$mbody.= "<p style='font-family:calibri;font-size:16px;font-weight:bold;'>A tegnapi nap folyamán egy rendszer hiba miatt téves fejléccel ellátott alkalmassági beutaló dokumentumot küldtünk ki az ön részére! Kérem az előző levelet tekintse tárgytalannak. Az érvényes beutaló dokumentumot ennek a levélnek a csatolmányából tudja letölteni!</p>";
+					//$mbody.= "<p style='font-family:calibri;font-size:14px'>Az Ön allalmassági vizsgálata <strong>".date("Y.m.d",strtotime($result["expiration"]))."-ig érvényes</strong>, kérjük hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be  az éves vizsgálat elvégzésére.</p>";
+					/*$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Kiss Renáta Réka részére elküldeni</strong> a <a href=\"mailto:kiss.renata.reka@tigaz.hu\" style=\"color:#a90000\">kiss.renata.reka@tigaz.hu</a> e-mail címre.</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Bármely felmerülő kérdéssel kapcsolatban ügyfélkapcsolati munkatársunk áll szolgálatára.</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>Telefonos ügyfélszolgálat:</b><br>";
+					$mbody.= "<i>Munkanapokon 08:00 –tol 16:00-ig.</i><br>";
+					$mbody.= " +36 1 / 800 9333<br>";
+					$mbody.= "+36 30 / 633 0961<br>";
+					$mbody.= "</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>E-mail:</b><br>ugyfelkapcsolat@hungariamed.hu</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Üdvözlettel</p>";
+					$mbody.= "<a href='https://www.hungariamed.hu' target='_blank'><img src='https://hungariamed.hu/images/logo.png'/></a>";*/
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége ".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére.</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Kiss Renáta Réka részére elküldeni</strong> a <a href=\"mailto:kiss.renata.reka@tigaz.hu\" style=\"color:#a90000\">kiss.renata.reka@tigaz.hu</a> e-mail címre.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Bármely felmerülő kérdéssel kapcsolatban ügyfélkapcsolati munkatársunk áll szolgálatára.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>Telefonos ügyfélszolgálat:</b><br>";
 					$mbody.= "<i>Munkanapokon 08:00 –tol 16:00-ig.</i><br>";
@@ -147,7 +160,13 @@ class AdminReferralPage extends AdminCorePage {
 					else unlink($attachment);
 					
 					//Rögzítem az adatbázisban a kiküldés idejét
-					sql_query("UPDATE beutalo_ertesites SET sent=NOW() WHERE id=?",array($result["id"]));
+					if(isset($_POST["saveTest"])){
+						sql_query("UPDATE beutalo_ertesites SET test_sent=NOW() WHERE id=?",array($result["id"]));
+					}
+					if(isset($_POST["sendSelectedReferrals"])){
+						sql_query("UPDATE beutalo_ertesites SET sent=NOW() WHERE id=?",array($result["id"]));
+					}
+					
 					
 					//Adatok rögzítése az összesítő excelbe:
 					$row++;
@@ -160,7 +179,7 @@ class AdminReferralPage extends AdminCorePage {
 				}
 				
 				//összesítő excel fájl véglegesítése:
-				/*$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 				$objWriter->save($folder.$overallExcel.".xlsx");
 				
 				
@@ -169,7 +188,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
 				$mail->FromName = Booking_Constants::COMPANY_NAME;
 				if ( isset( $_POST['saveTest'] )) {
-					$mail->AddAddress( "m.gergely9409@gmail.com" ); 
+					$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
 				} else {
 					$mail->AddAddress( "kiss.renata.reka@tigaz.hu" ); 
 				}
@@ -190,7 +209,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->Subject = $t;
 				$mail->Body = iconv( "UTF-8", "ISO-8859-2//IGNORE", $mbody );
 				$mail->AddAttachment($folder.$overallExcel.".xlsx");
-				$mail->Send();*/
+				$mail->Send();
 				
 				
 	
@@ -249,7 +268,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
 					$mail->FromName = Booking_Constants::COMPANY_NAME;
 					if ( isset( $_POST['saveTest'] )) {
-						$mail->AddAddress( "m.gergely9409@gmail.com" ); 
+						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
 					} else {
 						$mail->AddAddress( $name ); 
 					}
