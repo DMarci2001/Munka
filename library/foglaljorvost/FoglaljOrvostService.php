@@ -101,7 +101,7 @@ class FoglaljOrvostService extends FoGeneral {
             $xml = simplexml_load_string($result);
             $message = (string)$xml->RETURN["RETMESSAGE"];
             if (ctype_digit($message)) {
-                sql_query("update foglalasok set fofid=? where id=?", [$message, $fid]);
+                sql_query("update foglalasok set fofid=? where id=?", [$message, $reservationData["id"]]);
             }
             $results[] = $result;
         }
