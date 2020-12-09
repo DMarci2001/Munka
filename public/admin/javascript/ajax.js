@@ -406,6 +406,12 @@ function setListDay(day) {
     );
 }
 
+function setQueryDay(day) {
+    //$("#querystatus").html("lekérdezés folyamatban...");
+
+    $("#start-query-date").css("background-image","url('/images/loading_transparent.svg')");
+    $("#end-query-date").css("background-image","url('/images/loading_transparent.svg')");
+}
 
 var foglalasSelected=0;
 var foglalasSelectedPass="";
@@ -1610,8 +1616,23 @@ function initDateFilterPicker() {
     })
 }
 
+function initQueryDatePicker() {
+    $('#start-query-date, #end-query-date').datepicker({
+        language: 'hu',
+        onSelect: function(formattedDate, date, inst) {
+            inst.hide();
+            //setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+}
+
+
+
+
 $(document).ready(function(){
     initDateFilterPicker();
+    initQueryDatePicker();
 
     $(function(){
         $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
