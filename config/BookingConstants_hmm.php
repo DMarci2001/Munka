@@ -50,4 +50,6 @@ class Booking_Constants {
     //simplePay hmm sandbox
     const SIMPLEPAY_MERCHANT_ID     = "S076901";
     const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
+
+    const API_KEY                   = "04ab0c03-7e9f-468f-8d37-edc1a639d013";
 }

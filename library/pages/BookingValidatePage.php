@@ -100,6 +100,10 @@ class BookingValidatePage extends CorePage {
                 $bookingService->sendToCegAndOrvos($this->id);
                 $bookingService->sendToUser($this->id);
             }
+
+            //módosítás sync ha kell
+            $api = new BookingSyncApi();
+            $api->modifyReservation($this->foglalasData["id"]);
         } else {
             echo "Sajnáljuk!<br>
             Ez az időpont foglalás nem létezik, vagy időközben törölve lett.<br>

@@ -316,7 +316,7 @@ class BookingPage extends CorePage {
             echo "</select>";
             echo "</td></tr>";
 
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->_szuresTipusValasztoNew($beutalodata["helyszinid"],$beutalodata["szurestipusid"],1)."</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->_szuresTipusValasztoNew($beutalodata["szurestipusid"],1)."</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $beutalodata["szurestipusid"], $beutalodata["helyszinid"]);
             if (!empty($tipusMegj)) {
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
@@ -326,7 +326,7 @@ class BookingPage extends CorePage {
             if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["helyszin"], $_POST["szurestipus"]) . "</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
             echo "<tr><td></td><td><div id='tappenzcheck'>".$this->bookingService->tappenzCheckHTML($_POST["helyszin"])."</div></td></tr>";
@@ -431,7 +431,7 @@ class BookingPage extends CorePage {
         return $html;
     }
 
-    private function _szuresTipusValasztoNew($helyszinid, $selected = 0, $onlyselected = 0) {
+    private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0) {
         $tipusok = [];
         $tipusnevek = [];
 
@@ -481,7 +481,9 @@ class BookingPage extends CorePage {
         }
 
         $htmlout .= "</select>";
-        $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
+        if ($_SESSION["helyszindata"]["id"] != 82) {
+            $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
+        }
 
         return $htmlout;
     }

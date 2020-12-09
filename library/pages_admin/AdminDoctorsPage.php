@@ -216,9 +216,6 @@ class AdminDoctorsPage extends AdminCorePage {
             $oid = intval($_GET["szerk"]);
             $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
 			
-		
-			
-			
             if ($this->adminUtils->orvosModJog()) {
 				
                 if ($this->adminUtils->beosztasModJog()) {
@@ -427,7 +424,6 @@ class AdminDoctorsPage extends AdminCorePage {
 
                 $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>NOW() ORDER BY datum", [$oid]);
                 while ($reservationData = sql_fetch_array($res)) {
-
                     echo "<div>{$reservationData["datum"]} ".($reservationData["fofid"]==0?" <span style='color:#f00;'>nincs szinkronizálva</span>":" <span style='color:#0a0;'>szinkronizálva</span>")."</div>";
 
                     if ($reservationData["fofid"] == 0) {
@@ -436,6 +432,19 @@ class AdminDoctorsPage extends AdminCorePage {
                     }
 
                 }
+
+                echo "<div style='margin:10px 0px;font-weight: bold'>Szabadságok</div>";
+
+                $res = sql_query("SELECT groupid, foid, min(datumtol) as mindatum, max(datumtol) as maxdatum FROM szabadsag WHERE oid=? and datumtol>=date(now()) group by groupid", [$oid]);
+                while ($szabadsagData = sql_fetch_array($res)) {
+                    echo "<div>{$szabadsagData["mindatum"]} - {$szabadsagData["maxdatum"]} ".($szabadsagData["foid"]==0?" <span style='color:#f00;'>nincs szinkronizálva</span>":" <span style='color:#0a0;'>szinkronizálva</span>")."</div>";
+
+                    if ($szabadsagData["foid"] == 0) {
+                        //$result = $foService->newReservation($reservationData["id"]);
+                        //echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". Utils::converResult($result[0])."</pre>";
+                    }
+                }
+
                 echo "<br/><br/>";
 
 
@@ -570,6 +579,13 @@ class AdminDoctorsPage extends AdminCorePage {
             $oid = intval($_GET["szerk"]);
             $row = sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
             $_POST = $row;
+
+            //scan foglalások
+            $api = new BookingSyncApi();
+            $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>NOW() ORDER BY datum", [$oid]);
+            while ($reservationData = sql_fetch_array($res)) {
+                //$api->newReservation($reservationData["id"]);
+            }
 
             $hibak="";
 

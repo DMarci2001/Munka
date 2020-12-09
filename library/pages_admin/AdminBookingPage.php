@@ -222,6 +222,10 @@ class AdminBookingPage extends AdminCorePage
         $htmlout.= "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
 
         sql_query("SET SESSION group_concat_max_len = 10000");
+
+        if (empty($tipusok)) {
+            $tipusok[] = 0;
+        }
         $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'menedzser'), megnev");
         while ($szuresTipus = sql_fetch_array($szuresTipusok)) {
 

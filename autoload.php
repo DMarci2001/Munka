@@ -43,7 +43,7 @@ require_once(__DIR__ . "/library/foglaljorvost/FoGeneral.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoglaljOrvostService.php");
 require_once(__DIR__ . "/library/ReservationExportService.php");
 require_once(__DIR__ . "/library/DokirexService.php");
-
+require_once(__DIR__ . "/library/BookingSyncApi.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
