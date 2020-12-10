@@ -1,65 +1,103 @@
 <?php
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+
 class AdminReferalStatusQueryPage extends AdminCorePage
 {
     private $adminUser;
     private $dokirexService;
 
+    
+
     public function __construct()
     {
         parent::__construct();
 
+        if (!$this->adminUtils->dokirexlekerdezesekJog()) {
+            return;
+        }
+
         $this->adminUser = new adminUser();
         $this->dokirexService = new DokirexService();
 
-
+       
 
         if (isset($_POST["downloadExcel_x"]) && isset($_POST["downloadExcel_y"])) {
             //Itt el kell végeznem az adat letöltést excelben.
 
-            $response = json_decode($this->dokirexService->runBuiltInQuery($_POST), true);
-
-            $ceg = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE dokirexTelephelyId=?", array($_POST["Param1"])));
-
-            $Filename = "{$ceg["megnev"]} {$_POST["Param2"]}-{$_POST["Param3"]}";
-            $objPHPExcel = new PHPExcel();
-            $objPHPExcel->setActiveSheetIndex(0);
-            //$objPHPExcel->getActiveSheet()->setTitle('Állomány');
-
-            //Oszlop nevek:
-            $objPHPExcel->getActiveSheet()->SetCellValue("A1", "Vizsgálat Dátuma");
-            $objPHPExcel->getActiveSheet()->SetCellValue("B1", "Dolgozó neve");
-            $objPHPExcel->getActiveSheet()->SetCellValue("C1", "TAJ");
-            $objPHPExcel->getActiveSheet()->SetCellValue("D1", "Szül. dátum");
-            $objPHPExcel->getActiveSheet()->SetCellValue("E1", "Vizsgálat");
-            $objPHPExcel->getActiveSheet()->SetCellValue("F1", "Ellátó orvos");
-            $objPHPExcel->getActiveSheet()->SetCellValue("G1", "Munkakör");
-            $objPHPExcel->getActiveSheet()->SetCellValue("H1", "Cég");
-            $objPHPExcel->getActiveSheet()->SetCellValue("I1", "Vizsgálat típusa");
-            $objPHPExcel->getActiveSheet()->SetCellValue("J1", "Státusz");
-            $objPHPExcel->getActiveSheet()->SetCellValue("K1", "Érvényesség");
-            $objPHPExcel->getActiveSheet()->SetCellValue("L1", "Korlátozás");
-
-            for ($i = 1; $i < count($response["data"]); $i++) {
-                $objPHPExcel->getActiveSheet()->SetCellValue("A".($i+1), (isset($response["data"][$i]["PaciensVizsgalat_FelvetelDatuma"]) ? $response["data"][$i]["PaciensVizsgalat_FelvetelDatuma"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("B".($i+1), (isset($response["data"][$i]["PaciensNev"]) ? $response["data"][$i]["PaciensNev"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("C".($i+1), (isset($response["data"][$i]["Azonosito"]) ? $response["data"][$i]["Azonosito"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("D".($i+1), (isset($response["data"][$i]["SzuletesiDatum"]) ? $response["data"][$i]["SzuletesiDatum"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("E".($i+1), (isset($response["data"][$i]["SzakrendelesNev"]) ? $response["data"][$i]["SzakrendelesNev"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("F".($i+1), (isset($response["data"][$i]["FelhasznaloNev"]) ? $response["data"][$i]["FelhasznaloNev"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("G".($i+1), (isset($response["data"][$i]["Munkakor"]) ? $response["data"][$i]["Munkakor"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("H".($i+1), (isset($response["data"][$i]["Telephely"]) ? $response["data"][$i]["Telephely"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("I".($i+1), (isset($response["data"][$i]["VizsgalatTipusa"]) ? $response["data"][$i]["VizsgalatTipusa"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("J".($i+1), (isset($response["data"][$i]["Alkalmassag"]) ? $response["data"][$i]["Alkalmassag"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("K".($i+1), (isset($response["data"][$i]["Ervenyesseg"]) ? $response["data"][$i]["Ervenyesseg"] : ""));
-                $objPHPExcel->getActiveSheet()->SetCellValue("L".($i+1), (isset($response["data"][$i]["Korlatozas"]) ? $response["data"][$i]["Korlatozas"] : ""));
+            $ceg = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE md5(concat('dokirexTelephelyId',dokirexTelephelyId))=?", array($_POST["Param1"])));
+            if(!$ceg){
+                die("Error - 486");
+            }else{
+                $_POST["Param1"] = $ceg["dokirexTelephelyId"];
             }
 
+            $response = json_decode($this->dokirexService->runBuiltInQuery($_POST), true);
+
+            
+
+            
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $spreadsheet->getActiveSheet()->getProtection()->setSheet(true);
+
+            $sheet->getProtection()->setPassword('PhpSpreadsheet');
+            $sheet->getProtection()->setSheet(true);
+            $sheet->getProtection()->setSort(true);
+            $sheet->getProtection()->setInsertRows(true);
+            $sheet->getProtection()->setFormatCells(true);
+
+            $sheet->SetCellValue("A1", "Vizsgálat Dátuma");
+            $sheet->SetCellValue("B1", "Dolgozó neve");
+            $sheet->SetCellValue("C1", "TAJ");
+            $sheet->SetCellValue("D1", "Szül. dátum");
+            $sheet->SetCellValue("E1", "Vizsgálat");
+            $sheet->SetCellValue("F1", "Ellátó orvos");
+            $sheet->SetCellValue("G1", "Munkakör");
+            $sheet->SetCellValue("H1", "Cég");
+            $sheet->SetCellValue("I1", "Vizsgálat típusa");
+            $sheet->SetCellValue("J1", "Státusz");
+            $sheet->SetCellValue("K1", "Érvényesség");
+            $sheet->SetCellValue("L1", "Korlátozás");
+
+            $Filename = "{$ceg["megnev"]} {$_POST["Param2"]}-{$_POST["Param3"]}";
+
+            for ($i = 1; $i < count($response["data"]); $i++) {
+                $sheet->SetCellValue("A".($i+1), (isset($response["data"][$i]["PaciensVizsgalat_FelvetelDatuma"]) ? date("Y-m-d H:i:s",strtotime($response["data"][$i]["PaciensVizsgalat_FelvetelDatuma"])) : ""));
+                $sheet->SetCellValue("B".($i+1), (isset($response["data"][$i]["PaciensNev"]) ? $response["data"][$i]["PaciensNev"] : ""));
+                $sheet->SetCellValue("C".($i+1), (isset($response["data"][$i]["Azonosito"]) ? $response["data"][$i]["Azonosito"] : ""));
+                $sheet->SetCellValue("D".($i+1), (isset($response["data"][$i]["SzuletesiDatum"]) ? date("Y-m-d",strtotime($response["data"][$i]["SzuletesiDatum"])) : ""));
+                $sheet->SetCellValue("E".($i+1), (isset($response["data"][$i]["SzakrendelesNev"]) ? $response["data"][$i]["SzakrendelesNev"] : ""));
+                $sheet->SetCellValue("F".($i+1), (isset($response["data"][$i]["FelhasznaloNev"]) ? $response["data"][$i]["FelhasznaloNev"] : ""));
+                $sheet->SetCellValue("G".($i+1), (isset($response["data"][$i]["Munkakor"]) ? $response["data"][$i]["Munkakor"] : ""));
+                $sheet->SetCellValue("H".($i+1), (isset($response["data"][$i]["Telephely"]) ? $response["data"][$i]["Telephely"] : ""));
+                $sheet->SetCellValue("I".($i+1), (isset($response["data"][$i]["VizsgalatTipusa"]) ? $response["data"][$i]["VizsgalatTipusa"] : ""));
+                $sheet->SetCellValue("J".($i+1), (isset($response["data"][$i]["Alkalmassag"]) ? $response["data"][$i]["Alkalmassag"] : ""));
+                $sheet->SetCellValue("K".($i+1), (isset($response["data"][$i]["Ervenyesseg"]) ? $response["data"][$i]["Ervenyesseg"] : ""));
+                $sheet->SetCellValue("L".($i+1), (isset($response["data"][$i]["Korlatozas"]) ? $response["data"][$i]["Korlatozas"] : ""));
+            }
+
+            ob_clean();
+            header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            header("Content-Disposition: attachment;filename=\"{$Filename}.xlsx\"");
+            header("Cache-Control: max-age=0");
+
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save('php://output');
+
+            /*ob_end_clean();
+            //header('Content-Type: application/vnd.ms-excel');
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="' . $Filename . '.xlsx"');
             header('Cache-Control: max-age=0');
             //Excel fájl véglegesítése:
             $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
             $objWriter->save('php://output');
+            ob_end_clean();*/
         }
     }
 
@@ -67,6 +105,10 @@ class AdminReferalStatusQueryPage extends AdminCorePage
 
     public function showPage()
     {
+        if (!$this->adminUtils->dokirexlekerdezesekJog()) {
+            return;
+        }
+
         //Itt kéne látszódjon majd egy kezelő felületnek, ahol belehet állítani az Aktuális alkalmassági listát, az összes dolgozót lekérdezzük itt, akik a céghez vannak rendelve és 
         //és az utolsó hozzá tartozó alkalmassági lejáratot.
         //A cég azonosítót fixen a profilhoz rendeljük majd, így nem lesz módja az adminnak magának beállítani, hogy mely cégre szűrjön le.
@@ -102,7 +144,7 @@ class AdminReferalStatusQueryPage extends AdminCorePage
         if (isset($qC)) {
             $htmlout .= "<select name=\"Param1\">";
             while ($rC = sql_fetch_array($qC)) {
-                $htmlout .= "<option value=\"{$rC["dokirexTelephelyId"]}\">{$rC["megnev"]}</option>";
+                $htmlout .= "<option value=\"".md5("dokirexTelephelyId{$rC["dokirexTelephelyId"]}")."\">{$rC["megnev"]}</option>";
             }
             $htmlout .= "</select>&nbsp;&nbsp;&nbsp;";
         }
@@ -133,6 +175,13 @@ class AdminReferalStatusQueryPage extends AdminCorePage
     private function runDokirexQuery($data)
     {
         $htmlout = "";
+
+        $ceg = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE md5(concat('dokirexTelephelyId',dokirexTelephelyId))=?", array($data["Param1"])));
+        if(!$ceg){
+            die("Error - 486");
+        }else{
+            $data["Param1"] = $ceg["dokirexTelephelyId"];
+        }
 
         $response = json_decode($this->dokirexService->runBuiltInQuery($data), true);
 

@@ -46,24 +46,25 @@ class AdminUsersPage extends AdminCorePage {
                 if (!isset($_POST['jog_kuponkeszites'])) $_POST['jog_kuponkeszites']=0;
 				if (!isset($_POST['jog_tranzakciolatas'])) $_POST['jog_tranzakciolatas']=0;
 				if (!isset($_POST['jog_tranzakciokezeles'])) $_POST['jog_tranzakciokezeles']=0;
-				if (!isset($_POST['jog_beutalokezeles'])) $_POST['jog_beutalokezeles']=0;
+                if (!isset($_POST['jog_beutalokezeles'])) $_POST['jog_beutalokezeles']=0;
+                if (!isset($_POST["jog_dokirexlekerdezesek"])) $_POST["jog_dokirexlekerdezesek"]=0;
 
                 if (!isset($_POST["auth2fac"])) $_POST["auth2fac"]=0;
                 if (!isset($_POST["localeaccess"])) $_POST["localeaccess"]=0;
                 if (!isset($_POST["status"])) $_POST["status"]=0;
 
                 sql_query("UPDATE users 
-				   SET jog_jogset 	      = ?, jog_cegset 	      = ?, jog_helyszinset = ?, jog_orvosset   = ?, jog_beosztasset     = ?, jog_szurestipusset    = ?, 
-					   jog_szabi  	      = ?, jog_zarolista 	  = ?, jog_zaroszerk   = ?, jog_leletlatas = ?, jog_leletszerk      = ?, jog_gdprhferes 	   = ?, 
-					   jog_kuponlista     = ?, jog_kuponkeszites  = ?, auth2fac	  	   = ?, localeaccess   = ?, localeip            = ?, jogosultsag           = ?,
-					   jog_beallitasok    = ?, jog_nofoglimitset  = ?, jog_statisztika = ?, jog_vizsg_stat = ?, jog_tranzakciolatas = ?,  jog_tranzakciokezeles = ?, 
-					   status             = ?, jog_beutalokezeles = ?
+				   SET jog_jogset 	      = ?, jog_cegset 	      = ?, jog_helyszinset         = ?, jog_orvosset   = ?, jog_beosztasset     = ?, jog_szurestipusset    = ?, 
+					   jog_szabi  	      = ?, jog_zarolista 	  = ?, jog_zaroszerk           = ?, jog_leletlatas = ?, jog_leletszerk      = ?, jog_gdprhferes 	   = ?, 
+					   jog_kuponlista     = ?, jog_kuponkeszites  = ?, auth2fac	  	           = ?, localeaccess   = ?, localeip            = ?, jogosultsag           = ?,
+					   jog_beallitasok    = ?, jog_nofoglimitset  = ?, jog_statisztika         = ?, jog_vizsg_stat = ?, jog_tranzakciolatas = ?, jog_tranzakciokezeles = ?, 
+					   status             = ?, jog_beutalokezeles = ?, jog_dokirexlekerdezesek = ?
 				   WHERE id = ?",
                     array( $_POST["jog_jogset"], $_POST["jog_cegset"], $_POST["jog_helyszinset"], $_POST["jog_orvosset"], $_POST["jog_beosztasset"], $_POST["jog_szurestipusset"],
                         $_POST["jog_szabi"],  $_POST['jog_zarolista'], $_POST['jog_zaroszerk'], $_POST['jog_leletlatas'], $_POST['jog_leletszerk'], $_POST['jog_gdprhferes'],
                         $_POST['jog_kuponlista'], $_POST['jog_kuponkeszites'], $_POST["auth2fac"],   $_POST["localeaccess"],    $_POST["localeip"],     $_POST["jogosultsag"],
                         $_POST['jog_beallitasok'], $_POST['jog_nofoglimitset'], $_POST['jog_statisztika'],$_POST['jog_vizsg_stat'],$_POST['jog_tranzakciolatas'],$_POST['jog_tranzakciokezeles'],$_POST['status'],
-						$_POST['jog_beutalokezeles'],$id)
+						$_POST['jog_beutalokezeles'], $_POST["jog_dokirexlekerdezesek"],$id)
                 );
 
                 $jogs = "";
@@ -147,6 +148,7 @@ class AdminUsersPage extends AdminCorePage {
                     echo "<tr><td></td><td><input type='checkbox' name='jog_zarolista' ".($_POST["jog_zarolista"]==1?"checked":"")." value='1' />&nbsp;Zárólista látása</td></tr>";
                     echo "<tr><td></td><td><input type='checkbox' name='jog_zaroszerk' ".($_POST["jog_zaroszerk"]==1?"checked":"")." value='1' />&nbsp;Záró leletek szerkesztése</td></tr>";
                     echo "<tr><td></td><td><input type='checkbox' name='jog_vizsg_stat' ".($_POST["jog_vizsg_stat"]==1?"checked":"")." value='1' />&nbsp;Vizsgálati statisztika lekérdezése</td></tr>";
+                    echo "<tr><td></td><td><input type='checkbox' name='jog_dokirexlekerdezesek' ".($_POST["jog_dokirexlekerdezesek"]==1?"checked":"")." value='1' />&nbsp;Dokirex alapú lekérdezések</td></tr>";
                     echo "<tr><td></td><td><input type='checkbox' name='jog_leletlatas' ".($_POST["jog_leletlatas"]==1?"checked":"")." value='1' />&nbsp;Leletek látása</td></tr>";
                     echo "<tr><td></td><td><input type='checkbox' name='jog_leletszerk' ".($_POST["jog_leletszerk"]==1?"checked":"")." value='1' />&nbsp;Leletek szerkesztése</td></tr>";
 					

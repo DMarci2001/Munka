@@ -76,6 +76,12 @@ class AdminUtils
         return false;
     }
 
+    public function dokirexlekerdezesekJog()
+    {
+        if ($_SESSION["adminuser"]["jog_dokirexlekerdezesek"] == 1) return true;
+        return false;
+    }
+
     public function newPassSend($rowu)
     {
         $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";

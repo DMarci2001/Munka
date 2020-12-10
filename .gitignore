@@ -1,2 +1,16 @@
 library/other/attachments/stressz teszt.docx
 public/images/Web-doktor_banner_1600x600.jpg
+vendor
+vendor/composer/LICENSE
+vendor/composer/installed.json
+vendor/composer/ClassLoader.php
+vendor/composer/autoload_static.php
+vendor/composer/autoload_psr4.php
+vendor/composer/autoload_real.php
+vendor/composer/autoload_files.php
+vendor/composer/autoload_namespaces.php
+vendor/composer/autoload_classmap.php
+vendor/autoload.php
+vendor/composer/autoload_classmap.php
+composer.lock
+composer.json
