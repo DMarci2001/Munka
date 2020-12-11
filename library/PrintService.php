@@ -16,7 +16,7 @@ class PrintService
         "covidkerdoiv" => array(
             "nev", "lakcim", "telefon", "anyjaneve", "szulhely", "taj","email","szuldatum","datum"
         ),
-        "menedzsersetalolap" => array("nev","szulhely","szuldatum","cegnev","taj","")
+        "menedzsersetalolap" => array("nev","szulhely","szuldatum","cegnev","taj","vizsgnevdatum")
     );
 
     private $templateFileName = "";
@@ -85,7 +85,10 @@ class PrintService
             }
 
             //Dátum mező javítása:
-            $fields["datum"] = date("Y.m.d",strtotime($fields["datum"]));
+            if(isset($fields["datum"])){
+                $fields["datum"] = date("Y.m.d",strtotime($fields["datum"]));
+            }
+            
 
             $pdf = new FPDM("templates/{$this->templateFileName}");
             $pdf->Load($fields, true); // false-ra ha  ISO-8859-1, true-ra ha UTF-8 a beviteli szöveg
