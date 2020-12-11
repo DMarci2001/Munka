@@ -4,17 +4,19 @@ class PrintService
 {
 
     private $templates = array(
-        "menedzserkerdoiv" => "menedzserkerdoiv.html",
-        "alkalmassagi"     => "alkalmassagi.html",
-        "vizsgalatilap"    => "vizsgalatilap.html",
-        "karton"           => "karton.html",
-        "covidkerdoiv"     => "COVID-19_kérdőív_SZTK.pdf"
+        "menedzserkerdoiv"   => "menedzserkerdoiv.html",
+        "alkalmassagi"       => "alkalmassagi.html",
+        "vizsgalatilap"      => "vizsgalatilap.html",
+        "karton"             => "karton.html",
+        "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
+        "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf"
     );
 
     private $inputs = array(
         "covidkerdoiv" => array(
             "nev", "lakcim", "telefon", "anyjaneve", "szulhely", "taj","email","szuldatum","datum"
-        )
+        ),
+        "menedzsersetalolap" => array("nev","szulhely","szuldatum","cegnev","taj","")
     );
 
     private $templateFileName = "";
@@ -36,8 +38,9 @@ class PrintService
 
     public function setReservation($fid, $p)
     {
-        if (!$this->reservationData = sql_fetch_array(sql_query("select f.*,c.megnev as cegnev from foglalasok f
+        if (!$this->reservationData = sql_fetch_array(sql_query("select f.*,c.megnev as cegnev,concat(f.megnev,' ',f.datum) as vizsgnevdatum from foglalasok f
         left join cegek c on c.id=f.cegid
+        left join szurestipusok sz on sz.id=f.szurestipusid
         where f.id=? and pass=?", array($_GET["fid"], $_GET["p"])))) {
             die("error code 1254");
         }

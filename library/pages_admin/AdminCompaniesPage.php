@@ -115,9 +115,10 @@ class AdminCompaniesPage extends AdminCorePage {
                 if (!isset($_POST["alksend"])) $_POST["alksend"]=0;
                 if (!isset($_POST["alkertsend"])) $_POST["alkertsend"]=0;
                 if (!isset($_POST["no_doctor_select"])) $_POST["no_doctor_select"]=0;
+                if (!isset($_POST["dokirexTelephelyId"])) $_POST["dokirexTelephelyId"]="";
 
-                sql_query("update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=?,fieldoptions=?,no_doctor_select=? where id=?"
-                    ,array($_POST["megnev"],$_POST["domain"],$_POST["email"],$_POST["foglalasemail"],$_POST["onlyreg"],$_POST["nocim"],$_POST["visszaigazolas"],$_POST["onlybeutalo"],$_POST["tudoszuroopcio"],$_POST["smshour"],$_POST["beutaloszoveg"],$_POST["beutaloszoveg_de"],$_POST["beutaloszoveg_en"],$_POST["protokoll"],$_POST["aktiv"],$_POST["noregsms"],$_POST["alksend"],$_POST["alkertsend"],$_POST["alksendint"],$_POST["sendmail"],$_POST["nofoglalas_hu"],$_POST["nofoglalas_en"],$_POST["nofoglalas_de"], implode(",",$fieldOptions), $_POST["no_doctor_select"], $id));
+                sql_query("update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=?,fieldoptions=?,no_doctor_select=?,dokirexTelephelyId=? where id=?"
+                    ,array($_POST["megnev"],$_POST["domain"],$_POST["email"],$_POST["foglalasemail"],$_POST["onlyreg"],$_POST["nocim"],$_POST["visszaigazolas"],$_POST["onlybeutalo"],$_POST["tudoszuroopcio"],$_POST["smshour"],$_POST["beutaloszoveg"],$_POST["beutaloszoveg_de"],$_POST["beutaloszoveg_en"],$_POST["protokoll"],$_POST["aktiv"],$_POST["noregsms"],$_POST["alksend"],$_POST["alkertsend"],$_POST["alksendint"],$_POST["sendmail"],$_POST["nofoglalas_hu"],$_POST["nofoglalas_en"],$_POST["nofoglalas_de"], implode(",",$fieldOptions), $_POST["no_doctor_select"],$_POST["dokirexTelephelyId"], $id));
 
                 logActivity("ceg",$id,$_POST["megnev"]." adatlap",print_r($_POST,true));
             }
@@ -138,42 +139,43 @@ class AdminCompaniesPage extends AdminCorePage {
             $row = sql_fetch_array(sql_query("select * from cegek where id=?", array($_GET["szerk"])));
             $_POST = $row;
 
-            echo "<div style='background-color:#fff;padding:0px;'>";
-            echo "<form name='iform' method='post' enctype='multipart/form-data'>";
-            echo "<table style='font-size:12px;'>";
+            echo "<div style=\"background-color:#fff;padding:0px;\">";
+            echo "<form name=\"iform\" method=\"post\" enctype=\"multipart/form-data\">";
+            echo "<table style=\"font-size:12px;\">";
 
-            echo "<tr><td width='150'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev' value='{$_POST["megnev"]}'></td></tr>";
-            echo "<tr><td>Domain:</td><td>".Booking_Constants::SITE_PROTOCOL.":// <input class='inputbox' style='width:100px;' type='text' name='domain' value='{$_POST["domain"]}'> .".Booking_Constants::SITE_DOMAIN."</td></tr>";
-            echo "<tr><td>E-mail:</td><td><input class='inputbox' style='width:300px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
-            echo "<tr><td>SMS a pacinenseknek:</td><td><input class='inputbox' style='width:20px;' type='text' name='smshour' value='{$_POST["smshour"]}'> órával előtte</td></tr>";
-            echo "<tr><td>Figyelmeztető szöveg:</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg' value='{$_POST["beutaloszoveg"]}'></td></tr>";
-            echo "<tr><td>Figyelmeztető szöveg (német):</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg_de' value='{$_POST["beutaloszoveg_de"]}'></td></tr>";
-            echo "<tr><td>Figyelmeztető szöveg (angol):</td><td><input class='inputbox' style='width:600px;' type='text' name='beutaloszoveg_en' value='{$_POST["beutaloszoveg_en"]}'></td></tr>";
-            echo "<tr><td>Protokoll:</td><td><textarea class='inputbox' style='width:600px;height:80px;' type='text' name='protokoll'>{$_POST["protokoll"]}</textarea></td></tr>";
+            echo "<tr><td width=\"150\">Név:</td><td><input class=\"inputbox\" style=\"width:400px;\" type=\"text\" name=\"megnev\" value=\"{$_POST["megnev"]}\"></td></tr>";
+            echo "<tr><td>Domain:</td><td>".Booking_Constants::SITE_PROTOCOL.":// <input class=\"inputbox\" style=\"width:100px;\" type=\"text\" name=\"domain\" value=\"{$_POST["domain"]}\"> .".Booking_Constants::SITE_DOMAIN."</td></tr>";
+            echo "<tr><td>E-mail:</td><td><input class=\"inputbox\" style=\"width:300px;\" type=\"text\" name=\"email\" value=\"{$_POST["email"]}\"></td></tr>";
+            echo "<tr><td>SMS a pacinenseknek:</td><td><input class=\"inputbox\" style=\"width:20px;\" type=\"text\" name=\"smshour\" value=\"{$_POST["smshour"]}\"> órával előtte</td></tr>";
+            echo "<tr><td>Dokirex cég azonosító:</td><td><input class=\"inputbox\" style=\"width:40px;\" type=\"text\" name=\"dokirexTelephelyId\" value=\"{$_POST["dokirexTelephelyId"]}\"></td></tr>";
+            echo "<tr><td>Figyelmeztető szöveg:</td><td><input class=\"inputbox\" style=\"width:600px;\" type=\"text\" name=\"beutaloszoveg\" value=\"{$_POST["beutaloszoveg"]}\"></td></tr>";
+            echo "<tr><td>Figyelmeztető szöveg (német):</td><td><input class=\"inputbox\" style=\"width:600px;\" type=\"text\" name=\"beutaloszoveg_de\" value=\"{$_POST["beutaloszoveg_de"]}\"></td></tr>";
+            echo "<tr><td>Figyelmeztető szöveg (angol):</td><td><input class=\"inputbox\" style=\"width:600px;\" type=\"text\" name=\"beutaloszoveg_en\" value=\"{$_POST["beutaloszoveg_en"]}\"></td></tr>";
+            echo "<tr><td>Protokoll:</td><td><textarea class=\"inputbox\" style=\"width:600px;height:80px;\" type=\"text\" name=\"protokoll\">{$_POST["protokoll"]}</textarea></td></tr>";
 
-            echo "<tr><td colspan='2'><div style='margin-top:10px;padding-top:10px;border-top:1px solid #ccc;'></div></td></tr>";
+            echo "<tr><td colspan=\"2\"><div style=\"margin-top:10px;padding-top:10px;border-top:1px solid #ccc;\"></div></td></tr>";
 
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='onlyreg'".($_POST["onlyreg"]==1?" checked":"")."> Csak regisztrációval lehessen foglalni</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='visszaigazolas'".($_POST["visszaigazolas"]==1?" checked":"")."> Vissza kell igazolni a foglalást</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='onlybeutalo'".($_POST["onlybeutalo"]==1?" checked":"")."> Csak beutalóval lehessen foglalni</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='nocim'".($_POST["nocim"]==1?" checked":"")."> A rendelési cím ne, csak a cím megnevezése látszódjon a pacienseknek</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='foglalasemail'".($_POST["foglalasemail"]==1?" checked":"")."> Menjen a foglalásokról e-mail értesítés</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='tudoszuroopcio'".($_POST["tudoszuroopcio"]==1?" checked":"")."> Tüdőszűrő opció az üzemorvosi vizsgálatnál</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='alkertsend'".($_POST["alkertsend"]==1?" checked":"")."> Alkalmassági lejártáról értesítés a pácienseknek</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='alksend'".($_POST["alksend"]==1?" checked":"")."> Alkalmassági lista küldése</td></tr>";
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='no_doctor_select'".($_POST["no_doctor_select"]==1?" checked":"")."> Ne legyen orvos választás a foglalási folyamatban</td></tr>";
-			//echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='bound_booking'".($_POST["bound_booking"]==1?" checked":"")."> Foglalások korlátozása egy kiválasztott parameter alapján </td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"aktiv\"".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"onlyreg\"".($_POST["onlyreg"]==1?" checked":"")."> Csak regisztrációval lehessen foglalni</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"visszaigazolas\"".($_POST["visszaigazolas"]==1?" checked":"")."> Vissza kell igazolni a foglalást</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"onlybeutalo\"".($_POST["onlybeutalo"]==1?" checked":"")."> Csak beutalóval lehessen foglalni</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"nocim\"".($_POST["nocim"]==1?" checked":"")."> A rendelési cím ne, csak a cím megnevezése látszódjon a pacienseknek</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"foglalasemail\"".($_POST["foglalasemail"]==1?" checked":"")."> Menjen a foglalásokról e-mail értesítés</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"tudoszuroopcio\"".($_POST["tudoszuroopcio"]==1?" checked":"")."> Tüdőszűrő opció az üzemorvosi vizsgálatnál</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"alkertsend\"".($_POST["alkertsend"]==1?" checked":"")."> Alkalmassági lejártáról értesítés a pácienseknek</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"alksend\"".($_POST["alksend"]==1?" checked":"")."> Alkalmassági lista küldése</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"no_doctor_select\"".($_POST["no_doctor_select"]==1?" checked":"")."> Ne legyen orvos választás a foglalási folyamatban</td></tr>";
+			//echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"bound_booking\"".($_POST["bound_booking"]==1?" checked":"")."> Foglalások korlátozása egy kiválasztott parameter alapján </td></tr>";
 			
-            echo "<tr><td>Rendszeresség: </td><td><select name='alksendint'>";
-            echo "<option ".($_POST["alksendint"]=="napi"?" selected":"")." value='napi'>Napi</option>";
-            echo "<option ".($_POST["alksendint"]=="heti"?" selected":"")." value='heti'>Heti</option>";
-            echo "<option ".($_POST["alksendint"]=="havi"?" selected":"")." value='havi'>Havi</option>";
+            echo "<tr><td>Rendszeresség: </td><td><select name=\"alksendint\">";
+            echo "<option ".($_POST["alksendint"]=="napi"?" selected":"")." value=\"napi\">Napi</option>";
+            echo "<option ".($_POST["alksendint"]=="heti"?" selected":"")." value=\"heti\">Heti</option>";
+            echo "<option ".($_POST["alksendint"]=="havi"?" selected":"")." value=\"havi\">Havi</option>";
             echo "</select></td></tr>";
-            echo "<tr><td>Fogadó email(ek): </td><td ><textarea class='inputbox' name='sendmail' style='width:600px;height:80px;'>".(isset($_POST["sendmail"])?$_POST["sendmail"]:"")."</textarea>";
+            echo "<tr><td>Fogadó email(ek): </td><td ><textarea class=\"inputbox\" name=\"sendmail\" style=\"width:600px;height:80px;\">".(isset($_POST["sendmail"])?$_POST["sendmail"]:"")."</textarea>";
             echo "</td></tr>";
 
-            echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalás mező paraméterek</div></td></tr>";
+            echo "<tr><td colspan=\"2\"><div class=\"tdsepdiv\">Foglalás mező paraméterek</div></td></tr>";
 
             foreach ($this->optionalFields as $field => $name) {
                 echo $this->_fieldOptionsRow($field);
