@@ -2,6 +2,11 @@ $(document).ready(function() {
     $("#loginbox").css("margin-top",$(window).height()/2 - $("#loginbox").height()/2);
     //$("#loginbox").css("margin-left",-$("#loginbox").width()/2);
     //$("#loginbox").css("opacity",1);
+
+    setTimeout( function() {
+        checkAdminWarnings();
+    }, 1000);
+
 });
 
 
@@ -58,7 +63,7 @@ function startKepImport(id) {
         respo=response;
         if (response=="0") {
             window.location.href="index.php?page=cikkek&szerk="+id;
-        } else {
+        } else {a
             startKepImport(id);
         }
     });
@@ -1943,4 +1948,40 @@ function insertPaciensIntoDokirex(pid){
 			showGeneralPopup(result);
 		}
 	});
+}
+
+
+function checkAdminWarnings() {
+    $.ajax({
+        type:'POST',
+        url: 'index.php',
+        data: {checkAdminWarnings:true},
+        success:function(result) {
+            $("#warnbuttoncontainer").html(result.button);
+            $("#adminwarnwindow").html(result.window);
+            if (result.window == "" && $("#adminwarnwindow").css("right") == "20px") {
+                toggleWarnWindow();
+            }
+        }
+    });
+
+}
+
+function warningAck(wid) {
+    $.ajax({
+        type:'POST',
+        url: 'index.php',
+        data:{warningAck:true,wid:wid},
+        success:function(result){
+            checkAdminWarnings();
+        }
+    });
+}
+
+function toggleWarnWindow() {
+    if ($("#adminwarnwindow").css("right") == "20px") {
+        $("#adminwarnwindow").css("right", -600);
+    } else {
+        $("#adminwarnwindow").css("right", 20);
+    }
 }

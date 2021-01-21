@@ -1263,3 +1263,15 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	width:200px;
 	cursor:pointer;
 }
+
+#adminwarnwindow {
+	width:500px;
+	background:#f00;
+	color:#fff;
+	position: fixed;
+	top:40px;
+	right:-600px;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.1);
+	padding:15px;
+	transition: all .1s linear;
+}

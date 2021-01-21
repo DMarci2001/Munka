@@ -122,7 +122,11 @@ class AdminPage {
 
     private function _statusRow() {
         $html = "";
+
+        $html.="<div id='adminwarnwindow'></div>";
+
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
+        $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
         if (isset($_SESSION["adminuser"]["jog_schedule"]) && $_SESSION["adminuser"]["jog_schedule"] == 1) {
             $html.= "<div style='display: table-cell;'><a href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
         }
