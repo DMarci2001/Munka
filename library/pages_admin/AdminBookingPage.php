@@ -319,7 +319,8 @@ class AdminBookingPage extends AdminCorePage
                         left join szurestipusok sz on sz.id=f.szurestipusid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
-                        where f.datum>=? and f.datum<? and f.helyszinid=? ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) group by f.id", array($timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId));
+                        where f.datum>=? and f.datum<? and f.helyszinid=? ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) 
+                        group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId]);
 
                         $this->lastIdopont = "";
                         $this->foglalasButtonVolt = 0;
@@ -330,7 +331,7 @@ class AdminBookingPage extends AdminCorePage
                             if (isset($foglalasok[$rowf["szurestipusid"]][$rowf["id"]])) {
                                 unset($foglalasok[$rowf["szurestipusid"]][$rowf["id"]]);
                             }
-                            $htmlout .= $this->elojegyzesTableRow($rowf, $nap, $ora);
+                            $htmlout .= $this->elojegyzesTableRow($rowf, $nap, $ora, $binterval);
                             $this->displayedReservations[] = $rowf["id"];
                         }
 
@@ -366,7 +367,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='padding:4px 0px;'>Beosztáson kívüli foglalások:</div>";
                 $htmlout .= "<table cellpadding='0' cellspacing='0'>";
                 foreach ($foglalasok[$szuresTipus["id"]] as $foglalas) {
-                    $htmlout.= $this->elojegyzesTableRow($foglalas, date("Y-m-d", strtotime($foglalas["datum"])), date("H:i", strtotime($foglalas["datum"])), true);
+                    $htmlout.= $this->elojegyzesTableRow($foglalas, date("Y-m-d", strtotime($foglalas["datum"])), date("H:i", strtotime($foglalas["datum"])), 0, true);
                 }
                 $htmlout .= "</table>";
                 $htmlout .= "</td>";
@@ -404,7 +405,7 @@ class AdminBookingPage extends AdminCorePage
     private $displayedReservations = [];
     private $szuresTipusActual;
 
-    private function elojegyzesTableRow($rowf, $nap, $ora, $noAdd = false) {
+    private function elojegyzesTableRow($rowf, $nap, $ora, $binterval, $noAdd = false) {
         $htmlout = "";
 
         $jogosult = true;
@@ -428,11 +429,18 @@ class AdminBookingPage extends AdminCorePage
         $htmlout .= "</td>";
         if ($jogosult) {
             $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$rowf["id"]},\"{$rowf["pass"]}\",\"booking\");return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;</td>";
-            if ($this->szuresTipusActual["id"] == $rowf["szurestipusid"]) {
-                $htmlout .= "<td valign='top' nowrap><a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;</td>";
-            } else {
-                $htmlout .= "<td valign='top' nowrap>Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;</td>";
+            $htmlout .= "<td valign='top' nowrap>";
+
+            if ($rowf["rinterval"] != $binterval) {
+                $htmlout .= "({$rowf["rinterval"]} perc) ";
             }
+
+            if ($this->szuresTipusActual["id"] == $rowf["szurestipusid"]) {
+                $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
+            } else {
+                $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
+            }
+            $htmlout .= "</td>";
         } else {
             $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";
         }
