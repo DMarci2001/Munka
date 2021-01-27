@@ -1619,6 +1619,23 @@ function initDateFilterPicker() {
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
         }
     })
+
+    $('#datefrom').datepicker({
+        language: 'hu',
+        onSelect: function(formattedDate, date, inst) {
+            inst.hide();
+            //setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+    $('#dateto').datepicker({
+        language: 'hu',
+        onSelect: function(formattedDate, date, inst) {
+            inst.hide();
+            //setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
 }
 
 function initQueryDatePicker() {
@@ -1639,26 +1656,20 @@ $(document).ready(function(){
     initDateFilterPicker();
     initQueryDatePicker();
 
+    $('#napfilter').datepicker({
+        language: 'hu',
+        onSelect: function(formattedDate, date, inst) {
+            inst.hide();
+            setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+
     $(function(){
         $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
-            dateFormat: 'yy-mm-dd',
-            changeMonth: true,
-            changeYear: true,
-            yearRange: '-100y:c+20',
-            maxDate: '+2y'
+            language: 'hu'
         });
-        $.datepicker.regional['hu'] = {
-            monthNames: ['Január', 'Február', 'Március', 'Április', 'Május', 'Június', 'Július', 'Augusztus', 'Szeptember',
-                'Október', 'November', 'December'
-            ],
-            monthNamesShort: ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'],
-            dayNames: ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Pénter', 'Szombat', 'Vasárnap'],
-            dayNamesShort: ['Hé', 'Ke', 'Sze', 'Csü', 'Pé', 'Szo', 'Vas'],
-            dayNamesMin: ['Hé', 'Ke', 'Sze', 'Csü', 'Pé', 'Szo', 'Vas'],
-            weekHeader: 'hét'
-        };
 
-        $.datepicker.setDefaults($.datepicker.regional['hu']);
     });
 });
 
@@ -1984,4 +1995,81 @@ function toggleWarnWindow() {
     } else {
         $("#adminwarnwindow").css("right", 20);
     }
+}
+
+function refreshMonthSalary(month) {
+    $.ajax({
+        type:'POST',
+        url: 'index.php',
+        data: {refreshmonthsalary:1, month:month, page:"salary"},
+        success:function(result) {
+            $("#salarycontainer").html(result);
+            initDateFilterPicker();
+        }
+    });
+}
+
+function refreshSalary(month) {
+    $.ajax({
+        type:'POST',
+        url: 'index.php',
+        data: {refreshsalary:1, datefrom:$("#datefrom").val(), dateto:$("#dateto").val(), page:"salary"},
+        success:function(result) {
+            if (result.error != "") {
+                alert(result.error);
+                return;
+            }
+            $("#salarycontainer").html(result.html);
+            initDateFilterPicker();
+        }
+    });
+}
+
+function salaryDataNew(oid) {
+    $.ajax({
+        type:'POST',
+        url: 'index.php',
+        data: {salarydatanew:1, oid:oid, page:"salary"},
+        success:function(result) {
+            if (result.error != "") {
+                alert(result.error);
+                return;
+            }
+            $("#salarydataeditor"+oid).html(result.html);
+        }
+    });
+}
+
+function salaryDataDelete(oid, sid) {
+    if (confirm("Biztos törlöd?")) {
+        $.ajax({
+            type: 'POST',
+            url: 'index.php',
+            data: {salarydatadelete: 1, oid: oid, sid: sid, page: "salary"},
+            success: function (result) {
+                if (result.error != "") {
+                    alert(result.error);
+                    return;
+                }
+                $("#salarydataeditor" + oid).html(result.html);
+            }
+        });
+    }
+}
+
+function salaryDataSave(oid) {
+    let params = $("#salarydataeditorform"+oid).serialize();
+
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?page=salary&salarydatasave=1&oid='+oid,
+        data: params,
+        success: function (result) {
+            if (result.error != "") {
+                alert(result.error);
+                return;
+            }
+            $("#salarydataeditor" + oid).html(result.html);
+        }
+    });
 }
