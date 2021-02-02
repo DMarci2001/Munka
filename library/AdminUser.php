@@ -74,4 +74,9 @@ class AdminUser {
         return $result;
     }
 
+    public function salaryAccess() {
+        return $this->user["jog_salary"] == 1;
+    }
+
+
 }
