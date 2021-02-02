@@ -23,7 +23,7 @@ class BeosztasService {
             left join cegek c on c.id=b.cegid
             WHERE b.helyszinid=? and INSTR(tipusok, ?) AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
             AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$this->wCeg} 
-            group by b.orvosid order by o.nev,nap,tol", [$helyszinId, "|{$szuresTipusId}|", $wd, $day, $day, $day]);
+            group by b.orvosid order by o.sorrend, o.nev,nap,tol", [$helyszinId, "|{$szuresTipusId}|", $wd, $day, $day, $day]);
 
         return $beoRes->fetchAll();
     }

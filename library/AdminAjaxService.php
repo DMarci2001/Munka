@@ -318,7 +318,57 @@ class AdminAjaxService {
             }
             die();
         }
+
+        if (isset($_POST["checkAdminWarnings"])) {
+            $return = [
+                "number" => 0,
+                "button" => "",
+                "window" => ""
+            ];
+
+            if (isset($_SESSION["adminuser"]) && in_array($_SESSION["adminuser"]["jogosultsag"], [2, 99])) {
+                $warnings = sql_query("select * from warnings where checked=0 order by created")->fetchAll(PDO::FETCH_ASSOC);
+                $numberOfWarnings = count($warnings);
+                $return["number"] = $numberOfWarnings;
+                if ($numberOfWarnings > 0) {
+                    $return["button"] = "<span style='color:#fff;background:#f00;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='toggleWarnWindow();'>{$numberOfWarnings} figyelmeztetés!</span>";
+
+                    $html = "";
+                    foreach ($warnings as $warning) {
+                        $event = "";
+                        if (substr_count($warning["metaid"], "collision") > 0) {
+                            $event = "Dupla foglalás";
+                        }
+                        if (substr_count($warning["metaid"], "szabadsag") > 0) {
+                            $event = "Szabadságra eső foglalás";
+                        }
+                        $html.="<div style='display:table-row;'>";
+                        $html.="<div style='display:table-cell;'>{$event} {$warning["szoveg"]}</div>";
+                        $html.="<div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;<a style='color:#ff0;' href='#' onclick='warningAck({$warning["id"]});return false;'>OK</a></div>";
+                        $html.="</div>";
+                    }
+                    if ($html != "") {
+                        $html= "<div style='display:table;width:100%;'>{$html}</div>";
+                    }
+                    $return["window"] = $html;
+                }
+            }
+
+            $this->jsonOut($return);
+        }
+
+        if (isset($_POST["warningAck"])) {
+            if (isset($_SESSION["adminuser"])) {
+                sql_query("update warnings set checked=1, checkedby=? where id=?", [$_SESSION["adminuser"]["username"], $_POST["wid"]]);
+            }
+            die("ok");
+        }
     }
 
+    private function jsonOut($data) {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        die();
+    }
 
 }

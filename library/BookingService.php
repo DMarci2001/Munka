@@ -429,16 +429,16 @@ class BookingService
         return $minMaxData;
     }
 
-    private function getMinMaxPack($szuresTipus, $nap)
+    private function getMinMaxPack($szuresTipus, $orvosId, $nap)
     {
         $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
 
         return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles 
         FROM orvos_beosztas b
-        WHERE helyszinid=? and cegid=? and ({$typeWhere}) and aktiv=1
+        WHERE helyszinid=? and cegid=? and orvosid=? and ({$typeWhere}) and aktiv=1
         AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}')  
 		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2)) 
-        HAVING MAX(tol) IS NOT NULL", array($this->helyszin, $_SESSION["helyszindata"]["id"])));
+        HAVING MAX(tol) IS NOT NULL", array($this->helyszin, $_SESSION["helyszindata"]["id"], $orvosId)));
     }
 
     public function getPackageAvailabilityForDay($day)
@@ -460,9 +460,10 @@ class BookingService
         foreach ($checkForTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
+                    $orvosId     = $beoData["orvosid"];
                     $interval    = $beoData["binterval"];
                     $step        = 0;
-                    $beoMinMax   = $this->getMinMaxPack($packTypeId, $day);
+                    $beoMinMax   = $this->getMinMaxPack($packTypeId, $orvosId, $day);
                     $beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
                     $beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
 
@@ -478,7 +479,7 @@ class BookingService
                         $step++;
 
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
-                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "orvosid" => $beoData["orvosid"]];
+                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId];
                             break 2;
                         }
                     }
@@ -629,8 +630,9 @@ class BookingService
                                 and b.aktiv=1 
                                 and o.aktiv=1 {$orvosRestrict}", array($helyszin, "|{$this->szuresTipus}|", $_SESSION['helyszindata']['id']));
         while ($beoData = sql_fetch_array($res)) {
-            if ($beoData["csaksorban"] != 0) {
-                $vanCsakSorban = true;
+            if (Booking_Constants::SQL_DB == "keltexmed" && $beoData["orvosid"] == 403) {
+                //skip dr. megyeri márta - keltexmed temp
+                continue;
             }
             $orvosAvailable[$beoData["orvosid"]] = $beoData;
         }
@@ -978,7 +980,8 @@ class BookingService
             $rInterval = intval($_REQUEST["rinterval"]);
         }
 
-        sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)), rinterval=? where id=? and pass=''", array($rInterval, $id));
+        sql_query("UPDATE foglalasok SET pass=SHA1(CONCAT(id,regdatum,datum)) where id=? and pass=''", array($id));
+        sql_query("UPDATE foglalasok SET rinterval=? where id=? and rinterval=0", array($rInterval, $id));
 
         sql_query("UPDATE foglalasok fogl
 				   LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
@@ -1545,9 +1548,14 @@ END:VCALENDAR";
     }
 
 
-    public function deleteReservation($id, $code)
+    public function deleteReservation($id, $code, $force = false)
     {
-        if ($row = sql_fetch_array(sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code)))) {
+        if ($force) {
+            $res = sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and aktiv=0", array($id, $code, $code));
+        } else {
+            $res = sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
+        }
+        if ($row = sql_fetch_array($res)) {
             $foService = new FoglaljOrvostService();
             $foService->deleteReservation($row["id"]);
 
@@ -1668,7 +1676,7 @@ END:VCALENDAR";
                 $data["lang"] = $parentReservationData["rlang"];
                 $data["orvosid"] = $subData["orvosid"];
                 $data["szurestipus"] = $subTypeId;
-                $data["rinterval"] = 0;
+                $data["rinterval"] = $subData["interval"];
 
                 $this->addReservationQuery($data);
             }
@@ -1900,7 +1908,11 @@ END:VCALENDAR";
             logActivity("foglalas", $newfid,"{$this->copyReservationData["nev"]} foglalás mozgatása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
 
             $foService = new FoglaljOrvostService();
-            $foService->modifyReservation($newfid);
+            if ($this->copyReservationData["fofid"] == 0) {
+                $foService->newReservation($newfid);
+            } else {
+                $foService->modifyReservation($newfid);
+            }
         }
     }
 
