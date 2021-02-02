@@ -37,9 +37,6 @@ class CronService {
             $this->_sendReviewMails();
             $this->_sendAlkExcel();
             $this->_sendAlkExpire();
-
-            $this->checkSzabadsagCollisions();
-            $this->checkCollisions();
         }
 
         if ($this->interval == "teszt") {
@@ -56,100 +53,12 @@ class CronService {
 
     }
 
+
     private function _tesztStuff() {
         //$this->_sendAlkExcel();
         //$this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
-        //$this->sendSzabadsag2FoglaljOrvostBatch();
-        $this->checkSzabadsagCollisions();
-        $this->checkCollisions();
-
         echo "teszt\n";
         die();
-    }
-
-    private function checkSzabadsagCollisions() {
-        $szabadsagok = sql_query("SELECT sz.*, o.nev as orvosnev  FROM szabadsag sz left join orvosok o on o.id = sz.oid WHERE sz.datumtol>=DATE(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($szabadsagok as $szabadsagData) {
-            $szabadsagDatum = $szabadsagData["datumtol"];
-            $orvosId = $szabadsagData["oid"];
-            echo $szabadsagDatum." ".$szabadsagData["orvosnev"]." ";
-
-            $foglalasok = sql_query("select id from foglalasok where datum>=? and datum<=? and orvosassigned=? and aktiv=1 and nev<>'niffncs név'", [date("Y-m-d 00:00:00", strtotime($szabadsagDatum)), date("Y-m-d 23:59:59", strtotime($szabadsagDatum)), $orvosId])->fetchAll(PDO::FETCH_ASSOC);
-
-            if (count($foglalasok) > 0) {
-                echo "not ok ".count($foglalasok);
-
-                $meta = "szabadsag_{$szabadsagDatum}_{$orvosId}";
-                $text =  "{$szabadsagData["orvosnev"]} {$szabadsagDatum} napi szabadságára ".count($foglalasok)."db foglalás van.";
-
-                if (!sql_fetch_array(sql_query("select id from warnings where metaid=?", [$meta]))) {
-                    sql_query("insert into warnings set created=now(), expires=?, metaid=?, orvosid=?, tipusid=?, szoveg=?", [$szabadsagDatum." 23:59:59", $meta, $orvosId, 0, $text]);
-                }
-            } else {
-                echo "ok";
-            }
-
-            echo "\n";
-        }
-    }
-
-    private function checkCollisions() {
-        $checkedIds = [];
-
-        $reservations = sql_query("select f.id, f.datum, f.rinterval, f.orvosassigned, f.szurestipusid, t.megnev as szurestipusnev, o.nev as orvosnev from foglalasok f
-        left join szurestipusok t on t.id = f.szurestipusid
-        left join orvosok o on o.id = f.orvosassigned
-        where f.datum>date_sub(now(), interval 1 day) and f.aktiv=1 and f.orvosassigned<>117")->fetchAll(PDO::FETCH_ASSOC);
-
-        echo count($reservations)."\n";
-
-        foreach ($reservations as $reservation) {
-
-            $coll = sql_query("SELECT id, datum, rinterval FROM foglalasok WHERE datum>=date_sub(:datum, interval 1 hour) and datum<=date_add(:datum, interval 1 hour)
-                AND ((datum<=:datum AND datum>DATE_SUB(:datum, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE)) OR (datum>=:datum AND datum<DATE_ADD(:datum, INTERVAL :interval MINUTE)))
-                AND orvosassigned=:orvosid and id<>:reservationid", ["datum" => $reservation["datum"], "interval" => $reservation["rinterval"], "orvosid" => $reservation["orvosassigned"], "reservationid" => $reservation["id"]])->fetchAll(PDO::FETCH_ASSOC);
-
-            if (count($coll)>0 && !in_array($reservation["id"], $checkedIds)) {
-                $collision = $coll[0];
-
-
-                $reservationTime = date("Y-m-d H:i", strtotime($reservation["datum"]));
-                $collisionTime = date("H:i", strtotime($collision["datum"]));
-
-                $meta = "collision_{$reservation["id"]}_{$collision["id"]}";
-                $text =  "{$reservationTime} és {$collisionTime} {$reservation["orvosnev"]}, {$reservation["szurestipusnev"]} ";
-
-
-                if (!sql_fetch_array(sql_query("select id from warnings where metaid=?", [$meta]))) {
-                    sql_query("insert into warnings set created=now(), expires=?, metaid=?, orvosid=?, tipusid=?, szoveg=?", [$reservationTime, $meta, $reservation["orvosassigned"], $reservation["szurestipusid"], $text]);
-                }
-
-                echo $text."\n".count($coll)."\n";
-                $checkedIds[] = $reservation["id"];
-                $checkedIds[] = $collision["id"];
-
-            }
-
-
-
-        }
-
-    }
-
-    private function sendSzabadsag2FoglaljOrvostBatch() {
-        $foService = new FoglaljOrvostService();
-
-        $szabadsagok = sql_query("SELECT sz.* FROM szabadsag sz
-        LEFT JOIN orvosok o ON o.id=sz.oid
-        WHERE datumtol>=DATE(NOW()) AND o.foid<>0 AND sz.foid=0 group by sz.groupid")->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($szabadsagok as $szabadsag) {
-            echo $szabadsag["oid"]." ".$szabadsag["groupid"]." ".$szabadsag["datumtol"]."\n";
-            //$foService->sendSzabadsag($szabadsag["groupid"]);
-            //die;
-        }
-
     }
 
     private function _checkGDPRFiles() {
@@ -235,10 +144,10 @@ class CronService {
 
     private function _deleteNotActivatedReservations() {
         //1 órán belül nem aktivált foglalások törlése
-        $res = sql_query("select * from foglalasok where regdatum<date_sub(now(),interval 1 hour) AND regdatum>DATE_SUB(NOW(),INTERVAL 2 HOUR) and aktiv=0 and externalid=''");
+        $res = sql_query("select * from foglalasok where regdatum<date_sub(now(),interval 1 hour) and aktiv=0");
         while ($row = sql_fetch_array($res)) {
             $this->utils->sendNotConfirmedReservationMessages($row["id"]);
-            $this->bookingService->deleteReservation($row["id"], $row["rkod"], true);
+            $this->bookingService->deleteReservation($row["id"], $row["rkod"]);
         }
     }
 

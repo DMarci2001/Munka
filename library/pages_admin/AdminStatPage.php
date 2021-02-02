@@ -6,7 +6,6 @@ class AdminStatPage extends AdminCorePage {
     private $tol;
     private $ig;
     private $lista = "default";
-    private $adminUser;
 
     public function __construct()
     {
@@ -298,9 +297,6 @@ class AdminStatPage extends AdminCorePage {
 
         }
         $html.= "</select>";
-
-        $html.="&nbsp;&nbsp;[<a href='index.php?page=salary'>Bérek</a>]";
-
         return $html;
     }
 
