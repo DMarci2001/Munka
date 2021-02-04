@@ -52,4 +52,6 @@ class Booking_Constants {
     const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
 
     const API_KEY                   = "e23f8b75-9d88-4ad1-8149-12ece3ff9ce9";
+
+    const DEFAULT_PLACE_IDS         = [292]; //fehérvári út
 }

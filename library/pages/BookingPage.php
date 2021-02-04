@@ -539,74 +539,33 @@ class BookingPage extends CorePage {
         $html.="</div>";
 
         $helyszinek = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"]);
-        foreach ($helyszinek as $helyszin) {
-            if ($helyszin["id"] != 1) {
-                //csak jász utca
-                continue;
-            }
+        foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
+            $services = $this->bookingService->getPublicServices($helyszinId);
 
-            $rest = sql_query("SELECT b.* FROM orvos_beosztas b
-            LEFT JOIN orvosok o on o.id = b.orvosid
-            WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
-			GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszin["id"]));
-            //GROUP BY b.tipusok", array(11, $helyszin["id"]));
-            $tipusok = array(0);
-            while ($tipusData = sql_fetch_array($rest)) {
-                $tids = explode("|", $tipusData["tipusok"]);
-                foreach ($tids as $tid) {
-                    if (!empty($tid)) {
-                        if ($tid == 114 && !isset($_SESSION["enabletest"])) {
-                            continue;
-                        }
-                        if($tid==13){
-                            continue;
-                        }
-                        $tipusok[] = $tid;
-                    }
-                }
-            }
-
-            $tipusok = array_unique($tipusok);
-            $orvosok = [];
-            $tipusdb = [];
-			//$tipusok[] = 114;
-			
-            $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
-            while ($tipusData = sql_fetch_array($res)) {
-                $tipusdb[] = $tipusData;
-
-                $doctors = $this->bookingService->beosztasService->getDoctors(11, 1, $tipusData["id"]);
-                foreach ($doctors as $orvosData) {
-                    $orvosok[$tipusData["id"]][] = $orvosData;
-                }
-            }
-			
 			$html.= "<div style='text-align:center;'>";
 
-            if (!empty($orvosok)) {
-                $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
-				$html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
-                foreach ($tipusdb as $tipusData) {
-                    $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=0) {
-					    continue;
-                    }
-					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
+            $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+            $html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
+            foreach ($services as $tipusData) {
+                $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
+                if($tipusData['webdoktor']!=0) {
+                    continue;
                 }
-				$html.= "</table>";
-				
-				$html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
-				$html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
-                foreach ($tipusdb as $tipusData) {
-                    $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-					if($tipusData['webdoktor']!=1) {
-					    continue;
-                    }
-					$html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszin["id"]},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
-                }
-				$html.= "</table>";
+                $html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
             }
-			
+            $html.= "</table>";
+
+            $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
+            $html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
+            foreach ($services as $tipusData) {
+                $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
+                if($tipusData['webdoktor']!=1) {
+                    continue;
+                }
+                $html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
+            }
+            $html.= "</table>";
+
 			$html.= "</div>";
 
         }

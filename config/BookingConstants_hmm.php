@@ -52,4 +52,6 @@ class Booking_Constants {
     const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
 
     const API_KEY                   = "04ab0c03-7e9f-468f-8d37-edc1a639d013";
+
+    const DEFAULT_PLACE_IDS         = [1]; //jász utca
 }

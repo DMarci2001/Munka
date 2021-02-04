@@ -1942,4 +1942,39 @@ END:VCALENDAR";
         }
         return $html;
     }
+
+    public function getPublicServices($helyszinId) {
+        $rest = sql_query("SELECT b.* FROM orvos_beosztas b
+            LEFT JOIN orvosok o on o.id = b.orvosid
+            WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
+			GROUP BY b.tipusok", array($_SESSION["helyszindata"]["id"], $helyszinId));
+
+        $tipusok = [0];
+        while ($tipusData = sql_fetch_array($rest)) {
+            $tids = explode("|", $tipusData["tipusok"]);
+            foreach ($tids as $tid) {
+                if (!empty($tid)) {
+                    if ($tid == 114 && !isset($_SESSION["enabletest"])) {
+                        continue;
+                    }
+                    if($tid==13){
+                        continue;
+                    }
+                    $tipusok[] = $tid;
+                }
+            }
+        }
+
+        $tipusok = array_unique($tipusok);
+        $services = [];
+
+        $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
+        while ($tipusData = sql_fetch_array($res)) {
+            $tipusData["doctors"] = $this->beosztasService->getDoctors(11, 1, $tipusData["id"]);
+            $services[] = $tipusData;
+        }
+
+        return $services;
+    }
+
 }
