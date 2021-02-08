@@ -33,6 +33,7 @@ require_once(__DIR__ . "/library/pages/BeutalokPage.php");
 require_once(__DIR__ . "/library/pages/LeletekPage.php");
 require_once(__DIR__ . "/library/pages/AlkalmassagiTajekoztatoPage.php");
 require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
+require_once(__DIR__ . "/library/pages/CovidFormPage.php");
 require_once(__DIR__ . "/library/Page.php");
 require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");

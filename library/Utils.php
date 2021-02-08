@@ -448,6 +448,10 @@ class Utils {
         $htmlout.='<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.="<script type='text/javascript' src='javascript/ajax.js?v={$v}'></script>";
 
+        if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
+            $htmlout.="<script type='text/javascript' src='javascript/covidform.js?v={$v}'></script>";
+        }
+
         if (isset($GLOBALS["admin"])) {
             $htmlout .= '<link href="/javascript/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/datepicker.min.js"></script>';

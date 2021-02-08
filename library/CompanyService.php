@@ -24,6 +24,16 @@ class CompanyService {
 
         //if ($d!="admin") {
             if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array($d,$d)))) {
+
+
+                if ($d == "erkezes") {
+                    if ($_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array("bejelentkezes","bejelentkezes")))) {
+                        $_GET["page"] = "covidform";
+                        return;
+                    }
+
+                }
+
                 unset($_SESSION["helyszindata"]);
                 die("Domain nem található!");
             }

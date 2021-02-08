@@ -91,44 +91,51 @@ class Page {
         $html.= "<div style='display:table-row;'>";
         $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
 
+        $mainURL = "index.php";
+        if ($this->page->lockInPage) {
+            $mainURL = "index.php?page={$_GET["page"]}";
+        }
+
         if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
-            $html.= "<a href='index.php'><img width='120' src='/images/logo-retina.png' alt='' title='" .Booking_Constants::SITE_NAME."' style='margin-right:20px;' /></a>";
+            $html.= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" .Booking_Constants::SITE_NAME."' style='margin-right:20px;' /></a>";
         } else {
-            $html.= "<a href='index.php'><img width='30' src='" .Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
+            $html.= "<a href='{$mainURL}'><img width='30' src='" .Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
         }
 
         $html.= "</div>";
-        $html.= "<div style='display:table-cell;vertical-align:middle;'>";
+        if ($this->page->showMainMenu) {
+            $html.= "<div style='display:table-cell;vertical-align:middle;'>";
+            if (isset($_SESSION["user"])) {
+                $rowb = sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
+                $rowd = sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
+                $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
 
-
-        if (isset($_SESSION["user"])) {
-            $rowb = sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
-            $rowd = sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
-            $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
-
-            $html.= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
-            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["idopontfoglalas"])."</a> &bull; ";
-            $html.= "<a class='toplink' href='index.php?page=bookinglist'>".ucfirst($webText["foglalasok"])."</a>".($rowf["hany"]>0?" <span class='ujnumber'>{$rowf["hany"]}</span>":"")." &bull; ";
-            $html.= "<a class='toplink' href='index.php?page=beutalok'>".ucfirst($webText["beutalok"])."</a>".($rowb["hany"]>0?" <span class='ujnumber'>{$rowb["hany"]}</span>":"")." &bull; ";
-            //$html.= "<a class='toplink' href='index.php?page=documents'>".ucfirst($webText["dokumentumok"])."</a>".($rowd["hany"]>0?" <span class='ujnumber'>{$rowd["hany"]}</span>":"")." &bull; ";
-            //leletek oldal határozatlan ideig szüntetel
-            //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
-            $html.= "<a class='toplink' href='index.php?page=profile'>".ucfirst($webText["adatmodositas"])."</a> &bull; ";
-            $html.= "<a class='toplink' href='index.php?logout'>".ucfirst($webText["kijelentkezes"])."</a>";
-        } else {
-            $html.= "<a class='toplink' href='index.php?page=booking'>".ucfirst($webText["fooldal"])."</a>";
-            //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>";
-            //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
+                $html .= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
+                $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["idopontfoglalas"]) . "</a> &bull; ";
+                $html .= "<a class='toplink' href='index.php?page=bookinglist'>" . ucfirst($webText["foglalasok"]) . "</a>" . ($rowf["hany"] > 0 ? " <span class='ujnumber'>{$rowf["hany"]}</span>" : "") . " &bull; ";
+                $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
+                //$html.= "<a class='toplink' href='index.php?page=documents'>".ucfirst($webText["dokumentumok"])."</a>".($rowd["hany"]>0?" <span class='ujnumber'>{$rowd["hany"]}</span>":"")." &bull; ";
+                //leletek oldal határozatlan ideig szüntetel
+                //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
+                $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
+                $html .= "<a class='toplink' href='index.php?logout'>" . ucfirst($webText["kijelentkezes"]) . "</a>";
+            } else {
+                $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
+                //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>";
+                //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
+            }
+            $html .= "</div>";
         }
-        $html.= "</div>";
 
-        $html.= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;text-align:right;'>";
-        if (isset($_SERVER["HTTP_HOST"]) && substr_count($_SERVER["HTTP_HOST"],"anmeldung")==0) {
-            $html.= Lang::getLangLink("hu")." ";
-            $html.= Lang::getLangLink("en")." ";
-            $html.= Lang::getLangLink("de")." ";
+        if ($this->page->showLangMenu) {
+            $html .= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;text-align:right;'>";
+            if (isset($_SERVER["HTTP_HOST"]) && substr_count($_SERVER["HTTP_HOST"], "anmeldung") == 0) {
+                $html .= Lang::getLangLink("hu") . " ";
+                $html .= Lang::getLangLink("en") . " ";
+                $html .= Lang::getLangLink("de") . " ";
+            }
+            $html .= "</div>";
         }
-        $html.= "</div>";
 
         $html.= "</div>";
         $html.= "</div>";

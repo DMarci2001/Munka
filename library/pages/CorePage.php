@@ -7,6 +7,10 @@ class CorePage {
 
     public $errors = [];
 
+    public $showMainMenu = true;
+    public $showLangMenu = true;
+    public $lockInPage = false;
+
     public function __construct()
     {
         $this->utils = new Utils();

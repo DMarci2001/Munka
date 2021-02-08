@@ -150,6 +150,90 @@ class AdminArrivalsPage extends AdminCorePage
 
         echo "</div>";
 
+        if (session_id() == "6jiq4etuv291688obcmt98k76d" || true) {
+            echo "<div style='margin-top:10px;'>[<a href='#' onclick='$(\"#covidformlist\").toggle();return false;'>Covid form</a>]</div>";
+
+            echo "<div id='covidformlist' style='margin-top:10px;display: none;'>";
+
+            echo "<table>";
+            echo "<tr style='font-weight: bold;'>";
+            echo "<td>Kitöltés időpontja</td>";
+            echo "<td>Név</td>";
+            echo "<td>TAJ</td>";
+            echo "<td>Születési idő</td>";
+            echo "<td>Külföld</td>";
+            echo "<td>Covid kapcs.</td>";
+            echo "<td>Köhögés</td>";
+            echo "<td>Orrfolyás</td>";
+            echo "<td>Láz</td>";
+            echo "<td>Szaglás</td>";
+            echo "</tr>";
+
+            $covidDatas = sql_query("select * from webservicelog l where l.datum>date_sub(now(), interval 10 day) and l.tipus=22 order by datum desc")->fetchAll();
+            foreach ($covidDatas as $covidData) {
+                $arr = $this->_text2array($covidData["keres"]);
+
+                $datum = trim($arr["szuldatumev"]) . "-" . substr("00" . trim($arr["szuldatumho"]), -2) . "-" . substr("00" . trim($arr["szuldatumnap"]), -2);
+
+                $covidNum = 0;
+                $covidLaz = 0;
+
+                $warnColor = "#44d362;";
+                $warnTextColor = "#fff";
+
+                if (intval($arr["caugh"]) == 1) {
+                    $covidNum++;
+                }
+                if (intval($arr["runnynose"]) == 1) {
+                    $covidNum++;
+                }
+                if (intval($arr["fever"]) == 1) {
+                    $covidNum++;
+                    $covidLaz++;
+                }
+                if (intval($arr["smell"]) == 1) {
+                    $covidNum++;
+                }
+                if (intval($arr["travel"]) == 1) {
+                    $covidNum++;
+                }
+                if (intval($arr["kapcs"]) == 1) {
+                    $covidNum++;
+                }
+
+                if ($covidNum == 1 && $covidLaz == 0) {
+                    $warnColor = "#fdfd96";
+                    $warnTextColor = "#444";
+                }
+
+                if ($covidNum > 1 || $covidLaz == 1) {
+                    $warnColor = "#ff6961";
+                    $warnTextColor = "#fff";
+                }
+
+
+
+                echo "<tr>";
+                echo "<td>{$covidData["datum"]}</td>";
+                echo "<td>{$arr["nev"]}</td>";
+                echo "<td>{$arr["taj"]}</td>";
+                echo "<td>{$datum}</td>";
+                echo "<td>".(intval($arr["travel"])?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["kapcs"])?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["caugh"])?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["runnynose"])?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["fever"])?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["smell"])?"IGEN":"NEM")."</td>";
+                echo "<td><div style='background:{$warnColor};width:16px;height:16px;'></div></td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+
+
+            echo "</div>";
+
+        }
+
         $w=$bw="";
         if ($_SESSION["adminuser"]["jogosultsag"]<2) {
             $w="and f.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
@@ -173,7 +257,7 @@ class AdminArrivalsPage extends AdminCorePage
         WHERE f.datum>=? and f.datum<=? and f.aktiv=1 and f.technical=0 {$w} {$wo} and f.nev<>'Nincs név' order by datum desc",array($datumtol,$datumig));
 
         $tc="tcella";
-        $colspan=7;
+        $colspan=8;
 
         echo "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:10px;min-width:600px;'>";
         $date=substr($datumtol,0,10);
@@ -371,6 +455,45 @@ class AdminArrivalsPage extends AdminCorePage
 
 
         echo $out;
+
+    }
+
+
+    private function _text2array($str) {
+        //Initialize arrays
+        $keys = array();
+        $values = array();
+        $output = array();
+
+        //Is it an array?
+        if( substr($str, 0, 5) == 'Array' ) {
+
+            //Let's parse it (hopefully it won't clash)
+            $array_contents = substr($str, 7, -2);
+            $array_contents = str_replace(array('[', ']', '=>'), array('#!#', '#?#', ''), $array_contents);
+            $array_fields = explode("#!#", $array_contents);
+
+            //For each array-field, we need to explode on the delimiters I've set and make it look funny.
+            for($i = 0; $i < count($array_fields); $i++ ) {
+
+                //First run is glitched, so let's pass on that one.
+                if( $i != 0 ) {
+
+                    $bits = explode('#?#', $array_fields[$i]);
+                    if( $bits[0] != '' ) $output[$bits[0]] = $bits[1];
+
+                }
+            }
+
+            //Return the output.
+            return $output;
+
+        } else {
+
+            //Duh, not an array.
+            echo 'The given parameter is not an array.';
+            return null;
+        }
 
     }
 }
