@@ -12,6 +12,53 @@ $(window).on("keydown", function(event) {
 });
 
 
+ScheduleNotification = {
+    NofifyURL: "index.php?page=workschedule&subpage=notify",
+
+    Start: function(){
+        let sor = 0;
+
+        $("#sendstartbutton").hide();
+
+        setTimeout( function() {
+            ScheduleNotification.NotifyWorker(sor);
+        }, 100);
+    },
+    NotifyWorker: function (sor) {
+        let workerId = 0;
+        let smsnotif = 0;
+        let emailnotif = 0;
+
+        if ($("#notifrow"+sor).length) {
+            workerId = $("#notifrow"+sor).data("workerid");
+            smsnotif = 0;
+            emailnotif = 0;
+            if ($("#smscheck"+sor).prop('checked')) {
+                smsnotif = 1;
+            }
+            if ($("#emailcheck"+sor).prop('checked')) {
+                emailnotif = 1;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: ScheduleNotification.NofifyURL,
+                data: "notifybyworkerid=1&workerid="+workerId+"&smsnotif="+smsnotif+"&emailnotif="+emailnotif,
+                success: function(data)	{
+                    $("#notifresult"+sor).html(data);
+                    sor++;
+
+                    setTimeout( function() {
+                        ScheduleNotification.NotifyWorker(sor);
+                    }, 100);
+                }
+            });
+
+            //alert("wid: "+workerId);
+        }
+    }
+};
+
 Schedule = {
     URL: "index.php?page=workschedule",
     WorkerURL: "index.php?page=workschedule&subpage=workers",
@@ -235,6 +282,49 @@ Schedule = {
                 $("#workplacelist").html(data);
             }
         });
+    },
+    CopyURL: function () {
+        let copyText = $("#copylink").data("url");
+        copyTextToClipboard(copyText);
+        alert("URL vágólapra másolva");
     }
 };
+
+
+
+function fallbackCopyTextToClipboard(text) {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+
+    // Avoid scrolling to bottom
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Fallback: Copying text command was ' + msg);
+    } catch (err) {
+        console.error('unable to copy', err);
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function copyTextToClipboard(text) {
+    if (!navigator.clipboard) {
+        fallbackCopyTextToClipboard(text);
+        return;
+    }
+    navigator.clipboard.writeText(text).then(function() {
+        console.log('Async: Copying to clipboard was successful!');
+    }, function(err) {
+        console.error('Async: Could not copy text: ', err);
+    });
+}
 

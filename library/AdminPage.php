@@ -65,6 +65,13 @@ class AdminPage {
             }
         }
 
+
+        if (isset($_GET["scheduletoken"])) {
+            $_GET["page"] = "workschedule";
+            $page = new AdminWorkSchedulePage();
+            return $page;
+        }
+
         //ha tiltott felhasználó
         if ($this->adminUser->user["status"] == 0) {
             $this->skipFrame = true;
@@ -128,7 +135,7 @@ class AdminPage {
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
         $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
         if (isset($_SESSION["adminuser"]["jog_schedule"]) && $_SESSION["adminuser"]["jog_schedule"] == 1) {
-            $html.= "<div style='display: table-cell;'><a href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
+            $html.= "<div style='display: table-cell;'><a target='_blank' href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
         }
         if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
             $html.= "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";

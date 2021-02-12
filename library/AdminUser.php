@@ -74,9 +74,15 @@ class AdminUser {
         return $result;
     }
 
-    public function salaryAccess() {
+    public function salaryAccess():bool {
         return $this->user["jog_salary"] == 1;
     }
+
+    public function beosztasPageAccess():bool {
+        return $this->user["jog_schedule"] == 1;
+    }
+
+
 
 
 }

@@ -4,7 +4,7 @@ class WorkersSubPage extends AdminCorePage {
 
     private $service;
 
-    public function __construct($service)
+    public function __construct(WorkScheduleService $service)
     {
         parent::__construct();
 
@@ -26,7 +26,7 @@ class WorkersSubPage extends AdminCorePage {
             die;
         }
         if (isset($_POST["saveworker"])) {
-            sql_query("update schedule_workers set nev=? where id=?", [$_POST["nev"], $_POST["id"]]);
+            sql_query("update schedule_workers set nev=?, email=?, tel=?, smsert=?, emailert=? where id=?", [$_POST["nev"], $_POST["email"], $_POST["tel"], isset($_POST["smsert"])?1:0, isset($_POST["emailert"])?1:0, $_POST["id"]]);
             $result = ["list" => $this->workerList(), "detail" => $this->workerDetail($_POST["id"])];
             $this->utils->jsonOut($result);
         }
@@ -55,12 +55,14 @@ class WorkersSubPage extends AdminCorePage {
         $html.= "<table cellpadding='0' cellspacing='0'>";
         while ($workerData = sql_fetch_array($res)) {
             if ($lastRole != $workerData["roleid"]) {
+                $html.="<tr><td style='height: 10px;'></td></tr>";
                 $html.="<tr>";
                 $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
                 $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorker({$workerData["roleid"]});return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
                 $html.="<div style='display:table-cell;vertical-align: middle;'>{$workerData["rolenev"]}</div>";
                 $html.="</td>";
                 $html.="</tr>";
+                $html.="<tr><td style='height: 5px;'></td></tr>";
                 $lastRole = $workerData["roleid"];
             }
             $html.= "<tr>";
@@ -76,52 +78,29 @@ class WorkersSubPage extends AdminCorePage {
         if ($data = sql_fetch_array(sql_query("select * from schedule_workers where id=?", [$id]))) {
             $html.= "<h2>{$data["nev"]}</h2>";
 
+            $url = "https://bejelentkezes.hungariamed.hu/admin/index.php?scheduletoken=".$this->service->workerTokenGen($data);
 
             $html.="<form id='workerform' method='post'><input type='hidden' name='id' value='{$data["id"]}' />";
-            $html.="<div><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='' /></div>";
+            $html.="<div style=''>Munkatárs rövid neve:<br/><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='' /></div>";
+            $html.="<div style='margin-top:5px;'>Telefon:<br/><input type='text' placeholder='Telefonszám' name='tel' value='{$data["tel"]}' style='' /></div>";
+            $html.="<div style='margin-top:5px;'>Email:<br/><input type='text' placeholder='Email cím' name='email' value='{$data["email"]}' style='' /></div>";
+            //$html.="<div style='display:table-cell;'>Bejelentkező kapcsolódás:<br/><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='' /></div>";
+            $html.="<div style='margin-top:5px;'><input type='checkbox' name='smsert' value='1' ".($data["smsert"]==1?"checked":"")." /> sms értesítés</div>";
+            $html.="<div><input type='checkbox' name='emailert' value='1' ".($data["emailert"]==1?"checked":"")." /> e-mail értesítés</div>";
             $html.="<div style='display:table-cell;padding-top:5px;vertical-align: middle;'><a onclick='Schedule.SaveWorker();return false;' href='#' class='ujbutton'>Mentés</a></div>";
             $html.="<div style='display:table-cell;padding:5px 0px 0px 10px;vertical-align: middle;'><a onclick='Schedule.DeleteWorker();return false;' href='#'>Törlés</a></div>";
             $html.="</form>";
 
             $html.="<div style='margin-top:5px;'>";
-            $stat = [];
-            $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev 
-                    FROM schedule_mapping m
-                    LEFT JOIN schedule_tipusok t on t.id=m.tipusid
-                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$data["id"]]);
-            while ($row = sql_fetch_array($res)) {
-                $stat[$row["datum"]][] = $row;
-            }
+            $html.="Saját beosztás megtekintő URL: (kimegy az értesítő levélben is)<br/>";
 
-            for ($i = 0; $i < 7 * 5; $i++) {
-                $thisDay = date("Y-m-d", strtotime("last week monday + {$i} day"));
-                $weekDay = date("N", strtotime($thisDay));
-                $weekNum = date("W", strtotime($thisDay));
+            $html.="{$url} ";
 
-                if ($weekDay == 1) {
-                    $html.= "<div style='display:table-row;'>";
-                    $html.= "<div style='display:table-cell;font-weight: bold;padding:4px 0px;'>{$weekNum}. hét</div>";
-                    $html.= "</div>";
-                }
-                $html.= "<div style='display:table-row;'>";
-                $html.= "<div style='display:table-cell;'>".$this->adminUtils->magyarDatum($thisDay, false)."&nbsp;&nbsp;</div>";
-                $html.= "<div style='display:table-cell;'>".$this->adminUtils->settings->hetnap[$weekDay]."&nbsp;&nbsp;</div>";
-                $html.= "<div style='display:table-cell;'>";
-                $display = [];
-                if (isset($stat[$thisDay])) {
-                    foreach ($stat[$thisDay] as $item) {
-                        if ($item["napszak"] == 0) {
-                            $display[] = "délelőtt - ".$item["tipusnev"];
-                        } else {
-                            $display[] = "délután - ".$item["tipusnev"];
-                        }
-                    }
-                }
-                $html.= implode(", ", $display);
-                $html.= "</div>";
+            $html.="<a id='copylink' data-url='{$url}' title='vágólapra másolás' onclick='Schedule.CopyURL();return false;' href='#'><i class='far fa-copy'></i></a>";
+            $html.= "</div>";
 
-                $html.= "</div>";
-            }
+            $html.="<div style='margin-top:5px;'>";
+            $html.=$this->service->workerScheduleList($data);
             $html.= "</div>";
         }
         return $html;

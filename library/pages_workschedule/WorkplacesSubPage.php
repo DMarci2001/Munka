@@ -65,12 +65,14 @@ class WorkplacesSubPage extends AdminCorePage {
                         $name.=" - Egyéb";
                     }
                 }
+                $html.="<tr><td style='height: 10px;'></td></tr>";
                 $html.="<tr>";
                 $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
                 $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorkplace(\"{$data["roleid"]}\", \"{$data["kulso"]}\");return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
                 $html.="<div style='display:table-cell;vertical-align: middle;'>{$name}</div>";
                 $html.="</td>";
                 $html.="</tr>";
+                $html.="<tr><td style='height: 5px;'></td></tr>";
                 $lastRole = $data["roleid"];
             }
             $html.= "<tr>";
