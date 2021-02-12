@@ -575,7 +575,7 @@ class AdminPatientsPage extends AdminCorePage {
 
         //felhasználó lista
 
-        if ($_SESSION["adminuser"]["jog_vizsg_stat"] == 1) {
+        if ($_SESSION["adminuser"]["jog_vizsg_stat"] == 1 && false) {
             echo "<div style='padding-bottom:20px'>";
             echo "<h3>Vizsgálat statisztikai lista letöltése</h3>";
             echo "<table>";

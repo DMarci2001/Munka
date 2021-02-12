@@ -1636,6 +1636,10 @@ function initDateFilterPicker() {
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
         }
     })
+
+    $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
+        language: 'hu'
+    });
 }
 
 function initQueryDatePicker() {
@@ -1655,22 +1659,6 @@ function initQueryDatePicker() {
 $(document).ready(function(){
     initDateFilterPicker();
     initQueryDatePicker();
-
-    $('#napfilter').datepicker({
-        language: 'hu',
-        onSelect: function(formattedDate, date, inst) {
-            inst.hide();
-            setListDay(formattedDate);
-            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
-        }
-    })
-
-    $(function(){
-        $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
-            language: 'hu'
-        });
-
-    });
 });
 
 function downloadExamStat(){
