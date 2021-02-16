@@ -457,9 +457,6 @@ class BookingPage extends CorePage {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {
                 if (trim($ta[$i]) != "" && !in_array($ta[$i], $tipusok)) {
-                    if($ta[$i]==13){
-                        continue;
-                    }
                     $tipusok[] = $ta[$i];
                 }
             }

@@ -1957,9 +1957,6 @@ END:VCALENDAR";
                     if ($tid == 114 && !isset($_SESSION["enabletest"])) {
                         continue;
                     }
-                    if($tid==13){
-                        continue;
-                    }
                     $tipusok[] = $tid;
                 }
             }
