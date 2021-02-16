@@ -6,9 +6,6 @@ class DocumentsPage extends CorePage {
 
     public function __construct()
     {
-		header("Location:index.php");
-		die();
-		
         parent::__construct();
         $webText = $this->lang->webText;
 
@@ -31,14 +28,14 @@ class DocumentsPage extends CorePage {
         echo "<div style='display:inline-block'>";
         echo "<table>";
 
-        /*while ($row=sql_fetch_array($res)) {
+        while ($row=sql_fetch_array($res)) {
             echo "<div class='beutalobox' style='cursor:pointer;' onclick='window.location.href=\"index.php?downloaddoc&f={$row["id"]}&k={$row["kod"]}&v=1\";'>";
             echo "<div style='font-size:14px;font-weight:bold;'>{$row["megnev"]}</div>";
             echo "<div style='margin-top:0px;'>Feltöltve: ".substr($row["datum"],0,16)."</div>";
             echo "<div style='margin-top:5px;'><img height='50' src='images/icon_{$row["tipus"]}.png' alt='' /></div>";
             echo "<div style='margin-top:0px;'>{$row["filename"]}</div>";
             echo "</div>";
-        }*/
+        }
 
         echo "</table>";
         echo "</div>";
