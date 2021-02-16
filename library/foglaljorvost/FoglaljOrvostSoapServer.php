@@ -52,7 +52,19 @@ class FoglaljOrvostSoapServer {
         if ($fieldId == 98) {
             $fieldId = 4;
         }
-        return sql_fetch_array(sql_query("select id from szurestipusok where (fotid=? or fotid=?) and fotid<>0", [$fieldId, $servId]));
+
+        if ($result = sql_fetch_array(sql_query("select id from szurestipusok where (fotid=? or fotid=?) and fotid<>0", [$fieldId, $servId]))) {
+            return $result;
+        }
+
+        if ($field = sql_query("SELECT remoteid, parentremoteid FROM remoteids WHERE remoteid=?", [$fieldId])->fetch()) {
+            if ($result = sql_fetch_array(sql_query("select id from szurestipusok where fotid=? and fotid<>0", [$field["parentremoteid"]]))) {
+                return $result;
+            }
+        }
+        return false;
+
+        //return sql_fetch_array(sql_query("select id from szurestipusok where (fotid=? or fotid=?) and fotid<>0", [$fieldId, $servId]));
     }
 
 
