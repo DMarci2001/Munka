@@ -41,20 +41,51 @@
 .sch_oszlopdatacell {
     display:table-cell;
     vertical-align: top;
-    padding:0px 5px;
+    padding:2px 5px;
     min-width: 100px;
+    border-top:1px solid #ddd;
 }
+
+.sch_oszlopdatacell_print {
+    display:table-cell;
+    vertical-align: top;
+    padding:2px 5px;
+    width: 80px;
+    max-width: 80px;
+    overflow: hidden;
+}
+
+.sch_oszlopdatacell_print2 {
+    display:table-cell;
+    vertical-align: top;
+    padding:2px 5px;
+}
+
 
 .sch_oszlopfejcell {
     display:table-cell;
-    padding:0px 5px;
+    vertical-align: middle;
+    padding:2px 5px;
     text-align:left;
     font-weight: bold;
+}
+
+.sch_oszlopfejcell_print {
+    display:table-cell;
+    vertical-align: middle;
+    padding:2px 5px;
+    text-align:left;
+    font-weight: bold;
+    width:80px;
+    min-width: 80px;
+    border-left:1px solid #ddd;
 }
 
 .sch_oszlopdatacellbtn {
     display:table-cell;
     vertical-align: top;
+    padding:2px 5px;
+    border-top:1px solid #ddd;
 }
 
 .sch_dialog {

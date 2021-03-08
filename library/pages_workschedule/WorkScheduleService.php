@@ -5,10 +5,13 @@ use PHPMailer\PHPMailer\PHPMailer;
 class WorkScheduleService {
     public $weekStart;
     public $scheduleMapping = [];
+    public $collisionData = [];
+    public $collisionsByDate = [];
 
     function __construct()
     {
         $this->reloadScheduleMapping();
+        $this->recalcAllCollisions();
     }
 
     public function reloadScheduleMapping() {
@@ -16,13 +19,52 @@ class WorkScheduleService {
         $res = sql_query("SELECT m.*,w.nev AS workernev, n.nev AS novernev FROM schedule_mapping m
         LEFT JOIN schedule_workers w ON m.`workerid`=w.`id`
         LEFT JOIN schedule_workers n ON m.`noverid`=n.`id`
-        where datumfrom > date_sub(now(), interval 7 day)");
+        where datumfrom > date_sub(now(), interval 7 day) order by m.datumfrom, w.nev");
         while ($row = sql_fetch_array($res)) {
-            $key = date("Y-m-d", strtotime($row["datumfrom"]))."_{$row["napszak"]}_{$row["tipusid"]}";
-            $this->scheduleMapping[$key][] = $row;
+            if ($row["napszak"] == 2) {
+                $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_2_{$row["tipusid"]}";
+                $this->scheduleMapping[$key][] = $row;
+            } else {
+                //if (strtotime($row["datumfrom"]) < strtotime(date("Y-m-d 12:00:00", strtotime($row["datumfrom"])))) {
+                    $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_0_{$row["tipusid"]}";
+                    $this->scheduleMapping[$key][] = $row;
+                //}
+                //if (strtotime($row["datumto"]) > strtotime(date("Y-m-d 12:00:00", strtotime($row["datumto"])))) {
+                //    $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_1_{$row["tipusid"]}";
+                //    $this->scheduleMapping[$key][] = $row;
+                //}
+            }
+
+            //$key = date("Y-m-d", strtotime($row["datumfrom"])) . "_{$row["napszak"]}_{$row["tipusid"]}";
+            //$this->scheduleMapping[$key][] = $row;
         }
     }
 
+    public function recalcAllCollisions() {
+        $collisions = [];
+        $suspects = sql_query("SELECT m.id, DATE(datumfrom) AS datum, workerid, napszak, COUNT(*) AS hany FROM schedule_mapping m WHERE datumfrom>NOW() GROUP BY DATE(datumfrom), CONCAT(workerid) HAVING hany>1")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($suspects as $suspect) {
+            $beos = sql_query("select id, datumfrom, datumto from schedule_mapping m where m.workerid=? and date(datumfrom)=?", [$suspect["workerid"], $suspect["datum"]])->fetchAll(PDO::FETCH_ASSOC);
+
+            //(StartA <= EndB) and (EndA >= StartB)
+            foreach ($beos as $beoLook) {
+                foreach ($beos as $beo) {
+                    if ($beo["id"] == $beoLook["id"]) {
+                        continue;
+                    }
+
+                    if (($beo["datumfrom"] < $beoLook["datumto"]) && ($beo["datumto"] > $beoLook["datumfrom"])) {
+                        $collisions[$suspect["id"]] = ["workerid" => $suspect["workerid"], "datum" => $suspect["datum"], "napszak" => $suspect["napszak"], "szoveg" => "", "datumfrom" => $beo["datumfrom"], "datumto" => $beo["datumto"], "datumfrom2" => $beoLook["datumfrom"], "datumto2" => $beoLook["datumto"]];
+                        $this->collisionsByDate[$suspect["datum"]][$suspect["workerid"]][] = $beo["datumfrom"].$beo["datumto"];
+                    }
+                }
+            }
+        }
+
+        $this->collisionData = $collisions;
+        //print_r($collisions);
+        //die;
+    }
 
     public function notifyScheduleChange($workerId, $type = 'email') {
         $utils = new Utils();
@@ -71,8 +113,14 @@ class WorkScheduleService {
         $adminUtils = new AdminUtils();
         $html = "";
         $stat = [];
+        $szabadsagNapok = [];
 
-        $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso
+        $szabiData = sql_query("select datumtol from schedule_szabadsag sz where sz.datumtol>date(now()) and oid=?", [$workerData["id"]])->fetchAll();
+        foreach ($szabiData as $data) {
+            $szabadsagNapok[] = $data["datumtol"];
+        }
+
+        $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso, t.cim
                     FROM schedule_mapping m
                     LEFT JOIN schedule_tipusok t on t.id=m.tipusid
                     WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$workerData["id"]]);
@@ -95,14 +143,17 @@ class WorkScheduleService {
             $html.= "<div style='display:table-cell;border-top:1px solid #ccc;'>".$adminUtils->settings->hetnap[$weekDay]."&nbsp;&nbsp;</div>";
             $html.= "<div style='display:table-cell;border-top:1px solid #ccc;'>";
             $display = [];
+
+            if (in_array($thisDay, $szabadsagNapok)) {
+                $display[] = "<span style='padding:2px 5px;background:red;color:#fff;border-radius: 2px;'>Szabadság</span>";
+            }
+
             if (isset($stat[$thisDay])) {
                 foreach ($stat[$thisDay] as $item) {
-                    if ($item["napszak"] == 0) {
-                        $text = "délelőtt - ".$item["tipusnev"]." ";
-                        $text.= $this->workInterval($item);
-                    } else {
-                        $text = ($item["kulso"]==1?"":"délután - ").$item["tipusnev"]." ";
-                        $text.= $this->workInterval($item);
+                    $text = $item["tipusnev"]." ".$this->workInterval($item);
+
+                    if ($item["cim"] != "") {
+                        $text.= "&nbsp;&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/".urlencode($item["cim"])."' target='_blank'><i class='fas fa-map' style='font-size:16px;'></i></a>";
                     }
                     $display[] = $text;
                 }
@@ -134,5 +185,13 @@ class WorkScheduleService {
             }
         }
         return $html;
+    }
+
+    public function dateOddOrEvenText($date):string {
+        if (date('W', strtotime($date))%2==0) {
+            return "páros";
+        } else {
+            return "páratlan";
+        }
     }
 }

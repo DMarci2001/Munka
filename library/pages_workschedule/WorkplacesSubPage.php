@@ -26,9 +26,29 @@ class WorkplacesSubPage extends AdminCorePage {
             die;
         }
         if (isset($_POST["saveworkplace"])) {
-            sql_query("update schedule_tipusok set megnev=?, sorrend=? where id=?", [$_POST["megnev"], $_POST["sorrend"], $_POST["id"]]);
+            sql_query("update schedule_tipusok set megnev=?, sorrend=?, cim=? where id=?", [$_POST["megnev"], $_POST["sorrend"], $_POST["cim"], $_POST["id"]]);
             $result = ["list" => $this->workplaceList(), "detail" => $this->workplaceDetail($_POST["id"])];
             $this->utils->jsonOut($result);
+        }
+        if (isset($_POST["orderworkplace"])) {
+            $id = intval($_POST["id"]);
+            $workPlaceData = sql_query("select * from schedule_tipusok where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+
+            if ($_POST["direction"] == "up") {
+                if ($row2 = sql_fetch_array(sql_query("select id, sorrend from schedule_tipusok where roleid=? and kulso=? and sorrend<? order by sorrend desc limit 1", [$workPlaceData["roleid"], $workPlaceData["kulso"], $workPlaceData["sorrend"]]))) {
+                    sql_query("update schedule_tipusok set sorrend=? where id=?", [$row2["sorrend"], $id]);
+                    sql_query("update schedule_tipusok set sorrend=? where id=?", [$workPlaceData["sorrend"], $row2["id"]]);
+                }
+            }
+            if ($_POST["direction"] == "down") {
+                if ($row2 = sql_fetch_array(sql_query("select id, sorrend from schedule_tipusok where roleid=? and kulso=? and sorrend>? order by sorrend limit 1", [$workPlaceData["roleid"], $workPlaceData["kulso"], $workPlaceData["sorrend"]]))) {
+                    sql_query("update schedule_tipusok set sorrend=? where id=?", [$row2["sorrend"], $id]);
+                    sql_query("update schedule_tipusok set sorrend=? where id=?", [$workPlaceData["sorrend"], $row2["id"]]);
+                }
+            }
+
+            echo $this->workplaceList();
+            die;
         }
     }
 
@@ -51,7 +71,7 @@ class WorkplacesSubPage extends AdminCorePage {
     public function workplaceList() {
         $html = "";
 
-        $res = sql_query("select * from schedule_tipusok order by kulso,roleid,sorrend");
+        $res = sql_query("select * from schedule_tipusok where forday='0000-00-00' order by kulso,forday,roleid,sorrend");
         $lastRole = 0;
         $html.= "<table cellpadding='0' cellspacing='0'>";
         while ($data = sql_fetch_array($res)) {
@@ -69,14 +89,23 @@ class WorkplacesSubPage extends AdminCorePage {
                 $html.="<tr>";
                 $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
                 $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorkplace(\"{$data["roleid"]}\", \"{$data["kulso"]}\");return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
-                $html.="<div style='display:table-cell;vertical-align: middle;'>{$name}</div>";
+                $html.="<div style='display:table-cell;vertical-align: middle;'>{$name}";
+                $html.="</div>";
                 $html.="</td>";
                 $html.="</tr>";
                 $html.="<tr><td style='height: 5px;'></td></tr>";
                 $lastRole = $data["roleid"];
             }
             $html.= "<tr>";
-            $html.= "<td valign='middle' style='padding:2px 10px 2px 0px;'><a onclick='Schedule.OpenWorkplaceDetail({$data["id"]});return false;' href='#'>{$data["megnev"]}</a></td>";
+            $html.= "<td valign='middle' style='padding:2px 10px 2px 0px;'><a onclick='Schedule.OpenWorkplaceDetail({$data["id"]});return false;' href='#'>{$data["megnev"]}</a>";
+            if (!empty($data["cim"])) {
+                $html .= "&nbsp;&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/" . urlencode($data["cim"]) . "' target='_blank'><i class='fas fa-map' style='font-size:14px;'></i></a>";
+            }
+            $html.= "</td>";
+            $html.= "<td valign='middle' style='padding:2px 0px 2px 0px;'>";
+            $html.= "<a title='mozgatás fel' onclick='Schedule.OrderWorkplace(\"up\", {$data["id"]});return false;' href='#'><i class='fas fa-arrow-up'></i></a> ";
+            $html.= "<a title='mozgatás le' onclick='Schedule.OrderWorkplace(\"down\", {$data["id"]});return false;' href='#'><i class='fas fa-arrow-down'></i></a>";
+            $html.= "</td>";
             $html.= "</tr>";
         }
         $html.= "</table>";
@@ -90,9 +119,15 @@ class WorkplacesSubPage extends AdminCorePage {
             $html.= "<h2>{$data["megnev"]}</h2>";
 
             $html.="<form id='workplaceform' method='post'><input type='hidden' name='id' value='{$data["id"]}' />";
-            $html.="<div><input type='text' placeholder='Megnevezés' name='megnev' value='{$data["megnev"]}' style='' /> <input type='text' placeholder='Sorrend' name='sorrend' value='{$data["sorrend"]}' style='width:30px;' title='Sorrend' /></div>";
+            $html.="<div>Cég megnevezése:<br/><input type='text' placeholder='Megnevezés' name='megnev' value='{$data["megnev"]}' style='' /> <input type='text' placeholder='Sorrend' name='sorrend' value='{$data["sorrend"]}' style='width:30px;' title='Sorrend' /></div>";
+            if ($data["kulso"] == 1) {
+                $html .= "<div style='margin-top:5px;'>Cím:<br/><input style='width:300px;' type='text' placeholder='Cím' name='cim' value='{$data["cim"]}' style='' />&nbsp;&nbsp;<a title='Google Maps link (mentsd el a címet, mielőtt kattintasz)' href='https://www.google.com/maps/place/".urlencode($data["cim"])."' target='_blank'><i class='fas fa-map' style='font-size:18px;'></i></a></div>";
+            }
+            $html.="<div style='display: table-row;'>";
             $html.="<div style='display:table-cell;padding-top:5px;vertical-align: middle;'><a onclick='Schedule.SaveWorkplace();return false;' href='#' class='ujbutton'>Mentés</a></div>";
             $html.="<div style='display:table-cell;padding:5px 0px 0px 10px;vertical-align: middle;'><a onclick='Schedule.DeleteWorkplace();return false;' href='#'>Törlés</a></div>";
+            $html.= "</div>";
+
             $html.="</form>";
 
             $html.="<div style='margin-top:5px;'>";

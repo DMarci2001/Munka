@@ -16,14 +16,14 @@ class NotifySubPage extends AdminCorePage
             $workerId = $_POST["workerid"];
 
             if ($_POST["smsnotif"] == 1) {
-                $this->service->notifyScheduleChange($workerId, "sms");
+                //$this->service->notifyScheduleChange($workerId, "sms");
 
                 $result .= "<span style='color:#0a0;'>sms kiküldve</span>";
-                //sql_query("update schedule_mapping m set notifyhash=md5(concat(m.datumfrom, m.datumto)) where m.datumfrom>now() and workerid=?", [$workerId]);
+                sql_query("update schedule_mapping m set notifyhash=md5(concat(m.datumfrom, m.datumto)) where m.datumfrom>now() and workerid=?", [$workerId]);
             }
 
             if ($_POST["emailnotif"] == 1) {
-                $this->service->notifyScheduleChange($workerId, "email");
+                //$this->service->notifyScheduleChange($workerId, "email");
 
                 if ($result != "") {
                     $result .= ", ";
@@ -47,6 +47,7 @@ class NotifySubPage extends AdminCorePage
 
         $html .= "<div id='noifylist' style=''>";
         $html .= "<h2>Munkatársak értesítése</h2>";
+        //$html .= "fejlesztés alatt, később visszateszem.";
         $html .= $this->notificationList();
         $html .= "</div>";
 
@@ -96,7 +97,7 @@ class NotifySubPage extends AdminCorePage
         $html .= "</table>";
 
         if ($changedNum > 0) {
-            $html .= "<div style='padding-top:10px;' id='sendstartbutton'><a onclick='ScheduleNotification.Start();return false;' href='#' class='ujbutton'>Kijelölt értesítések kiküldése</a></div>";
+            $html .= "<div style='padding-top:10px;' id='sendstartbutton'><a onclick='ScheduleNotification.Start();scrollToTopPos();return false;' href='#' class='ujbutton'>Kijelölt értesítések kiküldése</a></div>";
         } else {
             $html .= "<div style='padding-top:0px;'>Nem történt változás a beosztásban.</div>";
         }

@@ -96,6 +96,41 @@ Schedule = {
             }
         });
 
+        $( "#addszabadsagbutton" ).click(function() {
+            let tol = $("#szabadsagtol").val();
+            let ig = $("#szabadsagig").val();
+            let workerId = $("#workerid").val();
+            $.ajax({
+                type: "POST",
+                url: Schedule.URL,
+                data: {addszabadsag:1, workerid:workerId, tol:tol, ig:ig},
+                success: function(data)	{
+                    if (data.status != "ok") {
+                        alert(data.status);
+                        return;
+                    }
+                    $("#workerdetail").html(data.message);
+                    Schedule.Init();
+                }
+            });
+        });
+
+    },
+    DeleteSzabadsag: function(groupId) {
+        let workerId = $("#workerid").val();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {deleteszabadsag:1, groupid:groupId, workerid:workerId},
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#workerdetail").html(data.message);
+                Schedule.Init();
+            }
+        });
     },
     ShowAddWorkerDialog: function(el) {
         Schedule.DialogId = el;
@@ -125,6 +160,57 @@ Schedule = {
 
                 $(".sch_dialog").css("top", position.top + 15);
                 $(".sch_dialog").css("left", left);
+            }
+        });
+    },
+    ShowCollisions: function() {
+        $("#collisionsdiv").toggle();
+
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {showcollisions:1},
+            success: function(data)	{
+                $("#collisionsdiv").html(data.message);
+            }
+        });
+    },
+    AddCompanyForDay: function(day) {
+        let companyName = $("#companyname"+day).val();
+        let companyAddress = $("#companyaddress"+day).val();
+
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {addcompanyforday:1, companyname:companyName, companyaddress:companyAddress, day:day},
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+day).html(data.message);
+                $(".sch_dialog").hide();
+                Schedule.Init();
+            }
+        });
+    },
+    DeleteWorkplaceForDay: function(id, day) {
+        if (!confirm("Biztos törlöd ezt a céget erről a napról?")) {
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {deleteworkplaceforday:1, id:id, day:day},
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+day).html(data.message);
+                $(".sch_dialog").hide();
+                Schedule.Init();
             }
         });
     },
@@ -192,6 +278,16 @@ Schedule = {
             }
         });
     },
+    OrderWorkplace: function (direction, id) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {orderworkplace:1, direction:direction, id:id},
+            success: function(data)	{
+                $("#workplacelist").html(data);
+            }
+        });
+    },
     SaveWorker: function () {
         let params = $("#workerform").serialize();
         $.ajax({
@@ -248,9 +344,10 @@ Schedule = {
             data: "openworkerdetail=1&id="+id,
             success: function(data)	{
                 $("#workerdetail").html(data);
+                scrollToTopPos();
+                Schedule.Init();
             }
         });
-
     },
     AddNewWorker: function (roleId) {
         $.ajax({
@@ -269,9 +366,9 @@ Schedule = {
             data: "openworkplacedetail=1&id="+id,
             success: function(data)	{
                 $("#workplacedetail").html(data);
+                scrollToTopPos();
             }
         });
-
     },
     AddNewWorkplace: function (roleId, kulso) {
         $.ajax({
@@ -328,3 +425,20 @@ function copyTextToClipboard(text) {
     });
 }
 
+function scrollToTopPos() {
+    let pos = 0;
+    $([document.documentElement, document.body]).animate({
+        scrollTop: pos
+    }, 500);
+}
+
+function confirmClearWeek() {
+    if (confirm("Biztos törlöd ennek a hétnek az összes beosztását?")) {
+        if (confirm("Egészen biztos?")) {
+            if (confirm("Biztos? (ez az utolsó megerősítés)")) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
