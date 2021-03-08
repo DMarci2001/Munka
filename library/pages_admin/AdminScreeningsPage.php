@@ -58,8 +58,6 @@ class AdminScreeningsPage extends AdminCorePage
 		}
 		
 		if (isset($_GET["delkerdes"]) && isset($_GET['szerk'])) {
-			
-			echo "itt vagyok!";
             $rowk = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_GET["szerk"])));
 			$questionArr=json_decode($rowk['askandanswers'],true);
 			
@@ -90,8 +88,6 @@ class AdminScreeningsPage extends AdminCorePage
         }
 
         if (isset($_POST["szurestipusmentes"])) {
-			
-			
             if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
             if (!isset($_POST["infopage"])) $_POST["infopage"]=0;
             if (!isset($_POST["ispack"])) $_POST["ispack"]=0;
@@ -106,7 +102,6 @@ class AdminScreeningsPage extends AdminCorePage
 			if (!isset($_POST['disablefileupload'])) $_POST['disablefileupload']=0;
 			$questionArr=array();
 			//Post catcher
-			
 			
 			if(isset($_POST['kerdes-0'])){
 				$sor=0;
@@ -212,40 +207,6 @@ class AdminScreeningsPage extends AdminCorePage
 			foreach ($this->optionalFields as $field => $name) {
 				echo $this->_fieldOptionsRow($field);
 			}
-			
-            //echo "<tr class='egyeniadatsor' style='".($_POST["customform"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addkerdes' value='+ hozzáadás'></td></tr>";
-
-            /*echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Kérdez / Felelek</div></td></tr>";
-			echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2'>";
-			echo "<div><table id='questions'>";
-			$rowk = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_GET['szerk'])));
-			$sor = 0;
-			
-			//Kérdez felelek rész!
-			if(!empty($rowk['askandanswers']))
-			{	
-				$questionArr=json_decode($rowk['askandanswers'],true);
-				
-				foreach($questionArr as $each){
-					echo "	<tr>";
-					echo "		<td><input style='padding:5px;width:300px' type='textbox' name='kerdes-{$sor}' value='{$each['question']}' placeholder='Kérdés...'/></td>";
-					echo "		<td><select style='padding:5px' onchange=\" if( $(this).val()!='textarea' ) { $('#valaszopciok-{$sor}').prop('disabled',false) } else { $('#valaszopciok-{$sor}').prop('disabled',true) } \" name='valasztipus-{$sor}'>";
-					echo "				<option ".($each['answertype']=='textarea'?'selected':'')." value='textarea'>Szövegmező</option>";
-					echo "				<option ".($each['answertype']=='radio'?'selected':'')." value='radio'>Rádió gomb</option>";
-					echo "				<option ".($each['answertype']=='checkbox'?'selected':'')." value='checkbox'>Checkbox</option>";
-					echo "		</select></td>";
-					echo "		<td><input style='padding:5px;width:300px' type='textbox' ".($each['answertype']=="textarea"?"disabled":"")." id='valaszopciok-{$sor}' name='valaszopciok-{$sor}' value='".(count($each['answeroptions'])>0?implode(";",$each['answeroptions']):"")."' placeholder='Válaszok;...'/></td>";
-					echo "		<td><a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delkerdes={$sor}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a></td>";
-					echo "	</tr>";
-					$sor++;
-				}
-			}
-			
-			//Ezt a részt kell beillesztenem és meghívnom és manipulálnom az információkat benne:
-			
-			echo "</table></div>";
-			echo "</td></tr>";
-			echo "<tr class='kerdezfeleleksor' style='".($_POST["askandansweraktiv"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addkerdes' value='+ kérdés hozzáadása'></td></tr>";*/
 			
 			echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2'><div class='tdsepdiv'>Csomag tartalma</div></td></tr>";
             echo "<tr class='csomagsor' style='".($_POST["ispack"] == 1?"":"display:none;")."'><td colspan='2' valign='top'><input type='submit' name='addcsomagkapcs' value='+ hozzáadás'></td></tr>";
@@ -375,21 +336,65 @@ class AdminScreeningsPage extends AdminCorePage
             echo "</div>";
             return;
         }
+        
 
-
-        $res = sql_query("SELECT t.*,m.tipusid FROM szurestipusok t
+        $services = sql_query("SELECT t.*,m.tipusid FROM szurestipusok t
         LEFT JOIN szurestipusok_megj m ON m.`tipusid`=t.`id` and csomag=0
         GROUP BY t.id
-        ORDER BY !instr(megnev,'Új tétel'),megnev");
+        ORDER BY !instr(megnev,'Új tétel'),megnev")->fetchAll(PDO::FETCH_ASSOC);
 
         $foStat = sql_fetch_array(sql_query("select count(*) as hany from szurestipusok where fotid<>0"));
-        if (sql_num_rows($res) > 0 && Booking_Constants::FO_CONNECTION_ENABLED) {
+        if (count($services) > 0 && Booking_Constants::FO_CONNECTION_ENABLED) {
             echo "<div style='margin-bottom: 10px;'>{$foStat["hany"]} típus szinkronizálva a foglaljorvost.hu-val - <a href='index.php?page={$_GET["page"]}&syncfofields'>frissítés</a></div>";
         }
 
+        if (session_id()=="t6g6s4ddrllc1sq5g2d4hb0s83") {
+
+            foreach ($services as $service) {
+                $resa = sql_query("select a.*,c.megnev as cegnev from arak a left join cegek c on c.id=a.cegid where tipusid='{$service["id"]}' and price<>0 and a.csomag=0");
+                $arak = "";
+                while ($rowa = sql_fetch_array($resa)) {
+                    $arak .= "<span class='price_badge' title='{$rowa["cegnev"]}'>{$rowa["price"]} Ft</span> ";
+                }
+
+                echo "<div style='display:inline-block;vertical-align:top;width:250px;height:125px;border:1px solid #ddd;margin:20px 20px 0px 0px;padding:10px;background:#f8f8f8;'>";
+                echo "<div style='height:110px;overflow: hidden;'>";
+                echo "<div style='float:left;padding:0px 10px 10px 0px;'><img style='width:60px;height:60px;border:0px solid #888;' src='https://budapestacrocup.com/wp-content/uploads/2019/09/placeholder.png' /></div>";
+                echo "<div><a style='color:#00a;font-size:14px;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$service["id"]}'>{$service["megnev"]}</a></div>";
+                if (!empty($arak)) {
+                    echo "<div style='margin-top:5px;line-height:18px;'>{$arak}</div>";
+                }
+                echo "</div>";
+
+                echo "<div style=''>";
+
+                echo "<div style='display:table;width:100%;'>";
+                echo "<div style='display:table-cell;vertical-align: middle;'>";
+                if ($service["ispack"] == 1) {
+                    echo "<span class='pack_badge'>CSOMAG</span>&nbsp;&nbsp;";
+                }
+                if ($service["fotid"] != 0) {
+                    echo "<span class='fo_badge' title='fo id: {$service["fotid"]}'>FOGLALJORVOST</span>";
+                }
+
+                echo "</div>";
+                echo "<div style='display:table-cell;text-align: right;vertical-align: middle;'>";
+                echo "<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$service["id"]}'><i class='fas fa-trash-alt'></i></a>";
+                echo "</div>";
+                echo "</div>";
+
+                echo "</div>";
+
+                echo "</div>";
+
+            }
+
+        }
+
+
         echo "<table cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr><td colspan='8' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px;'>Szűrések</td></tr>";
-        while ($row = sql_fetch_array($res)) {
+        foreach ($services as $row) {
             $tc = "tcella";
             if (!isset($first)) {
                 echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";

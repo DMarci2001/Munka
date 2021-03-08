@@ -358,7 +358,8 @@ class AdminArrivalsPage extends AdminCorePage
             $csv.="{$row["naploszam"]};";
             $csv.=($files==""?"":"feltöltött beutalót").";";
             $csv.="{$row["nev"]};";
-            $csv.="{$row["megj"]};";
+            $csv.="{$row["taj"]};";
+            $csv.= $this->csvString($row["megj"]).";";
             $csv.="{$row["orvosnev"]};";
             $csv.="{$row["szurestipus"]};";
             $csv.="{$row["cegnev"]};";
@@ -496,5 +497,13 @@ class AdminArrivalsPage extends AdminCorePage
         }
 
     }
+
+    private function csvString($szoveg):string {
+        $szoveg = str_replace("\n", " ", $szoveg);
+        $szoveg = str_replace("\r", "", $szoveg);
+        $szoveg = str_replace("\"", "'", $szoveg);
+        return $szoveg;
+    }
+
 }
 
