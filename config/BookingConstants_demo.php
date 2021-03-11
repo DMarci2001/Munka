@@ -16,6 +16,8 @@ class Booking_Constants {
 
     const DOCUMENT_PATH             = "/var/doc_demo/";
 
+    const ADATVEDELMI_URL           = "https://hungariamed.hu/images/adatkezeles.pdf";
+
     const FOOTER_ADDRESS_PARAM      = "<b>DEMO KFT</b><br/>Budapesti egészségközpont</b><br/>1135 Budapest, Teszt u. 33-35.";
     const FOOTER_CONTACT_PARAM      = "<b>Telefon:</b><br/>+36 1 123 4567,<br/>+36 30 123 4567";
     const FOOTER_COPYRIGHT          = "Hungariamed";
@@ -52,4 +54,5 @@ class Booking_Constants {
     const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
 
     const DEFAULT_PLACE_IDS         = [1]; //jász utca
+    const DEFAULT_COMPANY_ID       = 11;
 }

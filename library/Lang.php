@@ -24,6 +24,8 @@ class Lang {
             if ($rowL["tipus"]==2) {
                 $webText[$rowL["kulcs"]]=explode(",",$rowL["szoveg"]);
             }
+
+            $webText[$rowL["kulcs"]] = str_replace("#adatvedelmilink#", Booking_Constants::ADATVEDELMI_URL, $webText[$rowL["kulcs"]]);
         }
         return $webText;
     }

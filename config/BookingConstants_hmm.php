@@ -16,6 +16,8 @@ class Booking_Constants {
 
     const DOCUMENT_PATH             = "/var/doc/";
 
+    const ADATVEDELMI_URL           = "https://hungariamed.hu/images/adatkezeles.pdf";
+
     const FOOTER_ADDRESS_PARAM      = "<b>HUNGÁRIA MED-M KFT</b><br/>Budapesti egészségközpont</b><br/>1135 Budapest, Jász u. 33-35.";
     const FOOTER_CONTACT_PARAM      = "<b>Telefon:</b><br/>+36 1 800 9333,<br/>+36 30 633 0961";
     const FOOTER_COPYRIGHT          = "Hungariamed";
@@ -54,4 +56,7 @@ class Booking_Constants {
     const API_KEY                   = "04ab0c03-7e9f-468f-8d37-edc1a639d013";
 
     const DEFAULT_PLACE_IDS         = [1]; //jász utca
+    const DEFAULT_COMPANY_ID        = 11;
+
+
 }

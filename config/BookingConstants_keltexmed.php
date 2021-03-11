@@ -16,6 +16,8 @@ class Booking_Constants {
 
     const DOCUMENT_PATH             = "/var/doc_keltexmed/";
 
+    const ADATVEDELMI_URL           = "https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf";
+
     const FOOTER_ADDRESS_PARAM      = "<b>KeltextMed<br/>Egészségügyi Szolgáltató Kft.</b><br/><br/>Budapest, 1117 Fehérvári út 44.<br/>Csonka János Irodaház, I. emelet";
     const FOOTER_CONTACT_PARAM      = "<b>Telefon:</b><br/>+36 1 203 0091<br/><br/><b>E-mail:</b><br/>keltexmed@keltexmed.hu";
     const FOOTER_COPYRIGHT          = "KeltexMed";
@@ -32,12 +34,12 @@ class Booking_Constants {
     const SQL_DB                    = "keltexmed";
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.keltexmed.hu/foApi.php";
-    const SOAP_API_PASSWORD         = "Maexa4iu";
+    const SOAP_API_PASSWORD         = "KMa7PnbLPkl9KRTp";
 
-    const FO_CONNECTION_ENABLED     = false;
-    const FO_API_PASSWORD           = "wzUpTVrpexTh";
-    const FO_API_TEST_PASSWORD      = "wzUpTVrpexTh";
-    const FO_IFC_NAME               = "HUNGARIAMED";
+    const FO_CONNECTION_ENABLED     = true;
+    const FO_API_PASSWORD           = "KMa7PnbLPkl9KRTp";
+    const FO_API_TEST_PASSWORD      = "KMa7PnbLPkl9KRTp";
+    const FO_IFC_NAME               = "KELTEX_MED";
 
     const DokiRex_Email             = "admin@keltexmed.hu";
 	const DokiRex_Password          = "KELTEXadmin123.";
@@ -54,4 +56,5 @@ class Booking_Constants {
     const API_KEY                   = "e23f8b75-9d88-4ad1-8149-12ece3ff9ce9";
 
     const DEFAULT_PLACE_IDS         = [292]; //fehérvári út
+    const DEFAULT_COMPANY_ID       = 11;
 }
