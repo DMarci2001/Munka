@@ -85,7 +85,7 @@ class FoglaljOrvostSoapServer {
         $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
         $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
         $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId));
-        $locationId             = 1; //jász utca drótozva
+        $locationId             = Booking_Constants::DEFAULT_PLACE_IDS[0];
 
         if (empty(trim($patientName))) {
             $patientName = "nincs név";

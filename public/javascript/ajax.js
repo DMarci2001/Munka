@@ -35,8 +35,6 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     $("#loadingspinner").show();
 	
-	//console.log('showidopontvalasztov2=1&honnan='+honnan+'&helyszin='+$("#helyszin").val()+'&szurestipus='+$("#szurestipus").val()+'&selectoid='+orvosid+'&neme='+neme+'&taj='+$("input[name='taj']").val()+'&betegallomany='+$("#betegallomanynyilatkozat").prop("checked"));
-	
     $.ajax({
         method:"GET",
         url:"index.php",
@@ -157,8 +155,7 @@ function toggleCheckBox(id){
 	return;
 }
 
-function chooseIdoPont(idopont,orvos,helyszin,szurestipusid) {
-    let rinterval = $("#rinterval-"+idopont.substring(0,10)).val();
+function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
     if (orvos === undefined) orvos = 0;
     $.ajax({
         method:"POST",

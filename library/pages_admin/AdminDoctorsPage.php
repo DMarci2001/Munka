@@ -43,7 +43,7 @@ class AdminDoctorsPage extends AdminCorePage {
                     }
 
                     $foService = new FoglaljOrvostService();
-                    $foService->sendSzabadsag($groupId);
+                    //$foService->sendSzabadsag($groupId);
 
                     logActivity("orvos", $orvosId, "{$rowo["nev"]} szabadság hozzáadva: " . $tol . " - " . $ig, print_r($_POST, true));
                 }
@@ -56,7 +56,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
 
                 $foService = new FoglaljOrvostService();
-                $foService->deleteSzabadsag($_GET["delszabadsag"]);
+                //$foService->deleteSzabadsag($_GET["delszabadsag"]);
 
                 sql_query("delete from szabadsag where groupid=? and oid=? and groupid<>0", [$_GET["delszabadsag"], $_GET["szerk"]]);
                 logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
@@ -397,16 +397,21 @@ class AdminDoctorsPage extends AdminCorePage {
                 // - multbéli beosztásokat nem küldjük
                 // - az inaktiv jelölésű beosztások törlésre kerülnek a foglaljorvosnál, ott nincs aktiv - inaktiv beállítás
                 echo "<div style='margin-top:10px;font-weight: bold'>Beosztás szinkron:</div>";
-                $res = sql_query("select b.* from orvos_beosztas b where orvosid=? and cegid=? and noreservation=0 AND (beonap>DATE(NOW()) OR nap<>10) order by b.nap desc", [$oid, 11]);
+                $res = sql_query("select b.* from orvos_beosztas b where orvosid=? and cegid=? and noreservation=0 AND (beonap>DATE(NOW()) OR nap<>10) order by b.nap desc", [$oid, Booking_Constants::DEFAULT_COMPANY_ID]);
                 while ($beo = sql_fetch_array($res)) {
                     if ($beo["fobid"] == 0) {
                         if ($beo["aktiv"] == 1) {
                             $result = $foService->newConsultation($beo["id"]);
-                            $xml = simplexml_load_string($result);
-                            $message = (string)$xml->RETURN["RETMESSAGE"];
+                            try {
+                                error_reporting(0);
+                                $xml = simplexml_load_string($result);
+                                $message = (string)$xml->RETURN["RETMESSAGE"];
 
-                            if (ctype_digit($message)) {
-                                sql_query("update orvos_beosztas set fobid=? where id=?", [$message, $beo["id"]]);
+                                if (ctype_digit($message)) {
+                                    sql_query("update orvos_beosztas set fobid=? where id=?", [$message, $beo["id"]]);
+                                }
+                            } catch(Exception $e) {
+                                $message = $result;
                             }
                         }
                     } else {
@@ -422,7 +427,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
                 echo "<div style='margin:10px 0px;font-weight: bold'>Foglalások</div>";
 
-                $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>NOW() ORDER BY datum", [$oid]);
+                $res = sql_query("SELECT * FROM foglalasok f WHERE f.`orvosassigned`=? AND datum>date(NOW()) ORDER BY datum", [$oid]);
                 while ($reservationData = sql_fetch_array($res)) {
                     echo "<div>{$reservationData["datum"]} ".($reservationData["fofid"]==0?" <span style='color:#f00;'>nincs szinkronizálva</span>":" <span style='color:#0a0;'>szinkronizálva</span>")."</div>";
 
