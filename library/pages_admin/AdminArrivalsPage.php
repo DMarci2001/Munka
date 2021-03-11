@@ -161,6 +161,7 @@ class AdminArrivalsPage extends AdminCorePage
             echo "<td>Név</td>";
             echo "<td>TAJ</td>";
             echo "<td>Születési idő</td>";
+            echo "<td>Védőoltás</td>";
             echo "<td>Külföld</td>";
             echo "<td>Covid kapcs.</td>";
             echo "<td>Köhögés</td>";
@@ -177,6 +178,11 @@ class AdminArrivalsPage extends AdminCorePage
 
                 $covidNum = 0;
                 $covidLaz = 0;
+                $vedoOltas = 0;
+
+                if  (!isset($arr["vedooltas"])) {
+                    $arr["vedooltas"] = 0;
+                }
 
                 $warnColor = "#44d362;";
                 $warnTextColor = "#fff";
@@ -206,24 +212,31 @@ class AdminArrivalsPage extends AdminCorePage
                     $warnTextColor = "#444";
                 }
 
-                if ($covidNum > 1 || $covidLaz == 1) {
+                if ($covidNum > 0 || $covidLaz == 1) {
                     $warnColor = "#ff6961";
                     $warnTextColor = "#fff";
                 }
 
-
+                $travelText = "NEM";
+                if ($arr["travel"] == 1) {
+                    $travelText = "IGEN";
+                }
+                if ($arr["travel"] == 2) {
+                    $travelText = "IGEN, de PCR van";
+                }
 
                 echo "<tr>";
                 echo "<td>{$covidData["datum"]}</td>";
                 echo "<td>{$arr["nev"]}</td>";
                 echo "<td>{$arr["taj"]}</td>";
                 echo "<td>{$datum}</td>";
-                echo "<td>".(intval($arr["travel"])?"IGEN":"NEM")."</td>";
-                echo "<td>".(intval($arr["kapcs"])?"IGEN":"NEM")."</td>";
-                echo "<td>".(intval($arr["caugh"])?"IGEN":"NEM")."</td>";
-                echo "<td>".(intval($arr["runnynose"])?"IGEN":"NEM")."</td>";
-                echo "<td>".(intval($arr["fever"])?"IGEN":"NEM")."</td>";
-                echo "<td>".(intval($arr["smell"])?"IGEN":"NEM")."</td>";
+                echo "<td><span style='padding:0px 3px;".(intval($arr["vedooltas"] == 1)?"border:1px solid #0a0;":"")."'>".(intval($arr["vedooltas"] == 1)?"IGEN":"NEM")."</span></td>";
+                echo "<td>{$travelText}</td>";
+                echo "<td>".(intval($arr["kapcs"] == 1)?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["caugh"] == 1)?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["runnynose"] == 1)?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["fever"] == 1)?"IGEN":"NEM")."</td>";
+                echo "<td>".(intval($arr["smell"] == 1)?"IGEN":"NEM")."</td>";
                 echo "<td><div style='background:{$warnColor};width:16px;height:16px;'></div></td>";
                 echo "</tr>";
             }

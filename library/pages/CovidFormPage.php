@@ -2,6 +2,13 @@
 
 class CovidFormPage extends CorePage {
 
+
+    //1 igenre is piros
+    //az alábbi tüneteket = az alábbi tünetek megjelenését
+
+    //14 n de rendelkezik negativ pcr tesztte
+    //megkaptam a koronavirus elleni védőoltás és eltelt 7 nap
+
     public function __construct()
     {
         parent::__construct();
@@ -12,6 +19,10 @@ class CovidFormPage extends CorePage {
 
         if (isset($_REQUEST["covidformsavedata"])) {
             $result = ["error" => "", "html" => $this->donePage()];
+
+            if (!isset($_POST["vedooltas"])) {
+                $_POST["vedooltas"] = 0;
+            }
 
             $_POST["szuldatum"] = "";
 
@@ -56,10 +67,16 @@ class CovidFormPage extends CorePage {
         echo "<div id='covidformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
         echo "<form id='covidform'>";
 
-        echo "<div><strong>A rendelőbe érkezése előtti 14 napban járt e külföldön?</strong><br/>Have you travelled, visited or transited via airports in other country within 14 days before visiting medical examination rooms?</div>";
+        echo "<div><strong>Jelölje be, ha már megkapta a koronavírus elleni oltást, és eltelt azóta 7 nap</strong></div>";
+
+        echo "<div><input class='covidelement' type='checkbox' name='vedooltas' id='vedooltas' value='1' /> IGEN, megkaptam a védőoltást, és azóta eltelt 7 nap</div>";
+
+
+        echo "<div style='margin-top:20px;'><strong>A rendelőbe érkezése előtti 14 napban járt e külföldön?</strong><br/>Have you travelled, visited or transited via airports in other country within 14 days before visiting medical examination rooms?</div>";
 
         echo "<div><input class='covidelement' type='radio' name='travel' value='1' /> IGEN (YES)</div>";
         echo "<div id='traveltextdiv' style='display:none;'><textarea id='traveltext' class='inputbox' style='width:90%;' placeholder='Igen válasz esetén fejtse ki bővebben'></textarea></div>";
+        echo "<div><input class='covidelement' type='radio' name='travel' value='2' /> IGEN, de rendelkezem negatív PCR teszttel</div>";
         echo "<div><input class='covidelement' type='radio' name='travel' value='0' /> NEM (NO)</div>";
 
         echo "<div style='margin-top:20px;'><strong>Az elmúlt 14 nap folyamán kapcsolatban állt-e (otthon/munkahelyen/családban), vagy gondoskodott-e olyan személyekről, aki lázas, akiknél az új koronavírust diagnosztizáltak, vagy találkozott-e olyan személyekkel, akiket jelenleg egészségügyi megfigyelés alatt tartanak?</strong><br/>Have you been in close contact with or did you provide care to anyone diagnosed as having Coronavirus, or someone who is currently subject to health monitoring for possible exposure to Novel Coronavirus, or who has fever within the last 14 days?</div>";
@@ -68,7 +85,7 @@ class CovidFormPage extends CorePage {
         echo "<div id='kapcstextdiv' style='display:none;'><textarea id='kapcstext' class='inputbox' style='width:90%;' placeholder='Igen válasz esetén fejtse ki bővebben'></textarea></div>";
         echo "<div><input class='covidelement' type='radio' name='kapcs' value='0' /> NEM (NO)</div>";
 
-        echo "<div style='margin-top:20px;'><strong>Jelenleg, vagy az elmúlt 10 napban észlelte-e magán az alábbi tüneteket:</strong><br/>Do You have have any symptoms from the following - now or in the last 10 days:</div>";
+        echo "<div style='margin-top:20px;'><strong>Jelenleg, vagy az elmúlt 10 napban észlelte-e magán az alábbi tünetek megjelenését:</strong><br/>Do You have have any symptoms from the following - now or in the last 10 days:</div>";
 
         echo "<ul>";
 
@@ -153,7 +170,7 @@ class CovidFormPage extends CorePage {
             $warnTextColor = "#444";
         }
 
-        if ($covidNum > 1 || $covidLaz == 1) {
+        if ($covidNum > 0 || $covidLaz == 1) {
             $warn = "Sajnáljuk, a bentlévők egészségének védelme érdekében most nem tudjuk Önt fogadni.";
             $warnColor = "#ff6961";
             $warnTextColor = "#fff";
