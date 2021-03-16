@@ -164,6 +164,9 @@ class AdminPage {
         $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;font-weight:bold;color:#9cf3c3;'>";
 
         foreach ($this->adminMenu as $menu) {
+            if ($menu["sorrend"] == 0) {
+                 continue;
+            }
             $html.= "<div><a class='mainmenuitem".($_GET["page"] == $menu["pageid"]?"_aktiv":"")."' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
         }
 

@@ -34,6 +34,7 @@ require_once(__DIR__ . "/library/pages/LeletekPage.php");
 require_once(__DIR__ . "/library/pages/AlkalmassagiTajekoztatoPage.php");
 require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
 require_once(__DIR__ . "/library/pages/CovidFormPage.php");
+require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
 require_once(__DIR__ . "/library/Page.php");
 require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");
@@ -72,6 +73,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminArrivalsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminOnlineFogleuPage.php");
 	require_once(__DIR__ . "/library/pages_admin/AdminBanktransactionsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPlacesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminScreeningsPage.php");
