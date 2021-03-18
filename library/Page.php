@@ -1,6 +1,7 @@
 <?php
 
-class Page {
+class Page
+{
 
     private $utils;
     private $lang;
@@ -22,10 +23,10 @@ class Page {
             $exportService->exportReservation(133405);
             die("ok");
         }
-
     }
 
-    private function _getActualPage() {
+    private function _getActualPage()
+    {
         if (isset($_POST["page"])) {
             $_GET["page"] =  $_POST["page"];
         }
@@ -36,7 +37,7 @@ class Page {
             $_GET["page"] = "booking";
         }
 
-        $pageName = ucfirst(str_replace("_","",$_GET["page"]))."Page";
+        $pageName = ucfirst(str_replace("_", "", $_GET["page"])) . "Page";
         if (class_exists($pageName)) {
             $page = new $pageName;
         } else {
@@ -49,13 +50,14 @@ class Page {
         return $page;
     }
 
-    public function showPage() {
+    public function showPage()
+    {
         $webText = $this->lang->webText;
 
         header("Content-type: text/html; charset=UTF-8");
 
         echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés");
-        echo "<body>";
+        echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . ">";
 
         echo "<div class='pagecontainer'>";
         echo $this->_pageMenu();
@@ -73,23 +75,25 @@ class Page {
     }
 
 
-    private function _pageHead() {
+    private function _pageHead()
+    {
         return "<div class='fejlecdiv'></div>";
     }
 
-    private function _pageMenu() {
+    private function _pageMenu()
+    {
         $webText = $this->lang->webText;
 
         $html = "";
 
-        $html.= "<div id='sound' style='display:none;'></div>";
-        $html.= '<div class="successful-message"><span>Loading...</span></div>';
-        $html.= '<div class="obj-container-framebox"></div>';
+        $html .= "<div id='sound' style='display:none;'></div>";
+        $html .= '<div class="successful-message"><span>Loading...</span></div>';
+        $html .= '<div class="obj-container-framebox"></div>';
 
-        $html.= "<div class='headercontainer'>";
-        $html.= "<div style='display:table;width:100%;'>";
-        $html.= "<div style='display:table-row;'>";
-        $html.= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
+        $html .= "<div class='headercontainer'>";
+        $html .= "<div style='display:table;width:100%;'>";
+        $html .= "<div style='display:table-row;'>";
+        $html .= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
 
         $mainURL = "index.php";
         if ($this->page->lockInPage) {
@@ -97,14 +101,14 @@ class Page {
         }
 
         if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
-            $html.= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" .Booking_Constants::SITE_NAME."' style='margin-right:20px;' /></a>";
+            $html .= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
         } else {
-            $html.= "<a href='{$mainURL}'><img width='30' src='" .Booking_Constants::SITE_LOGO."' alt='' title='".Booking_Constants::SITE_NAME."' style='margin-right:10px;' /></a>";
+            $html .= "<a href='{$mainURL}'><img width='30' src='" . Booking_Constants::SITE_LOGO . "' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:10px;' /></a>";
         }
 
-        $html.= "</div>";
+        $html .= "</div>";
         if ($this->page->showMainMenu) {
-            $html.= "<div style='display:table-cell;vertical-align:middle;'>";
+            $html .= "<div style='display:table-cell;vertical-align:middle;'>";
             if (isset($_SESSION["user"])) {
                 $rowb = sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
                 $rowd = sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
@@ -114,7 +118,7 @@ class Page {
                 $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["idopontfoglalas"]) . "</a> &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=bookinglist'>" . ucfirst($webText["foglalasok"]) . "</a>" . ($rowf["hany"] > 0 ? " <span class='ujnumber'>{$rowf["hany"]}</span>" : "") . " &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
-                $html.= "<a class='toplink' href='index.php?page=documents'>".ucfirst($webText["dokumentumok"])."</a>".($rowd["hany"]>0?" <span class='ujnumber'>{$rowd["hany"]}</span>":"")." &bull; ";
+                $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
                 //leletek oldal határozatlan ideig szüntetel
                 //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
@@ -122,7 +126,7 @@ class Page {
             } else {
                 $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
                 //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>";
-                $html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>".ucfirst($webText["bejelentkezes"])."</a>";
+                $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
                 if (false) {
                     $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=webfogleu'>" . ucfirst($webText["webfogleu"]) . "</a>";
                 }
@@ -140,24 +144,23 @@ class Page {
             $html .= "</div>";
         }
 
-        $html.= "</div>";
-        $html.= "</div>";
-        $html.= "</div>";
+        $html .= "</div>";
+        $html .= "</div>";
+        $html .= "</div>";
         return $html;
     }
 
-    private function _pageFooter() {
+    private function _pageFooter()
+    {
         $html = "";
-        $html.= "<div class='footercontainer'>";
+        $html .= "<div class='footercontainer'>";
 
-        $html.= "<div style='float:left;margin:0px 40px 10px 0px;'>".Booking_Constants::FOOTER_ADDRESS_PARAM."</div>";
-        $html.= "<div style='float:left;margin:0px 10px 10px 0px;'>".Booking_Constants::FOOTER_CONTACT_PARAM."</div>";
-        $html.= "<br clear='all'/>";
+        $html .= "<div style='float:left;margin:0px 40px 10px 0px;'>" . Booking_Constants::FOOTER_ADDRESS_PARAM . "</div>";
+        $html .= "<div style='float:left;margin:0px 10px 10px 0px;'>" . Booking_Constants::FOOTER_CONTACT_PARAM . "</div>";
+        $html .= "<br clear='all'/>";
 
-        $html.= "&copy; ".date("Y")." ".Booking_Constants::FOOTER_COPYRIGHT;
-        $html.= "</div>";
+        $html .= "&copy; " . date("Y") . " " . Booking_Constants::FOOTER_COPYRIGHT;
+        $html .= "</div>";
         return $html;
     }
-
-
 }

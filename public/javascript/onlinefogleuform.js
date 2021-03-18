@@ -3,7 +3,6 @@ $(document).ready(function () {
         checkFogleuForm();
     });
 
-
 });
 
 function checkFogleuForm() {
@@ -208,6 +207,12 @@ function checkFogleuForm() {
             return;
         }
 
+        /*if (grecaptcha && grecaptcha.getResponse().length == 0) {
+            $("#online-fogoleu-submit-button").css("opacity", 0.3);
+            $("#online-fogoleu-submit-button").attr("onclick", "return false");
+            return;
+        }*/
+
         onlinefogleuFormOk = true;
     }
 
@@ -235,22 +240,22 @@ function checkFogleuForm() {
 
 function editOnlineFogelEuRow(fid) {
     $.ajax({
-        method:"POST",
-        url:"index.php",
-        data:{ page:"onlinefogleu", fogleueditor:fid }
-    }).done(function(data) {
-        $("#fogleueditor"+fid).html(data);
+        method: "POST",
+        url: "index.php",
+        data: { page: "onlinefogleu", fogleueditor: fid }
+    }).done(function (data) {
+        $("#fogleueditor" + fid).html(data);
     });
 }
 
 function fogleuMentes(fid) {
-    let params = $("#alkalmassagiform"+fid).serialize();
+    let params = $("#alkalmassagiform" + fid).serialize();
 
     $.ajax({
         type: 'POST',
-        url: 'index.php?page=onlinefogleu&onlinefogleusave=1&fid='+fid,
+        url: 'index.php?page=onlinefogleu&onlinefogleusave=1&fid=' + fid,
         data: params,
-        success: function(data) {
+        success: function (data) {
             $("#alkalmassaglista").html(data);
         }
     });
