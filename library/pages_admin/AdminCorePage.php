@@ -8,6 +8,8 @@ class AdminCorePage {
     public $adminUtils;
     public $lang;
     public $formError = "";
+    public $errors = [];
+    public $success = [];
 
     public function __construct()
     {
@@ -36,6 +38,22 @@ class AdminCorePage {
             $img = "<img src='images/hungarian_crest.png' height='30' />";
         }
         return "<div class='fejlecdiv'>{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "") . "</div>";
+    }
+
+    public function showErrors($title = "") {
+        $html = "";
+        if (!empty($this->errors)) {
+            $html.= "<div style='margin:0px 0px 20px 0px;background:#f77;color:#fff;border-radius:5px;padding:10px;'>".implode("<br/>", $this->errors)."</div>";
+        }
+        return $html;
+    }
+
+    public function showSuccess($title = "") {
+        $html = "";
+        if (!empty($this->success)) {
+            $html.= "<div style='margin:0px 0px 20px 0px;background:#32cd32;color:#fff;border-radius:5px;padding:10px;'>".implode("<br/>", $this->success)."</div>";
+        }
+        return $html;
     }
 
     public function showPlainErrors() {
