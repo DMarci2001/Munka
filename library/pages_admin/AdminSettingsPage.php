@@ -213,7 +213,7 @@ class AdminSettingsPage extends AdminCorePage
             $value .= ($i > 0 ? "," : "") . "(?,?,?,?)";
         }
 
-        $uploadCompanies = sql_query("INSERT INTO dokirex_telephelyek (dokirexid, megnev, datum, rogzitette) VALUES {$value}", $companyArray);
+        $uploadCompanies = sql_query("INSERT INTO dokirex_telephelyek (megnev, dokirexid, datum, rogzitette) VALUES {$value}", $companyArray);
         if (!$uploadCompanies) {
             $this->errors[] = "Cégek rögzítése sikertelen!";
         } else {

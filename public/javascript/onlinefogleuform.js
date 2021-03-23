@@ -27,7 +27,8 @@ function checkFogleuForm() {
     let currentBloodPressureMeasurement = $('input[name=current-blood-pressure-measurement]:checked', '#online-fogleu-form').val();
     let weight = $('input[name=weight]', '#online-fogleu-form').val();
     let height = $('input[name=height]', '#online-fogleu-form').val();
-    let gdpr = $('input[name=aszf]:checked', '#online-fogleu-form').val();
+    let gdpr = $('input[name=gdpr]:checked', '#online-fogleu-form').val();
+    let trustedData = $('input[name=trusted-data]:checked', '#online-fogleu-form').val();
     let responsibility = $('input[name=responsiblity-confirmed]:checked', '#online-fogleu-form').val();
     let phonecall = $('input[name=telepone-consultation-required]:checked', '#online-fogleu-form').val();
 
@@ -149,7 +150,7 @@ function checkFogleuForm() {
         healthComplaint !== undefined && eyeglassesUse !== undefined &&
         tendencyOfBloodPressureMeasurement !== undefined &&
         currentBloodPressureMeasurement !== undefined &&
-        weight.length !== 0 && height.length !== 0 && gdpr !== undefined && responsibility !== undefined &&
+        weight.length !== 0 && height.length !== 0 && gdpr !== undefined && trustedData !== undefined && responsibility !== undefined &&
         name.length !== 0 && taj.length !== 0 && birthplace.length !== 0 &&
         mothername.length !== 0 && workposition.length !== 0 && dateofbirth.length !== 0) {
 

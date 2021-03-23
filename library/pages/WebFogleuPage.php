@@ -56,8 +56,9 @@ class WebFogleuPage extends CorePage
             if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) $this->errors[] = $webText["hibasemail"];
             if ($_POST['szuldatum'] == "0-00-00") $this->errors[] = "A születési dátum megadása kötelező!";
             if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->errors[] = $webText["szulformat"];
-            if (!isset($_POST["aszf"])) $this->errors[] = $webText["aszfkotelezo"];
-
+            if (!isset($_POST["gdpr"])) $this->errors[] = $webText["aszfkotelezo"];
+            if (!isset($_POST["trusted-data"])) $this->errors[] = "Kérjük, járuljon hozzá, hogy kezelhessük az adatait.";
+            if (!isset($_POST["responsiblity-confirmed"])) $this->errors[] = "Kérjük, erősítse meg, hogy büntetőjogi felelősségének tudatában, valós és pontos információkat adott meg!";
             $captchaError = $this->utils->checkCaptcha();
             if (!empty($captchaError)) {
                 $this->errors[] = $captchaError;
@@ -459,7 +460,9 @@ class WebFogleuPage extends CorePage
             if (!isset($_POST["g-recaptcha-response"])) {
                 echo "<tr><td></td><td><div class='g-recaptcha' data-callback='recaptchaCallback' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
             }
-            echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' class=\"online-fogleu-element\" name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+            //echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' class=\"online-fogleu-element\" name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+            echo "<tr><td></td><td><div style=\"margin-top:10px\"><input type=\"checkbox\" class=\"online-fogleu-element\" name=\"gdpr\" value=\"1\" ".(isset($_POST["gdpr"])?"checked":"")." />Az <a href=\"#adatvedelmilink#\" target=\"_blank\">adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim bejelentkezés céljából történő kezeléshez.</div></td></tr>";
+            echo "<tr><td></td><td><div style=\"margin-top:10px\"><input type=\"checkbox\" class=\"online-fogleu-element\" name=\"trusted-data\" value=\"1\" ".(isset($_POST["trusted-data"])?"checked":"")." />Hozzájárulok az általam megadott egészségügyi adatok állapotfelmérés céljából történő kezeléséhez.</div></td></tr>";
             echo "<tr><td></td><td><div style=\margin-top:10px;\><input type=\"checkbox\" class=\"online-fogleu-element\" name=\"telepone-consultation-required\" " . (isset($_POST["telepone-consultation-required"]) ? "checked" : "") . "  value=\"1\">Szeretnék telefonos konzultációt kérni.</div></td></tr>";
             
 

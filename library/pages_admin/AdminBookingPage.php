@@ -156,7 +156,6 @@ class AdminBookingPage extends AdminCorePage
             }
             $this->utils->jsonOut(["result" => $result]);
         }
-
     }
 
     public function showPage()
