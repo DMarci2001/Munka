@@ -7,7 +7,7 @@ class DokirexService
 	private $bookingService;
 	private $token;
 
-	private $defaultParams = array("Nem" => 3, "Allampolgarsag" => 109);
+	private $defaultParams = array("Nem" => 3, "Allampolgarsag" => 109,"Orszag"=>109);
 
 	public function __construct()
 	{
