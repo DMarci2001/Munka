@@ -28,9 +28,9 @@ class WebFogleuPage extends CorePage
                 $this->errors[] = "{$webText["tajkotelezo"]}";
             }
 
-            if (empty($_POST["telefon"])) {
+            /*if (empty($_POST["telefon"])) {
                 $this->errors[] = "{$webText["telkotelezo"]}";
-            }
+            }*/
 
             if (empty($_POST["szulhely"])) {
                 $this->errors[] = "{$webText["szuletesidatum"]}!";
