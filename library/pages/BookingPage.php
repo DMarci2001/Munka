@@ -522,46 +522,39 @@ class BookingPage extends CorePage {
 
         $html = "";
 
-        $html.="<div style='padding:0px 0px 10px 0px;;'>";
+        $html.="<div style='padding:0px 0px 30px 0px;'>";
+
+        $html.="<h2 style='font-size:32px;font-family:robotolight;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
+        $html.=$this->lang->getText("miert.bennunket.description.2","");
+
         $html.="<div>";
-        $html.="<h2 style='text-transform: uppercase;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
 
-        $html.=$this->lang->getText("miert.bennunket.description","Egészségmegőrző tevékenységünk alappillérei a gondosan és szakmailag igényesen kidolgozott szűrőprogramok, melyeket azonos adottságú csoportokra terveztünk meg.<br/>
-        Célkitűzéseink szerint folyamatosan figyelünk megvizsgált partnereink egészségére, támogatást nyújtva az egészséges életmód kialakításához.<br/>
-        <br/>
-        Vizsgálatainkat szervezetten, magas szakmai színvonalon, kiváló szakemberekkel végezzük, exkluzív környezetben. A vizsgálatsorozatokat angolul is beszélő orvosaink menedzselik.<br/>
-        <br/>
-        Kattintson a szakrendelés nevére a foglalás indításához!
-        ");
-        $html.="</div>";
-
-        $helyszinek = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"]);
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
-			$html.= "<div style='text-align:center;'>";
+			$html.= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
 
-            $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
-            $html.= "<tr><td align='center'><h2>Időpontfoglalás</h2></td></tr>";
+            $html.= "<div style='display:inline-block;text-align:center;vertical-align: top;margin:0px 10px;'>";
+            $html.= "<h2>Időpontfoglalás</h2>".$this->lang->getText("foglalas.inditas","Kattintson a szakrendelés nevére a foglalás indításához!")."<br/><br/>";
             foreach ($services as $tipusData) {
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
                 if($tipusData['webdoktor']!=0) {
                     continue;
                 }
-                $html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</td></tr>";
+                $html.= "<div><div style='margin-top:4px;text-align:center;width:320px;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</div></div>";
             }
-            $html.= "</table>";
+            $html.= "</div>";
 
-            $html.= "<table style='display:inline-block;min-width:270px;height:715px'>";
-            $html.= "<tr><td align='center' style='min-width:270px'><h2>Webdoktor</h2></td></tr>";
+            $html.= "<div style='display:inline-block;text-align:center;vertical-align: top;margin:0px 10px;'>";
+            $html.= "<h2>Webdoktor</h2>".$this->lang->getText("foglalas.inditas","Kattintson a szakrendelés nevére a foglalás indításához!")."<br/><br/>";
             foreach ($services as $tipusData) {
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
                 if($tipusData['webdoktor']!=1) {
                     continue;
                 }
-                $html.= "<tr><td style='margin-top:2px;min-width:270px;text-align:center;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</td></tr>";
+                $html.= "<div><div style='margin-top:4px;text-align:center;width:320px;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</div></div>";
             }
-            $html.= "</table>";
+            $html.= "</div>";
 
 			$html.= "</div>";
 
