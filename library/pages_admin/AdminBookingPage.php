@@ -273,6 +273,10 @@ class AdminBookingPage extends AdminCorePage
                     $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Szabadságon {$szabiData["datumtol"]} - {$szabiData["datumig"]}</span></div>";
                 }
 
+                if ($beosztas["onlytel"] == 1) {
+                    $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Ez az orvos csak a telefonjára fogad foglalást!</span></div>";
+                }
+
                 $htmlout .= "<div id='adddoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Adj nevet az orvosnak:</div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosnev{$orvosId}' value='TempOrvos{$maxOrvosId}'/></div></div>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosmegj{$orvosId}' style='width:300px;'/></div></div>";

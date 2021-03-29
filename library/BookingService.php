@@ -1829,7 +1829,13 @@ END:VCALENDAR";
                 }
             }
 
+            $errorMsg = "Orvos nem elérhető!";
             foreach ($orvosIds as $orvosId) {
+                if (!sql_fetch_array(sql_query("select id from orvosok where id=? and aktiv=1 and onlytel=0", [$orvosId]))) {
+                    $errorMsg = "Ez az orvos csak a telefonjára fogad foglalást!";
+                    continue;
+                }
+
                 if ($orvosId == 117) {
                     //managerszűrés korlátlan
                     $selectedOrvosId = $orvosId;
@@ -1841,7 +1847,7 @@ END:VCALENDAR";
                 }
             }
             if (!isset($selectedOrvosId)) {
-                die("errorOrvos nem elérhető!");
+                die("error{$errorMsg}");
             }
 
             sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));

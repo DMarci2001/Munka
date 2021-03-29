@@ -18,7 +18,7 @@ class BeosztasService {
     public function getBookingPageBeosztasok($day, $helyszinId, $szuresTipusId) {
         $wd = date("N", strtotime($day));
 
-        $beoRes = sql_query("SELECT b.*, min(tol) as mintol, max(ig) as maxig, MAX(potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, c.megnev as cegnev, group_concat(distinct c.megnev separator ',') as cegek FROM orvos_beosztas b 
+        $beoRes = sql_query("SELECT b.*, min(tol) as mintol, max(ig) as maxig, MAX(potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel, c.megnev as cegnev, group_concat(distinct c.megnev separator ',') as cegek FROM orvos_beosztas b 
             left join orvosok o on o.id=b.orvosid 
             left join cegek c on c.id=b.cegid
             WHERE b.helyszinid=? and INSTR(tipusok, ?) AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
