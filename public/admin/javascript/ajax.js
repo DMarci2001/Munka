@@ -7,6 +7,7 @@ $(document).ready(function() {
         checkAdminWarnings();
     }, 1000);
 
+    $("#assetphotofile").on("change", preparePhotoUpload);
 });
 
 
@@ -2061,3 +2062,61 @@ function salaryDataSave(oid) {
         }
     });
 }
+
+
+function preparePhotoUpload(event) {
+    let tipus = $(this).data("tipus");
+    let id = $(this).data("id");
+
+    files = event.target.files;
+
+    $("#ajaxloader").show();
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    var data = new FormData();
+    data.append("uploadasset", id)
+    data.append("tipus", tipus)
+    $.each(files, function(key,value) {
+        data.append(key,value);
+    });
+
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: data,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function(response, textStatus, jqXHR) {
+            $("#ajaxloader").hide();
+
+            $("#asseteditor").html(response.html);
+
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+        }, error: function(jqXHR, textStatus, errorThrown) {
+            $("#ajaxloader").hide();
+            console.log('ERRORS: '+textStatus);
+        }
+    });
+}
+
+function deleteAsset(tipus, id) {
+    if (!confirm("Biztos törlöd ezt a képet?")) {
+        return;
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: 'index.php',
+        data: {deleteasset: id, tipus: tipus},
+        success: function (result) {
+            $("#asseteditor").html(result.html);
+        }
+    });
+}
+

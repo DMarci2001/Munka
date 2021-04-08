@@ -2,6 +2,8 @@
 
 
 class DocAgent {
+    const ASSET_DOCTOR_PHOTO = "orvosphoto";
+    const ASSET_SERVICE_ILLUSTRATION_IMAGE = "serviceimage";
 
     public function __construct()
     {
@@ -13,6 +15,26 @@ class DocAgent {
         if (!is_dir($path)) mkdir($path);
         $path.="/{$id}.bin";
         return $path;
+    }
+
+    private static function _getAssetImagePath($fileId) {
+        $path = "/var/www/onlinebejelentkezes_keltexmed/public/images/assets_".Booking_Constants::SQL_DB."/";
+        if (!is_dir($path)) {
+            mkdir($path);
+        }
+        $path.= floor((int)$fileId / 1000)."/";
+        if (!is_dir($path)) {
+            mkdir($path);
+        }
+        return $path;
+    }
+
+    public function getAssetImageURL($tipus, $id) {
+        $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
+        if (!is_file($path)) {
+            //return "";
+        }
+        return str_replace("/var/www/onlinebejelentkezes_keltexmed/public", "", $path);
     }
 
     public function getDoc($fileId) {
@@ -110,6 +132,93 @@ class DocAgent {
 
         $docURL = "//{$domain}/?downloaddoc&f={$docData["id"]}&k={$docData["kod"]}";
         return $docURL;
+    }
+
+    public function uploadAssetImage($tipus, $oid, $uploadedFile):array {
+        $result = ["error" => ""];
+
+        if (is_uploaded_file($uploadedFile["tmp_name"])) {
+            $fileName = strtolower($uploadedFile["name"]);
+            $fileSize = $uploadedFile["size"];
+            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+            if (in_array($extension, ["jpg", "jpeg", "png"])) {
+                sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?", [$tipus, $oid, $fileName, $extension, $fileSize]);
+                $fileId = sql_insert_id();
+                $path = $this->_getAssetImagePath($fileId);
+
+                $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
+                @move_uploaded_file($uploadedFile["tmp_name"], $kepfile);
+
+                $size = GetImageSize($kepfile);
+                $xsize = $size[0];
+                $ysize = $size[1];
+
+
+                if ($extension == "jpg" || $extension == "jpeg") {
+                    $src_img = ImageCreateFromJpeg($kepfile);
+                }
+
+                if ($extension == "png") {
+                    $src_img = ImageCreateFromPNG($kepfile);
+                    unlink($kepfile);
+                    $kepfile = "{$path}/{$oid}.jpg";
+                    imagejpeg($src_img, $kepfile);
+                }
+
+                $scale = [512, 512];
+
+                if ($ysize > $scale[1]) {
+                    $xscale = $scale[0];
+                    $yscale = $scale[1];
+                    $newxsize = floor($xsize/($xsize/$xscale));
+                    $newysize = floor($ysize/($xsize/$xscale));
+                    if ($newysize < $yscale) {
+                        $newxsize = floor($xsize/($ysize/$yscale));
+                        $newysize = floor($ysize/($ysize/$yscale));
+                    }
+                    $dst_img = imagecreatetruecolor($newxsize,$newysize);
+                    ImageCopyResampled($dst_img, $src_img, 0, 0, 0, 0, $newxsize, $newysize, ImageSX($src_img), ImageSY($src_img));
+                    imagejpeg($dst_img, $kepfile);
+
+                    $xsize = $newxsize;
+                    $ysize = $newysize;
+                }
+
+            } else {
+                $result["error"] = "A feltöltött file csak jpg vagy png lehet!";
+            }
+        } else {
+            $result["error"] = "A feltöltés közben hiba történt!";
+        }
+
+        return $result;
+
+    }
+
+    public function deleteAsset($tipus, $id) {
+        $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
+        unlink($path);
+        sql_query("delete from dokumentumok where assetid=? and id=? limit 1", [$tipus, $id]);
+    }
+
+    public function showAssetEditor($tipus, $dataId):string {
+        $html = "";
+
+        $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($images as $imageData) {
+            $photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
+            $html.= "<div style='display:inline-block;'>";
+            $html.= "<a href='{$photoURL}' target='_blank'><img class='assetimageitem' src='{$photoURL}' /></a>";
+            $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]});return false;'>Kép törlése</a></div>";
+            $html.= "</div>";
+        }
+
+        $html.= "<div style='display:inline-block;vertical-align: top;'>";
+        $html.= "<div class='upload-btn-wrapper'><div class='upbtn'>kép<br/>hozzáadása</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' id='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+        $html.= "</div>";
+
+        return $html;
     }
 
 }

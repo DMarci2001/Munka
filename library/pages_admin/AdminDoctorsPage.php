@@ -617,10 +617,10 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<div style='margin-bottom:10px;background:#f88;padding:10px;display:inline-block;'>{$hibak}</div>";
             }
 
-            echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='orvosform' value='1'/><input type='hidden' name='orvosid' value='{$_POST["id"]}'/>";
+            echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='orvosform' value='1'/><input type='hidden' id='orvosid' name='orvosid' value='{$_POST["id"]}'/>";
             echo "<table style='font-size:12px;'>";
 
-            echo "<tr><td width='130'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
+            echo "<tr><td width='100'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
             echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
             echo "<tr><td></td><td><div id='fodatadiv'></div></td></tr>";
             echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
@@ -838,7 +838,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</td></tr>";
 
 			echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalások korlátozása</div></td></tr>";
-			
+
 			$resb = sql_query("SELECT * FROM foglalas_korlatozasok WHERE orvosid=? ORDER BY datum",array($_GET['szerk']));
 			$sor = 1;
 			while($rowb = sql_fetch_array($resb)){	
@@ -877,8 +877,13 @@ class AdminDoctorsPage extends AdminCorePage {
 			}
 			
 			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";
-			
-			echo "<tr><td colspan='2'><div class='tdsepdiv'>Orvosi kérdések szűrésípusokhoz</div></td></tr>";
+
+            $docAgent = new DocAgent();
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Fotó</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_DOCTOR_PHOTO, $oid)."</div>";
+            echo "</td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Orvosi kérdések szűrésípusokhoz</div></td></tr>";
 			//Itt akkor az összes vizsgálatot ami bevan állítva az emberhez meg kell hogy jeleníteni O.o....
 			$resq=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(tipusok) AS tipusok FROM orvos_beosztas WHERE orvosid=?",array($_GET['szerk'])));
 			
@@ -1018,7 +1023,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</div>";
         }
 
-        $res=sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator '<br/>') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
+        $res=sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator ', ') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
         LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id`
         LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
         LEFT JOIN cegek c ON c.`id`=b.`cegid`
@@ -1044,7 +1049,9 @@ class AdminDoctorsPage extends AdminCorePage {
             }
 
             if ($row["cegidk"] == "nulla") {
-                $row["cegek"] = "*<br/>{$row["cegek"]}";
+                $cegek = "";
+            } else {
+                $cegek = "<span title='{$row["cegek"]}' style='border-bottom: 1px dashed;'>".(substr_count($row["cegek"], ", ")+1)." cég</span>";
             }
             $tc = "tcella";
             if (!isset($first)) {
@@ -1071,17 +1078,10 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<span style='color:#f00;'>nincs még beosztása</span>";
             }
             echo "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:200px;'>";
-            if ($row["cegek"] != "") {
-                echo "{$row["cegek"]}";
-            } else {
-                echo "Létrehozta: {$row["createdby"]}";
-            }
-            echo "</div></td>";
-            echo "<td nowrap valign='top'><div class={$tc} style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
-            //echo "<td nowrap valign='top'><div class={$tc} style='min-width:100px;'>{$row["email"]}</div></td>";
-            echo "<td nowrap valign='top'><div class={$tc} style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
-            echo "<td nowrap valign='top'><div class={$tc}>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:200px;'>{$cegek}</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
             echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }

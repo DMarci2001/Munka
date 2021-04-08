@@ -173,9 +173,9 @@ class AdminScreeningsPage extends AdminCorePage
         if (isset($_GET["szerk"])) {
             $row = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($_GET["szerk"])));
             $_POST = $row;
-			
-			
-			
+
+            $id = $row["id"];
+
             echo "<div style='background-color:#fff;padding:0px;'>";
             echo "<form name='iform' method='post' enctype='multipart/form-data'>";
             echo "<table style='font-size:12px;'>";
@@ -242,6 +242,11 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "</td></tr>";
                 $sor++;
             }
+
+            $docAgent = new DocAgent();
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Kép</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $id)."</div>";
+            echo "</td></tr>";
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Figyelmeztetések</div></td></tr>";
             echo "<tr><td colspan='2' valign=top><input type='submit' name='addtipmegj' value='+ figyelmeztetés hozzáadása'></td></tr>";

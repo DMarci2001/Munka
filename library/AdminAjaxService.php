@@ -363,6 +363,37 @@ class AdminAjaxService {
             }
             die("ok");
         }
+
+
+        if (isset($_POST["uploadasset"])) {
+            $dataId = intval($_POST["uploadasset"]);
+            $tipus  = $_POST["tipus"];
+
+            $docAgent = new DocAgent();
+            $result = $docAgent->uploadAssetImage($tipus, $dataId, $_FILES[0]);
+
+            $result["html"] = $docAgent->showAssetEditor($tipus, $dataId);
+            $this->jsonOut($result);
+
+            die;
+        }
+
+        if (isset($_POST["deleteasset"])) {
+            $id = intval($_POST["deleteasset"]);
+            $tipus  = $_POST["tipus"];
+
+            $data = sql_fetch_array(sql_query("select dataid from dokumentumok where id=? and assetid=?", [$id, $tipus]));
+            $dataId = $data["dataid"];
+
+            $docAgent = new DocAgent();
+            $docAgent->deleteAsset($tipus, $id);
+
+            $result["html"] = $docAgent->showAssetEditor($tipus, $dataId);
+            $this->jsonOut($result);
+
+            die;
+        }
+
     }
 
     private function jsonOut($data) {
