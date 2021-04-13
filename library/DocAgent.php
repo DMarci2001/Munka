@@ -162,7 +162,7 @@ class DocAgent {
                 if ($extension == "png") {
                     $src_img = ImageCreateFromPNG($kepfile);
                     unlink($kepfile);
-                    $kepfile = "{$path}/{$oid}.jpg";
+                    $kepfile = "{$path}/{$tipus}_{$fileId}.jpg";
                     imagejpeg($src_img, $kepfile);
                 }
 

@@ -7,7 +7,7 @@ $(document).ready(function() {
         checkAdminWarnings();
     }, 1000);
 
-    $("#assetphotofile").on("change", preparePhotoUpload);
+    initUploadRoutine();
 });
 
 
@@ -2064,6 +2064,10 @@ function salaryDataSave(oid) {
 }
 
 
+function initUploadRoutine() {
+    $("#assetphotofile").on("change", preparePhotoUpload);
+}
+
 function preparePhotoUpload(event) {
     let tipus = $(this).data("tipus");
     let id = $(this).data("id");
@@ -2093,6 +2097,7 @@ function preparePhotoUpload(event) {
             $("#ajaxloader").hide();
 
             $("#asseteditor").html(response.html);
+            initUploadRoutine();
 
             if (response.error != "") {
                 alert(response.error);
@@ -2116,6 +2121,7 @@ function deleteAsset(tipus, id) {
         data: {deleteasset: id, tipus: tipus},
         success: function (result) {
             $("#asseteditor").html(result.html);
+            initUploadRoutine();
         }
     });
 }
