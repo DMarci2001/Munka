@@ -25,6 +25,206 @@ class BookingService
         $this->beosztasService = new BeosztasService();
     }
 
+
+    public function getAvailableTimeTable($startDate, $endDate):array {
+        $result["error"] = "";
+        $result["startdate"] = $startDate;
+        $result["enddate"] = $endDate;
+
+        if ($this->helyszin == 0) {
+            $result["error"] = "Az időpont kiválasztásához válassza ki a helyszínt!";
+            return $result;
+        }
+
+        if ($this->szuresTipus == 0) {
+            $result["error"] = "Az időpont kiválasztásához válassza ki a szűrés tipusát!";
+            return $result;
+        }
+
+        if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
+            $result["error"] = "Szűréscsomag választása esetén előbb adja meg a nemét!";
+            return $result;
+        }
+
+        if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
+            $result["error"] = "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.";
+            return $result;
+        }
+
+        if ($this->checkBookingRestrictionProtocol($this->helyszin)) {
+            //Ha nem adott meg tajszámot:
+            if ($this->taj == 0) {
+                $result["error"] = "Időpontválasztás előtt kérem adja meg a TAJ számát!";
+                return $result;
+            }
+
+            //Paraméterek beállítása a korlátozáshoz:
+            $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
+        }
+
+        $this->lang = new Lang();
+        $webText = $this->lang->webText;
+        $cegId   = $_SESSION["helyszindata"]["id"] ?? Booking_Constants::DEFAULT_COMPANY_ID;
+
+        while (strtotime($startDate) <= strtotime($endDate)) {
+            $nap       = $startDate;
+            $startDate = date("Y-m-d", strtotime("{$startDate} + 1 day"));
+            $wd        = date("N", strtotime($nap));
+            $orvosList = $this->getOrvosListForIdopontValaszto($nap);
+
+            $napData = [
+                "day"         => $nap,
+                "fulldayname" => "{$nap} {$webText["hetnap"][$wd]}",
+                "weekday"     => "{$webText["hetnap"][$wd]}",
+                "description" => "",
+                "doctors"     => []
+            ];
+
+            if (in_array($nap, $this->getSzunnapok())) {
+                $napData["description"] = "Munkaszüneti nap";
+                $result["napdata"][] = $napData;
+                continue;
+            }
+
+            foreach ($orvosList as $oKey => $orvosId) {
+                $orvosData   = sql_query("select id, nev, tel, pecsetszam from orvosok where id=?", [$orvosId])->fetch(PDO::FETCH_ASSOC);
+                $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId);
+                $napiBeos    = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvosId);
+                $rowmax      = $this->getMinMaxNew($this->szuresTipus, $orvosId, $nap);
+                $step        = 0;
+                $freeTimes   = 0;
+                $realTimes   = 0;
+                $elsoIdopont = [];
+                $timeLoopEnd = false;
+                $lastButton  = [];
+                $beginHour   = round(substr($rowmax["minrendeles"], 0, 2));
+                $beginMinute = round(substr($rowmax["minrendeles"], 3, 2));
+                $dist        = $preResData["hour"]; //ennyi órán belül kell foglalni
+                $distFullDay = $preResData["day"]; //ennyi napon belül kell foglalni
+                $binterval   = $napiBeos[0]["binterval"];
+                $orvosData["idopontok"] = [];
+
+                while (!$timeLoopEnd) {
+                    $ora         = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
+                    $beoData     = [];
+                    $step        ++;
+
+                    if (strtotime($ora) >= strtotime($rowmax["maxrendeles"])) {
+                        break;
+                    }
+
+                    $idopontData = [
+                        "idopont"  => $ora,
+                        "interval" => $binterval,
+                        "status"   => "reserved",
+                        "title"    => "",
+                        "message"  => "Nem foglalható, vagy foglalt időpont!"
+                    ];
+
+                    //beosztások beolvasása
+                    if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) {
+                        //szabad orvos kiválasztása
+                        foreach ($beos as &$beoData) {
+                            if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $binterval)) {
+                                $free = true;
+
+                                if ($beoData["ispotig"] == 1 && $freeTimes != 0) {
+                                    $free = false;
+                                }
+
+                                if ($free) {
+                                    $freeTimes++;
+                                    $idopontData["status"] = "free";
+                                    $idopontData["title"] = $orvosData["nev"];
+                                    $idopontData["message"] = "";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    //csak sorban foglalható időpontok intézése
+                    if (isset($beoData) && $beoData["csaksorban"] == 1 && isset($elsoIdopont[$nap]) && $idopontData["status"] == "free") {
+                        $idopontData["message"] = "Csak sorrendben foglalható időpontok!";
+                        $idopontData["status"] = "disabled";
+                    }
+                    if (!isset($elsoIdopont[$nap]) && $idopontData["status"] == "free") {
+                        $elsoIdopont[$nap] = $ora;
+                    }
+
+                    if (strtotime("now + {$dist}") > strtotime("{$nap} {$ora}")) {
+                        //mégse foglalható, múltbéli dátum vagy túl közeli
+                        $idopontData["message"] = "Nem foglalható, vagy foglalt időpont!";
+                        $idopontData["status"] = "reserved";
+                    }
+
+                    if (strtotime("now + {$distFullDay}") > strtotime("{$nap} 23:59:59")) {
+                        //mégse foglalható, csak x napra előre foglalható
+                        $idopontData["message"] = "Nem foglalható, vagy foglalt időpont!";
+                        $idopontData["status"] = "reserved";
+                    }
+
+                    //Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
+                    if (count($this->restrictParameters) != 0 && $this->betegallomany != true) {
+                        $orvosok = $this->restrictParameters['orvosok'];
+                        $oid = array_search($orvosId, array_column($orvosok, "orvosid"));
+                        if ($oid !== false) {
+                            if (strtotime("{$nap} {$ora}") <= strtotime($this->restrictParameters['datum'])) {
+                                $idopontData["message"] = "Nem foglalható, vagy foglalt időpont!";
+                                $idopontData["status"] = "reserved";
+                            }
+                        }
+                    }
+
+                    //csak fordított sorrendben időpontok intézése
+                    if (isset($beoData) && $beoData["csaksorban"] == 2 && $idopontData["status"] == "free") {
+                        $lastButton = $idopontData;
+                        $idopontData["message"] = "Csak fordított sorrendben foglalható időpontok!";
+                        $idopontData["status"] = "disabled";
+                    }
+
+                    //csomag override
+                    if (!empty($this->packContentTypes)) {
+                        $availableData = $this->getPackageAvailabilityForDay($nap);
+                        if (empty($availableData["error"])) {
+                            $idopontData["message"] = "";
+                            $idopontData["status"] = "free";
+                        } else {
+                            $idopontData["message"] = $availableData["error"];
+                            $idopontData["status"] = "reserved";
+                        }
+                        $idopontData["title"] = "";
+                        $idopontData["idopont"] = "{$rowmax["minrendeles"]} ~ {$rowmax["maxrendeles"]}";
+                        $timeLoopEnd = true;
+                    }
+
+                    if ($idopontData["status"] == "free") {
+                        $realTimes++;
+                    }
+
+                    $orvosData["idopontok"][] = $idopontData;
+                }
+
+                if (!empty($lastButton) && !empty($orvosData["idopontok"])) {
+                    $removed = array_pop($orvosData["idopontok"]);
+                    $orvosData["idopontok"][] = $lastButton;
+                    $lastButton = [];
+                }
+
+                $orvosData["clickabletimes"] = $realTimes;
+                $napData["doctors"][] = $orvosData;
+            }
+
+            $result["helyszin"] = $this->helyszin;
+            $result["szurestipus"] = $this->szuresTipus;
+            $result["cegid"] = $cegId;
+            $result["napdata"][] = $napData;
+        }
+
+        return $result;
+
+    }
+
     public function showIdoPontValasztoV2() {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
@@ -319,6 +519,11 @@ class BookingService
     public function setHelyszin($helyszinId)
     {
         $this->helyszin = intval($helyszinId);
+    }
+
+    public function setTaj($taj)
+    {
+        $this->taj = $taj;
     }
 
     public function setSzuresTipus($szuresTipusId)
@@ -1869,6 +2074,8 @@ END:VCALENDAR";
     }
 
     public function getPublicServices($helyszinId) {
+        $docAgent = new DocAgent();
+
         $rest = sql_query("SELECT b.* FROM orvos_beosztas b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE b.cegid=? AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
@@ -1893,6 +2100,7 @@ END:VCALENDAR";
         $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
         while ($tipusData = sql_fetch_array($res)) {
             $tipusData["doctors"] = $this->beosztasService->getDoctors(11, 1, $tipusData["id"]);
+            $tipusData["assets"] = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $tipusData["id"]);
             $services[] = $tipusData;
         }
 

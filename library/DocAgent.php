@@ -221,5 +221,15 @@ class DocAgent {
         return $html;
     }
 
+    public function getAssetsByType($tipus, $dataId):array {
+        $assets = [];
+        $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($images as $imageData) {
+            $imageData["url"] = $this->getAssetImageURL($tipus, $imageData["id"]);
+            $assets[] = $imageData;
+        }
+        return $assets;
+    }
+
 }
 
