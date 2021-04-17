@@ -127,7 +127,7 @@ class Page
                 $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
                 //$html.= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>".ucfirst($webText["regisztracio"])."</a>";
                 $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
-                if (false) {
+                if ($_SESSION["helyszindata"]["web_fogleu"] == 1) {
                     $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=webfogleu'>" . ucfirst($webText["webfogleu"]) . "</a>";
                 }
             }
