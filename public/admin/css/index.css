@@ -1177,6 +1177,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	border-radius: 3px;
 	font-size:11px
 }
+
+.price_badge {
+	background:#0a0;
+	color:#fff;
+	padding:2px 5px;
+	border-radius: 3px;
+	font-size:11px;
+	white-space: nowrap;
+}
+
 .transactions_table{
 	border-collapse:collapse;
 }

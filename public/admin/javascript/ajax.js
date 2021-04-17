@@ -1986,6 +1986,109 @@ function toggleWarnWindow() {
     }
 }
 
+function toggleUploadFiles() {
+    if ($("#uploadfilesfolder").css("margin-left") == "-260px") {
+        $("#uploadfilesfolder").css("margin-left", -45);
+    } else {
+        $("#uploadfilesfolder").css("margin-left", -260);
+    }
+}
+
+function toggleAlkalmassagBox() {
+    if ($("#alkalmassagfolder").css("margin-left") == "-332px") {
+        $("#alkalmassagfolder").css("margin-left", -45);
+    } else {
+        $("#alkalmassagfolder").css("margin-left", -332);
+    }
+}
+
+
+var triggerSearch = "";
+var searchIsGoing = false;
+
+function prepareUserDataSearch() {
+    $("#pdatasearchrow").toggle();
+    $(".pdatarow").toggle();
+
+    $("#pdatasearchinput").unbind();
+    $("#pdatasearchinput").keyup(function() {
+        triggerSearch = $(this).val();
+    });
+}
+
+function searchTimer() {
+    if (triggerSearch != "" && !searchIsGoing) {
+        searchIsGoing = true;
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            data: {page: "booking", searchpaciens: 1, term: triggerSearch},
+            success: function (data) {
+                $("#searchpaciensresult").html(data);
+                searchIsGoing = false;
+            }
+        });
+        triggerSearch = "";
+    }
+}
+
+function bindUserToReservation(uid) {
+    let fid = $("#reservationId").val();
+    let ppp = $("#reservationToken").val();
+    if (confirm("Csatoljuk a kiválasztott felhasználót a foglaláshoz?")) {
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            data: {page: "booking", bindusertoreservation: 1, uid: uid, fid:fid, pp:ppp},
+            success: function (data) {
+                showIdopontEditor("booking", ppp, fid);
+
+                if ($("#arrivalstable").length) {
+                    $.ajax({
+                        type: "GET",
+                        url: "index.php?page=blista&showarrivalstable",
+                        success: function(response)	{
+                            $("#arrivalstable").html(response);
+                        }
+                    });
+                }
+
+                if ($("#elojegyzestable").length) {
+                    $.ajax({
+                        type: "GET",
+                        url: "index.php?page=booking&showelojegyzestable",
+                        success: function(response)	{
+                            $("#elojegyzestable").html(response);
+                        }
+                    });
+                }
+
+            }
+        });
+    }
+}
+
+function newUserDataFromReservation() {
+    let fid = $("#reservationId").val();
+    let ppp = $("#reservationToken").val();
+
+    let data = $("#iform").serialize()+"&page=booking&newUserDataFromReservation=1";
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:data,
+        success: function(data) {
+            if (data.error != "") {
+                alert(data.error);
+            } else {
+                foglalasMentes("booking");
+            }
+        }
+    });
+}
+
+
+
 function refreshMonthSalary(month) {
     $.ajax({
         type:'POST',

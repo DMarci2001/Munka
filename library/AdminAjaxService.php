@@ -394,6 +394,61 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_POST['searchpaciens'])) {
+            $kulcs = $_POST["term"];
+
+            $res = sql_query("SELECT u.*,c.megnev as cegnev FROM felhasznalok u
+	            LEFT JOIN cegek c ON c.`id`=u.`cegid`
+	            WHERE true and ( instr(u.nev, :kulcs) or instr(u.taj, :kulcs) or instr(u.torzsszam, :kulcs) or instr(u.email, :kulcs) )
+            	ORDER BY u.nev limit 9" ,["kulcs" => $kulcs]);
+
+            echo "<div style='display:table;'>";
+            while ($row = sql_fetch_array($res)) {
+                echo "<div style='display:table-row;'>";
+                echo "<div style='display:table-cell;white-space: nowrap;overflow: hidden;width:160px;max-width:160px;'><a href='#' onclick='bindUserToReservation({$row["id"]});return false;'>{$row["nev"]}</a></div>";
+                echo "<div style='display:table-cell;padding-left:10px;white-space: nowrap;overflow: hidden;width:80px;max-width:80px;'>{$row["szuldatum"]}</div>";
+                echo "<div style='display:table-cell;padding-left:10px;white-space: nowrap;overflow: hidden;width:80px;max-width:80px;'>{$row["taj"]}</div>";
+                echo "<div style='display:table-cell;padding-left:10px;white-space: nowrap;overflow: hidden;width:190px;max-width:190px;'>{$row["cegnev"]}</div>";
+                echo "</div>";
+            }
+            echo "</div>";
+            die;
+        }
+
+        if (isset($_POST["bindusertoreservation"])) {
+            if ($userData = sql_fetch_array(sql_query("select * from felhasznalok where id=?", [$_POST["uid"]]))) {
+                sql_query("update foglalasok set paciensid=?, cegid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, munkakor=?, irsz=?, varos=?, utca=?, taj=? where id=? and pass=?",
+                    [$userData["id"], $userData["cegid"], $userData["nev"], $userData["email"], $userData["telefon"], $userData["szuldatum"], $userData["szulhely"], $userData["anyjaneve"], $userData["neme"], $userData["munkakor"], $userData["irsz"], $userData["varos"], $userData["utca"], $userData["taj"], $_POST["fid"], $_POST["pp"]]);
+            }
+            die("ok");
+        }
+
+        if (isset($_REQUEST["newUserDataFromReservation"])) {
+            $error = "";
+            $_REQUEST["szuldatum"] = $_REQUEST["szuldatumev"]."-".substr("00".$_REQUEST["szuldatumho"],-2)."-".substr("00".$_REQUEST["szuldatumnap"],-2);
+
+            if (empty($_REQUEST["taj"]) || empty($_REQUEST["nev"]) || empty($_REQUEST["cegid"]) || !$this->validateDate($_REQUEST["szuldatum"], "Y-m-d")) {
+                $error .= "A TAJ szám, a név, a születési dátum és a cég megadása kötelező a paciens adatlap léterhozásához!\n";
+            }
+            if (sql_fetch_array(sql_query("select id from felhasznalok where cegid=? and taj=?", [$_REQUEST["cegid"], $_REQUEST["taj"]]))) {
+                $error.= "Már van paciens adatlap ezzel a taj számmal a kiválasztott cégnél. Használd a paciens adatlap keresés gombot.\n";
+            }
+
+            if (empty($error)) {
+                sql_query("insert into felhasznalok set cegid=?, regtime=now(), nev=?, email=?, telefon=?, szuldatum=?, taj=?, irsz=?, varos=?, utca=?, munkakor=?, rkod=?, validated=1",
+                    [$_REQUEST["cegid"], $_REQUEST["nev"], $_REQUEST["email"], $_REQUEST["telefon"], $_REQUEST["szuldatum"], $_REQUEST["taj"], $_REQUEST["irsz"], $_REQUEST["varos"], $_REQUEST["utca"], $_REQUEST["munkakor"], rand(11000, 98000)]);
+                $uid = sql_insert_id();
+                sql_query("update foglalasok set paciensid=? where id=? and pass=?", [$uid, $_REQUEST["fid"], $_REQUEST["p"]]);
+            }
+
+            $this->jsonOut(["error" => $error]);
+        }
+
+    }
+
+    private function validateDate($date, $format="Y-m-d H:i:s"):bool {
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format)==$date;
     }
 
     private function jsonOut($data) {
