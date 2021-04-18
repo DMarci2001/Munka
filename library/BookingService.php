@@ -438,6 +438,88 @@ class BookingService
         return json_encode(array("error" => "", "html" => $html));
     }
 
+    public function showIdoPontValasztoTemp() {
+        $html         = "";
+        $error        = "";
+        $this->lang = new Lang();
+        $this->honnan = intval($_GET["honnan"]);
+        $this->taj    = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
+        $startDate    = date("Y-m-d", strtotime("this week monday +{$this->honnan} day"));
+        $endDate      = date("Y-m-d", strtotime("{$startDate} + 6 day"));
+        $webText      = $this->lang->webText;
+        $this->setHelyszin($_GET["helyszin"]);
+        $this->setNeme($_GET["neme"]);
+        if (isset($_GET["szurestipus"])) {
+            $this->setSzuresTipus($_GET["szurestipus"]);
+        }
+
+        if (!isset($_GET['javascript'])) {
+            $_GET['javascript'] = "showIdoPontValasztoV2";
+        }
+
+        $result = $this->getAvailableTimeTable($startDate, $endDate);
+
+        if (!empty($result["error"])) {
+            return json_encode($result);
+        }
+
+        $html .= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
+        $html .= "<div>{$webText["valasszidopontot"]}:</div>";
+        $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
+        $html .= "<table cellpadding='0' cellspacing='0'><tr>";
+
+        foreach ($result["napdata"] as $napData) {
+            $html .= "<td valign='top'>";
+            $html .= "<div style='" . ($napData["day"] == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$napData["day"]}<br/>{$napData["weekday"]}</div>";
+
+            if (!empty($napData["description"])) {
+                $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>{$napData["description"]}</div>";
+                $html .= "</td>";
+                continue;
+            }
+
+            $html .= "<div style='display:table;width:100%;'>";
+
+            foreach ($napData["doctors"] as $oKey => $orvosData) {
+                $html.= "<div style='display:table-cell;text-align:center;vertical-align: top;".($oKey>1 ? "padding-left:3px;" : "")."'>";
+                $html.= "<div style='width:70px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
+
+                foreach ($orvosData["idopontok"] as $idopontData) {
+                    $buttonTitle = "";
+                    $buttonClass = "foglaltbtn";
+                    $buttonJava = "myAlert(\"{$idopontData["message"]}\");return false;";
+
+                    if ($idopontData["status"] == "free") {
+                        $buttonClass = "foglalhatobtn";
+                        $buttonTitle = "{$idopontData["title"]}";
+                        $idopont     = substr("{$napData["day"]} {$idopontData["idopont"]}", 0, 16);
+                        $buttonJava = "chooseIdoPont(\"{$idopont}\",{$idopontData["interval"]},{$orvosData["id"]},{$result['helyszin']},{$result['szurestipus']});return false;";
+                    }
+
+                    if ($idopontData["status"] == "disabled") {
+                        $buttonClass = "foglalhatobtn halv";
+                        $buttonJava = "myAlert(\"{$idopontData["message"]}\");return false;";
+                    }
+
+                    $html .= "<div style='text-align:center;'><a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$idopontData["idopont"]}</a></div>";
+                }
+
+                $html.= "</div>";
+            }
+
+            $html .= "</div>";
+            $html .= "</td>";
+        }
+
+        $html .= "</tr></table>";
+        $html .= "</div>";
+
+        //$html.= "<pre>".print_r($result, true)."</pre>";
+
+        return json_encode(array("error" => $error, "html" => $html));
+    }
+
+
     private function preReservationProtocol($cegId, $helyszinId, $orvosId) {
         $dist = "6 hour";
         $distFullDay = "0 day";
