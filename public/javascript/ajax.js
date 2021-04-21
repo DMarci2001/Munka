@@ -555,25 +555,8 @@ function changeServicePaymentMethod(sid, method) {
                 return;
             }
             else {
-                $("#sid-" + sid + " td:nth-child(3)").text(response);
+                $("#sid-" + sid + " td:nth-child(4)").text(response);
             }
         }
     })
-}
-
-function openDescription(id) {
-    var box = $("#sid-" + id + "-description");
-    if (typeof box.data("height") === "undefined") {
-        var height = (box.outerHeight() + 19);
-        box.data("height", height);
-    } else {
-        var height = box.outerHeight();
-    }
-
-    console.log(height);
-
-
-    box.css({ "height": height });
-    box.slideToggle("slow");
-
 }
