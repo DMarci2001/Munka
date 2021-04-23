@@ -452,6 +452,10 @@ class Utils {
             $htmlout.="<script type='text/javascript' src='javascript/covidform.js?v={$v}'></script>";
         }
 
+        if (isset($_GET["page"]) && $_GET["page"] == "oltasigenyfelmeres") {
+            $htmlout.="<script type='text/javascript' src='javascript/oltasigenyform.js?v={$v}'></script>";
+        }
+
         if (isset($_GET["page"]) && $_GET["page"] == "elsosegelyvizsga") {
             $htmlout.="<script type='text/javascript' src='javascript/elsosegelyvizsga.js?v={$v}'></script>";
         }
