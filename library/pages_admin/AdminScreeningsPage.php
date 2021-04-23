@@ -343,6 +343,8 @@ class AdminScreeningsPage extends AdminCorePage
         }
         
 
+        $docAgent = new DocAgent();
+
         $services = sql_query("SELECT t.*,m.tipusid FROM szurestipusok t
         LEFT JOIN szurestipusok_megj m ON m.`tipusid`=t.`id` and csomag=0
         GROUP BY t.id
@@ -425,6 +427,15 @@ class AdminScreeningsPage extends AdminCorePage
 
             echo "</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>" . ($row["tipusid"] != null ? "<div style='background:#f00;color:#fff;padding:0px 3px;font-weight:bold;'>M</div>" : "") . "</div></td>";
+
+            $image = "";
+            $assets = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $row["id"]);
+            if (!empty($assets)) {
+                $image = "<img style='width:50px;height:50px;object-fit: cover;' src='{$assets[0]["url"]}' title='' />";
+            }
+
+            echo "<td valign='top'><div class='{$tc}'>{$image}</div></td>";
+
             echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:10px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:10px;'>";
             if ($row["fotid"] != 0) {

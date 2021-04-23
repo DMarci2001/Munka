@@ -4,6 +4,11 @@
 class DocAgent {
     const ASSET_DOCTOR_PHOTO = "orvosphoto";
     const ASSET_SERVICE_ILLUSTRATION_IMAGE = "serviceimage";
+    const ASSET_SERVICE_DEFAULT_IMAGE = "/images/szakter_default.jpg";
+    const ASSET_DOCTOR_DEFAULT_IMAGE_MALE = "/images/doctor_male.png";
+    const ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE = "/images/doctor_female.png";
+
+    public $showDefaultAsset = false;
 
     public function __construct()
     {
@@ -223,11 +228,28 @@ class DocAgent {
 
     public function getAssetsByType($tipus, $dataId):array {
         $assets = [];
-        $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
+        $images = sql_query("select id, filename from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($images as $imageData) {
             $imageData["url"] = $this->getAssetImageURL($tipus, $imageData["id"]);
             $assets[] = $imageData;
         }
+
+        if (empty($imageData) && $this->showDefaultAsset) {
+            if ($tipus == self::ASSET_SERVICE_ILLUSTRATION_IMAGE) {
+                $imageData["url"] = self::ASSET_SERVICE_DEFAULT_IMAGE;
+                $assets[] = $imageData;
+            }
+            if ($tipus == self::ASSET_DOCTOR_PHOTO) {
+                $doctorData = sql_query("select gender from orvosok where id=?", [$dataId])->fetch(PDO::FETCH_ASSOC);
+                if ($doctorData["gender"] == 1) {
+                    $imageData["url"] = self::ASSET_DOCTOR_DEFAULT_IMAGE_MALE;
+                } else {
+                    $imageData["url"] = self::ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE;
+                }
+                $assets[] = $imageData;
+            }
+        }
+
         return $assets;
     }
 

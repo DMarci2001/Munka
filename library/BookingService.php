@@ -31,6 +31,9 @@ class BookingService
         $result["startdate"] = $startDate;
         $result["enddate"] = $endDate;
 
+        $docAgent = new DocAgent();
+        $docAgent->showDefaultAsset = true;
+
         if ($this->helyszin == 0) {
             $result["error"] = "Az időpont kiválasztásához válassza ki a helyszínt!";
             return $result;
@@ -103,6 +106,7 @@ class BookingService
                 $distFullDay = $preResData["day"]; //ennyi napon belül kell foglalni
                 $binterval   = $napiBeos[0]["binterval"];
                 $orvosData["idopontok"] = [];
+                $orvosData["assets"] = $docAgent->getAssetsByType(DocAgent::ASSET_DOCTOR_PHOTO, $orvosId);
 
                 while (!$timeLoopEnd) {
                     $ora         = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
@@ -2157,6 +2161,7 @@ END:VCALENDAR";
 
     public function getPublicServices($helyszinId) {
         $docAgent = new DocAgent();
+        $docAgent->showDefaultAsset = true;
 
         $rest = sql_query("SELECT b.* FROM orvos_beosztas b
             LEFT JOIN orvosok o on o.id = b.orvosid

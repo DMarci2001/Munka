@@ -303,8 +303,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     visszaigazol=?,
                     visszaigazolemail=?,
                     szurestipusok=?,
+                    gender=?,
                     aktiv=?
-                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["szurestipusok"], $_POST["aktiv"], $oid));
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["szurestipusok"], $_POST["gender"], $_POST["aktiv"], $oid));
 
 
                 if ($_POST["orvosmentesandcopy"]==1 && isset($_SESSION["orvosbeosztascegfilter"]) && $this->adminUtils->beosztasModJog()) {
@@ -694,7 +695,7 @@ class AdminDoctorsPage extends AdminCorePage {
             }
 
 
-            $resb = sql_query("select * from orvos_beosztas b where orvosid=? and (cegid=?) {$w} order by cegid, nap<>0, nap, beonap, tol",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
+            $resb = sql_query("select * from orvos_beosztas b where orvosid=? and (cegid=?) and (nap<>10 or beonap>date_sub(now(), interval 2 month)) {$w} order by cegid, nap<>0, nap, beonap, tol",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
 
             $sor = 1;
             $hetBackgrounds=array("","#ffffbb","#bbffff");
@@ -827,7 +828,7 @@ class AdminDoctorsPage extends AdminCorePage {
             }
 
             echo "<tr><td colspan='2'>";
-            $ressz=sql_query("select min(sz.datumtol) as datumtol, max(datumig) as datumig, groupid from szabadsag sz where oid=? group by sz.groupid order by datumtol", [$_GET["szerk"]]);
+            $ressz=sql_query("select min(sz.datumtol) as datumtol, max(datumig) as datumig, groupid from szabadsag sz where oid=? and datumtol>date_sub(now(), interval 6 month) group by sz.groupid order by datumtol", [$_GET["szerk"]]);
             while ($rowsz=sql_fetch_array($ressz)) {
                 echo "<div style='display:table-row;'>";
                 echo "<div style='display:table-cell;vertical-align:middle;'>{$rowsz["datumtol"]} - {$rowsz["datumig"]}</div>";
@@ -976,7 +977,9 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo $adminAutorithy;
             }
 
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value=1 name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
+            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value=1 name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív&nbsp;&nbsp;&nbsp;&nbsp;";
+            echo "<input type='radio' name='gender' value='2' ".($_POST["gender"]==2 ? "checked":"")."/> Nő <input type='radio' name='gender' value='1' ".($_POST["gender"]==1 ? "checked":"")."/> Férfi";
+            echo "</td></tr>";
 
             echo "</table>";
 
@@ -1023,23 +1026,50 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</div>";
         }
 
-        $res=sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator ', ') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
+        $orvosok = sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator ', ') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
         LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id`
         LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
         LEFT JOIN cegek c ON c.`id`=b.`cegid`
         where o.pecsetszam<>'temp' {$w}
         GROUP BY o.id
-        ORDER BY nev<>'Új orvos',nev");
+        ORDER BY nev<>'Új orvos', nev")->fetchAll(PDO::FETCH_ASSOC);
+
+        $kiemeltOrvosok = sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek,GROUP_CONCAT(DISTINCT c.megnev separator ', ') AS cegek,GROUP_CONCAT(DISTINCT IF(b.cegid=0,'nulla','') SEPARATOR ',') AS cegidk FROM orvosok o
+        LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id`
+        LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
+        LEFT JOIN cegek c ON c.`id`=b.`cegid`
+        LEFT JOIN dokumentumok d on d.dataid=o.id and d.assetid='orvosphoto'
+        where o.pecsetszam<>'temp' {$w} and (d.id is not null or o.foid<>0)
+        GROUP BY o.id
+        ORDER BY nev")->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($kiemeltOrvosok)) {
+            echo "<h2>Kiemelt orvosok</h2>";
+            echo $this->_orvosLista( $kiemeltOrvosok);
+        }
+
+        if (!empty($orvosok)) {
+            echo "<h2>Összes orvos</h2>";
+            echo $this->_orvosLista($orvosok);
+        }
+
+    }
+
+
+    private function _orvosLista($orvosok) {
+        $html = "";
+
+        $docAgent = new DocAgent();
 
         $rest = sql_query("select * from szurestipusok");
         while ($rowt = sql_fetch_array($rest)) {
             $tipusnevek[$rowt["id"]] = $rowt["megnev"];
         }
 
-        echo "<table cellpadding='0' cellspacing='0' border='0'>";
-        while ($row = sql_fetch_array($res)) {
+        $html.= "<table cellpadding='0' cellspacing='0' border='0'>";
+        foreach ($orvosok as $row) {
             unset($tipusok);
-            $ta=explode("|",$row["tipusok"]);
+            $ta = explode("|",$row["tipusok"]);
             for ($i=0;$i<count($ta);$i++) {
                 if (trim($ta[$i])!="") {
                     if (isset($tipusnevek[$ta[$i]])) {
@@ -1055,40 +1085,50 @@ class AdminDoctorsPage extends AdminCorePage {
             }
             $tc = "tcella";
             if (!isset($first)) {
-                echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first = 1;
             }
             if (trim($row["nev"])=="") $row["nev"] = "nincs neve";
-            echo "<tr>";
-            echo "<td nowrap valign='top'><div class='{$tc}'>";
-            echo "<a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}&sp'>{$row["nev"]}</a>";
+            $html.= "<tr>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>";
+            $html.= "<a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}&sp'>{$row["nev"]}</a>";
 
             if ($row["foid"] != 0) {
-                echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["foid"]}'>FOGLALJORVOST</span>";
+                $html.= "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["foid"]}'>FOGLALJORVOST</span>";
             }
 
-            if (isset($tipusok)) echo "<div>".implode("<br/>",array_unique($tipusok))."</div>";
-            echo "</div></td>";
-            //echo "<td nowrap valign=top><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
-            //echo "<td nowrap valign=top><div class='{$tc}'>{$row["cegek"]}</div></td>";
-            echo "<td valign='top'><div class='{$tc}' style='min-width:300px;'>";
+            if (isset($tipusok)) $html.= "<div>".implode("<br/>",array_unique($tipusok))."</div>";
+            $html.= "</div></td>";
+            //$html.= "<td nowrap valign=top><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
+
+
+
+            $image = "";
+            $assets = $docAgent->getAssetsByType(DocAgent::ASSET_DOCTOR_PHOTO, $row["id"]);
+            if (!empty($assets)) {
+                $image = "<img style='width:50px;height:50px;object-fit: cover;' src='{$assets[0]["url"]}' title='' />";
+            }
+
+            $html.= "<td valign='top'><div class='{$tc}'>{$image}</div></td>";
+
+            $html.= "<td valign='top'><div class='{$tc}' style='min-width:300px;'>";
             if ($row["cimek"]!="") {
-                echo "{$row["cimek"]}";
+                $html.= "{$row["cimek"]}";
             } else {
-                echo "<span style='color:#f00;'>nincs még beosztása</span>";
+                $html.= "<span style='color:#f00;'>nincs még beosztása</span>";
             }
-            echo "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:200px;'>{$cegek}</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
-            echo "</tr>";
-            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            $html.= "</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:200px;'>{$cegek}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}' style='color:#f00;'>".($row["visszaigazol"]==1?"V":"")."</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt az orvost?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            $html.= "</tr>";
+            $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
-        echo "</table>";
+        $html.= "</table>";
 
+        return $html;
     }
-
 
     private function smsAlertSettings($oid) {
         $htmlout="";
