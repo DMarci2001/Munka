@@ -2,19 +2,47 @@
 
 class SimplePayService {
 
-    const PROVIDER_NAME = "simplePay";
-    const SDK_VERSION = "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e";
-    const API_URL = "https://secure.simplepay.hu";
-    //sandbox : https://sandbox.simplepay.hu
-    //live:     https://secure.simplepay.hu
+    const PROVIDER_NAME   = "simplePay";
+    const SDK_VERSION     = "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e";
+    const API_URL         = "https://secure.simplepay.hu";
+    const API_URL_SANDBOX = "https://sandbox.simplepay.hu";
 
     private $orderId;
     private $order;
+    private $sandBox = false;
 
     public function __construct()
     {
 
 
+    }
+
+    public function setSandBox($value) {
+        $this->sandBox = $value;
+    }
+
+    private function _getMerchantId() {
+        if ($this->sandBox) {
+            return Booking_Constants::SIMPLEPAY_MERCHANT_ID_SANDBOX;
+        } else {
+            return Booking_Constants::SIMPLEPAY_MERCHANT_ID;
+        }
+    }
+
+    private function _getMerchantSecret() {
+        if ($this->sandBox) {
+            return Booking_Constants::SIMPLEPAY_MERCHANT_SECRET_SANDBOX;
+        } else {
+            return Booking_Constants::SIMPLEPAY_MERCHANT_SECRET;
+        }
+    }
+
+    private function _getApiUrl() {
+        if ($this->sandBox) {
+            return self::API_URL_SANDBOX;
+        } else {
+            return self::API_URL;
+        }
     }
 
     public function startPay($id) {
@@ -28,7 +56,7 @@ class SimplePayService {
 
         $request = [
             "salt" => $this->getSalt(),
-            "merchant" => Booking_Constants::SIMPLEPAY_MERCHANT_ID,
+            "merchant" => $this->_getMerchantId(),
             "orderRef" => $logId,
             "currency" => "HUF",
             "customerEmail" => $this->order["email"],
@@ -54,7 +82,7 @@ class SimplePayService {
         ]
         */
 
-        $result = $this->apiCall("POST", self::API_URL."/payment/v2/start", $request);
+        $result = $this->apiCall("POST", $this->_getApiUrl()."/payment/v2/start", $request);
 
         //print_r($result["response"]);
         //die;
@@ -71,6 +99,13 @@ class SimplePayService {
     public function setOrderId($id) {
         $this->orderId = $id;
         $this->order = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$id]));
+        if (empty($this->order)) {
+            $this->order = sql_fetch_array(sql_query("SELECT osszeg AS totalprice, f.email FROM szolgaltatasok_rendelesek_fizetesek fiz 
+                LEFT JOIN szolgaltatasok_rendelesek r ON r.id = fiz.order_id
+                LEFT JOIN felhasznalok f ON f.id = r.fid
+                WHERE fiz.id=?", [str_replace("serv", "", $id)]));
+
+        }
     }
 
 
@@ -98,7 +133,7 @@ class SimplePayService {
     }
 
     public function generateSignature($message) {
-        return base64_encode(hash_hmac('sha384', $message, Booking_Constants::SIMPLEPAY_MERCHANT_SECRET, true));
+        return base64_encode(hash_hmac('sha384', $message, $this->_getMerchantSecret(), true));
     }
 
     private function getSalt($length = 32) {
@@ -111,7 +146,7 @@ class SimplePayService {
     }
 
     public function addNewTransactionLog() {
-        sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, result='PENDING'", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $this->orderId]);
+        sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, result='PENDING'", [$this->_getMerchantId(), self::PROVIDER_NAME, $this->orderId]);
         return sql_insert_id();
     }
 
@@ -127,7 +162,7 @@ class SimplePayService {
     }
 
     public function getTransactionLog($foglalasId) {
-        return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [Booking_Constants::SIMPLEPAY_MERCHANT_ID, self::PROVIDER_NAME, $foglalasId]));
+        return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [$this->_getMerchantId(), self::PROVIDER_NAME, $foglalasId]));
     }
 
     public function simpleLogo() {
@@ -176,13 +211,13 @@ class SimplePayService {
         $request = [
             "salt" => $this->getSalt(),
             "orderRef" => $id,
-            "merchant" => Booking_Constants::SIMPLEPAY_MERCHANT_ID,
+            "merchant" => $this->_getMerchantId(),
             "currency" => "HUF",
             "refundTotal" => intval($osszeg),
             "sdkVersion" => "SimplePayV2.1_Payment_PHP_SDK_2.0.7_190701:dd236896400d7463677a82a47f53e36e"
         ];
 
-        $result = $this->apiCall("POST", self::API_URL."/payment/v2/refund", $request);
+        $result = $this->apiCall("POST", $this->_getApiUrl()."/payment/v2/refund", $request);
 
         if ($result["httpCode"] == 200) {
             if (empty($result["response"]["errorCodes"])) {

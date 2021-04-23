@@ -59,21 +59,35 @@ if (isset($_GET["ack"])) {
 if (isset($_GET["r"]) && isset($_GET["s"])) {
     $data = json_decode(base64_decode($_GET["r"]));
 
-    if ($simpleService->generateSignature(base64_decode($_GET["r"])) != $_GET["s"]) {
-        die("signature error");
-    }
-
+    //print_r($_SERVER);die;
     $transId  = $data->t;
     $event    = $data->e;
     $merchant = $data->m;
     $orderRef = $data->o;
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
+    if (!$foglalasData = sql_fetch_array(sql_query("select f.*, b.foglalasid, b.merchant from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
         die("reservation not found");
     }
 
-    $simpleService->setOrderId($foglalasData["id"]);
+    if ($foglalasData["merchant"] == "PUBLICTESTHUF") {
+        $simpleService->setSandBox(true);
+    }
+
+    if ($simpleService->generateSignature(base64_decode($_GET["r"])) != $_GET["s"]) {
+        die("signature error");
+    }
+
     $simpleService->setTransactionLog($orderRef, $transId, $event);
+
+    if (substr($foglalasData["foglalasid"], 0, 4) == "serv") {
+        //szolgáltatás vásárlás leágazás
+        $simpleService->setOrderId($foglalasData["foglalasid"]);
+        header("location:index.php?page=services&paymentresult={$foglalasData["foglalasid"]}");
+        die;
+    }
+
+
+    $simpleService->setOrderId($foglalasData["id"]);
 
     header("location:index.php?page=bookingvalidate&id={$foglalasData["id"]}&rk={$foglalasData["rkod"]}&setlang={$foglalasData["rlang"]}");
     die;
