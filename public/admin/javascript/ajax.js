@@ -2229,3 +2229,14 @@ function deleteAsset(tipus, id) {
     });
 }
 
+function toggleInvoiceFizetve(invId, partnerId) {
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?page=invoices',
+        data: {toggleinvoicefizetve: invId, partnerid:partnerId},
+        success: function (result) {
+            $("#invoicelist").html(result.html);
+        }
+    });
+
+}

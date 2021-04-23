@@ -300,6 +300,7 @@ class AdminStatPage extends AdminCorePage {
         $html.= "</select>";
 
         $html.="&nbsp;&nbsp;[<a href='index.php?page=salary'>Bérek</a>]";
+        $html.="&nbsp;&nbsp;[<a href='index.php?page=invoices'>Számlák</a>]";
 
         return $html;
     }
