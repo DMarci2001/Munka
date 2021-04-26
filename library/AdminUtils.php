@@ -201,6 +201,10 @@ class AdminUtils
         if (isset($_SESSION["adminuser"])) {
             $res = sql_query("select * from adminmenu where aktiv=1 order by sorrend, megnev");
             while ($menuData = sql_fetch_array($res)) {
+                //suzukinak csak 1 menüpont
+                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek") {
+                    continue;
+                }
 
                 if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"]["jogosultsag"] == 1 && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
                     $adminMenu[] = $menuData;

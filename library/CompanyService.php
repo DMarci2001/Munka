@@ -31,7 +31,9 @@ class CompanyService {
                 }
 
                 if ($d == "mscoltas") {
-                    $_GET["page"] = "oltasigenyfelmeres";
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "oltasigenyfelmeres";
+                    }
                     return;
                 }
             }

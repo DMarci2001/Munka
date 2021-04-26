@@ -11,6 +11,8 @@ class CorePage {
     public $showLangMenu = true;
     public $lockInPage = false;
 
+    public $showSuzukiLogo = false;
+
     public function __construct()
     {
         $this->utils = new Utils();
@@ -55,6 +57,10 @@ class CorePage {
             }
             return "<div class='fejlecdiv'>{$text}</div>";
         }
+    }
+
+    public function displayFejlexSuzuki($title) {
+        return "<div class='fejlecdiv_suzuki'>{$title}</div>";
     }
 
     public function showErrors($title = "") {

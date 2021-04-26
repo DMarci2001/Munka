@@ -36,6 +36,11 @@ class AdminPage {
         }
         if (!isset($_GET["page"])) {
             $_GET["page"] = "booking";
+
+            if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1) {
+                $_GET["page"] = "oltasigenyek";
+            }
+
         }
         if (!isset($_SESSION["helyid"])) {
             $_SESSION["helyid"] = 1;

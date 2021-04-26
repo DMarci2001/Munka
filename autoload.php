@@ -90,6 +90,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminSalaryPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminInvoicesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminOltasIgenyekPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");

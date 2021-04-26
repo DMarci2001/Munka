@@ -5,11 +5,12 @@ $(document).ready(function() {
     $("#oltas-submit-button").click(function() {
         let message = checkOltasForm();
         if (message != "") {
-            alert(message);
+            myAlert(message);
             return;
         }
 
         let params = $("#oltasform").serialize();
+        params["g-recaptcha-response"] = $("#g-recaptcha-response").val();
 
         $.ajax({
             type: 'POST',
@@ -18,13 +19,16 @@ $(document).ready(function() {
             success: function (result) {
                 if (result.error !== "") {
                     myAlert(result.error);
+                    grecaptcha.reset();
                     return;
                 }
-                $("#covidformdiv").html(result.html);
+                $("#oltasformdiv").html(result.html);
             }
         });
 
     });
+
+    checkOltasForm();
 });
 
 function checkOltasForm() {
@@ -36,9 +40,22 @@ function checkOltasForm() {
     let betegseg = $('input[name=betegseg]:checked', '#oltasform').val();
 
     let lazas = $('input[name=lazas]:checked', '#oltasform').val();
+    let atesett = $('input[name=atesett]:checked', '#oltasform').val();
+    let veralvadas = $('input[name=veralvadas]:checked', '#oltasform').val();
     let terhes = $('input[name=terhes]:checked', '#oltasform').val();
     let fogamzasgatlas = $('input[name=fogamzasgatlas]:checked', '#oltasform').val();
     let vedooltas = $('input[name=vedooltas]:checked', '#oltasform').val();
+    let oltasregisztralt = $('input[name=oltasregisztralt]:checked', '#oltasform').val();
+    let oltasmegkapta = $('input[name=oltasmegkapta]:checked', '#oltasform').val();
+    let igenybevenne = $('input[name=igenybevenne]:checked', '#oltasform').val();
+
+    if (igenybevenne === "1") {
+        $("#tovabbikerdesek").css("opacity", 1);
+        $('#tovabbikerdesek :input'). attr('disabled', false);
+    } else {
+        $("#tovabbikerdesek").css("opacity", .3);
+        $('#tovabbikerdesek :input'). attr('disabled', true);
+    }
 
     if (telconsultation === "1") {
         $("#telconsultationtextdiv").slideDown();
@@ -64,13 +81,15 @@ function checkOltasForm() {
         $("#betegsegtextdiv").slideUp();
     }
 
-    if ($("#nev").val().trim() == "" || $("#taj").val().trim() == "" || $("#email").val().trim() == "" || $("#telefon").val().trim() == "") {
-        formMessage = "Kérjük adja meg az adatait!";
+    if (formMessage == "") {
+        if (telconsultation === undefined || igenybevenne === undefined) {
+            formMessage = "Kérjük válaszoljon az összes kérdésre1!";
+        }
     }
 
-    if (formMessage == "") {
-        if (telconsultation === undefined || allergia === undefined || anafilaxia === undefined || betegseg === undefined || lazas === undefined || terhes === undefined || fogamzasgatlas === undefined || vedooltas === undefined) {
-            formMessage = "Kérjük válaszoljon az összes kérdésre!";
+    if (formMessage == "" && igenybevenne === "1") {
+        if (atesett === undefined || veralvadas === undefined || allergia === undefined || anafilaxia === undefined || betegseg === undefined || lazas === undefined || terhes === undefined || fogamzasgatlas === undefined || vedooltas === undefined || oltasregisztralt === undefined || oltasmegkapta === undefined) {
+            formMessage = "Kérjük válaszoljon az összes kérdésre2!";
         }
     }
 
@@ -79,7 +98,11 @@ function checkOltasForm() {
     }
 
     if (formMessage == "" && $("#responsiblity-confirmed").prop("checked") !== true) {
-        formMessage = "Kérjük fogadja el a büntetőjogi feltételt!";
+        formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megaott adatok a valóságnak megfelelnek!";
+    }
+
+    if (formMessage == "" && $("#trusted-data").prop("checked") !== true) {
+        formMessage = "Kérjük fogadja el a hozzájárulási nyilatkozatot!";
     }
 
     return formMessage;

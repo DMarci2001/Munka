@@ -100,6 +100,10 @@ class Page
             $mainURL = "index.php?page={$_GET["page"]}";
         }
 
+        if ($this->page->showSuzukiLogo) {
+            $html .= "<img height='45' src='images/suzuki_logo_2.png' alt='' title='Magyar Suzuki Zrt.' style='margin-right:10px;' /> ";
+        }
+
         if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
             $html .= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
         } else {
@@ -152,8 +156,12 @@ class Page
 
     private function _pageFooter()
     {
+        $class = "footercontainer";
+        if ($this->page->showSuzukiLogo) {
+            $class = "footercontainer_suzuki";
+        }
         $html = "";
-        $html .= "<div class='footercontainer'>";
+        $html .= "<div class='{$class}'>";
 
         $html .= "<div style='float:left;margin:0px 40px 10px 0px;'>" . Booking_Constants::FOOTER_ADDRESS_PARAM . "</div>";
         $html .= "<div style='float:left;margin:0px 10px 10px 0px;'>" . Booking_Constants::FOOTER_CONTACT_PARAM . "</div>";

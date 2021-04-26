@@ -46,9 +46,19 @@ a:hover {
     background-color:#fff;
     border-radius:5px;
 }
+
 .footercontainer {
     /* background:#3786be; */
     background: #b90000;
+    color:#fff;
+    padding:20px;
+    border-bottom-left-radius:5px;
+    border-bottom-right-radius:5px;
+}
+
+.footercontainer_suzuki {
+    /* background:#3786be; */
+    background: #003145;
     color:#fff;
     padding:20px;
     border-bottom-left-radius:5px;
@@ -331,6 +341,17 @@ input:not([type]), input[type="text"] , input[type="password"]{
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid #ccc;
+}
+
+.fejlecdiv_suzuki {
+    font-family:robotolight;
+    background:#003145;
+    color:#fff;
+    font-size:32px;
+    margin-bottom: 20px;
+    padding: 10px 10px 10px 10px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
 .fejlecdiv_hmm {
@@ -933,7 +954,7 @@ and (max-width: 1200px) {
         background-color:#fff;
         border-radius:0px;
     }
-    .footercontainer {
+    .footercontainer, footercontainer_suzuki {
         border-bottom-left-radius:0px;
         border-bottom-right-radius:0px;
     }
