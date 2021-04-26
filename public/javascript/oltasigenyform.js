@@ -34,7 +34,6 @@ $(document).ready(function() {
 function checkOltasForm() {
     let formMessage = "";
 
-    let telconsultation = $('input[name=telconsultation]:checked', '#oltasform').val();
     let allergia = $('input[name=allergia]:checked', '#oltasform').val();
     let anafilaxia = $('input[name=anafilaxia]:checked', '#oltasform').val();
     let betegseg = $('input[name=betegseg]:checked', '#oltasform').val();
@@ -47,21 +46,6 @@ function checkOltasForm() {
     let vedooltas = $('input[name=vedooltas]:checked', '#oltasform').val();
     let oltasregisztralt = $('input[name=oltasregisztralt]:checked', '#oltasform').val();
     let oltasmegkapta = $('input[name=oltasmegkapta]:checked', '#oltasform').val();
-    let igenybevenne = $('input[name=igenybevenne]:checked', '#oltasform').val();
-
-    if (igenybevenne === "1") {
-        $("#tovabbikerdesek").css("opacity", 1);
-        $('#tovabbikerdesek :input'). attr('disabled', false);
-    } else {
-        $("#tovabbikerdesek").css("opacity", .3);
-        $('#tovabbikerdesek :input'). attr('disabled', true);
-    }
-
-    if (telconsultation === "1") {
-        $("#telconsultationtextdiv").slideDown();
-    } else {
-        $("#telconsultationtextdiv").slideUp();
-    }
 
     if (allergia === "1") {
         $("#allergiatextdiv").slideDown();
@@ -82,14 +66,8 @@ function checkOltasForm() {
     }
 
     if (formMessage == "") {
-        if (telconsultation === undefined || igenybevenne === undefined) {
-            formMessage = "Kérjük válaszoljon az összes kérdésre1!";
-        }
-    }
-
-    if (formMessage == "" && igenybevenne === "1") {
         if (atesett === undefined || veralvadas === undefined || allergia === undefined || anafilaxia === undefined || betegseg === undefined || lazas === undefined || terhes === undefined || fogamzasgatlas === undefined || vedooltas === undefined || oltasregisztralt === undefined || oltasmegkapta === undefined) {
-            formMessage = "Kérjük válaszoljon az összes kérdésre2!";
+            formMessage = "Kérjük válaszoljon az összes kérdésre!";
         }
     }
 
@@ -99,10 +77,6 @@ function checkOltasForm() {
 
     if (formMessage == "" && $("#responsiblity-confirmed").prop("checked") !== true) {
         formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megaott adatok a valóságnak megfelelnek!";
-    }
-
-    if (formMessage == "" && $("#trusted-data").prop("checked") !== true) {
-        formMessage = "Kérjük fogadja el a hozzájárulási nyilatkozatot!";
     }
 
     return formMessage;

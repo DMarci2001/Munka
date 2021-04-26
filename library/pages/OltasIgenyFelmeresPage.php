@@ -34,6 +34,7 @@ class OltasIgenyFelmeresPage extends CorePage
     {
         parent::__construct();
 
+        $this->pageTitle = "Magyar Suzuki - Oltás igény felmérés";
         $this->lockInPage = true;
         $this->showLangMenu = false;
         $this->showMainMenu = false;
@@ -53,7 +54,7 @@ class OltasIgenyFelmeresPage extends CorePage
                 $_POST["szuldatum"] = $datum;
             }
 
-            if (empty($_POST["szuldatum"]) || empty($_POST["nev"])) {
+            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["torzsszam"])) {
                 $result["error"] = "Kérkük adja meg az adatait!";
             }
 
@@ -98,7 +99,7 @@ class OltasIgenyFelmeresPage extends CorePage
 
         echo "<form name='oltasform' id='oltasform' method='POST' enctype='multipart/form-data'>";
 
-        echo "<div>A Magyar Suzuki Corporation Dolgozóinak
+        echo "<div>A Magyar Suzuki dolgozóinak
             létrehozott Covid-19 oltási igény felmérő felülete. A Magyar Suzuki 
             oltópontot hoz létre munkavállalói részére, ahol lehetőség nyílik soron
             kívül és biztonságos módon a Covid-19 oltás beadására. A helyszínen
@@ -114,22 +115,25 @@ class OltasIgenyFelmeresPage extends CorePage
         echo "<table cellpadding='3' cellspacing='0'>";
         echo "<tr><td>Név:</td><td><input style='width:260px' type='text' value='{$_POST["nev"]}' name='nev' id='nev'></td></tr>";
         echo "<tr><td>Születési dátum:</td><td>" . $this->utils->datumSelector($_POST["szuldatum"], "szuldatum", 0, "") . "</td></tr>";
+        echo "<tr><td>TAJ:</td><td><input style='width:260px' type='text' value='{$_POST["taj"]}' name='taj' id='taj'></td></tr>";
+        echo "<tr><td>Magyar Suzuki<br/>törzsszám:</td><td><input style='width:260px' type='text' value='{$_POST["torszam"]}' name='torzsszam' id='torzsszam'></td></tr>";
         echo "<tr><td>E-mail: </td><td><input style='width:260px' type='text' value='{$_POST["email"]}' name='email' id='email'></td></tr>";
         echo "<tr><td>Telefonszám: </td><td><input style='width:260px' type='text' value='{$_POST["telefon"]}' name='telefon' id='telefon'></td></tr>";
         echo "</table>";
 
         //csoport
         echo "<div style='padding-bottom: 20px;margin-bottom: 20px;border-bottom: 1px solid #ccc;'>";
-        echo "<div style='margin-top:20px;'><strong>Melyik csoprtba tartozik?</strong></div>";
-        echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='csoport' value='a muszak' /> \"A\" műszak vagyok</div>";
-        echo "<div><input class='oltaselement' type='radio' name='csoport' value='b muszak' /> \"B\" műszak vagyok</div>";
-        echo "<div><input class='oltaselement' type='radio' name='csoport' value='office worker' /> \"Office Worker\" vagyok</div>";
+        echo "<div style='margin-top:20px;'><strong>Melyik csoportba tartozik?</strong></div>";
+        echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='csoport' value='a muszak' /> \"A\" műszak</div>";
+        echo "<div><input class='oltaselement' type='radio' name='csoport' value='b muszak' /> \"B\" műszak</div>";
+        echo "<div><input class='oltaselement' type='radio' name='csoport' value='office worker' /> Irodai dolgozó </div>";
+        echo "<div><input class='oltaselement' type='radio' name='csoport' value='karbantarto' /> Karbantartó </div>";
 
         //igénybe venne
-        echo "<div style='padding-bottom: 20px;margin-bottom: 20px;border-bottom: 1px solid #ccc;'>";
-        echo "<div style='margin-top:20px;'><strong>Igénybe venné-e Ön a Magyar Suzuki szervezésében az MSC telephelyén felállított oltóponton az oltást?</strong></div>";
-        echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='igenybevenne' value='1' /> IGEN</div>";
-        echo "<div><input class='oltaselement' type='radio' name='igenybevenne' value='0' /> NEM</div>";
+        //echo "<div style='padding-bottom: 20px;margin-bottom: 20px;border-bottom: 1px solid #ccc;'>";
+        //echo "<div style='margin-top:20px;'><strong>Igénybe venné-e Ön a Magyar Suzuki szervezésében az MSC telephelyén felállított oltóponton az oltást?</strong></div>";
+        //echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='igenybevenne' value='1' /> IGEN</div>";
+        //echo "<div><input class='oltaselement' type='radio' name='igenybevenne' value='0' /> NEM</div>";
 
         //vakcina
         echo "<div style='margin-top:20px;'><strong>Jelenleg az alábbi oltóanyago(ka)t tudjuk biztosítani, igényt tart-e az adott vakcinára?</strong></div>";
@@ -140,19 +144,9 @@ class OltasIgenyFelmeresPage extends CorePage
         //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina5' value='1' /> {$this->vakcinak[5]["name"]}</div>";
         //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina6' value='1' /> {$this->vakcinak[6]["name"]}</div>";
 
-        //telefonos konz
-        echo "<div style='margin-top:20px;'><strong>Igényt tart-e részletes telefonos konzultációra az oltást végző orvossal mielőtt hozzájárul az oltás beadásához?</strong></div>";
-        echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='telconsultation' value='1' /> IGEN</div>";
-        echo "<div id='telconsultationtextdiv' style='display:none;'><textarea name='telconsultationtext' class='inputbox' style='margin-left:5px;width:50%;min-width:340px;' placeholder='Igen esetén kérjük adjon meg egy Önnek alkalmas idősávot mikor kollégánk keresheti'></textarea></div>";
-        echo "<div><input class='oltaselement' type='radio' name='telconsultation' value='0' /> NEM</div>";
-
         echo "</div>";
 
-        echo "<div id='tovabbikerdesek' style='opacity:.3'>";
-
-        echo "<table cellpadding='3' cellspacing='0'>";
-        echo "<tr><td>TAJ:</td><td><input style='width:260px' type='text' value='{$_POST["taj"]}' name='taj' id='taj'></td></tr>";
-        echo "</table>";
+        echo "<div id='tovabbikerdesek' style='opacity:1'>";
 
         //allergia
         echo "<div style='margin-top:20px;'><strong>Van-e bármilyen allergiája (élelmiszer, gyógyszer, egyéb)?</strong></div>";
@@ -203,7 +197,7 @@ class OltasIgenyFelmeresPage extends CorePage
         echo "<div><input class='oltaselement' type='radio' name='oltasregisztralt' value='0' /> NEM</div>";
 
         //megkapta
-        echo "<div style='margin-top:20px;'><strong>Megkapta-e már Ön valamelyik oltóanyag 1. vagy 2. vagy mindkét dózisát?</strong></div>";
+        echo "<div style='margin-top:20px;'><strong>Kapott-e már Covid védőoltást?</strong></div>";
         echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='oltasmegkapta' value='1' /> IGEN</div>";
         echo "<div><input class='oltaselement' type='radio' name='oltasmegkapta' value='0' /> NEM</div>";
 
@@ -220,7 +214,7 @@ class OltasIgenyFelmeresPage extends CorePage
         }
         echo "<tr><td></td><td><div style='margin-top:10px'><input type='checkbox' class='online-fogleu-element' name='gdpr' id='gdpr' value='1' ".(isset($_POST["gdpr"])?"checked":"")." />&nbsp;Az <a href='https://bejelentkezes.hungariamed.hu/images/adatvedelmi_tajekoztato_rendelesi_mozaik_v4_210325.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.</div></td></tr>";
         echo "<tr><td></td><td><div style=\margin-top:5px;\><input type='checkbox' class='online-fogleu-element'  name='responsiblity-confirmed'  id='responsiblity-confirmed' " . (isset($_POST["responsiblity-confirmed"]) ? "checked" : "") . " value='1'>&nbsp;Kijelentem, hogy a megadott információk pontosak és megfelelnek a valóságnak.</div></td></tr>";
-        echo "<tr><td></td><td><div style='margin-top:5px'><input type='checkbox' class='online-fogleu-element' name='trusted-data' id='trusted-data' value='1' ".(isset($_POST["trusted-data"])?"checked":"")." /> Hozzájárulok, hogy a megadott egészségügyi adataim átadásra kerüljenek a [CÉG NEVE] foglalkozás-egészségügyi szolgáltató részére.</div></td></tr>";
+        //echo "<tr><td></td><td><div style='margin-top:5px'><input type='checkbox' class='online-fogleu-element' name='trusted-data' id='trusted-data' value='1' ".(isset($_POST["trusted-data"])?"checked":"")." /> Hozzájárulok, hogy a megadott egészségügyi adataim átadásra kerüljenek a [CÉG NEVE] foglalkozás-egészségügyi szolgáltató részére.</div></td></tr>";
         echo "</table>";
 
         echo "<div style='margin-top:30px;text-align: center;'><input type='button' name='oltas-submit-button' id='oltas-submit-button' class='newbutton' style='border:none' value='Adatok elküldése' /></div>";
@@ -234,7 +228,12 @@ class OltasIgenyFelmeresPage extends CorePage
     private function donePage():string {
         $html = "";
 
-        $html.= "<div style='margin:20px 0px 20px 0px;'><strong>Köszönjük a kitöltést!</strong></div>";
+        $html.= "<div style='margin:20px 0px 20px 0px;'>">
+        $html.="<div><strong>Köszönjük a kitöltést!</strong></div>";
+        if (isset($_POST["oltasregisztralt"]) && $_POST["oltasregisztralt"] == "0") {
+            $html .= "<div style='margin:10px 0px 0px 0px;'>Kérjük tegye meg a regisztrációját a vakcinainfo.gov.hu oldalon is!</div>";
+        }
+        $html.="</div>";
 
         return $html;
     }

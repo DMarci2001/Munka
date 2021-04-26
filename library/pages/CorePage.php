@@ -7,6 +7,8 @@ class CorePage {
 
     public $errors = [];
 
+    public $pageTitle;
+
     public $showMainMenu = true;
     public $showLangMenu = true;
     public $lockInPage = false;
@@ -20,6 +22,8 @@ class CorePage {
 
         $this->setLang();
 
+        //default pagetitle
+        $this->pageTitle = "{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés";
         //tiltott oldalak
         if (!isset($_SESSION["user"]) && isset($_GET["page"])) {
             if (in_array($_GET["page"], array("beutalok", "bookinglist","registration"))) {

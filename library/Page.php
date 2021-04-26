@@ -56,7 +56,7 @@ class Page
 
         header("Content-type: text/html; charset=UTF-8");
 
-        echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} online bejelentkezés");
+        echo $this->utils->htmlheader($this->page->pageTitle);
         echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . ">";
 
         echo "<div class='pagecontainer'>";
