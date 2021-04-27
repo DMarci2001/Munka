@@ -1,5 +1,6 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
 
 class OltasIgenyFelmeresPage extends CorePage
 {
@@ -55,7 +56,7 @@ class OltasIgenyFelmeresPage extends CorePage
             }
 
             if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["torzsszam"])) {
-                $result["error"] = "Kérkük adja meg az adatait!";
+                $result["error"] = "Kérjük adja meg az adatait!";
             }
 
             if (empty($result["error"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
@@ -69,6 +70,8 @@ class OltasIgenyFelmeresPage extends CorePage
             if ($result["error"] == "") {
                 unset($_POST["g-recaptcha-response"]);
                 sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasform_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
+
+                $this->doneEmail($_POST);
             }
 
             $this->utils->jsonOut($result);
@@ -192,7 +195,7 @@ class OltasIgenyFelmeresPage extends CorePage
         echo "<div><input class='oltaselement' type='radio' name='vedooltas' value='0' /> NEM</div>";
 
         //regisztrált oltásra
-        echo "<div style='margin-top:20px;'><strong>Regisztrált-e Ön oltásra a vakcinainfo.gov.hu- oldalon?</strong></div>";
+        echo "<div style='margin-top:20px;'><strong>Regisztrált-e Ön oltásra a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon?</strong></div>";
         echo "<div style='margin-top:10px;'><input class='oltaselement' type='radio' name='oltasregisztralt' value='1' /> IGEN</div>";
         echo "<div><input class='oltaselement' type='radio' name='oltasregisztralt' value='0' /> NEM</div>";
 
@@ -212,7 +215,7 @@ class OltasIgenyFelmeresPage extends CorePage
         if (!isset($_POST["g-recaptcha-response"])) {
             echo "<tr><td></td><td><div class='g-recaptcha' data-callback='recaptchaCallback' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         }
-        echo "<tr><td></td><td><div style='margin-top:10px'><input type='checkbox' class='online-fogleu-element' name='gdpr' id='gdpr' value='1' ".(isset($_POST["gdpr"])?"checked":"")." />&nbsp;Az <a href='https://bejelentkezes.hungariamed.hu/images/adatvedelmi_tajekoztato_rendelesi_mozaik_v4_210325.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.</div></td></tr>";
+        echo "<tr><td></td><td><div style='margin-top:10px'><input type='checkbox' class='online-fogleu-element' name='gdpr' id='gdpr' value='1' ".(isset($_POST["gdpr"])?"checked":"")." />&nbsp;Az <a href='https://bejelentkezes.hungariamed.hu/images/Hungariamed_Suzuki_oltasigenyles_adatvedelmi_tajekoztato_final_HR_0428_v2.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.</div></td></tr>";
         echo "<tr><td></td><td><div style=\margin-top:5px;\><input type='checkbox' class='online-fogleu-element'  name='responsiblity-confirmed'  id='responsiblity-confirmed' " . (isset($_POST["responsiblity-confirmed"]) ? "checked" : "") . " value='1'>&nbsp;Kijelentem, hogy a megadott információk pontosak és megfelelnek a valóságnak.</div></td></tr>";
         //echo "<tr><td></td><td><div style='margin-top:5px'><input type='checkbox' class='online-fogleu-element' name='trusted-data' id='trusted-data' value='1' ".(isset($_POST["trusted-data"])?"checked":"")." /> Hozzájárulok, hogy a megadott egészségügyi adataim átadásra kerüljenek a [CÉG NEVE] foglalkozás-egészségügyi szolgáltató részére.</div></td></tr>";
         echo "</table>";
@@ -231,10 +234,32 @@ class OltasIgenyFelmeresPage extends CorePage
         $html.= "<div style='margin:20px 0px 20px 0px;'>">
         $html.="<div><strong>Köszönjük a kitöltést!</strong></div>";
         if (isset($_POST["oltasregisztralt"]) && $_POST["oltasregisztralt"] == "0") {
-            $html .= "<div style='margin:10px 0px 0px 0px;'>Kérjük tegye meg a regisztrációját a vakcinainfo.gov.hu oldalon is!</div>";
+            $html .= "<div style='margin:10px 0px 0px 0px;'>Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!</div>";
         }
         $html.="</div>";
 
         return $html;
     }
+
+    private function doneEmail($data) {
+        $mail = new PHPMailer();
+        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->FromName = Booking_Constants::COMPANY_NAME;
+        $mail->AddAddress($data["email"]);
+        $mail->CharSet = "UTF-8";
+        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+        $mail->IsHTML(true);
+
+        $mail->Subject = "Értesítés oltási regisztrációról";
+        $mail->Body = "Tisztelt jelentkező!<br/>
+        <br/>
+        Köszönjük regisztrációját.<br/>
+        Oltási időpontjáról hamarosan értesítést küldünk e-mail címére és SMS-ben.<br/>
+        <br/>
+        Üdvözlettel:<br/>
+        Hungária Med-M Kft.";
+
+        $mail->Send();
+    }
+
 }

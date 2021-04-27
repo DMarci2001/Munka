@@ -76,7 +76,7 @@ function checkOltasForm() {
     }
 
     if (formMessage == "" && $("#responsiblity-confirmed").prop("checked") !== true) {
-        formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megaott adatok a valóságnak megfelelnek!";
+        formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megadott adatok a valóságnak megfelelnek!";
     }
 
     return formMessage;
