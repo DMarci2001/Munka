@@ -41,6 +41,11 @@ class OltasIgenyFelmeresPage extends CorePage
         $this->showMainMenu = false;
         $this->showSuzukiLogo = true;
 
+        if (isset($_GET["emailteszt"])) {
+            $data["email"] = "jnsmobil@gmail.com";
+            $this->doneEmail($data);
+        }
+
         if (isset($_REQUEST["oltasformsavedata"])) {
             $result = ["error" => "", "html" => $this->donePage()];
 
@@ -59,7 +64,7 @@ class OltasIgenyFelmeresPage extends CorePage
                 $result["error"] = "Kérjük adja meg az adatait!";
             }
 
-            if (empty($result["error"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
+            if (empty($result["error"]) && !filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
                 $result["error"] = "A megadott e-mail cím formátuma nem megfelelő!";
             }
 

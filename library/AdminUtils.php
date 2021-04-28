@@ -202,7 +202,7 @@ class AdminUtils
             $res = sql_query("select * from adminmenu where aktiv=1 order by sorrend, megnev");
             while ($menuData = sql_fetch_array($res)) {
                 //suzukinak csak 1 menüpont
-                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek") {
+                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek" && $_SESSION["adminuser"]["jogosultsag"] == 0) {
                     continue;
                 }
 
