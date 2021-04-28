@@ -560,3 +560,36 @@ function changeServicePaymentMethod(sid, method) {
         }
     })
 }
+
+function openDescription(id) {
+    var box = $("#sid-" + id + "-description");
+    if (typeof box.data("height") === "undefined") {
+        var height = (box.outerHeight() + 19);
+        box.data("height", height);
+    } else {
+        var height = box.outerHeight();
+    }
+
+    console.log(height);
+
+
+    box.css({ "height": height });
+    box.slideToggle("slow");
+
+}
+
+function startServiceOrderPay(fizId) {
+    $.ajax({
+        type: "POST",
+        url: "?page=services",
+        data: { startServiceOrderPay: true, fizId: fizId },
+        success: function (response) {
+            if (response == "") {
+                window.location.href = "index.php?page=services&startpay="+fizId
+                return;
+            } else {
+                alert(response);
+            }
+        }
+    })
+}

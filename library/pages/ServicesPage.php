@@ -57,6 +57,41 @@ class ServicesPage extends CorePage
                 }
             }
         }
+
+
+
+        if (isset($_GET["startpay"])) {
+            $fizId = intval($_GET["startpay"]);
+            $fizId = 89;
+
+            if (sql_fetch_array(sql_query("select id from szolgaltatasok_rendelesek_fizetesek where id=?", [$fizId]))) {
+                $simpleService = new SimplePayService();
+                $simpleService->setSandBox(true);
+                $simpleService->startPay(self::serviceTransactionId($fizId));
+                die;
+            }
+        }
+
+        /*
+        if (isset($_POST["startServiceOrderPay"])) {
+            $fizId = intval($_POST["fizId"]);
+            $fizId = 89;
+
+            if ($fizData = sql_query("select * from szolgaltatasok_rendelesek_fizetesek where id=?", [$fizId])->fetch(PDO::FETCH_ASSOC)) {
+                if (!$simpleService->getTransactionLog(self::serviceTransactionId($fizId))) {
+                    die;
+                }
+
+            }
+            echo "A fizetés indítása nem sikerült!";
+            die;
+        }
+        */
+
+    }
+
+    public static function serviceTransactionId($id) {
+        return "serv{$id}";
     }
 
     public function showPage()
@@ -66,6 +101,42 @@ class ServicesPage extends CorePage
         }*/
         echo $this->displayFejlec("Szolgáltatások", true);
         echo $this->showErrors();
+
+        $fizId = str_replace("serv", "", $_REQUEST["paymentresult"]);
+
+        //fizetés eredménnyel visszatérés
+        if (isset($_REQUEST["paymentresult"])) {
+            $paymentResult = sql_fetch_array(sql_query("select * from banktransactions where id=? and foglalasid=? limit 1", [$_REQUEST["transid"], $_REQUEST["paymentresult"]]));
+
+            //jogosultság ellenőrzés
+            if (!sql_fetch_array(sql_query("SELECT * FROM szolgaltatasok_rendelesek_fizetesek f 
+                LEFT JOIN szolgaltatasok_rendelesek r ON r.id=f.order_id
+                WHERE f.id = ? AND r.fid=?", [$fizId, $_SESSION["user"]["id"]]))) {
+                die("error 555");
+            }
+
+            $resultColor = "#f00";
+            if ($paymentResult["result"] == "CANCEL") {
+                $resultToShow = "A fizetés folyamatot megszakította!";
+            }
+            if ($paymentResult["result"] == "FAIL") {
+                $resultToShow = "A fizetés nem sikerült!";
+                sql_query("update szolgaltatasok_rendelesek_fizetesek set statusz=? where id=?", [$paymentResult["result"], $fizId]);
+            }
+
+            if ($paymentResult["result"] == "SUCCESS" || $paymentResult["result"] == "FINISHED") {
+                $resultColor = "#080";
+                $resultToShow = "A fizetés sikerült!";
+                sql_query("update szolgaltatasok_rendelesek_fizetesek set statusz=? where id=?", [$paymentResult["result"], $fizId]);
+            }
+
+
+
+            if (isset($resultToShow)) {
+                echo "<div style='margin:0px 0px 20px 0px;padding:10px;text-align: center;background:{$resultColor};color:#fff;'>{$resultToShow}</div>";
+            }
+        }
+
 
         $orderTable = $otr = $price = "";
 
@@ -116,7 +187,7 @@ class ServicesPage extends CorePage
                 }
 
                 $otr .= "<td>{$price} Ft</td>";
-                $otr .= "<td><a class=\"newbutton\">Fizetés</a></td>";
+                $otr .= "<td><a class=\"newbutton\" href='?page=services&startpay={$result["id"]}'>Fizetés</a></td>";
                 $otr .= "</tr>";
             }
         }

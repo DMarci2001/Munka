@@ -37,6 +37,7 @@ require_once(__DIR__ . "/library/pages/CovidFormPage.php");
 require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
 require_once(__DIR__ . "/library/pages/OltasIgenyFelmeresPage.php");
 require_once(__DIR__ . "/library/pages/ElsosegelyVizsgaPage.php");
+require_once(__DIR__ . "/library/pages/ServicesPage.php");
 require_once(__DIR__ . "/library/Page.php");
 require_once(__DIR__ . "/library/DocAgent.php");
 require_once(__DIR__ . "/library/BookingService.php");

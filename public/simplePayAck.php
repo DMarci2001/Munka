@@ -65,7 +65,7 @@ if (isset($_GET["r"]) && isset($_GET["s"])) {
     $merchant = $data->m;
     $orderRef = $data->o;
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select f.*, b.foglalasid, b.merchant from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
+    if (!$foglalasData = sql_fetch_array(sql_query("select f.*, b.foglalasid, b.merchant, b.id as banktransid from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
         die("reservation not found");
     }
 
@@ -82,7 +82,7 @@ if (isset($_GET["r"]) && isset($_GET["s"])) {
     if (substr($foglalasData["foglalasid"], 0, 4) == "serv") {
         //szolgáltatás vásárlás leágazás
         $simpleService->setOrderId($foglalasData["foglalasid"]);
-        header("location:index.php?page=services&paymentresult={$foglalasData["foglalasid"]}");
+        header("location:index.php?page=services&paymentresult={$foglalasData["foglalasid"]}&transid={$foglalasData["banktransid"]}");
         die;
     }
 
