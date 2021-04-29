@@ -62,7 +62,6 @@ class ServicesPage extends CorePage
 
         if (isset($_GET["startpay"])) {
             $fizId = intval($_GET["startpay"]);
-            $fizId = 89;
 
             if (sql_fetch_array(sql_query("select id from szolgaltatasok_rendelesek_fizetesek where id=?", [$fizId]))) {
                 $simpleService = new SimplePayService();
@@ -71,22 +70,6 @@ class ServicesPage extends CorePage
                 die;
             }
         }
-
-        /*
-        if (isset($_POST["startServiceOrderPay"])) {
-            $fizId = intval($_POST["fizId"]);
-            $fizId = 89;
-
-            if ($fizData = sql_query("select * from szolgaltatasok_rendelesek_fizetesek where id=?", [$fizId])->fetch(PDO::FETCH_ASSOC)) {
-                if (!$simpleService->getTransactionLog(self::serviceTransactionId($fizId))) {
-                    die;
-                }
-
-            }
-            echo "A fizetés indítása nem sikerült!";
-            die;
-        }
-        */
 
     }
 
