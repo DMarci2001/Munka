@@ -1,5 +1,7 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
+
 class AdminOltasIgenyekPage extends AdminCorePage
 {
 
@@ -10,6 +12,39 @@ class AdminOltasIgenyekPage extends AdminCorePage
         parent::__construct();
         $this->bookingService = new BookingService();
 
+
+        if (isset($_GET["sendmessage"])) {
+            $igenyles = sql_query("SELECT * FROM webservicelog WHERE id=? AND ACTION='oltasform_new' order by datum desc", [$_GET["sendmessage"]])->fetch(PDO::FETCH_ASSOC);
+
+            $data = json_decode($igenyles["keres"], JSON_OBJECT_AS_ARRAY);
+
+            //$data["email"] = "kuzdyg@gmail.com";
+            //$data["telefon"] = "06306521732";
+
+            $idopont = "2021-05-01 12:00";
+
+            $szovegSMS = "Kedves ügyfelünk, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton. Hungáriamed csapata";
+            $szovegEmail = "Kedves ügyfelünk!<br/><br/>{$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.<br/><br/>Hungáriamed csapata";
+            //$this->utils->sendSMS($data["telefon"], $szovegSMS);
+
+            $mail = new PHPMailer();
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->AddAddress($data["email"]);
+            $mail->CharSet = "UTF-8";
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+
+            $mail->Subject = "Értesítés oltás időpontról";
+            $mail->Body = $szovegEmail;
+
+            //$mail->Send();
+
+            sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasform_message', response=?", [intval($_GET["sendmessage"]), $szovegSMS]);
+
+            header("location: index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}");
+            die;
+        }
     }
 
     public function showPage() {
@@ -134,6 +169,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
         $html.="<td style='padding:5px;'>Taj szám</td>";
         $html.="<td style='padding:5px;'>Törzsszám</td>";
         $html.="<td style='padding:5px;'>Választott vakcina</td>";
+        $html.="<td style='padding:5px;'>Message</td>";
         $html.="</tr>";
 
         foreach ($igenylesek as $igenyData) {
@@ -154,8 +190,13 @@ class AdminOltasIgenyekPage extends AdminCorePage
                 $formData["torzsszam"] = "";
             }
 
+            $messageText = "";
+            if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='oltasform_message' and keres=? limit 1", [$igenyData["id"]]))) {
+                $messageText = $message["response"];
+            }
+
             $html.="<tr>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();' href='#'>Válaszok</a>]</td>";
+            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();' href='#'>Válaszok</a>] [<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>]</td>";
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
@@ -165,6 +206,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["taj"]}</td>";
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["torzsszam"]}</td>";
             $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>".implode(", ", $selectedVakcina)."</td>";
+            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$messageText}</td>";
             $html.="</tr>";
 
             $html.="<tr>";

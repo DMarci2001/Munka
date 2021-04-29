@@ -529,6 +529,23 @@ class Utils {
         return $result["result"]=="OK";
     }
 
+    public function sendSMSRaw($num,$szoveg) {
+        $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
+
+        try {
+            $SeeMe->sendSMS($num, $szoveg);
+        } catch (SeeMeGatewayException $e) {
+            //print_r($SeeMe->getResult());
+            //die();
+        }
+        $result = $SeeMe->getResult();
+        //print_r($result);
+
+        @sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?",array($num,$szoveg,print_r($SeeMe->getResult(),true)));
+
+        return $result["result"]=="OK";
+    }
+
 
     public function ENS($companies) {
         foreach ($companies as $company) {
