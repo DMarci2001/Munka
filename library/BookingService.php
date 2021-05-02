@@ -696,8 +696,15 @@ class BookingService
 
         $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles 
                                                     FROM orvos_beosztas b
-                                                    WHERE helyszinid=? and cegid=? and (instr(tipusok, '|{$szuresTipus}|') and b.orvosid=?) and aktiv=1 and (b.nap=? or (b.nap=10 and b.beonap=?)) AND (b.hetek=0 OR (WEEK(? ,3)%2=0 AND b.hetek=2)) {$orvosRestrict} HAVING MAX(tol) IS NOT NULL",
-            [$helyszinId, $cegId, $orvosId, $wd, $nap, $nap]));
+                                                    WHERE helyszinid=? and cegid=? and (instr(tipusok, '|{$szuresTipus}|') and b.orvosid=?) and aktiv=1 
+                                                      AND (b.nap=? or (b.nap=10 and b.beonap=?)) 
+                                                      AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) 
+                                                      {$orvosRestrict} HAVING MAX(tol) IS NOT NULL",
+            [$helyszinId, $cegId, $orvosId, $wd, $nap, $nap, $nap]));
+
+
+        //WHERE helyszinid=? and cegid=? and (instr(tipusok, '|{$szuresTipus}|') and b.orvosid=?) and aktiv=1 and (b.nap=? or (b.nap=10 and b.beonap=?)) AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) {$orvosRestrict} HAVING MAX(tol) IS NOT NULL",
+
 
         if ($minMaxData["maxpotigrendeles"] > $minMaxData["maxrendeles"]) {
             $minMaxData["maxrendeles"] = $minMaxData["maxpotigrendeles"];
