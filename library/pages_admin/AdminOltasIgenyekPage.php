@@ -6,12 +6,29 @@ class AdminOltasIgenyekPage extends AdminCorePage
 {
 
     private $bookingService;
+    private $vakcinak;
+    private $eljottek = 0;
 
     public function __construct()
     {
         parent::__construct();
         $this->bookingService = new BookingService();
 
+        $oltasPage = new OltasIgenyFelmeresPage();
+        $this->vakcinak = $oltasPage->vakcinak;
+
+
+        if (isset($_POST["oltaseljottcheck"])) {
+            $id = $_POST["oltaseljottcheck"];
+            if ($data = sql_fetch_array(sql_query("select id from webservicelog where tipus=23 and keres=? and action='oltasform_eljott'", [$id]))) {
+                sql_query("delete from webservicelog where id=?", [$data["id"]]);
+            } else {
+                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasform_eljott'", [$id]);
+            }
+
+            echo $this->personRow(sql_fetch_array(sql_query("select * from webservicelog where id=?", [$id])));
+            die;
+        }
 
         if (isset($_GET["sendmessage"])) {
             $igenyles = sql_query("SELECT * FROM webservicelog WHERE id=? AND ACTION='oltasform_new' order by datum desc", [$_GET["sendmessage"]])->fetch(PDO::FETCH_ASSOC);
@@ -21,7 +38,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             //$data["email"] = "kuzdyg@gmail.com";
             //$data["telefon"] = "06306521732";
 
-            $idopont = "2021-05-01 12:00";
+            $idopont = "2021-05-01 13:00";
 
             $szovegSMS = "Kedves ügyfelünk, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton. Hungáriamed csapata";
             $szovegEmail = "Kedves ügyfelünk!<br/><br/>{$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.<br/><br/>Hungáriamed csapata";
@@ -45,6 +62,79 @@ class AdminOltasIgenyekPage extends AdminCorePage
             header("location: index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}");
             die;
         }
+
+        if (isset($_GET["reportmail"])) {
+            $szovegEmail = "Regisztráltak, de nem jelentek meg:<br/>
+<br/>
+04-30 08:00<br/>
+Balogh Miklós office worker 06704174128 mbalogh@suzuki.hu<br/>
+Patrik Hajósi b muszak 317850876 hajpatrik@outlook.com<br/>
+<br/>
+04-30 10:00<br/>
+Szirányi Viktória office worker 303207512 vsziranyi@suzuki.hu<br/>
+Gyerák András a muszak 06308868005 andrasgyerak90@gmail.com<br/>
+<br/>
+04-30 11:00<br/>
+Ronyecz Krisztina b muszak 06702152814 Krisztironyecz@gmail.com<br/>
+Làzi Oszkàr b muszak 06703959047 Oszividampark@gmail.com<br/>
+<br/>
+04-30 12:00<br/>
+Kovács ladislav b muszak +421911642238 lacikovacs775@gmail.com<br/>
+Csapó Tamás office worker 305950425 csatomi@t-online.hu<br/>
+<br/>
+04-30 13:00<br/>
+Priskin Lászlóné a muszak 308776604 andi4774@freemail.hu<br/>
+Rostás Péter b muszak 06205010047 peterrostas870@gmail.com<br/>
+Tóth Gábor a muszak 209893006 tothg087@gmail.com<br/>
+<br/>
+<br/>
+05-01 08:00<br/>
+Dávid János	a muszak 06704216559 iamdavidjanos@gmail.com<br/>
+Horváth-Szeder Kata b muszak 06302541208 hszederkata@gmail.com<br/>
+<br/>
+05-01 09:00<br/>
+Schwarz Erika F a muszak +36308574901 balazs20160816@gmail.com<br/>
+Horváth István b muszak 06306510161 bogar33@citromail.hu <br/>
+Tar Zoltán a muszak 0620 232 5701 zolisuzuki83@gmail.com<br/>
+<br/>
+05-01 10:00<br/>
+Molnár Ferenc b muszak +36702083893 molnarf39@gmail.com<br/>
+<br/>
+05-01 11:00<br/>
+Rajnoha Fridrich b muszak +421907163378 fregyo78@azet.sk<br/>
+<br/>
+05-01 12:00<br/>
+Bertók János office worker +36209309933 jbertok2@gmail.com<br/>
+Nyúl-Klein Kinga office worker 06-30-419-2829 kklein@suzuki.hu<br/>
+Kiss László Imre a muszak 06709537313 papalaci6107@gmail.com<br/>
+Víg László a muszak 06302967879 viglacikolyok72@gmail.com<br/>
+<br/>
+05-01 13:00<br/>
+Pataki István Róbert office worker 06208522146 pataliirobi@gmail.com<br/>
+Illés Dániel b muszak 06203418253 illesdani687@gmail.com<br/>
+Török László a muszak 06303145372 laszlot342@gmail.com<br/>
+Szenkovits Mónika a muszak +36706017502 szwnkomoncsi@gmail.com<br/>
+Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
+
+            ";
+
+            $mail = new PHPMailer();
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->AddAddress("ateberi@suzuki.hu");
+            $mail->AddAddress("mbalogh@suzuki.hu");
+            $mail->AddAddress("kuzdyg@gmail.com");
+            $mail->addBCC("jns@jns.hu");
+            $mail->CharSet = "UTF-8";
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+            $mail->Subject = "Suzuki oltóponton nem megjelentek";
+            $mail->Body = $szovegEmail;
+            $mail->Send();
+
+            echo "mail sent<br>";
+        }
+
     }
 
     public function showPage() {
@@ -55,7 +145,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
         }
 
         if (!isset($_GET["subpage"])) {
-            if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
+            if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
                 echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             }
             echo $this->showOltasIgenyek();
@@ -150,17 +240,16 @@ class AdminOltasIgenyekPage extends AdminCorePage
     private function showAllIgeny() {
         $html = "";
 
+        $this->eljottek = 0;
         $igen = "<span style='color:#a00;'>IGEN</span>";
         $nem = "<span style='color:#080;'>NEM</span>";
-        $oltasPage = new OltasIgenyFelmeresPage();
-        $vakcinak = $oltasPage->vakcinak;
 
-        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='oltasform_new' order by datum desc")->fetchAll(PDO::FETCH_ASSOC);
+        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='oltasform_new' order by datum")->fetchAll(PDO::FETCH_ASSOC);
 
         $html.="<table cellpadding='0' cellspacing='0'>";
         $html.="<tr style='background:#ddd;font-weight: bold'>";
         $html.="<td style='padding:5px;'></td>";
-        $html.="<td style='padding:5px;'>Dátum</td>";
+        $html.="<td style='padding:5px;'>Beérkezett</td>";
         $html.="<td style='padding:5px;'>Név</td>";
         $html.="<td style='padding:5px;'>Csoport</td>";
         $html.="<td style='padding:5px;'>születési dátum</td>";
@@ -169,44 +258,24 @@ class AdminOltasIgenyekPage extends AdminCorePage
         $html.="<td style='padding:5px;'>Taj szám</td>";
         $html.="<td style='padding:5px;'>Törzsszám</td>";
         $html.="<td style='padding:5px;'>Választott vakcina</td>";
-        $html.="<td style='padding:5px;'>Message</td>";
+        $html.="<td style='padding:5px;'>Kiküldött időpont</td>";
         $html.="</tr>";
 
         foreach ($igenylesek as $igenyData) {
             $formData = json_decode($igenyData["keres"], JSON_OBJECT_AS_ARRAY);
 
-            $selectedVakcina = [];
-            foreach ($vakcinak as $vakcinaId => $vakcinaData) {
-                if (isset($formData["vakcina{$vakcinaId}"])) {
-                    $selectedVakcina[] = $vakcinaData["name"];
-                }
-            }
-
-            if (!isset($formData["taj"])) {
-                $formData["taj"] = "";
-            }
-
-            if (!isset($formData["torzsszam"])) {
-                $formData["torzsszam"] = "";
-            }
-
-            $messageText = "";
+            $idopont = "";
             if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='oltasform_message' and keres=? limit 1", [$igenyData["id"]]))) {
-                $messageText = $message["response"];
+                $idopont = substr($message["response"], 20, 16);
             }
 
-            $html.="<tr>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();' href='#'>Válaszok</a>] [<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>]</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["szuldatum"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["telefon"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["email"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["taj"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["torzsszam"]}</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>".implode(", ", $selectedVakcina)."</td>";
-            $html.="<td style='padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$messageText}</td>";
+            if (date("Y-m-d", strtotime($idopont)) == "2021-04-30") {
+                //continue;
+            }
+
+
+            $html.="<tr id='personrow{$igenyData["id"]}'>";
+            $html.=$this->personRow($igenyData);
             $html.="</tr>";
 
             $html.="<tr>";
@@ -237,9 +306,61 @@ class AdminOltasIgenyekPage extends AdminCorePage
         }
         $html.="</table>";
 
+        $html.="<div style='margin:20px 0px 0px 5px;'>Eljöttek száma: {$this->eljottek} fő</div>";
+
         return $html;
     }
 
 
+    private function personRow($igenyData):string {
+        $formData = json_decode($igenyData["keres"], JSON_OBJECT_AS_ARRAY);
+
+        if (!isset($formData["taj"])) {
+            $formData["taj"] = "";
+        }
+
+        if (!isset($formData["torzsszam"])) {
+            $formData["torzsszam"] = "";
+        }
+
+        $selectedVakcina = [];
+        foreach ($this->vakcinak as $vakcinaId => $vakcinaData) {
+            if (isset($formData["vakcina{$vakcinaId}"])) {
+                $selectedVakcina[] = $vakcinaData["name"];
+            }
+        }
+
+        $idopont = "";
+        if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='oltasform_message' and keres=? limit 1", [$igenyData["id"]]))) {
+            $idopont = substr($message["response"], 20, 16);
+        }
+
+        $background = "";
+        if (sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='oltasform_eljott' and keres=? limit 1", [$igenyData["id"]]))) {
+            $background = "background:#9f9;";
+            $this->eljottek++;
+        }
+
+        $html = "";
+
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
+        if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
+            $html.="[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>] ";
+        }
+        $html.="[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";
+        $html.="</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["szuldatum"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["telefon"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["email"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["taj"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["torzsszam"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>".implode(", ", $selectedVakcina)."</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$idopont}</td>";
+
+        return $html;
+    }
 }
 

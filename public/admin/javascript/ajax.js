@@ -2240,3 +2240,15 @@ function toggleInvoiceFizetve(invId, partnerId) {
     });
 
 }
+
+function oltasEljottCheck(id) {
+    $.ajax({
+        type: "POST",
+        url: "?page=oltasigenyek&subpage=showall",
+        data: { oltaseljottcheck: id },
+        success: function (response) {
+            $("#personrow"+id).html(response);
+        }
+    })
+
+}
