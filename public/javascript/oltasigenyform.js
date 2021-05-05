@@ -34,6 +34,7 @@ $(document).ready(function() {
 function checkOltasForm() {
     let formMessage = "";
 
+    let csoport = $('input[name=csoport]:checked', '#oltasform').val();
     let allergia = $('input[name=allergia]:checked', '#oltasform').val();
     let anafilaxia = $('input[name=anafilaxia]:checked', '#oltasform').val();
     let betegseg = $('input[name=betegseg]:checked', '#oltasform').val();
@@ -46,6 +47,12 @@ function checkOltasForm() {
     let vedooltas = $('input[name=vedooltas]:checked', '#oltasform').val();
     let oltasregisztralt = $('input[name=oltasregisztralt]:checked', '#oltasform').val();
     let oltasmegkapta = $('input[name=oltasmegkapta]:checked', '#oltasform').val();
+
+    if (csoport === "egyeb") {
+        $("#csoporttextdiv").slideDown();
+    } else {
+        $("#csoporttextdiv").slideUp();
+    }
 
     if (allergia === "1") {
         $("#allergiatextdiv").slideDown();

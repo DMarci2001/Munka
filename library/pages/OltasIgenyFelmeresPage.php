@@ -136,6 +136,8 @@ class OltasIgenyFelmeresPage extends CorePage
         echo "<div><input class='oltaselement' type='radio' name='csoport' value='b muszak' /> \"B\" műszak</div>";
         echo "<div><input class='oltaselement' type='radio' name='csoport' value='office worker' /> Irodai dolgozó </div>";
         echo "<div><input class='oltaselement' type='radio' name='csoport' value='karbantarto' /> Karbantartó </div>";
+        echo "<div><input class='oltaselement' type='radio' name='csoport' value='egyeb' /> nem Magyar Suzuki dolgozó</div>";
+        echo "<div id='csoporttextdiv' style='display:none;'><textarea name='csoporttext' class='inputbox' style='margin-left:5px;width:50%;min-width:340px;' placeholder='Kérjük adja meg melyik partnercégnél dolgozik'></textarea></div>";
 
         //igénybe venne
         //echo "<div style='padding-bottom: 20px;margin-bottom: 20px;border-bottom: 1px solid #ccc;'>";

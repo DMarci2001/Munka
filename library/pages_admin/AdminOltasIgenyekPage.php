@@ -30,6 +30,13 @@ class AdminOltasIgenyekPage extends AdminCorePage
             die;
         }
 
+        if (isset($_GET["deletemscrow"])) {
+            sql_query("update webservicelog set action='oltasform_deleted' where id=? limit 1", [$_GET["deletemscrow"]]);
+            header("location: index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}");
+            die;
+        }
+
+
         if (isset($_GET["sendmessage"])) {
             $igenyles = sql_query("SELECT * FROM webservicelog WHERE id=? AND ACTION='oltasform_new' order by datum desc", [$_GET["sendmessage"]])->fetch(PDO::FETCH_ASSOC);
 
@@ -246,6 +253,12 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
         $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='oltasform_new' order by datum")->fetchAll(PDO::FETCH_ASSOC);
 
+        if (isset($_GET["report2"])) {
+            $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='oltasform_new' order by instr(keres,'egyeb'), instr(keres,'office worker'), instr(keres,'karbantarto'), instr(keres,'b muszak'), instr(keres,'a muszak'), datum")->fetchAll(PDO::FETCH_ASSOC);
+
+        }
+
+
         $html.="<table cellpadding='0' cellspacing='0'>";
         $html.="<tr style='background:#ddd;font-weight: bold'>";
         $html.="<td style='padding:5px;'></td>";
@@ -269,6 +282,10 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
                 $idopont = substr($message["response"], 20, 16);
             }
 
+            if ($idopont != "" && isset($_GET["report2"])) {
+                continue;
+            }
+
             if (date("Y-m-d", strtotime($idopont)) == "2021-04-30") {
                 //continue;
             }
@@ -278,30 +295,31 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             $html.=$this->personRow($igenyData);
             $html.="</tr>";
 
-            $html.="<tr>";
-            $html.="<td id='valaszok{$igenyData["id"]}' colspan='12' style='padding:5px 5px 5px 5px;display: none;'>";
+            if (!isset($_GET["report2"])) {
+                $html .= "<tr>";
+                $html .= "<td id='valaszok{$igenyData["id"]}' colspan='12' style='padding:5px 5px 5px 5px;display: none;'>";
 
-            $html.="Van-e bármilyen allergiája (élelmiszer, gyógyszer, egyéb)? ".($formData["allergia"]==1?$igen:$nem)."<br/>";
-            if (isset($formData["allergiatext"]) && $formData["allergiatext"] != "") {
-                $html.="<span style='color:#888;text-decoration: underline;'>{$formData["allergiatext"]}</span><br/>";
+                $html .= "Van-e bármilyen allergiája (élelmiszer, gyógyszer, egyéb)? " . ($formData["allergia"] == 1 ? $igen : $nem) . "<br/>";
+                if (isset($formData["allergiatext"]) && $formData["allergiatext"] != "") {
+                    $html .= "<span style='color:#888;text-decoration: underline;'>{$formData["allergiatext"]}</span><br/>";
+                }
+                $html .= "Védőoltás beadását követően volt-e anafilaxiás reakciója? " . ($formData["anafilaxia"] == 1 ? $igen : $nem) . "<br/>";
+                if (isset($formData["anafilaxiatext"]) && $formData["anafilaxiatext"] != "") {
+                    $html .= "<span style='color:#888;text-decoration: underline;font-weight: bold;'>{$formData["anafilaxiatext"]}</span><br/>";
+                }
+                $html .= "Volt-e lázas beteg az elmúlt 2 hétben? " . ($formData["lazas"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Terhes? " . ($formData["terhes"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Van-e tartós, krónikus betegsége? (cukorbetegség, magas vérnyomás, asztma, szív-, vesebetegség stb.)? " . ($formData["betegseg"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Volt-e Önnek valaha véralvadási megbetegedése (mélyvénás-trombózis, tüdőembólia, szívinfarktus, STROKE (agyi infarktus)? " . ($formData["veralvadas"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Fogamzásgátlót szed-e? " . ($formData["fogamzasgatlas"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Kapott-e az elmúlt 4 hétben védő oltást? " . ($formData["vedooltas"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Regisztrált-e Ön oltásra a vakcinainfo.gov.hu oldalon? " . ($formData["oltasregisztralt"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Kapott-e már Covid védőoltást? " . ($formData["oltasmegkapta"] == 1 ? $igen : $nem) . "<br/>";
+                $html .= "Átesett-e 3 hónapon belül PCR vizsgálattal igazolt Covid fertőzésen? " . ($formData["atesett"] == 1 ? $igen : $nem) . "<br/>";
+
+                $html .= "</td>";
+                $html .= "</tr>";
             }
-            $html.="Védőoltás beadását követően volt-e anafilaxiás reakciója? ".($formData["anafilaxia"]==1?$igen:$nem)."<br/>";
-            if (isset($formData["anafilaxiatext"]) && $formData["anafilaxiatext"] != "") {
-                $html.="<span style='color:#888;text-decoration: underline;font-weight: bold;'>{$formData["anafilaxiatext"]}</span><br/>";
-            }
-            $html.="Volt-e lázas beteg az elmúlt 2 hétben? ".($formData["lazas"]==1?$igen:$nem)."<br/>";
-            $html.="Terhes? ".($formData["terhes"]==1?$igen:$nem)."<br/>";
-            $html.="Van-e tartós, krónikus betegsége? (cukorbetegség, magas vérnyomás, asztma, szív-, vesebetegség stb.)? ".($formData["betegseg"]==1?$igen:$nem)."<br/>";
-            $html.="Volt-e Önnek valaha véralvadási megbetegedése (mélyvénás-trombózis, tüdőembólia, szívinfarktus, STROKE (agyi infarktus)? ".($formData["veralvadas"]==1?$igen:$nem)."<br/>";
-            $html.="Fogamzásgátlót szed-e? ".($formData["fogamzasgatlas"]==1?$igen:$nem)."<br/>";
-            $html.="Kapott-e az elmúlt 4 hétben védő oltást? ".($formData["vedooltas"]==1?$igen:$nem)."<br/>";
-            $html.="Regisztrált-e Ön oltásra a vakcinainfo.gov.hu oldalon? ".($formData["oltasregisztralt"]==1?$igen:$nem)."<br/>";
-            $html.="Kapott-e már Covid védőoltást? ".($formData["oltasmegkapta"]==1?$igen:$nem)."<br/>";
-            $html.="Átesett-e 3 hónapon belül PCR vizsgálattal igazolt Covid fertőzésen? ".($formData["atesett"]==1?$igen:$nem)."<br/>";
-
-            $html.="</td>";
-            $html.="</tr>";
-
 
         }
         $html.="</table>";
@@ -341,11 +359,22 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             $this->eljottek++;
         }
 
+        if ($formData["csoport"] == "egyeb" && !empty($formData["csoporttext"])) {
+            $formData["csoport"] = "<span style='font-style: italic;'>".substr(trim(strip_tags($formData["csoporttext"])), 0, 50)."</span>";
+        }
+
         $html = "";
 
         $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
+
+            $week = date("W", strtotime("next week monday"));
+            $paros = $week % 2;
+
+            $html.= "{$week} {$paros}";
+
             $html.="[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>] ";
+            $html.="[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&deletemscrow={$igenyData["id"]}' onclick='return confirm(\"Biztos törlöd ezt a sort?\");'>Törlés</a>] ";
         }
         $html.="[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";
         $html.="</td>";
@@ -364,3 +393,4 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
     }
 }
 
+//excel password: Ya8Eisao
