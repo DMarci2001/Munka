@@ -53,14 +53,14 @@ class AdminOltasIgenyekPage extends AdminCorePage
             //$data["email"] = "kuzdyg@gmail.com";
             //$data["telefon"] = "06306521732";
 
-            $idopont = "2021-05-08 11:30";
+            $idopont = "2021-05-08 12:30";
 
-            //$szovegSMS = "Figyelem, további információ az oltással kapcsolatban: Kérjük 6:00-kor vegye fel a munkát. Az oltási időpontjára elengedik a termelésből. Helyettesítés biztosítva lesz. Az oltás után nem kell tovább folytatni a munkát.";
+            $extraMessage = "";
+            //$extraMessage.= " Kérjük 6:00-kor vegye fel a munkát. Az oltási időpontjára elengedik a termelésből. Helyettesítés biztosítva lesz. Az oltás után nem kell tovább folytatni a munkát.";
 
-
-            $szovegSMS = "Kedves ügyfelünk, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton. Hungáriamed csapata";
-            $szovegEmail = "Kedves ügyfelünk!<br/><br/>{$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.<br/><br/>Hungáriamed csapata";
-            if (substr($data["telefon"], 0, 1) == "+") {
+            $szovegSMS = "Kedves ügyfelünk, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton. Hungáriamed csapata.{$extraMessage}";
+            $szovegEmail = "Kedves ügyfelünk!<br/><br/>{$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.{$extraMessage}<br/><br/>Hungáriamed csapata";
+            if (substr($data["telefon"], 0, 1) == "+" || substr($data["telefon"], 0, 2) == "00") {
                 $this->utils->sendSMSRaw($data["telefon"], $szovegSMS);
             } else {
                 $this->utils->sendSMS($data["telefon"], $szovegSMS);
@@ -306,7 +306,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             }
 
             if ($formData["csoport"] != "a muszak") {
-                continue;
+                //continue;
             }
 
 

@@ -14,6 +14,9 @@ class CorePage {
     public $lockInPage = false;
 
     public $showSuzukiLogo = false;
+    public $showSamsungLogo = false;
+
+    public $langList = ["hu", "en", "de"];
 
     public function __construct()
     {

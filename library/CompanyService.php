@@ -11,7 +11,7 @@ class CompanyService {
     }
 
     private function _domainProcess() {
-        $d = $this->_getSubDomain();
+        $d = $GLOBALS["subdomain"] = $this->_getSubDomain();
 
         if ($d == "ertekeles") {
             $GLOBALS["ertekeles"] = 1;
@@ -33,6 +33,13 @@ class CompanyService {
                 if ($d == "mscoltas") {
                     if (!isset($GLOBALS["admin"])) {
                         $_GET["page"] = "oltasigenyfelmeres";
+                    }
+                    return;
+                }
+
+                if ($d == "secl") {
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "oltasjelentkezes";
                     }
                     return;
                 }

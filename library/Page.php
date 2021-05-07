@@ -93,7 +93,7 @@ class Page
         $html .= "<div class='headercontainer'>";
         $html .= "<div style='display:table;width:100%;'>";
         $html .= "<div style='display:table-row;'>";
-        $html .= "<div style='display:table-cell;vertical-align:middle;width:20px;'>";
+        $html .= "<div style='display:table-cell;vertical-align:middle;width:20px;white-space: nowrap;'>";
 
         $mainURL = "index.php";
         if ($this->page->lockInPage) {
@@ -103,6 +103,12 @@ class Page
         if ($this->page->showSuzukiLogo) {
             $html .= "<img height='45' src='images/suzuki_logo_2.png' alt='' title='Magyar Suzuki Zrt.' style='margin-right:10px;' /> ";
         }
+
+        if ($this->page->showSamsungLogo) {
+            $html .= "<img height='45' src='https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg' alt='' title='' style='margin-right:10px;' /> ";
+        }
+
+
 
         if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
             $html .= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
@@ -141,9 +147,9 @@ class Page
         if ($this->page->showLangMenu) {
             $html .= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;text-align:right;'>";
             if (isset($_SERVER["HTTP_HOST"]) && substr_count($_SERVER["HTTP_HOST"], "anmeldung") == 0) {
-                $html .= Lang::getLangLink("hu") . " ";
-                $html .= Lang::getLangLink("en") . " ";
-                $html .= Lang::getLangLink("de") . " ";
+                foreach ($this->page->langList as $lang) {
+                    $html .= Lang::getLangLink($lang) . " ";
+                }
             }
             $html .= "</div>";
         }
