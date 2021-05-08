@@ -32,7 +32,20 @@ class OltasJelentkezesPage extends CorePage
             "adatvedelmi" => "Az <a href='https://bejelentkezes.hungariamed.hu/images/Hungariamed_Suzuki_oltasigenyles_adatvedelmi_tajekoztato_final_HR_0428 v3.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.",
             "pontos" => "Kijelentem, hogy a megadott információk pontosak és megfelelnek a valóságnak.",
             "reszletezze" => "Igen válasz esetén kérjük részletezze",
+            "errordata" => "Kérjük adja meg az adatait!",
+            "erroremail" => "A megadott e-mail cím formátuma nem megfelelő!",
+            "questionerror" => "Kérjük válaszoljon az összes kérdésre!",
             "send" => "Regisztráció",
+            "thanks" => "Köszönjök a kitöltést!",
+            "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
+            "maildonesubject" => "Értesítés oltási regisztrációról",
+            "maildone" => "Tisztelt jelentkező!<br/>
+                <br/>
+                Köszönjük regisztrációját.<br/>
+                Oltási időpontjáról hamarosan értesítést küldünk e-mail címére és SMS-ben.<br/>
+                <br/>
+                Üdvözlettel:<br/>
+                Hungária Med-M Kft.",
         ],
         "en" => [
             "intro" => "",
@@ -61,7 +74,20 @@ class OltasJelentkezesPage extends CorePage
             "adatvedelmi" => "Az <a href='https://bejelentkezes.hungariamed.hu/images/Hungariamed_Suzuki_oltasigenyles_adatvedelmi_tajekoztato_final_HR_0428 v3.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.",
             "pontos" => "Kijelentem, hogy a megadott információk pontosak és megfelelnek a valóságnak.",
             "reszletezze" => "If yes, please describe it",
+            "errordata" => "Please fill all data field!",
+            "erroremail" => "The format of the email you provided is not correct!",
+            "questionerror" => "Please answer all of the questions!",
             "send" => "Registration",
+            "thanks" => "Thank you for your registration!",
+            "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
+            "maildonesubject" => "Értesítés oltási regisztrációról",
+            "maildone" => "Dear applicant!<br/>
+                <br/>
+                Thank you for registering.<br/>
+                We will send you a notification about your vaccination date to your email address and in text.<br/>
+                <br/>
+                Regards:<br/>
+                Hungária Med-M Kft.",
         ]
     ];
 
@@ -140,12 +166,12 @@ class OltasJelentkezesPage extends CorePage
                 $_POST["szuldatum"] = $datum;
             }
 
-            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["torzsszam"])) {
-                $result["error"] = "Kérjük adja meg az adatait!";
+            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["utlevel"])) {
+                $result["error"] = $this->getText("errordata");
             }
 
             if (empty($result["error"]) && !filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
-                $result["error"] = "A megadott e-mail cím formátuma nem megfelelő!";
+                $result["error"] = $this->getText("erroremail");
             }
 
             if (empty($result["error"])) {
@@ -154,9 +180,10 @@ class OltasJelentkezesPage extends CorePage
 
             if ($result["error"] == "") {
                 unset($_POST["g-recaptcha-response"]);
-                //sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasform_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
+                $_POST["lang"] = $_COOKIE["lang"];
+                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasformsamsung_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
 
-                //$this->doneEmail($_POST);
+                $this->doneEmail($_POST);
             }
 
             $this->utils->jsonOut($result);
@@ -185,6 +212,12 @@ class OltasJelentkezesPage extends CorePage
 
         echo "<form name='oltasform' id='oltasform' method='POST' enctype='multipart/form-data'>";
 
+
+        //if (session_id() != "eqgn831hqh61cvalmb6eohhgmc") {
+        //    echo "<div>Fejlesztés alatt, kérjük nézzen vissza fél óra múlva! " . session_id() . "<br/><br/></div>";
+        //    return;
+        //}
+
         echo "<div>".$this->getText("intro")."</div>";
 
 
@@ -193,7 +226,7 @@ class OltasJelentkezesPage extends CorePage
         echo "<table cellpadding='3' cellspacing='0'>";
         echo "<tr><td>".$this->getText("nev").":</td><td><input style='width:260px' type='text' value='{$_POST["nev"]}' name='nev' id='nev'></td></tr>";
         echo "<tr><td>".$this->getText("szuletesido").":</td><td>" . $this->utils->datumSelector($_POST["szuldatum"], "szuldatum", 0, "") . "</td></tr>";
-        echo "<tr><td>".$this->getText("utlevel").":</td><td><input style='width:260px' type='text' value='{$_POST["taj"]}' name='taj' id='taj'></td></tr>";
+        echo "<tr><td>".$this->getText("utlevel").":</td><td><input style='width:260px' type='text' value='{$_POST["utlevel"]}' name='utlevel' id='taj'></td></tr>";
         //echo "<tr><td>Magyar Suzuki<br/>törzsszám:</td><td><input style='width:260px' type='text' value='{$_POST["torszam"]}' name='torzsszam' id='torzsszam'></td></tr>";
         echo "<tr><td>E-mail: </td><td><input style='width:260px' type='text' value='{$_POST["email"]}' name='email' id='email'></td></tr>";
         echo "<tr><td>".$this->getText("telefon").": </td><td><input style='width:260px' type='text' value='{$_POST["telefon"]}' name='telefon' id='telefon'></td></tr>";
@@ -215,7 +248,7 @@ class OltasJelentkezesPage extends CorePage
         //vakcina
         echo "<div style='margin:20px 0px 10px 0px;'><strong>".$this->getText("oltoanyag")."</strong></div>";
         foreach ($this->validVakcinak as $vakcinaId) {
-            echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina1' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>".$this->getText("tajekoztato")."</a>]</div>";
+            echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina{$vakcinaId}' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>".$this->getText("tajekoztato")."</a>]</div>";
         }
         echo "</div>";
 
@@ -287,15 +320,13 @@ class OltasJelentkezesPage extends CorePage
         }
 
         if ($_COOKIE["lang"] == "hu") {
-            echo "<tr><td></td><td><div style='margin-top:10px'><input type='checkbox' class='online-fogleu-element' name='gdpr' id='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . " />&nbsp;Az <a href='https://bejelentkezes.hungariamed.hu/images/Hungariamed_Suzuki_oltasigenyles_adatvedelmi_tajekoztato_final_HR_0428 v3.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.</div></td></tr>";
+            echo "<tr><td></td><td><div style='margin-top:10px'><input type='checkbox' class='online-fogleu-element' name='gdpr' id='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . " />&nbsp;Az <a href='https://bejelentkezes.hungariamed.hu/images/Hungariamed_Suzuki_oltasigenyles_adatvedelmi_tajekoztato_final_HR_0428 v3.pdf' target='_blank'>adatkezelési tájékoztató</a>t elolvastam, hozzájárulok a fenti adataim koronavírus elleni oltás nyújtása céljából történő kezeléséhez.<input type='hidden' name='gdprno' id='gdprno' value='0' /></div></td></tr>";
             echo "<tr><td></td><td><div style=\margin-top:5px;\><input type='checkbox' class='online-fogleu-element'  name='responsiblity-confirmed'  id='responsiblity-confirmed' " . (isset($_POST["responsiblity-confirmed"]) ? "checked" : "") . " value='1'>&nbsp;Kijelentem, hogy a megadott információk pontosak és megfelelnek a valóságnak.</div></td></tr>";
             //echo "<tr><td></td><td><div style='margin-top:5px'><input type='checkbox' class='online-fogleu-element' name='trusted-data' id='trusted-data' value='1' ".(isset($_POST["trusted-data"])?"checked":"")." /> Hozzájárulok, hogy a megadott egészségügyi adataim átadásra kerüljenek a [CÉG NEVE] foglalkozás-egészségügyi szolgáltató részére.</div></td></tr>";
         }
         echo "</table>";
 
         if ($_COOKIE["lang"] != "hu") {
-            echo "<input type='hidden' name='gdpr' id='gdpr' value='1' />";
-            echo "<input type='hidden' name='responsiblity-confirmed' id='responsiblity-confirmed' value='1' />";
         }
 
         echo "<div style='margin-top:30px;text-align: center;'><input type='button' name='oltas-submit-button' id='oltas-submit-button' class='newbutton' style='border:none' value='".$this->getText("send")."' /></div>";
@@ -304,15 +335,19 @@ class OltasJelentkezesPage extends CorePage
         echo "</form>";
         echo "</div>";
 
+        echo "<script>";
+        echo "var questionErrorText = '".$this->getText("questionerror")."';";
+        echo "</script>";
+
     }
 
     private function donePage():string {
         $html = "";
 
         $html.= "<div style='margin:20px 0px 20px 0px;'>">
-            $html.="<div><strong>Köszönjük a kitöltést!</strong></div>";
+            $html.="<div><strong>".$this->getText("thanks")."</strong></div>";
         if (isset($_POST["oltasregisztralt"]) && $_POST["oltasregisztralt"] == "0") {
-            $html .= "<div style='margin:10px 0px 0px 0px;'>Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!</div>";
+            $html .= "<div style='margin:10px 0px 0px 0px;'>".$this->getText("doreg")."</div>";
         }
         $html.="</div>";
 
@@ -328,14 +363,8 @@ class OltasJelentkezesPage extends CorePage
         $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
         $mail->IsHTML(true);
 
-        $mail->Subject = "Értesítés oltási regisztrációról";
-        $mail->Body = "Tisztelt jelentkező!<br/>
-        <br/>
-        Köszönjük regisztrációját.<br/>
-        Oltási időpontjáról hamarosan értesítést küldünk e-mail címére és SMS-ben.<br/>
-        <br/>
-        Üdvözlettel:<br/>
-        Hungária Med-M Kft.";
+        $mail->Subject = $this->getText("maildonesubject");
+        $mail->Body = $this->getText("maildone");
 
         $mail->Send();
     }

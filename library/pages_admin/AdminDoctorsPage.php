@@ -313,6 +313,10 @@ class AdminDoctorsPage extends AdminCorePage {
                     while ($row=sql_fetch_array($res)) {
                         $cegId = $row["id"];
                         if (isset($_POST["copyceg{$cegId}"])) {
+                            if ($cegId == Booking_Constants::DEFAULT_COMPANY_ID) {
+                                continue;
+                            }
+
                             sql_query("delete from orvos_beosztas where orvosid=? and cegid=?",array($oid,$cegId));
 
                             $ress=sql_query("select * from orvos_beosztas where orvosid=? and cegid=?",array($oid,$_SESSION["orvosbeosztascegfilter"]));

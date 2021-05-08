@@ -530,6 +530,12 @@ class Utils {
     }
 
     public function sendSMSRaw($num,$szoveg) {
+        $num = str_replace(" ","",$num);
+        $num = str_replace("-","",$num);
+        $num = str_replace("/","",$num);
+        $num = str_replace("(","",$num);
+        $num = str_replace(")","",$num);
+
         $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
 
         try {

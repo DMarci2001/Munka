@@ -67,16 +67,18 @@ function checkOltasForm() {
 
     if (formMessage == "") {
         if (atesett === undefined || veralvadas === undefined || allergia === undefined || anafilaxia === undefined || betegseg === undefined || lazas === undefined || terhes === undefined || fogamzasgatlas === undefined || vedooltas === undefined || oltasregisztralt === undefined || oltasmegkapta === undefined) {
-            formMessage = "Kérjük válaszoljon az összes kérdésre!";
+            formMessage = questionErrorText;
         }
     }
 
-    if (formMessage == "" && $("#gdpr").prop("checked") !== true) {
-        formMessage = "Kérjük fogadja el az adatvédelmi nyilatkozatot!";
-    }
+    if ($("#gdprno").val() == 0) {
+        if (formMessage == "" && $("#gdpr").prop("checked") !== true) {
+            formMessage = "Kérjük fogadja el az adatvédelmi nyilatkozatot!";
+        }
 
-    if (formMessage == "" && $("#responsiblity-confirmed").prop("checked") !== true) {
-        formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megadott adatok a valóságnak megfelelnek!";
+        if (formMessage == "" && $("#responsiblity-confirmed").prop("checked") !== true) {
+            formMessage = "Kérjük fogadja el a nyilatkozatot, hogy a megadott adatok a valóságnak megfelelnek!";
+        }
     }
 
     return formMessage;
