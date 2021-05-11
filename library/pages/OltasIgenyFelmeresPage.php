@@ -8,28 +8,42 @@ class OltasIgenyFelmeresPage extends CorePage
         1 => [
             "name" => "Pfizer-Biotech",
             "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/pfizer-biontech_vakcina_lakossagi_tajekoztato_2.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ],
         2 => [
             "name" => "Moderna",
-            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/moderna-vakcina_lakossagi_tajekoztato_0.pdf"
+            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/moderna-vakcina_lakossagi_tajekoztato_0.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ],
         3 => [
             "name" => "Szputnyik",
-            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/qa_lakossag_oltasi_javallatok_es_ellenjavallatok_szputnyik.pdf"
+            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/qa_lakossag_oltasi_javallatok_es_ellenjavallatok_szputnyik.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ],
         4 => [
             "name" => "Astra Zeneca",
-            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/astrazeneca_lakossagi_tajekoztato_2.pdf"
+            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/astrazeneca_lakossagi_tajekoztato_2.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ],
         5 => [
             "name" => "Sinopharm",
-            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/sinopharm-vakcina_lakossagi_tajekoztato.pdf"
+            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/sinopharm-vakcina_lakossagi_tajekoztato.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ],
         6 => [
             "name" => "Janessen",
-            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/janssen_vakcina_lakossagi_tajekoztato.pdf"
+            "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/janssen_vakcina_lakossagi_tajekoztato.pdf",
+            "supply" => 0,
+            "supplyfrom" => "2021-05-11 00:00:00"
         ]
     ];
+
+    public $validVakcinak = [1, 2, 3, 4, 5, 6];
 
     public function __construct()
     {
@@ -50,6 +64,20 @@ class OltasIgenyFelmeresPage extends CorePage
             $result = ["error" => "", "html" => $this->donePage()];
 
             $_POST["szuldatum"] = "";
+
+            $selectedVakcinak = 0;
+            for ($i=1;$i<=6;$i++) {
+                if (isset($_POST["vakcina{$i}"])) {
+                    $selectedVakcinak++;
+                }
+            }
+
+            if ($selectedVakcinak==0) {
+                $result["error"] = "Kérjük válasszon vakcinát!";
+            }
+            if ($selectedVakcinak>1) {
+                $result["error"] = "Kérjük csak 1 vakcinát válasszon!";
+            }
 
             $datum = "";
             if (isset($_POST["szuldatumev"])) {
@@ -146,15 +174,19 @@ class OltasIgenyFelmeresPage extends CorePage
         //echo "<div><input class='oltaselement' type='radio' name='igenybevenne' value='0' /> NEM</div>";
 
         //vakcina
-        echo "<div style='margin-top:20px;'><strong>Jelenleg az alábbi oltóanyago(ka)t tudjuk biztosítani, igényt tart-e az adott vakcinára?</strong></div>";
-        //echo "<div style='margin-top:10px;'><input class='oltaselement' type='checkbox' name='vakcina1' value='1' /> {$this->vakcinak[1]["name"]} [<a target='_blank' href='{$this->vakcinak[1]["tajekoztato_url"]}'>tájékoztató</a>]</div>";
-        //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina2' value='1' /> {$this->vakcinak[2]["name"]}</div>";
-        //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina3' value='1' /> {$this->vakcinak[3]["name"]}</div>";
-        echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina4' value='1' /> {$this->vakcinak[4]["name"]} [<a target='_blank' href='{$this->vakcinak[4]["tajekoztato_url"]}'>tájékoztató</a>]</div>";
-        //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina5' value='1' /> {$this->vakcinak[5]["name"]}</div>";
-        //echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina6' value='1' /> {$this->vakcinak[6]["name"]}</div>";
-
+        echo "<div style='margin:20px 0px 10px 0px;'><strong>Jelenleg az alábbi oltóanyago(ka)t tudjuk biztosítani, igényt tart-e az adott vakcinára?</strong></div>";
+        foreach ($this->validVakcinak as $vakcinaId) {
+            $data = sql_query("select count(*) as hany from webservicelog where tipus=23 and action='oltasform_new' and instr(keres, ?) and datum>?", ["vakcina{$vakcinaId}", $this->vakcinak[$vakcinaId]["supplyfrom"]])->fetch(PDO::FETCH_ASSOC);
+            if ($data["hany"]<$this->vakcinak[$vakcinaId]["supply"]) {
+                $vakcinaExists = true;
+                echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina{$vakcinaId}' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>tájékoztató</a>]</div>";
+            }
+        }
+        if (!isset($vakcinaExists)) {
+            echo "<div style='background:#ff6961;color:white;padding:10px;border-radius: 3px;'>Jelenleg nincs beállítva választható vakcina, kérjük nézzen vissza később!</div>";
+        }
         echo "</div>";
+
 
         echo "<div id='tovabbikerdesek' style='opacity:1'>";
 
