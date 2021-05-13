@@ -77,6 +77,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminArrivalsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminElsosegelyVizsgaPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminOnlineFogleuPage.php");
 	require_once(__DIR__ . "/library/pages_admin/AdminBanktransactionsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPlacesPage.php");

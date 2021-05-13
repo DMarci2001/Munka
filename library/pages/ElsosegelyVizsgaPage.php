@@ -3,6 +3,7 @@
 
 class ElsosegelyVizsgaPage extends CorePage {
 
+    private $answerLetters = ["", "A", "B", "C", "D", "E"];
 
     public function __construct()
     {
@@ -16,6 +17,7 @@ class ElsosegelyVizsgaPage extends CorePage {
         $this->showMainMenu = false;
         $this->showLangMenu = false;
         $this->lockInPage = true;
+        $this->pageTitle = "Elsősegély teszt - Hungáriamed";
 
         if (isset($_REQUEST["vizsgaformsavedata"])) {
             $result = ["error" => "", "html" => $this->donePage()];
@@ -51,7 +53,7 @@ class ElsosegelyVizsgaPage extends CorePage {
                 }
             }
 
-            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["anyjaneve"]) || empty($_POST["szulhely"]) || empty($_POST["oktatasiazonosito"]) || empty($_POST["iskolavegzettseg"]) || empty($_POST["adoazonosito"]) || empty($_POST["email"]) || empty($_POST["varos"]) || empty($_POST["irsz"]) || empty($_POST["cim"])) {
+            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["anyjaneve"]) || empty($_POST["szulhely"]) || empty($_POST["oktatasiazonosito"]) || empty($_POST["iskolavegzettseg"]) || empty($_POST["email"]) || empty($_POST["varos"]) || empty($_POST["irsz"]) || empty($_POST["cim"])) {
                 $result["error"] = "Minden mező kitöltése kötelező!";
             }
 
@@ -75,16 +77,16 @@ class ElsosegelyVizsgaPage extends CorePage {
 
 
         echo "<h1 style='text-align: center;'>Elsősegély vizsga</h1>";
-        echo "<div style='text-align: center;'>Kérjük töltse ki az alábbi formot!</div>";
 
         echo "<div id='vizsgaformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
         echo "<form id='vizsgaform'>";
 
+        echo "<div style='text-align: center;margin:0px 0px 20px 0px;'>Kérjük töltse ki az alábbi formot!</div>";
 
 
         $_POST["szuldatum"] = null;
 
-        echo "<div><strong>Kérjük adja meg az adatait:</strong></div>";
+        echo "<div><strong>Adja meg az adatait:</strong></div>";
 
         echo "<div style='margin-top:5px;'>Név:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='nev' value='' /></div>";
         echo "<div style='margin-top:5px;'>Születési neve:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='szulnev' value='' /></div>";
@@ -95,7 +97,7 @@ class ElsosegelyVizsgaPage extends CorePage {
         echo "<div style='margin-top:5px;'>Legmagasabb iskolai végzettsége:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='iskolavegzettseg' value='' /></div>";
         //echo "<div style='margin-top:5px;'>Adóazonosító jele:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='adoazonosito' value='' /></div>";
         echo "<div style='margin-top:5px;'>Email címe:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='email' value='' /></div>";
-        echo "<div style='margin-top:20px;'><strong>Kérjük adja meg a címét:</strong></div>";
+        echo "<div style='margin-top:20px;'><strong>Adja meg a címét:</strong></div>";
         echo "<div style='margin-top:5px;'>Város:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='varos' value='' /></div>";
         echo "<div style='margin-top:5px;'>Irányítószám:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='irsz' value='' /></div>";
         echo "<div style='margin-top:5px;'>Cím:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='cim' value='' /></div>";
@@ -103,7 +105,7 @@ class ElsosegelyVizsgaPage extends CorePage {
 
         echo "<div style='margin-top:20px;'><strong>Töltse ki az alábbi tesztet:</strong></div>";
 
-        $questions = sql_query("select * from vizsgakerdesek order by rand(?)", [$_SESSION["vizsgarandom"]])->fetchAll();
+        $questions = sql_query("select * from vizsgakerdesek order by rand(?) limit 10", [$_SESSION["vizsgarandom"]])->fetchAll();
         $questionIds = [];
         foreach ($questions as $question) {
             $questionIds[] = $question["id"];
@@ -111,7 +113,12 @@ class ElsosegelyVizsgaPage extends CorePage {
 
             $valasz = 1;
             while (!empty($question["valasz{$valasz}"])) {
-                echo "<div><input type='radio' name='question{$question["id"]}' value='{$valasz}' /> {$question["valasz{$valasz}"]}</div>";
+                $valaszT = str_replace("->", "<i class='fas fa-angle-right'></i>", $question["valasz{$valasz}"]);
+                echo "<div style='display: table;margin-top:5px;'>";
+                echo "<div style='display: table-row;'>";
+                echo "<div style='display: table-cell;vertical-align: top;'><input type='radio' name='question{$question["id"]}' id='question{$question["id"]}' value='{$valasz}' />&nbsp;</div><div style='display: table-cell;vertical-align: top;'> <label for='question{$question["id"]}'>".$this->answerLetters[$valasz].") {$valaszT}</label></div>";
+                echo "</div>";
+                echo "</div>";
                 $valasz++;
             }
 
