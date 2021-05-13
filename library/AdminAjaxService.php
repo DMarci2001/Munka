@@ -425,7 +425,12 @@ class AdminAjaxService {
 
         if (isset($_REQUEST["newUserDataFromReservation"])) {
             $error = "";
-            $_REQUEST["szuldatum"] = $_REQUEST["szuldatumev"]."-".substr("00".$_REQUEST["szuldatumho"],-2)."-".substr("00".$_REQUEST["szuldatumnap"],-2);
+
+            if (isset($_REQUEST["szuldatumev"])) {
+                $_REQUEST["szuldatum"] = $_REQUEST["szuldatumev"] . "-" . substr("00" . $_REQUEST["szuldatumho"], -2) . "-" . substr("00" . $_REQUEST["szuldatumnap"], -2);
+            }
+
+            $_REQUEST["szuldatum"] = str_replace(".", "-", $_REQUEST["szuldatum"]);
 
             if (empty($_REQUEST["taj"]) || empty($_REQUEST["nev"]) || empty($_REQUEST["cegid"]) || !$this->validateDate($_REQUEST["szuldatum"], "Y-m-d")) {
                 $error .= "A TAJ szám, a név, a születési dátum és a cég megadása kötelező a paciens adatlap léterhozásához!\n";
