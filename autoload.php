@@ -49,6 +49,7 @@ require_once(__DIR__ . "/library/foglaljorvost/FoGeneral.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoglaljOrvostService.php");
 require_once(__DIR__ . "/library/ReservationExportService.php");
 require_once(__DIR__ . "/library/DokirexService.php");
+require_once(__DIR__ . "/library/DicomService.php");
 require_once(__DIR__ . "/library/BookingSyncApi.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
@@ -94,6 +95,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminInvoicesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminOltasIgenyekPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminDicomPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");

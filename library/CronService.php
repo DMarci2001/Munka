@@ -16,6 +16,14 @@ class CronService {
         }
         $this->utils = new Utils();
         $this->bookingService = new BookingService();
+
+
+
+        if (isset($_GET["dicomteszt"])) {
+            $dicomService = new DicomService();
+            $dicomService->teszt();
+            die;
+        }
     }
 
     public function run() {
