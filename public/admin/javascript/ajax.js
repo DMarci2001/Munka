@@ -8,6 +8,8 @@ $(document).ready(function() {
     }, 1000);
 
     initUploadRoutine();
+    initIrszAutoFill();
+
 });
 
 
@@ -625,6 +627,8 @@ function showIdopontEditor(page,p,id) {
             foglalasDisplayed = id;
             $("#idoponteditor").slideDown();
             $("#naptarloading").hide();
+            initIrszAutoFill();
+            initTabOrder();
         }
     });
 }
@@ -2251,4 +2255,32 @@ function oltasEljottCheck(id) {
         }
     })
 
+}
+
+function initIrszAutoFill() {
+    $("#irsz").keyup(function() {
+        let irsz = $(this).val();
+        if (irsz.length == 4) {
+            $.ajax({
+                method: "POST",
+                url: "/index.php",
+                data: {irszquery: irsz}
+            }).done(function (msg) {
+                if (msg != "") {
+                    $("#varos").val(msg);
+                }
+            });
+        }
+    });
+}
+
+function initTabOrder() {
+    $(".ui-taborder").keypress(function(e) {
+        if(e.which == 13) {
+            var index = $(this).data("taborder") + 1;
+            $(document).find("[data-taborder='"+index+"']").focus();
+            //$('.ui-dform-text').eq(index).focus();
+
+        }
+    });
 }

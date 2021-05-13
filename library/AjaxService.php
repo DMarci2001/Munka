@@ -70,6 +70,24 @@ class AjaxService {
             die;
         }
 
+        if (isset($_POST["irszquery"])) {
+            $varos = "";
+            if ($irszData = sql_query("select varos from irsz where irszonly=? limit 1", [$_POST["irszquery"]])->fetch()) {
+                $varos = $irszData["varos"];
+            } else {
+
+                if (substr($_POST["irszquery"], 0, 1) == "1") {
+                    $varos = "Budapest";
+                }
+            }
+            if (substr_count($varos, "BUDAPEST")) {
+                $varos = "Budapest";
+            }
+
+            echo  $varos;
+            die();
+        }
+
 
     }
 
