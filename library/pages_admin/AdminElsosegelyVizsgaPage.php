@@ -3,6 +3,8 @@
 class AdminElsosegelyVizsgaPage extends AdminCorePage
 {
 
+    private $answerWords = ["", "A", "B", "C", "D", "E"];
+
     public function __construct()
     {
         parent::__construct();
@@ -53,10 +55,10 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
                 }
                 echo "<tr>";
 
-                $szuldatum = $data["szuldatumho"]."-".substr("00{$data["szuldatumho"]}", -2)."-".substr("00{$data["szuldatumnap"]}", -2);
+                $szuldatum = $data["szuldatumev"]."-".substr("00{$data["szuldatumho"]}", -2)."-".substr("00{$data["szuldatumnap"]}", -2);
 
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$row["datum"]}</div></td>";
-                echo "<td nowrap valign='top'><div class='{$tc}'>{$row["osszesvalasz"]}/{$row["helyesvalasz"]}</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'><a onclick='$(\"#answersrow{$row["id"]}\").toggle();return false;' href='#'>{$row["osszesvalasz"]}/{$row["helyesvalasz"]}</a></div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["nev"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["oktatasiazonosito"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["iskolavegzettseg"]}</div></td>";
@@ -74,6 +76,18 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
                 */
 
                 echo "</tr>";
+                echo "<tr id='answersrow{$row["id"]}' style='display:none;'><td colspan='18' style='padding-bottom:10px;'>";
+
+                $questions = sql_query("select * from vizsgakerdesek where id in ({$data["questionids"]})")->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($questions as $question) {
+                    $valasz = $data["question{$question["id"]}"];
+                    $sorok = explode("<br>", $question["kerdes"]);
+                    echo "<div>".reset($sorok)." ". $this->answerWords[$valasz]." <strong>".($valasz == $question["helyesvalasz"] ? "<span style='color:#0a0;'>HELYES</span>" : "<span style='color:#a00;'>HELYTELEN</span>")."</strong></div>";
+                }
+
+
+                echo "</td></tr>";
                 echo "<tr><td colspan='18' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
             }
             echo "</table>";

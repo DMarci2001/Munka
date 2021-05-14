@@ -43,6 +43,13 @@ class CompanyService {
                     }
                     return;
                 }
+
+                if ($d == "elsosegelyteszt") {
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "elsosegelyvizsga";
+                    }
+                    return;
+                }
             }
 
             unset($_SESSION["helyszindata"]);
