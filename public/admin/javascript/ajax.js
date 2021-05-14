@@ -9,7 +9,7 @@ $(document).ready(function() {
 
     initUploadRoutine();
     initIrszAutoFill();
-
+    initGeneralSearch();
 });
 
 
@@ -2283,4 +2283,28 @@ function initTabOrder() {
 
         }
     });
+}
+
+function initGeneralSearch() {
+    $("#generalsearch").keypress(function(e) {
+        if (e.which == 13) {
+            let term = $(this).val();
+            let page = $(this).data("page");
+            let resultDiv = $(this).data("resultdiv");
+
+            if (term.length < 3) {
+                alert("A keresési érték minimum 3 karakter!");
+                return;
+            }
+
+            $.ajax({
+                method: "POST",
+                url: "index.php",
+                data: {page:page, generalsearch:1, term: term}
+            }).done(function (msg) {
+                $("#"+resultDiv).html(msg);
+            });
+        }
+    });
+
 }

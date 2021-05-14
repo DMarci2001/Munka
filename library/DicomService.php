@@ -154,10 +154,41 @@ class DicomService {
     }
 
 
-    public function getImages() {
-        $images = sql_query("select * from dicom order by contentDate desc limit 500")->fetchAll(PDO::FETCH_ASSOC);
+    public function getImages($params = []) {
+        $queryParams = [];
+        $w = "";
+
+        if (isset($params["search"]) && !empty($params["search"])) {
+            $w .= " and instr(concat(patientName,patientBirthDate,patientOtherIDs), ?)";
+            $queryParams[] = $params["search"];
+        }
+
+        $images = sql_query("select * from dicom where  true {$w} order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
         return $images;
     }
+
+    public function getRawDicomFile($id) {
+        $content = ["fileName" =>"", "file" => ""];
+        if ($data = sql_query("select fileName from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+            $content["fileName"] = basename($data["fileName"]);
+            $content["file"] = file_get_contents($data["fileName"]);
+        }
+
+
+
+        return $content;
+    }
+
+    public function getRawImage($id) {
+        if ($content = sql_query("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+
+            $content["imageData"] = `dcmj2pnm --write-png {$content["fileName"]}`;
+
+        }
+
+        return $content;
+    }
+
 }
 
 //703305233
