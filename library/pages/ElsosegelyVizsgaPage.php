@@ -69,23 +69,22 @@ class ElsosegelyVizsgaPage extends CorePage {
     }
 
     public function showPage() {
-        $webText = $this->lang->webText;
-
-
-         echo $this->showFormErrors();
-
-
+        echo $this->showFormErrors();
 
         echo "<h1 style='text-align: center;'>Elsősegély vizsga</h1>";
 
         echo "<div id='vizsgaformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
         echo "<form id='vizsgaform'>";
 
-        echo "<div style='text-align: center;margin:0px 0px 20px 0px;'>Kérjük töltse ki az alábbi formot!</div>";
-
+        echo "<div style='text-align: left;margin:0px 0px 20px 0px;'>";
+        echo "Kérjük töltse le és nézze meg a következő oktatóanyagot, majd ha elolvasta, és megnézte a benne található videókat, kattintson a vizsga indítása linkre:";
+        echo "<div style='margin-top:10px;'><a target='_blank' href='/oktato/First Aid-creative.pptx'>Oktatóanyag letöltése</a></div>";
+        echo "<div style='margin-top:10px;'><a onclick='$(\"#vizsgablokk\").slideToggle();return false;' href='#'>Vizsga indítása</a></div>";
+        echo "</div>";
 
         $_POST["szuldatum"] = null;
 
+        echo "<div id='vizsgablokk' style='display: none;'>";
         echo "<div><strong>Adja meg az adatait:</strong></div>";
 
         echo "<div style='margin-top:5px;'>Név:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='nev' value='' /></div>";
@@ -130,6 +129,8 @@ class ElsosegelyVizsgaPage extends CorePage {
 
 
         echo "<div style='margin-top:30px;text-align: center;'><a onclick='elsosegelyFormSubmit();return false;' id='covidsubmitbutton' class='newbutton' href='#'>Vizsga elküldése</a></div>";
+
+        echo "</div>";
 
         echo "</form>";
         echo "</div>";
