@@ -8,6 +8,7 @@ require_once 'vendor/autoload.php';
 
 require_once(__DIR__ . "/config/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
+require_once(__DIR__ . "/library/sql_common.php");
 require_once(__DIR__ . "/library/Lang.php");
 require_once(__DIR__ . "/library/Settings.php");
 require_once(__DIR__ . "/library/Utils.php");

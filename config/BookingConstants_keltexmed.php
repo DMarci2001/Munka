@@ -33,6 +33,11 @@ class Booking_Constants {
     const SQL_HOST                  = "localhost";
     const SQL_DB                    = "keltexmed";
 
+    const SQL_USER_COMMON           = "hungariamed";
+    const SQL_PASS_COMMON           = "hmedpass";
+    const SQL_HOST_COMMON           = "localhost";
+    const SQL_DB_COMMON             = "hungariamed";
+
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.keltexmed.hu/foApi.php";
     const SOAP_API_PASSWORD         = "KMa7PnbLPkl9KRTp";
 

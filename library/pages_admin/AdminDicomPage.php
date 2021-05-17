@@ -23,9 +23,17 @@ class AdminDicomPage extends AdminCorePage
             //header('Content-Disposition: attachment; filename="'.$content["fileName"].'.png"');
             header("Content-Type: image/png");
 
-            echo $content["imageData"];
+            //imagefilter($content["imageData"], IMG_FILTER_NEGATE);
+
+            imagepng($content["imageData"]);
             die();
         }
+
+        if (isset($_GET["displayimage"])) {
+            echo $this->displayImageEditor($_GET["displayimage"]);
+            die;
+        }
+
 
         if (isset($_GET["downloaddicomfile"])) {
             $content = $this->dicomService->getRawDicomFile($_GET["downloaddicomfile"]);
@@ -94,7 +102,7 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<tr>";
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>";
-            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&getimage={$row["id"]}'>kép megtekintése</a>] ";
+            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["id"]}'>kép megtekintése</a>] ";
             $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["id"]}'>DICOM file letöltése</a>]";
             $html.= "</td>";
 
@@ -108,6 +116,60 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         $html.= "</table>";
+
+        return $html;
+    }
+
+    private function displayImageEditor($id) {
+        $dicomData = $this->dicomService->getDicomEntry($id);
+
+        $html = "<!DOCTYPE html>";
+        $html.= "<head>";
+        $html.= "<title>{$dicomData["patientName"]} DICOM image</title>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/javascript/panzoom.min.js'></script>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/javascript/jquery/jquery.js'></script>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/admin/javascript/dicom.js?v=".date("mdHi")."'></script>";
+        $html.= '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">';
+        $html.= '<link rel="stylesheet" href="https://bejelentkezes.hungariamed.hu/css/dicom.css?v='.date("mdHi").'" />';
+        $html.= "</head>";
+        $html.= "<body style='margin:0px;padding:0px;background:black;font-family:arial;font-size: 18px;'>";
+
+        $html.= "<div style='text-align: center;padding:5px;border-bottom:2px solid #888;'>";
+
+        $html.= "<a class='dicombutton' id='invertbutton' data-status='0' onclick='toggleInvert();return false;' href='#' title='invertálás'><i class='fas fa-star-half-alt'></i></a> ";
+        $html.= "<a class='dicombutton' id='normalizebutton' data-status='0' onclick='toggleNormalize();return false;' href='#' title='automata fényszint'><i class='fas fa-sun'></i></a>&nbsp;&nbsp;";
+
+        $html.= "<a class='dicombutton' onclick='panzoom.zoomIn();return false;' href='#' title='közelítás'><i class='fas fa-search-plus'></i></a> ";
+        $html.= "<a class='dicombutton' onclick='panzoom.reset();return false;' href='#' title='alapértelmezett nagyítás'><i class='far fa-window-close'></i></a> ";
+        $html.= "<a class='dicombutton' onclick='panzoom.zoomOut();return false;' href='#' title='távolítás'><i class='fas fa-search-minus'></i></a>";
+
+        $html.= "</div>";
+
+        $html.= "<div style='display:table;width:100%;color:#ccc'>";
+        $html.= "<div style='display:table-cell;width:300px;vertical-align: top;padding:20px;'>";
+        $html.= "<div style='font-size:32px;text-transform: uppercase;font-weight: bold;'>{$dicomData["patientName"]}</div>";
+        $html.= "<div style=''>{$dicomData["patientBirthDate"]}</div>";
+        $html.= "<div style=''>TAJ: {$dicomData["patientOtherIDs"]}</div>";
+        $html.= "<div style='margin-top:15px;'>Készítés időpontja:<br/>{$dicomData["contentDate"]}</div>";
+        if (!empty($dicomData["studyDescription"])) {
+            $html .= "<div style='margin-top:15px;'>{$dicomData["studyDescription"]}</div>";
+        }
+
+        $html.= "</div>";
+
+        $html.= "<div id='imagecell' style='display:table-cell;vertical-align: top;border-left:2px solid #999;'>";
+
+        $imageURL = "https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$id}";
+
+        $html.= "<div id='panzoom' width='100%;'><img id='dicomimage' style='' src='' data-rooturl='{$imageURL}' /></div>";
+        $html.= "</div>";
+        $html.= "</div>";
+
+        $html.="<div id='dicomloading'>Kép betöltése...</div>";
+
+        $html.= "</body>";
+        //$html.= "</html>";
+
 
         return $html;
     }

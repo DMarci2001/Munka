@@ -163,13 +163,16 @@ class DicomService {
             $queryParams[] = $params["search"];
         }
 
-        $images = sql_query("select * from dicom where  true {$w} order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
-        return $images;
+        return sql_query_common("select * from dicom where true {$w} order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getDicomEntry($id) {
+        return sql_query_common("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
     }
 
     public function getRawDicomFile($id) {
         $content = ["fileName" =>"", "file" => ""];
-        if ($data = sql_query("select fileName from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+        if ($data = sql_query_common("select fileName from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
             $content["fileName"] = basename($data["fileName"]);
             $content["file"] = file_get_contents($data["fileName"]);
         }
@@ -180,9 +183,23 @@ class DicomService {
     }
 
     public function getRawImage($id) {
-        if ($content = sql_query("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+        if ($content = sql_query_common("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
 
-            $content["imageData"] = `dcmj2pnm --write-png {$content["fileName"]}`;
+            $param = "";
+
+            if (isset($_GET["normalize"])) {
+                $param.= " -normalize";
+            }
+            if (isset($_GET["invert"])) {
+                $param.= " -negate";
+            }
+
+            if (!empty($param)) {
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+            } else {
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+            }
+
 
         }
 
