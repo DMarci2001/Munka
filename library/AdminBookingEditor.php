@@ -29,9 +29,9 @@ class AdminBookingEditor {
                     }
                 }
             } else {
-                if (ctype_digit($_POST["szuldatum"]) && strlen(trim($_POST["szuldatum"])) == 8) {
-                    $_POST["szuldatum"] = substr($_POST["szuldatum"], 0, 4)."-".substr($_POST["szuldatum"], 4, 2)."-".substr($_POST["szuldatum"], 6, 2);
-                }
+                $_POST["szuldatum"] = str_replace(".", "", $_POST["szuldatum"]);
+                $_POST["szuldatum"] = str_replace("-", "", $_POST["szuldatum"]);
+                $_POST["szuldatum"] = substr($_POST["szuldatum"], 0, 4)."-".substr($_POST["szuldatum"], 4, 2)."-".substr($_POST["szuldatum"], 6, 2);
             }
 
             if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
@@ -164,7 +164,7 @@ class AdminBookingEditor {
             if (empty($_REQUEST["munkakor"])) {
                 $error .= "A munkakör megadása kötelező!\n";
             }
-            if (empty($_REQUEST["szuldatumev"]) || empty($_REQUEST["szuldatumho"]) || empty($_REQUEST["szuldatumnap"])) {
+            if (empty($_REQUEST["szuldatum"])) {
                 $error .= "A születési dátum megadása kötelező!\n";
             }
 
@@ -174,7 +174,7 @@ class AdminBookingEditor {
             }
 
             if (empty($error)) {
-                $_REQUEST["szuldatum"] = $_REQUEST["szuldatumev"]."-".substr("00".$_REQUEST["szuldatumho"],-2)."-".substr("00".$_REQUEST["szuldatumnap"],-2);
+                $_REQUEST["szuldatum"] = str_replace(".", "-", $_REQUEST["szuldatum"]);
 
                 if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj=? OR szuldatum=?", array($_REQUEST['taj'], $_REQUEST['szuldatum'])))) {
                     sql_query("UPDATE felhasznalok set taj=?, cegid=?, email=?, nev=?, telefon=?, munkakor=?, irsz=?, varos=?, utca=?, szulhely=?, anyjaneve = ?, szuldatum=?, torzsszam=? WHERE  id=?",

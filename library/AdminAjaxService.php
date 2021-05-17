@@ -164,6 +164,9 @@ class AdminAjaxService {
                                                         
 											    FROM foglalasok fogl WHERE id=?", array($_POST["pid"])));
 
+            $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
+            $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
+            $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4)."-".substr($params["SzuletesiDatum"], 4, 2)."-".substr($params["SzuletesiDatum"], 6, 2);
 
             foreach ($params as $index => $value) {
                 if ($value == "" && in_array($index, $required)) {
