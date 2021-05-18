@@ -139,7 +139,7 @@ class AdminDicomPage extends AdminCorePage
         $html.= "<a class='dicombutton' id='invertbutton' data-status='0' onclick='toggleInvert();return false;' href='#' title='invertálás'><i class='fas fa-star-half-alt'></i></a> ";
         $html.= "<a class='dicombutton' id='normalizebutton' data-status='0' onclick='toggleNormalize();return false;' href='#' title='automata fényszint'><i class='fas fa-sun'></i></a>&nbsp;&nbsp;";
 
-        $html.= "<a class='dicombutton' onclick='panzoom.zoomIn();return false;' href='#' title='közelítás'><i class='fas fa-search-plus'></i></a> ";
+        $html.= "<a class='dicombutton' onclick='panzoom.zoomIn();return false;' href='#' title='közelítés'><i class='fas fa-search-plus'></i></a> ";
         $html.= "<a class='dicombutton' onclick='panzoom.reset();return false;' href='#' title='alapértelmezett nagyítás'><i class='far fa-window-close'></i></a> ";
         $html.= "<a class='dicombutton' onclick='panzoom.zoomOut();return false;' href='#' title='távolítás'><i class='fas fa-search-minus'></i></a>";
 
@@ -148,9 +148,15 @@ class AdminDicomPage extends AdminCorePage
         $html.= "<div style='display:table;width:100%;color:#ccc'>";
         $html.= "<div style='display:table-cell;width:300px;vertical-align: top;padding:20px;'>";
         $html.= "<div style='font-size:32px;text-transform: uppercase;font-weight: bold;'>{$dicomData["patientName"]}</div>";
-        $html.= "<div style=''>{$dicomData["patientBirthDate"]}</div>";
-        $html.= "<div style=''>TAJ: {$dicomData["patientOtherIDs"]}</div>";
-        $html.= "<div style='margin-top:15px;'>Készítés időpontja:<br/>{$dicomData["contentDate"]}</div>";
+        if (!empty($dicomData["patientBirthDate"])) {
+            $html .= "<div style=''>{$dicomData["patientBirthDate"]}</div>";
+        }
+        if (!empty($dicomData["patientOtherIDs"])) {
+            $html .= "<div style=''>TAJ: {$dicomData["patientOtherIDs"]}</div>";
+        }
+        if (!empty($dicomData["contentDate"])) {
+            $html .= "<div style='margin-top:15px;'>Készítés időpontja:<br/>{$dicomData["contentDate"]}</div>";
+        }
         if (!empty($dicomData["studyDescription"])) {
             $html .= "<div style='margin-top:15px;'>{$dicomData["studyDescription"]}</div>";
         }
@@ -161,7 +167,7 @@ class AdminDicomPage extends AdminCorePage
 
         $imageURL = "https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$id}";
 
-        $html.= "<div id='panzoom' width='100%;'><img id='dicomimage' style='' src='' data-rooturl='{$imageURL}' /></div>";
+        $html.= "<div id='panzoom' width='100%;' style='text-align: center;'><img id='dicomimage' style='' src='' data-rooturl='{$imageURL}' /></div>";
         $html.= "</div>";
         $html.= "</div>";
 

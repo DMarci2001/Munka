@@ -1,0 +1,22 @@
+.dicombutton {
+    background:#fff;
+    color:#000;
+    border-radius: 3px;
+    text-decoration: none;
+    padding:3px 5px;
+}
+
+.dicombutton {
+    text-decoration: none;
+}
+
+#dicomloading {
+    display:none;
+    position: fixed;
+    top:50px;
+    left:350px;
+    background:yellow;
+    color:black;
+    font-size: 18px;
+    padding:20px;
+}

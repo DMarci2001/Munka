@@ -167,7 +167,11 @@ class DicomService {
     }
 
     public function getDicomEntry($id) {
-        return sql_query_common("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+        if ($this->dicomPermission()) {
+            return sql_query_common("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+        } else {
+            return ["patientName" => "403 nincs jogosultságod"];
+        }
     }
 
     public function getRawDicomFile($id) {
@@ -177,14 +181,19 @@ class DicomService {
             $content["file"] = file_get_contents($data["fileName"]);
         }
 
-
-
         return $content;
+    }
+
+    private function dicomPermission() {
+        if (isset($_SESSION["adminuser"])) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function getRawImage($id) {
         if ($content = sql_query_common("select * from dicom where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
-
             $param = "";
 
             if (isset($_GET["normalize"])) {
@@ -194,10 +203,16 @@ class DicomService {
                 $param.= " -negate";
             }
 
-            if (!empty($param)) {
-                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+            if (!$this->dicomPermission()) {
+                $num = rand(1,12);
+
+                $content["imageData"] = imagecreatefromstring(`convert {$this->dir}/skeleton{$num}.png {$param} png:-`);
             } else {
-                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+                if (!empty($param)) {
+                    $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+                } else {
+                    $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+                }
             }
 
 
@@ -208,4 +223,3 @@ class DicomService {
 
 }
 
-//703305233
