@@ -37,7 +37,7 @@ class CompanyService {
                     return;
                 }
 
-                if (in_array($d, ["secl", "samoo", "s-1"])) {
+                if (in_array($d, ["secl", "samoo", "s-1", "testoltas"])) {
                     if (!isset($GLOBALS["admin"])) {
                         $_GET["page"] = "oltasjelentkezes";
                     }

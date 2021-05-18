@@ -161,7 +161,7 @@ class Page
     private function _pageFooter()
     {
         $class = "footercontainer";
-        if ($this->page->showSuzukiLogo) {
+        if ($this->page->showSuzukiLogo || !empty($this->page->customLogo)) {
             $class = "footercontainer_suzuki";
         }
         $html = "";

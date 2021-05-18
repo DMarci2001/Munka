@@ -126,6 +126,16 @@ class OltasJelentkezesPage extends CorePage
 
 
     public $pageParams = [
+      "testoltas" => [
+            "id" => "oltasformteszt",
+            "title" => "Oltás teszt",
+            "vakcinalist" => [1, 2, 3, 4, 5, 6],
+            "supply" => [null, 10000, 4000, 10000, 10000, 10000, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "https://influitive.com/wp-content/uploads/2021/01/UserTesting-Logo.png",
+            "logoheight" => 45
+      ],
       "secl" => [
             "id" => "oltasformsamsung",
             "title" => "Samsung",
