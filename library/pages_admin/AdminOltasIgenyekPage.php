@@ -11,41 +11,68 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
     private $prefix = "";
 
+
+    public $pageParams = [
+        "mscoltas" => [
+            "id" => "oltasform",
+            "username" => "suzukioltas",
+            "title" => "Suzuki",
+        ],
+        "secl" => [
+            "id" => "oltasformsamsung",
+            "username" => "samsungoltas",
+            "title" => "Samsung",
+        ],
+        "samoo" => [
+            "id" => "oltasformsamoo",
+            "username" => "samoooltas",
+            "title" => "Samoo",
+        ],
+        "s-1" => [
+            "id" => "oltasforms1",
+            "username" => "s1oltas",
+            "title" => "S-1",
+        ]
+
+    ];
+
+    public $pageParam;
+
     public function __construct()
     {
         parent::__construct();
         $this->bookingService = new BookingService();
-
-        $oltasPage = new OltasIgenyFelmeresPage();
-        $this->vakcinak = $oltasPage->vakcinak;
-
-        if ($GLOBALS["subdomain"] == "mscoltas") {
-            $this->prefix = "oltasform";
-        }
-        if ($GLOBALS["subdomain"] == "secl") {
-            $this->prefix = "oltasformsamsung";
-        }
-
-        if (isset($_SESSION["adminuser"])) {
-            if ($_SESSION["adminuser"]["username"] != "hmmoltas") {
-                if ($this->prefix == "oltasform" && $_SESSION["adminuser"]["username"] != "suzukioltas") {
-                    die("error 9921");
-                }
-                if ($this->prefix == "oltasformsamsung" && $_SESSION["adminuser"]["username"] != "samsungoltas") {
-                    die("error 9922");
-                }
-            }
-        }
 
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
             if (isset($_GET["setoceg"])) {
                 $_SESSION["oceg"] = $_GET["setoceg"];
             }
 
-            if (isset($_SESSION["oceg"])) {
-                $this->prefix = $_SESSION["oceg"];
+            if (!isset($_SESSION["oceg"])) {
+                $_SESSION["oceg"] = "mscoltas";
+            }
+
+            $GLOBALS["subdomain"] = $_SESSION["oceg"];
+        }
+
+
+
+
+        $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
+
+        $oltasPage = new OltasIgenyFelmeresPage();
+        $this->vakcinak = $oltasPage->vakcinak;
+
+        $this->prefix = $this->pageParam["id"];
+
+        if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jogosultsag"] <= 1) {
+            if ($_SESSION["adminuser"]["username"] != "hmmoltas") {
+                if ($this->pageParam["username"] != $_SESSION["adminuser"]["username"]) {
+                    die("error 9921");
+                }
             }
         }
+
 
         if (!isset($_GET["subpage"])) {
             $_GET["subpage"] = "";
@@ -212,8 +239,8 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
             echo "<div style='margin-bottom:10px;'>";
-            echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg=oltasform'>Suzuki</a>] ";
-            echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg=oltasformsamsung'>Samsung</a>] ";
+            foreach ($this->pageParams as $key => $pageParam)
+            echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}'>{$pageParam["title"]}</a>] ";
             echo "</div>";
         }
 
@@ -226,10 +253,107 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             //if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
                 echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             //}
-            echo $this->showOltasIgenyek();
+            echo $this->showOltasIgenyekEljott();
         }
         echo "</div>";
     }
+
+
+    private function showOltasIgenyekEljott() {
+        $result = [];
+        $html   = "";
+        $oltasPage = new OltasIgenyFelmeresPage();
+        $vakcinak = $oltasPage->vakcinak;
+
+        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='{$this->prefix}_new' order by datum desc")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($igenylesek as $igenylesData) {
+            $data = json_decode($igenylesData["keres"], JSON_OBJECT_AS_ARRAY);
+            //$html.= "<pre>".print_r($data, true)."</pre>";
+
+            $idopont = "";
+            if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_message' and keres=? limit 1", [$igenylesData["id"]]))) {
+                if (substr($message["response"], 0, 4) == "Dear") {
+                    $idopont = substr($message["response"], 48, 10);
+                } else {
+                    $idopont = substr($message["response"], 20, 10);
+                }
+            }
+
+
+            $datum = $idopont;
+
+            if (empty($datum)) {
+                $datum = "Időpont nélkül";
+            }
+
+            if (!sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_eljott' and keres=? limit 1", [$igenylesData["id"]]))) {
+                continue;
+            }
+
+            $csoport = "Mindenki";
+            if (isset($data["csoport"])) {
+                $csoport = $data["csoport"];
+            }
+
+            $van = 0;
+            foreach ($vakcinak as $vakcinaId => $vakcinaData) {
+                if (isset($data["vakcina{$vakcinaId}"])) {
+                    @$result[$datum][$csoport]++;
+                    $van = 1;
+                }
+            }
+            if ($van == 0) {
+                @$result[$datum][$csoport]++;
+            }
+
+
+
+        }
+
+        //$html.= "<pre>".print_r($result, true)."</pre>";
+
+
+        foreach ($result as $datum => $datumData) {
+            $html .= "<h2>{$datum} eljöttek száma</h2>";
+
+            $html.="<div style='display:table-row;background:#ddd;'>";
+            $html.="<div style='display:table-cell;padding:5px;'>Csoport</div>";
+            $html.= "<div style='display:table-cell;padding:5px;'>&nbsp;&nbsp;&nbsp;Eljöttek</div>";
+            $html.="</div>";
+
+            $napiDb = 0;
+
+            ksort($datumData);
+
+            foreach ($datumData as $csoportId => $csoportData) {
+                $html.="<div style='display:table-row;'>";
+                $html.="<div style='display:table-cell;padding:5px 5px 5px 5px;border-bottom:1px solid #ccc;'>{$csoportId}</div>";
+
+                $html.= "<div style='display:table-cell;padding:5px 5px 5px 5px;text-align: right;border-bottom:1px solid #ccc;'>";
+                if (isset($csoportData)) {
+                    $html.= $csoportData." fő";
+                    @$napiDb += $csoportData;
+                }
+
+                $html.= "</div>";
+
+                $html.="</div>";
+            }
+            $html.="<div style='display:table-row;font-weight: bold;'>";
+            $html.="<div style='display:table-cell;padding:5px 5px 5px 5px;border-bottom:1px solid #ccc;'>Összesen</div>";
+
+            $html.= "<div style='display:table-cell;padding:5px 5px 5px 5px;text-align: right;border-bottom:1px solid #ccc;'>".@intval($napiDb)." fő</div>";
+
+            $html.="</div>";
+        }
+
+
+
+        return $html;
+    }
+
+
 
     private function showOltasIgenyek() {
         $result = [];

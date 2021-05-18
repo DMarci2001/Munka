@@ -14,7 +14,8 @@ class CorePage {
     public $lockInPage = false;
 
     public $showSuzukiLogo = false;
-    public $showSamsungLogo = false;
+    public $customLogo = null;
+    public $customLogoHeight = 45;
 
     public $langList = ["hu", "en", "de"];
 

@@ -35,6 +35,8 @@ class OltasJelentkezesPage extends CorePage
             "errordata" => "Kérjük adja meg az adatait!",
             "erroremail" => "A megadott e-mail cím formátuma nem megfelelő!",
             "questionerror" => "Kérjük válaszoljon az összes kérdésre!",
+            "vchoose1" => "Kérjük válasszon egy vakcinát!",
+            "vonly1" => "Kérjük csak 1 vakcinát válasszon!",
             "send" => "Regisztráció",
             "thanks" => "Köszönjök a kitöltést!",
             "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
@@ -77,6 +79,8 @@ class OltasJelentkezesPage extends CorePage
             "errordata" => "Please fill all data field!",
             "erroremail" => "The format of the email you provided is not correct!",
             "questionerror" => "Please answer all of the questions!",
+            "vchoose1" => "Please choose a vaccine!",
+            "vonly1" => "Please choose only one vaccine!",
             "send" => "Registration",
             "thanks" => "Thank you for your registration!",
             "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
@@ -123,10 +127,36 @@ class OltasJelentkezesPage extends CorePage
 
     public $pageParams = [
       "secl" => [
-          "title" => "",
-          "vakcinalist" => [2,4],
-          "javascript" => "oltasform_samsung.js"
-      ]
+            "id" => "oltasformsamsung",
+            "title" => "Samsung",
+            "vakcinalist" => [1, 2, 3, 4, 5, 6],
+            "supply" => [null, 0, 4000, 0, 0, 0, 0],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
+            "logoheight" => 45
+      ],
+      "samoo" => [
+            "id" => "oltasformsamoo",
+            "title" => "Samoo",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Logo_Samoo_Signature_Vertical.png/375px-Logo_Samoo_Signature_Vertical.png",
+            "logoheight" => 45
+        ],
+        "s-1" => [
+            "id" => "oltasforms1",
+            "title" => "S-1",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "/images/s1logo.png",
+            "logoheight" => 50
+        ]
+
     ];
 
     public $pageParam;
@@ -136,12 +166,14 @@ class OltasJelentkezesPage extends CorePage
         parent::__construct();
 
         $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
-        $this->pageTitle = "Samsung - ".$this->getText("title");
+        $this->pageTitle = $this->pageParam["title"]." - ".$this->getText("title");
         $this->lockInPage = true;
         //$this->showLangMenu = false;
         $this->langList = ["hu", "en"];
         $this->showMainMenu = false;
-        $this->showSamsungLogo = true;
+
+        $this->customLogo = $this->pageParam["logo"];
+        $this->customLogoHeight = $this->pageParam["logoheight"];
 
         $this->validVakcinak = $this->pageParam["vakcinalist"];
 
@@ -156,6 +188,20 @@ class OltasJelentkezesPage extends CorePage
             $result = ["error" => "", "html" => $this->donePage()];
 
             $_POST["szuldatum"] = "";
+
+            $selectedVakcinak = 0;
+            for ($i=1;$i<=6;$i++) {
+                if (isset($_POST["vakcina{$i}"])) {
+                    $selectedVakcinak++;
+                }
+            }
+
+            if ($selectedVakcinak==0) {
+                $result["error"] =  $this->getText("vchoose1");
+            }
+            if ($selectedVakcinak>1) {
+                $result["error"] =  $this->getText("vonly1");
+            }
 
             $datum = "";
             if (isset($_POST["szuldatumev"])) {
@@ -181,7 +227,7 @@ class OltasJelentkezesPage extends CorePage
             if ($result["error"] == "") {
                 unset($_POST["g-recaptcha-response"]);
                 $_POST["lang"] = $_COOKIE["lang"];
-                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='oltasformsamsung_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
+                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$this->pageParam["id"]}_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
 
                 $this->doneEmail($_POST);
             }
@@ -246,11 +292,28 @@ class OltasJelentkezesPage extends CorePage
         */
 
         //vakcina
+        //echo "<div style='margin:20px 0px 10px 0px;'><strong>".$this->getText("oltoanyag")."</strong></div>";
+        //foreach ($this->validVakcinak as $vakcinaId) {
+        //    echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina{$vakcinaId}' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>".$this->getText("tajekoztato")."</a>]</div>";
+        //}
+        //echo "</div>";
+
+
+        //vakcina
         echo "<div style='margin:20px 0px 10px 0px;'><strong>".$this->getText("oltoanyag")."</strong></div>";
         foreach ($this->validVakcinak as $vakcinaId) {
-            echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina{$vakcinaId}' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>".$this->getText("tajekoztato")."</a>]</div>";
+            $data = sql_query("select count(*) as hany from webservicelog where tipus=23 and action='{$this->pageParam["id"]}_new' and instr(keres, ?) and datum>?", ["vakcina{$vakcinaId}", $this->pageParam["supplyfrom"][$vakcinaId]])->fetch(PDO::FETCH_ASSOC);
+            if ($data["hany"] < $this->pageParam["supply"][$vakcinaId]) {
+                $vakcinaExists = true;
+                echo "<div style=''><input class='oltaselement' type='checkbox' name='vakcina{$vakcinaId}' value='1' /> {$this->vakcinak[$vakcinaId]["name"]} [<a target='_blank' href='{$this->vakcinak[$vakcinaId]["tajekoztato_url"]}'>".$this->getText("tajekoztato")."</a>]</div>";
+            }
+        }
+        if (!isset($vakcinaExists)) {
+            echo "<div style='background:#ff6961;color:white;padding:10px;border-radius: 3px;'>Jelenleg nincs beállítva választható vakcina, kérjük nézzen vissza később!</div>";
         }
         echo "</div>";
+
+
 
         echo "<div id='tovabbikerdesek' style='opacity:1'>";
 

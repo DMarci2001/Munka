@@ -104,11 +104,9 @@ class Page
             $html .= "<img height='45' src='images/suzuki_logo_2.png' alt='' title='Magyar Suzuki Zrt.' style='margin-right:10px;' /> ";
         }
 
-        if ($this->page->showSamsungLogo) {
-            $html .= "<img height='45' src='https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg' alt='' title='' style='margin-right:10px;' /> ";
+        if (!empty($this->page->customLogo)) {
+            $html .= "<img height='{$this->page->customLogoHeight}' src='{$this->page->customLogo}' alt='' title='' style='margin-right:10px;' /> ";
         }
-
-
 
         if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
             $html .= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
