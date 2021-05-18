@@ -13,6 +13,7 @@ require_once(__DIR__ . "/library/Lang.php");
 require_once(__DIR__ . "/library/Settings.php");
 require_once(__DIR__ . "/library/Utils.php");
 require_once(__DIR__ . "/library/User.php");
+require_once(__DIR__ . "/library/NotificationService.php");
 require_once(__DIR__ . "/library/AjaxService.php");
 require_once(__DIR__ . "/library/CompanyService.php");
 require_once(__DIR__ . "/library/pages/CorePage.php");

@@ -131,7 +131,7 @@ class AdminBookingEditor {
             }
 
             if (isset($_POST["foglalasmentesnaptaresertesites2"])) {
-                $this->bookingService->sendToCegAndOrvos($fid,1);
+                $this->bookingService->notificationService->sendToCegAndOrvos($fid,1);
             }
 
             $foService = new FoglaljOrvostService();

@@ -81,7 +81,7 @@ class BookingValidatePage extends CorePage {
                 }
 
                 if (in_array($transactionData["result"], ["SUCCESS", "FINISHED"])) {
-					$bookingService->sendToCegAndOrvos($this->id);
+					$bookingService->notificationService->sendToCegAndOrvos($this->id);
                     echo "<h2>Sikeres megrendelés és fizetés</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
                     echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk figyelmét, hogy abban az esetben  ha panaszait nem tudjuk kezelni Web-Doktor szolgáltatásunkon keresztül, úgy a teljes összeg visszautalásra kerül.<br/><br/>";
@@ -97,8 +97,8 @@ class BookingValidatePage extends CorePage {
                 
                 <a href='/'>{$webText["visszafooldal"]}</a>";
 
-                $bookingService->sendToCegAndOrvos($this->id);
-                $bookingService->sendToUser($this->id);
+                $bookingService->notificationService->sendToCegAndOrvos($this->id);
+                $bookingService->notificationService->sendUserReservationNotification($this->id);
             }
 
             //módosítás sync ha kell

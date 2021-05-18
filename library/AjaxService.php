@@ -57,8 +57,8 @@ class AjaxService {
 
         if (isset($_GET["mailtest"])) {
             $bookingService = new BookingService();
-            $bookingService->sendToUser(135442);
-            $bookingService->sendToCegAndOrvos(132112, 1, 1);
+            $bookingService->notificationService->sendUserReservationNotification(135442);
+            $bookingService->notificationService->sendToCegAndOrvos(132112, 1, 1);
             die("sent");
         }
 

@@ -230,7 +230,7 @@ class AdminAjaxService {
                     //Lekérdezés ellenőrzése
                     if ($request['userertesitve'] == 1) sql_query("UPDATE foglalasok SET userertesitve=0 WHERE id=?", array($_POST['id']));
                     $service = new BookingService();
-                    $service->sendToUser($_POST['id']);
+                    $service->notificationService->sendUserReservationNotification($_POST['id']);
                     die(json_encode(array("status" => true, "text" => "Sikeres értesítő küldés!")));
                 } else {
                     $notification = sql_fetch_array(sql_query("SELECT MAX(datum) as datum FROM ertesites_log WHERE foglid=? GROUP BY foglid", array($_POST['id'])));

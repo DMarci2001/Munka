@@ -913,68 +913,6 @@ class Utils {
         die();
     }
 	
-	public function reservationReminder($data){
-		
-		//$data["email"]="marton.gergely@hungariamed.hu";
-		//id=128492
-		//Adott cégeknél ha benvan kapcsolva küldjön 1 nappal a foglalás előtt egy emlékeztető levelet!
-		//A küldő funkciót külön fogom kezelni, és foglalás azonosítóval fogom meghívni, abból fogja kiolvasni a szükséges infokat, magát a szelektálást 
-		
-		/*$result=sql_fetch_array(sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl 
-										   LEFT JOIN helyszinek h ON h.id=fogl.helyszinid 
-										   LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
-										   LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-										   WHERE fogl.id=?",array($fid)));*/
-										   
-		//Időpont tölése:								   
-		$href="http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$data["id"]}&rk={$data["rkod"]}&setlang={$data["rlang"]}";
-										   
-		 $mail = new PHPMailer();
-         $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-         $mail->FromName = Booking_Constants::COMPANY_NAME;
-         $mail->AddAddress($data["email"]);
-         //$mail->AddAddress("jns@jns.hu");
-         $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-         $mail->IsHTML(true);
-
-         $t = iconv("UTF-8", "ISO-8859-2", "Időpontfoglalás Emlékeztető - {$data["megnev"]}");
-		
-		
-		$mbody = "<p style='font-size:18px;font-weight:bold;font-family:calibri'>Tisztelt hölgyem/uram!</p>";
-		$mbody.= "";
-		$mbody.= "<p style='font-family:calibri'>Szeretnénk emlékeztetni, hogy <strong>".date("Y.m.d H:i",strtotime($data["datum"]))."-ra</strong> időpontfoglalása van,<br><br>";
-		
-		$mbody.= "<table style='font-family:calibri'>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátás megnevezése:</td><td style='padding:0px 10px'>{$data["megnev"]},</td></tr>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Helyszín:</td><td style='padding:0px 10px'>{$data["cim"]},</td></tr>";
-		$mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátó orvos vagy<br> rendelő megnevezése:</td><td style='padding:0px 10px' valign='middle'>{$data["nev"]}</td></tr>";
-		$mbody.= "</table>";
-		
-		$mbody.= "<br><br>";
-		$mbody.= "Az ellátás folytonossága érdekében kérjük, hogy legalább <strong>15 percel</strong> a lefoglalt időpont előtt sziveskedjék megjelenni!<br>";
-		$mbody.= "Ha bármilyen okból nem tud megjelenni a vizsgálaton, vagy lemondaná a foglalást kérem <a style='color:#a00;' href='{$href}' target='_blank'>kattintson ide az időpont törléséhez.</a></p>";
-		
-		$mbody.= "<p style='font-family:calibri'>Köszönjük, ".Booking_Constants::COMPANY_NAME." Csapata!</p>";
-
-         $mail->Subject = $t;
-         $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-         //$mail->AddAttachment("");
-         $mail->Send();
-		 
-		sql_query("UPDATE foglalasok SET emlekezteto_mail = 1 WHERE id=?",array($data['id']));
-		
-		$this->createNotificationRecord($data["id"],$mbody,$data["email"],"emlekezteto");
-		 
-		 //echo $mbody;
-	}
-	
-	public function createNotificationRecord($id,$text,$email,$subject){
-		
-		$data = array($id,$text,$email,(isset($_SESSION["adminuser"]["id"])?$_SESSION["adminuser"]["id"]:null),$subject);
-		
-		sql_query("INSERT INTO ertesites_log SET foglid=?,szoveg=?,email=?,uid=?,targy=?,datum=NOW()",$data);
-	}
-
 	public static function isDemoSite() {
         return Booking_Constants::IS_DEMO;
     }

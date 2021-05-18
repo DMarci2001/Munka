@@ -372,6 +372,8 @@ class CronService {
     }
 	
 	private function sendReservationReminders() {
+        $notificationService = new NotificationService();
+
 		if (date("G:i") == "10:00") {
 			$request = sql_query("SELECT fogl.datum,h.cim,o.nev,fogl.email,sz.megnev,fogl.id,fogl.rkod,fogl.rlang FROM foglalasok fogl
 								  LEFT JOIN cegek c ON c.id=fogl.cegid
@@ -383,7 +385,9 @@ class CronService {
 								  AND fogl.datum LIKE '".date("Y-m-d",strtotime("Now + 1 day"))."%'
 								  ");
 								  
-			while($result=sql_fetch_array($request)) $this->utils->reservationReminder($result);
+			while($result=sql_fetch_array($request)) {
+			    $notificationService->reservationReminder($result);
+            }
 		}
 	}
 }
