@@ -140,7 +140,7 @@ class OltasJelentkezesPage extends CorePage
             "id" => "oltasformsamsung",
             "title" => "Samsung",
             "vakcinalist" => [1, 2, 3, 4, 5, 6],
-            "supply" => [null, 0, 4000, 0, 0, 0, 0],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
             "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
             "javascript" => "oltasform_samsung.js",
             "logo" => "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
