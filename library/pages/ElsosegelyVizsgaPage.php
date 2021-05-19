@@ -69,18 +69,29 @@ class ElsosegelyVizsgaPage extends CorePage {
     }
 
     public function showPage() {
-        echo $this->showFormErrors();
+        $webText = $this->lang->webText;
+
+
+         echo $this->showFormErrors();
+
+
 
         echo "<h1 style='text-align: center;'>Elsősegély vizsga</h1>";
 
         echo "<div id='vizsgaformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
         echo "<form id='vizsgaform'>";
 
-        echo "<div style='text-align: left;margin:0px 0px 20px 0px;'>";
-        echo "Kérjük töltse le és nézze meg a következő oktatóanyagot, majd ha elolvasta, és megnézte a benne található videókat, kattintson a vizsga indítása linkre:";
-        echo "<div style='margin-top:10px;'><a target='_blank' href='/oktato/First Aid-creative.pptx'>Oktatóanyag letöltése</a></div>";
-        echo "<div style='margin-top:10px;'><a onclick='$(\"#vizsgablokk\").slideToggle();return false;' href='#'>Vizsga indítása</a></div>";
+        echo "<div style='text-align: left;margin:0px 0px 20px 0px;' id='videodiv'>";
+        echo "Kérjük nézze végig a következő videót, majd kattintson a vizsga indítása gombra:";
+        echo "<div style='margin-top:10px;'>";
+        echo " <video width='100%' controls><source src='https://bejelentkezes.hungariamed.hu/presentation/First-Aid-creative.mp4' type='video/mp4'>Your browser does not support the video tag.</video>";
         echo "</div>";
+
+        echo "<div style='margin-top:30px;text-align: center;'><a onclick='$(\"#vizsgablokk\").toggle();$(\"#videodiv\").toggle();return false;' id='covidsubmitbutton' class='newbutton' href='#'>Vizsga indítása</a></div>";
+
+        //echo "<div style='margin-top:10px;'><a onclick='$(\"#vizsgablokk\").slideToggle();return false;' href='#'>Vizsga indítása</a></div>";
+        echo "</div>";
+
 
         $_POST["szuldatum"] = null;
 
