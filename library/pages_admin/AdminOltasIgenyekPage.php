@@ -32,6 +32,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasforms1",
             "username" => "s1oltas",
             "title" => "S-1",
+        ],
+        "sdi" => [
+            "id" => "oltasformsdi",
+            "username" => "sdioltas",
+            "title" => "Sdi",
         ]
 
     ];
