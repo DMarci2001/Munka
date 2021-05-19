@@ -17,7 +17,15 @@ class NotificationService {
         sql_query("INSERT INTO notifications SET datum=now(), tipus=?, objectid=?, destination=?, targy=?, szoveg=?, uid=?", [$tipus, $objectid, $destination, $subject, $text, $uid]);
     }
 
-    public function sendUserReservationNotification($id) {
+    public static function hasNotification($tipus, $objectid):bool {
+        return (bool)sql_fetch_array(sql_query("select id from notifications where tipus=? and objectid=?", [$tipus, $objectid]));
+    }
+
+    public static function getNotificationsByType($tipus, $objectid):array {
+        return sql_query("select * from notifications where tipus=? and objectid=? order by datum desc", [$tipus, $objectid])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
         $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev 
@@ -29,7 +37,7 @@ class NotificationService {
         WHERE f.id=?",  [$id]);
 
         if ($row = sql_fetch_array($res)) {
-            if (sql_fetch_array(sql_query("select id from notifications where tipus='usernotification' and objectid=?", [$id])) && !isset($_GET["mailtest"])) {
+            if (self::hasNotification("usernotification", $id) && !isset($_GET["mailtest"]) && !$force) {
                 return;
             }
 
@@ -88,7 +96,7 @@ class NotificationService {
 		WHERE f.id in (" . implode(",", $fids) . ")");
 
         while ($rowf = sql_fetch_array($resf)) {
-            if (sql_fetch_array(sql_query("select id from notifications where tipus='doctornotification' and objectid=?", [$rowf["id"]])) && $force == 0) {
+            if (self::hasNotification("doctornotification", $rowf["id"]) && $force == 0) {
                 return;
             }
 
@@ -151,7 +159,7 @@ class NotificationService {
 
         if ($row = sql_fetch_array($res)) {
             if ($row["foglalasemail"] == 1) {
-                if (!sql_fetch_array(sql_query("select id from notifications where tipus='cegnotification' and objectid=?", [$row["id"]])) || $force == 1) {
+                if (!self::hasNotification("cegnotification", $row["id"]) || $force == 1) {
                     $packText = $this->_getPackText($row);
 
                     $mail = new PHPMailer();
@@ -229,9 +237,10 @@ class NotificationService {
             }
             $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
+            $mail->CharSet = "UTF-8";
 
             $webTextLocal = $lang->getWebTexts($row["rlang"]);
-            $t = iconv("UTF-8", "ISO-8859-2", $webTextLocal["mailtitleerositsdmeg"]);
+            $t = $webTextLocal["mailtitleerositsdmeg"];
 
             $mbody = "";
 
@@ -279,7 +288,7 @@ class NotificationService {
             }
 
             $mail->Subject = $t;
-            $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
+            $mail->Body = $mbody;
             //$mail->AddAttachment("");
             $mail->Send();
 
@@ -300,7 +309,7 @@ class NotificationService {
         $mail->IsHTML(true);
         $mail->CharSet = "UTF-8";
 
-        $t = iconv("UTF-8", "ISO-8859-2", "Időpontfoglalás Emlékeztető - {$data["megnev"]}");
+        $t = "Időpontfoglalás Emlékeztető - {$data["megnev"]}";
 
         $mbody = "<p style='font-size:18px;font-weight:bold;font-family:calibri'>Tisztelt hölgyem/uram!</p>";
         $mbody.= "";

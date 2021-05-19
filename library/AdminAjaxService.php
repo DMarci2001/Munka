@@ -216,8 +216,6 @@ class AdminAjaxService {
 
         if (isset($_POST['manualNotificationSend']) && $_POST['manualNotificationSend'] == true) {
             header('Content-Type: application/json');
-            $status = "";
-            $error  = "";
 
             $request = sql_fetch_array(sql_query("SELECT userertesitve,email FROM foglalasok where id=?", array($_POST['id'])));
 
@@ -226,17 +224,17 @@ class AdminAjaxService {
                 die(json_encode(array("status" => "error", "text" => "Nincs megadott helyes e-mail cím!")));
             } else {
                 //Ha nem volt még értesítve, vagy post tartalmazza a megerősítési kérelmet:
-                if ($request['userertesitve'] == 0 || (isset($_POST['status']) && $_POST['status'] == true)) {
+                if (!NotificationService::hasNotification("usernotification", $_POST["id"]) || (isset($_POST['status']) && $_POST['status'] == true)) {
                     //Lekérdezés ellenőrzése
-                    if ($request['userertesitve'] == 1) sql_query("UPDATE foglalasok SET userertesitve=0 WHERE id=?", array($_POST['id']));
                     $service = new BookingService();
-                    $service->notificationService->sendUserReservationNotification($_POST['id']);
+                    $service->notificationService->sendUserReservationNotification($_POST['id'], true);
                     die(json_encode(array("status" => true, "text" => "Sikeres értesítő küldés!")));
                 } else {
-                    $notification = sql_fetch_array(sql_query("SELECT MAX(datum) as datum FROM ertesites_log WHERE foglid=? GROUP BY foglid", array($_POST['id'])));
-                    if (count($notification) > 0) {
+                    $notifications = NotificationService::getNotificationsByType("usernotification", $_POST["id"]);
+                    if (!empty($notifications)) {
+                        $notification = reset($notifications);
                         die(json_encode(array("status" => false, "text" => "A páciens részére már volt értesítés küldve {$notification['datum']}-kor! Biztosan küldeni akarsz egyet ismét?")));
-                    } else die(json_encode(array("status" => false, "text" => "A páciens részére már volt értesítés küldve! Biztosan küldeni akarsz egyet ismét?")));
+                    }
                 }
             }
             die();
