@@ -102,8 +102,8 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<tr>";
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>";
-            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["id"]}'>kép megtekintése</a>] ";
-            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["id"]}'>DICOM file letöltése</a>]";
+            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'>kép megtekintése</a>] ";
+            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'>DICOM file letöltése</a>]";
             $html.= "</td>";
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["contentDate"]}</div></td>";
