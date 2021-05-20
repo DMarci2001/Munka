@@ -583,4 +583,47 @@ END:VCALENDAR";
         return $ical;
     }
 
+
+    public function sendMissingDataEmail($id) {
+        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain,o.nev as orvosnev,
+        CONCAT(SHA1(CONCAT(f.regdatum, f.id)), SHA1(CONCAT(f.nev, f.regdatum)), SHA1(CONCAT(f.id, f.nev, f.regdatum))) AS h 
+        FROM foglalasok f
+        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+        LEFT JOIN cegek c on c.id=f.cegid
+		LEFT JOIN orvosok o ON o.id=f.`orvosassigned` 
+        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+        WHERE f.id=?", array($id));
+
+        if ($row = sql_fetch_array($res)) {
+            $body = "Kedves {$row["nev"]}!<br/>
+            <br/>
+            Ezt a levelet azért kapja, mert  a FoglaljOrvost.hu felületén időpontot foglalt egészségközpontunkba.<br/>
+            Az ügyintézés meggyorsítása és a várakozási idő csökkentése érdekében a következő űrlapon megadhatja a szükséges adatait.<br/>
+            <br/>
+            Az adatok megadásához <a href='".Booking_Constants::MAIN_URL."/index.php?page=missingdata&r={$row["id"]}&h={$row["h"]}'>kattintson ide</a><br/>
+            <br/>
+            Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
+
+            $mail = new PHPMailer();
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            //$mail->AddAddress($row["email"]);
+            $mail->AddAddress("jnsmobil@gmail.com");
+            //if (!empty(Booking_Constants::USER_BCC_MAIL)) {
+            $mail->AddBCC("jns@jns.hu");
+            //}
+            $mail->CharSet = "UTF-8";
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+
+            $t = "[".Booking_Constants::COMPANY_NAME_SHORT."] Kérjük adja meg az adatait";
+            $mail->Subject = $t;
+            $mail->Body = $body;
+
+            $mail->Send();
+
+            $this->createNotificationRecord("missingdata", $id, $row["email"], $t, $body);
+        }
+    }
+
 }

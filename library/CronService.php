@@ -24,6 +24,11 @@ class CronService {
             $dicomService->teszt();
             die;
         }
+
+        if (isset($_GET["missingteszt"])) {
+            $this->sendMissingDataEmails();
+            die("ok");
+        }
     }
 
     public function run() {
@@ -34,6 +39,10 @@ class CronService {
             $this->_updateNaploszam();
             $this->_sendFoglaljOrvostHeartBeat();
 			$this->sendReservationReminders();
+			$this->sendMissingDataEmails();
+
+			$dicomService = new DicomService();
+			$dicomService->processEntries();
 
 			$foService = new FoglaljOrvostService();
 			$foService->retryFailedMessages();
@@ -390,4 +399,17 @@ class CronService {
             }
 		}
 	}
+
+    private function sendMissingDataEmails() {
+        $notificationService = new NotificationService();
+
+        $reservations = sql_query("SELECT id, nev, email, regdatum, datum, CONCAT(SHA1(CONCAT(regdatum, id)), SHA1(CONCAT(nev, regdatum)), SHA1(CONCAT(id, nev, regdatum))) AS h FROM foglalasok WHERE regdatum>DATE_SUB(NOW(), INTERVAL 1 DAY) AND foglalta='foglaljorvost'")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($reservations as $reservation) {
+            if (!NotificationService::hasNotification("missingdata", $reservation["id"])) {
+                echo $reservation["datum"] . " " . $reservation["nev"] . " " . $reservation["email"] . "\n";
+                $notificationService->sendMissingDataEmail($reservation["id"]);
+            }
+        }
+    }
+
 }

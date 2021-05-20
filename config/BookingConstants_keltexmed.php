@@ -5,9 +5,9 @@
 class Booking_Constants {
     const IS_DEMO                   = false;
     const SITE_NAME                 = 'KeltexMed időpontfoglalás';
-    const SITE_LOGO                 = 'images/hmm_logo.png';
+    const SITE_LOGO                 = 'images/keltexmed_logo.png';
     const SITE_ADMIN_LOGO           = 'keltexmed_logo.png';
-    const SITE_FAVICON              = 'hmm_favicon.png';
+    const SITE_FAVICON              = 'keltexmed_logo.png';
     const SITE_DOMAIN               = 'keltexmed.hu';
     const SITE_PROTOCOL             = 'http';
     const GENERATED_PASSWORD_LENGTH = 8;
@@ -24,6 +24,7 @@ class Booking_Constants {
     const COMPANY_NAME              = "Keltexmed Kft.";
     const COMPANY_NAME_SHORT        = "Keltexmed"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
 
+    const MAIN_URL                  = "http://bejelentkezes.keltexmed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
     const RESERVATION_TO_ADDRESS    = "bejelentkezes@hungariamed.hu";
     const USER_BCC_MAIL             = "";

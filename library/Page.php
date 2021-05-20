@@ -108,11 +108,7 @@ class Page
             $html .= "<img height='{$this->page->customLogoHeight}' src='{$this->page->customLogo}' alt='' title='' style='margin-right:10px;' /> ";
         }
 
-        if ($_SESSION["helyszindata"]["domain"] == "bejelentkezes" && substr_count($_SERVER["HTTP_HOST"], "keltexmed") == 0) {
-            $html .= "<a href='{$mainURL}'><img width='120' src='/images/logo-retina.png' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
-        } else {
-            $html .= "<a href='{$mainURL}'><img width='30' src='" . Booking_Constants::SITE_LOGO . "' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:10px;' /></a>";
-        }
+        $html .= "<a href='{$mainURL}'><img height='45' src='" . Booking_Constants::SITE_LOGO . "' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
 
         $html .= "</div>";
         if ($this->page->showMainMenu) {
