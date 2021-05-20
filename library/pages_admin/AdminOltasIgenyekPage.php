@@ -4,8 +4,6 @@ use PHPMailer\PHPMailer\PHPMailer;
 
 class AdminOltasIgenyekPage extends AdminCorePage
 {
-
-    private $bookingService;
     private $vakcinak;
     private $eljottek = 0;
 
@@ -37,6 +35,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformsdi",
             "username" => "sdioltas",
             "title" => "Sdi",
+        ],
+        "cksolution" => [
+            "id" => "oltasformck",
+            "username" => "cksolutionoltas",
+            "title" => "CK Solution",
         ]
 
     ];
@@ -46,7 +49,6 @@ class AdminOltasIgenyekPage extends AdminCorePage
     public function __construct()
     {
         parent::__construct();
-        $this->bookingService = new BookingService();
 
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
             if (isset($_GET["setoceg"])) {
@@ -59,9 +61,6 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             $GLOBALS["subdomain"] = $_SESSION["oceg"];
         }
-
-
-
 
         $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
 
@@ -258,7 +257,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             //if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
                 echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             //}
-            echo $this->showOltasIgenyekEljott();
+            echo $this->showOltasIgenyek();
         }
         echo "</div>";
     }
