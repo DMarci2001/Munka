@@ -175,6 +175,16 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "https://www.samsungsdi.hu/assets/oldSite/img/common/logo.svg",
             "logoheight" => 45
+        ],
+        "cksolution" => [
+            "id" => "oltasformck",
+            "title" => "CK Solution",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "/images/cksolution_logo.png",
+            "logoheight" => 45
         ]
 
     ];
