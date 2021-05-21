@@ -4,6 +4,8 @@ use PHPMailer\PHPMailer\PHPMailer;
 
 class AdminOltasIgenyekPage extends AdminCorePage
 {
+
+    private $bookingService;
     private $vakcinak;
     private $eljottek = 0;
 
@@ -36,11 +38,12 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "username" => "sdioltas",
             "title" => "Sdi",
         ],
-        "cksolution" => [
+        "cksolutions" => [
             "id" => "oltasformck",
             "username" => "cksolutionoltas",
             "title" => "CK Solution",
         ]
+
 
     ];
 
@@ -49,6 +52,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
     public function __construct()
     {
         parent::__construct();
+        $this->bookingService = new BookingService();
 
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
             if (isset($_GET["setoceg"])) {
@@ -61,6 +65,9 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             $GLOBALS["subdomain"] = $_SESSION["oceg"];
         }
+
+
+
 
         $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
 
@@ -102,14 +109,6 @@ class AdminOltasIgenyekPage extends AdminCorePage
         }
 
         if (isset($_GET["sendmessage"])) {
-            /*
-            08:00 - 09:00 japánok 08:00 és 08:30
-            2021-05-08 9-10 20db b műszak 09:00, 09:30
-            10:00 - a műszak amig ki nem fogynak 30 percenként 10 ember
-            12:00 - összes többi, kivéve japánok
-            */
-
-
             $igenyles = sql_query("SELECT * FROM webservicelog WHERE id=? AND ACTION='{$this->prefix}_new' order by datum desc", [$_GET["sendmessage"]])->fetch(PDO::FETCH_ASSOC);
 
             $data = json_decode($igenyles["keres"], JSON_OBJECT_AS_ARRAY);
@@ -127,16 +126,20 @@ class AdminOltasIgenyekPage extends AdminCorePage
                 //$szovegEmail = "Kedves ügyfelünk!<br/><br/>Új időpont, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.{$extraMessage}<br/><br/>Hungáriamed csapata";
             }
 
-            if ($this->prefix == "oltasformsamsung") {
+            //tegnapi 74ember
+            //15 percenként 6 ember 1. secl, 2. samoo, 3. cksolution, 4. s1
+            //07:00
+
+            if (true || $this->prefix == "oltasformsamsung") {
                 //15 percenként 4 ember  7:00
 
-                $idopont = "2021-05-08 09:45";
+                $idopont = "2021-05-22 10:15";
 
                 $szovegSMS = "Dear Client, we are waiting for your arrival at {$idopont} at our vaccination point located in the SECL office. Hungáriamed team";
                 $szovegEmail = "Dear Client!<br/><br/>We are waiting for your arrival at {$idopont} at our vaccination point located in the SECL office.<br/><br/>Hungáriamed team";
             }
 
-            if ($this->prefix == "oltasform") {
+            if (true || $this->prefix == "oltasform") {
                 if (substr($data["telefon"], 0, 1) == "+" || substr($data["telefon"], 0, 2) == "00") {
                     $this->utils->sendSMSRaw($data["telefon"], $szovegSMS);
                 } else {
@@ -257,7 +260,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             //if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
                 echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             //}
-            echo $this->showOltasIgenyek();
+            echo $this->showOltasIgenyekEljott();
         }
         echo "</div>";
     }
