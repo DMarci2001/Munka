@@ -8,6 +8,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
     private $bookingService;
     private $vakcinak;
     private $eljottek = 0;
+    private $allRegistered = 0;
 
     private $prefix = "";
 
@@ -38,7 +39,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "username" => "sdioltas",
             "title" => "Sdi",
         ],
-        "cksolutions" => [
+        "cksolution" => [
             "id" => "oltasformck",
             "username" => "cksolutionoltas",
             "title" => "CK Solution",
@@ -260,6 +261,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
             //if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
                 echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             //}
+            echo $this->showOltasIgenyek();
             echo $this->showOltasIgenyekEljott();
         }
         echo "</div>";
@@ -399,7 +401,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
 
         foreach ($result as $datum => $datumData) {
-            $html .= "<h2>{$datum}</h2>";
+            $html .= "<h2>{$datum} regisztráltak</h2>";
 
             $html.="<div style='display:table-row;background:#ddd;'>";
             $html.="<div style='display:table-cell;padding:5px;'>Csoport</div>";
@@ -453,6 +455,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         $html = "";
 
         $this->eljottek = 0;
+        $this->allRegistered = 0;
         $igen = "<span style='color:#a00;'>IGEN</span>";
         $nem = "<span style='color:#080;'>NEM</span>";
 
@@ -553,13 +556,16 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         }
         $html.="</table>";
 
-        $html.="<div style='margin:20px 0px 0px 5px;'>Eljöttek száma: {$this->eljottek} fő</div>";
+        $html.="<div style='margin:20px 0px 0px 5px;'>Összesen: {$this->allRegistered}, Eljöttek száma: {$this->eljottek} fő</div>";
 
         return $html;
     }
 
 
-    private function personRow($igenyData):string {
+    private function personRow($igenyData):string
+    {
+        $this->allRegistered++;
+
         $formData = json_decode($igenyData["keres"], JSON_OBJECT_AS_ARRAY);
         if (!isset($formData["csoport"])) {
             $formData["csoport"] = "all";
@@ -598,21 +604,25 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         }
 
         if ($formData["csoport"] == "egyeb" && !empty($formData["csoporttext"])) {
-            $formData["csoport"] = "<span style='font-style: italic;'>".substr(trim(strip_tags($formData["csoporttext"])), 0, 50)."</span>";
+            $formData["csoport"] = "<span style='font-style: italic;'>" . substr(trim(strip_tags($formData["csoporttext"])), 0, 50) . "</span>";
         }
 
         $html = "";
 
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
+        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
-            $html.="[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>] ";
-            $html.="[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&deletemscrow={$igenyData["id"]}' onclick='return confirm(\"Biztos törlöd ezt a sort?\");'>Törlés</a>] ";
+            $html .= "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>] ";
+            $html .= "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&deletemscrow={$igenyData["id"]}' onclick='return confirm(\"Biztos törlöd ezt a sort?\");'>Törlés</a>] ";
         }
-        $html.="[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";
-        $html.="</td>";
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
+        $html .= "[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";
+        $html .= "</td>";
+        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
+        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
+        if (isset($formData["utlevel"])) {
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["utlevel"]}</td>";
+        } else {
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
+        }
         $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["szuldatum"]}</td>";
         $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["telefon"]}</td>";
         $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["email"]}</td>";

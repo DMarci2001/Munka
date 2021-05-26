@@ -117,7 +117,7 @@ class OltasJelentkezesPage extends CorePage
             "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/sinopharm-vakcina_lakossagi_tajekoztato.pdf"
         ],
         6 => [
-            "name" => "Janessen",
+            "name" => "Janssen",
             "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/janssen_vakcina_lakossagi_tajekoztato.pdf"
         ]
     ];

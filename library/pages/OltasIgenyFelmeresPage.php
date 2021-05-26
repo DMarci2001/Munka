@@ -36,7 +36,7 @@ class OltasIgenyFelmeresPage extends CorePage
             "supplyfrom" => "2021-05-11 00:00:00"
         ],
         6 => [
-            "name" => "Janessen",
+            "name" => "Janssen",
             "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/janssen_vakcina_lakossagi_tajekoztato.pdf",
             "supply" => 0,
             "supplyfrom" => "2021-05-11 00:00:00"
