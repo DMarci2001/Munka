@@ -93,8 +93,7 @@ class DicomService {
         return $entries;
     }
 
-
-    public function getImages($params = []) {
+    public function getPatients($params = []) {
         $queryParams = [];
         $w = "";
 
@@ -103,7 +102,17 @@ class DicomService {
             $queryParams[] = $params["search"];
         }
 
-        return sql_query_common("select * from dicom where true {$w} order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        if (isset($params["byuid"]) && !empty($params["byuid"])) {
+            $w .= " and uid=?";
+            $queryParams[] = $params["byuid"];
+        }
+
+        return sql_query_common("select d.*, count(*) as imageNum from dicom d where true {$w} group by d.patientID order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    public function getImages($patientID) {
+        return sql_query_common("select * from dicom where patientID=? order by contentDate desc limit 500", [$patientID])->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getDicomEntry($id) {
@@ -133,33 +142,43 @@ class DicomService {
     }
 
     public function getRawImage($id) {
+        $param = "";
+
+        if (isset($_GET["normalize"])) {
+            $param.= " -normalize";
+        }
+        if (isset($_GET["invert"])) {
+            $param.= " -negate";
+        }
+
         if ($content = sql_query_common("select * from dicom where uid=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
-            $param = "";
-
-            if (isset($_GET["normalize"])) {
-                $param.= " -normalize";
-            }
-            if (isset($_GET["invert"])) {
-                $param.= " -negate";
-            }
-
             if (!$this->dicomPermission()) {
-                $num = rand(1,12);
-
-                $content["imageData"] = imagecreatefromstring(`convert {$this->dir}/skeleton{$num}.png {$param} png:-`);
+                $content["imageData"] = $this->notAvailableImage($param);
             } else {
-                if (!empty($param)) {
-                    $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+                if (isset($_GET["thumb"])) {
+                    $thumbLocation = "{$this->dir}/thumbnails/{$id}.jpg";
+                    if (!is_file($thumbLocation)) {
+                        `dcmj2pnm --write-png {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
+                    }
+                    $content["imageData"] = imagecreatefromstring(file_get_contents($thumbLocation));
                 } else {
-                    $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+                    if (!empty($param)) {
+                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+                    } else {
+                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+                    }
                 }
             }
-
-
+        } else {
+            $content["imageData"] = $this->notAvailableImage($param);
         }
 
         return $content;
     }
 
+    private function notAvailableImage($param) {
+        $num = rand(1,12);
+        return imagecreatefromstring(`convert {$this->dir}/skeleton{$num}.png {$param} png:-`);
+    }
 }
 

@@ -12,25 +12,34 @@ class AdminDicomPage extends AdminCorePage
         $this->dicomService = new DicomService();
 
         if (isset($_REQUEST["generalsearch"])) {
-            $images = $this->dicomService->getImages(["search" => $_REQUEST["term"]]);
-            echo $this->listDicomEntries($images);
+            $patients = $this->dicomService->getPatients(["search" => $_REQUEST["term"]]);
+            echo $this->listDicomEntries($patients);
             die;
         }
 
         if (isset($_GET["getimage"])) {
             $content = $this->dicomService->getRawImage($_GET["getimage"]);
 
-            //header('Content-Disposition: attachment; filename="'.$content["fileName"].'.png"');
             header("Content-Type: image/png");
+            if (isset($_GET["thumb"])) {
+                header("Content-Type: image/jpeg");
+                imagejpeg($content["imageData"]);
+            } else {
+                header("Content-Type: image/png");
+                imagepng($content["imageData"]);
+            }
 
-            //imagefilter($content["imageData"], IMG_FILTER_NEGATE);
-
-            imagepng($content["imageData"]);
             die();
-        }
+        } //lemondás
 
         if (isset($_GET["displayimage"])) {
             echo $this->displayImageEditor($_GET["displayimage"]);
+            die;
+        }
+
+        if (isset($_POST["showimagelist"])) {
+            $patients = $this->dicomService->getPatients(["byuid" => $_POST["showimagelist"]]);
+            echo $this->showImageList($patients[0]["patientID"]);
             die;
         }
 
@@ -61,18 +70,13 @@ class AdminDicomPage extends AdminCorePage
 
 
         echo "<div style='margin-bottom:20px;'>";
-
         echo "<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>";
-
         echo "</div>";
 
 
-
         echo "<div id='dicomlist'>";
-
-        $images = $this->dicomService->getImages();
-        echo $this->listDicomEntries($images);
-
+        $patients = $this->dicomService->getPatients();
+        echo $this->listDicomEntries($patients);
         echo "</div>";
     }
 
@@ -80,13 +84,13 @@ class AdminDicomPage extends AdminCorePage
     private function listDicomEntries($images) {
         $html = "";
 
-        $html.= "<table cellpadding='0' cellspacing='0' border='0'>";
+        $html.= "<table cellpadding='0' cellspacing='0' border='0' width='100%;'>";
         $html.= "<tr style='background:#eee;'>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Műveletek</td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 5px;'>Időpont</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Paciens neve</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Szül. dátum</td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>TAJ szám</td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:140px;'>Időpont</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:240px;'>Paciens neve</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>Szül. dátum</td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>TAJ szám</td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Megjegyzés</td>";
         $html.= "</tr>";
 
@@ -102,17 +106,20 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<tr>";
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>";
-            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'>kép megtekintése</a>] ";
-            $html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'>DICOM file letöltése</a>]";
+            $html.= "<a style='' onclick='toggleDicomImageRow(\"{$row["uid"]}\");return false;' href='#'>{$row["imageNum"]} kép</a> ";
+            //$html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'>kép megtekintése</a>] ";
+            //$html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'>DICOM file letöltése</a>]";
             $html.= "</td>";
 
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["contentDate"]}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientName"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientBirthDate"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientOtherIDs"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["studyDescription"]}</div></td>";
 
             $html.= "</tr>";
+            $html.= "<tr><td colspan='8' ><div id='imagerow{$row["uid"]}' style='padding:10px 0px 10px 0px;display:none;'>";
+            $html.= "</div></td></tr>";
             $html.= "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         $html.= "</table>";
@@ -120,7 +127,7 @@ class AdminDicomPage extends AdminCorePage
         return $html;
     }
 
-    private function displayImageEditor($id) {
+    private function displayImageEditor($id):string {
         $dicomData = $this->dicomService->getDicomEntry($id);
 
         $html = "<!DOCTYPE html>";
@@ -176,6 +183,25 @@ class AdminDicomPage extends AdminCorePage
         $html.= "</body>";
         //$html.= "</html>";
 
+        return $html;
+    }
+
+
+    private function showImageList($patientId):string {
+        $html = "";
+
+        $images = $this->dicomService->getImages($patientId);
+
+        foreach ($images as $row) {
+            $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
+            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:100px;height:100px;object-fit: cover;' alt='' /></a>";
+            $html.= "<div style='text-align: center;padding-top: 5px;'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div>";
+            $html.= "<div style='text-align: center;padding-top: 5px;font-size: 16px;'>";
+            //$html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><i class='fas fa-eye'></i></a>&nbsp;";
+            $html.= "<a title='DICOM file letöltése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'><i class='fas fa-cloud-download-alt'></i></a>";
+            $html.= "</div>";
+            $html.= "</div>";
+        }
 
         return $html;
     }

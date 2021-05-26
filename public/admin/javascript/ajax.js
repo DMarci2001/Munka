@@ -2292,7 +2292,7 @@ function initGeneralSearch() {
             let page = $(this).data("page");
             let resultDiv = $(this).data("resultdiv");
 
-            if (term.length < 3) {
+            if (term.length < 3 && term.length != 0) {
                 alert("A keresési érték minimum 3 karakter!");
                 return;
             }
@@ -2306,5 +2306,19 @@ function initGeneralSearch() {
             });
         }
     });
+
+}
+
+function toggleDicomImageRow(id) {
+    $("#imagerow"+id).toggle();
+
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"dicom", showimagelist:id}
+    }).done(function (msg) {
+        $("#imagerow"+id).html(msg);
+    });
+
 
 }
