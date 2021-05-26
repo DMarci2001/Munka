@@ -66,23 +66,79 @@ class ElsosegelyVizsgaPage extends CorePage {
             $this->utils->jsonOut($result);
         }
 
+        if (isset($_GET["elsosegelylogout"])) {
+            unset($_SESSION["elsosegelyuser"]);
+            header("location:index.php");
+            die;
+        }
+
+        if (isset($_POST["eloginusername"])) {
+            if (empty($_POST["eloginusername"]) || empty($_POST["eloginpassword"])) {
+                $this->errors[] = "Kérjük adja meg a felhasználónevet és a jelszót!";
+            }
+
+            if (empty($this->errors)) {
+                foreach ($this->users as $key => $user) {
+                    if ($user["username"] == $_POST["eloginusername"] && $user["password"] == $_POST["eloginpassword"]) {
+
+                        if (strtotime("now") > strtotime($user["validuntil"])) {
+                            $this->errors[] = "A belépési jogosultság ehhez a fiókhoz lejárt!";
+                            break;
+                        }
+
+                        $_SESSION["elsosegelyuser"] = $key;
+                        header("location:index.php");
+                        die;
+                    }
+                }
+
+                if (!isset($_SESSION["elsosegelyuser"]) && empty($this->errors)) {
+                    $this->errors[] = "Felhasználó név vagy jelszó nem megfelelő!";
+                }
+            }
+        }
+
+    }
+
+    private $users = [
+        [
+            "username" => "teszt",
+            "password" => "teszt2",
+            "validuntil" => "2021-07-05 00:00:00"
+        ],
+        [
+            "username" => "teszt2",
+            "password" => "teszt3",
+            "validuntil" => "2021-07-05 00:00:00"
+        ],
+    ];
+
+    private function authenticatedUser():array {
+        if (isset($_SESSION["elsosegelyuser"])) {
+            return $this->users[$_SESSION["elsosegelyuser"]];
+        }
+        return [];
     }
 
     public function showPage() {
-        $webText = $this->lang->webText;
-
-
-         echo $this->showFormErrors();
-
-
+        echo $this->showErrors();
 
         echo "<h1 style='text-align: center;'>Elsősegély vizsga</h1>";
 
-        echo "<div id='vizsgaformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
+        echo "<div id='vizsgaformdiv' style='margin:40px 40px 40px 40px;'>";
+
+        if (!$user = $this->authenticatedUser()) {
+            echo $this->loginForm();
+            echo "</div>";
+            return;
+        }
+
+        echo "<div style='margin-bottom:20px;text-align: center;'>Bejelentkezett felhasználó: {$user["username"]} [<a href='index.php?elsosegelylogout'>kijelentkezés</a>]</div>";
+
         echo "<form id='vizsgaform'>";
 
-        echo "<div style='text-align: left;margin:0px 0px 20px 0px;' id='videodiv'>";
-        echo "Kérjük nézze végig a következő videót, majd kattintson a vizsga indítása gombra:";
+        echo "<div style='text-align: center;margin:0px 0px 20px 0px;' id='videodiv'>";
+        echo "Kérjük nézze végig a következő videót, majd kattintson a vizsga indítása gombra:<br/><br/>";
         echo "<div style='margin-top:10px;'>";
         echo " <video width='100%' controls><source src='https://bejelentkezes.hungariamed.hu/presentation/First-Aid-creative.mp4' type='video/mp4'>Your browser does not support the video tag.</video>";
         echo "</div>";
@@ -155,6 +211,20 @@ class ElsosegelyVizsgaPage extends CorePage {
         //$html .= "<div style='padding:10px;background-color:{$warnColor};color:{$warnTextColor};font-size: 18px;'><strong>{$warn}</strong></div>";
         $html .= "<div style='margin-top:20px;'><strong>Köszönjük a kitöltést!</strong></div>";
 
+
+        return $html;
+    }
+
+    private function loginForm():string {
+        $html = "";
+
+        $html.= "<form method='post'>";
+        $html.= "<div style='max-width:400px;margin:0px auto;'>";
+        $html.= "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' type='text' name='eloginusername'></div>";
+        $html.= "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' type='password' placeholder='jelszó' name='eloginpassword' /></div>";
+        $html.= "<div style='padding-top:10px;'><input style='padding:8px 0px;width:100%;box-sizing: border-box;display: inline-block;' type='submit' name='elsosegelylogintry' value='Belépés' /></div>";
+        $html.= "</div>";
+        $html.= "</form>";
 
         return $html;
     }
