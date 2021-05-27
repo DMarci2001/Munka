@@ -88,7 +88,8 @@ class AdminDicomPage extends AdminCorePage
         $html.= "<table cellpadding='0' cellspacing='0' border='0' width='100%;'>";
         $html.= "<tr style='background:#eee;'>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:140px;'>Időpont</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Időpont</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:10px;'></div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:240px;'>Paciens neve</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>Szül. dátum</td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>TAJ szám</td>";
@@ -96,6 +97,8 @@ class AdminDicomPage extends AdminCorePage
         $html.= "</tr>";
 
         foreach ($images as $row) {
+            $patientData = $this->patinentService->getPatinentByTaj($row["patientOtherIDs"]);
+
             $tc = "tcella";
             if (!isset($first)) {
                 $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
@@ -112,8 +115,15 @@ class AdminDicomPage extends AdminCorePage
             //$html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'>DICOM file letöltése</a>]";
             $html.= "</td>";
 
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientName"]}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["datum"]))."</div></td>";
+            if (!empty($patientData)) {
+                $html .= "<td nowrap valign='top'><div class='{$tc}'><i title='pacienssel összekapcsolva' class='fas fa-link'></i></div></td>";
+                $html .= "<td nowrap valign='top'><div class='{$tc}'><a target='_blank' href='index.php?page=patients&szerk={$patientData["id"]}'>{$row["patientName"]}</a></div></td>";
+            } else {
+                $html .= "<td nowrap valign='top'></td>";
+                $html .= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientName"]}</div></td>";
+            }
+
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientBirthDate"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientOtherIDs"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["studyDescription"]}</div></td>";

@@ -11,7 +11,6 @@ class AdminPatientsPage extends AdminCorePage {
     {
         parent::__construct();
 
-
         if( !isset( $_GET['scroll'] )) $_GET['scroll'] = 1;
 
         if ($_SESSION["adminuser"]["jogosultsag"] < 2 || $_SESSION["adminuser"]["orvosid"] != "") {
@@ -138,59 +137,16 @@ class AdminPatientsPage extends AdminCorePage {
 
             if ($this->formError == "") {
                 if ($id != 0) {
-                    sql_query("update felhasznalok set
-                    nev='".addslashes($_POST["nev"])."',
-                    email='".addslashes($_POST["email"])."',
-                    telefon='".addslashes($_POST["telefon"])."',
-                    szuldatum='".addslashes($_POST["szuldatum"])."',
-                    szulhely='".addslashes($_POST["szulhely"])."',
-                    anyjaneve='".addslashes($_POST["anyjaneve"])."',
-                    neme='".addslashes($_POST["neme"])."',
-                    taj='".addslashes($_POST["taj"])."',
-                    irsz='".addslashes($_POST["irsz"])."',
-                    varos='".addslashes($_POST["varos"])."',
-                    utca='".addslashes($_POST["utca"])."',
-                    munkakor='".addslashes($_POST["munkakor"])."',
-                    torzsszam='".addslashes($_POST["torzsszam"])."'
-                    where id='{$id}'");
-
-                    if (!empty($_POST["jelszo"])) {
-                        sql_query("update felhasznalok set jelszo=md5(?) where id=?",array($_POST["jelszo"],$id));
-                    }
+                    $this->patinentService->updatePatient($_POST, $id);
 
                     logActivity("paciens",$id,"{$_POST["nev"]} adatlap",print_r($_POST,true));
-
                     header("location:index.php?page={$_GET["page"]}&szerk={$id}");
                     die();
                 } else {
-                    $rn=rand(11000,98000);
-                    sql_query("insert into felhasznalok set
-                    cegid='{$cegid}',
-                    regtime=now(),
-                    nev='".addslashes($_POST["nev"])."',
-                    email='".addslashes($_POST["email"])."',
-                    telefon='".addslashes($_POST["telefon"])."',
-                    szuldatum='".addslashes($_POST["szuldatum"])."',
-                    szulhely='".addslashes($_POST["szulhely"])."',
-                    anyjaneve='".addslashes($_POST["anyjaneve"])."',
-                    neme='".addslashes($_POST["neme"])."',
-                    taj='".addslashes($_POST["taj"])."',
-                    irsz='".addslashes($_POST["irsz"])."',
-                    varos='".addslashes($_POST["varos"])."',
-                    utca='".addslashes($_POST["utca"])."',
-                    munkakor='".addslashes($_POST["munkakor"])."',
-                    torzsszam='".addslashes($_POST["torzsszam"])."',
-                    validated=1,
-                    rkod='{$rn}'");
-
-                    $id = sql_insert_id();
-
-                    if (!empty($_POST["jelszo"])) {
-                        sql_query("update felhasznalok set jelszo=md5(?) where id=?",array($_POST["jelszo"],$id));
-                    }
+                    $_POST["validated"] = 1;
+                    $id = $this->patinentService->insertPatient($_POST);
 
                     logActivity("paciens",$id,"{$_POST["nev"]} bevitele",print_r($_POST,true));
-
                     header("location:index.php?page={$_GET["page"]}&szerk={$id}");
                     die();
                 }
@@ -213,29 +169,28 @@ class AdminPatientsPage extends AdminCorePage {
             echo $this->showFormErrors();
 
             if (!isset($_POST["nev"])) {
-                $_POST = sql_fetch_array(sql_query("select u.*,c.id as cegid,c.megnev as cegnev from felhasznalok u left join cegek c on c.id=u.cegid where u.id='{$id}'"));
+                $_POST = $this->patinentService->getPatinentById($id);
             }
 
-            if ($id==0) {
-                $_SESSION["kereskulcs"]="";
-                echo "";
-            } else {
-                $cegdata = sql_fetch_array(sql_query("select u.*,c.id as cegid,c.megnev as cegnev from felhasznalok u left join cegek c on c.id=u.cegid where u.id='{$id}'"));
+            if ($id != 0) {
                 echo "<h2>Paciens adatai</h2>";
             }
+
             echo "<form name='iform' method='post' enctype='multipart/form-data'>";
             echo "<table style='font-size:12px;'>";
 
-            if ($id!=0) {
-                echo "<tr><tdstyle='padding:4px 0px;'>Cég: </td><td>{$cegdata["cegnev"]}<input type='hidden' name='cegid' value='{$cegdata["cegid"]}'/></td></tr>";
+            if ($id != 0) {
+                echo "<tr><td style='padding:4px 0px;'>Cég: </td><td>{$_POST["cegnev"]}<input type='hidden' name='cegid' value='{$_POST["cegid"]}'/></td></tr>";
             } else {
+                $_SESSION["kereskulcs"] = "";
+
                 $selected = $_SESSION["cegfilter"];
                 if (isset($_POST["cegid"])) {
                     $selected = $_POST["cegid"];
                 }
                 echo "<tr><td>Cég: </td><td>";
                 echo "<select name='cegid'>";
-                $res = sql_query("SELECT * FROM cegek where true {$bw} order by megnev");
+                $res = sql_query("SELECT * FROM cegek where true {$this->bw} order by megnev");
                 while ($rowt = sql_fetch_array($res)) {
                     echo "<option value='{$rowt["id"]}'".($rowt["id"]==$selected?" selected":"").">{$rowt["megnev"]}</option>";
                 }
@@ -299,19 +254,19 @@ class AdminPatientsPage extends AdminCorePage {
             }
 
 
-            $row = sql_fetch_array(sql_query("select u.*,c.megnev as cegnev from felhasznalok u left join cegek c on c.id=u.cegid where u.id=? {$this->w}", array($_GET["szerk"])));
-            $_POST = $row;
+            $row = $this->patinentService->getPatinentById($_GET["szerk"]);
 
             echo "<div style='background-color:#fff;padding:0px;'>";
 
             echo "<h1>{$row["nev"]} ".($row["validated"]==1?"<span style='font-size:12px;color:#0a0;'>(aktíválva)</span>":"<span style='font-size:12px;color:#f00;border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód: {$row["rkod"]}'>(nem aktív)</span>")."</h1>";
 
-            echo "<div style=''>Cég: {$row["cegnev"]} ({$row["munkakor"]})</div>";
+            echo "<div style=''>Cég: {$row["cegnev"]} ".(!empty($row["munkakor"])?"({$row["munkakor"]})":"")."</div>";
             echo "<div style=''>TAJ: {$row["taj"]}</div>";
             if ($row["torzsszam"]!="") echo "<div style=''>Törzsszám: {$row["torzsszam"]}</div>";
             echo "<div style=''>Születési idő: {$row["szuldatum"]}</div>";
             if ($row["anyjaneve"]!="") echo "<div style=''>Anyja neve: {$row["anyjaneve"]}</div>";
-            echo "<div style=''>Telefon: {$row["telefon"]} E-mail: <a href='mailto:{$row["email"]}'>{$row["email"]}</a></div>";
+            if ($row["telefon"]!="") echo "<div style=''>Telefon: {$row["telefon"]}</div>";
+            if ($row["email"]!="") echo "<div style=''>E-mail: <a href='mailto:{$row["email"]}'>{$row["email"]}</a></div>";
             echo "<div>[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&fszerk={$_GET["szerk"]}&back=szerk'>adatok módosítása</a>]</div>";
 
             //echo "<div style='margin-top:20px'>";
@@ -319,20 +274,13 @@ class AdminPatientsPage extends AdminCorePage {
             //echo "<a href='/admin/templates/setalolap_02.php?szerk={$_GET["szerk"]}' class='printbutton' target='_blank'>Sétálólap nyomtatása</a>";
             //echo "</div>";
 
-            $resf = sql_query("SELECT t.`megnev` AS szurestipus,c.`megnev` AS cegnev,o.`nev` AS orvos,h.`cim` AS helyszin,f.*,b.naploszam,b.megj as beutalomegj FROM foglalasok f
-            LEFT JOIN szurestipusok t ON t.`id`=f.`szurestipusid`
-            LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
-            left join beutalok b on b.foglalasid=f.id
-            LEFT JOIN cegek c ON c.id=f.`cegid`
-            LEFT JOIN helyszinek h ON h.`id`=f.`helyszinid`
-            WHERE paciensid='{$row["id"]}' ORDER BY f.datum DESC");
+            $patientReservations = $this->patinentService->getPatientReservations($row["id"]);
 
-            if (sql_num_rows($resf)>0) {
-                echo "<div class='tdsepdiv' style='margin-top:20px;'>{$_POST["nev"]} időpont foglalásai</div>";
+            if (!empty($patientReservations)) {
+                echo "<div class='tdsepdiv' style='margin-top:20px;'>{$row["nev"]} időpont foglalásai</div>";
                 echo "<table cellpadding='0' cellspacing='0' border='0'>";
-                while ($rowf = sql_fetch_array($resf)) {
+                foreach ($patientReservations as $rowf) {
                     $tc = "tcella";
-                    //if (trim($rowf["nev"])=="") continue;
                     echo "<tr>";
                     echo "<td nowrap valign='top'><div class='{$tc}'>".substr($rowf["datum"],0,16).($rowf["beutalomegj"]!=""?" [<a href='#' onclick='$(\"#bmegj{$rowf["id"]}\").toggle();'>megj</a>]":"")."</div></td>";
                     echo "<td valign='top'><div class='{$tc}'>{$rowf["naploszam"]}</div></td>";
@@ -353,8 +301,10 @@ class AdminPatientsPage extends AdminCorePage {
             $dicomPage = new AdminDicomPage();
             $dicomImagesHtml = $dicomPage->showImageList($row["taj"]);
 
-            echo "<div class='tdsepdiv' style='margin-top:20px;'>Röntgen felvételek</div>";
-            echo "<div style='margin:10px 0px 0px 0px;'>{$dicomImagesHtml}</div>";
+            if (!empty($dicomImagesHtml)) {
+                echo "<div class='tdsepdiv' style='margin-top:20px;'>Röntgen felvételek</div>";
+                echo "<div style='margin:10px 0px 0px 0px;'>{$dicomImagesHtml}</div>";
+            }
 
 
             echo "<form name='dform' method='post' enctype='multipart/form-data'>";

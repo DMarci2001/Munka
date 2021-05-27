@@ -6,15 +6,19 @@ use PHPMailer\PHPMailer\Exception;
 class AdminCorePage {
     public $utils;
     public $adminUtils;
+    //public $adminUser;
     public $lang;
     public $formError = "";
     public $errors = [];
     public $success = [];
+    public $patinentService;
 
     public function __construct()
     {
         $this->utils = new Utils();
         $this->adminUtils = new AdminUtils();
+        $this->patinentService = new PatientService();
+        //$this->adminUser = new AdminUser();
         $this->lang = new Lang();
 
         //tiltott oldalak

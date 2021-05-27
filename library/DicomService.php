@@ -107,7 +107,7 @@ class DicomService {
             $queryParams[] = $params["byuid"];
         }
 
-        return sql_query_common("select d.*, count(*) as imageNum from dicom d where true {$w} group by d.patientID order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where true {$w} group by d.patientID order by contentDate desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 

@@ -83,6 +83,9 @@ class AdminUser {
     }
 
 
+    public function dicomAccess():bool {
+        return $this->user["jog_dicom"] == 1;
+    }
 
 
 }

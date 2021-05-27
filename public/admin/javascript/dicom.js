@@ -87,3 +87,17 @@ function toggleDicomImageRow(id) {
 
 
 }
+
+function toggleDicomImageRow(id) {
+    $("#imagerow"+id).toggle();
+
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"dicom", showimagelist:id}
+    }).done(function (msg) {
+        $("#imagerow"+id).html(msg);
+    });
+
+
+}
