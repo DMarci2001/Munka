@@ -185,8 +185,17 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "/images/cksolution_logo.png",
             "logoheight" => 45
+        ],
+        "theductkft" => [
+            "id" => "oltasformduct",
+            "title" => "The Duct Kft.",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "/images/theduct_logo.jpg",
+            "logoheight" => 45
         ]
-
     ];
 
     public $pageParam;

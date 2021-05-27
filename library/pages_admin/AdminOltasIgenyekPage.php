@@ -43,6 +43,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformck",
             "username" => "cksolutionoltas",
             "title" => "CK Solution",
+        ],
+        "theductkft" => [
+            "id" => "oltasformduct",
+            "username" => "theductoltas",
+            "title" => "The Duct Kft.",
         ]
 
 

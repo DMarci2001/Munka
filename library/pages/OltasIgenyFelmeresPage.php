@@ -8,8 +8,8 @@ class OltasIgenyFelmeresPage extends CorePage
         1 => [
             "name" => "Pfizer-Biotech",
             "tajekoztato_url"  => "https://koronavirus.gov.hu/sites/default/files/sites/default/files/imce/pfizer-biontech_vakcina_lakossagi_tajekoztato_2.pdf",
-            "supply" => 0,
-            "supplyfrom" => "2021-05-11 00:00:00"
+            "supply" => 18,
+            "supplyfrom" => "2021-05-26 19:30:00"
         ],
         2 => [
             "name" => "Moderna",
