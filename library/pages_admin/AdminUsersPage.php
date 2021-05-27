@@ -49,6 +49,7 @@ class AdminUsersPage extends AdminCorePage {
                 if (!isset($_POST['jog_beutalokezeles'])) $_POST['jog_beutalokezeles']=0;
                 if (!isset($_POST["jog_dokirexlekerdezesek"])) $_POST["jog_dokirexlekerdezesek"]=0;
                 if (!isset($_POST["jog_salary"])) $_POST["jog_salary"]=0;
+                if (!isset($_POST["jog_dicom"])) $_POST["jog_dicom"]=0;
 
                 if (!isset($_POST["auth2fac"])) $_POST["auth2fac"]=0;
                 if (!isset($_POST["localeaccess"])) $_POST["localeaccess"]=0;
@@ -59,13 +60,13 @@ class AdminUsersPage extends AdminCorePage {
 					   jog_szabi  	      = ?, jog_zarolista 	  = ?, jog_zaroszerk           = ?, jog_leletlatas = ?, jog_leletszerk      = ?, jog_gdprhferes 	   = ?, 
 					   jog_kuponlista     = ?, jog_kuponkeszites  = ?, auth2fac	  	           = ?, localeaccess   = ?, localeip            = ?, jogosultsag           = ?,
 					   jog_beallitasok    = ?, jog_nofoglimitset  = ?, jog_statisztika         = ?, jog_vizsg_stat = ?, jog_tranzakciolatas = ?, jog_tranzakciokezeles = ?, 
-					   status             = ?, jog_beutalokezeles = ?, jog_dokirexlekerdezesek = ?, jog_salary     = ?
+					   status             = ?, jog_beutalokezeles = ?, jog_dokirexlekerdezesek = ?, jog_salary     = ?, jog_dicom           = ?
 				   WHERE id = ?",
                     array( $_POST["jog_jogset"], $_POST["jog_cegset"], $_POST["jog_helyszinset"], $_POST["jog_orvosset"], $_POST["jog_beosztasset"], $_POST["jog_szurestipusset"],
                         $_POST["jog_szabi"],  $_POST['jog_zarolista'], $_POST['jog_zaroszerk'], $_POST['jog_leletlatas'], $_POST['jog_leletszerk'], $_POST['jog_gdprhferes'],
                         $_POST['jog_kuponlista'], $_POST['jog_kuponkeszites'], $_POST["auth2fac"],   $_POST["localeaccess"],    $_POST["localeip"],     $_POST["jogosultsag"],
                         $_POST['jog_beallitasok'], $_POST['jog_nofoglimitset'], $_POST['jog_statisztika'],$_POST['jog_vizsg_stat'],$_POST['jog_tranzakciolatas'],$_POST['jog_tranzakciokezeles'],$_POST['status'],
-						$_POST['jog_beutalokezeles'], $_POST["jog_dokirexlekerdezesek"], $_POST["jog_salary"], $id)
+						$_POST['jog_beutalokezeles'], $_POST["jog_dokirexlekerdezesek"], $_POST["jog_salary"], $_POST["jog_dicom"], $id)
                 );
 
                 $jogs = "";
@@ -162,6 +163,7 @@ class AdminUsersPage extends AdminCorePage {
                     echo "<tr><td></td><td><input type='checkbox' name='jog_kuponkeszites' ".($_POST["jog_kuponkeszites"]==1?"checked":"")." value='1' />&nbsp;Kuponkód hozzáadás/szerkesztés</td></tr>";
 
                     echo "<tr><td></td><td><input type='checkbox' name='jog_salary' ".($_POST["jog_salary"]==1?"checked":"")." value='1' />&nbsp;Jövedelem adatok megadása / statisztika</td></tr>";
+                    echo "<tr><td></td><td><input type='checkbox' name='jog_dicom' ".($_POST["jog_dicom"]==1?"checked":"")." value='1' />&nbsp;DICOM / röntgen képekhez hozzáférés</td></tr>";
                 }
             }
 

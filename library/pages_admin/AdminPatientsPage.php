@@ -304,45 +304,7 @@ class AdminPatientsPage extends AdminCorePage {
 
             echo "<div style='background-color:#fff;padding:0px;'>";
 
-
             echo "<h1>{$row["nev"]} ".($row["validated"]==1?"<span style='font-size:12px;color:#0a0;'>(aktíválva)</span>":"<span style='font-size:12px;color:#f00;border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód: {$row["rkod"]}'>(nem aktív)</span>")."</h1>";
-
-
-            /*
-            if($row['cegid'] == 104) {
-                require_once("/var/www/onlinebejelentkezes_keltexmed/library/other/PHPExcel.php");
-                $tmpfname    = "templates/debrecen.xlsx";
-                $excelReader = PHPExcel_IOFactory::createReader( 'Excel2007' );
-                $excelObj    = $excelReader->load( $tmpfname );
-                $worksheet   = $excelObj->getSheet(0);
-                //$lastRow   = $excelObj->getHighestRow();
-                $lastRow     = $excelObj->setActiveSheetIndex(0)->getHighestRow();
-                $protocolid  = "";
-
-                for ($sor = 5; $sor <= $lastRow; $sor++) {
-                    $excelArray[] = array(
-                        "nev"      			 => $worksheet->getCell('A'.$sor)->getValue(),
-                        "neme" 	  			 => $worksheet->getCell('B'.$sor)->getValue(),
-                        "csomag_1"   		 => $worksheet->getCell('C'.$sor)->getValue(),
-                        "csomag_2"  			 => $worksheet->getCell('D'.$sor)->getValue(),
-                        "nap"   				 => $worksheet->getCell('E'.$sor)->getValue(),
-                        "alap_tumor_no"  	 => $worksheet->getCell('F'.$sor)->getValue(),
-                        "alap_tumor_ferfi"	 => $worksheet->getCell('G'.$sor)->getValue(),
-                        "abi" 				 => $worksheet->getCell('H'.$sor)->getValue(),
-                        "kieg. nagylabor"   	 => $worksheet->getCell('I'.$sor)->getValue(),
-                        "kieg. tumor_csg2"  	 => $worksheet->getCell('J'.$sor)->getValue(),
-                        "telj. tumor_csg1" 	 => $worksheet->getCell('K'.$sor)->getValue(),
-                        "pajzsmirigy_labor"   => $worksheet->getCell('L'.$sor)->getValue(),
-                        "pajzsmirigy_uh"   	 => $worksheet->getCell('M'.$sor)->getValue(),
-                        "kedv. 01"    		 => $worksheet->getCell('N'.$sor)->getValue(),
-                        "kedv. 02"    		 => $worksheet->getCell('O'.$sor)->getValue(),
-                        "carotis_vizsg"    	 => $worksheet->getCell('Q'.$sor)->getValue(),
-                        "fizetendo"			 => $worksheet->getCell('P'.$sor)->getValue()
-                    );
-                }
-                $key = array_search( $row['nev'], array_column( $excelArray, 'nev' ));
-            }
-            */
 
             echo "<div style=''>Cég: {$row["cegnev"]} ({$row["munkakor"]})</div>";
             echo "<div style=''>TAJ: {$row["taj"]}</div>";
@@ -385,6 +347,15 @@ class AdminPatientsPage extends AdminCorePage {
                 }
                 echo "</table>";
             }
+
+
+
+            $dicomPage = new AdminDicomPage();
+            $dicomImagesHtml = $dicomPage->showImageList($row["taj"]);
+
+            echo "<div class='tdsepdiv' style='margin-top:20px;'>Röntgen felvételek</div>";
+            echo "<div style='margin:10px 0px 0px 0px;'>{$dicomImagesHtml}</div>";
+
 
             echo "<form name='dform' method='post' enctype='multipart/form-data'>";
             echo "<div class='tdsepdiv' style='margin-top:20px;'>Dokumentumok</div>";
@@ -693,7 +664,10 @@ class AdminPatientsPage extends AdminCorePage {
                 break;
             }
         }
-        echo $pageout;
+
+        if ($_GET["scroll"] != 1 || $page_numb > 1) {
+            echo $pageout;
+        }
 
         echo "</td></tr>";
         echo "</table>";

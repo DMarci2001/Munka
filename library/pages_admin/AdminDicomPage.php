@@ -60,6 +60,7 @@ class AdminDicomPage extends AdminCorePage
             die();
         }
 
+        $GLOBALS["javascript"][] = "dicom.js?v=".date("YmdHi");
     }
 
     public function showPage()
@@ -187,14 +188,14 @@ class AdminDicomPage extends AdminCorePage
     }
 
 
-    private function showImageList($patientId):string {
+    public function showImageList($patientId):string {
         $html = "";
 
         $images = $this->dicomService->getImages($patientId);
 
         foreach ($images as $row) {
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
-            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:100px;height:100px;object-fit: cover;' alt='' /></a>";
+            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:100px;height:100px;object-fit: cover;' alt='' /></a>";
             $html.= "<div style='text-align: center;padding-top: 5px;'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div>";
             $html.= "<div style='text-align: center;padding-top: 5px;font-size: 16px;'>";
             //$html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><i class='fas fa-eye'></i></a>&nbsp;";
