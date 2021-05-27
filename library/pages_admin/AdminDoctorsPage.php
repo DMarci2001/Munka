@@ -43,7 +43,7 @@ class AdminDoctorsPage extends AdminCorePage {
                     }
 
                     $foService = new FoglaljOrvostService();
-                    //$foService->sendSzabadsag($groupId);
+                    $foService->sendSzabadsag($groupId);
 
                     logActivity("orvos", $orvosId, "{$rowo["nev"]} szabadság hozzáadva: " . $tol . " - " . $ig, print_r($_POST, true));
                 }
@@ -56,7 +56,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
 
                 $foService = new FoglaljOrvostService();
-                //$foService->deleteSzabadsag($_GET["delszabadsag"]);
+                $foService->deleteSzabadsag($_GET["delszabadsag"]);
 
                 sql_query("delete from szabadsag where groupid=? and oid=? and groupid<>0", [$_GET["delszabadsag"], $_GET["szerk"]]);
                 logActivity("orvos",$_GET["szerk"],"{$rowo["nev"]} szabadság törlése",print_r($_POST,true));
@@ -458,7 +458,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<br/><br/>";
 
 
-                //$result = $foService->sendSzabadsag();
+                $result = $foService->sendSzabadsag();
                 //echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>". htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))))."</pre>";
             } else {
                 echo "hibás lekérdezés";
