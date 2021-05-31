@@ -631,6 +631,33 @@ function showIdopontEditor(page,p,id) {
             $("#naptarloading").hide();
             initIrszAutoFill();
             initTabOrder();
+            //initTajEditor();
+        }
+    });
+}
+
+function initTajEditor() {
+    $("#editortaj2").select2({
+        tags: true,
+        multiple: true,
+        tokenSeparators: [',', ' '],
+        minimumInputLength: 2,
+        ajax: {
+            url: "index.php",
+            dataType: "json",
+            type: "GET",
+            data: function (params) {
+                var queryParameters = {
+                    tajrequest: "tajrequest",
+                    term: params.term
+                }
+                return queryParameters;
+            },
+            processResults: function (response) {
+                return {
+                    results: response
+                };
+            }
         }
     });
 }

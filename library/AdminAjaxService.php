@@ -450,6 +450,25 @@ class AdminAjaxService {
             $this->jsonOut(["error" => $error]);
         }
 
+
+        if (isset($_REQUEST["tajrequest"])) {
+            $utils = new Utils();
+
+            if (!isset($_SESSION["adminuser"])) {
+                $utils->jsonOut(["error" => "error"]);
+            }
+
+            $data = [];
+            $data[] = ["id" => 1, "text" => "ez egy sor"];
+            $data[] = ["id" => 2, "text" => "még egy sor"];
+            $data[] = ["id" => 3, "text" => "harmadik sor"];
+            $data[] = ["id" => 4, "text" => "tamás jános"];
+            $data[] = ["id" => 5, "text" => "marha"];
+
+            $utils->jsonOut($data);
+            die();
+        }
+
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {
