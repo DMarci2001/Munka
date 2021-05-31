@@ -48,8 +48,12 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformduct",
             "username" => "theductoltas",
             "title" => "The Duct Kft.",
+        ],
+        "ekg" => [
+            "id" => "oltasformekg",
+            "username" => "ekgoltas",
+            "title" => "EKG",
         ]
-
 
     ];
 
@@ -60,7 +64,37 @@ class AdminOltasIgenyekPage extends AdminCorePage
         parent::__construct();
         $this->bookingService = new BookingService();
 
-        if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
+        if (isset($_GET["sendme"])) {
+
+            /*
+            +861086519978           Dear Client, we are waiting for your arrival at 2021-05-29 13:54 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861063570443           Dear Client, we are waiting for your arrival at 2021-05-29 13:51 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861031389214           Dear Client, we are waiting for your arrival at 2021-05-29 13:48 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861038512996           Dear Client, we are waiting for your arrival at 2021-05-29 13:45 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861075311600           Dear Client, we are waiting for your arrival at 2021-05-29 13:42 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861047418484           Dear Client, we are waiting for your arrival at 2021-05-29 13:39 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861038798403           Dear Client, we are waiting for your arrival at 2021-05-29 13:36 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861067737737           Dear Client, we are waiting for your arrival at 2021-05-29 13:33 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861062721968           Dear Client, we are waiting for your arrival at 2021-05-29 13:27 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            +861080062051           Dear Client, we are waiting for your arrival at 2021-05-29 13:27 at our vaccination point located in the The Duct CSC office. Hungáriamed team
+            */
+
+            /*
+            $this->utils->sendSMSRaw("+821086519978", "Dear Client, we are waiting for your arrival at 2021-05-29 13:54 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821063570443", "Dear Client, we are waiting for your arrival at 2021-05-29 13:51 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821031389214", "Dear Client, we are waiting for your arrival at 2021-05-29 13:48 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821038512996", "Dear Client, we are waiting for your arrival at 2021-05-29 13:45 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821075311600", "Dear Client, we are waiting for your arrival at 2021-05-29 13:42 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821047418484", "Dear Client, we are waiting for your arrival at 2021-05-29 13:39 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821038798403", "Dear Client, we are waiting for your arrival at 2021-05-29 13:36 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821067737737", "Dear Client, we are waiting for your arrival at 2021-05-29 13:33 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821062721968", "Dear Client, we are waiting for your arrival at 2021-05-29 13:27 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            $this->utils->sendSMSRaw("+821080062051", "Dear Client, we are waiting for your arrival at 2021-05-29 13:27 at our vaccination point located in the The Duct CSC office. Hungáriamed team");
+            */
+            die("sent");
+        }
+
+        if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jogosultsag"] > 1) {
             if (isset($_GET["setoceg"])) {
                 $_SESSION["oceg"] = $_GET["setoceg"];
             }
@@ -139,10 +173,10 @@ class AdminOltasIgenyekPage extends AdminCorePage
             if (true || $this->prefix == "oltasformsamsung") {
                 //15 percenként 4 ember  7:00
 
-                $idopont = "2021-05-22 10:15";
+                $idopont = "2021-05-29 14:06";
 
-                $szovegSMS = "Dear Client, we are waiting for your arrival at {$idopont} at our vaccination point located in the SECL office. Hungáriamed team";
-                $szovegEmail = "Dear Client!<br/><br/>We are waiting for your arrival at {$idopont} at our vaccination point located in the SECL office.<br/><br/>Hungáriamed team";
+                $szovegSMS = "Dear Client, we are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office. Hungáriamed team";
+                $szovegEmail = "Dear Client!<br/><br/>We are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office.<br/><br/>Hungáriamed team";
             }
 
             if (true || $this->prefix == "oltasform") {

@@ -7,6 +7,8 @@ $(document).ready(function() {
         checkAdminWarnings();
     }, 1000);
 
+    self.setInterval("searchTimer()",1000);
+
     initUploadRoutine();
     initIrszAutoFill();
     initGeneralSearch();

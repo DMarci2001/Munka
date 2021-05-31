@@ -140,8 +140,8 @@ class OltasJelentkezesPage extends CorePage
             "id" => "oltasformsamsung",
             "title" => "Samsung",
             "vakcinalist" => [1, 2, 3, 4, 5, 6],
-            "supply" => [null, 0, 0, 0, 0, 0, 10000],
-            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "supply" => [null, 12, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-27', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
             "javascript" => "oltasform_samsung.js",
             "logo" => "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
             "logoheight" => 45
@@ -194,6 +194,16 @@ class OltasJelentkezesPage extends CorePage
             "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
             "javascript" => "oltasform_samsung.js",
             "logo" => "/images/theduct_logo.jpg",
+            "logoheight" => 45
+        ],
+        "ekg" => [
+            "id" => "oltasformekg",
+            "title" => "EKG",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
             "logoheight" => 45
         ]
     ];
