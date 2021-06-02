@@ -53,6 +53,16 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformekg",
             "username" => "ekgoltas",
             "title" => "EKG",
+        ],
+        "janssen" => [
+            "id" => "oltasformjanssen",
+            "username" => "janssenoltas",
+            "title" => "Janssen",
+        ],
+        "jkgroup" => [
+            "id" => "oltasformjkgroup",
+            "username" => "jkgroupoltas",
+            "title" => "JK Group Kft.",
         ]
 
     ];
@@ -107,6 +117,13 @@ class AdminOltasIgenyekPage extends AdminCorePage
         }
 
 
+        if (isset($_GET["setkor"])) {
+            $_SESSION["kor"] = $_GET["setkor"];
+        }
+
+        if (!isset($_SESSION["kor"])) {
+            $_SESSION["kor"] = 1;
+        }
 
 
         $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
@@ -115,6 +132,10 @@ class AdminOltasIgenyekPage extends AdminCorePage
         $this->vakcinak = $oltasPage->vakcinak;
 
         $this->prefix = $this->pageParam["id"];
+
+        if ($_SESSION["kor"] == 2) {
+            $this->prefix.= "2";
+        }
 
         if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jogosultsag"] <= 1) {
             if ($_SESSION["adminuser"]["username"] != "hmmoltas") {
@@ -207,6 +228,90 @@ class AdminOltasIgenyekPage extends AdminCorePage
             die;
         }
 
+
+        if (isset($_GET["copyseclmoderna"])) {
+            $source      = "oltasform_new";
+            $destination = "oltasform2_new";
+
+            $igenyek = sql_query("select * from webservicelog where action=? order by datum", [$source])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($igenyek as $igeny) {
+                if (substr_count($igeny["keres"], "vakcina2") == 0) {
+                    echo $igeny["keres"] . " ";
+
+                    sql_query("insert into webservicelog set datum=?, tipus=23, action=?, exception=?, keres=?", [$igeny["datum"], $destination, $igeny["id"], $igeny["keres"]]);
+                }
+            }
+
+            die;
+        }
+
+
+
+        if (isset($_GET["mailsuzuki"])) {
+            $source = "oltasform2_new";
+
+            $igenyek = sql_query("select * from webservicelog where action=? and ip<>'JP'", [$source])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($igenyek as $igeny) {
+                $data = json_decode($igeny["keres"], JSON_OBJECT_AS_ARRAY);
+
+                //if (substr_count($igeny["keres"], "vakcina2")) {
+                    echo $data["email"] . " ";
+
+                    //$data["email"] = "jns@jns.hu";
+
+                    $mail = new PHPMailer();
+                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                    $mail->FromName = Booking_Constants::COMPANY_NAME;
+                    $mail->AddAddress($data["email"]);
+                    $mail->AddBCC("jns@jns.hu");
+                    $mail->CharSet = "UTF-8";
+                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+                    $mail->IsHTML(true);
+
+                    $mail->Subject = "Másoldik oltás időpont";
+                    $mail->Body = "Kedves Ügyfelünk!<br/><br/>Kérjük jelezze vissza melyik napon alkalmas Önnek, hogy megkapja a 2. oltását: <a href='https://mscoltas.hungariamed.hu/index.php?subpage=suzukiconfirmation&sid={$igeny["id"]}'>Kattintson ide</a><br/><br/>Hungária Med Csapata";
+
+                    $mail->Send();
+                    //die;
+                //}
+            }
+
+            die("itt");
+        }
+
+        if (isset($_GET["mailseclmoderna"])) {
+            $source = "oltasformsamsung2_new";
+
+            $igenyek = sql_query("select * from webservicelog where action=?", [$source])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($igenyek as $igeny) {
+                $data = json_decode($igeny["keres"], JSON_OBJECT_AS_ARRAY);
+
+                if (substr_count($igeny["keres"], "vakcina2")) {
+                    echo $data["email"] . " ";
+
+                    //$data["email"] = "jns@jns.hu";
+
+                    $mail = new PHPMailer();
+                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+                    $mail->FromName = Booking_Constants::COMPANY_NAME;
+                    $mail->AddAddress($data["email"]);
+                    //$mail->AddBCC("jns@jns.hu");
+                    $mail->CharSet = "UTF-8";
+                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+                    $mail->IsHTML(true);
+
+                    $mail->Subject = "Vaccination confirmation";
+                    $mail->Body = "Dear Client!<br/><br/>At the attached link, please confirm the vaccination date: <a href='https://secl.hungariamed.hu/index.php?subpage=seclconfirmation&sid={$igeny["id"]}'>Click here</a><br/><br/>Hungariamed Team";
+
+                    $mail->Send();
+                    //die;
+                }
+            }
+
+            die;
+        }
+
+
         if (isset($_GET["reportmail"])) {
             $szovegEmail = "Regisztráltak, de nem jelentek meg:<br/>
 <br/>
@@ -284,12 +389,14 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
     public function showPage() {
         echo "<div id='alkalmassaglista'>";
 
-        if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
-            echo "<div style='margin-bottom:10px;'>";
-            foreach ($this->pageParams as $key => $pageParam)
-            echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}'>{$pageParam["title"]}</a>] ";
-            echo "</div>";
+        echo "<div style='margin-bottom:10px;'>";
+        foreach ($this->pageParams as $key => $pageParam) {
+            if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $GLOBALS["subdomain"] == $key) {
+                echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}&setkor=1'>{$pageParam["title"]} 1. kör</a>] ";
+                echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}&setkor=2'>{$pageParam["title"]} 2. kör</a>] ";
+            }
         }
+        echo "</div>";
 
 
         if (isset($_GET["subpage"]) && $_GET["subpage"] == "showall") {
@@ -355,8 +462,6 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
                 @$result[$datum][$csoport]++;
             }
 
-
-
         }
 
         //$html.= "<pre>".print_r($result, true)."</pre>";
@@ -401,7 +506,9 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         return $html;
     }
 
-
+    private function korFilter() {
+        return $_SESSION["kor"] == 2 ? " and exception='2'":"and exception<>'2'";
+    }
 
     private function showOltasIgenyek() {
         $result = [];
@@ -435,6 +542,11 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
 
         }
+
+
+        //jun 5re amit japánok suzuki csak japánok
+        //link a suzuki az alábbi 2 napra 5-re 12-e, vagy bármelyik 160-160
+        //pfizer kihagyva
 
         //$html.= "<pre>".print_r($result, true)."</pre>";
 
@@ -644,6 +756,11 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
         if ($formData["csoport"] == "egyeb" && !empty($formData["csoporttext"])) {
             $formData["csoport"] = "<span style='font-style: italic;'>" . substr(trim(strip_tags($formData["csoporttext"])), 0, 50) . "</span>";
+        }
+
+
+        if ($igenyData["useragent"] != "") {
+            $idopont = "<span style='color:#f00;'>{$igenyData["useragent"]}</span> {$idopont}";
         }
 
         $html = "";

@@ -110,6 +110,18 @@ class OltasIgenyFelmeresPage extends CorePage
             $this->utils->jsonOut($result);
         }
 
+        if (isset($_POST["suzuki-confirm-button"])) {
+            if (isset($_POST["confirmed"])) {
+                $sid = intval($_GET["sid"]);
+
+                //$igeny = sql_query("select * from webservicelog where id=?", [$sid])->fetch(PDO::FETCH_ASSOC);
+
+                sql_query("update webservicelog set useragent=? where id=?", [$_POST["confirmed"], $sid]);
+
+                $GLOBALS["confirmed"] = 1;
+            }
+        }
+
 
     }
 
@@ -134,6 +146,34 @@ class OltasIgenyFelmeresPage extends CorePage
         echo $this->showErrors();
 
         echo "<form name='oltasform' id='oltasform' method='POST' enctype='multipart/form-data'>";
+
+
+        if (isset($_GET["subpage"]) && $_GET["subpage"] == "suzukiconfirmation") {
+            if (isset($GLOBALS["confirmed"])) {
+                echo "<div style='margin:20px 0px 20px 0px;'>";
+                echo "<div><strong>Köszönjük a közreműködést!</strong></div>";
+                echo "</div>";
+            } else {
+                $sid = intval($_GET["sid"]);
+                $igeny = sql_query("select * from webservicelog where id=?", [$sid])->fetch(PDO::FETCH_ASSOC);
+
+                if (!empty($igeny["useragent"])) {
+                    echo "<div style='margin:20px 0px 20px 0px;'>";
+                    echo "<div><strong>Már kiválasztotta az időpontot.</strong></div>";
+                    echo "</div>";
+                } else {
+                    echo "<div style='margin-top:30px;'><strong>Kérjük válassza ki melyik időpont alkalmas Önnek:</strong></div>";
+                    echo "<div style='margin-top:10px;'><input type='radio' name='confirmed' value='2021-06-05' /> 2021 június 5.</div>";
+                    echo "<div style='margin-top:0px;'><input type='radio' name='confirmed' value='2021-06-12' /> 2021 június 12.</div>";
+                    echo "<div style='margin-top:0px;'><input type='radio' name='confirmed' value='mindegy' /> Mindkét időpont megfelel</div>";
+                    echo "<div style='margin-top:10px;margin-bottom:20px;'><input type='submit' name='suzuki-confirm-button' id='suzuki-confirm-button' class='newbutton' style='border:none' value='Elküld' /></div>";
+                }
+            }
+            echo "</form>";
+            echo "</div>";
+            return;
+        }
+
 
         echo "<div>A Magyar Suzuki dolgozóinak
             létrehozott Covid-19 oltási igény felmérő felülete. A Magyar Suzuki 

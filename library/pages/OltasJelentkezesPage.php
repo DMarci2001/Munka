@@ -38,6 +38,7 @@ class OltasJelentkezesPage extends CorePage
             "vchoose1" => "Kérjük válasszon egy vakcinát!",
             "vonly1" => "Kérjük csak 1 vakcinát válasszon!",
             "send" => "Regisztráció",
+            "conf" => "Confirmation",
             "thanks" => "Köszönjök a kitöltést!",
             "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
             "maildonesubject" => "Értesítés oltási regisztrációról",
@@ -82,6 +83,7 @@ class OltasJelentkezesPage extends CorePage
             "vchoose1" => "Please choose a vaccine!",
             "vonly1" => "Please choose only one vaccine!",
             "send" => "Registration",
+            "conf" => "Confirmation",
             "thanks" => "Thank you for your registration!",
             "doreg" => "Kérjük tegye meg a regisztrációját a <a target='_blank' href='https://vakcinainfo.gov.hu'>vakcinainfo.gov.hu</a> oldalon is!",
             "maildonesubject" => "Értesítés oltási regisztrációról",
@@ -205,7 +207,28 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "",
             "logoheight" => 45
+        ],
+        "janssen" => [
+            "id" => "oltasformjanssen",
+            "title" => "Janssen",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "/images/janssen_logo.png",
+            "logoheight" => 45
+        ],
+        "jkgroup" => [
+            "id" => "oltasformjkgroup",
+            "title" => "JK Group Kft.",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "/images/jk.png",
+            "logoheight" => 45
         ]
+
     ];
 
     public $pageParam;
@@ -285,6 +308,24 @@ class OltasJelentkezesPage extends CorePage
         }
 
 
+        if (isset($_POST["secl-confirm-button"])) {
+            if (isset($_POST["confirmed"])) {
+                $sid = intval($_GET["sid"]);
+
+                $igeny = sql_query("select * from webservicelog where id=?", [$sid])->fetch(PDO::FETCH_ASSOC);
+                $szovegSMS = "Dear Client, we are waiting for your arrival at 2021-06-04 07:00:00 at our vaccination point. Hungáriamed team";
+
+                $prefix = str_replace("_new", "", $igeny["action"]);
+
+                if (!sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and keres=? and action='{$prefix}_message'", [$sid]))) {
+                    sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$prefix}_message', response=?", [$sid, $szovegSMS]);
+                }
+
+                $GLOBALS["confirmed"] = 1;
+            }
+        }
+
+
     }
 
     public function showPage()
@@ -305,6 +346,10 @@ class OltasJelentkezesPage extends CorePage
 
         echo $this->showErrors();
 
+        echo "<script>";
+        echo "var questionErrorText = '".$this->getText("questionerror")."';";
+        echo "</script>";
+
         echo "<form name='oltasform' id='oltasform' method='POST' enctype='multipart/form-data'>";
 
 
@@ -312,6 +357,33 @@ class OltasJelentkezesPage extends CorePage
         //    echo "<div>Fejlesztés alatt, kérjük nézzen vissza fél óra múlva! " . session_id() . "<br/><br/></div>";
         //    return;
         //}
+
+        if (isset($_GET["subpage"]) && $_GET["subpage"] == "seclconfirmation") {
+            if (isset($GLOBALS["confirmed"])) {
+                echo "<div style='margin:20px 0px 20px 0px;'>";
+                echo "<div><strong>".$this->getText("thanks")."</strong></div>";
+                echo "</div>";
+            } else {
+                $sid = intval($_GET["sid"]);
+                $igeny = sql_query("select * from webservicelog where id=?", [$sid])->fetch(PDO::FETCH_ASSOC);
+
+                $prefix = str_replace("_new", "", $igeny["action"]);
+
+                if (sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and keres=? and action='{$prefix}_message'", [$sid]))) {
+                    echo "<div style='margin:20px 0px 20px 0px;'>";
+                    echo "<div><strong>This registration is already confirmed.</strong></div>";
+                    echo "</div>";
+                } else {
+                    echo "<div style='margin-top:30px;'><input type='checkbox' name='confirmed' value='1' /> I confirm that I will appear on 2021 June 04 at the SECL vaccination point</div>";
+                    echo "<div style='margin-top:10px;margin-bottom:20px;'><input type='submit' name='secl-confirm-button' id='secl-confirm-button' class='newbutton' style='border:none' value='" . $this->getText("conf") . "' /></div>";
+                }
+            }
+            echo "</form>";
+            echo "</div>";
+            return;
+        }
+
+
 
         echo "<div>".$this->getText("intro")."</div>";
 
@@ -447,17 +519,14 @@ class OltasJelentkezesPage extends CorePage
         echo "</form>";
         echo "</div>";
 
-        echo "<script>";
-        echo "var questionErrorText = '".$this->getText("questionerror")."';";
-        echo "</script>";
 
     }
 
     private function donePage():string {
         $html = "";
 
-        $html.= "<div style='margin:20px 0px 20px 0px;'>">
-            $html.="<div><strong>".$this->getText("thanks")."</strong></div>";
+        $html.= "<div style='margin:20px 0px 20px 0px;'>";
+        $html.="<div><strong>".$this->getText("thanks")."</strong></div>";
         if (isset($_POST["oltasregisztralt"]) && $_POST["oltasregisztralt"] == "0") {
             $html .= "<div style='margin:10px 0px 0px 0px;'>".$this->getText("doreg")."</div>";
         }
