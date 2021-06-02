@@ -63,6 +63,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformjkgroup",
             "username" => "jkgroupoltas",
             "title" => "JK Group Kft.",
+        ],
+        "sekwang" => [
+            "id" => "oltasformsekwang",
+            "username" => "sekwangoltas",
+            "title" => "SekwangTotalPanel Kft.",
         ]
 
     ];

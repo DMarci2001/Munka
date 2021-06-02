@@ -227,6 +227,16 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "/images/jk.png",
             "logoheight" => 45
+        ],
+        "sekwang" => [
+            "id" => "oltasformsekwang",
+            "title" => "SekwangTotalPanel Kft.",
+            "vakcinalist" => [6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
         ]
 
     ];
