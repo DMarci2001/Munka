@@ -631,35 +631,19 @@ function showIdopontEditor(page,p,id) {
             $("#naptarloading").hide();
             initIrszAutoFill();
             initTabOrder();
-            //initTajEditor();
+            initTajEditor();
         }
     });
 }
 
 function initTajEditor() {
-    $("#editortaj2").select2({
-        tags: true,
-        multiple: true,
-        tokenSeparators: [',', ' '],
-        minimumInputLength: 2,
-        ajax: {
-            url: "index.php",
-            dataType: "json",
-            type: "GET",
-            data: function (params) {
-                var queryParameters = {
-                    tajrequest: "tajrequest",
-                    term: params.term
-                }
-                return queryParameters;
-            },
-            processResults: function (response) {
-                return {
-                    results: response
-                };
-            }
+    $(".editortaj2").keyup(function() {
+        let taj = $(this).val();
+        if (taj.length >= 9) {
+            autoFill(true);
         }
     });
+
 }
 
 function startFoglalasMove(id,p) {
@@ -689,15 +673,15 @@ function startAutoFill(id,p) {
     $("#autofill").slideDown();
 }
 
-function autoFill(){
+function autoFill(silent){
     let taj = $("#editortaj").val().trim();
 
-    if (taj == "") {
+    if (taj == "" && !silent) {
         alert("Add meg a TAJ számot!");
         return;
     }
 
-    if (taj.length < 9 || taj.length > 9){
+    if ((taj.length < 9 || taj.length > 9) && !silent){
         alert("A megadott TAJ szám formátuma nem megfelelő!");
         return;
     }
@@ -708,10 +692,12 @@ function autoFill(){
         data:{AFForm:taj},
         success:function(data) {
             if (data.error != "") {
-                alert(data.error);
+                if (!silent) {
+                    alert(data.error);
+                }
             } else {
                 $('input[name="paciensid"]').val(data.id);
-                $('input[name="taj"]').val(data.taj);
+                //$('input[name="taj"]').val(data.taj);
                 $('input[name="email"]').val(data.email);
                 $('input[name="nev"]').val(data.nev);
                 $('input[name="telefon"]').val(data.telefon);
@@ -723,7 +709,7 @@ function autoFill(){
                 $('input[name="szulhely"]').val(data.szulhely);
                 $('input[name="anyjaneve"]').val(data.anyjaneve);
                 $('input[name="torzsszam"]').val(data.torzsszam);
-                $('#editorDate').load('index.php?DateSelector=' + data.szuldatum);
+                $('input[name="szuldatum"]').val(data.szuldatum);
             }
         }
     });
