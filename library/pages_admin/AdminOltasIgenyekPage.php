@@ -180,8 +180,8 @@ class AdminOltasIgenyekPage extends AdminCorePage
             $data = json_decode($igenyles["keres"], JSON_OBJECT_AS_ARRAY);
 
             $szovegSMS = $szovegEmail = "";
-            if ($this->prefix == "oltasform") {
-                $idopont = "2021-05-08 09:30";
+            if (true || $this->prefix == "oltasform") {
+                $idopont = "2021-06-05 13:30";
 
                 $extraMessage = "";
                 //$extraMessage.= " Kérjük 6:00-kor vegye fel a munkát. Az oltási időpontjára elengedik a termelésből. Helyettesítés biztosítva lesz. Az oltás után nem kell tovább folytatni a munkát.";
@@ -192,14 +192,23 @@ class AdminOltasIgenyekPage extends AdminCorePage
                 //$szovegEmail = "Kedves ügyfelünk!<br/><br/>Új időpont, {$idopont} időpontban várjuk Önt a Magyar Suzuki oltóponton.{$extraMessage}<br/><br/>Hungáriamed csapata";
             }
 
-            //tegnapi 74ember
-            //15 percenként 6 ember 1. secl, 2. samoo, 3. cksolution, 4. s1
-            //07:00
+            //08:00 10fő, 08:30 10 fő,
+            //5 japán 9:00-ra, 5 magyar 09:15
+            //09:30 10 ember, 10:00 15 ember 30 percenként
 
-            if (true || $this->prefix == "oltasformsamsung") {
+            //10 mindegynek is!
+            //msc oltópont
+
+            //if (!isset($_SESSION["smsidopont"])) {
+                $_SESSION["smsidopont"] = "2021-06-05 08:00";
+            //}
+
+            //50 15 15 15
+
+            if (false || $this->prefix == "oltasformsamsung") {
                 //15 percenként 4 ember  7:00
 
-                $idopont = "2021-05-29 14:06";
+                $idopont =  $_SESSION["smsidopont"];
 
                 $szovegSMS = "Dear Client, we are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office. Hungáriamed team";
                 $szovegEmail = "Dear Client!<br/><br/>We are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office.<br/><br/>Hungáriamed team";
@@ -228,6 +237,8 @@ class AdminOltasIgenyekPage extends AdminCorePage
             $mail->Send();
 
             sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$this->prefix}_message', response=?", [intval($_GET["sendmessage"]), $szovegSMS]);
+
+            $_SESSION["smsidopont"] = date("Y-m-d H:i", strtotime("{$_SESSION["smsidopont"]} + 3 minute"));
 
             header("location: index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}");
             die;

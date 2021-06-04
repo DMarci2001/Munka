@@ -231,8 +231,8 @@ class OltasJelentkezesPage extends CorePage
         "sekwang" => [
             "id" => "oltasformsekwang",
             "title" => "SekwangTotalPanel Kft.",
-            "vakcinalist" => [6],
-            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 10000, 10000, 0, 0, 0, 10000],
             "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
             "javascript" => "oltasform_samsung.js",
             "logo" => "",
