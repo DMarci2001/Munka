@@ -27,7 +27,7 @@ class AdminPage {
 
         $this->page = $this->_getActualPage();
 
-        $this->adminMenu = $this->adminUtils->getAdminMenu();
+        $this->adminMenu = $this->getAdminMenu(0, 0);
     }
 
     private function _getActualPage() {
@@ -142,6 +142,10 @@ class AdminPage {
         if (isset($_SESSION["adminuser"]["jog_schedule"]) && $_SESSION["adminuser"]["jog_schedule"] == 1) {
             $html.= "<div style='display: table-cell;'><a target='_blank' href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
         }
+
+        $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($_SESSION["adminuser"], true)."&nbsp;&nbsp;</div>";
+
+        /*
         if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
             $html.= "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";
             $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
@@ -152,6 +156,7 @@ class AdminPage {
         if ($_SESSION["adminuser"]["jogosultsag"] == 0) {
             $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span>&nbsp;&nbsp;</div>";
         }
+        */
         $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>{$_SESSION["adminuser"]["nev"]}</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
         $html.= "</div>";
         return $html;
@@ -166,13 +171,17 @@ class AdminPage {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }
 
-        $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;font-weight:bold;color:#9cf3c3;'>";
+        $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;color:#9cf3c3;'>";
 
         foreach ($this->adminMenu as $menu) {
             if ($menu["sorrend"] == 0) {
                  continue;
             }
-            $html.= "<div><a class='mainmenuitem".($_GET["page"] == $menu["pageid"]?"_aktiv":"")."' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
+            if ($menu["parent"] == 0) {
+                $html .= "<div><a class='mainmenuitem" . ($_GET["page"] == $menu["pageid"] || $this->pageData["parent"] == $menu["id"] ? "_aktiv" : "") . "' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
+            } else {
+                $html .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $menu["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
+            }
         }
 
         return $html;
@@ -180,7 +189,7 @@ class AdminPage {
 
     private function _contentHeader() {
         $html = "";
-        $adminMenu = $this->adminUtils->getAdminMenu(1);
+        $adminMenu = $this->getAdminMenu(0, 1);
 
         foreach ($adminMenu as $menu) {
             if ($_GET["page"] == $menu["pageid"]) {
@@ -219,5 +228,38 @@ class AdminPage {
         return $html;
     }
 
+    public function getAdminMenu($parent, $full = 0)
+    {
+        $adminMenu = [];
 
+        if (isset($_SESSION["adminuser"])) {
+            $res = sql_query("select * from adminmenu where aktiv=1 and parent=? order by sorrend, megnev", [$parent]);
+            while ($menuData = sql_fetch_array($res)) {
+                //suzukinak csak 1 menüpont
+                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek" && $_SESSION["adminuser"]["jogosultsag"] == 0) {
+                    continue;
+                }
+
+                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"]["jogosultsag"] == 1 && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
+                    $adminMenu[] = $menuData;
+                    continue;
+                }
+
+                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
+                    continue;
+                }
+                //if ($menuData["jogszint"] > $_SESSION["adminuser"]["jogosultsag"] && $full != 1) {
+                //    continue;
+                //}
+
+                $adminMenu[] = $menuData;
+
+                if ($this->pageData["id"] == $menuData["id"] || $this->pageData["parent"] == $menuData["id"] || $full == 1) {
+                    $subMenu = $this->getAdminMenu($menuData["id"], $full);
+                    $adminMenu = array_merge($adminMenu, $subMenu);
+                }
+            }
+        }
+        return $adminMenu;
+    }
 }

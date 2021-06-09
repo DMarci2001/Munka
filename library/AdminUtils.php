@@ -195,34 +195,6 @@ class AdminUtils
         return $htmlout;
     }
 
-    public function getAdminMenu($full = 0)
-    {
-        $adminMenu = [];
-        if (isset($_SESSION["adminuser"])) {
-            $res = sql_query("select * from adminmenu where aktiv=1 order by sorrend, megnev");
-            while ($menuData = sql_fetch_array($res)) {
-                //suzukinak csak 1 menüpont
-                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek" && $_SESSION["adminuser"]["jogosultsag"] == 0) {
-                    continue;
-                }
-
-                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"]["jogosultsag"] == 1 && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
-                    $adminMenu[] = $menuData;
-                    continue;
-                }
-
-                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
-                    continue;
-                }
-                if ($menuData["jogszint"] > $_SESSION["adminuser"]["jogosultsag"] && $full != 1) {
-                    continue;
-                }
-                $adminMenu[] = $menuData;
-            }
-        }
-        return $adminMenu;
-    }
-
     public function magyarDatum($datum, $weekDay = true)
     {
         $m = date("n", strtotime($datum));
