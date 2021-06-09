@@ -68,8 +68,37 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformsekwang",
             "username" => "sekwangoltas",
             "title" => "SekwangTotalPanel Kft.",
+        ],
+        "gih" => [
+            "id" => "oltasformgih",
+            "username" => "giholtas",
+            "title" => "Green Industry Hungary Kft",
+        ],
+        "daeha" => [
+            "id" => "oltasformdaeha",
+            "username" => "daehaoltas",
+            "title" => "Daeha Techwon Hungary Kft",
+        ],
+        "topengineering" => [
+            "id" => "oltasformtec",
+            "username" => "tecoltas",
+            "title" => "TOP Engineering Co.,Ltd",
+        ],
+        "amsdesign20group" => [
+            "id" => "oltasformamsdesign",
+            "username" => "amsoltas",
+            "title" => "AMS Design 20 Group Kft",
+        ],
+        "uth" => [
+            "id" => "oltasformuth",
+            "username" => "utholtas",
+            "title" => "UNI TECHNOLOGY Hungary Kft.",
+        ],
+        "irs" => [
+            "id" => "oltasformirs",
+            "username" => "irsoltas",
+            "title" => "IRS Construction EU Kft.",
         ]
-
     ];
 
     public $pageParam;
@@ -133,7 +162,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
         $this->pageParam = $this->pageParams[$GLOBALS["subdomain"]];
 
-        $oltasPage = new OltasIgenyFelmeresPage();
+        $oltasPage = new OltasJelentkezesPage();
         $this->vakcinak = $oltasPage->vakcinak;
 
         $this->prefix = $this->pageParam["id"];
@@ -158,13 +187,10 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
         if (isset($_POST["oltaseljottcheck"])) {
             $id = $_POST["oltaseljottcheck"];
-            if ($data = sql_fetch_array(sql_query("select id from webservicelog where tipus=23 and keres=? and action='{$this->prefix}_eljott'", [$id]))) {
-                sql_query("delete from webservicelog where id=?", [$data["id"]]);
-            } else {
-                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$this->prefix}_eljott'", [$id]);
-            }
 
-            echo $this->personRow(sql_fetch_array(sql_query("select * from webservicelog where id=?", [$id])));
+            sql_query("update oltasok set eljott = if(eljott=0,1,0) where id=?", [$id]);
+
+            echo $this->personRow(sql_fetch_array(sql_query("select * from oltasok where id=?", [$id])));
             die;
         }
 
@@ -433,22 +459,15 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
     private function showOltasIgenyekEljott() {
         $result = [];
         $html   = "";
-        $oltasPage = new OltasIgenyFelmeresPage();
+        $oltasPage = new OltasJelentkezesPage();
         $vakcinak = $oltasPage->vakcinak;
 
-        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='{$this->prefix}_new' order by datum desc")->fetchAll(PDO::FETCH_ASSOC);
+        $igenylesek = sql_query("SELECT * FROM oltasok WHERE cegid='{$this->prefix}' order by regtime desc")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($igenylesek as $igenylesData) {
-            $data = json_decode($igenylesData["keres"], JSON_OBJECT_AS_ARRAY);
-            //$html.= "<pre>".print_r($data, true)."</pre>";
-
             $idopont = "";
-            if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_message' and keres=? limit 1", [$igenylesData["id"]]))) {
-                if (substr($message["response"], 0, 4) == "Dear") {
-                    $idopont = substr($message["response"], 48, 10);
-                } else {
-                    $idopont = substr($message["response"], 20, 10);
-                }
+            if (substr($igenylesData["idopont"], 0, 4) != "0000") {
+                $idopont = substr($igenylesData["idopont"], 0, 10);
             }
 
 
@@ -458,18 +477,18 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
                 $datum = "Időpont nélkül";
             }
 
-            if (!sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_eljott' and keres=? limit 1", [$igenylesData["id"]]))) {
+            if ($igenylesData["eljott"] == 0) {
                 continue;
             }
 
             $csoport = "Mindenki";
-            if (isset($data["csoport"])) {
-                $csoport = $data["csoport"];
+            if (isset($igenylesData["csoport"])) {
+                $csoport = $igenylesData["csoport"];
             }
 
             $van = 0;
             foreach ($vakcinak as $vakcinaId => $vakcinaData) {
-                if (isset($data["vakcina{$vakcinaId}"])) {
+                if ($igenylesData["vakcina"] == $vakcinaId) {
                     @$result[$datum][$csoport]++;
                     $van = 1;
                 }
@@ -529,24 +548,23 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
     private function showOltasIgenyek() {
         $result = [];
         $html   = "";
-        $oltasPage = new OltasIgenyFelmeresPage();
+        $oltasPage = new OltasJelentkezesPage();
         $vakcinak = $oltasPage->vakcinak;
 
-        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='{$this->prefix}_new' order by datum desc")->fetchAll(PDO::FETCH_ASSOC);
+        $igenylesek = sql_query("SELECT * FROM oltasok WHERE cegid='{$this->prefix}' order by regtime desc")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($igenylesek as $igenylesData) {
-            $data = json_decode($igenylesData["keres"], JSON_OBJECT_AS_ARRAY);
             //$html.= "<pre>".print_r($data, true)."</pre>";
 
-            $datum = date("Y-m-d", strtotime($igenylesData["datum"]));
+            $datum = date("Y-m-d", strtotime($igenylesData["regtime"]));
             $csoport = "Mindenki";
-            if (isset($data["csoport"])) {
-                $csoport = $data["csoport"];
+            if (isset($igenylesData["csoport"])) {
+                $csoport = $igenylesData["csoport"];
             }
 
             $van = 0;
             foreach ($vakcinak as $vakcinaId => $vakcinaData) {
-                if (isset($data["vakcina{$vakcinaId}"])) {
+                if ($igenylesData["vakcina"] == $vakcinaId) {
                     @$result[$datum][$csoport][$vakcinaId]++;
                     $van = 1;
                 }
@@ -626,13 +644,12 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         $igen = "<span style='color:#a00;'>IGEN</span>";
         $nem = "<span style='color:#080;'>NEM</span>";
 
-        $igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='{$this->prefix}_new' order by datum")->fetchAll(PDO::FETCH_ASSOC);
+        $igenylesek = sql_query("SELECT * FROM oltasok WHERE cegid='{$this->prefix}' order by regtime")->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET["report2"])) {
             //$igenylesek = sql_query("SELECT * FROM webservicelog WHERE tipus=23 AND ACTION='{$this->prefix}_new' order by instr(keres,'egyeb'), instr(keres,'office worker'), instr(keres,'karbantarto'), instr(keres,'b muszak'), instr(keres,'a muszak'), datum")->fetchAll(PDO::FETCH_ASSOC);
 
         }
-
 
         $html.="<table cellpadding='0' cellspacing='0'>";
         $html.="<tr style='background:#ddd;font-weight: bold'>";
@@ -656,39 +673,11 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         $html.="</tr>";
 
         foreach ($igenylesek as $igenyData) {
-            $formData = json_decode($igenyData["keres"], JSON_OBJECT_AS_ARRAY);
+            $formData = json_decode($igenyData["answers"], JSON_OBJECT_AS_ARRAY);
 
             if (!isset($formData["csoport"])) {
                 $formData["csoport"] = "all";
             }
-
-            $idopont = "";
-            if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_message' and keres=? limit 1", [$igenyData["id"]]))) {
-                if (substr($message["response"], 0, 4) == "Dear") {
-                    $idopont = substr($message["response"], 48, 16);
-                } else {
-                    $idopont = substr($message["response"], 20, 16);
-                }
-            }
-
-            if ($idopont != "" && isset($_GET["report2"])) {
-                //continue;
-            }
-
-            if (isset($_GET["report2"]) && sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_eljott' and keres=? limit 1", [$igenyData["id"]]))) {
-                //continue;
-            }
-
-            if ($formData["csoport"] != "a muszak") {
-                //continue;
-            }
-
-
-
-            if (date("Y-m-d", strtotime($idopont)) == "2021-04-30") {
-                //continue;
-            }
-
 
             $html.="<tr id='personrow{$igenyData["id"]}'>";
             $html.=$this->personRow($igenyData);
@@ -733,50 +722,29 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
     {
         $this->allRegistered++;
 
-        $formData = json_decode($igenyData["keres"], JSON_OBJECT_AS_ARRAY);
-        if (!isset($formData["csoport"])) {
-            $formData["csoport"] = "all";
+        $idopont = substr($igenyData["idopont"], 0, 16);
+        if (substr($idopont, 0, 4) == "0000") {
+            $idopont = "";
         }
 
-        if (!isset($formData["taj"])) {
-            $formData["taj"] = "";
-        }
-        if (!isset($formData["lang"])) {
-            $formData["lang"] = "hu";
-        }
-        if (!isset($formData["torzsszam"])) {
-            $formData["torzsszam"] = "";
-        }
-
-        $selectedVakcina = [];
-        foreach ($this->vakcinak as $vakcinaId => $vakcinaData) {
-            if (isset($formData["vakcina{$vakcinaId}"])) {
-                $selectedVakcina[] = $vakcinaData["name"];
-            }
-        }
-
-        $idopont = "";
-        if ($message = sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_message' and keres=? limit 1", [$igenyData["id"]]))) {
-            if (substr($message["response"], 0, 4) == "Dear") {
-                $idopont = substr($message["response"], 48, 16);
-            } else {
-                $idopont = substr($message["response"], 20, 16);
-            }
+        $vakcina = "";
+        if (!empty($igenyData["vakcina"])) {
+            $vakcina = $this->vakcinak[$igenyData["vakcina"]]["name"];
         }
 
         $background = "";
-        if (sql_fetch_array(sql_query("select * from webservicelog where tipus=23 and action='{$this->prefix}_eljott' and keres=? limit 1", [$igenyData["id"]]))) {
+        if ($igenyData["eljott"] == 1) {
             $background = "background:#9f9;";
             $this->eljottek++;
         }
 
-        if ($formData["csoport"] == "egyeb" && !empty($formData["csoporttext"])) {
-            $formData["csoport"] = "<span style='font-style: italic;'>" . substr(trim(strip_tags($formData["csoporttext"])), 0, 50) . "</span>";
+        if ($igenyData["csoport"] == "egyeb" && !empty($igenyData["csoporttext"])) {
+            $igenyData["csoport"] = "<span style='font-style: italic;'>" . substr(trim(strip_tags($igenyData["csoporttext"])), 0, 50) . "</span>";
         }
 
 
-        if ($igenyData["useragent"] != "") {
-            $idopont = "<span style='color:#f00;'>{$igenyData["useragent"]}</span> {$idopont}";
+        if ($igenyData["poll1"] != "") {
+            $idopont = "<span style='color:#f00;'>{$igenyData["poll1"]}</span> {$idopont}";
         }
 
         $html = "";
@@ -788,25 +756,25 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         }
         $html .= "[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";
         $html .= "</td>";
-        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["datum"]}</td>";
-        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["nev"]}</td>";
+        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["regtime"]}</td>";
+        $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["nev"]}</td>";
         if (isset($formData["utlevel"])) {
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["utlevel"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["utlevel"]}</td>";
         } else {
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["csoport"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["csoport"]}</td>";
         }
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["szuldatum"]}</td>";
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["telefon"]}</td>";
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["email"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["szuldatum"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["telefon"]}</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["email"]}</td>";
         if ($GLOBALS["subdomain"] == "mscoltas") {
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["taj"]}</td>";
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["torzsszam"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["taj"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["utlevel"]}</td>";
         }
         if ($GLOBALS["subdomain"] == "secl") {
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["utlevel"]}</td>";
-            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$formData["lang"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["utlevel"]}</td>";
+            $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["lang"]}</td>";
         }
-        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>".implode(", ", $selectedVakcina)."</td>";
+        $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$vakcina}</td>";
         $html.="<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$idopont}</td>";
 
         return $html;

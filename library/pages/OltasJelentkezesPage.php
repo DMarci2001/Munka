@@ -128,7 +128,17 @@ class OltasJelentkezesPage extends CorePage
 
 
     public $pageParams = [
-      "testoltas" => [
+        "mscoltas" => [
+            "id" => "oltasform",
+            "title" => "MSC",
+            "vakcinalist" => [1, 2, 3, 4, 5, 6],
+            "supply" => [null, 10000, 4000, 10000, 10000, 10000, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "https://influitive.com/wp-content/uploads/2021/01/UserTesting-Logo.png",
+            "logoheight" => 45
+        ],
+        "testoltas" => [
             "id" => "oltasformteszt",
             "title" => "Oltás teszt",
             "vakcinalist" => [1, 2, 3, 4, 5, 6],
@@ -137,8 +147,8 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "https://influitive.com/wp-content/uploads/2021/01/UserTesting-Logo.png",
             "logoheight" => 45
-      ],
-      "secl" => [
+        ],
+        "secl" => [
             "id" => "oltasformsamsung",
             "title" => "Samsung",
             "vakcinalist" => [1, 2, 3, 4, 5, 6],
@@ -147,8 +157,8 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
             "logoheight" => 45
-      ],
-      "samoo" => [
+        ],
+        "samoo" => [
             "id" => "oltasformsamoo",
             "title" => "Samoo",
             "vakcinalist" => [6],
@@ -237,9 +247,80 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "",
             "logoheight" => 45
+        ],
+        "gih" => [
+            "id" => "oltasformgih",
+            "title" => "Green Industry Hungary Kft",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
+        ],
+        "daeha" => [
+            "id" => "oltasformdaeha",
+            "title" => "Daeha Techwon Hungary Kft",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
+        ],
+        "topengineering" => [
+            "id" => "oltasformtec",
+            "title" => "TOP Engineering Co.,Ltd",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
+        ],
+        "amsdesign20group" => [
+            "id" => "oltasformamsdesign",
+            "title" => "AMS Design 20 Group Kft",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
+        ],
+        "uth" => [
+            "id" => "oltasformuth",
+            "title" => "UNI TECHNOLOGY Hungary Kft.",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
+        ],
+        "irs" => [
+            "id" => "oltasformirs",
+            "title" => "IRS Construction EU Kft.",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
         ]
 
     ];
+
+
+    /*
+    Green Industry Hungary Kft
+    Daeha Techwon Hungary Kft
+    TOP Engineering Co.,Ltd
+    JK Group Kft
+    AMS Design 20 Group Kft
+    UNI TECHNOLOGY Hungary Kft.
+    IRS Construction EU Kft.
+    */
 
     public $pageParam;
 
@@ -272,8 +353,10 @@ class OltasJelentkezesPage extends CorePage
             $_POST["szuldatum"] = "";
 
             $selectedVakcinak = 0;
+            $selectedVakcina  = 0;
             for ($i=1;$i<=6;$i++) {
                 if (isset($_POST["vakcina{$i}"])) {
+                    $selectedVakcina = $i;
                     $selectedVakcinak++;
                 }
             }
@@ -309,7 +392,7 @@ class OltasJelentkezesPage extends CorePage
             if ($result["error"] == "") {
                 unset($_POST["g-recaptcha-response"]);
                 $_POST["lang"] = $_COOKIE["lang"];
-                sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$this->pageParam["id"]}_new', response=?", [json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
+                sql_query("insert into oltasok set nev=?, email=?, telefon=?, szuldatum=?, utlevel=?, vakcina=?, regtime=now(), answers=?, cegid='{$this->pageParam["id"]}', message=?", [$_POST["nev"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["utlevel"], $selectedVakcina, json_encode($_POST, JSON_PRETTY_PRINT), $result["html"]]);
 
                 $this->doneEmail($_POST);
             }
