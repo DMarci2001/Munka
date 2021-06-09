@@ -13,10 +13,12 @@ class AdminPatientsPage extends AdminCorePage {
 
         if( !isset( $_GET['scroll'] )) $_GET['scroll'] = 1;
 
-        if ($_SESSION["adminuser"]["jogosultsag"] < 2 || $_SESSION["adminuser"]["orvosid"] != "") {
-            if (isset($_SESSION["adminuser"]["cegjog"])) {
-                $this->w = "and cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
-                $this->bw = "and id in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
+        if (isset($_SESSION["adminuser"])) {
+            if ($_SESSION["adminuser"]["jogosultsag"] < 2 || $_SESSION["adminuser"]["orvosid"] != "") {
+                if (isset($_SESSION["adminuser"]["cegjog"])) {
+                    $this->w = "and cegid in (" . $this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]) . ")";
+                    $this->bw = "and id in (" . $this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]) . ")";
+                }
             }
         }
 

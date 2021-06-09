@@ -4,6 +4,87 @@ class AdminUser {
 
     public $user;
 
+    public static $jogosultsagLista = [
+        "jog_jogset" => [
+            "name" => "jogkörök kiosztása"
+        ],
+        "jog_cegset" => [
+            "name" => "cégek kezelés"
+        ],
+        "jog_helyszinset" => [
+            "name" => "helyszínek kezelése"
+        ],
+        "jog_orvosset" => [
+            "name" => "orvosok kezelése"
+        ],
+        "jog_beosztasset" => [
+            "name" => "orvos beosztások kezelése"
+        ],
+        "jog_szabi" => [
+            "name" => "szabadságok beállítása"
+        ],
+        "jog_statisztika" => [
+            "name" => "statisztikák megtekintése"
+        ],
+        "jog_beallitasok" => [
+            "name" => "beállítások kezelése"
+        ],
+        "jog_szurestipusset" => [
+            "name" => "szűréstipusok kezelése"
+        ],
+        "jog_nofoglimitset" => [
+            "name" => "korlátan időpontfoglalás"
+        ],
+        "jog_zarolista" => [
+            "name" => "zárólista látása"
+        ],
+        "jog_zaroszerk" => [
+            "name" => "záró leletek szerkesztése"
+        ],
+        "jog_vizsg_stat" => [
+            "name" => "vizsgálati statisztika lekérdezése"
+        ],
+        "jog_leletlatas" => [
+            "name" => "leletek látása"
+        ],
+        "jog_leletszerk" => [
+            "name" => "leletek szerkesztése"
+        ],
+        "jog_gdprhferes" => [
+            "name" => "GDPR hozzáférés"
+        ],
+        "jog_kuponlista" => [
+            "name" => "kuponkód lista"
+        ],
+        "jog_kuponkeszites" => [
+            "name" => "kuponkód hozzáadás/szerkesztés"
+        ],
+        "jog_tranzakciolatas" => [
+            "name" => "tranzakciók látása"
+        ],
+        "jog_tranzakciokezeles" => [
+            "name" => "tranzakciók kezelése"
+        ],
+        "jog_beutalokezeles" => [
+            "name" => "beutalók kezelése"
+        ],
+        "jog_dokirexlekerdezesek" => [
+            "name" => "Dokirex alapú lekérdezések"
+        ],
+        "jog_schedule" => [
+            "name" => "munkavállalói beosztás szerkesztése"
+        ],
+        "jog_salary" => [
+            "name" => "jövedelem adatok megadása / statisztika"
+        ],
+        "jog_dicom" => [
+            "name" => "Röntgen felvétel kezelés"
+        ],
+        "jog_oltasigenyek" => [
+            "name" => "céges oltások kezelése"
+        ],
+    ];
+
     public function __construct()
     {
         if (isset($_COOKIE["pid"])) {
@@ -74,6 +155,40 @@ class AdminUser {
         return $result;
     }
 
+    public function getAdminLevel($user, $box = false) {
+        $result = "";
+
+        if ($user["jog_jogset"] == 1) {
+            $result = "<span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>adm1n</span>";
+        }
+
+        if (empty($result) && $user["jogosultsag"] == 2) {
+            $result = "<span style='color:#fff;background:#7B96CD;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>cégadmin</span>";
+        }
+
+        if (empty($result) && $user["jogosultsag"] == 1) {
+            $result = "<span style='color:#fff;background:#A7C7E7;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>céguser</span>";
+        }
+
+        if (empty($result)) {
+            $result = "<span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>recepció</span>";
+        }
+
+        if (!$box) {
+            $result = strip_tags($result);
+        }
+
+        return $result;
+    }
+
+    public function companyPermissionAccess():bool {
+        return $this->user["jogosultsag"] >= 2;
+    }
+
+    public function jogosultsagAccess():bool {
+        return $this->user["jog_jogset"] == 1;
+    }
+
     public function salaryAccess():bool {
         return $this->user["jog_salary"] == 1;
     }
@@ -81,7 +196,6 @@ class AdminUser {
     public function beosztasPageAccess():bool {
         return $this->user["jog_schedule"] == 1;
     }
-
 
     public function dicomAccess():bool {
         return $this->user["jog_dicom"] == 1;

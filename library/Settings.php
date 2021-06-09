@@ -6,7 +6,6 @@ class Booking_Settings
 
     public $honaptext               = array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
     public $hetnap                  = array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
-    public $adminszintek            = array("recepció","cégadmin","<b>admin</b>");
 
     public $alkalmassagvariaciok    = array (
             "I" => "alkalmas",
