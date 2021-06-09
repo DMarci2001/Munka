@@ -176,6 +176,12 @@ class AdminBookingPage extends AdminCorePage
                 }
                 if (!isset($go)) continue;
             }
+
+            if  ($_SESSION["helyszin"] == 0 && $placeData["id"] == Booking_Constants::DEFAULT_PLACE_IDS[0]) {
+                //default cím beállítása
+                $_SESSION["helyszin"] = $placeData["id"];
+            }
+
             echo "<option value='{$placeData["id"]}-0'".("{$_SESSION["helyszin"]}-0"=="{$placeData["id"]}-0"?" selected":"").">{$placeData["cim"]}</option>";
         }
         echo "</select>";
@@ -322,7 +328,7 @@ class AdminBookingPage extends AdminCorePage
                         left join szurestipusok sz on sz.id=f.szurestipusid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
-                        where f.datum>=? and f.datum<? and f.helyszinid=? ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) 
+                        where f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) 
                         group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId]);
 
                         $this->lastIdopont = "";

@@ -1129,8 +1129,9 @@ class BookingService
         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join orvosok o on o.id=f.orvosassigned
+                        left join szurestipusok sz on sz.id=f.szurestipusid
                         left join dokumentumok d on d.foglalasid=f.id
-                        where f.datum>=? and f.datum<=? and f.helyszinid=? {$wCeg}", [$tol, $ig, $helyszinId]);
+                        where f.datum>=? and f.datum<=? and (f.helyszinid=? or sz.webdoktor=1) {$wCeg}", [$tol, $ig, $helyszinId]);
         while ($reservationData = sql_fetch_array($resf)) {
             $return[$reservationData["szurestipusid"]][$reservationData["id"]] = $reservationData;
         }
