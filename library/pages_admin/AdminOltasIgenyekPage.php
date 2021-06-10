@@ -200,14 +200,15 @@ class AdminOltasIgenyekPage extends AdminCorePage
             die;
         }
 
-        if (isset($_GET["sendmessage"])) {
-            $igenyles = sql_query("SELECT * FROM webservicelog WHERE id=? AND ACTION='{$this->prefix}_new' order by datum desc", [$_GET["sendmessage"]])->fetch(PDO::FETCH_ASSOC);
+        if (isset($_POST["sendoltasmessage"])) {
+            $igenyles = sql_query("SELECT * FROM oltasok WHERE id=? AND cegid='{$this->prefix}'", [$_POST["sendoltasmessage"]])->fetch(PDO::FETCH_ASSOC);
 
-            $data = json_decode($igenyles["keres"], JSON_OBJECT_AS_ARRAY);
+            //$igenyles["email"] = "jnsmobil@gmail.com";
+            //$igenyles["telefon"] = "06209996183";
 
             $szovegSMS = $szovegEmail = "";
             if (true || $this->prefix == "oltasform") {
-                $idopont = "2021-06-05 13:30";
+                $idopont = "2021-06-12 14:00";
 
                 $extraMessage = "";
                 //$extraMessage.= " Kérjük 6:00-kor vegye fel a munkát. Az oltási időpontjára elengedik a termelésből. Helyettesítés biztosítva lesz. Az oltás után nem kell tovább folytatni a munkát.";
@@ -241,17 +242,17 @@ class AdminOltasIgenyekPage extends AdminCorePage
             }
 
             if (true || $this->prefix == "oltasform") {
-                if (substr($data["telefon"], 0, 1) == "+" || substr($data["telefon"], 0, 2) == "00") {
-                    $this->utils->sendSMSRaw($data["telefon"], $szovegSMS);
+                if (substr($igenyles["telefon"], 0, 1) == "+" || substr($igenyles["telefon"], 0, 2) == "00") {
+                    $this->utils->sendSMSRaw($igenyles["telefon"], $szovegSMS);
                 } else {
-                    $this->utils->sendSMS($data["telefon"], $szovegSMS);
+                    $this->utils->sendSMS($igenyles["telefon"], $szovegSMS);
                 }
             }
 
             $mail = new PHPMailer();
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
-            $mail->AddAddress($data["email"]);
+            $mail->AddAddress($igenyles["email"]);
             $mail->AddBCC("jns@jns.hu");
             $mail->CharSet = "UTF-8";
             $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
@@ -262,11 +263,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             $mail->Send();
 
-            sql_query("insert into webservicelog set tipus=23, datum=now(), keres=?, action='{$this->prefix}_message', response=?", [intval($_GET["sendmessage"]), $szovegSMS]);
+            sql_query("update oltasok set idopont=? where id=?", [$idopont, intval($_POST["sendoltasmessage"])]);
 
             $_SESSION["smsidopont"] = date("Y-m-d H:i", strtotime("{$_SESSION["smsidopont"]} + 3 minute"));
 
-            header("location: index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}");
+            echo $this->personRow(sql_fetch_array(sql_query("select * from oltasok where id=?", [$_POST["sendoltasmessage"]])));
             die;
         }
 
@@ -751,7 +752,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
         $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
         if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
-            $html .= "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&sendmessage={$igenyData["id"]}'>SMS</a>] ";
+            $html .= "[<a href='#' onclick='sendOltasMessage({$igenyData["id"]});return false;'>SMS</a>] ";
             $html .= "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&deletemscrow={$igenyData["id"]}' onclick='return confirm(\"Biztos törlöd ezt a sort?\");'>Törlés</a>] ";
         }
         $html .= "[<a href='#' onclick='oltasEljottCheck({$igenyData["id"]});return false;'>Eljött</a>] ";

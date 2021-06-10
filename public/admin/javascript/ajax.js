@@ -2269,7 +2269,17 @@ function oltasEljottCheck(id) {
             $("#personrow"+id).html(response);
         }
     })
+}
 
+function sendOltasMessage(id) {
+    $.ajax({
+        type: "POST",
+        url: "?page=oltasigenyek&subpage=showall",
+        data: { sendoltasmessage: id },
+        success: function (response) {
+            $("#personrow"+id).html(response);
+        }
+    })
 }
 
 function initIrszAutoFill() {
