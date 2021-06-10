@@ -5,14 +5,12 @@ class AdminSalaryPage extends AdminCorePage
 {
 
     private $salaryCalculator;
-    private $adminUser;
 
     public function __construct()
     {
         parent::__construct();
 
         $this->salaryCalculator = new SalaryCalculator();
-        $this->adminUser = new AdminUser();
 
         if (!isset($_SESSION["salarydatumtol"])) $_SESSION["salarydatumtol"] = date("Y-m-01", strtotime("now - 1 month"));
         if (!isset($_SESSION["salarydatumig"])) $_SESSION["salarydatumig"] = date("Y-m-t", strtotime($_SESSION["salarydatumtol"]));

@@ -61,7 +61,8 @@ class AdminPlacesPage extends AdminCorePage {
     }
 
     public function showPage() {
-        if (!$this->adminUtils->helyszinModJog()) {
+        if (!$this->adminUser->placesAccess()) {
+            echo "Az oldal megtekintéséhez nincs jogosultsága!";
             return;
         }
 

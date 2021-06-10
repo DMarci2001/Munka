@@ -10,7 +10,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
     private $notifySubPage;
     private $printSubPage;
     private $subPage = "beosztasok";
-    private $adminUser;
 
     private $napszakok = ["Délelőtt", "Délután", "Külső"];
 
@@ -24,7 +23,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $this->notifySubPage = new NotifySubPage($this->workScheduleService);
         $this->printSubPage = new PrintSubPage($this->workScheduleService);
         $this->settings = new Booking_Settings();
-        $this->adminUser = new AdminUser();
 
         if (!isset($_SESSION["wpoffset"])) {
             $_SESSION["wpoffset"] = 0;

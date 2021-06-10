@@ -201,5 +201,9 @@ class AdminUser {
         return $this->user["jog_dicom"] == 1;
     }
 
+    public function placesAccess():bool {
+        return $this->user["jog_helyszinset"] == 1;
+    }
+
 
 }

@@ -5,13 +5,10 @@ class AdminUsersPage extends AdminCorePage {
     private $bookingService;
 
     private $companyFilter = "";
-    private $adminUser;
 
     public function __construct()
     {
         parent::__construct();
-
-        $this->adminUser = new AdminUser();
 
         $this->companyFilter = "u.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).") and u.cegid<>0";
         if ($this->adminUser->jogosultsagAccess()) {
@@ -120,7 +117,7 @@ class AdminUsersPage extends AdminCorePage {
                 echo "</td></tr>";
 
                 foreach (AdminUser::$jogosultsagLista as $jogKey => $jogosultsagData) {
-                    echo "<tr><td></td><td><input type='checkbox' name='{$jogKey}' ".($_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;{$jogosultsagData["name"]}</td></tr>";
+                    echo "<tr><td></td><td><input type='checkbox' name='{$jogKey}' ".($_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;".ucfirst($jogosultsagData["name"])."</td></tr>";
                 }
 
                 echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";

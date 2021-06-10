@@ -298,16 +298,15 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "</table>";
             }
 
+            if ($this->adminUser->dicomAccess()) {
+                $dicomPage = new AdminDicomPage();
+                $dicomImagesHtml = $dicomPage->showImageList($row["taj"]);
 
-
-            $dicomPage = new AdminDicomPage();
-            $dicomImagesHtml = $dicomPage->showImageList($row["taj"]);
-
-            if (!empty($dicomImagesHtml)) {
-                echo "<div class='tdsepdiv' style='margin-top:20px;'>Röntgen felvételek</div>";
-                echo "<div style='margin:10px 0px 0px 0px;'>{$dicomImagesHtml}</div>";
+                if (!empty($dicomImagesHtml)) {
+                    echo "<div class='tdsepdiv' style='margin-top:20px;'>Röntgen felvételek</div>";
+                    echo "<div style='margin:10px 0px 0px 0px;'>{$dicomImagesHtml}</div>";
+                }
             }
-
 
             echo "<form name='dform' method='post' enctype='multipart/form-data'>";
             echo "<div class='tdsepdiv' style='margin-top:20px;'>Dokumentumok</div>";

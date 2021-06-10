@@ -6,7 +6,6 @@ class AdminStatPage extends AdminCorePage {
     private $tol;
     private $ig;
     private $lista = "default";
-    private $adminUser;
 
     public function __construct()
     {

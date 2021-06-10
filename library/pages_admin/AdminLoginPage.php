@@ -3,13 +3,10 @@
 class AdminLoginPage extends AdminCorePage {
 
     private $bookingService;
-    private $adminUser;
 
     public function __construct()
     {
         parent::__construct();
-
-        $this->adminUser = new AdminUser();
 
         if (isset( $_REQUEST["logintry"])) {
             $result = $this->adminUser->adminLogin($_REQUEST["loginusername"], $_REQUEST["loginpassword"]);

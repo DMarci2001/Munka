@@ -3,13 +3,9 @@
 
 class AdminInvoicesPage extends AdminCorePage
 {
-    private $adminUser;
-
     public function __construct()
     {
         parent::__construct();
-
-        $this->adminUser = new AdminUser();
 
         if (isset($_POST["toggleinvoicefizetve"])) {
             if (sql_fetch_array(sql_query("select * from remoteids where provider='invoice' and tipus='fizetve' and remoteid=?", [$_POST["toggleinvoicefizetve"]]))) {

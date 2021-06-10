@@ -7,7 +7,6 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AdminReferalStatusQueryPage extends AdminCorePage
 {
-    private $adminUser;
     private $dokirexService;
 
     
@@ -20,7 +19,6 @@ class AdminReferalStatusQueryPage extends AdminCorePage
             return;
         }
 
-        $this->adminUser = new adminUser();
         $this->dokirexService = new DokirexService();
 
        

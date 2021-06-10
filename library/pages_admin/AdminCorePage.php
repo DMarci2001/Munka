@@ -6,7 +6,7 @@ use PHPMailer\PHPMailer\Exception;
 class AdminCorePage {
     public $utils;
     public $adminUtils;
-    //public $adminUser;
+    public $adminUser;
     public $lang;
     public $formError = "";
     public $errors = [];
@@ -18,7 +18,7 @@ class AdminCorePage {
         $this->utils = new Utils();
         $this->adminUtils = new AdminUtils();
         $this->patinentService = new PatientService();
-        //$this->adminUser = new AdminUser();
+        $this->adminUser = new AdminUser();
         $this->lang = new Lang();
 
         //tiltott oldalak
