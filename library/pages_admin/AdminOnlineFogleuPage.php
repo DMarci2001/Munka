@@ -3,14 +3,9 @@
 class AdminOnlineFogleuPage extends AdminCorePage
 {
 
-    private $bookingService;
-    private $shift;
-
     public function __construct()
     {
         parent::__construct();
-        $webText = $this->lang->webText;
-        $this->bookingService = new BookingService();
 
         if (!isset($_SESSION["blistanap"])) $_SESSION["blistanap"]=date("Y-m-d");
         if (isset($_GET["today"])) $_GET["blistanap"]=date("Y-m-d");
@@ -81,7 +76,7 @@ class AdminOnlineFogleuPage extends AdminCorePage
         }
 
         if ($_SESSION["adminuser"]["jogosultsag"]<2) {
-            $w = "and f.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
+            $w = "and f.cegid in (".$this->adminUser->getCegList().")";
         }
 
         $res = sql_query("SELECT o.`nev` AS orvosnev,h.cim AS helyszin,sz.megnev AS szurestipus,f.*,b.naploszam,b.megj as beutalomegj,c.megnev as cegnev FROM foglalasok f

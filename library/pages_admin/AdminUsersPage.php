@@ -10,7 +10,7 @@ class AdminUsersPage extends AdminCorePage {
     {
         parent::__construct();
 
-        $this->companyFilter = "u.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).") and u.cegid<>0";
+        $this->companyFilter = "u.cegid in (".$this->adminUser->getCegList().") and u.cegid<>0";
         if ($this->adminUser->jogosultsagAccess()) {
             $this->companyFilter = "true";
         }
@@ -66,7 +66,8 @@ class AdminUsersPage extends AdminCorePage {
     }
 
     public function showPage() {
-        if (!$this->adminUtils->userModJog()) {
+        if (!$this->adminUser->jogosultsagAccess()) {
+            echo $this->noPermissionMessage();
             return;
         }
 

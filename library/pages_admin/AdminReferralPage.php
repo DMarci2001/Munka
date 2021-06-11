@@ -5,7 +5,7 @@ class AdminReferralPage extends AdminCorePage {
     {
         parent::__construct();
 		
-		if(!$this->adminUtils->beutalokezelesJog()) header("Location:index.php");
+		if(!$this->adminUser->beutaloAccess()) header("Location:index.php");
 		
 		if (isset($_POST['deleteSelectedReferrals']) && $_GET['page']=="referral") {
 			

@@ -106,7 +106,7 @@ class AdminArrivalsPage extends AdminCorePage
         }
 
         if (isset($_GET["loadorvoschangecombo"])) {
-            if ($this->adminUtils->orvosModJog()) {
+            if ($this->adminUser->doctorsAccess()) {
                 if ($foglalasData=sql_fetch_array(sql_query("select orvosassigned from foglalasok where id=?",array($_GET["fid"])))) {
                     $res=sql_query("select * from orvosok order by nev");
                     echo "<select onchange=\"$('#orvoschangediv{$_GET["fid"]}').load('index.php?page={$_GET["page"]}&loadorvoschangedefault&oid='+this.value+'&fid={$_GET["fid"]}');\" style='width:200px;'>";
@@ -249,8 +249,7 @@ class AdminArrivalsPage extends AdminCorePage
 
         $w=$bw="";
         if ($_SESSION["adminuser"]["jogosultsag"]<2) {
-            $w="and f.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
-            //echo $w;
+            $w = "and f.cegid in (".$this->adminUser->getCegList().")";
         }
 
         if (isset($_SESSION["filternev"]) && $_SESSION["filternev"]!="") {
@@ -351,7 +350,7 @@ class AdminArrivalsPage extends AdminCorePage
                 echo "<a target='_blank' href='index.php?page=patients&szerk={$row["paciensid"]}'>{$row["nev"]}</a>";
             }
             echo "&nbsp;&nbsp;</div><div>".($row["beutalomegj"]!=""?" [<a href='#' onclick='$(\"#bmegj{$row["id"]}\").toggle();return false;'>megj</a>]":"")."&nbsp;&nbsp;</div></div></td>";
-            echo "<td nowrap valign=top><div class='{$tc}'><div id='orvoschangediv{$row["id"]}'><a target='_blank' href='index.php?page=doctors&szerk={$row["orvosassigned"]}&sp'>{$row["orvosnev"]}</a>&nbsp;".($this->adminUtils->orvosModJog()?"<a onclick='$(\"#orvoschangediv{$row["id"]}\").load(\"index.php?page={$_GET["page"]}&loadorvoschangecombo&fid={$row["id"]}\");return false;' href='#'><img style='height:10px;opacity: .5;' src='images/refresh.png' title='orvos csere'/></a>":"")."&nbsp;</div><div>{$row["szurestipus"]}&nbsp;&nbsp;{$szolg}</div></td>";
+            echo "<td nowrap valign=top><div class='{$tc}'><div id='orvoschangediv{$row["id"]}'><a target='_blank' href='index.php?page=doctors&szerk={$row["orvosassigned"]}&sp'>{$row["orvosnev"]}</a>&nbsp;".($this->adminUser->doctorsAccess()?"<a onclick='$(\"#orvoschangediv{$row["id"]}\").load(\"index.php?page={$_GET["page"]}&loadorvoschangecombo&fid={$row["id"]}\");return false;' href='#'><img style='height:10px;opacity: .5;' src='images/refresh.png' title='orvos csere'/></a>":"")."&nbsp;</div><div>{$row["szurestipus"]}&nbsp;&nbsp;{$szolg}</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'><div>{$row["cegnev"]}&nbsp;&nbsp;</div><div>{$row["helyszin"]}&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign=top><div class='{$tc}'>";
             echo "[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&togglemegerkezett={$row["id"]}'>megérkezett</a>] ";

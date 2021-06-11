@@ -181,6 +181,38 @@ class AdminUser {
         return $result;
     }
 
+    public function getCegList() {
+        $cl = [0];
+
+        if ($this->user["jogosultsag"] == 0) {
+            $cl = [-1];
+        }
+
+        foreach (explode("|", $this->user["cegjog"]) as $cegId) {
+            if (!empty(trim($cegId))) {
+                $cl[] = intval($cegId);
+            }
+        }
+        return implode(",", $cl);
+    }
+
+    public function cegSQLFilter($key) {
+        $w = "";
+        if ($this->isCegAdmin()) {
+            $cegidk = str_replace("||", ",", $this->user["cegjog"]);
+            $cegidk = str_replace("|", "", $cegidk);
+            if ($cegidk == "") {
+                $cegidk = "-1";
+            }
+            $w .= "and {$key} in ({$cegidk})";
+        }
+        return $w;
+    }
+
+    public function isCegAdmin() {
+        return $this->authenticated() && $this->user["jogosultsag"] < 2;
+    }
+
     public function companyPermissionAccess():bool {
         return $this->user["jogosultsag"] >= 2;
     }
@@ -205,5 +237,44 @@ class AdminUser {
         return $this->user["jog_helyszinset"] == 1;
     }
 
+    public function statAccess():bool {
+        return $this->user["jog_statisztika"] == 1;
+    }
+
+    public function doctorsAccess():bool {
+        return $this->user["jog_orvosset"] == 1;
+    }
+
+    public function doctorsCalendarAccess():bool {
+        return $this->user["jog_beosztasset"] == 1;
+    }
+
+    public function szabiAccess():bool {
+        return $this->user["jog_szabi"] == 1;
+    }
+
+    public function szurestipusAccess():bool {
+        return $this->user["jog_szurestipusset"] == 1;
+    }
+
+    public function tranzakcioAccess():bool {
+        return $this->user["jog_tranzakciolatas"] == 1;
+    }
+
+    public function tranzakcioModAccess():bool {
+        return $this->user["jog_tranzakciokezeles"] == 1;
+    }
+
+    public function beutaloAccess() {
+        return $this->user["jog_beutalokezeles"] == 1;
+    }
+
+    public function dokirexQueryAccess() {
+        return $this->user["jog_dokirexlekerdezesek"] == 1;
+    }
+
+    public function cegModAccess() {
+        return $this->user["jog_cegset"] == 1;
+    }
 
 }

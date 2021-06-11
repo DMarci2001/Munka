@@ -2,15 +2,15 @@
 
 class BeosztasService {
     private $utils;
-    private $adminUtils;
+    private $adminUser;
     private $wCeg = "";
 
     public function __construct() {
         //$this->utils = new Utils();
         if (isset($GLOBALS["admin"])) {
-            if (empty($this->adminUtils)) {
-                $this->adminUtils = new AdminUtils();
-                $this->wCeg = $this->adminUtils->cegSQLFilter("b.cegid");
+            if (empty($this->adminUser)) {
+                $this->adminUser = new AdminUser();
+                $this->wCeg = $this->adminUser->cegSQLFilter("b.cegid");
             }
         }
     }

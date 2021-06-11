@@ -7,7 +7,7 @@ public function __construct()
 	}
 	
 	public function showPage() {
-		if (!$this->adminUtils->tranzakciolatasModJog()) {
+		if (!$this->adminUser->tranzakcioAccess()) {
             return;
         }
 		
@@ -56,7 +56,7 @@ public function __construct()
 			if($result['result']=="FAIL") $resultCSS="style='font-weight:bold;color:red'";
 			$rows.="	<td {$border} align='center'><span {$resultCSS}>{$result['result']}</span></td>";
 			$rows.="	<td {$border}>";
-			if ( $result['result']=="FINISHED" && $this->adminUtils->tranzakciokezelesModJog()){
+			if ( $result['result']=="FINISHED" && $this->adminUser->tranzakcioModAccess()){
 				$rows.="[<a href='#' class='retransfer_button' onClick='retranserOperation({$result['id']})' >VISSZAUTALÁS</a>]";
 			}
 			$rows.="	</td>";

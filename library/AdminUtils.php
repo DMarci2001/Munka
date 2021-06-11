@@ -16,72 +16,6 @@ class AdminUtils
         $this->protocolService = new AdminProtocolService();
     }
 
-    public function beosztasModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_beosztasset"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function orvosModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_orvosset"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function szabadsagJog()
-    {
-        if ($_SESSION["adminuser"]["jog_szabi"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function cegModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_cegset"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function szurestipusModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_szurestipusset"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function tranzakciolatasModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_tranzakciolatas"] == 1 || $_SESSION["adminuser"]["jog_tranzakciolatas"] == 1) return true;
-        return false;
-    }
-
-    public function tranzakciokezelesModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_tranzakciokezeles"] == 1 || $_SESSION["adminuser"]["jog_tranzakciokezeles"] == 1) return true;
-        return false;
-    }
-
-    public function helyszinModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_helyszinset"] == 1 || $_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function userModJog()
-    {
-        if ($_SESSION["adminuser"]["jog_jogset"] == 1) return true;
-        return false;
-    }
-
-    public function beutalokezelesJog()
-    {
-        if ($_SESSION["adminuser"]["jog_beutalokezeles"] == 1) return true;
-        return false;
-    }
-
-    public function dokirexlekerdezesekJog()
-    {
-        if ($_SESSION["adminuser"]["jog_dokirexlekerdezesek"] == 1) return true;
-        return false;
-    }
-
     public function newPassSend($rowu)
     {
         $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
@@ -112,23 +46,6 @@ class AdminUtils
         $mail->Send();
 
         sql_query("update users set password='" . md5($p) . "' where id='{$rowu["id"]}'", array(md5($p), $rowu["id"]));
-    }
-
-
-
-    public function getCegList($c)
-    {
-        $cl = "0";
-
-        if ($_SESSION["adminuser"]["jogosultsag"] == 0) $cl = "-1";
-
-        $j = explode("|", $c);
-        for ($i = 0; $i < count($j); $i++) {
-            if ($j[$i] != "") {
-                $cl .= "," . intval($j[$i]);
-            }
-        }
-        return $cl;
     }
 
     public function showCegListSzT($raw, $sor)
@@ -208,66 +125,4 @@ class AdminUtils
         return trim($date);
     }
 
-    public function cegSQLFilter($key)
-    {
-        $w = "";
-        if ($this->isCegAdmin()) {
-            $cegidk = str_replace("||", ",", $_SESSION["adminuser"]["cegjog"]);
-            $cegidk = str_replace("|", "", $cegidk);
-            if ($cegidk == "") $cegidk = "-1";
-            $w .= "and {$key} in ({$cegidk})";
-        }
-        return $w;
-    }
-
-    public function isCegAdmin()
-    {
-        if (!isset($_SESSION["adminuser"])) {
-            return false;
-        }
-        return $_SESSION["adminuser"]["jogosultsag"] < 2;
-    }
-
-    public function isOrvosLogin()
-    {
-        return $GLOBALS["adminuser"]["orvosid"] == 0 ? false : true;
-    }
-
-
-    public function showAlkalmassagStatus($row)
-    {
-        $htmlout = "";
-
-        if (isset($GLOBALS["alkalmassagvariaciok"][$row["alkalmassag"]])) {
-            $htmlout .= "<div style='display:table;margin-top:10px;'>";
-
-            $htmlout .= "<div style='display:table-cell;vertical-align:middle;'>";
-            $htmlout .= "<div class='alkalmassagjelzes alkalmascolor{$row["alkalmassag"]}'>" . $GLOBALS["alkalmassagvariaciok"][$row["alkalmassag"]];
-            if ($row["alkalmassag"] == "I") $htmlout .= " {$row["alkalmassagido"]} hó";
-            $htmlout .= "</div>";
-            $htmlout .= "</div>";
-
-            $htmlout .= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;'>";
-            $htmlout .= "<a href='printalkalmassagi?id={$row["id"]}&token=" . md5($row["datum"] . $row["regdatum"]) . "' target='_blank'><img src='images/print-icon.png' style='height:21px;' title='Alkalmassági igazolás nyomtatása' alt='' /></a>";
-            $htmlout .= "</div>";
-
-            $htmlout .= "</div>";
-        }
-
-        return $htmlout;
-    }
-
-    public function showEljottCheckBox($row)
-    {
-        $htmlout = "";
-        $htmlout .= "<div style='display:table;'>";
-        $htmlout .= "<div style='display:table-row;'>";
-        $htmlout .= "<div style='display:table-cell;'>";
-        $htmlout .= "<div onclick='toggleEljott({$row["id"]})' class='nagycheckbox" . ($row["eljott"] == 1 ? " nagychecked" : "") . "'></div>";
-        $htmlout .= "</div>";
-        $htmlout .= "<div style='display:table-cell;vertical-align:middle;'>&nbsp;Eljött</div>";
-        $htmlout .= "</div>";
-        $htmlout .= "</div>";
-        return $htmlout;
-    }
 }

@@ -16,8 +16,8 @@ class AdminPatientsPage extends AdminCorePage {
         if (isset($_SESSION["adminuser"])) {
             if ($_SESSION["adminuser"]["jogosultsag"] < 2 || $_SESSION["adminuser"]["orvosid"] != "") {
                 if (isset($_SESSION["adminuser"]["cegjog"])) {
-                    $this->w = "and cegid in (" . $this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]) . ")";
-                    $this->bw = "and id in (" . $this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]) . ")";
+                    $this->w = "and cegid in (" . $this->adminUser->getCegList() . ")";
+                    $this->bw = "and id in (" . $this->adminUser->getCegList() . ")";
                 }
             }
         }
@@ -162,6 +162,7 @@ class AdminPatientsPage extends AdminCorePage {
 
     public function showPage() {
         //if (!$this->adminUtils->helyszinModJog()) {
+        //    echo $this->noPermissionMessage();
         //    return;
         //}
 

@@ -71,14 +71,12 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminBookingEditor.php");
     require_once(__DIR__ . "/library/AdminLeletService.php");
     require_once(__DIR__ . "/library/AdminProtocolService.php");
-    require_once(__DIR__ . "/library/AdminCalendarService.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
     require_once(__DIR__ . "/library/salary/SalaryCalculator.php");
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminReferralPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminReferalStatusQueryPage.php");
-    require_once(__DIR__ . "/library/pages_admin/AdminCalendarPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminBookingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLoginPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminArrivalsPage.php");

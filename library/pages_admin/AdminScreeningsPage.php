@@ -115,7 +115,7 @@ class AdminScreeningsPage extends AdminCorePage
 				}while(isset($_POST["kerdes-{$sor}"]));
 			}
 
-            if ($this->adminUtils->szuresTipusModJog()) {
+            if ($this->adminUser->szurestipusAccess()) {
                 $sor=1;
                 while (isset($_POST["cskapcsid{$sor}"])) {
                     sql_query("update szurescsomagok_kapcs set szurestipusid=?,nemerequired=?,noreservation=? where id=?", array($_POST["cskapcstipid{$sor}"], $_POST["cskapcsnemerequired{$sor}"], $_POST["noreservation{$sor}"], $_POST["cskapcsid{$sor}"]));
@@ -166,7 +166,8 @@ class AdminScreeningsPage extends AdminCorePage
 
     public function showPage()
     {
-        if (!$this->adminUtils->szurestipusModJog()) {
+        if (!$this->adminUser->szurestipusAccess()) {
+            echo $this->noPermissionMessage();
             return;
         }
 

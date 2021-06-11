@@ -13,7 +13,7 @@ class AdminDoctorsPage extends AdminCorePage {
         if (!isset($_SESSION["cegfilter"])) $_SESSION["cegfilter"] = 0;
 
         if (isset($_POST["addszabadsag"])) {
-            if ($this->adminUtils->szabadsagJog()) {
+            if ($this->adminUser->szabiAccess()) {
                 $orvosId   = intval($_GET["szerk"]);
                 $tol       = $_POST["szabadsagtol"];
                 $ig        = $_POST["szabadsagig"];
@@ -52,7 +52,7 @@ class AdminDoctorsPage extends AdminCorePage {
         }
 
         if (isset($_GET["delszabadsag"])) {
-            if ($this->adminUtils->szabadsagJog()) {
+            if ($this->adminUser->szabiAccess()) {
                 $rowo=sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
 
                 $foService = new FoglaljOrvostService();
@@ -67,7 +67,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
 
         if (isset($_GET["delbeosztas"])) {
-            if ($this->adminUtils->beosztasModJog()) {
+            if ($this->adminUser->doctorsCalendarAccess()) {
                 $oid = intval($_GET["szerk"]);
                 if ($beoData = sql_fetch_array(sql_query("select * from orvos_beosztas where id=? and orvosid=? and fobid<>0", array($_GET["delbeosztas"], $oid)))) {
                     $foService = new FoglaljOrvostService();
@@ -80,7 +80,7 @@ class AdminDoctorsPage extends AdminCorePage {
         }
 
         if (isset($_POST["addbeosztas"])) {
-            if ($this->adminUtils->beosztasModJog()) {
+            if ($this->adminUser->doctorsCalendarAccess()) {
                 if ($_SESSION["adminuser"]["jogosultsag"]>=2) {
                     if (isset($_SESSION["orvosbeosztascegfilter"])) {
                         sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
@@ -138,7 +138,9 @@ class AdminDoctorsPage extends AdminCorePage {
         }
 
         if (isset($_GET["showtipusvalaszto"])) {
-            if (!$this->adminUtils->beosztasModJog()) die();
+            if (!$this->adminUser->doctorsCalendarAccess()) {
+                die();
+            }
             $beosztasid = intval($_GET["showtipusvalaszto"]);
             $rowo = sql_fetch_array(sql_query("select * from orvos_beosztas where id=?", array($beosztasid)));
 
@@ -161,7 +163,9 @@ class AdminDoctorsPage extends AdminCorePage {
         }
 		
 		if (isset($_GET["showcegvalasztov2"])) {
-            if (!$this->adminUtils->beosztasModJog()) die();
+            if (!$this->adminUser->doctorsCalendarAccess()) {
+                die();
+            }
             $restrictid = intval($_GET["showcegvalasztov2"]);
             $rowo = sql_fetch_array(sql_query("SELECT * FROM foglalas_korlatozasok WHERE id=?", array($restrictid)));
 			
@@ -216,9 +220,9 @@ class AdminDoctorsPage extends AdminCorePage {
             $oid = intval($_GET["szerk"]);
             $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
 			
-            if ($this->adminUtils->orvosModJog()) {
+            if ($this->adminUser->doctorsAccess()) {
 				
-                if ($this->adminUtils->beosztasModJog()) {
+                if ($this->adminUser->doctorsCalendarAccess()) {
                     while (isset($_POST["beosztasid{$sor}"])) {
                         $aktiv  = isset($_POST["aktiv{$sor}"])?1:0;
                         $sorban = isset($_POST["csaksorban{$sor}"])?1:0;
@@ -308,7 +312,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["szurestipusok"], $_POST["gender"], $_POST["aktiv"], $oid));
 
 
-                if ($_POST["orvosmentesandcopy"]==1 && isset($_SESSION["orvosbeosztascegfilter"]) && $this->adminUtils->beosztasModJog()) {
+                if ($_POST["orvosmentesandcopy"]==1 && isset($_SESSION["orvosbeosztascegfilter"]) && $this->adminUser->doctorsCalendarAccess()) {
                     $res=sql_query("select id from cegek");
                     while ($row=sql_fetch_array($res)) {
                         $cegId = $row["id"];
@@ -581,7 +585,8 @@ class AdminDoctorsPage extends AdminCorePage {
     }
 
     public function showPage() {
-        if (!$this->adminUtils->helyszinModJog()) {
+        if (!$this->adminUser->doctorsAccess()) {
+            echo $this->noPermissionMessage();
             return;
         }
 
@@ -639,8 +644,8 @@ class AdminDoctorsPage extends AdminCorePage {
 
             $w=$wc="";
             if ($_SESSION["adminuser"]["jogosultsag"]<2) {
-                $w="and b.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
-                $wc="and id in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).")";
+                $w = "and b.cegid in (".$this->adminUser->getCegList().")";
+                $wc = "and id in (".$this->adminUser->getCegList().")";
             }
 
 
@@ -694,7 +699,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</div>";
             echo "</td></tr>";
 
-            if (!$this->adminUtils->beosztasModJog()) {
+            if (!$this->adminUser->doctorsCalendarAccess()) {
                 echo "<tr><td colspan='2' style=''><div class='nojog'>A beosztás módosításához nincs jogosultsága</div></td></tr>";
             }
 
@@ -827,7 +832,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "</td></tr>";
 
             echo "<tr><td colspan='2'><div class='tdsepdiv' style='margin-top:10px;'>Szabadság</div></td></tr>";
-            if (!$this->adminUtils->szabadsagJog()) {
+            if (!$this->adminUser->szabiAccess()) {
                 echo "<tr><td colspan='2' style=''><div class='nojog'>A szabadságok módosításához nincs jogosultsága</div></td></tr>";
             }
 
@@ -990,7 +995,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
             echo "<div id='errorlistdiv' style='padding:10px;background:#f00;color:#fff;font-weight:bold;display:none;'></div>";
             //onclick=\"return orvosDataVerify();\";
-            if ($this->adminUtils->orvosModJog()) {
+            if ($this->adminUser->doctorsAccess()) {
                 if (sql_num_rows($request) == 0) {
                     echo "<br><input type='submit' onClick='accountini({$_GET['szerk']})' name = 'account-ini' value = 'Account inicializálás' /> ";
                 } else {
@@ -1009,7 +1014,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
         $w="";
         if ($_SESSION["adminuser"]["jogosultsag"]<2) {
-            $w="and (b.cegid in (".$this->adminUtils->getCegList($_SESSION["adminuser"]["cegjog"]).") or b.cegid is null)";
+            $w = "and (b.cegid in (".$this->adminUser->getCegList().") or b.cegid is null)";
         }
 
         if ($_SESSION["cegfilter"]>0) $w = "and (b.cegid='".addslashes($_SESSION["cegfilter"])."' or b.cegid is null)";

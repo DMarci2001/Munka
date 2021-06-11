@@ -97,7 +97,7 @@ class AdminSalaryPage extends AdminCorePage
 
     public function showPage() {
         if (!$this->adminUser->salaryAccess()) {
-            echo "nincs jogosultságod!";
+            echo $this->noPermissionMessage();
             return;
         }
 

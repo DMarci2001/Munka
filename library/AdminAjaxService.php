@@ -5,6 +5,7 @@ class AdminAjaxService {
     public function start() {
 
         $adminUtils = new AdminUtils();
+        $adminUser = new AdminUser();
 
         if (isset($_GET["print"]) && isset($_GET["template"])) {
             $printService = new PrintService();
@@ -47,18 +48,18 @@ class AdminAjaxService {
         }
 
         if (isset($_GET["addnew"])) {
-            if ($_GET["page"] == "companies" && $adminUtils->cegModJog()) {
+            if ($_GET["page"] == "companies" && $adminUser->cegModAccess()) {
                 sql_query("insert into cegek set megnev='Új cég'");
             }
-            if ($_GET["page"] == "places" && $adminUtils->helyszinModJog()) {
+            if ($_GET["page"] == "places" && $adminUser->placesAccess()) {
                 sql_query("insert into helyszinek set cim='Új helyszín'");
             }
-            if ($_GET["page"] == "doctors" && $adminUtils->orvosModJog()) {
+            if ($_GET["page"] == "doctors" && $adminUser->doctorsAccess()) {
                 sql_query("insert into orvosok set nev='Új orvos',createdby=?, created=now()", array($_SESSION["adminuser"]["nev"]));
                 $oid = sql_insert_id();
                 sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
             }
-            if ($_GET["page"] == "screenings" && $adminUtils->szurestipusModJog()) {
+            if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
                 sql_query("insert into szurestipusok set megnev='Új tétel'");
             }
             if ($_GET["page"] == "users") {
@@ -75,15 +76,15 @@ class AdminAjaxService {
         }
 
         if (isset($_GET["delete"])) {
-            if ($_GET["page"] == "places" && $adminUtils->helyszinModJog()) {
+            if ($_GET["page"] == "places" && $adminUser->placesAccess()) {
                 sql_query("delete from helyszinek where id=?", array($_GET["delete"]));
             }
-            if ($_GET["page"] == "doctors" && $adminUtils->orvosModJog()) {
+            if ($_GET["page"] == "doctors" && $adminUser->doctorsAccess()) {
                 sql_query("delete from orvosok where id=?", array($_GET["delete"]));
                 sql_query("delete from orvos_beosztas where orvosid=?", array($_GET["delete"]));
             }
 
-            if ($_GET["page"] == "screenings" && $adminUtils->szurestipusModJog()) {
+            if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
                 sql_query("delete from szurestipusok where id=?", array($_GET["delete"]));
             }
             if ($_GET["page"] == "users") {

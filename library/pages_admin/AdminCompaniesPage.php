@@ -63,7 +63,7 @@ class AdminCompaniesPage extends AdminCorePage {
 
         if (isset($_POST["cegmentes"])) {
             $id=intval($_GET["szerk"]);
-            if ($this->adminUtils->cegModJog()) {
+            if ($this->adminUser->cegModAccess()) {
                 $sor=1;
                 while (isset($_POST["visszid{$sor}"])) {
                     sql_query("update visszaigazolok set 
@@ -131,7 +131,8 @@ class AdminCompaniesPage extends AdminCorePage {
     }
 
     public function showPage() {
-        if (!$this->adminUtils->cegModJog()) {
+        if (!$this->adminUser->cegModAccess()) {
+            echo $this->noPermissionMessage();
             return;
         }
 

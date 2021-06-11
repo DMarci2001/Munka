@@ -28,6 +28,11 @@ class AdminStatPage extends AdminCorePage {
     }
 
     public function showPage() {
+        if (!$this->adminUser->statAccess()) {
+            echo $this->noPermissionMessage();
+            return;
+        }
+
         $stat = $this->_showIntervalSelector();
 
         switch ($this->lista) {
@@ -51,7 +56,7 @@ class AdminStatPage extends AdminCorePage {
         $html = "";
 
         $cegid = intval($_GET["cegid"]);
-        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
+        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
 
         $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a></div>";
         $html.= "<table cellpadding='0' cellspacing='4' border='0' style='margin-top:10px;'>";
@@ -154,7 +159,7 @@ class AdminStatPage extends AdminCorePage {
         $html = "";
         $cegid = intval($_GET["cegid"]);
 
-        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
+        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
 
         $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a> | <a href='index.php?page={$_GET["page"]}&lista=tetel&cegid={$_GET["cegid"]}&downloadcsv'>Letöltés</a></div>";
         $html.= "<div style='margin-top:10px;'>* = Eljött. Alkalmasság: I = Alkalmas, N = Nem alkalmas, IK = Ideiglenesen nem alkalmas, K = Korlátozottan alkalmas</div>";
@@ -211,7 +216,7 @@ class AdminStatPage extends AdminCorePage {
     private function _showDefaultStat() {
         $html = "";
 
-        $res = sql_query("SELECT * from cegek c where true ".$this->adminUtils->cegSQLFilter("c.id")." ORDER BY megnev");
+        $res = sql_query("SELECT * from cegek c where true ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev");
 
         $html.= "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;'>";
         while ($row = sql_fetch_array($res)) {

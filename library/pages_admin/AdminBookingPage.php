@@ -204,7 +204,6 @@ class AdminBookingPage extends AdminCorePage
         $helyszin      = intval($_SESSION["helyszin"]);
         $nap           = date("Y-m-d", strtotime($setDay));
         $wd            = date("N", strtotime($setDay));
-        $wCeg          = $this->adminUtils->cegSQLFilter("b.cegid");
         $tipusok       = $this->bookingService->tipusExtract($this->bookingService->beosztasService->getTipusByHelyszin($helyszin));
         $foglalasok    = $this->bookingService->getAllReservationForDay($nap, $helyszin);
         $isHoliday     = in_array($nap, $settings->getMunkaszunetiNapok());
@@ -418,7 +417,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout = "";
 
         $jogosult = true;
-        if ($this->adminUtils->isCegAdmin() && substr_count($_SESSION["adminuser"]["cegjog"], "|{$rowf["cegid"]}|") == 0) {
+        if ($this->adminUser->isCegAdmin() && substr_count($_SESSION["adminuser"]["cegjog"], "|{$rowf["cegid"]}|") == 0) {
             $jogosult = false;
         }
 

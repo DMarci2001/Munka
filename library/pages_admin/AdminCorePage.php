@@ -12,6 +12,7 @@ class AdminCorePage {
     public $errors = [];
     public $success = [];
     public $patinentService;
+    public $pageData = null;
 
     public function __construct()
     {
@@ -20,18 +21,23 @@ class AdminCorePage {
         $this->patinentService = new PatientService();
         $this->adminUser = new AdminUser();
         $this->lang = new Lang();
-
-        //tiltott oldalak
-        if (!isset($_SESSION["user"]) && isset($_GET["page"])) {
-            if (in_array($_GET["page"], array("beutalok", "documents", "bookinglist"))) {
-                header("location:/");
-                die();
-            }
-        }
+        $this->pageData = sql_query("select * from adminmenu where pageid=?", [$_GET["page"]])->fetch(PDO::FETCH_ASSOC);
 
         $adminAjaxService = new AdminAjaxService();
         $adminAjaxService->start();
+    }
 
+    public function checkPagePermission() {
+        if (!empty($this->pageData) && !empty($this->pageData["jogosultsag"])) {
+            if (isset($this->adminUser->user[$this->pageData["jogosultsag"]]) && $this->adminUser->user[$this->pageData["jogosultsag"]] == 0) {
+                echo "nincs jogosultságod az oldal megtekintéséhez! ({$this->pageData["jogosultsag"]})";
+            }
+        }
+    }
+
+    public function noPermissionMessage() {
+        $message = "Nincs jogosultságod az oldal megtekintéséhez! ({$this->pageData["jogosultsag"]})";
+        return $message;
     }
 
     public function displayFejlec($title = "")

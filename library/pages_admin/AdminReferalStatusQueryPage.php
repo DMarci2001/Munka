@@ -15,7 +15,7 @@ class AdminReferalStatusQueryPage extends AdminCorePage
     {
         parent::__construct();
 
-        if (!$this->adminUtils->dokirexlekerdezesekJog()) {
+        if (!$this->adminUser->dokirexQueryAccess()) {
             return;
         }
 
@@ -103,7 +103,8 @@ class AdminReferalStatusQueryPage extends AdminCorePage
 
     public function showPage()
     {
-        if (!$this->adminUtils->dokirexlekerdezesekJog()) {
+        if (!$this->adminUser->dokirexQueryAccess()) {
+            echo $this->noPermissionMessage();
             return;
         }
 
@@ -125,7 +126,7 @@ class AdminReferalStatusQueryPage extends AdminCorePage
 
             //Ha alacsonyabb mint szuper admin és rendelkezik cég joggal akkor:
         } elseif (!empty($this->adminUser->user["cegjog"])) {
-            $wC = $this->adminUtils->cegSQLFilter("id");
+            $wC = $this->adminUser->cegSQLFilter("id");
             $qC = sql_query("SELECT * FROM cegek WHERE dokirexTelephelyId IS NOT NULL {$wC} ORDER BY megnev ASC");
         }
 

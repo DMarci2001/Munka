@@ -65,9 +65,10 @@ class AdminDicomPage extends AdminCorePage
 
     public function showPage()
     {
-        //if (!$this->adminUtils->szurestipusModJog()) {
-        //    return;
-        //}
+        if (!$this->adminUser->dicomAccess()) {
+            echo $this->noPermissionMessage();
+            return;
+        }
 
 
         echo "<div style='margin-bottom:20px;'>";

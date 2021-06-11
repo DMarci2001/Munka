@@ -371,7 +371,7 @@ class AdminBookingEditor {
             $html.= "<tr><td width='60'>Cég:</td><td width='226'>";
             $html.= "<select name='cegid' style='width:200px;'>";
             $html.= "<option value='0'>Nincs céghez kötve</option>";
-            $wCeg = $this->adminUtils->cegSQLFilter("b.cegid");
+            $wCeg = $this->user->cegSQLFilter("b.cegid");
             $resh=sql_query("SELECT c.* FROM orvos_beosztas b 
                   LEFT JOIN cegek c ON c.`id`=b.`cegid` 
                   WHERE b.`helyszinid`=? and instr(tipusok,'|{$row["szurestipusid"]}|') {$wCeg} and c.id is not null

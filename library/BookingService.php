@@ -1123,8 +1123,8 @@ class BookingService
         $tol        = "{$day} 00:00:00";
         $ig         = "{$day} 23:59:59";
         $return     = [];
-        $adminUtils = new AdminUtils();
-        $wCeg       = $adminUtils->cegSQLFilter("f.cegid");
+        $adminUser  = new AdminUser();
+        $wCeg       = $adminUser->cegSQLFilter("f.cegid");
 
         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
@@ -1499,20 +1499,13 @@ class BookingService
         if (isset($_SESSION["helyszin"])) {
             $foService = new FoglaljOrvostService();
 
-            $adminUtils = new AdminUtils();
+            $adminUser = new AdminUser();
 
             $szuresTipusId = intval($_GET["szt"]);
-            $cegId = 0;
-            $orvosIds[0] = 0;
-            if (!empty($_GET["orvosid"])) {
-                $orvosIds = explode(",", $_GET["orvosid"]);
-            }
+            $cegId         = 0;
+            $orvosId       = !empty($_GET["orvosid"]) ? intval($_GET["orvosid"]) : 0;
 
-            if ($adminUtils->isCegAdmin()) {
-                $cegId = $_SESSION["adminuser"]["cegid"];
-            }
-
-            if ($adminUtils->isCegAdmin()) {
+            if ($adminUser->isCegAdmin()) {
                 $cegIds = explode("|", $_SESSION["adminuser"]["cegjog"]);
                 if (isset($cegIds[1])) {
                     $cegId = intval($cegIds[1]);
@@ -1520,22 +1513,19 @@ class BookingService
             }
 
             $errorMsg = "Orvos nem elérhető!";
-            foreach ($orvosIds as $orvosId) {
-                if (!sql_fetch_array(sql_query("select id from orvosok where id=? and aktiv=1 and onlytel=0", [$orvosId]))) {
-                    $errorMsg = "Ez az orvos csak a telefonjára fogad foglalást!";
-                    continue;
-                }
 
-                if ($orvosId == 117) {
-                    //managerszűrés korlátlan
-                    $selectedOrvosId = $orvosId;
-                    break;
-                }
-                if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId, $_GET["rinterval"])) {
-                    $selectedOrvosId = $orvosId;
-                    break;
-                }
+            if (!sql_fetch_array(sql_query("select id from orvosok where id=? and aktiv=1 and onlytel=0", [$orvosId]))) {
+                $errorMsg = "Ez az orvos csak a telefonjára fogad foglalást!";
             }
+
+            if ($orvosId == 117) {
+                //managerszűrés korlátlan
+                $selectedOrvosId = $orvosId;
+            }
+            if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId, $_GET["rinterval"])) {
+                $selectedOrvosId = $orvosId;
+            }
+
             if (!isset($selectedOrvosId)) {
                 die("error{$errorMsg}");
             }
