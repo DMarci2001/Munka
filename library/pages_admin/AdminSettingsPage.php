@@ -199,7 +199,7 @@ class AdminSettingsPage extends AdminCorePage
             $companyArray[] = $option->nodeValue;
             $companyArray[] = $option->getAttribute("value");
             $companyArray[] = date("Y-m-d H:i:s");
-            $companyArray[] = $_SESSION["adminuser"]["nev"];
+            $companyArray[] = $this->adminUser->user["nev"];
 
             $first = $option = $companySelect->item(0);
             $first->parentNode->removeChild($first);
@@ -243,9 +243,7 @@ class AdminSettingsPage extends AdminCorePage
             $workArray[] = $workId;
             $workArray[] = $workName;
             $workArray[] = date("Y-m-d H:i:s");
-            $workArray[] = $_SESSION["adminuser"]["nev"];
-
-            //array($workId, $workName, date("Y-m-d H:i:s"), $_SESSION["adminuser"]["nev"]);
+            $workArray[] = $this->adminUser->user["nev"];
 
             $first = $option = $workSelect->item(0);
             $first->parentNode->removeChild($first);

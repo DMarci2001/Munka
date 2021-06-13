@@ -3,9 +3,11 @@
 class DicomService {
 
     private $dir = "/var/rtg";
+    private $adminUser;
+
     public function __construct()
     {
-
+        $this->adminUser = new AdminUser();
 
     }
 
@@ -133,8 +135,8 @@ class DicomService {
         return $content;
     }
 
-    private function dicomPermission() {
-        if (isset($_SESSION["adminuser"])) {
+    private function dicomPermission():bool {
+        if ($this->adminUser->dicomAccess()) {
             return true;
         } else {
             return false;

@@ -248,7 +248,7 @@ class AdminArrivalsPage extends AdminCorePage
         }
 
         $w=$bw="";
-        if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+        if (!$this->$this->adminUser->allCegJog()) {
             $w = "and f.cegid in (".$this->adminUser->getCegList().")";
         }
 

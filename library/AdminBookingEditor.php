@@ -238,7 +238,7 @@ class AdminBookingEditor {
 
 
         if (isset($_REQUEST['AFForm'])) {
-            if (!isset($_SESSION["adminuser"])) {
+            if (!$this->user->authenticated()) {
                 $this->utils->jsonOut(["error" => "error"]);
             }
 

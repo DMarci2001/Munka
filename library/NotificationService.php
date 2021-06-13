@@ -12,7 +12,8 @@ class NotificationService {
     }
 
     public function createNotificationRecord($tipus, $objectid, $destination, $subject = "", $text = "") {
-        $uid = $_SESSION["adminuser"]["id"] ?? 0;
+        $adminUser = new AdminUser();
+        $uid = $adminUser->user["id"] ?? 0;
 
         sql_query("INSERT INTO notifications SET datum=now(), tipus=?, objectid=?, destination=?, targy=?, szoveg=?, uid=?", [$tipus, $objectid, $destination, $subject, $text, $uid]);
     }

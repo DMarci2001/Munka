@@ -23,13 +23,13 @@ class AdminAjaxService {
             die;
         }
 
-        if (isset($_POST["showrefund"]) && isset($_SESSION["adminuser"])) {
+        if (isset($_POST["showrefund"]) && $adminUser->authenticated()) {
             $simpleService = new SimplePayService();
             echo $simpleService->showRefundWindow($_POST["showrefund"]);
             die;
         }
 
-        if (isset($_POST["startsimplerefund"]) && isset($_SESSION["adminuser"])) {
+        if (isset($_POST["startsimplerefund"]) && $adminUser->authenticated()) {
             $simpleService = new SimplePayService();
             echo $simpleService->startRefund($_POST["startsimplerefund"], $_POST["osszeg"]);
             die;
@@ -55,19 +55,15 @@ class AdminAjaxService {
                 sql_query("insert into helyszinek set cim='Új helyszín'");
             }
             if ($_GET["page"] == "doctors" && $adminUser->doctorsAccess()) {
-                sql_query("insert into orvosok set nev='Új orvos',createdby=?, created=now()", array($_SESSION["adminuser"]["nev"]));
+                sql_query("insert into orvosok set nev='Új orvos',createdby=?, created=now()", array($adminUser->user["nev"]));
                 $oid = sql_insert_id();
                 sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
             }
             if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
                 sql_query("insert into szurestipusok set megnev='Új tétel'");
             }
-            if ($_GET["page"] == "users") {
-                if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
-                    sql_query("insert into users set nev='Új felhasználó'");
-                } else {
-                    sql_query("insert into users set nev='Új felhasználó', cegid='{$_SESSION["adminuser"]["cegid"]}'");
-                }
+            if ($_GET["page"] == "users" && $adminUser->jogosultsagAccess()) {
+                sql_query("insert into users set nev='Új felhasználó'");
                 logActivity("user", sql_insert_id(), "felhasználó létrehozva");
             }
 
@@ -87,7 +83,7 @@ class AdminAjaxService {
             if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
                 sql_query("delete from szurestipusok where id=?", array($_GET["delete"]));
             }
-            if ($_GET["page"] == "users") {
+            if ($_GET["page"] == "users" && $adminUser->jogosultsagAccess()) {
                 sql_query("delete from users where id=? and id<>1", array($_GET["delete"]));
                 logActivity("user", $_GET["delete"], "felhasználó törölve");
             }
@@ -328,7 +324,7 @@ class AdminAjaxService {
                 "window" => ""
             ];
 
-            if (isset($_SESSION["adminuser"]) && in_array($_SESSION["adminuser"]["jogosultsag"], [2, 99])) {
+            if ($adminUser->jogosultsagAccess()) {
                 $warnings = sql_query("select * from warnings where checked=0 order by created")->fetchAll(PDO::FETCH_ASSOC);
                 $numberOfWarnings = count($warnings);
                 $return["number"] = $numberOfWarnings;
@@ -360,8 +356,8 @@ class AdminAjaxService {
         }
 
         if (isset($_POST["warningAck"])) {
-            if (isset($_SESSION["adminuser"])) {
-                sql_query("update warnings set checked=1, checkedby=? where id=?", [$_SESSION["adminuser"]["username"], $_POST["wid"]]);
+            if ($adminUser->authenticated()) {
+                sql_query("update warnings set checked=1, checkedby=? where id=?", [$adminUser->user["username"], $_POST["wid"]]);
             }
             die("ok");
         }
@@ -455,7 +451,7 @@ class AdminAjaxService {
         if (isset($_REQUEST["tajrequest"])) {
             $utils = new Utils();
 
-            if (!isset($_SESSION["adminuser"])) {
+            if (!$adminUser->authenticated()) {
                 $utils->jsonOut(["error" => "error"]);
             }
 

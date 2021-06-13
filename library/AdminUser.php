@@ -103,7 +103,7 @@ class AdminUser {
         }
     }
 
-    public function adminLogin($userName, $password) {
+    public function adminLogin($userName, $password):string {
         if (empty(trim($userName)) || empty(trim($password))) {
             return "Adja meg a belépési adatait!";
         }
@@ -137,7 +137,7 @@ class AdminUser {
         }
     }
 
-    public function authenticated() {
+    public function authenticated():bool {
         $result = true;
 
         if (empty($this->user)) {
@@ -155,7 +155,7 @@ class AdminUser {
         return $result;
     }
 
-    public function getAdminLevel($user, $box = false) {
+    public function getAdminLevel($user, $box = false):string {
         $result = "";
 
         if ($user["jog_jogset"] == 1) {
@@ -181,7 +181,12 @@ class AdminUser {
         return $result;
     }
 
-    public function getCegList() {
+    public function getCegList():string {
+        $cl = $this->getCegListArray();
+        return implode(",", $cl);
+    }
+
+    public function getCegListArray():array {
         $cl = [0];
 
         if ($this->user["jogosultsag"] == 0) {
@@ -193,10 +198,10 @@ class AdminUser {
                 $cl[] = intval($cegId);
             }
         }
-        return implode(",", $cl);
+        return $cl;
     }
 
-    public function cegSQLFilter($key) {
+    public function cegSQLFilter($key):string {
         $w = "";
         if ($this->isCegAdmin()) {
             $cegidk = str_replace("||", ",", $this->user["cegjog"]);
@@ -209,7 +214,15 @@ class AdminUser {
         return $w;
     }
 
-    public function isCegAdmin() {
+    public function readOnlySelectedCegAccess():bool {
+        return $this->authenticated() && $this->user["jogosultsag"] == 0;
+    }
+
+    public function allCegJog():bool {
+        return $this->authenticated() && $this->user["jogosultsag"] >= 2;
+    }
+
+    public function isCegAdmin():bool {
         return $this->authenticated() && $this->user["jogosultsag"] < 2;
     }
 
@@ -218,7 +231,7 @@ class AdminUser {
     }
 
     public function jogosultsagAccess():bool {
-        return $this->user["jog_jogset"] == 1;
+        return $this->authenticated() && $this->user["jog_jogset"] == 1;
     }
 
     public function salaryAccess():bool {
@@ -265,16 +278,32 @@ class AdminUser {
         return $this->user["jog_tranzakciokezeles"] == 1;
     }
 
-    public function beutaloAccess() {
+    public function beutaloAccess():bool {
         return $this->user["jog_beutalokezeles"] == 1;
     }
 
-    public function dokirexQueryAccess() {
+    public function dokirexQueryAccess():bool {
         return $this->user["jog_dokirexlekerdezesek"] == 1;
     }
 
-    public function cegModAccess() {
+    public function cegModAccess():bool {
         return $this->user["jog_cegset"] == 1;
+    }
+
+    public function leletAccess():bool {
+        return $this->leletModAccess() || $this->user["jog_leletlatas"] == 1;
+    }
+
+    public function leletModAccess():bool {
+        return $this->user["jog_leletszerk"] == 1;
+    }
+
+    public function oltasAccess():bool {
+        return $this->authenticated() && $this->user["jog_oltasigenyek"] == 1;
+    }
+
+    public function vizsgStatAccess():bool {
+        return $this->authenticated() && $this->user["jog_vizsg_stat"] == 1;
     }
 
 }

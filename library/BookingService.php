@@ -19,12 +19,14 @@ class BookingService
     public $beosztasService;
     public $notificationService;
     private $taj;
+    private $adminUser;
 
     public function __construct()
     {
         $this->utils = new Utils();
         $this->beosztasService = new BeosztasService();
         $this->notificationService = new NotificationService();
+        $this->adminUser = new AdminUser();
     }
 
 
@@ -970,7 +972,7 @@ class BookingService
             }
         }
 
-        if ($oid == 0 && !isset($_SESSION["adminuser"])) {
+        if ($oid == 0 && !$this->adminUser->authenticated()) {
             $mail = new PHPMailer();
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
@@ -1060,7 +1062,7 @@ class BookingService
 
         //admin esetén lazább szűrés
         if (isset($GLOBALS["admin"])) {
-            if ($_SESSION["adminuser"]["jogosultsag"] < 2) {
+            if (!$this->adminUser->allCegJog()) {
                 $wceg = "and (b.cegid='{$cegId}' or b.cegid=0)";
             }
         } else {
@@ -1123,8 +1125,7 @@ class BookingService
         $tol        = "{$day} 00:00:00";
         $ig         = "{$day} 23:59:59";
         $return     = [];
-        $adminUser  = new AdminUser();
-        $wCeg       = $adminUser->cegSQLFilter("f.cegid");
+        $wCeg       = $this->adminUser->cegSQLFilter("f.cegid");
 
         $resf = sql_query("select f.*,c.megnev as cegnev,o.nev as orvosnev,d.id as docid from foglalasok f 
                         left join cegek c on c.id=f.cegid
@@ -1499,13 +1500,11 @@ class BookingService
         if (isset($_SESSION["helyszin"])) {
             $foService = new FoglaljOrvostService();
 
-            $adminUser = new AdminUser();
-
             $szuresTipusId = intval($_GET["szt"]);
             $cegId         = 0;
             $orvosId       = !empty($_GET["orvosid"]) ? intval($_GET["orvosid"]) : 0;
 
-            if ($adminUser->isCegAdmin()) {
+            if ($this->adminUser->isCegAdmin()) {
                 $cegIds = explode("|", $_SESSION["adminuser"]["cegjog"]);
                 if (isset($cegIds[1])) {
                     $cegId = intval($cegIds[1]);
@@ -1530,7 +1529,7 @@ class BookingService
                 die("error{$errorMsg}");
             }
 
-            sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($_SESSION["adminuser"]["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));
+            sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($this->adminUser->user["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));
             $fid = sql_insert_id();
 
             if (!empty($this->copyReservationData)) {
@@ -1580,7 +1579,7 @@ class BookingService
             }
 
             sql_query("update foglalasok set aktiv=1, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=0
-                where id=?", [$_SESSION["adminuser"]["nev"], $_SESSION["helyszin"], $szuresTipusId, $_GET["moveidopont"], intval($_GET["rinterval"]), $newfid]);
+                where id=?", [$this->adminUser->user["nev"], $_SESSION["helyszin"], $szuresTipusId, $_GET["moveidopont"], intval($_GET["rinterval"]), $newfid]);
 
             if ($orvosId != $this->copyReservationData["orvosassigned"] && $this->copyReservationData["fofid"] != 0 && !$this->copy) {
                 //foglaljorvos foglalás csak egy orvoson belül mozgatható, ha nem így van visszaállítjuk az adatokat

@@ -258,9 +258,9 @@ class AdminCompaniesPage extends AdminCorePage {
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addvisszaigazolo' value='+ Visszaigaziló szöveg hozzáadása'></td></tr>";
 
             $w=$wc="";
-            if ($_SESSION["adminuser"]["jogosultsag"] < 2) {
-                $w="and b.cegid='{$_SESSION["adminuser"]["cegid"]}'";
-                $wc="and id='{$_SESSION["adminuser"]["cegid"]}'";
+            if (!$this->adminUser->allCegJog()) {
+                $w = "and b.cegid in (".$this->adminUser->getCegList().")";
+                $wc = "and id in (".$this->adminUser->getCegList().")";
             }
 
             $resb = sql_query("select * from visszaigazolok where cegid=? order by id", array($_GET["szerk"]));

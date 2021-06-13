@@ -13,13 +13,9 @@ class AdminPatientsPage extends AdminCorePage {
 
         if( !isset( $_GET['scroll'] )) $_GET['scroll'] = 1;
 
-        if (isset($_SESSION["adminuser"])) {
-            if ($_SESSION["adminuser"]["jogosultsag"] < 2 || $_SESSION["adminuser"]["orvosid"] != "") {
-                if (isset($_SESSION["adminuser"]["cegjog"])) {
-                    $this->w = "and cegid in (" . $this->adminUser->getCegList() . ")";
-                    $this->bw = "and id in (" . $this->adminUser->getCegList() . ")";
-                }
-            }
+        if (!$this->adminUser->allCegJog() || $_SESSION["adminuser"]["orvosid"] != "") {
+            $this->w = "and cegid in (" . $this->adminUser->getCegList() . ")";
+            $this->bw = "and id in (" . $this->adminUser->getCegList() . ")";
         }
 
         if (!isset($_SESSION["cegfilter"])) $_SESSION["cegfilter"]=0;
@@ -448,9 +444,9 @@ class AdminPatientsPage extends AdminCorePage {
 
 
 
-            if ($_SESSION["adminuser"]["jogosultsag"]>=2 || $_SESSION["adminuser"]["jog_leletlatas"]==1) {
+            if ($this->adminUser->leletAccess()) {
                 $patient_id = $_GET["szerk"];
-                $medic_id = $_SESSION["adminuser"]["orvosid"];
+                $medic_id = $this->adminUser->user["orvosid"];
                 $_SESSION['medic_id'] = $medic_id;
                 $_SESSION['patient_id'] = $patient_id;
 
@@ -498,7 +494,7 @@ class AdminPatientsPage extends AdminCorePage {
 
         //felhasználó lista
 
-        if ($_SESSION["adminuser"]["jog_vizsg_stat"] == 1 && false) {
+        if ($this->adminUser->vizsgStatAccess() && false) {
             echo "<div style='padding-bottom:20px'>";
             echo "<h3>Vizsgálat statisztikai lista letöltése</h3>";
             echo "<table>";

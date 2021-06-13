@@ -37,7 +37,7 @@ class AdminPage {
         if (!isset($_GET["page"])) {
             $_GET["page"] = "booking";
 
-            if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1) {
+            if ($this->adminUser->oltasAccess()) {
                 $_GET["page"] = "oltasigenyek";
             }
 
@@ -139,25 +139,11 @@ class AdminPage {
 
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
         $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
-        if (isset($_SESSION["adminuser"]["jog_schedule"]) && $_SESSION["adminuser"]["jog_schedule"] == 1) {
+        if ($this->adminUser->beosztasPageAccess()) {
             $html.= "<div style='display: table-cell;'><a target='_blank' href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
         }
-
-        $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($_SESSION["adminuser"], true)."&nbsp;&nbsp;</div>";
-
-        /*
-        if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
-            $html.= "<div style='display: table-cell;'><a href='index.php?page=log'>LOG</a>&nbsp;&nbsp;</div>";
-            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;'>ADMIN</span>&nbsp;&nbsp;</div>";
-        }
-        if ($_SESSION["adminuser"]["jogosultsag"] == 1) {
-            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#00a;padding:2px 5px;border-radius:2px;'>CÉG ADMIN</span>&nbsp;&nbsp;</div>";
-        }
-        if ($_SESSION["adminuser"]["jogosultsag"] == 0) {
-            $html.= "<div style='display: table-cell;'><span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;'>RECEPCIÓ</span>&nbsp;&nbsp;</div>";
-        }
-        */
-        $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>{$_SESSION["adminuser"]["nev"]}</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
+        $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($this->adminUser->user, true)."&nbsp;&nbsp;</div>";
+        $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>".$this->adminUser->user["nev"]."</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
         $html.= "</div>";
         return $html;
     }
@@ -198,7 +184,7 @@ class AdminPage {
                 if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
                     $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
                 }
-                if ($menu["pageid"] == "felhasznalok" && !isset($_GET["szerk"]) && $_SESSION["adminuser"]["jogosultsag"] >= 1) {
+                if ($menu["pageid"] == "felhasznalok" && !isset($_GET["szerk"])) {
                     $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page=alkalmassagi'>Alkalmassági lista</a></div>";
                 }
                 if (isset($_GET["szerk"])) {
@@ -232,15 +218,15 @@ class AdminPage {
     {
         $adminMenu = [];
 
-        if (isset($_SESSION["adminuser"])) {
+        if ($this->adminUser->authenticated()) {
             $res = sql_query("select * from adminmenu where aktiv=1 and parent=? order by sorrend, megnev", [$parent]);
             while ($menuData = sql_fetch_array($res)) {
                 //suzukinak csak 1 menüpont
-                if (isset($_SESSION["adminuser"]["jog_oltasigenyek"]) && $_SESSION["adminuser"]["jog_oltasigenyek"] == 1 && $menuData["pageid"] != "oltasigenyek" && $_SESSION["adminuser"]["jogosultsag"] == 0) {
+                if ($this->adminUser->oltasAccess() && $menuData["pageid"] != "oltasigenyek" && $this->adminUser->readOnlySelectedCegAccess()) {
                     continue;
                 }
 
-                if ($full==0 && $menuData["jogosultsag"] != "" && $_SESSION["adminuser"]["jogosultsag"] == 1 && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
+                if ($full==0 && $menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
                     $adminMenu[] = $menuData;
                     continue;
                 }
@@ -248,9 +234,6 @@ class AdminPage {
                 if ($full==0 && $menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
                     continue;
                 }
-                //if ($menuData["jogszint"] > $_SESSION["adminuser"]["jogosultsag"] && $full != 1) {
-                //    continue;
-                //}
 
                 $adminMenu[] = $menuData;
 

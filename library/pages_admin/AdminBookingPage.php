@@ -84,7 +84,7 @@ class AdminBookingPage extends AdminCorePage
             $return        = ["error" => "", "html" => "", "newOrvosId" => 0];
 
             if ($beoData = $this->bookingService->beosztasService->getBeosztasDataForDoctor($sourceOrvosId, $nap, $helyszinId, $szuresTipusId)) {
-                sql_query("insert into orvosok set nev=?, description=?, aktiv=1, pecsetszam='temp', created=now(), createdby=?", [$orvosNev, $orvosMegj, $_SESSION["adminuser"]["nev"]]);
+                sql_query("insert into orvosok set nev=?, description=?, aktiv=1, pecsetszam='temp', created=now(), createdby=?", [$orvosNev, $orvosMegj, $this->adminUser->user["nev"]]);
                 $return["newOrvosId"] = $orvosId = sql_insert_id();
 
                 sql_query("insert into orvos_beosztas set orvosid=?, helyszinid=?, nap=10, beonap=?, tol=?, ig=?, binterval=?, tipusok=?, aktiv=1", [$orvosId, $helyszinId, $nap, $orvosTol, $orvosIg, $orvosInterval, "|{$szuresTipusId}|"]);
@@ -165,16 +165,13 @@ class AdminBookingPage extends AdminCorePage
         echo "<option value='0'>Válassz helyszínt!</option>";
         $res = sql_query("SELECT h.* FROM helyszinek h WHERE true ORDER BY trim(h.cim)");
         while ($placeData = sql_fetch_array($res)) {
-            if ($_SESSION["adminuser"]["jogosultsag"] < 2) {
-                if (isset($go)) unset($go);
-                $cegidk = explode("|",$_SESSION["adminuser"]["cegjog"]);
+            if (!$this->adminUser->allCegJog()) {
+                $cegidk = $this->adminUser->getCegListArray();
                 foreach ($cegidk as &$val) {
                     if (substr_count($placeData["ceglink"],"|{$val}|") && $val!="") {
-                        $go = 1;
-                        break;
+                        continue 2;
                     }
                 }
-                if (!isset($go)) continue;
             }
 
             if  ($_SESSION["helyszin"] == 0 && $placeData["id"] == Booking_Constants::DEFAULT_PLACE_IDS[0]) {

@@ -19,7 +19,7 @@ class AdminOnlineFogleuPage extends AdminCorePage
         }
 
         if (isset($_POST["fogleueditor"])) {
-            if (isset($_SESSION["adminuser"])) {
+            if ($this->adminUser->authenticated()) {
                 if ($data = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$_POST["fogleueditor"]]))) {
                     echo $this->showAlkalmassagForm($data);
                 }
@@ -29,7 +29,7 @@ class AdminOnlineFogleuPage extends AdminCorePage
         }
 
         if (isset($_GET["onlinefogleusave"])) {
-            if (!isset($_SESSION["adminuser"])) {
+            if (!$this->$this->adminUser->authenticated()) {
                 die;
             }
 
@@ -75,7 +75,7 @@ class AdminOnlineFogleuPage extends AdminCorePage
             $s = "background:#f88;color:#fff;font-size:16px;padding:5px;";
         }
 
-        if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+        if (!$this->adminUser->allCegJog()) {
             $w = "and f.cegid in (".$this->adminUser->getCegList().")";
         }
 

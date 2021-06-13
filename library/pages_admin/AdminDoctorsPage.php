@@ -81,14 +81,8 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (isset($_POST["addbeosztas"])) {
             if ($this->adminUser->doctorsCalendarAccess()) {
-                if ($_SESSION["adminuser"]["jogosultsag"]>=2) {
-                    if (isset($_SESSION["orvosbeosztascegfilter"])) {
-                        sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
-                    }
-                } else {
-                    if (isset($_SESSION["orvosbeosztascegfilter"])) {
-                        sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
-                    }
+                if (isset($_SESSION["orvosbeosztascegfilter"])) {
+                    sql_query("insert into orvos_beosztas set orvosid=?,cegid=?",array($_GET["szerk"],$_SESSION["orvosbeosztascegfilter"]));
                 }
             }
             $_POST["orvosmentes"]=1;
@@ -347,7 +341,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
 
-            if($_SESSION["adminuser"]["jog_jogset"] == 1) {
+            if ($this->adminUser->jogosultsagAccess()) {
                 //Jelszó módosítás:
                 if ($_POST["password"]!="") sql_query("UPDATE users SET password = MD5(?) WHERE orvosid = ?",array( $_POST["password"], $oid ));
 
@@ -643,7 +637,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
 
             $w=$wc="";
-            if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+            if (!$this->adminUser->allCegJog()) {
                 $w = "and b.cegid in (".$this->adminUser->getCegList().")";
                 $wc = "and id in (".$this->adminUser->getCegList().")";
             }
@@ -1013,14 +1007,14 @@ class AdminDoctorsPage extends AdminCorePage {
 
 
         $w="";
-        if ($_SESSION["adminuser"]["jogosultsag"]<2) {
+        if (!$this->adminUser->allCegJog()) {
             $w = "and (b.cegid in (".$this->adminUser->getCegList().") or b.cegid is null)";
         }
 
         if ($_SESSION["cegfilter"]>0) $w = "and (b.cegid='".addslashes($_SESSION["cegfilter"])."' or b.cegid is null)";
         if ($_SESSION["cegfilter"]==-1) $w = "and (b.cegid='0' or b.cegid is null)";
 
-        if ($_SESSION["adminuser"]["jogosultsag"] >= 2) {
+        if ($this->adminUser->allCegJog()) {
             echo "<div style='margin-bottom:10px;'>";
             echo "<select name='cegselect' onchange='setCegFilter(this.value,\"doctors\");'>";
             echo "<option value='0'>Szűrés cégre</option>";

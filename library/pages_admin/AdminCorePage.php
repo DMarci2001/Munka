@@ -27,14 +27,6 @@ class AdminCorePage {
         $adminAjaxService->start();
     }
 
-    public function checkPagePermission() {
-        if (!empty($this->pageData) && !empty($this->pageData["jogosultsag"])) {
-            if (isset($this->adminUser->user[$this->pageData["jogosultsag"]]) && $this->adminUser->user[$this->pageData["jogosultsag"]] == 0) {
-                echo "nincs jogosultságod az oldal megtekintéséhez! ({$this->pageData["jogosultsag"]})";
-            }
-        }
-    }
-
     public function noPermissionMessage() {
         $message = "Nincs jogosultságod az oldal megtekintéséhez! ({$this->pageData["jogosultsag"]})";
         return $message;

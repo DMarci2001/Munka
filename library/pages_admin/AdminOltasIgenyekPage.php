@@ -138,7 +138,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             die("sent");
         }
 
-        if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jogosultsag"] > 1) {
+        if ($this->adminUser->allCegJog()) {
             if (isset($_GET["setoceg"])) {
                 $_SESSION["oceg"] = $_GET["setoceg"];
             }
@@ -171,9 +171,9 @@ class AdminOltasIgenyekPage extends AdminCorePage
             $this->prefix.= "2";
         }
 
-        if (isset($_SESSION["adminuser"]) && $_SESSION["adminuser"]["jogosultsag"] <= 1) {
-            if ($_SESSION["adminuser"]["username"] != "hmmoltas") {
-                if ($this->pageParam["username"] != $_SESSION["adminuser"]["username"]) {
+        if ($this->adminUser->readOnlySelectedCegAccess()) {
+            if ($this->adminUser->user["username"] != "hmmoltas") {
+                if ($this->pageParam["username"] != $this->adminUser->user["username"]) {
                     die("error 9921");
                 }
             }
@@ -208,7 +208,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             $szovegSMS = $szovegEmail = "";
             if (true || $this->prefix == "oltasform") {
-                $idopont = "2021-06-12 14:00";
+                $idopont = "2021-06-12 11:30";
 
                 $extraMessage = "";
                 //$extraMessage.= " Kérjük 6:00-kor vegye fel a munkát. Az oltási időpontjára elengedik a termelésből. Helyettesítés biztosítva lesz. Az oltás után nem kell tovább folytatni a munkát.";
@@ -227,7 +227,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             //msc oltópont
 
             //if (!isset($_SESSION["smsidopont"])) {
-                $_SESSION["smsidopont"] = "2021-06-05 08:00";
+                //$_SESSION["smsidopont"] = "2021-06-12 11:30";
             //}
 
             //50 15 15 15
@@ -237,7 +237,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
                 $idopont =  $_SESSION["smsidopont"];
 
-                $szovegSMS = "Dear Client, we are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office. Hungáriamed team";
+                $szovegSMS = "Dear Client! The date and exact time of your Janssen vaccination is on 12th of June 2021 at ".date("H:i", strtotime($idopont))." (at Göd)";
                 $szovegEmail = "Dear Client!<br/><br/>We are waiting for your arrival at {$idopont} at our vaccination point located in the The Duct CSC office.<br/><br/>Hungáriamed team";
             }
 
@@ -265,7 +265,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             sql_query("update oltasok set idopont=? where id=?", [$idopont, intval($_POST["sendoltasmessage"])]);
 
-            $_SESSION["smsidopont"] = date("Y-m-d H:i", strtotime("{$_SESSION["smsidopont"]} + 3 minute"));
+            $_SESSION["smsidopont"] = date("Y-m-d H:i", strtotime("{$_SESSION["smsidopont"]} + 2 minute"));
 
             echo $this->personRow(sql_fetch_array(sql_query("select * from oltasok where id=?", [$_POST["sendoltasmessage"]])));
             die;
@@ -434,7 +434,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
 
         echo "<div style='margin-bottom:10px;'>";
         foreach ($this->pageParams as $key => $pageParam) {
-            if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $GLOBALS["subdomain"] == $key) {
+            if ($this->adminUser->allCegJog() || $GLOBALS["subdomain"] == $key) {
                 echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}&setkor=1'>{$pageParam["title"]} 1. kör</a>] ";
                 echo "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&setoceg={$key}&setkor=2'>{$pageParam["title"]} 2. kör</a>] ";
             }
@@ -447,9 +447,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         }
 
         if (empty($_GET["subpage"])) {
-            //if ($_SESSION["adminuser"]["jogosultsag"] > 1 || $_SESSION["adminuser"]["username"] == "hmmoltas") {
-                echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
-            //}
+            echo "<div>[<a href='index.php?page={$_GET["page"]}&subpage=showall'>Összes regisztrált lista</a>]</div>";
             echo $this->showOltasIgenyek();
             echo $this->showOltasIgenyekEljott();
         }
@@ -751,7 +749,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         $html = "";
 
         $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>[<a onclick='$(\"#valaszok{$igenyData["id"]}\").toggle();return false;' href='#'>Válaszok</a>] ";
-        if ($_SESSION["adminuser"]["jogosultsag"] > 1) {
+        if ($this->adminUser->allCegJog()) {
             $html .= "[<a href='#' onclick='sendOltasMessage({$igenyData["id"]});return false;'>SMS</a>] ";
             $html .= "[<a href='index.php?page={$_GET["page"]}&subpage={$_GET["subpage"]}&deletemscrow={$igenyData["id"]}' onclick='return confirm(\"Biztos törlöd ezt a sort?\");'>Törlés</a>] ";
         }
