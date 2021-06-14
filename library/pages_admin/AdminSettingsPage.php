@@ -118,10 +118,6 @@ class AdminSettingsPage extends AdminCorePage
         echo $this->showErrors();
         echo $this->showSuccess();
 
-        echo "<div style='margin-bottom:20px;'>";
-        echo "<a href='index.php?page=langsettings'>Többnyelvű szövegek beállítása</a>";
-        echo "</div>";
-
         $row = sql_fetch_array(sql_query("select * from settings"));
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";

@@ -466,6 +466,23 @@ class AdminAjaxService {
             die();
         }
 
+        if (isset($_POST["opensubmenu"])) {
+            $id = intval($_POST["opensubmenu"]);
+
+            if (!isset($_SESSION["opensubmenu"])) {
+                $_SESSION["opensubmenu"] = [];
+            }
+
+            if (isset($_SESSION["opensubmenu"][$id])) {
+                unset($_SESSION["opensubmenu"][$id]);
+            }
+
+            if ($_POST["open"] == 1) {
+                $_SESSION["opensubmenu"][$id] = 1;
+            }
+            die;
+        }
+
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {

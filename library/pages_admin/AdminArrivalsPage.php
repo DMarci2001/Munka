@@ -248,8 +248,8 @@ class AdminArrivalsPage extends AdminCorePage
         }
 
         $w=$bw="";
-        if (!$this->$this->adminUser->allCegJog()) {
-            $w = "and f.cegid in (".$this->adminUser->getCegList().")";
+        if (!$this->adminUser->allCegJog()) {
+            $w = "and f.cegid in (".$this->adminUser->getCegList().") and f.cegid<>0";
         }
 
         if (isset($_SESSION["filternev"]) && $_SESSION["filternev"]!="") {

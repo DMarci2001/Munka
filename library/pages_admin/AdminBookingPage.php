@@ -167,10 +167,14 @@ class AdminBookingPage extends AdminCorePage
         while ($placeData = sql_fetch_array($res)) {
             if (!$this->adminUser->allCegJog()) {
                 $cegidk = $this->adminUser->getCegListArray();
+                $cegJog = false;
                 foreach ($cegidk as &$val) {
                     if (substr_count($placeData["ceglink"],"|{$val}|") && $val!="") {
-                        continue 2;
+                        $cegJog = true;
                     }
+                }
+                if (!$cegJog) {
+                    continue;
                 }
             }
 

@@ -2334,3 +2334,17 @@ function initGeneralSearch() {
 
 }
 
+function toggleSubMenu(id) {
+    $("#submenu"+id).slideToggle("fast", function() {
+        let open = 1;
+        if($("#submenu"+id).is(":hidden")) {
+            open = 0;
+        }
+        $.ajax({
+            method: "POST",
+            url: "index.php",
+            data: {opensubmenu:id, open: open}
+        });
+    });
+
+}

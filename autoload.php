@@ -55,6 +55,7 @@ require_once(__DIR__ . "/library/DokirexService.php");
 require_once(__DIR__ . "/library/DicomService.php");
 require_once(__DIR__ . "/library/BookingSyncApi.php");
 require_once(__DIR__ . "/library/PatientService.php");
+require_once(__DIR__ . "/library/AdminUser.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
@@ -65,7 +66,6 @@ require_once(__DIR__ . "/library/other/SimplePayService.php");
 
 if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminPage.php");
-    require_once(__DIR__ . "/library/AdminUser.php");
     require_once(__DIR__ . "/library/AdminUtils.php");
     require_once(__DIR__ . "/library/AdminAjaxService.php");
     require_once(__DIR__ . "/library/AdminBookingEditor.php");

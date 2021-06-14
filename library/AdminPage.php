@@ -27,7 +27,7 @@ class AdminPage {
 
         $this->page = $this->_getActualPage();
 
-        $this->adminMenu = $this->getAdminMenu(0, 0);
+        $this->adminMenu = $this->getAdminMenu(0);
     }
 
     private function _getActualPage() {
@@ -110,7 +110,7 @@ class AdminPage {
 
         echo "<td valign='top' style='background-color:#fff;box-shadow:-0px 0px 10px #bbb;'>";
         echo "<div style='margin:20px;min-height:400px;'>";
-        echo $this->_contentHeader();
+        echo $this->_contentHeader($this->pageData);
         $this->page->showPage();
         echo "</div>";
         echo "</td>";
@@ -163,59 +163,45 @@ class AdminPage {
             if ($menu["sorrend"] == 0) {
                  continue;
             }
-            if ($menu["parent"] == 0) {
-                $html .= "<div><a class='mainmenuitem" . ($_GET["page"] == $menu["pageid"] || $this->pageData["parent"] == $menu["id"] ? "_aktiv" : "") . "' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
-            } else {
-                $html .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $menu["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$menu["pageid"]}'>{$menu["megnev"]}</a></div>";
+
+            $aktualPage = $_GET["page"] == $menu["pageid"] || $this->pageData["parent"] == $menu["id"];
+            $url = "index.php?page={$menu["pageid"]}";
+            $onClick = "";
+            if ($menu["pageid"] == "#") {
+                $url = "#";
+                $onClick = "toggleSubMenu({$menu["id"]});return false;";
+            }
+            $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
+
+            if (!empty($menu["submenu"])) {
+                $html .= "<div id='submenu{$menu["id"]}' style='margin-top:5px;".(isset($_SESSION["opensubmenu"][$menu["id"]])?"":"display:none;")."'>";
+                foreach ($menu["submenu"] as $submenuItem) {
+                    $html .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $submenuItem["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$submenuItem["pageid"]}'>{$submenuItem["megnev"]}</a></div>";
+                }
+                $html .= "</div>";
             }
         }
 
         return $html;
     }
 
-    private function _contentHeader() {
+    private function _contentHeader($menu) {
         $html = "";
-        $adminMenu = $this->getAdminMenu(0, 1);
 
-        foreach ($adminMenu as $menu) {
-            if ($_GET["page"] == $menu["pageid"]) {
-                $html.= "<div class='pagehead'>";
-                $html.= "<div style='display:table-cell;vertical-align:middle;'>{$menu["megnev"]}".($_GET["page"]=="elojegyzestdfdabla"?"&nbsp;&nbsp;<span style='background:#0a0;color:#fff;font-size:16px;font-weight:bold;padding:3px 8px;border-radius:10px;'>BÉTA</span>":"")."</div>";
-                if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
-                }
-                if ($menu["pageid"] == "felhasznalok" && !isset($_GET["szerk"])) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page=alkalmassagi'>Alkalmassági lista</a></div>";
-                }
-                if (isset($_GET["szerk"])) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
-                }
-                if($_GET['page'] == "zarok" && ( isset($_GET['status']) && $_GET['status'] == "open" || !isset($_GET['status']))) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='index.php?page=zarok&status=closed'>Lezártak</a></div>";
-                }
-                if($_GET['page'] == "zarok" &&  isset($_GET['status']) && $_GET['status'] == "closed" ) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>&nbsp;<a class='ujbutton' href='index.php?page=zarok&status=open'>Nyitottak</a></div>";
-                }
-                if($_GET['page'] == "zaro-kezelo") {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>&nbsp;<a class='ujbutton' href='index.php?page=zarok'>Vissza</a></div>";
-                }
-                if($_GET['page'] == "gdpr" &&  isset($_GET['status']) && $_GET['status'] == "closed") {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>&nbsp;<a class='ujbutton' href='index.php?page=gdpr&status=open'>Aktuálisak</a></div>";
-                }
-                if($_GET['page'] == "gdpr" && ( isset($_GET['status']) && $_GET['status'] == "open" || !isset($_GET['status']))) {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='index.php?page=gdpr&status=closed'>Archív</a></div>";
-                }
-                if($_GET['page'] == "gdpr_edit") {
-                    $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>&nbsp;<a class='ujbutton' href='index.php?page=gdpr'>Vissza</a></div>";
-                }
-                $html.= "</div>";
-            }
+        $html.= "<div class='pagehead'>";
+        $html.= "<div style='display:table-cell;vertical-align:middle;'>{$menu["megnev"]}".($_GET["page"]=="elojegyzestdfdabla"?"&nbsp;&nbsp;<span style='background:#0a0;color:#fff;font-size:16px;font-weight:bold;padding:3px 8px;border-radius:10px;'>BÉTA</span>":"")."</div>";
+        if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
+            $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
         }
+        if (isset($_GET["szerk"])) {
+            $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
+        }
+        $html.= "</div>";
+
         return $html;
     }
 
-    public function getAdminMenu($parent, $full = 0)
-    {
+    public function getAdminMenu($parent) {
         $adminMenu = [];
 
         if ($this->adminUser->authenticated()) {
@@ -226,21 +212,14 @@ class AdminPage {
                     continue;
                 }
 
-                if ($full==0 && $menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] == 1) {
-                    $adminMenu[] = $menuData;
+                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
                     continue;
                 }
 
-                if ($full==0 && $menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
-                    continue;
-                }
+                $subMenu = $this->getAdminMenu($menuData["id"]);
+                $menuData["submenu"] = $subMenu;
 
                 $adminMenu[] = $menuData;
-
-                if ($this->pageData["id"] == $menuData["id"] || $this->pageData["parent"] == $menuData["id"] || $full == 1) {
-                    $subMenu = $this->getAdminMenu($menuData["id"], $full);
-                    $adminMenu = array_merge($adminMenu, $subMenu);
-                }
             }
         }
         return $adminMenu;
