@@ -98,6 +98,11 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformirs",
             "username" => "irsoltas",
             "title" => "IRS Construction EU Kft.",
+        ],
+        "hallimprecision" => [
+            "id" => "oltasformhall",
+            "username" => "hallimprecisionoltas",
+            "title" => "Hallimprecision Hungary Kft.",
         ]
     ];
 

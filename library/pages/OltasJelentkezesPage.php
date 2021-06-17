@@ -307,6 +307,16 @@ class OltasJelentkezesPage extends CorePage
             "javascript" => "oltasform_samsung.js",
             "logo" => "",
             "logoheight" => 45
+        ],
+        "hallimprecision" => [
+            "id" => "oltasformhall",
+            "title" => "Hallimprecision Hungary Kft.",
+            "vakcinalist" => [1,2,6],
+            "supply" => [null, 0, 0, 0, 0, 0, 10000],
+            "supplyfrom" => [null, '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10', '2021-05-10'],
+            "javascript" => "oltasform_samsung.js",
+            "logo" => "",
+            "logoheight" => 45
         ]
 
     ];
