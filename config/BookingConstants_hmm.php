@@ -24,7 +24,7 @@ class Booking_Constants {
     const COMPANY_NAME              = "Hungariamed-M Kft.";
     const COMPANY_NAME_SHORT        = "Hungariamed"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
 
-    const MAIN_URL                  = "http://bejelentkezes.hungariamed.hu";
+    const MAIN_URL                  = "https://bejelentkezes.hungariamed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
     const RESERVATION_TO_ADDRESS    = "bejelentkezes@hungariamed.hu";
     const USER_BCC_MAIL             = "usermail@hungariamed.hu";

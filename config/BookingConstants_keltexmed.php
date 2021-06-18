@@ -24,7 +24,7 @@ class Booking_Constants {
     const COMPANY_NAME              = "Keltexmed Kft.";
     const COMPANY_NAME_SHORT        = "Keltexmed"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
 
-    const MAIN_URL                  = "http://bejelentkezes.keltexmed.hu";
+    const MAIN_URL                  = "https://bejelentkezes.keltexmed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
     const RESERVATION_TO_ADDRESS    = "bejelentkezes@hungariamed.hu";
     const USER_BCC_MAIL             = "";

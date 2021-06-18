@@ -78,17 +78,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
                 if ($_POST["mapid"] == 0) {
                     sql_query("insert into schedule_mapping set createdat=now(), createdby=:createdBy, datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId, megj=:megj", $params);
-
-                    //ha 12:00-nál tovább tart berakjuk délutánhoz is
-                    //if ($_POST["napszak"] == 0 && strtotime($datumEnd) > strtotime("{$_POST["datum"]} 12:00:00")) {
-                    //    $params["napszak"] = 1;
-                    //    sql_query("insert into schedule_mapping set createdat=now(), createdby=:createdBy, datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId, megj=:megj", $params);
-                    //}
-
                 } else {
                     $params["id"] = $_POST["mapid"];
                     sql_query("update schedule_mapping set createdby=:createdBy, datumfrom=:datumFrom, datumto=:datumTo, napszak=:napszak, tipusid=:tipusId, roleid=:roleId, workerid=:workerId, megj=:megj where id=:id", $params);
                 }
+
+                $_SESSION["datumstartcache"] = $datumStart;
+                $_SESSION["datumendcache"]   = $datumEnd;
 
                 $this->workScheduleService->reloadScheduleMapping();
                 $this->workScheduleService->recalcAllCollisions();
@@ -219,14 +215,30 @@ class AdminWorkSchedulePage extends AdminCorePage {
             }
 
             $hour = $n = 0;
+
+            $defaultTimeStart = $defaultTimeEnd = "";
+            if (isset($_SESSION["datumstartcache"])) {
+                $defaultTimeStart = date("H:i", strtotime($_SESSION["datumstartcache"]));
+                $defaultTimeEnd = date("H:i", strtotime($_SESSION["datumendcache"]));
+            }
+
+            if ($timeHelper = sql_fetch_array(sql_query("select datumfrom, datumto from schedule_mapping m where date(m.datumfrom)=? and m.tipusid=? limit 1", [$_POST["datum"], $_POST["tipusid"]]))) {
+                $defaultTimeStart = date("H:i", strtotime($timeHelper["datumfrom"]));
+                $defaultTimeEnd = date("H:i", strtotime($timeHelper["datumto"]));
+            }
+
+            if (isset($mapData["datumfrom"]) && isset($mapData["datumto"])) {
+                $defaultTimeStart = date("H:i", strtotime($mapData["datumfrom"]));
+                $defaultTimeEnd = date("H:i", strtotime($mapData["datumto"]));
+            }
+
             echo "<div style='display:table-cell;vertical-align: top;'>";
             echo "<select id='doctortol' name='workertol' style='width:80px;'>";
             echo "<option value='0'>Kezdés?</option>";
             while ($hour<23) {
-                $d = (isset($mapData["datumfrom"])?date("H:i", strtotime($mapData["datumfrom"])):"");
                 $t = date("H:i",mktime($startHour,$n,0,1,1, date("Y")));
                 $hour = date("H",mktime($startHour,$n,0,1,1, date("Y")));
-                echo "<option value='{$t}'".($d==$t?" selected":"").">{$t}</option>";
+                echo "<option value='{$t}'".($defaultTimeStart==$t?" selected":"").">{$t}</option>";
                 $n+=15;
             }
             echo "</select> - ";
@@ -235,10 +247,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
             echo "<select id='doctorig' name='workerig' style='width:80px;'>";
             echo "<option value='0'>Vége?</option>";
             while ($hour<23) {
-                $d = (isset($mapData["datumto"])?date("H:i", strtotime($mapData["datumto"])):"");
                 $t = date("H:i",mktime($startHour,$n,0,1,1, date("Y")));
                 $hour = date("H",mktime($startHour,$n,0,1,1, date("Y")));
-                echo "<option value='{$t}'".($d==$t?" selected":"").">{$t}</option>";
+                echo "<option value='{$t}'".($defaultTimeEnd==$t?" selected":"").">{$t}</option>";
                 $n+=15;
             }
             echo "</select> ";
@@ -319,7 +330,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "<a href='index.php?page={$_GET["page"]}'>Beosztások</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=workers'>Munkatársak</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=workplaces'>Munkahelyek</a> &bull; ";
-        echo "<a href='index.php?page={$_GET["page"]}&subpage=notify'>Értesítések</a>";
+        echo "<a href='index.php?page={$_GET["page"]}&subpage=notify'>Értesítések</a> &bull; ";
+        echo "<a href='index.php'>Vissza az adminba</a>";
         echo "</div>";
 
         if ($this->subPage == "beosztasok") {
@@ -559,7 +571,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         $html="";
         $html.="<div class='sch_oszlopdatacellbtn' {$extraStyle}>";
-        $html.="<a data-mapid='0' data-datum='{$this->thisDay}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}' data-tipusnev='{$tipusName}' data-napszak='{$this->napszak}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'><img src='/admin/images/add.png' class='sch_plusbtn'></a>";
+        $html.="<a data-mapid='0' data-datum='{$this->thisDay}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}' data-tipusnev='{$tipusName}' data-napszak='{$this->napszak}' onclick='Schedule.ShowAddWorkerDialog(this);return false;' href='#'><i class='fas fa-plus-circle'></i></a>";
         $html.="</div>";
 
         $html.="<div class='sch_oszlopdatacell' {$extraStyle} data-datum='{$this->thisDay}' data-napszak='{$this->napszak}' data-roleid='{$roleId}' data-tipusid='{$tipusData["id"]}'>";

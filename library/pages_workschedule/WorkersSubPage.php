@@ -99,24 +99,26 @@ class WorkersSubPage extends AdminCorePage {
 
     public function workerList() {
         $html = "";
-        $res = sql_query("select w.*, r.megnev as rolenev from schedule_workers w left join schedule_roles r on r.id=w.roleid order by roleid, nev");
-        $lastRole = 0;
         $html.= "<table cellpadding='0' cellspacing='0'>";
-        while ($workerData = sql_fetch_array($res)) {
-            if ($lastRole != $workerData["roleid"]) {
-                $html.="<tr><td style='height: 10px;'></td></tr>";
-                $html.="<tr>";
-                $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
-                $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorker({$workerData["roleid"]});return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
-                $html.="<div style='display:table-cell;vertical-align: middle;'>{$workerData["rolenev"]}</div>";
-                $html.="</td>";
-                $html.="</tr>";
-                $html.="<tr><td style='height: 5px;'></td></tr>";
-                $lastRole = $workerData["roleid"];
+
+        $resr = sql_query("select * from schedule_roles order by id");
+        while ($roleData = sql_fetch_array($resr)) {
+            $html.="<tr><td style='height: 10px;'></td></tr>";
+            $html.="<tr>";
+            $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
+            $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorker({$roleData["id"]});return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
+            $html.="<div style='display:table-cell;vertical-align: middle;'>{$roleData["megnev"]}</div>";
+            $html.="</td>";
+            $html.="</tr>";
+            $html.="<tr><td style='height: 5px;'></td></tr>";
+
+            $res = sql_query("select w.* from schedule_workers w where w.roleid=? order by nev", [$roleData["id"]]);
+            while ($workerData = sql_fetch_array($res)) {
+                $html.= "<tr>";
+                $html.= "<td valign='middle' style='padding:2px 10px 2px 0px;'><a onclick='Schedule.OpenWorkerDetail({$workerData["id"]});return false;' href='#'>".(!empty($workerData["teljesnev"])?$workerData["teljesnev"]:$workerData["nev"])."</a></td>";
+                $html.= "</tr>";
             }
-            $html.= "<tr>";
-            $html.= "<td valign='middle' style='padding:2px 10px 2px 0px;'><a onclick='Schedule.OpenWorkerDetail({$workerData["id"]});return false;' href='#'>".(!empty($workerData["teljesnev"])?$workerData["teljesnev"]:$workerData["nev"])."</a></td>";
-            $html.= "</tr>";
+
         }
         $html.= "</table>";
         return $html;
@@ -127,7 +129,7 @@ class WorkersSubPage extends AdminCorePage {
         if ($data = sql_fetch_array(sql_query("select * from schedule_workers where id=?", [$id]))) {
             $html.= "<h2>".(!empty($data["teljesnev"])?$data["teljesnev"]:$data["nev"])."</h2>";
 
-            $url = "https://bejelentkezes.hungariamed.hu/admin/index.php?scheduletoken=".$this->service->workerTokenGen($data);
+            $url = Booking_Constants::MAIN_URL."/admin/index.php?scheduletoken=".$this->service->workerTokenGen($data);
 
             $html.="<form id='workerform' method='post'><input type='hidden' name='id' value='{$data["id"]}' />";
             $html.="<div style='display: table-row;'>";

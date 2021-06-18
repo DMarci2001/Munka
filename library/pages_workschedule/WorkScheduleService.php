@@ -8,6 +8,12 @@ class WorkScheduleService {
     public $collisionData = [];
     public $collisionsByDate = [];
 
+    public $roles = [
+        1 => "orvos",
+        2 => "nővér",
+        3 => "egyéb"
+    ];
+
     function __construct()
     {
         $this->reloadScheduleMapping();

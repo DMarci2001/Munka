@@ -26,7 +26,7 @@ class WorkplacesSubPage extends AdminCorePage {
             die;
         }
         if (isset($_POST["saveworkplace"])) {
-            sql_query("update schedule_tipusok set megnev=?, sorrend=?, cim=? where id=?", [$_POST["megnev"], $_POST["sorrend"], $_POST["cim"], $_POST["id"]]);
+            sql_query("update schedule_tipusok set megnev=?, sorrend=? where id=?", [$_POST["megnev"], $_POST["sorrend"], $_POST["id"]]);
             $result = ["list" => $this->workplaceList(), "detail" => $this->workplaceDetail($_POST["id"])];
             $this->utils->jsonOut($result);
         }
