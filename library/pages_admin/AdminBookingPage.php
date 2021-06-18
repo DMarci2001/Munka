@@ -160,6 +160,10 @@ class AdminBookingPage extends AdminCorePage
 
     public function showPage()
     {
+        //$cegidk = $this->adminUser->getCegListArray();
+        //print_r($cegidk, true);
+
+
         echo "<div>";
         echo "<select name='helyszin' onchange='setHelyszin2(this.value);'>";
         echo "<option value='0'>Válassz helyszínt!</option>";
@@ -417,10 +421,7 @@ class AdminBookingPage extends AdminCorePage
     private function elojegyzesTableRow($rowf, $nap, $ora, $binterval, $noAdd = false) {
         $htmlout = "";
 
-        $jogosult = true;
-        if ($this->adminUser->isCegAdmin() && substr_count($_SESSION["adminuser"]["cegjog"], "|{$rowf["cegid"]}|") == 0) {
-            $jogosult = false;
-        }
+        $jogosult = $this->adminUser->cegJog($rowf["cegid"]);
 
         if ($rowf["nev"] == "nincs név") {
             $rowf["nev"] = "Foglalt";

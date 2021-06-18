@@ -174,7 +174,7 @@ class AdminPage {
             $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
 
             if (!empty($menu["submenu"])) {
-                $html .= "<div id='submenu{$menu["id"]}' style='margin-top:5px;".(isset($_SESSION["opensubmenu"][$menu["id"]])?"":"display:none;")."'>";
+                $html .= "<div id='submenu{$menu["id"]}' style='margin:5px 0px;".(isset($_SESSION["opensubmenu"][$menu["id"]])?"":"display:none;")."'>";
                 foreach ($menu["submenu"] as $submenuItem) {
                     $html .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $submenuItem["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$submenuItem["pageid"]}'>{$submenuItem["megnev"]}</a></div>";
                 }
@@ -212,7 +212,7 @@ class AdminPage {
                     continue;
                 }
 
-                if ($menuData["jogosultsag"] != "" && $_SESSION["adminuser"][$menuData["jogosultsag"]] != 1) {
+                if ($menuData["jogosultsag"] != "" && $this->adminUser->user[$menuData["jogosultsag"]] != 1) {
                     continue;
                 }
 

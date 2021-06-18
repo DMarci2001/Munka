@@ -104,7 +104,7 @@ class AdminBookingEditor {
                 if( $check == "usable") {
                     $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok WHERE kod = ?", array($_POST['kuponkod'])));
                     sql_query("INSERT INTO kupon_lista SET kuponid = ?, kuponkod = ?, foglalasid = ?, jovahagyta = ?",
-                        array( $kupon['id'], $kupon['kod'], $fid, $_SESSION['adminuser']['username'] ));
+                        array( $kupon['id'], $kupon['kod'], $fid, $this->user->user["username"] ));
                 }
             }
 

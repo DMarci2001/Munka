@@ -1505,9 +1505,9 @@ class BookingService
             $orvosId       = !empty($_GET["orvosid"]) ? intval($_GET["orvosid"]) : 0;
 
             if ($this->adminUser->isCegAdmin()) {
-                $cegIds = explode("|", $_SESSION["adminuser"]["cegjog"]);
+                $cegIds = $this->adminUser->getCegListArray();
                 if (isset($cegIds[1])) {
-                    $cegId = intval($cegIds[1]);
+                    $cegId = $cegIds[1];
                 }
             }
 

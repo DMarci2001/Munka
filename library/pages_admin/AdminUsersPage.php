@@ -98,7 +98,7 @@ class AdminUsersPage extends AdminCorePage {
                 echo "</td></tr>";
 
                 echo "<tr><td></td><td>";
-                echo "<div id='cegjogok' style='".($row["jogosultsag"]<=1||$row['orvosid']!=""?"":"display:none;")."'>";
+                echo "<div id='cegjogok' style='".($row["jogosultsag"]<=1?"":"display:none;")."'>";
 
                 $resh=sql_query("select * from cegek order by megnev");
                 while ($rowh=sql_fetch_array($resh)) {

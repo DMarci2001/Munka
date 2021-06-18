@@ -51,16 +51,6 @@ class AdminCompaniesPage extends AdminCorePage {
             $_POST["cegmentes"]=1;
         }
 		
-		/*if(isset($_POST['restricttobooking'])){
-			sql_query("INSERT INTO foglalas_korlatozasok set cegid=?,uid=?,datum=?",array(intval($_GET['szerk']),intval($_SESSION['adminuser']['id']),date("Y-m-d H:i:s")));
-			$_POST["cegmentes"]=1;
-		}
-		if (isset($_GET["delrestriction"])) {
-            sql_query("DELETE FROM foglalas_korlatozasok WHERE id=? AND cegid=?",array($_GET['delrestriction'],$_GET["szerk"]));
-            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
-            die();
-        }*/
-
         if (isset($_POST["cegmentes"])) {
             $id=intval($_GET["szerk"]);
             if ($this->adminUser->cegModAccess()) {

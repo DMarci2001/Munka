@@ -13,7 +13,7 @@ class PatientService {
     }
 
     public function getPatinentByTaj($taj) {
-        return sql_fetch_array(sql_query("select u.*, c.id as cegid, c.megnev as cegnev from felhasznalok u left join cegek c on c.id=u.cegid where u.taj=?", [$taj]));
+        return sql_fetch_array(sql_query("select u.*, c.id as cegid, c.megnev as cegnev from felhasznalok u left join cegek c on c.id=u.cegid where u.taj=? and trim(u.taj)<>''", [$taj]));
     }
 
     public function getPatientReservations($patientId) {

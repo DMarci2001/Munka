@@ -198,7 +198,7 @@ class AdminDoctorsPage extends AdminCorePage {
         }
 		
 		if(isset($_POST['restricttobooking'])){
-			sql_query("INSERT INTO foglalas_korlatozasok SET orvosid=?,uid=?,datum=?",array(intval($_GET['szerk']),intval($_SESSION['adminuser']['id']),date("Y-m-d H:i:s")));
+			sql_query("INSERT INTO foglalas_korlatozasok SET orvosid=?,uid=?,datum=?",array(intval($_GET['szerk']),$this->adminUser->user["id"],date("Y-m-d H:i:s")));
 			$_POST["orvosmentes"]=1;
 		}
 		if (isset($_GET["delrestriction"])) {
@@ -635,6 +635,10 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr><td>&nbsp;</td><td><input type='checkbox' value=1 name='visszaigazol'".($_POST["visszaigazol"]==1?" checked":"")."> visszaigazolás szükséges, erre a címre: <input class='inputbox' style='width:200px;' type='text' name='visszaigazolemail' value='{$_POST["visszaigazolemail"]}'></td></tr>";
             echo "<tr><td>HMED értesítés email:</td><td><input class='inputbox' style='width:600px;' type='text' name='hmedemail' value='{$_POST["hmedemail"]}'></td></tr>";
 
+            echo "<tr><td></td><td valign='top'><input type='checkbox' value=1 name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív&nbsp;&nbsp;&nbsp;&nbsp;";
+            echo "<input type='radio' name='gender' value='2' ".($_POST["gender"]==2 ? "checked":"")."/> Nő <input type='radio' name='gender' value='1' ".($_POST["gender"]==1 ? "checked":"")."/> Férfi";
+            echo "</td></tr>";
+
 
             $w=$wc="";
             if (!$this->adminUser->allCegJog()) {
@@ -894,103 +898,38 @@ class AdminDoctorsPage extends AdminCorePage {
 			$tipusok=array_values(array_unique(explode("||",substr(str_replace(",","",$resq['tipusok']),1,-1))));
 			foreach($tipusok as $tipus){
 				$szurestipus=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($tipus)));
-				echo "<tr><td colspan='2'>";
-				echo "<div>";
-				echo "<input type='textbox' disabled='true' value='{$szurestipus['megnev']}'>&nbsp;&nbsp;";
-				echo "<span style='cursor:pointer' title='Szűrésípushoz tartozó kérdések szerkesztése.'><i onClick='setQndA({$_GET['szerk']},{$tipus})' class='fas fa-pen'></i></span>";
-				echo "</div>";
-				echo "</td></tr>";
+				echo "<tr><td colspan='2'><div><a href='#' title='Szűrésípushoz tartozó kérdések szerkesztése.' onClick='setQndA({$_GET['szerk']},{$tipus});return false;'>{$szurestipus['megnev']}</a></div></td></tr>";
 			}
-			
-			
 
-            if( $_SESSION['adminuser']['jog_orvosset'] == 1 )
-            {
-                $type = explode( ",", $_POST['szurestipusok'] );
-
-                echo "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Vizsgálat típusok kiválasztása</div></td></tr>";
-                echo "<tr><td><table>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(1, $type)?"checked":"")." name = 'szak_belgyogy' value = '1' /></td>";
-                echo "	  <td>Belgyógyász</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(2, $type)?"checked":"")." name = 'szak_rtg' value = '2' /></td>";
-                echo "	  <td>Röntgen</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(3, $type)?"checked":"")." name = 'szak_uh' value = '3' /></td>";
-                echo "	  <td>Ultrahang</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(4, $type)?"checked":"")." name = 'szak_borgyogy' value = '4' /></td>";
-                echo " 	  <td>Bőrgyógyász</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(5, $type)?"checked":"")." name = 'szak_szemesz' value = '5' /></td>";
-                echo "	  <td>Szemész</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(6, $type)?"checked":"")." name = 'szak_kardio' value = '6' /></td>";
-                echo "	  <td>Kardiológia</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(7, $type)?"checked":"")." name = 'szak_torna' value = '7' /></td>";
-                echo "	  <td>Gyógytornász</td></tr>";
-
-                echo "<tr><td><input type = 'checkbox' ".(in_array(8, $type)?"checked":"")." name = 'szak_labor' value = '8' /></td>";
-                echo "	  <td>Labor</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(9, $type)?"checked":"")." name = 'szak_urologia' value = '9' /></td>";
-                echo "	  <td>Urológia</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(10, $type)?"checked":"")." name = 'szak_nogyogy' value = '10' /></td>";
-                echo "	  <td>Nőgyógyászat</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(11, $type)?"checked":"")." name = 'szak_tudogyogy' value = '11' /></td>";
-                echo "	  <td>Tüdőgyógyászat</td></tr>";
-                echo "<tr><td><input type = 'checkbox' ".(in_array(12, $type)?"checked":"")." name = 'szak_ortopedia' value = '12' /></td>";
-                echo "	  <td>Ortopédia</td></tr>";
-
-                echo "</td></tr></table>";
-            }
-
-
-            //Orvosi jogkörök:
-            $request = sql_query( "SELECT * FROM users WHERE orvosid = ?", array( $_GET['szerk'] ));
-            if ( sql_num_rows($request) > 0 && $_SESSION['adminuser']['jog_jogset'] == 1) {
-                $adminAutorithy = "";
-                $result = sql_fetch_array( $request );
-                $nowrap = "style = 'white-space:nowrap'";
-                $adminAutorithy.= "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Jogkörök hozzárendelése</div></td></tr>";
-                $adminAutorithy.= "<tr><td><table>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_cegset' ".( $result["jog_cegset"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Cégek kezelése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_helyszinset' ".( $result["jog_helyszinset"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Helyszínek kezelése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_orvosset' ".( $result["jog_orvosset"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Orvosok kezelése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_beosztasset' ".( $result["jog_beosztasset"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Orvos beosztások kezelése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_szabi' ".( $result["jog_szabi"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Szabadságok beállítása</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_szurestipusset' ".( $result["jog_szurestipusset"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Szűréstipusok kezelése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_zarolista' ".( $result["jog_zarolista"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Zárólista látása</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_zaroszerk' ".( $result["jog_zaroszerk"] == 1 ? "checked" : "" )."  value = '1'/ ></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Záró leletek szerkesztése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_leletlatas' ".( $result["jog_leletlatas"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Leletek látása</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_leletszerk' ".( $result["jog_leletszerk"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Leletek szerkesztése</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_gdprhferes' ".( $result["jog_gdprhferes"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >GDPR hozzáférés</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_kuponlista' ".( $result["jog_kuponlista"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Kuponkód lista</td></tr>";
-                $adminAutorithy.= "<tr><td><input type = 'checkbox' name='jog_kuponkeszites' ".( $result["jog_kuponkeszites"] == 1 ? "checked" : "" )." value = '1' /></td>";
-                $adminAutorithy.= "	   <td {$nowrap} >Kuponkód hozzáadás/szerkesztés</td></tr>";
-                $adminAutorithy.= "<tr><td {$nowrap} colspan = '2'>Felh. név: <input type = 'text' value = '{$result['username']}' name = 'username' /></td></tr>";
-                $adminAutorithy.= "<tr><td {$nowrap} colspan = '2'>Új jelszó: <input type = 'text' name = 'password' style = 'margin-left:2px'/></td></tr>";
-                $adminAutorithy.= "</table></td></tr>";
-                echo $adminAutorithy;
-            }
-
-            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value=1 name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív&nbsp;&nbsp;&nbsp;&nbsp;";
-            echo "<input type='radio' name='gender' value='2' ".($_POST["gender"]==2 ? "checked":"")."/> Nő <input type='radio' name='gender' value='1' ".($_POST["gender"]==1 ? "checked":"")."/> Férfi";
-            echo "</td></tr>";
+            $type = explode( ",", $_POST['szurestipusok'] );
+            echo "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Vizsgálat típusok kiválasztása</div></td></tr>";
+            echo "<tr><td><table>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(1, $type)?"checked":"")." name = 'szak_belgyogy' value = '1' /></td><td>Belgyógyász</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(2, $type)?"checked":"")." name = 'szak_rtg' value = '2' /></td><td>Röntgen</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(3, $type)?"checked":"")." name = 'szak_uh' value = '3' /></td><td>Ultrahang</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(4, $type)?"checked":"")." name = 'szak_borgyogy' value = '4' /></td><td>Bőrgyógyász</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(5, $type)?"checked":"")." name = 'szak_szemesz' value = '5' /></td><td>Szemész</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(6, $type)?"checked":"")." name = 'szak_kardio' value = '6' /></td><td>Kardiológia</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(7, $type)?"checked":"")." name = 'szak_torna' value = '7' /></td><td>Gyógytornász</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(8, $type)?"checked":"")." name = 'szak_labor' value = '8' /></td><td>Labor</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(9, $type)?"checked":"")." name = 'szak_urologia' value = '9' /></td><td>Urológia</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(10, $type)?"checked":"")." name = 'szak_nogyogy' value = '10' /></td><td>Nőgyógyászat</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(11, $type)?"checked":"")." name = 'szak_tudogyogy' value = '11' /></td><td>Tüdőgyógyászat</td></tr>";
+            echo "<tr><td><input type = 'checkbox' ".(in_array(12, $type)?"checked":"")." name = 'szak_ortopedia' value = '12' /></td><td>Ortopédia</td></tr>";
+            echo "</table></td></tr>";
 
             echo "</table>";
 
 
             echo "<div id='errorlistdiv' style='padding:10px;background:#f00;color:#fff;font-weight:bold;display:none;'></div>";
-            //onclick=\"return orvosDataVerify();\";
+
+            if ($userConnect = sql_fetch_array(sql_query("SELECT * FROM users WHERE orvosid = ?", [$_GET["szerk"]]))) {
+                echo "<div style='margin:10px 0px 5px 0px;padding:10px;border-radius: 5px;background:#8f8;display:inline-block;'>Ehhez az orvoshoz felhasználói adatlap is tartozik. <a title='szerkesztés' target='_blank' href='index.php?page=users&szerk={$userConnect["id"]}'><i class='fas fa-edit'></i></a></div><br/>";
+                echo "<div>Jogosultságai: ".implode(", ", $this->adminUser->getUserPermissionList($userConnect))."</div>";
+            }
+
             if ($this->adminUser->doctorsAccess()) {
-                if (sql_num_rows($request) == 0) {
+                if (empty($userConnect)) {
                     echo "<br><input type='submit' onClick='accountini({$_GET['szerk']})' name = 'account-ini' value = 'Account inicializálás' /> ";
                 } else {
                     echo "<br>";
