@@ -585,6 +585,11 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	text-decoration:none;
 }
 
+.iconbutton {
+	color:red;
+	font-size: 14px;
+}
+
 .middlebutton {
 	background:#f00;
 	color:#fff;

@@ -352,7 +352,7 @@ class AdminBookingPage extends AdminCorePage
                             //nem volt foglalás, üres időpont kirakás
                             $htmlout .= "<tr style=''>";
                             $htmlout .= "<td valign='top'>{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</td>";
-                            $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='kisbutton' title='foglalás' href='#'>+</a>&nbsp;&nbsp;</td>";
+                            $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
                             $htmlout .= "</tr>";
                             if (!$szabi) {
                                 $freeCounter++;
@@ -433,12 +433,12 @@ class AdminBookingPage extends AdminCorePage
         $htmlout .= "<td valign='top'>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
         $htmlout .= "<td valign='top'>";
         if ($this->foglalasButtonVolt == 0 && "{$nap} {$idopontShow}" == "{$nap} {$ora}" && !$noAdd) {
-            $htmlout .= "<a onclick='{$this->addIdopontJavaScript}' class='kisbutton' title='foglalás' href='#'>+</a>&nbsp;&nbsp;";
+            $htmlout .= "<a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;";
             $this->foglalasButtonVolt = 1;
         }
         $htmlout .= "</td>";
         if ($jogosult) {
-            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$rowf["id"]},\"{$rowf["pass"]}\",\"booking\");return false;' class='kisbutton' title='foglalás törlése' href='#'>-</a>&nbsp;&nbsp;</td>";
+            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$rowf["id"]},\"{$rowf["pass"]}\",\"booking\");return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
             if ($rowf["rinterval"] != $binterval) {
@@ -446,7 +446,7 @@ class AdminBookingPage extends AdminCorePage
             }
 
             if ($this->szuresTipusActual["id"] == $rowf["szurestipusid"]) {
-                $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <span title='Tüdőszűrés kell' style='background:#f00;color:#fff;padding:0px 5px;border-radius:3px;'>T</span>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <span style='background:#888;color:#fff;padding:0px 5px;border-radius:3px;'>file</span>" : "") . "&nbsp;&nbsp;";
+                $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "opacity:.5;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
             } else {
                 $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
             }
@@ -464,13 +464,6 @@ class AdminBookingPage extends AdminCorePage
             }
 
             $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
-            if ($orvNev != "" && $cegNev != "") {
-                $htmlout .= " &#187; ";
-            }
-            $htmlout .= " <span style='color:#080;'>{$orvNev}</span>";
-            if ($orvNev == "" && $cegNev == "") {
-                $htmlout .= "???";
-            }
             if ($rowf["telephely"] != "") {
                 $htmlout .= "&nbsp;<span style='color:#003366'>{$rowf["telephely"]}</span>";
             }
