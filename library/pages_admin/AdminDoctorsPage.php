@@ -341,22 +341,6 @@ class AdminDoctorsPage extends AdminCorePage {
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
 
-            if ($this->adminUser->jogosultsagAccess()) {
-                //Jelszó módosítás:
-                if ($_POST["password"]!="") sql_query("UPDATE users SET password = MD5(?) WHERE orvosid = ?",array( $_POST["password"], $oid ));
-
-                //Jogkörök módosítása:
-                sql_query("UPDATE users 
-				   SET    jog_cegset = ?, jog_helyszinset = ?, jog_orvosset = ?, jog_beosztasset = ?, 
-						  jog_szabi  = ?, jog_szurestipusset = ?, jog_zarolista = ?, jog_zaroszerk = ?, 
-						  jog_leletszerk = ?, jog_leletlatas = ?, jog_gdprhferes = ?, jog_kuponlista = ?, 
-						  jog_kuponkeszites = ?, username = ?, nev = ? WHERE orvosid = {$oid}",
-                    array($_POST['jog_cegset'], 		 $_POST['jog_helyszinset'],    $_POST['jog_orvosset'],   $_POST['jog_beosztasset'],
-                          $_POST['jog_szabi'], 		 $_POST['jog_szurestipusset'], $_POST['jog_zarolista'],  $_POST['jog_zaroszerk'],
-                          $_POST['jog_leletszerk'], 	 $_POST['jog_leletlatas'], 	   $_POST['jog_gdprhferes'], $_POST['jog_kuponlista'],
-                          $_POST['jog_kuponkeszites'], $_POST['username'], 		   $_POST['nev'])
-                );
-            }
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
         }
