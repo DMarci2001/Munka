@@ -482,7 +482,7 @@ class Utils {
                 $htmlout.="<script type='text/javascript' src='javascript/{$js}?v={$v}'></script>";
             }
         }
-		$htmlout.='<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">';
+		$htmlout.='<link rel="stylesheet" href="/css/fontawesome/css/all.css" />';
         $htmlout.='<link rel="stylesheet" href="/javascript/jquery/jquery-ui.css">';
         $htmlout.='<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
