@@ -428,6 +428,7 @@ class AdminBookingPage extends AdminCorePage
         }
 
         $idopontShow = date("H:i", strtotime($rowf["datum"]));
+        $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
 
         $htmlout .= "<tr style=''>";
         $htmlout .= "<td valign='top'>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
@@ -451,19 +452,9 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
             }
             $htmlout .= "</td>";
-        } else {
-            $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";
-        }
-        if ($jogosult) {
             $htmlout .= "<td valign='top' nowrap>";
-            $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
 
-            $orvNev = "";
-            if ($rowf["orvosassigned"] != 0) {
-                $orvNev = trim($rowf["orvosnev"]);
-            }
-
-            $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "") . "'>{$cegNev}</span>";
+            $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "color:#0a0;") . "'>{$cegNev}</span>";
             if ($rowf["telephely"] != "") {
                 $htmlout .= "&nbsp;<span style='color:#003366'>{$rowf["telephely"]}</span>";
             }
@@ -475,21 +466,12 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "<td valign='top' nowrap>{$rowf["megj"]}</td>";
 
             $this->lastIdopont = $idopontShow;
+        } else {
+            $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";
         }
         $htmlout .= "</tr>";
 
         return $htmlout;
-    }
-
-    private function napFilter($setDay) {
-        $html = "";
-        $html.= "<select name='napselect' style='margin-right:10px;font-size:22px;width:300px;' onchange='window.location.href=\"index.php?page={$_GET["page"]}&setday=\"+this.value;'>";
-        for ($i=-60; $i<150; $i++) {
-            $day = date("Y-m-d",strtotime("now +{$i} day"));
-            $html.= "<option value='{$day}'".($day == $setDay?" selected":"").">".$this->adminUtils->magyarDatum($day)."</option>";
-        }
-        $html.= "</select>";
-        return $html;
     }
 
     private function napFilter2($setDay) {
@@ -514,16 +496,6 @@ class AdminBookingPage extends AdminCorePage
 
         $html.="</select>";
         return $html;
-    }
-
-    private function _getIntervals($beosztasok) {
-        $intervals = [];
-        foreach ($beosztasok as $beosztasData) {
-            if (!in_array($beosztasData["binterval"],$intervals)) {
-                $intervals[] = $beosztasData["binterval"];
-            }
-        }
-        return $intervals;
     }
 
     private function rendIdoSelect($id, $selectedTime) {

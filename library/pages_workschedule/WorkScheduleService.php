@@ -50,7 +50,10 @@ class WorkScheduleService {
         $collisions = [];
         $suspects = sql_query("SELECT m.id, DATE(datumfrom) AS datum, workerid, napszak, COUNT(*) AS hany FROM schedule_mapping m WHERE datumfrom>NOW() GROUP BY DATE(datumfrom), CONCAT(workerid) HAVING hany>1")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($suspects as $suspect) {
-            $beos = sql_query("select id, datumfrom, datumto from schedule_mapping m where m.workerid=? and date(datumfrom)=?", [$suspect["workerid"], $suspect["datum"]])->fetchAll(PDO::FETCH_ASSOC);
+            $beos = sql_query("select m.id, m.datumfrom, m.datumto from schedule_mapping m 
+            left join schedule_workers sw on m.workerid=sw.id
+            left join schedule_tipusok st on m.tipusid=st.id
+            where m.workerid=? and date(datumfrom)=? and sw.id is not null and st.id is not null", [$suspect["workerid"], $suspect["datum"]])->fetchAll(PDO::FETCH_ASSOC);
 
             //(StartA <= EndB) and (EndA >= StartB)
             foreach ($beos as $beoLook) {
