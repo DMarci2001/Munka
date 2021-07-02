@@ -117,7 +117,7 @@ class CronService {
         $reservations = sql_query("select f.id, f.datum, f.rinterval, f.orvosassigned, f.szurestipusid, t.megnev as szurestipusnev, o.nev as orvosnev from foglalasok f
         left join szurestipusok t on t.id = f.szurestipusid
         left join orvosok o on o.id = f.orvosassigned
-        where f.datum>date_sub(now(), interval 1 day) and f.aktiv=1 and f.orvosassigned<>117")->fetchAll(PDO::FETCH_ASSOC);
+        where f.datum>date_sub(now(), interval 3 day) and f.aktiv=1 and f.orvosassigned<>117")->fetchAll(PDO::FETCH_ASSOC);
 
         echo count($reservations)."\n";
 

@@ -431,8 +431,8 @@ class AdminBookingPage extends AdminCorePage
         $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
 
         $htmlout .= "<tr style=''>";
-        $htmlout .= "<td valign='top'>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
-        $htmlout .= "<td valign='top'>";
+        $htmlout .= "<td valign='top' nowrap>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
+        $htmlout .= "<td valign='top' nowrap>";
         if ($this->foglalasButtonVolt == 0 && "{$nap} {$idopontShow}" == "{$nap} {$ora}" && !$noAdd) {
             $htmlout .= "<a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;";
             $this->foglalasButtonVolt = 1;

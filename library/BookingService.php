@@ -1581,14 +1581,16 @@ class BookingService
             sql_query("update foglalasok set aktiv=1, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=0
                 where id=?", [$this->adminUser->user["nev"], $_SESSION["helyszin"], $szuresTipusId, $_GET["moveidopont"], intval($_GET["rinterval"]), $newfid]);
 
-            if ($orvosId != $this->copyReservationData["orvosassigned"] && $this->copyReservationData["fofid"] != 0 && !$this->copy) {
+            if ($orvosId != $this->copyReservationData["orvosassigned"] && $this->copyReservationData["fofid"] != 0) {
                 //foglaljorvos foglalás csak egy orvoson belül mozgatható, ha nem így van visszaállítjuk az adatokat
                 sql_query("update foglalasok set aktiv=?, foglalta=?, helyszinid=?, szurestipusid=?, datum=?, rinterval=?, orvosassigned=? where id=?",
                     [$this->copyReservationData["aktiv"], $this->copyReservationData["foglalta"], $this->copyReservationData["helyszinid"], $this->copyReservationData["szurestipusid"], $this->copyReservationData["datum"], $this->copyReservationData["rinterval"], $this->copyReservationData["orvosassigned"], $newfid]);
                 die("errorFoglaljOrvost.hu foglalás nem helyezhető át másik orvoshoz!");
             }
 
-            sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($orvosId, $newfid));
+            $api = new BookingSyncApi();
+            sql_query("update foglalasok set orvosassigned=? where id=?", array($orvosId, $newfid));
+            $api->modifyReservation($newfid);
 
             logActivity("foglalas", $newfid,"{$this->copyReservationData["nev"]} foglalás mozgatása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
 
