@@ -123,7 +123,6 @@ class AdminLoginPage extends AdminCorePage {
             echo "</div>";
 
             echo "<div id='forgetpart' style='color:#444;display:none;padding:20px;'>";
-            echo "<form method='post'>";
             echo "<div style='margin-top:0px;'>Kérjük adja meg az e-mail címét, vagy felhasználónevét.<br/>Az új jelszavát a regisztrált e-mail címére fogjuk elküldeni.</div>";
 
             echo "<div style='margin-top:5px;'><input type='text' name='email' placeholder='E-mail cím, vagy felhasználónév' style='width:300px;'></div>";

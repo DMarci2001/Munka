@@ -175,6 +175,8 @@ class AdminScreeningsPage extends AdminCorePage
             $row = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($_GET["szerk"])));
             $_POST = $row;
 
+            $GLOBALS["subtitle"] = $row["megnev"];
+
             $id = $row["id"];
 
             echo "<div style='background-color:#fff;padding:0px;'>";

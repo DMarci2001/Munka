@@ -70,6 +70,7 @@ class AdminDicomPage extends AdminCorePage
             return;
         }
 
+        $GLOBALS["subtitle"] = "DICOM";
 
         echo "<div style='margin-bottom:20px;'>";
         echo "<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>";

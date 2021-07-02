@@ -86,6 +86,8 @@ class AdminPage {
     }
 
     public function showPage() {
+        $pageContent = $this->_getPageContent();
+
         header("Content-type: text/html; charset=UTF-8");
 
         echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} orvosi felület");
@@ -93,7 +95,7 @@ class AdminPage {
 
         //login és más keret nélküli oldalak
         if ($this->skipFrame) {
-            $this->page->showPage();
+            echo $pageContent;
             die;
         }
 
@@ -111,7 +113,7 @@ class AdminPage {
         echo "<td valign='top' style='background-color:#fff;box-shadow:-0px 0px 10px #bbb;'>";
         echo "<div style='margin:20px;min-height:400px;'>";
         echo $this->_contentHeader($this->pageData);
-        $this->page->showPage();
+        echo $pageContent;
         echo "</div>";
         echo "</td>";
 
@@ -130,6 +132,14 @@ class AdminPage {
         echo "<div id='generalpopup'></div>";
         echo "</body>";
         echo "</html>";
+    }
+
+    private function _getPageContent():string {
+        ob_start();
+        $this->page->showPage();
+        $pageContent = ob_get_contents();
+        ob_end_clean();
+        return $pageContent;
     }
 
     private function _statusRow() {

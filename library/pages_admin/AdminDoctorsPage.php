@@ -570,8 +570,10 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (isset($_GET["szerk"])) {
             $oid = intval($_GET["szerk"]);
-            $row = sql_fetch_array(sql_query("select * from orvosok where id=?",array($_GET["szerk"])));
-            $_POST = $row;
+            $doctorData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]));
+            $_POST = $doctorData;
+
+            $GLOBALS["subtitle"] = $doctorData["nev"];
 
             //scan foglalások
             $api = new BookingSyncApi();
@@ -865,7 +867,6 @@ class AdminDoctorsPage extends AdminCorePage {
 				echo "</div>";
 				echo "<div id='cegvalasztov2{$rowb['id']}'></div>";
 				echo "</td></tr>";
-				$row++;
 			}
 			
 			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";
@@ -971,7 +972,7 @@ class AdminDoctorsPage extends AdminCorePage {
 
         if (!empty($kiemeltOrvosok)) {
             echo "<h2>Kiemelt orvosok</h2>";
-            echo $this->_orvosLista( $kiemeltOrvosok);
+            echo $this->_orvosLista($kiemeltOrvosok);
         }
 
         if (!empty($orvosok)) {

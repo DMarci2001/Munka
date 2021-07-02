@@ -175,6 +175,8 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "<h2>Paciens adatai</h2>";
             }
 
+            $GLOBALS["subtitle"] = $_POST["nev"];
+
             echo "<form name='iform' method='post' enctype='multipart/form-data'>";
             echo "<table style='font-size:12px;'>";
 
@@ -254,6 +256,8 @@ class AdminPatientsPage extends AdminCorePage {
 
 
             $row = $this->patinentService->getPatinentById($_GET["szerk"]);
+
+            $GLOBALS["subtitle"] = $row["nev"];
 
             echo "<div style='background-color:#fff;padding:0px;'>";
 

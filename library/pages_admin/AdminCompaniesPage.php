@@ -130,6 +130,8 @@ class AdminCompaniesPage extends AdminCorePage {
             $row = sql_fetch_array(sql_query("select * from cegek where id=?", array($_GET["szerk"])));
             $_POST = $row;
 
+            $GLOBALS["subtitle"] = $row["megnev"];
+
             echo "<div style=\"background-color:#fff;padding:0px;\">";
             echo "<form name=\"iform\" method=\"post\" enctype=\"multipart/form-data\">";
             echo "<table style=\"font-size:12px;\">";
