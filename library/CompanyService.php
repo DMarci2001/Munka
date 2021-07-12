@@ -37,7 +37,7 @@ class CompanyService {
                     return;
                 }
 
-                if (in_array($d, ["secl", "samoo", "s-1", "testoltas", "sdi", "cksolution", "theductkft", "ekg", "janssen", "jkgroup", "sekwang", "gih", "daeha", "topengineering", "amsdesign20group", "uth", "irs", "hallimprecision"])) {
+                if (in_array($d, ["secl", "samoo", "s-1", "testoltas", "sdi", "cksolution", "theductkft", "ekg", "janssen", "jkgroup", "sekwang", "gih", "daeha", "topengineering", "amsdesign20group", "uth", "irs", "hallimprecision", "ooksan", "shinsung", "hyojin"])) {
                     if (!isset($GLOBALS["admin"])) {
                         $_GET["page"] = "oltasjelentkezes";
                     }

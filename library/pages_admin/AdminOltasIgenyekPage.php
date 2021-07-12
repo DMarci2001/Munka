@@ -103,6 +103,21 @@ class AdminOltasIgenyekPage extends AdminCorePage
             "id" => "oltasformhall",
             "username" => "hallimprecisionoltas",
             "title" => "Hallimprecision Hungary Kft.",
+        ],
+        "ooksan" => [
+            "id" => "oltasformooksan",
+            "username" => "ooksanoltas",
+            "title" => "OOKSAN Kft.",
+        ],
+        "shinsung" => [
+            "id" => "oltasformshinsung",
+            "username" => "shisungoltas",
+            "title" => "Shinsung ENG Hungary kft.",
+        ],
+        "hyojin" => [
+            "id" => "oltasformhyojin",
+            "username" => "hyojinoltas",
+            "title" => "Hyojin kft.",
         ]
     ];
 
@@ -237,7 +252,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             //50 15 15 15
 
-            if (false || $this->prefix == "oltasformsamsung") {
+            if (true || $this->prefix == "oltasformsamsung") {
                 //15 percenként 4 ember  7:00
 
                 $idopont =  $_SESSION["smsidopont"];
@@ -266,7 +281,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
             $mail->Subject = "Értesítés oltás időpontról";
             $mail->Body = $szovegEmail;
 
-            $mail->Send();
+            //$mail->Send();
 
             sql_query("update oltasok set idopont=? where id=?", [$idopont, intval($_POST["sendoltasmessage"])]);
 
