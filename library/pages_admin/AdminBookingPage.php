@@ -451,6 +451,15 @@ class AdminBookingPage extends AdminCorePage
             } else {
                 $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
             }
+
+            if (!empty($rowf["externalid"])) {
+                $htmlout.= "<span class='externalmark' title='foglalás forrása'>".str_replace("hungariamed", "hmm", preg_replace('/[0-9]+/', '', $rowf["externalid"]))."</span>&nbsp;&nbsp;";
+            }
+
+            if ($rowf["foglalta"] == "foglaljorvost") {
+                $htmlout.= "<span class='externalmark' title='foglaljorvost foglalás'>FO</span>&nbsp;&nbsp;";
+            }
+
             $htmlout .= "</td>";
             $htmlout .= "<td valign='top' nowrap>";
 

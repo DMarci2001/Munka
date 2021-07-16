@@ -36,7 +36,40 @@ class BookingSyncApi {
             $this->deleteRemotereServationAction($input);
         }
 
+        if ($action == "storebeosztas") {
+            $this->storeAllBeosztas($input);
+        }
+
         die("Action not found");
+    }
+
+
+    private function storeAllBeosztas($data) {
+        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=?", [$data["pecsetszam"]]))) {
+            if ($cegData = sql_fetch_array(sql_query("select * from cegek where domain=?", [$data["cegdomain"]]))) {
+                sql_query("delete from orvos_beosztas where cegid=? and orvosid=? and remoteid<>0", [$cegData["id"], $orvosData["id"]]);
+
+                foreach ($data["beosztasok"] as $beoData) {
+                    sql_query("insert into orvos_beosztas set
+                               orvosid=?,
+                               cegid=?,
+                               helyszinid=?,
+                               nap=?,
+                               beonap=?,
+                               tol=?,
+                               ig=?,
+                               potig=?,
+                               hetek=?,
+                               binterval=?,
+                               csaksorban=?,
+                               tipusok=?,
+                               aktiv=?,
+                               noreservation=?,
+                               remoteid=?                                                           
+                        ", [$orvosData["id"], $cegData["id"], $data["defaulthelyszin"], $beoData["nap"], $beoData["beonap"], $beoData["tol"], $beoData["ig"], $beoData["potig"], $beoData["hetek"], $beoData["binterval"], $beoData["csaksorban"], $beoData["tipusok"], $beoData["aktiv"], $beoData["noreservation"], $beoData["id"]]);
+                }
+            }
+        }
     }
 
     private function storeNewReservationAction($data) {
@@ -172,6 +205,33 @@ class BookingSyncApi {
 
         return $externalReservation;
     }
+
+    public function sendBeosztas($pecsetszam, $cegId) {
+        if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$pecsetszam]))) {
+            $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+
+            if (isset($syncParameters["enablebeocopy"])) {
+                $beosztasok = sql_query("SELECT b.*, c.domain FROM orvosok o
+                LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.id
+                LEFT JOIN cegek c on c.id = b.cegid
+                WHERE o.pecsetszam=? AND b.cegid=? AND b.remoteid=0 ORDER BY b.beonap", [$pecsetszam, $cegId])->fetchAll(PDO::FETCH_ASSOC);
+
+                $cegData = sql_query("select domain from cegek where id=?", [$cegId])->fetch(PDO::FETCH_ASSOC);
+
+                $data = [
+                    "source" => Booking_Constants::SQL_DB,
+                    "action" => "storebeosztas",
+                    "pecsetszam" => $pecsetszam,
+                    "cegdomain" => $cegData["domain"],
+                    "defaulthelyszin" => $syncParameters["defaulthelyszin"],
+                    "beosztasok" => $beosztasok
+                ];
+
+                $this->_send($data, $syncParameters["apiurl"]);
+            }
+        }
+    }
+
 
     public function newReservation($reservationId) {
         if ($reservation = $this->_getReservation($reservationId)) {

@@ -88,6 +88,16 @@ class AdminDoctorsPage extends AdminCorePage {
             $_POST["orvosmentes"]=1;
         }
 
+        if (isset($_POST["syncbeosztas"])) {
+            if ($this->adminUser->doctorsCalendarAccess()) {
+                if (isset($_SESSION["orvosbeosztascegfilter"])) {
+                    $syncApi = new BookingSyncApi();
+                    $syncApi->sendBeosztas($_POST["pecsetszam"], $_SESSION["orvosbeosztascegfilter"]);
+                }
+            }
+            $_POST["orvosmentes"]=1;
+        }
+
         if (isset($_GET["addsmsphone"])) {
             sql_query("insert into smsphones set orvosid=?",array($_GET["oid"]));
             echo $this->smsAlertSettings($_GET["oid"]);
@@ -812,6 +822,14 @@ class AdminDoctorsPage extends AdminCorePage {
             } else {
                 if (sql_num_rows($resb)==0) echo "<div style='margin:10px 0px;'>Ennek az orvosnak nincs beosztása a kiválasztott céghez!</div>";
                 echo "<input type='submit' name='addbeosztas' value='+ Beosztás hozzáadása'>";
+
+                if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$doctorData["pecsetszam"]]))) {
+                    $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+                    if (isset($syncParameters["enablebeocopy"])) {
+                        echo " <input type='submit' name='syncbeosztas' value='Beosztás sync (".$syncData["provider"].")'>";
+                    }
+                }
+
             }
             echo "</td></tr>";
 
