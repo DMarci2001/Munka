@@ -18,6 +18,7 @@ class FoGeneral {
         }
 
         $description = str_replace("&", "&amp;", $description);
+        $description = str_replace("\"", "'", $description);
         return trim($description);
     }
 
