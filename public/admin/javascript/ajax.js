@@ -7,11 +7,17 @@ $(document).ready(function() {
         checkAdminWarnings();
     }, 1000);
 
+    $('.option-box').on('submit',(function(e) {
+        $(this).slideToggle();
+    }));
+
     self.setInterval("searchTimer()",1000);
 
     initUploadRoutine();
     initIrszAutoFill();
     initGeneralSearch();
+    initDateFilterPicker();
+    initQueryDatePicker();
 });
 
 
@@ -410,7 +416,7 @@ function setListDay(day) {
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
-            initDateFilterPicker();
+            afterElojegyzesTableInit();
             $("#napfilter").css("background-image","url('/images/empty-128.png')");
         }
     );
@@ -475,11 +481,15 @@ function addIdopont(idopont,szt) {
                 alert(data.substring(5));
             } else {
                 $("#elojegyzestable").html(data);
+                afterElojegyzesTableInit();
             }
         }
     });
 }
 
+function afterElojegyzesTableInit() {
+    initDateFilterPicker();
+}
 
 function refreshNaptar(idopont) {
     $.ajax({
@@ -544,6 +554,7 @@ function removeIdopont(id, p, page) {
             $("#idoponteditor").slideUp();
             if (page == "booking") {
                 $("#elojegyzestable").html(data);
+                afterElojegyzesTableInit();
             }
             if (page == "calendar") {
                 $("#foglalasnaptar").html(data);
@@ -551,6 +562,45 @@ function removeIdopont(id, p, page) {
         }
     });
 
+}
+
+function addReplaceDoctor(nap, helyszin, szt, sourceoid) {
+    let helyettesitoorvosid = $("#helyettesitoorvosid"+sourceoid).val();
+    let orvosMegj = $("#orvosmegj"+sourceoid).val();
+
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        data:{page:"booking", addreplacedoctor:1, helyszin:helyszin, nap:nap, szt:szt, sourceoid:sourceoid, helyettesitoorvosid:helyettesitoorvosid, orvosMegj:orvosMegj},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+                return;
+            }
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(data.html);
+            afterElojegyzesTableInit();
+        }
+    });
+}
+
+function removeReplaceDoctor(nap, oid) {
+    $.ajax({
+        url:'index.php',
+        type:'GET',
+        data:{page:"booking", removereplacedoctor:1, nap:nap, oid:oid},
+        success:function(data) {
+            if (data.error != "") {
+                alert(data.error);
+                return;
+            }
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(data.html);
+            afterElojegyzesTableInit();
+        }
+    });
 }
 
 function addTempDoctor(nap, helyszin, szt, sourceoid) {
@@ -572,6 +622,7 @@ function addTempDoctor(nap, helyszin, szt, sourceoid) {
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             $("#elojegyzestable").html(data.html);
+            afterElojegyzesTableInit();
             scrollTo("orvosdiv"+data.newOrvosId);
         }
     });
@@ -595,6 +646,7 @@ function saveTempDoctor(oid) {
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             $("#elojegyzestable").html(data.html);
+            afterElojegyzesTableInit();
         }
     });
 }
@@ -612,6 +664,7 @@ function removeTempDoctor(nap, oid) {
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             $("#elojegyzestable").html(data.html);
+            afterElojegyzesTableInit();
         }
     });
 }
@@ -743,13 +796,11 @@ function foglalasMentes(page) {
         data: data,
         success: function(response)	{
             $("#idoponteditor").html(response);
-            if (page == "calendar") {
-                refreshNaptar($("#idopontmarker").val());
-                //sF2($("#idopontmarker").val());
-                $("#naptarloading").hide();
-                return;
-            }
-            $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable");
+            $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
+                function(responseText){
+                    afterElojegyzesTableInit();
+                }
+            );
         }
     });
 
@@ -999,12 +1050,6 @@ function saveProtocol(cid){
         }
     });
 }
-
-$(document).ready(function(){
-    $('.option-box').on('submit',(function(e) {
-        $(this).slideToggle();
-    }));
-});
 
 $(document).on('click','input[name="uj_lelet"]',function(){
     $('#leletform').load('index.php?uj_lelet');
@@ -1676,11 +1721,6 @@ function initQueryDatePicker() {
 
 
 
-$(document).ready(function(){
-    initDateFilterPicker();
-    initQueryDatePicker();
-});
-
 function downloadExamStat(){
     //var data='downloadExamStat=true&start='+$('#vizsg_szures_start').val()+'&end='+$('#vizsg_szures_end').val()+'&cegid='+$('select[name="cegselect"]').val();
     $('<form></form>').appendTo('body').submit();
@@ -2078,6 +2118,7 @@ function bindUserToReservation(uid) {
                         url: "index.php?page=booking&showelojegyzestable",
                         success: function(response)	{
                             $("#elojegyzestable").html(response);
+                            afterElojegyzesTableInit();
                         }
                     });
                 }
