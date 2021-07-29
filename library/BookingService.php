@@ -1513,8 +1513,13 @@ class BookingService
 
             $errorMsg = "Orvos nem elérhető!";
 
-            if (!sql_fetch_array(sql_query("select id from orvosok where id=? and aktiv=1 and onlytel=0", [$orvosId]))) {
-                $errorMsg = "Ez az orvos csak a telefonjára fogad foglalást!";
+            if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=? and aktiv=1", [$orvosId]))) {
+                if ($orvosData["onlytel"] == 1) {
+                    die("errorEz az orvos csak a telefonjára fogad foglalást!");
+                }
+                if ($orvosData["externalonly"] == 1) {
+                    die("errorEhhez az orvoshoz a recepció nem rögzíthet foglalást!");
+                }
             }
 
             if ($orvosId == 117) {
@@ -1590,7 +1595,12 @@ class BookingService
 
             $api = new BookingSyncApi();
             sql_query("update foglalasok set orvosassigned=? where id=?", array($orvosId, $newfid));
-            $api->modifyReservation($newfid);
+            if ($orvosId == $this->copyReservationData["orvosassigned"]) {
+                $api->modifyReservation($newfid);
+            } else {
+                $api->deleteReservation($this->copyReservationData);
+                $api->newReservation($newfid);
+            }
 
             logActivity("foglalas", $newfid,"{$this->copyReservationData["nev"]} foglalás mozgatása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
 

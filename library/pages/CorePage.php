@@ -59,7 +59,7 @@ class CorePage {
             $html.= "</div>";
             return $html;
         } else {
-            $text = trim("{$img} {$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}".($title != "" ? " - {$title}" : ""));
+            $text = trim("{$img} {$_SESSION["helyszindata"]["megnev"]} - ".strtolower($webText["idopontfoglalas"]).($title != "" ? " - {$title}" : ""));
             if ($custom) {
                 $text = $title;
             }

@@ -385,7 +385,7 @@ class AdminCompaniesPage extends AdminCorePage {
         $res = sql_query("SELECT b.*,o.`nev`,GROUP_CONCAT(DISTINCT b.`tipusok` SEPARATOR '') AS tipusokok FROM orvos_beosztas b
 	        LEFT JOIN orvosok o ON o.id=b.`orvosid`
 	        LEFT JOIN cegek c ON c.id=b.`cegid`
-	        WHERE b.cegid=? and b.aktiv=1 and nap<10 OR (nap=10 AND beonap>=DATE(NOW())) and o.parentoid=0 GROUP BY orvosid ORDER BY o.nev", [$cegId]);
+	        WHERE b.cegid=? and b.aktiv=1 and (nap<10 OR (nap=10 AND beonap>=DATE(NOW()))) and o.parentoid=0 GROUP BY orvosid ORDER BY o.nev", [$cegId]);
 
         $rest = sql_query("select * from szurestipusok");
         while ($rowt = sql_fetch_array($rest)) {
