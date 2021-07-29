@@ -784,13 +784,17 @@ class Utils {
         $extraHTML    = "";
         $extraRow     = "";
         $width        = 250;
+        $required     = $this->getFieldRequired($field);
+        $hidden       = $this->getFieldHidden($field);
 
         switch ($fieldName) {
             case "taj":
                 $translateKey = "tajszam";
                 break;
             case "email":
-                $extraRow = "<tr><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
+                if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {
+                    $extraRow = "<tr><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
+                }
                 break;
             case "nev":
                 break;
@@ -834,16 +838,14 @@ class Utils {
                 }
                 break;
             case "munkakor":
-                if (!in_array($_SESSION["helyszindata"]["domain"],array("bejelentkezes","gyor-bejelentkezes"))) {
-                    $hidden = true;
+                if (!in_array($_SESSION["helyszindata"]["domain"], ["bejelentkezes", "gyor-bejelentkezes"])) {
+                    //$hidden = true;
+                }
+                if ($_SESSION["helyszindata"]["domain"] == "fesztivalonkentes") {
+                    //forced default
+                    $_POST[$field] = "rendezvény kisegítő";
                 }
         }
-		
-		$required = $this->getFieldRequired($field);
-		$hidden = $this->getFieldHidden($field);
-		
-		
-        
 
         if (!$hidden) {
             if (empty($extraHTML)) {

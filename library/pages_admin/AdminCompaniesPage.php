@@ -13,7 +13,8 @@ class AdminCompaniesPage extends AdminCorePage {
         "irsz"      => "Irányítószám",
         "varos"     => "Város",
         "utca"      => "Utca",
-        "munkakor"  => "Munkakör"
+        "munkakor"  => "Munkakör",
+        "doksi"     => "Dokumentum feltöltés"
     ];
 
     public function __construct()

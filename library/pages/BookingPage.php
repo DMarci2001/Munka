@@ -340,13 +340,14 @@ class BookingPage extends CorePage {
             echo "<tr><td></td><td>{$nofoglalasText}</td></tr>";
         }
 
-        echo "<tr><td></td><td>&nbsp;</td></tr>";
-
-        echo "<tr><td></td><td>";
-        echo "<div>{$webText["dokfelinfo"]}</div>";
-        echo "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
-        echo "</td></tr>";
-        echo "<tr><td></td><td><div id='paciensfilediv'>".$this->utils->showPaciensFiles()."</div></td></tr>";
+        if (!$this->utils->getFieldHidden("doksi")) {
+            echo "<tr><td></td><td>&nbsp;</td></tr>";
+            echo "<tr><td></td><td>";
+            echo "<div>{$webText["dokfelinfo"]}</div>";
+            echo "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+            echo "</td></tr>";
+            echo "<tr><td></td><td><div id='paciensfilediv'>" . $this->utils->showPaciensFiles() . "</div></td></tr>";
+        }
 
         if (trim($_SESSION["helyszindata"]["telephelyek"]) != "") {
             echo "<tr><td>{$webText["munkaltato"]}: *</td><td><select name='telephely' id='telephely'>";
