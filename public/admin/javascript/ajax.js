@@ -1,9 +1,9 @@
-$(document).ready(function() {
-    $("#loginbox").css("margin-top",$(window).height()/2 - $("#loginbox").height()/2);
+$(document).ready(function () {
+    $("#loginbox").css("margin-top", $(window).height() / 2 - $("#loginbox").height() / 2);
     //$("#loginbox").css("margin-left",-$("#loginbox").width()/2);
     //$("#loginbox").css("opacity",1);
 
-    setTimeout( function() {
+    setTimeout(function () {
         checkAdminWarnings();
     }, 1000);
 
@@ -23,58 +23,59 @@ $(document).ready(function() {
 
 
 function setHelyszin(h) {
-    window.location.href='index.php?page=calendar&sethelyszin='+h;
+    window.location.href = 'index.php?page=calendar&sethelyszin=' + h;
 }
 
 function setHelyszin2(h) {
-    window.location.href='index.php?page=booking&sethelyszin2='+h;
+    window.location.href = 'index.php?page=booking&sethelyszin2=' + h;
 }
 
 function setNaptarSzuresTipus(t) {
-    window.location.href='index.php?page=calendar&setnaptarszurestipus='+t;
+    window.location.href = 'index.php?page=calendar&setnaptarszurestipus=' + t;
 }
 
 
 
 
-function setCegFilter(c,p) {
-    window.location.href='index.php?setcegfilter='+c+"&p="+p;
+function setCegFilter(c, p) {
+    window.location.href = 'index.php?setcegfilter=' + c + "&p=" + p;
 }
 
 function sF(i) {
-    window.location.href='index.php?page=bnaptar&idopont='+encodeURIComponent(i);
+    window.location.href = 'index.php?page=bnaptar&idopont=' + encodeURIComponent(i);
 }
 
 
 
 function toggleEljott(id) {
-    $("#eljottcheck"+id).load("index.php?toggleeljott="+encodeURIComponent(id));
+    $("#eljottcheck" + id).load("index.php?toggleeljott=" + encodeURIComponent(id));
 }
 
 function statIdoszakChange(idoszak) {
-    window.location.href="index.php?page=stat&idoszak="+encodeURIComponent(idoszak);
+    window.location.href = "index.php?page=stat&idoszak=" + encodeURIComponent(idoszak);
 }
 
 
-var respo="";
+var respo = "";
 
 function startKepImport(id) {
     $("#importstatus").show();
     $("#importstatus").html("Importálás kezdődik ...");
 
-    if (respo!="") $("#importstatus").html("Importálás... még "+respo+" kép van hátra.");
+    if (respo != "") $("#importstatus").html("Importálás... még " + respo + " kép van hátra.");
 
     let request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "importoneimage=1&id="+encodeURIComponent(id)
+        data: "importoneimage=1&id=" + encodeURIComponent(id)
     });
 
-    request.done(function (response, textStatus, jqXHR){
-        respo=response;
-        if (response=="0") {
-            window.location.href="index.php?page=cikkek&szerk="+id;
-        } else {a
+    request.done(function (response, textStatus, jqXHR) {
+        respo = response;
+        if (response == "0") {
+            window.location.href = "index.php?page=cikkek&szerk=" + id;
+        } else {
+            a
             startKepImport(id);
         }
     });
@@ -85,50 +86,50 @@ function changeInterval(beosztasid, interval) {
     let request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "page=doctors&changeinterval="+beosztasid+"&interval="+interval
+        data: "page=doctors&changeinterval=" + beosztasid + "&interval=" + interval
     });
 }
 
 function showTipusValaszto(beosztasid) {
-    if ($.trim($("#tipusvalaszto"+beosztasid).html())) {
-        $("#tipusvalaszto"+beosztasid).html("");
+    if ($.trim($("#tipusvalaszto" + beosztasid).html())) {
+        $("#tipusvalaszto" + beosztasid).html("");
         return;
     }
-    $("#tipusvalaszto"+beosztasid).load("index.php?page=doctors&showtipusvalaszto="+beosztasid);
+    $("#tipusvalaszto" + beosztasid).load("index.php?page=doctors&showtipusvalaszto=" + beosztasid);
 }
 
 function showcegvalasztov2(restrictid) {
-    if ($.trim($("#cegvalasztov2"+restrictid).html())) {
-        $("#cegvalasztov2"+restrictid).html("");
+    if ($.trim($("#cegvalasztov2" + restrictid).html())) {
+        $("#cegvalasztov2" + restrictid).html("");
         return;
     }
-    $("#cegvalasztov2"+restrictid).load("index.php?page=doctors&showcegvalasztov2="+restrictid);
+    $("#cegvalasztov2" + restrictid).load("index.php?page=doctors&showcegvalasztov2=" + restrictid);
 }
 
 function saveceglistav2(restrictid) {
-    var tk="";
-    var num=0;
-    var t="nincs cég hozzárendelve";
-    var tlist="";
+    var tk = "";
+    var num = 0;
+    var t = "nincs cég hozzárendelve";
+    var tlist = "";
 
-    $("#cegvalasztov2"+restrictid+" input:checked").each(function() {
-        tk=tk+"|"+$(this).attr("name").replace("cegvalasztov2"+restrictid+"_","")+"|";
+    $("#cegvalasztov2" + restrictid + " input:checked").each(function () {
+        tk = tk + "|" + $(this).attr("name").replace("cegvalasztov2" + restrictid + "_", "") + "|";
         num++;
-        tlist=tlist+", "+$(this).attr("value");
+        tlist = tlist + ", " + $(this).attr("value");
     });
 
-    if (num>0) t=tlist.substring(2);
+    if (num > 0) t = tlist.substring(2);
 
-    $("#cegstatusz"+restrictid).html("<a href='#' class='tlink' title='"+t+"' onclick='showcegvalasztov2("+restrictid+");return false;'>"+num+" cég</a>");
+    $("#cegstatusz" + restrictid).html("<a href='#' class='tlink' title='" + t + "' onclick='showcegvalasztov2(" + restrictid + ");return false;'>" + num + " cég</a>");
 
     request = $.ajax({
         url: "index.php",
         type: "get",
-        data: {page:"doctors",savecegekv2:restrictid,value:tk}
+        data: { page: "doctors", savecegekv2: restrictid, value: tk }
     });
 
-    request.done(function (response, textStatus, jqXHR){
-        respo=response;
+    request.done(function (response, textStatus, jqXHR) {
+        respo = response;
     });
 
 
@@ -136,138 +137,138 @@ function saveceglistav2(restrictid) {
 
 
 function saveTipusList(beosztasid) {
-    var tk="";
-    var num=0;
-    var t="nincs tipus hozzárendelve";
-    var tlist="";
+    var tk = "";
+    var num = 0;
+    var t = "nincs tipus hozzárendelve";
+    var tlist = "";
 
-    $("#tipusvalaszto"+beosztasid+" input:checked").each(function() {
-        tk=tk+"|"+$(this).attr("name").replace("tipusvalaszto"+beosztasid+"_","")+"|";
+    $("#tipusvalaszto" + beosztasid + " input:checked").each(function () {
+        tk = tk + "|" + $(this).attr("name").replace("tipusvalaszto" + beosztasid + "_", "") + "|";
         num++;
-        tlist=tlist+", "+$(this).attr("value");
+        tlist = tlist + ", " + $(this).attr("value");
     });
 
-    if (num>0) t=tlist.substring(2);
+    if (num > 0) t = tlist.substring(2);
 
-    $("#tipusstatus"+beosztasid).html("<a href='#' class='tlink' title='"+t+"' onclick='showTipusValaszto("+beosztasid+");return false;'>"+num+" tipus</a>");
+    $("#tipusstatus" + beosztasid).html("<a href='#' class='tlink' title='" + t + "' onclick='showTipusValaszto(" + beosztasid + ");return false;'>" + num + " tipus</a>");
 
 
     request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "page=doctors&savebeosztastipusok="+beosztasid+"&value="+encodeURIComponent(tk)
+        data: "page=doctors&savebeosztastipusok=" + beosztasid + "&value=" + encodeURIComponent(tk)
     });
 
-    request.done(function (response, textStatus, jqXHR){
-        respo=response;
+    request.done(function (response, textStatus, jqXHR) {
+        respo = response;
     });
 
 
 }
 
-var actualprefix=0
+var actualprefix = 0
 
 function showftable(prefix) {
-    actualprefix=prefix;
-    $("#foglalotable").load('index.php?showfoglalotable='+prefix);
+    actualprefix = prefix;
+    $("#foglalotable").load('index.php?showfoglalotable=' + prefix);
 }
 
 
-var actualtol="";
-var actualig="";
+var actualtol = "";
+var actualig = "";
 var lastobj;
 
-function showfoglalas(tol,ig,obj) {
-    if (lastobj) lastobj.style.borderColor="#888";
+function showfoglalas(tol, ig, obj) {
+    if (lastobj) lastobj.style.borderColor = "#888";
     if (obj) {
-        lastobj=obj;
-        obj.style.borderColor="#000";
+        lastobj = obj;
+        obj.style.borderColor = "#000";
     }
 
-    actualtol=tol;
-    actualig=ig
-    $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(tol)+'_'+encodeURIComponent(ig));
+    actualtol = tol;
+    actualig = ig
+    $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(tol) + '_' + encodeURIComponent(ig));
 }
 
 function lefoglal(time) {
-    $("#foglalaslista").load('index.php?lefoglal='+encodeURIComponent(time),null,
-        function(responseText){
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+    $("#foglalaslista").load('index.php?lefoglal=' + encodeURIComponent(time), null,
+        function (responseText) {
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 function lefoglalnap(datum) {
-    $("#foglalaslista").load('index.php?lefoglalnap='+encodeURIComponent(datum),null,
-        function(responseText){
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+    $("#foglalaslista").load('index.php?lefoglalnap=' + encodeURIComponent(datum), null,
+        function (responseText) {
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 function deletefoglalas(id) {
-    $("#foglalaslista").load('index.php?deletefoglalas='+encodeURIComponent(id),null,
-        function(responseText){
-            $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(actualtol)+'_'+encodeURIComponent(actualig));
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+    $("#foglalaslista").load('index.php?deletefoglalas=' + encodeURIComponent(id), null,
+        function (responseText) {
+            $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(actualtol) + '_' + encodeURIComponent(actualig));
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 
 function szerkfoglalas(id) {
-    $("#fszerk"+id).load('index.php?szerkfoglalas='+id);
+    $("#fszerk" + id).load('index.php?szerkfoglalas=' + id);
 }
 
 function closefoglalasszerk(id) {
-    $("#fszerk"+id).html('');
+    $("#fszerk" + id).html('');
 }
 
-function savefoglalas(id,nap,ora,fo) {
-    $("#foglalaslista").load("index.php?savefoglalas="+encodeURIComponent(id)+"_"+encodeURIComponent(nap)+"_"+encodeURIComponent(ora)+"_"+encodeURIComponent(fo),null,
-        function(responseText){
-            $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(actualtol)+'_'+encodeURIComponent(actualig));
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+function savefoglalas(id, nap, ora, fo) {
+    $("#foglalaslista").load("index.php?savefoglalas=" + encodeURIComponent(id) + "_" + encodeURIComponent(nap) + "_" + encodeURIComponent(ora) + "_" + encodeURIComponent(fo), null,
+        function (responseText) {
+            $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(actualtol) + '_' + encodeURIComponent(actualig));
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 
-function setlastminute(id,val) {
-    $("#foglalaslista").load("index.php?setlastminute="+encodeURIComponent(id)+"_"+encodeURIComponent(val),null,
-        function(responseText){
-            $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(actualtol)+'_'+encodeURIComponent(actualig));
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+function setlastminute(id, val) {
+    $("#foglalaslista").load("index.php?setlastminute=" + encodeURIComponent(id) + "_" + encodeURIComponent(val), null,
+        function (responseText) {
+            $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(actualtol) + '_' + encodeURIComponent(actualig));
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
-function settiltva(id,val) {
-    $("#foglalaslista").load("index.php?settiltva="+encodeURIComponent(id)+"_"+encodeURIComponent(val),null,
-        function(responseText){
-            $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(actualtol)+'_'+encodeURIComponent(actualig));
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+function settiltva(id, val) {
+    $("#foglalaslista").load("index.php?settiltva=" + encodeURIComponent(id) + "_" + encodeURIComponent(val), null,
+        function (responseText) {
+            $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(actualtol) + '_' + encodeURIComponent(actualig));
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 function fizetve(id) {
-    $("#foglalaslista").load("index.php?fizetve="+encodeURIComponent(id),null,
-        function(responseText){
-            $("#foglalaslista").load('index.php?showfoglalas='+encodeURIComponent(actualtol)+'_'+encodeURIComponent(actualig));
-            $("#foglalotable").load('index.php?showfoglalotable='+actualprefix);
+    $("#foglalaslista").load("index.php?fizetve=" + encodeURIComponent(id), null,
+        function (responseText) {
+            $("#foglalaslista").load('index.php?showfoglalas=' + encodeURIComponent(actualtol) + '_' + encodeURIComponent(actualig));
+            $("#foglalotable").load('index.php?showfoglalotable=' + actualprefix);
         });
 }
 
 
 function rendelesdetail(id) {
-    if ($("#rendelesdetail"+id).is(':empty')) {
-        $("#rendelesdetail"+id).load("index.php?rendelesdetail="+encodeURIComponent(id));
+    if ($("#rendelesdetail" + id).is(':empty')) {
+        $("#rendelesdetail" + id).load("index.php?rendelesdetail=" + encodeURIComponent(id));
     } else {
-        $("#rendelesdetail"+id).empty();
+        $("#rendelesdetail" + id).empty();
     }
 }
 
 
 function validateBeutalo() {
-    if ($("#beutalotarget").val()=="0") {
+    if ($("#beutalotarget").val() == "0") {
         alert("Nem adta meg hova kéred a beutalót!");
         return false;
     }
 
-    if ($("#beutalomegj").val()=="") {
+    if ($("#beutalomegj").val() == "") {
         if (!confirm("Nem adott meg megjegyzést a beutalóhoz, folytatja?")) return false;
     }
 
-    if ($("#beutalonaploszam").val()=="") {
+    if ($("#beutalonaploszam").val() == "") {
         if (!confirm("Biztos naplószám nélkül adja meg a beutalót?")) return false;
     }
 
@@ -276,39 +277,38 @@ function validateBeutalo() {
 
 
 
-var refreshTime = 60000*5;
-window.setInterval( function() {
+var refreshTime = 60000 * 5;
+window.setInterval(function () {
     $.ajax({
         cache: false,
         type: "GET",
         url: "/admin/refreshsession.php",
-        success: function(data) {
+        success: function (data) {
         }
     });
-}, refreshTime );
+}, refreshTime);
 
 
 
-function cssClick(tip,sor) {
-    if (tip==1) {
-        if ($("#csaksorban"+sor).is(":checked")) $("#csakvsorban"+sor).prop("checked", false);
+function cssClick(tip, sor) {
+    if (tip == 1) {
+        if ($("#csaksorban" + sor).is(":checked")) $("#csakvsorban" + sor).prop("checked", false);
     } else {
-        if ($("#csakvsorban"+sor).is(":checked")) $("#csaksorban"+sor).prop("checked", false);
+        if ($("#csakvsorban" + sor).is(":checked")) $("#csaksorban" + sor).prop("checked", false);
     }
 }
 
 
 function orvosDataVerify() {
-    var formid=$("#iform");
+    var formid = $("#iform");
     $("#errorlistdiv").hide();
 
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "orvosdataverify=1&"+$(formid).serialize(),
-        success: function(data)
-        {
-            if (data=="ok") {
+        data: "orvosdataverify=1&" + $(formid).serialize(),
+        success: function (data) {
+            if (data == "ok") {
                 formid.submit();
             } else {
                 $("#errorlistdiv").html(data);
@@ -324,15 +324,15 @@ function orvosDataVerify() {
 
 
 function userDataVerify() {
-    var formid=$("#iform");
+    var formid = $("#iform");
     $("#errorlistdiv").hide();
 
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "userdataverify=1&"+$(formid).serialize(),
-        success: function(data)	{
-            if (data=="ok") {
+        data: "userdataverify=1&" + $(formid).serialize(),
+        success: function (data) {
+            if (data == "ok") {
                 formid.submit();
             } else {
                 $("#errorlistdiv").html(data);
@@ -344,31 +344,31 @@ function userDataVerify() {
     return false;
 }
 
-function add2SztCegek(cegid,sor) {
-    var arid=$("#arid"+sor).val();
+function add2SztCegek(cegid, sor) {
+    var arid = $("#arid" + sor).val();
 
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "add2sztceg=1&arid="+arid+"&cegid="+cegid+"&sor="+sor,
-        success: function(data)	{
-            $("#ceglist"+sor).html(data);
-            $("#cegadd"+sor).slideToggle();
+        data: "add2sztceg=1&arid=" + arid + "&cegid=" + cegid + "&sor=" + sor,
+        success: function (data) {
+            $("#ceglist" + sor).html(data);
+            $("#cegadd" + sor).slideToggle();
         }
     });
 
 
 }
 
-function removeSztCegek(cegid,sor) {
-    var arid=$("#arid"+sor).val();
+function removeSztCegek(cegid, sor) {
+    var arid = $("#arid" + sor).val();
 
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "removesztceg=1&arid="+arid+"&cegid="+cegid+"&sor="+sor,
-        success: function(data)	{
-            $("#ceglist"+sor).html(data);
+        data: "removesztceg=1&arid=" + arid + "&cegid=" + cegid + "&sor=" + sor,
+        success: function (data) {
+            $("#ceglist" + sor).html(data);
         }
     });
 
@@ -379,31 +379,31 @@ function removeSztCegek(cegid,sor) {
 
 
 function showFizSzolg(id) {
-    $("#fizszolglist"+id).load("index.php?page=arrivals&showfizszolglist&fid="+id);
+    $("#fizszolglist" + id).load("index.php?page=arrivals&showfizszolglist&fid=" + id);
 }
 
 
-function addFizSzolg(fid,aid) {
+function addFizSzolg(fid, aid) {
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "page=arrivals&addfizszolg=1&fid="+fid+"&aid="+aid,
-        success: function(data)	{
-            $("#fizszolglist"+fid).html(data);
+        data: "page=arrivals&addfizszolg=1&fid=" + fid + "&aid=" + aid,
+        success: function (data) {
+            $("#fizszolglist" + fid).html(data);
         }
     });
 }
 
 
-function removeFizSzolg(fid,id) {
+function removeFizSzolg(fid, id) {
     if (!confirm("Biztos törli ezt a szolgáltatást?")) return;
 
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "page=arrivals&removefizszolg=1&fid="+fid+"&id="+id,
-        success: function(data)	{
-            $("#fizszolglist"+fid).html(data);
+        data: "page=arrivals&removefizszolg=1&fid=" + fid + "&id=" + id,
+        success: function (data) {
+            $("#fizszolglist" + fid).html(data);
         }
     });
 }
@@ -425,13 +425,13 @@ function setListDay(day) {
 function setQueryDay(day) {
     //$("#querystatus").html("lekérdezés folyamatban...");
 
-    $("#start-query-date").css("background-image","url('/images/loading_transparent.svg')");
-    $("#end-query-date").css("background-image","url('/images/loading_transparent.svg')");
+    $("#start-query-date").css("background-image", "url('/images/loading_transparent.svg')");
+    $("#end-query-date").css("background-image", "url('/images/loading_transparent.svg')");
 }
 
-var foglalasSelected=0;
-var foglalasSelectedPass="";
-var foglalasDisplayed=0;
+var foglalasSelected = 0;
+var foglalasSelectedPass = "";
+var foglalasDisplayed = 0;
 var cpy = 0;
 var selectedInterval = 0;
 var selectedOrvos = 0;
@@ -444,19 +444,19 @@ function setSelectedOrvos(oId) {
     selectedOrvos = oId;
 }
 
-function addIdopont(idopont,szt) {
+function addIdopont(idopont, szt) {
     if (foglalasSelected != 0) {
-        let msg="Biztos áthelyezed ide a kijelölt foglalást?";
+        let msg = "Biztos áthelyezed ide a kijelölt foglalást?";
         if (cpy == 1) {
-            msg="Biztos átmásolod ide a kijelölt foglalást?";
+            msg = "Biztos átmásolod ide a kijelölt foglalást?";
         }
 
         if (confirm(msg)) {
             $.ajax({
-                url:'index.php',
-                type:'GET',
-                data:{page:'booking', cpy:cpy, szt:szt, moveidopont:idopont, fid:foglalasSelected, rinterval:selectedInterval, orvosid: selectedOrvos},
-                success:function(data){
+                url: 'index.php',
+                type: 'GET',
+                data: { page: 'booking', cpy: cpy, szt: szt, moveidopont: idopont, fid: foglalasSelected, rinterval: selectedInterval, orvosid: selectedOrvos },
+                success: function (data) {
                     if (data.substring(0, 5) == "error") {
                         alert(data.substring(5));
                     } else {
@@ -473,11 +473,11 @@ function addIdopont(idopont,szt) {
     }
 
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:'booking', szt:szt, addidopont:idopont, rinterval: selectedInterval, orvosid: selectedOrvos},
-        success:function(data){
-            if (data.substring(0, 5)=='error') {
+        url: 'index.php',
+        type: 'GET',
+        data: { page: 'booking', szt: szt, addidopont: idopont, rinterval: selectedInterval, orvosid: selectedOrvos },
+        success: function (data) {
+            if (data.substring(0, 5) == 'error') {
                 alert(data.substring(5));
             } else {
                 $("#elojegyzestable").html(data);
@@ -493,10 +493,10 @@ function afterElojegyzesTableInit() {
 
 function refreshNaptar(idopont) {
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:'calendar', loadnaptar:'1'},
-        success:function(data){
+        url: 'index.php',
+        type: 'GET',
+        data: { page: 'calendar', loadnaptar: '1' },
+        success: function (data) {
             $("#foglalasnaptar").html(data);
         }
     });
@@ -504,15 +504,15 @@ function refreshNaptar(idopont) {
 
 
 
-function addIdopontNaptar(idopont,szt) {
+function addIdopontNaptar(idopont, szt) {
     $("#naptarloading").show();
 
-    if (foglalasSelected!=0) {
-        if (confirm("Biztos áthelyezed ide a kijelölt foglalást: "+idopont+"?")) {
+    if (foglalasSelected != 0) {
+        if (confirm("Biztos áthelyezed ide a kijelölt foglalást: " + idopont + "?")) {
 
-            $("#foglalasnaptaridopont").load("index.php?page=calendar&szt="+encodeURIComponent(szt)+"&moveidopont="+encodeURIComponent(idopont)+"&fid="+encodeURIComponent(foglalasSelected),null,
-                function(responseText){
-                    showIdopontEditor('bnaptar',foglalasSelectedPass,foglalasSelected);
+            $("#foglalasnaptaridopont").load("index.php?page=calendar&szt=" + encodeURIComponent(szt) + "&moveidopont=" + encodeURIComponent(idopont) + "&fid=" + encodeURIComponent(foglalasSelected), null,
+                function (responseText) {
+                    showIdopontEditor('bnaptar', foglalasSelectedPass, foglalasSelected);
                     cancelFoglalasMove();
                     refreshNaptar(idopont);
                     $("#naptarloading").hide();
@@ -523,11 +523,11 @@ function addIdopontNaptar(idopont,szt) {
     }
 
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:'calendar', szt:szt, addidopont:idopont, rinterval: selectedInterval},
-        success:function(data){
-            if (data.substring(0, 5)=='error') {
+        url: 'index.php',
+        type: 'GET',
+        data: { page: 'calendar', szt: szt, addidopont: idopont, rinterval: selectedInterval },
+        success: function (data) {
+            if (data.substring(0, 5) == 'error') {
                 alert(data.substring(5));
             } else {
                 $("#foglalasnaptar").html(data);
@@ -546,10 +546,10 @@ function removeIdopont(id, p, page) {
     }
 
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:page, removeidopont:id, p:p},
-        success:function(data){
+        url: 'index.php',
+        type: 'GET',
+        data: { page: page, removeidopont: id, p: p },
+        success: function (data) {
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             if (page == "booking") {
@@ -604,17 +604,17 @@ function removeReplaceDoctor(nap, oid) {
 }
 
 function addTempDoctor(nap, helyszin, szt, sourceoid) {
-    let orvosNev = $("#orvosnev"+sourceoid).val();
-    let orvosMegj = $("#orvosmegj"+sourceoid).val();
-    let orvosTol = $("#orvostol"+sourceoid).val();
-    let orvosIg = $("#orvosig"+sourceoid).val();
-    let orvosInterval = $("#orvosinterval"+sourceoid).val();
+    let orvosNev = $("#orvosnev" + sourceoid).val();
+    let orvosMegj = $("#orvosmegj" + sourceoid).val();
+    let orvosTol = $("#orvostol" + sourceoid).val();
+    let orvosIg = $("#orvosig" + sourceoid).val();
+    let orvosInterval = $("#orvosinterval" + sourceoid).val();
 
     $.ajax({
-        url:'index.php',
-        type:'POST',
-        data:{page:"booking", addtempdoctor:1, helyszin:helyszin, nap:nap, szt:szt, sourceoid:sourceoid, orvosNev:orvosNev, orvosMegj:orvosMegj, orvosTol:orvosTol, orvosIg:orvosIg, orvosInterval:orvosInterval},
-        success:function(data) {
+        url: 'index.php',
+        type: 'POST',
+        data: { page: "booking", addtempdoctor: 1, helyszin: helyszin, nap: nap, szt: szt, sourceoid: sourceoid, orvosNev: orvosNev, orvosMegj: orvosMegj, orvosTol: orvosTol, orvosIg: orvosIg, orvosInterval: orvosInterval },
+        success: function (data) {
             if (data.error != "") {
                 alert(data.error);
                 return;
@@ -629,16 +629,16 @@ function addTempDoctor(nap, helyszin, szt, sourceoid) {
 }
 
 function saveTempDoctor(oid) {
-    let orvosNev = $("#editorvosnev"+oid).val();
-    let orvosMegj = $("#editorvosmegj"+oid).val();
-    let orvosTol = $("#editorvostol"+oid).val();
-    let orvosIg = $("#editorvosig"+oid).val();
+    let orvosNev = $("#editorvosnev" + oid).val();
+    let orvosMegj = $("#editorvosmegj" + oid).val();
+    let orvosTol = $("#editorvostol" + oid).val();
+    let orvosIg = $("#editorvosig" + oid).val();
 
     $.ajax({
-        url:'index.php',
-        type:'POST',
-        data:{page:"booking", savetempdoctor:1, oid:oid, orvosNev:orvosNev, orvosMegj:orvosMegj, orvosTol:orvosTol, orvosIg:orvosIg},
-        success:function(data) {
+        url: 'index.php',
+        type: 'POST',
+        data: { page: "booking", savetempdoctor: 1, oid: oid, orvosNev: orvosNev, orvosMegj: orvosMegj, orvosTol: orvosTol, orvosIg: orvosIg },
+        success: function (data) {
             if (data.error != "") {
                 alert(data.error);
                 return;
@@ -653,10 +653,10 @@ function saveTempDoctor(oid) {
 
 function removeTempDoctor(nap, oid) {
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:"booking", removetempdoctor:1, nap:nap, oid:oid},
-        success:function(data) {
+        url: 'index.php',
+        type: 'GET',
+        data: { page: "booking", removetempdoctor: 1, nap: nap, oid: oid },
+        success: function (data) {
             if (data.error != "") {
                 alert(data.error);
                 return;
@@ -669,15 +669,15 @@ function removeTempDoctor(nap, oid) {
     });
 }
 
-function showIdopontEditor(page,p,id) {
+function showIdopontEditor(page, p, id) {
     cancelFoglalasMove();
     $("#naptarloading").show();
 
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:{page:page, showidoponteditor:id, p:p},
-        success:function(data) {
+        url: 'index.php',
+        type: 'GET',
+        data: { page: page, showidoponteditor: id, p: p },
+        success: function (data) {
             $("#idoponteditor").html(data);
             foglalasDisplayed = id;
             $("#idoponteditor").slideDown();
@@ -690,7 +690,7 @@ function showIdopontEditor(page,p,id) {
 }
 
 function initTajEditor() {
-    $(".editortaj2").keyup(function() {
+    $(".editortaj2").keyup(function () {
         let taj = $(this).val();
         if (taj.length >= 9) {
             autoFill(true);
@@ -699,34 +699,34 @@ function initTajEditor() {
 
 }
 
-function startFoglalasMove(id,p) {
-    cpy=0;
-    foglalasSelected=id;
-    foglalasSelectedPass=p;
+function startFoglalasMove(id, p) {
+    cpy = 0;
+    foglalasSelected = id;
+    foglalasSelectedPass = p;
     $("#autofill").slideUp();
     $("#copyinfo").slideUp();
     $("#moveinfo").slideDown();
 }
 
-function startFoglalasCopy(id,p) {
-    cpy=1;
-    foglalasSelected=id;
-    foglalasSelectedPass=p;
+function startFoglalasCopy(id, p) {
+    cpy = 1;
+    foglalasSelected = id;
+    foglalasSelectedPass = p;
     $("#autofill").slideUp();
     $("#moveinfo").slideUp();
     $("#copyinfo").slideDown();
 }
 
-function startAutoFill(id,p) {
+function startAutoFill(id, p) {
     //cpy=1;
-    foglalasSelected=id;
-    foglalasSelectedPass=p;
+    foglalasSelected = id;
+    foglalasSelectedPass = p;
     $("#copyinfo").slideUp();
     $("#moveinfo").slideUp();
     $("#autofill").slideDown();
 }
 
-function autoFill(silent){
+function autoFill(silent) {
     let taj = $("#editortaj").val().trim();
 
     if (taj == "" && !silent) {
@@ -734,16 +734,16 @@ function autoFill(silent){
         return;
     }
 
-    if ((taj.length < 9 || taj.length > 9) && !silent){
+    if ((taj.length < 9 || taj.length > 9) && !silent) {
         alert("A megadott TAJ szám formátuma nem megfelelő!");
         return;
     }
 
     $.ajax({
-        url:'index.php',
-        type:'POST',
-        data:{AFForm:taj},
-        success:function(data) {
+        url: 'index.php',
+        type: 'POST',
+        data: { AFForm: taj },
+        success: function (data) {
             if (data.error != "") {
                 if (!silent) {
                     alert(data.error);
@@ -769,7 +769,7 @@ function autoFill(silent){
 }
 
 function cancelFoglalasMove() {
-    foglalasSelected=0;
+    foglalasSelected = 0;
     $("#moveinfo").slideUp();
     $("#copyinfo").slideUp();
     $("#autofill").slideUp();
@@ -777,24 +777,24 @@ function cancelFoglalasMove() {
 
 function foReservationInfo(id, p) {
     $.ajax({
-        type:'post',
-        url:'index.php',
-        data:{foReservationInfo:1, page:"booking", fid:id, p:p},
-        success:function(data){
+        type: 'post',
+        url: 'index.php',
+        data: { foReservationInfo: 1, page: "booking", fid: id, p: p },
+        success: function (data) {
             alert(data.result);
         }
     });
 }
 
 function foglalasMentes(page) {
-    var data = $("#iform").serialize()+"&page="+page+"&foglalasmentesnaptar2=1";
+    var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
     $("#naptarloading").show();
 
     $.ajax({
         type: "POST",
         url: "index.php",
         data: data,
-        success: function(response)	{
+        success: function (response) {
             $("#idoponteditor").html(response);
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
@@ -807,13 +807,13 @@ function foglalasMentes(page) {
 }
 
 function foglalasOrvosErtesites() {
-    var data=$("#iform").serialize()+"&foglalasmentesnaptaresertesites2=1";
+    var data = $("#iform").serialize() + "&foglalasmentesnaptaresertesites2=1";
 
     $.ajax({
         type: "POST",
         url: "index.php?page=booking",
         data: data,
-        success: function(response)	{
+        success: function (response) {
             $("#idoponteditor").html(response);
             alert("Értesítés elküldve!");
         }
@@ -824,54 +824,54 @@ function foglalasOrvosErtesitesOnly(fid) {
     $.ajax({
         type: "POST",
         url: "index.php",
-        data: "fid="+encodeURIComponent(fid)+"&foglalasorvosertesitesonly=1",
-        success: function(response)	{
+        data: "fid=" + encodeURIComponent(fid) + "&foglalasorvosertesitesonly=1",
+        success: function (response) {
             alert(response);
         }
     });
 }
 
 
-var lastCell="";
-var zindex=10000;
+var lastCell = "";
+var zindex = 10000;
 
 function setIdoPontCell(i) {
-    var id=i.replace(" ","");
-    id=id.replace("-","");
-    id=id.replace("-","");
-    id=id.replace(":","");
+    var id = i.replace(" ", "");
+    id = id.replace("-", "");
+    id = id.replace("-", "");
+    id = id.replace(":", "");
 
     //$("#ipbox"+id).css("background","#81d6e6");
 
 
-    $("#ipbox"+id).css("transform","scale(1.1)");
-    $("#ipbox"+id).css("z-index",zindex);
-    $("#ipbox"+id).css("box-shadow","0px 0px 5px #444");
+    $("#ipbox" + id).css("transform", "scale(1.1)");
+    $("#ipbox" + id).css("z-index", zindex);
+    $("#ipbox" + id).css("box-shadow", "0px 0px 5px #444");
 
-    if (id==lastCell) return;
+    if (id == lastCell) return;
 
     zindex++;
-    if (lastCell!="") {
-        $("#ipbox"+lastCell).css("transform","scale(1)");
-        $("#ipbox"+lastCell).css("box-shadow","");
+    if (lastCell != "") {
+        $("#ipbox" + lastCell).css("transform", "scale(1)");
+        $("#ipbox" + lastCell).css("box-shadow", "");
     }
-    lastCell=id;
+    lastCell = id;
 }
 
 
 function sF2(i) {
     setIdoPontCell(i);
 
-    $("#foglalasnaptaridopont").load("index.php?shownaptaridopont="+encodeURIComponent(i),null,
-        function(responseText){
+    $("#foglalasnaptaridopont").load("index.php?shownaptaridopont=" + encodeURIComponent(i), null,
+        function (responseText) {
         }
     );
 }
 
 function naptarMove(d) {
     $("#naptarloading").show();
-    $("#foglalasnaptar").load("index.php?page=calendar&loadnaptar&shift="+encodeURIComponent(d),null,
-        function(responseText){
+    $("#foglalasnaptar").load("index.php?page=calendar&loadnaptar&shift=" + encodeURIComponent(d), null,
+        function (responseText) {
             $("#foglalasnaptaridopont").html("");
             $("#naptarloading").hide();
         }
@@ -879,71 +879,71 @@ function naptarMove(d) {
 }
 
 function addSMSPhone(oid) {
-    $("#smsalertsettings").load("index.php?page=doctors&addsmsphone&oid="+oid);
+    $("#smsalertsettings").load("index.php?page=doctors&addsmsphone&oid=" + oid);
 }
 
-function deleteSMSPhone(oid,id) {
-    $("#smsalertsettings").load("index.php?page=doctors&deletesmsphone&oid="+oid+"&id="+id);
+function deleteSMSPhone(oid, id) {
+    $("#smsalertsettings").load("index.php?page=doctors&deletesmsphone&oid=" + oid + "&id=" + id);
 }
 
 function showCegValaszto(phoneid) {
-    if ($.trim($("#cegvalaszto"+phoneid).html())) {
-        $("#cegvalaszto"+phoneid).html("");
+    if ($.trim($("#cegvalaszto" + phoneid).html())) {
+        $("#cegvalaszto" + phoneid).html("");
         return;
     }
-    $("#cegvalaszto"+phoneid).load("index.php?page=doctors&showcegvalaszto="+phoneid);
+    $("#cegvalaszto" + phoneid).load("index.php?page=doctors&showcegvalaszto=" + phoneid);
 }
 
 function saveCegList(phoneid) {
-    var tk="";
-    var bszoveg="Összes cég";
-    var num=0;
-    var t="nincs tipus hozzárendelve";
-    var tlist="";
+    var tk = "";
+    var bszoveg = "Összes cég";
+    var num = 0;
+    var t = "nincs tipus hozzárendelve";
+    var tlist = "";
 
-    $("#cegvalaszto"+phoneid+" input:checked").each(function() {
-        tk=tk+"|"+$(this).attr("name").replace("cegvalaszto"+phoneid+"_","")+"|";
+    $("#cegvalaszto" + phoneid + " input:checked").each(function () {
+        tk = tk + "|" + $(this).attr("name").replace("cegvalaszto" + phoneid + "_", "") + "|";
         num++;
-        tlist=tlist+", "+$(this).attr("value");
+        tlist = tlist + ", " + $(this).attr("value");
     });
 
-    if (num>0) {
-        t=tlist.substring(2);
-        bszoveg=num+" cég";
+    if (num > 0) {
+        t = tlist.substring(2);
+        bszoveg = num + " cég";
     }
 
-    $("#cegstatus"+phoneid).html("<a href='#' class='tlink' title='"+t+"' onclick='showCegValaszto("+phoneid+");return false;'>"+bszoveg+"</a>");
+    $("#cegstatus" + phoneid).html("<a href='#' class='tlink' title='" + t + "' onclick='showCegValaszto(" + phoneid + ");return false;'>" + bszoveg + "</a>");
 
     request = $.ajax({
         url: "index.php",
         type: "get",
-        data: "page=doctors&savesmsphonetipusok="+phoneid+"&value="+encodeURIComponent(tk)
+        data: "page=doctors&savesmsphonetipusok=" + phoneid + "&value=" + encodeURIComponent(tk)
     });
 
-    request.done(function (response, textStatus, jqXHR){
-        respo=response;
+    request.done(function (response, textStatus, jqXHR) {
+        respo = response;
     });
 }
 
 
 function lEditorOpen(id) {
-    $("#lszoveg"+id).hide();
-    $("#leditor"+id).show();
+    $("#lszoveg" + id).hide();
+    $("#leditor" + id).show();
 }
 function lEditorClose(id) {
-    $("#lszoveg"+id).show();
-    $("#leditor"+id).hide();
+    $("#lszoveg" + id).show();
+    $("#leditor" + id).hide();
 }
 function lEditorSave(id) {
     lEditorClose(id);
-    var e=$("#langtext"+id).val();
+    var e = $("#langtext" + id).val();
 
     $.ajax({
         url: 'index.php',
         type: 'POST',
-        data: "page=langsettings&savelangvalue="+encodeURIComponent(e)+"&id="+id,
-        success: function(data){
-            $("#llink"+id).html(data);
+        data: "page=langsettings&savelangvalue=" + encodeURIComponent(e) + "&id=" + id,
+        success: function (data) {
+            $("#llink" + id).html(data);
         }
     });
 }
@@ -953,18 +953,18 @@ function lEditorSave(id) {
 //marci
 
 var op_val = 0;
-$(document).on('click','.protocol-list-frame',function (){
-    if(op_val == 0){
-        $('.protocol-list-main-center').css('display','inline-block');
-        $('.protocol-list-wrapper-01').animate({left:'-420px'});
-        $('.protocol-list-main-center').animate({width:'400px'});
+$(document).on('click', '.protocol-list-frame', function () {
+    if (op_val == 0) {
+        $('.protocol-list-main-center').css('display', 'inline-block');
+        $('.protocol-list-wrapper-01').animate({ left: '-420px' });
+        $('.protocol-list-main-center').animate({ width: '400px' });
         op_val++;
         return;
     }
-    if(op_val == 1){
-        $('.protocol-list-wrapper-01').animate({left:'-20px'});
-        $('.protocol-list-main-center').animate({width:'0px'},400, function (){
-            $('.protocol-list-main-center').css('display','none');
+    if (op_val == 1) {
+        $('.protocol-list-wrapper-01').animate({ left: '-20px' });
+        $('.protocol-list-main-center').animate({ width: '0px' }, 400, function () {
+            $('.protocol-list-main-center').css('display', 'none');
         });
         op_val--;
         return;
@@ -972,56 +972,56 @@ $(document).on('click','.protocol-list-frame',function (){
 
 });
 
-$(document).on('click','.protocol-obj', function (e){
-    var obj 	  = $(e.target).closest('.protocol-obj').find('.checkDiv');
-    var subject   = $(e.target).closest('.protocol-obj').find('.checkDiv > svg');
-    var string 	  = $(e.target).closest('.protocol-obj').attr('title');
+$(document).on('click', '.protocol-obj', function (e) {
+    var obj = $(e.target).closest('.protocol-obj').find('.checkDiv');
+    var subject = $(e.target).closest('.protocol-obj').find('.checkDiv > svg');
+    var string = $(e.target).closest('.protocol-obj').attr('title');
     var curStr = $('#protocol-textarea');
     var curVal = $('#protocol-textarea').val();
-    var pipe 	  = '<i class="fa fa-check"></i>';
-    if( subject.length ) {
+    var pipe = '<i class="fa fa-check"></i>';
+    if (subject.length) {
         obj.empty();
-        var position = curVal.search( string );
-        if( curVal != '' ){
-            if( position == 0 ) modStr = curVal.replace( string , '');
-            else modStr = curVal.replace( ', ' + string, '' );
+        var position = curVal.search(string);
+        if (curVal != '') {
+            if (position == 0) modStr = curVal.replace(string, '');
+            else modStr = curVal.replace(', ' + string, '');
         }
         else modStr = curVal.replace(string, '');
-        curStr.val( modStr );
+        curStr.val(modStr);
     }
     else {
-        obj.html( pipe );
-        if( curVal != '' ) curStr.val( curVal + ', ' + string );
-        else curStr.val( string );
+        obj.html(pipe);
+        if (curVal != '') curStr.val(curVal + ', ' + string);
+        else curStr.val(string);
     }
 });
 
-function listCheck(){
+function listCheck() {
     var protocolArr = new Array();
-    $('.checkDiv').each( function( i, obj ) {
+    $('.checkDiv').each(function (i, obj) {
         var strID = $(obj).closest('.protocol-obj').attr('id').split('-');
         var protocol = strID[1];
-        if( $(obj).find('svg').length ) protocolArr.push(protocol);
+        if ($(obj).find('svg').length) protocolArr.push(protocol);
     });
     return protocolArr;
 }
 
-function setProtocol(val){
+function setProtocol(val) {
     var protocolArr = new Array();
     protocolArr = listCheck();
 
     $.ajax({
         url: 'index.php',
         type: 'POST',
-        data: {newProtocol: val},
-        success: function(data){
-            if( data == 'Successful added!'){
-                $('.protocol-list-wrapper').load('index.php',{refreshProtocolList:protocolArr});
-                $('.successful-message').css('display','block');
+        data: { newProtocol: val },
+        success: function (data) {
+            if (data == 'Successful added!') {
+                $('.protocol-list-wrapper').load('index.php', { refreshProtocolList: protocolArr });
+                $('.successful-message').css('display', 'block');
                 $('.successful-message').find('span').text('Protocoll hozzáadva!');
-                setTimeout( function() {
-                    $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1500, function() {
-                        $('.successful-message').css('display','none');
+                setTimeout(function () {
+                    $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1500, function () {
+                        $('.successful-message').css('display', 'none');
                     });
                 }, 1500);
             }
@@ -1029,21 +1029,23 @@ function setProtocol(val){
     });
 }
 
-function saveProtocol(cid){
+function saveProtocol(cid) {
     var protocolArr = new Array();
     protocolArr = listCheck();
     $.ajax({
         url: 'index.php',
         type: 'POST',
-        data: {saveProtocol: protocolArr,
-            cid: cid},
-        success: function(data){
-            if( data == ''){
-                $('.successful-message').css('display','block');
+        data: {
+            saveProtocol: protocolArr,
+            cid: cid
+        },
+        success: function (data) {
+            if (data == '') {
+                $('.successful-message').css('display', 'block');
                 $('.successful-message').find('span').text('Lista elmentve!');
-                setTimeout( function() {
-                    $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1500, function() {
-                        $('.successful-message').css('display','none');
+                setTimeout(function () {
+                    $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1500, function () {
+                        $('.successful-message').css('display', 'none');
                     });
                 }, 1500);
             }
@@ -1054,74 +1056,71 @@ function saveProtocol(cid){
 $(document).on('click','input[name="uj_lelet"]',function(){
     $('#leletform').load('index.php?uj_lelet');
     $('#leletform').slideToggle();
-    $(this).css('display','none');
+    $(this).css('display', 'none');
 });
 
 function printLelet() {
-    var objToPrint=document.getElementById('lelet-content');
+    var objToPrint = document.getElementById('lelet-content');
 
-    var newWin=window.open('','Print-Window');
+    var newWin = window.open('', 'Print-Window');
 
     newWin.document.open();
 
-    newWin.document.write('<html><body style = "page-break-after: always;" onload="window.print()">'+objToPrint.innerHTML+'</body></html>');
+    newWin.document.write('<html><body style = "page-break-after: always;" onload="window.print()">' + objToPrint.innerHTML + '</body></html>');
 
     newWin.document.close();
 
-    setTimeout(function(){newWin.close();},10);
+    setTimeout(function () { newWin.close(); }, 10);
 }
 
-function open_lelet(id){
+function open_lelet(id) {
     $('#uj-lelet').remove();
-    if($('#leletform').css('display') == 'none')
-    {
-        tinymce.EditorManager.execCommand('mceAddEditor',true, 'lelet-page-'+id);
+    if ($('#leletform').css('display') == 'none') {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, 'lelet-page-' + id);
         $('#leletform').load('index.php?open_lelet=' + id);
 
-        setTimeout(function() {
+        setTimeout(function () {
             $('#leletform').slideToggle();
-            $('#add-lelet').css('display','none');
+            $('#add-lelet').css('display', 'none');
         }, 1200);
     }
 }
-function open_zaro(id){
+function open_zaro(id) {
     $('#uj-lelet').remove();
-    if($('#zaroform').css('display') == 'none')
-    {
-        tinymce.EditorManager.execCommand('mceAddEditor',true, 'zaro-page-'+id);
+    if ($('#zaroform').css('display') == 'none') {
+        tinymce.EditorManager.execCommand('mceAddEditor', true, 'zaro-page-' + id);
         $('#zaroform').load('index.php?zaro_lelet=' + id);
 
-        setTimeout(function() {
+        setTimeout(function () {
             $('#zaroform').slideToggle();
-            $('#add-lelet').css('display','none');
+            $('#add-lelet').css('display', 'none');
         }, 1200);
     }
 }
 
-$(document).on('click','input[name="close_lelet"]',function(){
+$(document).on('click', 'input[name="close_lelet"]', function () {
     //console.log('haliii');
-    $('#leletform').slideToggle(function(){
+    $('#leletform').slideToggle(function () {
         $('#leletform').empty();
-        $('#leletbutton').find('input[type="button"]').css('display','block');
+        $('#leletbutton').find('input[type="button"]').css('display', 'block');
     });
 
 });
-$(document).on('click','input[name="close_zaro"]',function(){
+$(document).on('click', 'input[name="close_zaro"]', function () {
     //console.log('haliii');
-    $('#zaroform').slideToggle(function(){
+    $('#zaroform').slideToggle(function () {
         $('#zaroform').empty();
-        $('#leletbutton').find('input[type="button"]').css('display','block');
+        $('#leletbutton').find('input[type="button"]').css('display', 'block');
     });
 
 });
-function add_lelet(id,textarea){
+function add_lelet(id, textarea) {
 
-    if( id == 'empty' ) return;
+    if (id == 'empty') return;
     var data = 'request_lelet=' + id;
     var footage = $('.medic-footage').text().replace(/\"/g, '');
     var seal_number = $('#pecsetszam').val();
-    if(footage.includes('('))
-    {
+    if (footage.includes('(')) {
         var fracted_footage = footage.split('(');
         footage = fracted_footage[0] + '(' + seal_number + fracted_footage[1];
     }
@@ -1131,37 +1130,36 @@ function add_lelet(id,textarea){
         type: 'POST',
         data: data
     });
-    request.done(function (res, textStatus, jqXHR){
-        $('#minta-lista').prop('disabled',true);
-        $('input[name="lelet_hozzadas"]').prop('disabled',true);
-        $('table[name="positive-options"]').load('index.php', {setCheckboxes:id});
-        $('table[name="negative-option"]').load('index.php', {loadnegativeCheck:true});
+    request.done(function (res, textStatus, jqXHR) {
+        $('#minta-lista').prop('disabled', true);
+        $('input[name="lelet_hozzadas"]').prop('disabled', true);
+        $('table[name="positive-options"]').load('index.php', { setCheckboxes: id });
+        $('table[name="negative-option"]').load('index.php', { loadnegativeCheck: true });
 
         $('.currently-text-container').html(res);
-        var iframe = textarea+'_ifr';
+        var iframe = textarea + '_ifr';
         $('#' + iframe).contents().find('#tinymce').append(res);
         $('#' + iframe).contents().find('#tinymce').append(footage);
 
     });
 }
 
-function send_iFrame( patient, medic, textarea ){
+function send_iFrame(patient, medic, textarea) {
 
     var params = new window.URLSearchParams(window.location.search);
-    if ( $('form[name="iForm"] input:checkbox:checked').length > 0 )
-    {
+    if ($('form[name="iForm"] input:checkbox:checked').length > 0) {
         var mceContent = $('#' + textarea + '_ifr').contents().find('#tinymce').prop('outerHTML');
-        if(textarea != 'uj-lelet-page'){
+        if (textarea != 'uj-lelet-page') {
             idDumb = textarea.split('-');
-            var data  = 'update_lelet=' + encodeURIComponent(mceContent);
+            var data = 'update_lelet=' + encodeURIComponent(mceContent);
             data += '&lid=' + idDumb[2];
-            data += '&'+$('form[name="iForm"]').serialize();
+            data += '&' + $('form[name="iForm"]').serialize();
         }
-        else{
-            var data  = 'save_lelet=' + encodeURIComponent(mceContent);
+        else {
+            var data = 'save_lelet=' + encodeURIComponent(mceContent);
             data += '&seal_numb=' + $('#pecsetszam').val();
             data += '&tipus=' + $('#minta-lista').val();
-            data += '&'+$('form[name="iForm"]').serialize();
+            data += '&' + $('form[name="iForm"]').serialize();
         }
 
         request = $.ajax({
@@ -1169,18 +1167,18 @@ function send_iFrame( patient, medic, textarea ){
             type: 'post',
             data: data
         });
-        request.done(function ( res, textStatus,jqXHR ){
-            $('#lelet-lista').load('index.php?reload_leletlista&p='+params.get('page')+'&user='+params.get('szerk'));
-            $('#leletform').slideToggle(function(){
+        request.done(function (res, textStatus, jqXHR) {
+            $('#lelet-lista').load('index.php?reload_leletlista&p=' + params.get('page') + '&user=' + params.get('szerk'));
+            $('#leletform').slideToggle(function () {
                 $('#leletform').empty();
-                $('#leletbutton').find('input[type="button"]').css('display','block');
+                $('#leletbutton').find('input[type="button"]').css('display', 'block');
             });
-            $('.successful-message').css('color','#67ec00');
-            $('.successful-message').css('display','block');
+            $('.successful-message').css('color', '#67ec00');
+            $('.successful-message').css('display', 'block');
             $('.successful-message').find('span').text('Lelet elmentve!');
-            setTimeout(function() {
-                $('.successful-message').css({opacity: 1.0, visibility: 'visible'}).animate({opacity: 0}, 1000, function(){
-                    $('.successful-message').css('display','none');
+            setTimeout(function () {
+                $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1000, function () {
+                    $('.successful-message').css('display', 'none');
                 });
             }, 1000);
         });
@@ -1188,80 +1186,77 @@ function send_iFrame( patient, medic, textarea ){
         $('#' + textarea + '_ifr').get(0).contentWindow.focus();
         $('#' + textarea + '_ifr').get(0).contentWindow.print();
     }
-    else
-    {
-        $('.successful-message').css('display','block');
-        $('.successful-message').find('span').css('color','red');
+    else {
+        $('.successful-message').css('display', 'block');
+        $('.successful-message').find('span').css('color', 'red');
         $('.successful-message').find('span').text('Jelöld ha van eltérés vagy nincs!');
-        setTimeout(function() {
-            $('.successful-message').css({opacity: 1.0, visibility: 'visible'}).animate({opacity: 0}, 1000, function(){
-                $('.successful-message').css('display','none');
+        setTimeout(function () {
+            $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1000, function () {
+                $('.successful-message').css('display', 'none');
             });
         }, 1000);
     }
 }
-function save_iFrame( patient, medic, textarea){
+function save_iFrame(patient, medic, textarea) {
 
     var params = new window.URLSearchParams(window.location.search);
     //console.log($('form[name="iForm"]').serializeArray());
-    if ( $('form[name="iForm"] input:checkbox:checked').length > 0 )
-    {
+    if ($('form[name="iForm"] input:checkbox:checked').length > 0) {
         var mceContent = $('#' + textarea + '_ifr').contents().find('#tinymce').prop('outerHTML');
 
-        if(textarea != 'uj-lelet-page'){
+        if (textarea != 'uj-lelet-page') {
             idDumb = textarea.split('-');
-            var data  = 'update_lelet=' + encodeURIComponent(mceContent);
+            var data = 'update_lelet=' + encodeURIComponent(mceContent);
             data += '&lid=' + idDumb[2];
-            data += '&'+$('form[name="iForm"]').serialize();
+            data += '&' + $('form[name="iForm"]').serialize();
         }
-        else{
-            var data  = 'save_lelet=' + encodeURIComponent(mceContent);
+        else {
+            var data = 'save_lelet=' + encodeURIComponent(mceContent);
             data += '&seal_numb=' + $('#pecsetszam').val();
             data += '&tipus=' + $('#minta-lista').val();
-            data += '&'+$('form[name="iForm"]').serialize();
+            data += '&' + $('form[name="iForm"]').serialize();
         }
         request = $.ajax({
             url: 'index.php',
             type: 'post',
             data: data
         });
-        request.done(function (res, textStatus,jqXHR){
-            $('#lelet-lista').load('index.php?reload_leletlista&p='+params.get('page')+'&user='+params.get('szerk'));
-            $('#leletform').slideToggle(function(){
+        request.done(function (res, textStatus, jqXHR) {
+            $('#lelet-lista').load('index.php?reload_leletlista&p=' + params.get('page') + '&user=' + params.get('szerk'));
+            $('#leletform').slideToggle(function () {
                 $('#leletform').empty();
-                $('#leletbutton').find('input[type="button"]').css('display','block');
+                $('#leletbutton').find('input[type="button"]').css('display', 'block');
             });
-            $('.successful-message').css('color','#67ec00');
-            $('.successful-message').css('display','block');
+            $('.successful-message').css('color', '#67ec00');
+            $('.successful-message').css('display', 'block');
             $('.successful-message').find('span').text('Lelet elmentve!');
-            setTimeout(function() {
-                $('.successful-message').css({opacity: 1.0, visibility: 'visible'}).animate({opacity: 0}, 1000, function(){
-                    $('.successful-message').css('display','none');
+            setTimeout(function () {
+                $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1000, function () {
+                    $('.successful-message').css('display', 'none');
                 });
             }, 1000);
         });
     }
-    else
-    {
-        $('.successful-message').css('display','block');
-        $('.successful-message').find('span').css('color','red');
+    else {
+        $('.successful-message').css('display', 'block');
+        $('.successful-message').find('span').css('color', 'red');
         $('.successful-message').find('span').text('Jelöld ha van eltérés vagy nincs!');
-        setTimeout(function() {
-            $('.successful-message').css({opacity: 1.0, visibility: 'visible'}).animate({opacity: 0}, 1000, function(){
-                $('.successful-message').css('display','none');
+        setTimeout(function () {
+            $('.successful-message').css({ opacity: 1.0, visibility: 'visible' }).animate({ opacity: 0 }, 1000, function () {
+                $('.successful-message').css('display', 'none');
             });
         }, 1000);
     }
 
 }
 /*$(function(){
-	$('input[name="intval-start"], input[name="intval-end"]').datepicker({
-	dateFormat: 'yy-mm-dd',
-	changeMonth: true,
-	changeYear: true,
-	yearRange: '-100y:c+nn',
-	maxDate: '+2y'
-	});
+    $('input[name="intval-start"], input[name="intval-end"]').datepicker({
+    dateFormat: 'yy-mm-dd',
+    changeMonth: true,
+    changeYear: true,
+    yearRange: '-100y:c+nn',
+    maxDate: '+2y'
+    });
 });*/
 
 function selectFolder(e) {
@@ -1272,19 +1267,19 @@ function selectFolder(e) {
 }
 
 /*function load_uj_lelet(){
-	$('#leletform').load('index.php?uj_lelet');
-	//tinymce.get('uj-lelet-page').setContent('');
-	//var iframe = document.getElementById(FrameId);
-	//iframe.src = iframe.src;
+    $('#leletform').load('index.php?uj_lelet');
+    //tinymce.get('uj-lelet-page').setContent('');
+    //var iframe = document.getElementById(FrameId);
+    //iframe.src = iframe.src;
 }*/
 
-function syncFoglalasDataToUser(fogl, pass){
-    var data = $("#iform").serialize()+"&syncFoglalasDataToUser=1";
+function syncFoglalasDataToUser(fogl, pass) {
+    var data = $("#iform").serialize() + "&syncFoglalasDataToUser=1";
     $.ajax({
-        url:'index.php',
-        type:'POST',
-        data:data,
-        success: function(data) {
+        url: 'index.php',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             if (data.error != "") {
                 alert(data.error);
             } else {
@@ -1295,7 +1290,7 @@ function syncFoglalasDataToUser(fogl, pass){
     });
 }
 
-$(function(){
+$(function () {
     $('input[name="intval-start"], input[name="intval-end"]').datepicker({
         dateFormat: 'yy-mm-dd',
         changeMonth: true,
@@ -1307,67 +1302,62 @@ $(function(){
 
 $.extend(
     {
-        redirectPost: function(loc, args)
-        {
+        redirectPost: function (loc, args) {
             var form = '';
-            $.each( args, function( key, value ) {
-                form += '<input type = "hidden" name = "'+key+'" value = "'+value+'">';
+            $.each(args, function (key, value) {
+                form += '<input type = "hidden" name = "' + key + '" value = "' + value + '">';
             });
-            $('<form action = "'+loc+'" method = "POST">'+form+'</form>').appendTo('body').submit();
+            $('<form action = "' + loc + '" method = "POST">' + form + '</form>').appendTo('body').submit();
         }
     });
 
-function kuponCheck(coupon,version,foglalas,szurestipus)
-{
+function kuponCheck(coupon, version, foglalas, szurestipus) {
     console.log(foglalas);
     $.ajax({
-        method:'POST',
-        url:'index.php',
-        data:{ kuponCheck:'1',
-            coupon:coupon,
-            version:version,
-            foglalas:foglalas,
-            szurestipus:szurestipus
+        method: 'POST',
+        url: 'index.php',
+        data: {
+            kuponCheck: '1',
+            coupon: coupon,
+            version: version,
+            foglalas: foglalas,
+            szurestipus: szurestipus
         }
-    }).done(function(data){
-        if(data == 'error01')
-        {
-            $('#coupondesc').css('color','red').text('Érvénytelen kupon!');
+    }).done(function (data) {
+        if (data == 'error01') {
+            $('#coupondesc').css('color', 'red').text('Érvénytelen kupon!');
         }
-        if(data == 'error02')
-        {
-            $('#coupondesc').css('color','red').text('A kupont már felhasználták!');
+        if (data == 'error02') {
+            $('#coupondesc').css('color', 'red').text('A kupont már felhasználták!');
         }
-        if(data == 'error03'){
-            $('#coupondesc').css('color','red').text('Erre a vizsgálatra nem lehet felhasználni!');
+        if (data == 'error03') {
+            $('#coupondesc').css('color', 'red').text('Erre a vizsgálatra nem lehet felhasználni!');
         }
-        if(data != 'error01' && data != 'error02' && data != 'error03')
-        {
-            if(version == 1) {
+        if (data != 'error01' && data != 'error02' && data != 'error03') {
+            if (version == 1) {
                 var str = data.split('|');
                 $('#coupontitle').text(str[0]);
-                $('#coupondesc').css('color','#12c915').text(str[1]);
+                $('#coupondesc').css('color', '#12c915').text(str[1]);
             }
-            if(version == 2) {
+            if (version == 2) {
                 var str = data.split('|');
                 var $text01 = str[0];
-                $text02 = 'Kedv.:'+str[2];
-                $('#coupondesc').css('color','#444;').text($text01);
-                $('#coupondiscount').css('color','#444;').text($text02);
+                $text02 = 'Kedv.:' + str[2];
+                $('#coupondesc').css('color', '#444;').text($text01);
+                $('#coupondiscount').css('color', '#444;').text($text02);
             }
 
         }
     });
 }
 
-function accountini( id )
-{
+function accountini(id) {
     var data = { accountIni: true, docid: id };
     $.ajax({
         method: 'POST',
         url: 'index.php',
         data: data
-    }).done(function(data) {
+    }).done(function (data) {
         console.log(data);
         location.reload();
     });
@@ -1377,19 +1367,16 @@ function checkSzabiData() {
     $.ajax({
         type: 'POST',
         url: 'index.php',
-        data: 'page=doctors&checkSzabiData=1&start='+$('input[name="szabadsagtol"]').val()+'&end='+$('input[name="szabadsagig"]').val()+'&orvosid='+$('input[name="orvosid"]').val(),
-        success: function(data)
-        {
-            if(data != '')
-            {
+        data: 'page=doctors&checkSzabiData=1&start=' + $('input[name="szabadsagtol"]').val() + '&end=' + $('input[name="szabadsagig"]').val() + '&orvosid=' + $('input[name="orvosid"]').val(),
+        success: function (data) {
+            if (data != '') {
                 var result = '';
                 var analysis = data.split('|');
-                for(var i = 0;i < analysis.length; i++)
-                {
+                for (var i = 0; i < analysis.length; i++) {
                     var match = analysis[i].split(',');
-                    result+=match[0]+' '+match[1]+'\n';
+                    result += match[0] + ' ' + match[1] + '\n';
                 }
-                alert('Az alábbi foglalások a szabadságra esnek: \n'+result);
+                alert('Az alábbi foglalások a szabadságra esnek: \n' + result);
                 return false;
             }
             $('<input />').attr('type', 'hidden').attr('name', 'addszabadsag').attr('value', '1').appendTo('#iform');
@@ -1400,44 +1387,39 @@ function checkSzabiData() {
     return false;
 }
 
-function LWOpener(count)
-{
-    var numb = (count-10);
-    if( $('.warrnings-content').css('max-height') == '250px')
-    {
+function LWOpener(count) {
+    var numb = (count - 10);
+    if ($('.warrnings-content').css('max-height') == '250px') {
         $('.warrnings-content').css('max-height', 'none');
         $('.warningOpenFolder').html('Kevesebb <i class="fas fa-angle-double-up"></i>');
     }
-    else
-    {
+    else {
         $('.warrnings-content').css('max-height', '250px');
-        $('.warningOpenFolder').html(' Még '+numb+' db <i class="fas fa-angle-double-down"></i>');
+        $('.warningOpenFolder').html(' Még ' + numb + ' db <i class="fas fa-angle-double-down"></i>');
     }
 }
 
-function SmoothScrollTo(string, timelength){
+function SmoothScrollTo(string, timelength) {
     var timelength = timelength || 1000;
     $('html, body').animate({
-        scrollTop: $('*:contains("'+string+'"):last').offset().top-70
-    }, timelength, function(){
-        window.location.hash = '*:contains("'+string+'"):last';
+        scrollTop: $('*:contains("' + string + '"):last').offset().top - 70
+    }, timelength, function () {
+        window.location.hash = '*:contains("' + string + '"):last';
     });
 }
 
-function scrollToTarget(string,target)
-{
+function scrollToTarget(string, target) {
     $('body').highlight(string, target);
     SmoothScrollTo(string, 1000);
-    $(window).scrollTop($('*:contains("'+string+'"):first').offset().top);
+    $(window).scrollTop($('*:contains("' + string + '"):first').offset().top);
 }
 
-function scrollToTop()
-{
+function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function scrollTo(id) {
-    let pos = $("#"+id).offset().top - ($("#stickytablefilter").height() + 20);
+    let pos = $("#" + id).offset().top - ($("#stickytablefilter").height() + 20);
     if (id == "filterbox") {
         pos = 0;
     }
@@ -1447,182 +1429,159 @@ function scrollTo(id) {
 }
 
 //Highlight
-jQuery.fn.highlight = function( c,target )
-{
-    function e( b, c )
-    {
+jQuery.fn.highlight = function (c, target) {
+    function e(b, c) {
         var d = 0;
-        if( 3 == b.nodeType )
-        {
+        if (3 == b.nodeType) {
             var a = b.data.toUpperCase().indexOf(c);
-            if( 0 <= a )
-            {
+            if (0 <= a) {
                 d = document.createElement('span');
                 d.className = 'highlight';
-                a = b.splitText( a );
-                a.splitText( c.length );
-                var f = a.cloneNode( !0 );
-                d.appendChild( f );
-                a.parentNode.replaceChild( d, a );
+                a = b.splitText(a);
+                a.splitText(c.length);
+                var f = a.cloneNode(!0);
+                d.appendChild(f);
+                a.parentNode.replaceChild(d, a);
                 d = 1
             }
         }
-        else if ( 1 == b.nodeType && b.childNodes && !/(script|style)/i.test( b.tagName ))
-            for( a = 0; a < b.childNodes.length; ++a )
-            {
-                a+= e( b.childNodes[a], c );
+        else if (1 == b.nodeType && b.childNodes && !/(script|style)/i.test(b.tagName))
+            for (a = 0; a < b.childNodes.length; ++a) {
+                a += e(b.childNodes[a], c);
             }
 
         return d
     }
-    return this.length && c && c.length ? this.each( function()
-    {
-        e( this, c.toUpperCase() )
-    }): this
+    return this.length && c && c.length ? this.each(function () {
+        e(this, c.toUpperCase())
+    }) : this
 };
-jQuery.fn.removeHighlight = function()
-{
-    return this.find('span.highlight').each( function()
-    {
+jQuery.fn.removeHighlight = function () {
+    return this.find('span.highlight').each(function () {
         this.parentNode.firstChild.nodeName;
-        with( this.parentNode )replaceChild( this.firstChild, this ), normalize()
+        with (this.parentNode) replaceChild(this.firstChild, this), normalize()
     }).end()
 };
 
-function openSidePanel(select)
-{
-    $('.WL-sidePanel').animate({width: 'toggle'});
+function openSidePanel(select) {
+    $('.WL-sidePanel').animate({ width: 'toggle' });
     $('.WL-sidePanel').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:50%;left:50%;" src="images/loading.svg" />');
-    if( $('.WL-sidePanel').css('display') == 'block' )
-    {
-        if($('.WL-sidePanel').data('examIndex')) var index = $('.WL-sidePanel').data('examIndex');
+    if ($('.WL-sidePanel').css('display') == 'block') {
+        if ($('.WL-sidePanel').data('examIndex')) var index = $('.WL-sidePanel').data('examIndex');
         else var index = 'empty';
         $.ajax({
-            type:'POST',
-            url:'index.php',
-            data:{ loadSelectedMenu:true,option:select,index:index},
-            success:function( data ){
-                $('.WL-sidePanel').html( data );
+            type: 'POST',
+            url: 'index.php',
+            data: { loadSelectedMenu: true, option: select, index: index },
+            success: function (data) {
+                $('.WL-sidePanel').html(data);
             }
         })
     }
 }
 
-function showMissingExams(index)
-{
+function showMissingExams(index) {
     $('.WL-sidePanel').data('examIndex', index);
-    if( $('.WL-sidePanel').css('display') != 'block' )
-    {
-        $('.WL-sidePanel').animate({width: 'toggle'});
+    if ($('.WL-sidePanel').css('display') != 'block') {
+        $('.WL-sidePanel').animate({ width: 'toggle' });
     }
     $('.WL-sidePanel-selected-menu-conainer').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:calc(50% - 28px);left:calc(50% - 10px);" src="images/loading.svg" />');
 
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{ loadSelectedMenu:true,option:'option-3',index:index},
-        success:function( data ){
-            $('.WL-sidePanel').html( data );
+        type: 'POST',
+        url: 'index.php',
+        data: { loadSelectedMenu: true, option: 'option-3', index: index },
+        success: function (data) {
+            $('.WL-sidePanel').html(data);
         }
     })
 }
 
-function copyBooking(id, pass)
-{
-    if($('#copyButton').css('color') == 'rgb(0, 0, 0)')
-    {
-        $('#copyButton').css('color','red');
-        cpy=1;
-        foglalasSelected=id;
-        foglalasSelectedPass=pass;
+function copyBooking(id, pass) {
+    if ($('#copyButton').css('color') == 'rgb(0, 0, 0)') {
+        $('#copyButton').css('color', 'red');
+        cpy = 1;
+        foglalasSelected = id;
+        foglalasSelectedPass = pass;
         return;
     }
-    if($('#copyButton').css('color') == 'rgb(255, 0, 0)')
-    {
-        $('#copyButton').css('color','black');
-        cpy=0;
-        foglalasSelected=0;
-        foglalasSelectedPass=0;
+    if ($('#copyButton').css('color') == 'rgb(255, 0, 0)') {
+        $('#copyButton').css('color', 'black');
+        cpy = 0;
+        foglalasSelected = 0;
+        foglalasSelectedPass = 0;
         return;
     }
 }
 
-function selectSPOption(option)
-{
+function selectSPOption(option) {
     $('.WL-sidePanel-selected-menu-conainer').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:calc(50% - 28px);left:calc(50% - 10px);" src="images/loading.svg" />');
-    if($('.WL-sidePanel').data('examIndex')) var index = $('.WL-sidePanel').data('examIndex');
+    if ($('.WL-sidePanel').data('examIndex')) var index = $('.WL-sidePanel').data('examIndex');
     else var index = 'empty';
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{ loadWLSelectedMenu:true,option:option,index:index },
-        success:function( data ){
-            $('.WL-sidePanel-selected-menu-conainer').html( data );
+        type: 'POST',
+        url: 'index.php',
+        data: { loadWLSelectedMenu: true, option: option, index: index },
+        success: function (data) {
+            $('.WL-sidePanel-selected-menu-conainer').html(data);
 
         }
     })
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{ loadWLSPTitle:true,option:option },
-        success:function( data ){
-            $('.WL-sidePanel-title > span:first').text( data );
+        type: 'POST',
+        url: 'index.php',
+        data: { loadWLSPTitle: true, option: option },
+        success: function (data) {
+            $('.WL-sidePanel-title > span:first').text(data);
 
         }
     })
 }
 
-function changeWLPosition()
-{
+function changeWLPosition() {
     var position = $('.manager-warnings').offset();
-    var relativePositionLeft  = 373;
-    var relativeTop  = 50.48333740234375;
+    var relativePositionLeft = 373;
+    var relativeTop = 50.48333740234375;
     var monitorWidth = $(window).width();
-    var relativeLeft = ( monitorWidth - relativePositionLeft );
+    var relativeLeft = (monitorWidth - relativePositionLeft);
 
 
-    if($('.manager-warnings').css('position') == 'fixed')
-    {
-        var positionTop = (position.top - relativeTop)+'px';
-        var positionLeft = (position.left - relativeLeft)+'px';
-        $('.manager-warnings').css({'position':'absolute','left':positionLeft,'top':positionTop});
+    if ($('.manager-warnings').css('position') == 'fixed') {
+        var positionTop = (position.top - relativeTop) + 'px';
+        var positionLeft = (position.left - relativeLeft) + 'px';
+        $('.manager-warnings').css({ 'position': 'absolute', 'left': positionLeft, 'top': positionTop });
     }
-    else
-    {
-        var positionTop = (position.top - $(window).scrollTop() - 10)+'px';
-        var positionLeft = position.left+'px';
-        $('.manager-warnings').css({'position':'fixed','left':positionLeft,'top':positionTop});
+    else {
+        var positionTop = (position.top - $(window).scrollTop() - 10) + 'px';
+        var positionLeft = position.left + 'px';
+        $('.manager-warnings').css({ 'position': 'fixed', 'left': positionLeft, 'top': positionTop });
     }
 }
 
-function removeManager(id)
-{
+function removeManager(id) {
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{removeManager:id},
-        success:function(data){
-            if(data != '')
-            {
-                $('#manager-'+id).remove();
-                if($('.WL-sidePanel').css('display') == 'block')
-                {
+        type: 'POST',
+        url: 'index.php',
+        data: { removeManager: id },
+        success: function (data) {
+            if (data != '') {
+                $('#manager-' + id).remove();
+                if ($('.WL-sidePanel').css('display') == 'block') {
                     $('.WL-sidePanel-selected-menu-conainer').html('<img style="position:absolute;width:25px;height:25px;margin:0 auto;top:calc(50% - 28px);left:calc(50% - 10px);" src="images/loading.svg" />');
                     $.ajax({
-                        type:'POST',
-                        url:'index.php',
-                        data:{ loadWLSelectedMenu:true,option:'option-1' },
-                        success:function( data ){
-                            $('.WL-sidePanel-selected-menu-conainer').html( data );
+                        type: 'POST',
+                        url: 'index.php',
+                        data: { loadWLSelectedMenu: true, option: 'option-1' },
+                        success: function (data) {
+                            $('.WL-sidePanel-selected-menu-conainer').html(data);
                         }
                     });
                     $.ajax({
-                        type:'POST',
-                        url:'index.php',
-                        data:{refreshLWOpener:true},
-                        success:function(data){
-                            if(data != '')
-                            {
+                        type: 'POST',
+                        url: 'index.php',
+                        data: { refreshLWOpener: true },
+                        success: function (data) {
+                            if (data != '') {
                                 $('#LWOpener-container').html(data);
                             }
                         }
@@ -1633,41 +1592,36 @@ function removeManager(id)
     })
 }
 
-function refreshWList()
-{
+function refreshWList() {
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{refreshWL:true},
-        success:function(data){
-            if(data != '')
-            {
+        type: 'POST',
+        url: 'index.php',
+        data: { refreshWL: true },
+        success: function (data) {
+            if (data != '') {
                 $('.warrnings-content').html(data);
             }
         }
     });
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{refreshLWOpener:true},
-        success:function(data){
-            if(data != '')
-            {
+        type: 'POST',
+        url: 'index.php',
+        data: { refreshLWOpener: true },
+        success: function (data) {
+            if (data != '') {
                 $('#LWOpener-container').html(data);
             }
         }
     })
 }
-function withdrawRemove(id)
-{
+function withdrawRemove(id) {
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{withdrawManager:id},
-        success:function(data){
-            if(data != '')
-            {
-                $('#removedManager-'+id).remove();
+        type: 'POST',
+        url: 'index.php',
+        data: { withdrawManager: id },
+        success: function (data) {
+            if (data != '') {
+                $('#removedManager-' + id).remove();
                 refreshWList();
                 selectSPOption('option-1');
             }
@@ -1678,7 +1632,7 @@ function withdrawRemove(id)
 function initDateFilterPicker() {
     $('#napfilter').datepicker({
         language: 'hu',
-        onSelect: function(formattedDate, date, inst) {
+        onSelect: function (formattedDate, date, inst) {
             inst.hide();
             setListDay(formattedDate);
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
@@ -1687,7 +1641,7 @@ function initDateFilterPicker() {
 
     $('#datefrom').datepicker({
         language: 'hu',
-        onSelect: function(formattedDate, date, inst) {
+        onSelect: function (formattedDate, date, inst) {
             inst.hide();
             //setListDay(formattedDate);
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
@@ -1695,7 +1649,7 @@ function initDateFilterPicker() {
     })
     $('#dateto').datepicker({
         language: 'hu',
-        onSelect: function(formattedDate, date, inst) {
+        onSelect: function (formattedDate, date, inst) {
             inst.hide();
             //setListDay(formattedDate);
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
@@ -1710,7 +1664,7 @@ function initDateFilterPicker() {
 function initQueryDatePicker() {
     $('#start-query-date, #end-query-date').datepicker({
         language: 'hu',
-        onSelect: function(formattedDate, date, inst) {
+        onSelect: function (formattedDate, date, inst) {
             inst.hide();
             //setListDay(formattedDate);
             //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
@@ -1729,17 +1683,17 @@ function downloadExamStat(){
     //$(form).attr('action', 'reserves.php');
     $(form).attr('method', 'POST');
 
-    var key   = $('<input>').attr('type','hidden').attr('name','downloadExamStat').val(true);
-    var start = $('<input>').attr('type','hidden').attr('name','start').val($('#vizsg_szures_start').val());
-    var end   = $('<input>').attr('type','hidden').attr('name','end').val($('#vizsg_szures_end').val());
-    var cegid = $('<input>').attr('type','hidden').attr('name','cegid').val($('select[name="cegselect"]').val());
+    var key = $('<input>').attr('type', 'hidden').attr('name', 'downloadExamStat').val(true);
+    var start = $('<input>').attr('type', 'hidden').attr('name', 'start').val($('#vizsg_szures_start').val());
+    var end = $('<input>').attr('type', 'hidden').attr('name', 'end').val($('#vizsg_szures_end').val());
+    var cegid = $('<input>').attr('type', 'hidden').attr('name', 'cegid').val($('select[name="cegselect"]').val());
 
     $(form).append($(key));
     $(form).append($(start));
     $(form).append($(end));
     $(form).append($(cegid));
 
-    form.appendTo( document.body )
+    form.appendTo(document.body)
 
     $(form).submit();
 }
@@ -1747,18 +1701,18 @@ function downloadExamStat(){
 //marci end
 
 function showLogDetail(id) {
-    $("#logdetail"+id).toggle();
-    $("#logdetailcontent"+id).load("index.php?page=log&loadlogdetail="+id);
+    $("#logdetail" + id).toggle();
+    $("#logdetailcontent" + id).load("index.php?page=log&loadlogdetail=" + id);
     return false;
 }
 
 function startFODoctorSync(oid) {
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{page:"doctors", fosync:1, oid:oid},
-        success:function(data){
-            if(data != '') {
+        type: 'POST',
+        url: 'index.php',
+        data: { page: "doctors", fosync: 1, oid: oid },
+        success: function (data) {
+            if (data != '') {
                 $("#fosyncbutton").html(data);
             }
         }
@@ -1767,87 +1721,87 @@ function startFODoctorSync(oid) {
 
 function getFOData(oid) {
     $.ajax({
-        type:'POST',
-        url:'index.php',
-        data:{page:"doctors", getfodata:1, oid:oid},
-        success:function(data){
-            if(data != '') {
+        type: 'POST',
+        url: 'index.php',
+        data: { page: "doctors", getfodata: 1, oid: oid },
+        success: function (data) {
+            if (data != '') {
                 $("#fodatadiv").html(data);
             }
         }
     })
 }
 
-function manualNotificationSend(id,pass){
-	$.ajax({
-		type:'post',
-		url:'index.php',
-		data:{manualNotificationSend:true,id:id},
-		success:function(data){
-			if(data.status==true )alert(data.text);
-			if(data.status=="error")alert(data.text);
-			if(data.status==false){
-				var choice = confirm(data.text);
-				//Ha mégis elakarja küldeni az értesítést:
-				if(choice==true){
-					$.ajax({
-						type:'post',
-						url:'index.php',
-						data:{manualNotificationSend:true,id:id,status:true},
-						success:function(data){
-							if(data.status==true )alert(data.text);
-						}
-					});
-				}
-			}
-		}
-	});
+function manualNotificationSend(id, pass) {
+    $.ajax({
+        type: 'post',
+        url: 'index.php',
+        data: { manualNotificationSend: true, id: id },
+        success: function (data) {
+            if (data.status == true) alert(data.text);
+            if (data.status == "error") alert(data.text);
+            if (data.status == false) {
+                var choice = confirm(data.text);
+                //Ha mégis elakarja küldeni az értesítést:
+                if (choice == true) {
+                    $.ajax({
+                        type: 'post',
+                        url: 'index.php',
+                        data: { manualNotificationSend: true, id: id, status: true },
+                        success: function (data) {
+                            if (data.status == true) alert(data.text);
+                        }
+                    });
+                }
+            }
+        }
+    });
 }
 
-function formSerializer(selector,formula){
-	if(formula=='get'){
-		data="";
-		// look for every form field
-		selector.find('input, select, textarea').each(function(){
-			// serialize data
-			//Radio gomb kezelés:
-			if($(this).attr('type')=='radio' && $(this).prop('checked')!=true) return true;
-			//Checkbox kezelés:
-			if($(this).attr('type')=='checkbox' && $(this).prop('checked')!=true) return true;
+function formSerializer(selector, formula) {
+    if (formula == 'get') {
+        data = "";
+        // look for every form field
+        selector.find('input, select, textarea').each(function () {
+            // serialize data
+            //Radio gomb kezelés:
+            if ($(this).attr('type') == 'radio' && $(this).prop('checked') != true) return true;
+            //Checkbox kezelés:
+            if ($(this).attr('type') == 'checkbox' && $(this).prop('checked') != true) return true;
 
-			//Normál kezelés:
-			data+=$(this).attr('name')+'='+$(this).val()+'&';
-		});
-		// remove the last & char
-		return data.replace(/&$/g,"");
-	}
-	
-	if(formula=='arr'){
-		data=[];
-		// look for every form field
-		selector.find('input, select, textarea').each(function(i){
-			// serialize data
-			//Radio gomb kezelés:
-			if($(this).attr('type')=='radio' && $(this).prop('checked')!=true) return true;
-			//Checkbox kezelés:
-			if($(this).attr('type')=='checkbox' && $(this).prop('checked')!=true) return true;
+            //Normál kezelés:
+            data += $(this).attr('name') + '=' + $(this).val() + '&';
+        });
+        // remove the last & char
+        return data.replace(/&$/g, "");
+    }
 
-			//Normál kezelés:
-			data[i] = {name:$(this).attr('name'),value:$(this).val()};
-		});
-		// remove the last & char
-		return data;
-	}
-  
+    if (formula == 'arr') {
+        data = [];
+        // look for every form field
+        selector.find('input, select, textarea').each(function (i) {
+            // serialize data
+            //Radio gomb kezelés:
+            if ($(this).attr('type') == 'radio' && $(this).prop('checked') != true) return true;
+            //Checkbox kezelés:
+            if ($(this).attr('type') == 'checkbox' && $(this).prop('checked') != true) return true;
+
+            //Normál kezelés:
+            data[i] = { name: $(this).attr('name'), value: $(this).val() };
+        });
+        // remove the last & char
+        return data;
+    }
+
 }
 
-function setQndA(orvosid,szurestipus){
-	$.ajax({
-        type:'post',
-        url:'index.php?page=doctors',
-        data:{showQndA:true,orvosid:orvosid,szurestipus:szurestipus},
-        success:function(data){
-			showGeneralPopup(data);
+function setQndA(orvosid, szurestipus) {
+    $.ajax({
+        type: 'post',
+        url: 'index.php?page=doctors',
+        data: { showQndA: true, orvosid: orvosid, szurestipus: szurestipus },
+        success: function (data) {
+            showGeneralPopup(data);
             /*if (data.status == "ok") {
                 showGeneralPopup(data.html);
             } else {
@@ -1857,57 +1811,57 @@ function setQndA(orvosid,szurestipus){
     });
 }
 
-function addkerdes(szurestipus,orvosid){
-	$.ajax({
-        type:'post',
-        url:'index.php?page=doctors',
-        data:{addkerdes:true,orvosid:orvosid,szurestipus:szurestipus},
-        success:function(data){
-			if(data=="ok"){
-				setQndA(orvosid,szurestipus);
-			} 
+function addkerdes(szurestipus, orvosid) {
+    $.ajax({
+        type: 'post',
+        url: 'index.php?page=doctors',
+        data: { addkerdes: true, orvosid: orvosid, szurestipus: szurestipus },
+        success: function (data) {
+            if (data == "ok") {
+                setQndA(orvosid, szurestipus);
+            }
         }
     });
 }
 
-function delkerdes(szurestipus,orvosid,q){
-	if(confirm('Biztos törlöd ezt az egységet?')){
-		$.ajax({
-			type:'post',
-			url:'index.php?page=doctors',
-			data:{delkerdes:true,orvosid:orvosid,szurestipus:szurestipus,q},
-			success:function(data){
-				console.log(data);
-				if(data=="ok"){
-					setQndA(orvosid,szurestipus);
-				} 
-			}
-		});
-	}
+function delkerdes(szurestipus, orvosid, q) {
+    if (confirm('Biztos törlöd ezt az egységet?')) {
+        $.ajax({
+            type: 'post',
+            url: 'index.php?page=doctors',
+            data: { delkerdes: true, orvosid: orvosid, szurestipus: szurestipus, q },
+            success: function (data) {
+                console.log(data);
+                if (data == "ok") {
+                    setQndA(orvosid, szurestipus);
+                }
+            }
+        });
+    }
 }
 
-function saveQndA(szurestipus,orvosid){
-	var inputs = formSerializer($('#questions'),'arr');
-	
-	$.ajax({
-		type:'post',
-		url:'index.php?page=doctors',
-		data:{saveQndA:true,orvosid,szurestipus,inputs},
-		success:function(data){
-			if(data=="ok"){
-				setQndA(orvosid,szurestipus);
-			} 
-		}
-	});
+function saveQndA(szurestipus, orvosid) {
+    var inputs = formSerializer($('#questions'), 'arr');
+
+    $.ajax({
+        type: 'post',
+        url: 'index.php?page=doctors',
+        data: { saveQndA: true, orvosid, szurestipus, inputs },
+        success: function (data) {
+            if (data == "ok") {
+                setQndA(orvosid, szurestipus);
+            }
+        }
+    });
 }
 
 
 function retranserOperation(id) {
     $.ajax({
-        type:'post',
-        url:'index.php',
-        data:{showrefund:id},
-        success:function(data){
+        type: 'post',
+        url: 'index.php',
+        data: { showrefund: id },
+        success: function (data) {
             if (data.status == "ok") {
                 showGeneralPopup(data.html);
             } else {
@@ -1921,10 +1875,10 @@ function startSimpleRefund(id) {
     let osszeg = $("#refundprice").val();
     $("#refunbuttonsor").hide();
     $.ajax({
-        type:'post',
-        url:'index.php',
-        data:{startsimplerefund:id, osszeg:osszeg},
-        success:function(data){
+        type: 'post',
+        url: 'index.php',
+        data: { startsimplerefund: id, osszeg: osszeg },
+        success: function (data) {
             $("#refunbuttonsor").show();
             $("#simplerefundbutton").hide();
             $("#transferresult").show();
@@ -1935,7 +1889,7 @@ function startSimpleRefund(id) {
 }
 
 
-$(window).resize(function() {
+$(window).resize(function () {
     popUpPosition();
 });
 
@@ -1956,39 +1910,39 @@ function popUpPosition() {
     let bw = $("#generalpopup").width();
     let bh = $("#generalpopup").height();
 
-    $("#generalpopup").css("left", ww/2 - bw/2);
-    $("#generalpopup").css("top", wh/2 - bh/2);
+    $("#generalpopup").css("left", ww / 2 - bw / 2);
+    $("#generalpopup").css("top", wh / 2 - bh / 2);
 }
 
-function toggleCheckBox(id){
-	var checkbox = $(id);
-	console.log(checkbox.prop("checked"));
-	if(checkbox.prop("checked")==true) checkbox.prop("checked",false);
-	else checkbox.prop("checked",true);
-	//checkbox.prop("checked", !checkbox.prop("checked"));
-	return;
+function toggleCheckBox(id) {
+    var checkbox = $(id);
+    console.log(checkbox.prop("checked"));
+    if (checkbox.prop("checked") == true) checkbox.prop("checked", false);
+    else checkbox.prop("checked", true);
+    //checkbox.prop("checked", !checkbox.prop("checked"));
+    return;
 }
 
-function switchCheckBoxes(classname,func){
-	if(func=='disable'){
-		$('input.'+classname+'[type=checkbox]').each(function () {
-			if (this.checked) $(this).prop('checked',false);
-		});
-		
-		$('#checkBoxSwitcher').attr('onClick','switchCheckBoxes("'+classname+'","enable")');
-		$('#checkBoxSwitcher').text('Mindegyik');
-		return true;
-	}
-	
-	if(func=='enable'){
-		$('input.'+classname+'[type=checkbox]').each(function () {
-			if (!this.checked) $(this).prop('checked',true);
-		});
-		
-		$('#checkBoxSwitcher').attr('onClick','switchCheckBoxes("'+classname+'","disable")');
-		$('#checkBoxSwitcher').text('Egyikse');
-		return true;
-	}
+function switchCheckBoxes(classname, func) {
+    if (func == 'disable') {
+        $('input.' + classname + '[type=checkbox]').each(function () {
+            if (this.checked) $(this).prop('checked', false);
+        });
+
+        $('#checkBoxSwitcher').attr('onClick', 'switchCheckBoxes("' + classname + '","enable")');
+        $('#checkBoxSwitcher').text('Mindegyik');
+        return true;
+    }
+
+    if (func == 'enable') {
+        $('input.' + classname + '[type=checkbox]').each(function () {
+            if (!this.checked) $(this).prop('checked', true);
+        });
+
+        $('#checkBoxSwitcher').attr('onClick', 'switchCheckBoxes("' + classname + '","disable")');
+        $('#checkBoxSwitcher').text('Egyikse');
+        return true;
+    }
 }
 
 function selectAllCopyCompany() {
@@ -1998,24 +1952,24 @@ function deselectAllCopyCompany() {
     $(".copycegch").prop('checked', false);
 }
 
-function insertPaciensIntoDokirex(pid){
-	$.ajax({
-		type:'POST',
-		url: 'index.php',
-		data:{insertPaciensIntoDokirex:true,pid},
-		success:function(result){
-			showGeneralPopup(result);
-		}
-	});
+function insertPaciensIntoDokirex(pid) {
+    $.ajax({
+        type: 'POST',
+        url: 'index.php',
+        data: { insertPaciensIntoDokirex: true, pid },
+        success: function (result) {
+            showGeneralPopup(result);
+        }
+    });
 }
 
 
 function checkAdminWarnings() {
     $.ajax({
-        type:'POST',
+        type: 'POST',
         url: 'index.php',
-        data: {checkAdminWarnings:true},
-        success:function(result) {
+        data: { checkAdminWarnings: true },
+        success: function (result) {
             $("#warnbuttoncontainer").html(result.button);
             $("#adminwarnwindow").html(result.window);
             if (result.window == "" && $("#adminwarnwindow").css("right") == "20px") {
@@ -2028,10 +1982,10 @@ function checkAdminWarnings() {
 
 function warningAck(wid) {
     $.ajax({
-        type:'POST',
+        type: 'POST',
         url: 'index.php',
-        data:{warningAck:true,wid:wid},
-        success:function(result){
+        data: { warningAck: true, wid: wid },
+        success: function (result) {
             checkAdminWarnings();
         }
     });
@@ -2070,7 +2024,7 @@ function prepareUserDataSearch() {
     $(".pdatarow").toggle();
 
     $("#pdatasearchinput").unbind();
-    $("#pdatasearchinput").keyup(function() {
+    $("#pdatasearchinput").keyup(function () {
         triggerSearch = $(this).val();
     });
 }
@@ -2081,7 +2035,7 @@ function searchTimer() {
         $.ajax({
             url: 'index.php',
             type: 'POST',
-            data: {page: "booking", searchpaciens: 1, term: triggerSearch},
+            data: { page: "booking", searchpaciens: 1, term: triggerSearch },
             success: function (data) {
                 $("#searchpaciensresult").html(data);
                 searchIsGoing = false;
@@ -2098,7 +2052,7 @@ function bindUserToReservation(uid) {
         $.ajax({
             url: 'index.php',
             type: 'POST',
-            data: {page: "booking", bindusertoreservation: 1, uid: uid, fid:fid, pp:ppp},
+            data: { page: "booking", bindusertoreservation: 1, uid: uid, fid: fid, pp: ppp },
             success: function (data) {
                 showIdopontEditor("booking", ppp, fid);
 
@@ -2106,7 +2060,7 @@ function bindUserToReservation(uid) {
                     $.ajax({
                         type: "GET",
                         url: "index.php?page=blista&showarrivalstable",
-                        success: function(response)	{
+                        success: function (response) {
                             $("#arrivalstable").html(response);
                         }
                     });
@@ -2116,7 +2070,7 @@ function bindUserToReservation(uid) {
                     $.ajax({
                         type: "GET",
                         url: "index.php?page=booking&showelojegyzestable",
-                        success: function(response)	{
+                        success: function (response) {
                             $("#elojegyzestable").html(response);
                             afterElojegyzesTableInit();
                         }
@@ -2132,12 +2086,12 @@ function newUserDataFromReservation() {
     let fid = $("#reservationId").val();
     let ppp = $("#reservationToken").val();
 
-    let data = $("#iform").serialize()+"&page=booking&newUserDataFromReservation=1";
+    let data = $("#iform").serialize() + "&page=booking&newUserDataFromReservation=1";
     $.ajax({
-        url:'index.php',
-        type:'GET',
-        data:data,
-        success: function(data) {
+        url: 'index.php',
+        type: 'GET',
+        data: data,
+        success: function (data) {
             if (data.error != "") {
                 alert(data.error);
             } else {
@@ -2151,10 +2105,10 @@ function newUserDataFromReservation() {
 
 function refreshMonthSalary(month) {
     $.ajax({
-        type:'POST',
+        type: 'POST',
         url: 'index.php',
-        data: {refreshmonthsalary:1, month:month, page:"salary"},
-        success:function(result) {
+        data: { refreshmonthsalary: 1, month: month, page: "salary" },
+        success: function (result) {
             $("#salarycontainer").html(result);
             initDateFilterPicker();
         }
@@ -2163,10 +2117,10 @@ function refreshMonthSalary(month) {
 
 function refreshSalary(month) {
     $.ajax({
-        type:'POST',
+        type: 'POST',
         url: 'index.php',
-        data: {refreshsalary:1, datefrom:$("#datefrom").val(), dateto:$("#dateto").val(), page:"salary"},
-        success:function(result) {
+        data: { refreshsalary: 1, datefrom: $("#datefrom").val(), dateto: $("#dateto").val(), page: "salary" },
+        success: function (result) {
             if (result.error != "") {
                 alert(result.error);
                 return;
@@ -2179,15 +2133,15 @@ function refreshSalary(month) {
 
 function salaryDataNew(oid) {
     $.ajax({
-        type:'POST',
+        type: 'POST',
         url: 'index.php',
-        data: {salarydatanew:1, oid:oid, page:"salary"},
-        success:function(result) {
+        data: { salarydatanew: 1, oid: oid, page: "salary" },
+        success: function (result) {
             if (result.error != "") {
                 alert(result.error);
                 return;
             }
-            $("#salarydataeditor"+oid).html(result.html);
+            $("#salarydataeditor" + oid).html(result.html);
         }
     });
 }
@@ -2197,7 +2151,7 @@ function salaryDataDelete(oid, sid) {
         $.ajax({
             type: 'POST',
             url: 'index.php',
-            data: {salarydatadelete: 1, oid: oid, sid: sid, page: "salary"},
+            data: { salarydatadelete: 1, oid: oid, sid: sid, page: "salary" },
             success: function (result) {
                 if (result.error != "") {
                     alert(result.error);
@@ -2210,11 +2164,11 @@ function salaryDataDelete(oid, sid) {
 }
 
 function salaryDataSave(oid) {
-    let params = $("#salarydataeditorform"+oid).serialize();
+    let params = $("#salarydataeditorform" + oid).serialize();
 
     $.ajax({
         type: 'POST',
-        url: 'index.php?page=salary&salarydatasave=1&oid='+oid,
+        url: 'index.php?page=salary&salarydatasave=1&oid=' + oid,
         data: params,
         success: function (result) {
             if (result.error != "") {
@@ -2245,8 +2199,8 @@ function preparePhotoUpload(event) {
     var data = new FormData();
     data.append("uploadasset", id)
     data.append("tipus", tipus)
-    $.each(files, function(key,value) {
-        data.append(key,value);
+    $.each(files, function (key, value) {
+        data.append(key, value);
     });
 
     $.ajax({
@@ -2256,7 +2210,7 @@ function preparePhotoUpload(event) {
         cache: false,
         processData: false,
         contentType: false,
-        success: function(response, textStatus, jqXHR) {
+        success: function (response, textStatus, jqXHR) {
             $("#ajaxloader").hide();
 
             $("#asseteditor").html(response.html);
@@ -2266,9 +2220,9 @@ function preparePhotoUpload(event) {
                 alert(response.error);
                 return;
             }
-        }, error: function(jqXHR, textStatus, errorThrown) {
+        }, error: function (jqXHR, textStatus, errorThrown) {
             $("#ajaxloader").hide();
-            console.log('ERRORS: '+textStatus);
+            console.log('ERRORS: ' + textStatus);
         }
     });
 }
@@ -2281,7 +2235,7 @@ function deleteAsset(tipus, id) {
     $.ajax({
         type: 'POST',
         url: 'index.php',
-        data: {deleteasset: id, tipus: tipus},
+        data: { deleteasset: id, tipus: tipus },
         success: function (result) {
             $("#asseteditor").html(result.html);
             initUploadRoutine();
@@ -2293,7 +2247,7 @@ function toggleInvoiceFizetve(invId, partnerId) {
     $.ajax({
         type: 'POST',
         url: 'index.php?page=invoices',
-        data: {toggleinvoicefizetve: invId, partnerid:partnerId},
+        data: { toggleinvoicefizetve: invId, partnerid: partnerId },
         success: function (result) {
             $("#invoicelist").html(result.html);
         }
@@ -2307,7 +2261,7 @@ function oltasEljottCheck(id) {
         url: "?page=oltasigenyek&subpage=showall",
         data: { oltaseljottcheck: id },
         success: function (response) {
-            $("#personrow"+id).html(response);
+            $("#personrow" + id).html(response);
         }
     })
 }
@@ -2318,19 +2272,19 @@ function sendOltasMessage(id) {
         url: "?page=oltasigenyek&subpage=showall",
         data: { sendoltasmessage: id },
         success: function (response) {
-            $("#personrow"+id).html(response);
+            $("#personrow" + id).html(response);
         }
     })
 }
 
 function initIrszAutoFill() {
-    $("#irsz").keyup(function() {
+    $("#irsz").keyup(function () {
         let irsz = $(this).val();
         if (irsz.length == 4) {
             $.ajax({
                 method: "POST",
                 url: "/index.php",
-                data: {irszquery: irsz}
+                data: { irszquery: irsz }
             }).done(function (msg) {
                 if (msg != "") {
                     $("#varos").val(msg);
@@ -2341,10 +2295,10 @@ function initIrszAutoFill() {
 }
 
 function initTabOrder() {
-    $(".ui-taborder").keypress(function(e) {
-        if(e.which == 13) {
+    $(".ui-taborder").keypress(function (e) {
+        if (e.which == 13) {
             var index = $(this).data("taborder") + 1;
-            $(document).find("[data-taborder='"+index+"']").focus();
+            $(document).find("[data-taborder='" + index + "']").focus();
             //$('.ui-dform-text').eq(index).focus();
 
         }
@@ -2352,7 +2306,7 @@ function initTabOrder() {
 }
 
 function initGeneralSearch() {
-    $("#generalsearch").keypress(function(e) {
+    $("#generalsearch").keypress(function (e) {
         if (e.which == 13) {
             let term = $(this).val();
             let page = $(this).data("page");
@@ -2366,9 +2320,9 @@ function initGeneralSearch() {
             $.ajax({
                 method: "POST",
                 url: "index.php",
-                data: {page:page, generalsearch:1, term: term}
+                data: { page: page, generalsearch: 1, term: term }
             }).done(function (msg) {
-                $("#"+resultDiv).html(msg);
+                $("#" + resultDiv).html(msg);
             });
         }
     });
@@ -2376,15 +2330,15 @@ function initGeneralSearch() {
 }
 
 function toggleSubMenu(id) {
-    $("#submenu"+id).slideToggle("fast", function() {
+    $("#submenu" + id).slideToggle("fast", function () {
         let open = 1;
-        if($("#submenu"+id).is(":hidden")) {
+        if ($("#submenu" + id).is(":hidden")) {
             open = 0;
         }
         $.ajax({
             method: "POST",
             url: "index.php",
-            data: {opensubmenu:id, open: open}
+            data: { opensubmenu: id, open: open }
         });
     });
 
@@ -2402,7 +2356,7 @@ function addDoctorToCompany() {
     $.ajax({
         method: "POST",
         url: "index.php",
-        data: {page:"companies", adddoctortocompany:id, companyid: cid}
+        data: { page: "companies", adddoctortocompany: id, companyid: cid }
     }).done(function (msg) {
         $("#doctorlist").html(msg);
     });
@@ -2418,9 +2372,480 @@ function removeDoctorFromCompany(id) {
     $.ajax({
         method: "POST",
         url: "index.php",
-        data: {page:"companies", removedoctorfromcompany:id, companyid: cid}
+        data: { page: "companies", removedoctorfromcompany: id, companyid: cid }
     }).done(function (msg) {
         $("#doctorlist").html(msg);
     });
 
 }
+
+function setSynlabStatus() {
+    var form = $("#synlabParamsForApplication");
+    var arr = [];
+    var i = 0;
+
+    form.find("input").each(function () {
+        if (typeof $(this).attr("name") != "undefined" && ~$(this).attr("name").indexOf("sltc") && $(this).prop("checked") == true) {
+            i++;
+            var id = $(this).attr("value");
+            //Ez lesz a formula amire szükségem lesz.
+            arr[id] = $("input[name='sltp-" + id + "']").val();
+        }
+    });
+
+
+    $.ajax({
+        url: "?page=laborkero",
+        method: "POST",
+        data: { getsynlabstatus: true, items: arr, packId: $("select[name='PackId']").val() },
+        success: function (response) {
+            response = $.parseJSON(response);
+            $("#item_numb").html(response.unit + " db");
+            $("#grand_total").html(response.price + ".-");
+            $("#grand_total_int").val(parseInt(response.price));
+            $("#required_tubes").html(response.tubes);
+        }
+    });
+
+}
+
+$(document).mouseup(function (e) {
+
+    if (!$("#searchbar").is(e.target) && !$("#data-source").is(e.target) && !$("#patientlist").is(e.target)) {
+        $("#patientlist").hide();
+    }
+
+    if ($("#searchbar").is(e.target) && $("#searchbar").val().length > 4) {
+        $("#patientlist").show();
+    }
+    /*var object = $("YOUR CONTAINER SELECTOR");
+
+    // if the target of the click isn't the container nor a descendant of the container
+    if (!container.is(e.target) && container.has(e.target).length === 0) 
+    {
+        container.hide();
+    }*/
+});
+
+function setAId(aid) {
+    $("#aid").val(aid);
+    $("#searchbar").val($("#patientlist").find('option:selected').attr("name"));
+    $("#patientlist").hide();
+}
+
+function setPatientDroplist(word) {
+
+    if (word.length > 4) {
+        $("#patientlist").css({ "display": "block" });
+        $.ajax({
+            url: "?page=laborkero",
+            method: "POST",
+            data: { searchPatient: true, word: word, source: $("#data-source").val() },
+            success: function (response) {
+                $("#patientlist").html(response);
+                $("#patientlist").attr("size", $("#patientlist option").length);
+            }
+        })
+    } else {
+        $("#patientlist").css({ "display": "none" });
+    }
+}
+
+function setLaborPatientData(id, source) {
+    $.ajax({
+        url: "?page=laborkero",
+        method: "POST",
+        data: { setPatientData: true, aid: id, source: source },
+        success: function (response) {
+            //console.log(response);
+            $("#patientData").html(response);
+        }
+    })
+}
+
+function searchbyitem(keyword) {
+    $.ajax({
+        url: "?page=labortetelek",
+        method: "POST",
+        data: { searchbyitem: true, keyword: keyword, szerk: true },
+        success: function (response) {
+            $("#item-content").html(response);
+        }
+    })
+}
+
+function selectItemForPackage(item) {
+    $.ajax({
+        url: "?page=labortetelek",
+        method: "POST",
+        data: { selectItemForPackage: true, id: item, szerk: true },
+        success: function (response) {
+            console.log(response);
+        }
+    })
+}
+
+function readExcel() {
+
+    var data = new FormData();
+    $.each($('#staff-list-file')[0].files, function (i, file) {
+        data.append('file-' + i, file);
+    });
+
+    data.append('readExcel', true);
+    //var company  = ;
+    //var referral = ;
+    data.append('cegid', $('#companyid').val());
+    data.append('nev', $('#nev-column').val());
+    data.append('taj', $('#taj-column').val());
+    data.append('szuldatum', $('#szuldatum-column').val());
+    data.append('szulhely', $('#szulhely-column').val());
+    data.append('anyjaneve', $('#anyjaneve-column').val());
+    data.append('lakcim', $('#lakcim-column').val());
+    data.append('email', $('#email-column').val());
+    data.append('tel1', $('#tel1-column').val());
+    data.append('tel2', $('#tel2-column').val());
+    data.append('szerv', $('#szerv-column').val());
+    //data.append('referral_template',$('select[name="referral_template"]').val());
+    //data.append('sheet',$('#sheet').val());
+    /*if($("#onlyexcel").prop("checked")==true){
+        data.append('onlyexcel',1);
+    }else{
+        data.append('onlyexcel',0);
+    }*/
+
+    /*if($("#nojob").prop("checked")==true){
+        data.append('nojob',1);
+    }else{
+        data.append('nojob',0);
+    }*/
+
+    /*var columns = {};
+    $("#column_names").find("input").each(function(){
+        data.append($(this).attr("name"),$(this).val());
+        //columns[$(this).attr("name")] = $(this).val();
+    });*/
+
+
+    $('#excel_loading').html('<img src="images/loading.svg" width="20" />');
+    $.ajax({
+        url: 'index.php?page=companies',
+        data: data,
+        cache: false,
+        contentType: false,
+        processData: false,
+        method: 'POST',
+        type: 'POST', // For jQuery < 1.9
+        success: function (data) {
+            $('#excel_loading').html('');
+            $('#excel-processing-result').html(data);
+        }
+    });
+}
+
+function Insert_New_Organizational_Units(cid) {
+    if (!confirm("Biztosan importálni akarod az új szervezeti egységeket?")) {
+        return;
+    }
+    var values = $("input[name='new_units[]']")
+        .map(function () { return $(this).val(); }).get();
+
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Insert_New_Organizational_Units: true, units: values, cegid: cid },
+        success: function (response) {
+            confirm(response);
+            $("#Insert-New-O-Units-Button").remove();
+        }
+    })
+
+    //console.table(values);
+}
+
+function Insert_New_Staff_List(cid) {
+    if (!confirm("Biztosan importálni akarod az új állományi listát?")) {
+        return;
+    }
+
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Insert_New_Staff_List: true, cegid: cid },
+        success: function (response) {
+            console.log(response);
+            //confirm(response);
+            //$("#Insert-New-Staff-List-Button").remove();
+        }
+    })
+
+    //console.table(values);
+}
+
+function New_Notification_Message(cid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { New_Notification_Message: true, cegid: cid },
+        success: function (response) {
+            $("#edit-notification-message").attr("disabled", true);
+            $("#set-new-notification-message").attr("disabled", true);
+            $("#notification-editor").html(response).css("border", "none");
+        }
+    })
+}
+
+function Insert_New_Notification() {
+    if (!confirm("Biztosan mented az üzentet?")) {
+        return;
+    }
+
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Insert_New_Notification: true, cegid: $("#companyid").val(), megnev: $("#megnev").val(), targy: $("#targy").val(), szoveg: $("#szoveg").val() },
+        dataType: "json",
+        success: function (response) {
+
+            //Minden ok
+            if (response.result) {
+                window.location.reload();
+            }
+
+            //Tárgy nem megfelelő
+            if (response.targyError == true) {
+                $("#targy").css("border", "1px solid red");
+            } else {
+                $("#targy").css("border", "1px solid #a3a3a3");
+            }
+
+            //Szöveg nem megfelelő
+            if (response.szovegError == true) {
+                $("#szoveg").css("border", "1px solid red");
+            } else {
+                $("#szoveg").css("border", "1px solid #a3a3a3");
+            }
+
+            //Megnevezés nem megfelelő
+            if (response.megnevError == true) {
+                $("#megnev").css("border", "1px solid red");
+            } else {
+                $("#megnev").css("border", "1px solid red");
+            }
+        }
+    })
+}
+function Save_Notification(nid) {
+    if (!confirm("Biztosan mented a módosításokat?")) {
+        return;
+    }
+
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Save_Notification: true, notificationId: nid, megnev: $("#megnev").val(), targy: $("#targy").val(), szoveg: $("#szoveg").val() },
+        dataType: "json",
+        success: function (response) {
+            if (response.errorCode == 0) {
+                window.location.reload();
+            }
+            if (response.errorCode == 1) {
+                //A tárgy jó
+                $("#targy").css("border", "1px solid #a3a3a3");
+                //A szöveg rossz
+                $("#szoveg").css("border", "1px solid red");
+            }
+            if (response.errorCode == 2) {
+                //A tárgy rossz
+                $("#targy").css("border", "1px solid red");
+                //A szöveg jó
+                $("#szoveg").css("border", "1px solid #a3a3a3");
+            }
+            if (response.errorCode == 3) {
+                //A tárgy rossz
+                $("#targy").css("border", "1px solid red");
+                //A szöveg rossz
+                $("#szoveg").css("border", "1px solid red");
+            }
+        }
+    })
+
+}
+
+function Load_Notification_Message(nid, cegid) {
+    console.log("itt vagyok!");
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Load_Notification_Message: true, notificationId: nid, cegid: cegid },
+        dataType: "json",
+        success: function (response) {
+            if (response) {
+                $("#notification-editor").html(response.editor).css("border", "1px solid #a3a3a3");;
+                $("#notification-selector").html(response.selector);
+            }
+
+        }
+    })
+}
+
+function Edit_Notification_Message(nid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Edit_Notification_Message: true, notificationId: nid },
+        success: function (response) {
+            $("#edit-notification-message").attr("disabled", true);
+            $("#set-new-notification-message").attr("disabled", true);
+            $("#notification-editor").html(response);
+        }
+    })
+}
+
+function Cancel_Notification_Processing() {
+    if (!confirm("Biztosan bezárod az üzenet szerkesztőjét?")) {
+        return;
+    }
+
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Cancel_Notification_Processing: true, notificationId: $("#notification-selector").val() },
+        success: function (response) {
+            console.log(response);
+            $("#edit-notification-message").attr("disabled", false);
+            $("#set-new-notification-message").attr("disabled", false);
+            $("#notification-editor").html(response).css("border", "1px solid #a3a3a3");
+            //confirm(response);
+            //$("#Insert-New-Staff-List-Button").remove();
+        }
+    })
+}
+
+function Delete_Notification_Message(nid) {
+    if (!confirm("Biztosan törölni akarod az értesítő üzenetet?")) {
+        return;
+    }
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Delete_Notification_Message: true, notificationId: nid },
+        success: function (response) {
+            window.location.reload();
+            //console.log(response);
+            //$("#edit-notification-message").attr("disabled", false);
+            //$("#set-new-notification-message").attr("disabled", false);
+            //$("#notification-editor").html(response);
+            //confirm(response);
+            //$("#Insert-New-Staff-List-Button").remove();
+        }
+    })
+}
+
+function Show_Organizational_List(cegid, nlid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Show_Organizational_List: true, cegid: cegid, list: nlid },
+        success: function (response) {
+            if ($("#" + nlid + "-szervek").contents().length == 0) {
+                $("#" + nlid + "-szervek").html(response);
+            } else {
+                $("#" + nlid + "-szervek").empty();
+            }
+
+        }
+    })
+}
+
+function Set_Organizational_To_List(szid, cegid, nlid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Set_Organizational_To_List: true, list: nlid, szid: szid, cegid: cegid },
+        success: function (response) {
+            $("#" + nlid + "-organizational-list").html(response);
+        }
+    })
+}
+
+function Save_Custom_Notification_List(nlid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Save_Custom_Notification_List: true, list: nlid, megnev: $("#" + nlid + "-megnev").val(), leiras: $("#" + nlid + "-leiras").val(), uid: $("#" + nlid + "-uzenet").val() },
+        success: function (response) {
+            if (response == "success") {
+                window.location.reload();
+            }
+
+        }
+    })
+}
+
+function Show_Affected_Staff(nlid) {
+    if ($("#" + nlid + "-staff-list").contents().length == 0) {
+        $.ajax({
+            url: "?page=companies",
+            method: "POST",
+            data: { Show_Affected_Staff: true, list: nlid },
+            success: function (response) {
+                $("#" + nlid + "-staff-list").html(response);
+            }
+        })
+    } else {
+        $("#" + nlid + "-staff-list").empty();
+    }
+}
+
+function Inicialize_Custom_Notification_List(nlid) {
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Inicialize_Custom_Notification_List: true, list: nlid },
+        success: function (response) {
+            window.location.reload();
+        }
+    })
+}
+
+function Set_Scroll_To_Staff_List(scrollNumber, cegid) {
+    
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Set_Scroll_To_Staff_List: true, scroll: scrollNumber, cegid: cegid },
+        success: function (response) {
+            $("#staff-list-box").html(response);
+        }
+    })
+}
+
+function Staff_List_Searching(cegid,keyword,szid){
+    $('#staff-list-search-bar-loading').html('<img src="images/loading.svg" width="20" />');
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Staff_List_Searching: true,cegid: cegid, keyword: keyword,szid:szid },
+        success: function (response) {
+            console.log(response);
+            $('#staff-list-search-bar-loading').html('');
+            $("#staff-list-box").html(response);
+        }
+    })
+}
+
+function Staff_List_Filtering(cegid,keyword,szid){
+    $('#staff-list-filter-loading').html('<img src="images/loading.svg" width="20" />');
+    $.ajax({
+        url: "?page=companies",
+        method: "POST",
+        data: { Staff_List_Filtering: true,cegid: cegid, szid: szid,keyword:keyword },
+        success: function (response) {
+            console.log(response);
+            $('#staff-list-filter-loading').html('');
+            $("#staff-list-box").html(response);
+        }
+    })
+}
+
