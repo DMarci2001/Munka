@@ -16,14 +16,14 @@ class NotifySubPage extends AdminCorePage
             $workerId = $_POST["workerid"];
 
             if ($_POST["smsnotif"] == 1) {
-                //$this->service->notifyScheduleChange($workerId, "sms");
+                $this->service->notifyScheduleChange($workerId, "sms");
 
                 $result .= "<span style='color:#0a0;'>sms kiküldve</span>";
                 sql_query("update schedule_mapping m set notifyhash=md5(concat(m.datumfrom, m.datumto)) where m.datumfrom>now() and workerid=?", [$workerId]);
             }
 
             if ($_POST["emailnotif"] == 1) {
-                //$this->service->notifyScheduleChange($workerId, "email");
+                $this->service->notifyScheduleChange($workerId, "email");
 
                 if ($result != "") {
                     $result .= ", ";

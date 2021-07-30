@@ -214,7 +214,7 @@ class BookingSyncApi {
                 $beosztasok = sql_query("SELECT b.*, c.domain FROM orvosok o
                 LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.id
                 LEFT JOIN cegek c on c.id = b.cegid
-                WHERE o.pecsetszam=? AND b.cegid=? AND b.remoteid=0 ORDER BY b.beonap", [$pecsetszam, $cegId])->fetchAll(PDO::FETCH_ASSOC);
+                WHERE o.pecsetszam=? AND b.cegid=? AND b.aktiv=1 AND b.remoteid=0 ORDER BY b.beonap", [$pecsetszam, $cegId])->fetchAll(PDO::FETCH_ASSOC);
 
                 $cegData = sql_query("select domain from cegek where id=?", [$cegId])->fetch(PDO::FETCH_ASSOC);
 
@@ -238,6 +238,10 @@ class BookingSyncApi {
             if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$reservation["pecsetszam"]]))) {
                 $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
 
+                if (isset($syncParameters["onlyhelyszin"]) && $reservation["helyszinid"] != $syncParameters["onlyhelyszin"]) {
+                    return;
+                }
+
                 $data = [
                     "source"          => Booking_Constants::SQL_DB,
                     "action"          => "storenewreservation",
@@ -256,6 +260,10 @@ class BookingSyncApi {
             if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$reservation["pecsetszam"]]))) {
                 $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
 
+                if (isset($syncParameters["onlyhelyszin"]) && $reservation["helyszinid"] != $syncParameters["onlyhelyszin"]) {
+                    return;
+                }
+
                 $data = [
                     "source"          => Booking_Constants::SQL_DB,
                     "action"          => "modifyremotereservation",
@@ -273,6 +281,10 @@ class BookingSyncApi {
         if ($orvosData = sql_query("SELECT * FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC)) {
             if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$orvosData["pecsetszam"]]))) {
                 $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+
+                if (isset($syncParameters["onlyhelyszin"]) && $reservationData["helyszinid"] != $syncParameters["onlyhelyszin"]) {
+                    return;
+                }
 
                 $data = [
                     "source"          => Booking_Constants::SQL_DB,

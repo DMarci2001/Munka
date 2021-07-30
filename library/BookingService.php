@@ -1243,9 +1243,9 @@ class BookingService
     public function deleteReservation($id, $code, $force = false)
     {
         if ($force) {
-            $res = sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and aktiv=0", array($id, $code, $code));
+            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and aktiv=0", array($id, $code, $code));
         } else {
-            $res = sql_query("select id, orvosassigned, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
+            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
         }
         if ($row = sql_fetch_array($res)) {
             $foService = new FoglaljOrvostService();
