@@ -647,7 +647,7 @@ class BookingService
         }
 
         //BP-s maszkolt beosztások
-        if($_SESSION["helyszindata"]["id"]==74){
+        /*if($_SESSION["helyszindata"]["id"]==74){
             //Ha a fantom helyszínt választják ki:
             
             //Ha a jász utcát:
@@ -661,7 +661,7 @@ class BookingService
                 $helyszin=1;
                 $typeWhere = "instr(tipusok, '|{$szuresTipus}|')";
             }
-        }
+        }*/
 
         if ($nap != "") {
             $wd  = date("N", strtotime($nap));
@@ -685,7 +685,7 @@ class BookingService
         $orvosRestrict = "";
 
         //BP-s maszkolt beosztások
-        if($_SESSION["helyszindata"]["id"]==74){
+        /*if($_SESSION["helyszindata"]["id"]==74){
             //Ha a fantom helyszínt választják ki:
             //Ha a jász utcát:
             if($helyszinId == 1){
@@ -696,7 +696,7 @@ class BookingService
                 $orvosRestrict = " AND orvosid IN(282,285)";
                 $helyszinId = 1;
             }
-        }
+        }*/
 
         $minMaxData = sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles,MAX(potig) as maxpotigrendeles 
                                                     FROM orvos_beosztas b
@@ -821,7 +821,7 @@ class BookingService
         }
 
         //Ha a BP cég az aktuális cég:
-        if($_SESSION["helyszindata"]["id"]==74){
+        /*if($_SESSION["helyszindata"]["id"]==74){
             //Ha a fantom helyszínt választják ki:
             
             //Ha a jász utcát:
@@ -839,7 +839,7 @@ class BookingService
                     $orvos="";
                 }
             }
-        }
+        }*/
 
 
         //időpontra beosztott orvosok kiolvasása
@@ -886,7 +886,7 @@ class BookingService
         $helyszin = $this->helyszin;
         $wd  = date("N", strtotime($day));
 
-        if($_SESSION["helyszindata"]["id"]==74){
+        /*if($_SESSION["helyszindata"]["id"]==74){
             //Ha a fantom helyszínt választják ki:
 
             //Ha a jász utcát:
@@ -898,7 +898,7 @@ class BookingService
                 $orvosRestrict = " AND b.orvosid IN(282,285)";
                 $helyszin = 1;
             }
-        }
+        }*/
 
         $orvosAvailable = [];
         $res = sql_query("select b.* from orvos_beosztas b 
@@ -1070,7 +1070,7 @@ class BookingService
         }
         
         //Ha a BP cég az aktuális cég:
-        if($_SESSION["helyszindata"]["id"]==74){
+        /*if($_SESSION["helyszindata"]["id"]==74){
             //Ha a fantom helyszínt választják ki:
             
             //Ha a jász utcát:
@@ -1082,7 +1082,7 @@ class BookingService
                 $orvosRestrict=" AND orvosid IN(282,285)";
                 $helyszin=1;
             }
-        }
+        }*/
 
         //időpontra beosztott orvosok kiolvasása
         $resb = sql_query("SELECT 
