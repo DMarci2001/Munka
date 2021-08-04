@@ -543,18 +543,6 @@ class BookingService
                 $dist = "24 hour";
             }
 
-            //BFKH - Buda / Pest / VIP
-            if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
-                //cib
-                $dist = "48 hour";
-                if (date("N") == 4) {
-                    $dist = "72 hour";
-                }
-                if (date("N") == 5) {
-                    $dist = "96 hour";
-                }
-            }
-
             if ($cegId == 6) {
                 //cib
                 $dist = "72 hour";

@@ -53,49 +53,9 @@ class ServicesPage extends CorePage
                     $service = sql_fetch_array(sql_query("SELECT * FROM szolgaltatasok WHERE id=?", array($_POST["order-service"])));
                     $ar = ($_POST["method"] == "evesdij") ? $service["evesdij"] : ($service["futamido"] * $service["havidij"]);
                     $data = array($_SESSION["user"]["id"], $_POST["order-service"], "WFP", date("Y-m-d H:i:s"), $_POST["method"], ($_POST["method"] == "havidij") ? $service["futamido"] : "nincs", $ar, $service["havidij"]);
-
-                    //Megrendelés rögzítése:
                     sql_query("INSERT INTO szolgaltatasok_rendelesek SET fid=?,sid=?,statusz=?,kelte=?,fizetesimod=?,futamido=?,ar=?,havidij=?", $data);
-                    $orderId = sql_insert_id();
-
-                    //Fizetés sor(ok) generálása:
-                    if ($service["futamido"] == "nincs") {
-                        sql_query(
-                            "INSERT INTO szolgaltatasok_rendelesek_fizetesek SET order_id=?,reszlet=1,osszeg=?,kelte=NOW(),hatarido=?,statusz=",
-                            array($orderId, $service["evesdij"], date("Y-m-d", strtotime("now + 1 week")), "WAITING")
-                        );
-                    } else {
-                        //for ciklussal a futamidőnek megfelelően generálok query-ket:
-                        for ($i = 1; $i <= $service["futamido"]; $i++) {
-                            sql_query(
-                                "INSERT INTO szolgaltatasok_rendelesek_fizetesek SET order_id=?,reszlet=?,osszeg=?,kelte=NOW(),hatarido=?,statusz=?",
-                                array($orderId, $i, $service["havidij"], ($i == 1) ? date("Y-m-d", strtotime("now + 1 week")) : "", ($i == 1) ? "WAITING" : NULL)
-                            );
-                        }
-                    }
                 }
             }
-        }
-
-        if (isset($_GET["delorder"])) {
-            $checkIfExist = sql_num_rows(sql_query("SELECT * FROM szolgaltatasok_rendelesek WHERE id=?",array($_GET["delorder"])));
-            if($checkIfExist){
-                $checkForOwener = sql_num_rows(sql_query("SELECT * FROM szolgaltatasok_rendelesek WHERE id=? AND fid=?",array($_GET["delorder"],$_SESSION["user"]["id"])));
-                if($checkForOwener){
-                    $numb = sql_num_rows(sql_query("SELECT * FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='SUCCESS'", array($_GET["delorder"])));
-                    if ($numb == 0) {
-                        sql_query("DELETE FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=?", array($_GET["delorder"]));
-                        sql_query("DELETE FROM szolgaltatasok_rendelesek WHERE id=?", array($_GET["delorder"]));
-                    } else {
-                        $this->errors[] = "A szolgáltatás nem törölhető ha már történt befizetés!";
-                    }
-                }else{
-                    $this->errors[] = "A kijelölt megrendelés nem tartozik a felhasználó fiókjához!";
-                }
-            }else{
-                $this->errors[] = "A kijelölt megrendelés nem létezik!";
-            }
-           
         }
 
 
@@ -110,10 +70,10 @@ class ServicesPage extends CorePage
                 die;
             }
         }
+
     }
 
-    public static function serviceTransactionId($id)
-    {
+    public static function serviceTransactionId($id) {
         return "serv{$id}";
     }
 
@@ -122,13 +82,13 @@ class ServicesPage extends CorePage
         /*if (!isset($_SESSION["user"])) {
             header("Location:index.php?page=booking");
         }*/
-
         echo $this->displayFejlec("Szolgáltatások", true);
         echo $this->showErrors();
 
+        $fizId = str_replace("serv", "", $_REQUEST["paymentresult"]);
+
         //fizetés eredménnyel visszatérés
         if (isset($_REQUEST["paymentresult"])) {
-            $fizId = str_replace("serv", "", $_REQUEST["paymentresult"]);
             $paymentResult = sql_fetch_array(sql_query("select * from banktransactions where id=? and foglalasid=? limit 1", [$_REQUEST["transid"], $_REQUEST["paymentresult"]]));
 
             //jogosultság ellenőrzés
@@ -188,17 +148,6 @@ class ServicesPage extends CorePage
             $otr .= "</tr>";
 
             while ($result = sql_fetch_array($request)) {
-
-                //Külön tömbbe ki kell nyernem bizonyos adatokat a rendelesek táblából az order_id alapján:
-                //Milyen adatokra van itt szükségem?
-                //id,utolsó befizetés, aktuális befizetési határidő,törlés lehetőségének meghatározása
-
-                $orderData = sql_fetch_array(sql_query("SELECT (SELECT id FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='WAITING') AS FizId,
-                                                               (SELECT befizetve FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='SUCCESS' ORDER BY befizetve DESC LIMIT 1) AS utolso_befizetes,
-                                                               (SELECT MAX(hatarido) FROM szolgaltatasok_rendelesek_fizetesek WHERE id=FizId) AS hatarido
-                                                               ",array($result["id"],$result["id"])));
-
-                
                 $otr .= "<tr>";
                 $otr .= "<td style=\"font-weight:bold\">{$result["megnev"]}</td>";
                 //$otr .= "<td>{$result["fizetesimod"]}</td>";
@@ -209,11 +158,8 @@ class ServicesPage extends CorePage
                 $otr .= "<td>" . ($result["futamido"] == "nincs" ? $result["futamido"] : $result["futamido"] . " hónap") . "</td>";
 
                 //Ezekhez az adatokhoz szükségem van a befizetések táblára
-                //$lastPaymentDate = sql_fetch_array(sql_query("SELECT MAX(befizetve) as befizetve FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='SUCCESS' ",array($result["id"])));
-                $otr .= "<td>{$orderData["utolso_befizetes"]}</td>";
-                
-                //$nextPaymentDate = sql_fetch_array(sql_query("SELECT * FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='WAITING'",array($result["id"])));
-                $otr .= "<td>".date("Y-m-d",strtotime($orderData["hatarido"]))."</td>";
+                $otr .= "<td></td>";
+                $otr .= "<td></td>";
 
                 //fizetési összeg meghatározása:
                 if ($result["fizetesimod"] == "havidij") {
@@ -224,13 +170,7 @@ class ServicesPage extends CorePage
                 }
 
                 $otr .= "<td>{$price} Ft</td>";
-                $otr .= "<td><a class=\"newbutton\" href='?page=services&startpay={$orderData["FizId"]}'>Fizetés</a></td>";
-
-                $numb = sql_num_rows(sql_query("SELECT * FROM szolgaltatasok_rendelesek_fizetesek WHERE order_id=? AND statusz='SUCCESS'", array($result["id"])));
-                if (!$orderData["utolso_befizetes"]) {
-                    $otr .= "<td>{$numb}<a class=\"newbuttongray\" href='?page=services&delorder={$result["id"]}'>Törlés</a></td>";
-                }
-
+                $otr .= "<td><a class=\"newbutton\" href='?page=services&startpay={$result["id"]}'>Fizetés</a></td>";
                 $otr .= "</tr>";
             }
         }
