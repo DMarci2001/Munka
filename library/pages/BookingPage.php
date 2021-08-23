@@ -104,9 +104,9 @@ class BookingPage extends CorePage {
             if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
             if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
 
-            if($_POST["helyszin"]==98989898989898){
+            /*if($_POST["helyszin"]==98989898989898){
                 $_POST["helyszin"]=1;
-            }
+            }*/
 
             $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
             $this->bookingService->setHelyszin($_POST["helyszin"]);
@@ -115,9 +115,13 @@ class BookingPage extends CorePage {
             
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
+                
                 if (empty($_POST["email"])) {
-                    $this->errors[] = "{$webText["emailkotelezo"]}";
+                    if($_SESSION["helyszindata"]["id"]!=129){
+                        $this->errors[] = "{$webText["emailkotelezo"]}";
+                    } 
                 }
+                
 				if(!empty($_POST["email"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)){
 					$this->errors[] = "{$webText["hibasemail"]}";
 				}
