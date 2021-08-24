@@ -363,7 +363,9 @@ class BookingPage extends CorePage {
             echo "</select></td></tr>";
         }
 
-        echo $this->utils->dataField("email");
+        if($_SESSION["helyszindata"]["id"]!=129){
+            echo $this->utils->dataField("email");
+        }
         echo $this->utils->dataField("nev");
         echo $this->utils->dataField("telefon");
         echo $this->utils->dataField("szuldatum");
