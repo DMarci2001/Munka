@@ -145,14 +145,18 @@ class AdminDoctorsPage extends AdminCorePage {
             if (!$this->adminUser->doctorsCalendarAccess()) {
                 die();
             }
+
             $beosztasid = intval($_GET["showtipusvalaszto"]);
-            $rowo = sql_fetch_array(sql_query("select * from orvos_beosztas where id=?", array($beosztasid)));
+            $rowo = sql_fetch_array(sql_query("select * from orvos_beosztas where id=?", [$beosztasid]));
 
-            $res=sql_query("select * from szurestipusok where true order by megnev");
+            $tipusok = sql_query("select * from szurestipusok where true order by megnev")->fetchAll(PDO::FETCH_ASSOC);
 
-            echo "<div style='width:850px;'>";
-            while ($row=sql_fetch_array($res)) {
-                echo "<label style='white-space: nowrap;'><input onchange='saveTipusList({$beosztasid})' type='checkbox' name='tipusvalaszto{$beosztasid}_{$row["id"]}' value='{$row["megnev"]}' ".(substr_count($rowo["tipusok"],"|{$row["id"]}|")>0?"checked":"")."/>{$row["megnev"]}&nbsp;&nbsp;</label> ";
+            echo "<div style='width:1000px;padding:4px 0px;'>";
+
+            foreach ($tipusok as $tipus) {
+                $class = substr_count($rowo["tipusok"],"|{$tipus["id"]}|")>0 ? "serviceselected" : "servicenotselected";
+
+                echo "<a data-beoid='{$beosztasid}' data-tipusid='{$tipus["id"]}' title='' class='{$class}' href='#' onclick='toggleBeoService(this);return false;'>{$tipus["megnev"]}</a> ";
             }
 
             echo "<div style=''><input type='button' onclick='showTipusValaszto({$beosztasid});' value='OK'></div>";

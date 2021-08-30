@@ -1390,3 +1390,38 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	border-radius: 3px;
 	cursor: pointer;
 }
+
+.tablenyito {
+	transition: all .1s linear;
+}
+
+.servicenotselected {
+	border: 1px solid #ff6961;
+	border-radius: 4px;
+	white-space: nowrap;
+	color: #ff6961;
+	text-decoration: none;
+	padding: 2px 4px;
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.servicenotselected:hover {
+	text-decoration: none;
+}
+
+.serviceselected {
+	border: 1px solid #ff6961;
+	background: #ff6961;
+	border-radius: 4px;
+	white-space: nowrap;
+	color: white;
+	text-decoration: none;
+	padding: 2px 4px;
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.serviceselected:hover {
+	text-decoration: none;
+}

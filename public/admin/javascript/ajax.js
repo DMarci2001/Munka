@@ -95,7 +95,16 @@ function showTipusValaszto(beosztasid) {
         $("#tipusvalaszto" + beosztasid).html("");
         return;
     }
-    $("#tipusvalaszto" + beosztasid).load("index.php?page=doctors&showtipusvalaszto=" + beosztasid);
+
+    let request = $.ajax({
+        url: "index.php",
+        type: "get",
+        data: { page: "doctors", showtipusvalaszto: beosztasid }
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#tipusvalaszto"+beosztasid).html(response);
+    });
 }
 
 function showcegvalasztov2(restrictid) {
@@ -126,37 +135,6 @@ function saveceglistav2(restrictid) {
         url: "index.php",
         type: "get",
         data: { page: "doctors", savecegekv2: restrictid, value: tk }
-    });
-
-    request.done(function (response, textStatus, jqXHR) {
-        respo = response;
-    });
-
-
-}
-
-
-function saveTipusList(beosztasid) {
-    var tk = "";
-    var num = 0;
-    var t = "nincs tipus hozzárendelve";
-    var tlist = "";
-
-    $("#tipusvalaszto" + beosztasid + " input:checked").each(function () {
-        tk = tk + "|" + $(this).attr("name").replace("tipusvalaszto" + beosztasid + "_", "") + "|";
-        num++;
-        tlist = tlist + ", " + $(this).attr("value");
-    });
-
-    if (num > 0) t = tlist.substring(2);
-
-    $("#tipusstatus" + beosztasid).html("<a href='#' class='tlink' title='" + t + "' onclick='showTipusValaszto(" + beosztasid + ");return false;'>" + num + " tipus</a>");
-
-
-    request = $.ajax({
-        url: "index.php",
-        type: "get",
-        data: "page=doctors&savebeosztastipusok=" + beosztasid + "&value=" + encodeURIComponent(tk)
     });
 
     request.done(function (response, textStatus, jqXHR) {
@@ -2849,3 +2827,38 @@ function Staff_List_Filtering(cegid,keyword,szid){
     })
 }
 
+function toggleBeoService(button) {
+    if ($(button).hasClass("serviceselected")) {
+        $(button).removeClass("serviceselected");
+        $(button).addClass("servicenotselected");
+    } else {
+        $(button).removeClass("servicenotselected");
+        $(button).addClass("serviceselected");
+    }
+
+    var tk = "";
+    var num = 0;
+    var t = "nincs tipus hozzárendelve";
+    var tlist = "";
+    var beosztasid = $(button).data("beoid");
+
+    $("#tipusvalaszto" + beosztasid + " a").each(function () {
+        if ($(this).hasClass("serviceselected")) {
+            tk = tk + "|" + $(this).data("tipusid") + "|";
+            num++;
+            tlist = tlist + ", " + $(this).html();
+        }
+    });
+
+    if (num > 0) {
+        t = tlist.substring(2);
+    }
+
+    $("#tipusstatus" + beosztasid).html("<a href='#' class='tlink' title='" + t + "' onclick='showTipusValaszto(" + beosztasid + ");return false;'>" + num + " tipus</a>");
+
+    $.ajax({
+        url: "index.php",
+        type: "get",
+        data: "page=doctors&savebeosztastipusok=" + beosztasid + "&value=" + encodeURIComponent(tk)
+    });
+}
