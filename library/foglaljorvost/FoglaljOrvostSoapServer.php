@@ -134,6 +134,9 @@ class FoglaljOrvostSoapServer {
         //set foglaljorvost id
         sql_query("update foglalasok set fofid=?, foglalta='foglaljorvost' where id=?", [$appointmentId, $fid]);
 
+        $api = new BookingSyncApi();
+        $api->newReservation($fid);
+
         return $this->messageOutput("0",$fid);
     }
 
