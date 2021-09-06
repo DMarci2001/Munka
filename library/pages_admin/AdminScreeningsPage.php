@@ -316,15 +316,22 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<input type='submit' name='scancel' value='Vissza'> ";
             echo "</form>";
 
-            $res = sql_query("SELECT b.*,o.`nev`,GROUP_CONCAT(DISTINCT c.`megnev` SEPARATOR ', ') AS cegnev FROM orvos_beosztas b
+            $res = sql_query("SELECT b.*,o.nev FROM orvos_beosztas_new b
             LEFT JOIN orvosok o ON o.id=b.`orvosid`
-            LEFT JOIN cegek c ON c.id=b.`cegid`
-            WHERE INSTR(tipusok, ?) GROUP BY orvosid order by cegnev",array("|{$row["id"]}|"));
+            WHERE INSTR(tipusok, ?) and o.pecsetszam<>'temp' GROUP BY b.orvosid", ["|{$row["id"]}|"]);
+
+            $service = new BeosztasService();
 
             if (sql_num_rows($res) > 0) {
                 echo "<div class='tdsepdiv' style='margin-top:20px;'>{$_POST["megnev"]} orvosok</div>";
                 echo "<table cellpadding='0' cellspacing='0' border='0'>";
                 while ($row = sql_fetch_array($res)) {
+                    $companies = $service->getDoctorCompanies($row["orvosid"]);
+                    $companyNames = [];
+                    foreach ($companies as $company) {
+                        $companyNames[] = $company["megnev"];
+                    }
+
                     $tc = "tcella";
                     if (!isset($first)) {
                         echo "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
@@ -335,7 +342,7 @@ class AdminScreeningsPage extends AdminCorePage
                     }
                     echo "<tr>";
                     echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page=doctors&szerk={$row["orvosid"]}'>{$row["nev"]}</a></div></td>";
-                    echo "<td valign='top'><div class='{$tc}'>{$row["cegnev"]}</div></td>";
+                    echo "<td valign='top'><div class='{$tc}'>".implode(", ", $companyNames)."</div></td>";
                     echo "</tr>";
                     echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 }

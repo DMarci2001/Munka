@@ -77,7 +77,7 @@ class AdminAjaxService {
             }
             if ($_GET["page"] == "doctors" && $adminUser->doctorsAccess()) {
                 sql_query("delete from orvosok where id=?", array($_GET["delete"]));
-                sql_query("delete from orvos_beosztas where orvosid=?", array($_GET["delete"]));
+                sql_query("delete from orvos_beosztas_new where orvosid=?", array($_GET["delete"]));
             }
 
             if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
@@ -483,6 +483,108 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_POST["closebeotable"])) {
+            $closed = intval($_POST["closebeotable"]);
+            $index = intval($_POST["oid"])."_".intval($_POST["tid"]);
+
+            if (!isset($_SESSION["closedbeotable"])) {
+                $_SESSION["closedbeotable"] = [];
+            }
+
+            if (isset($_SESSION["closedbeotable"][$index])) {
+                unset($_SESSION["closedbeotable"][$index]);
+            }
+
+            if ($closed == 1) {
+                $_SESSION["closedbeotable"][$index] = 1;
+            }
+            die;
+        }
+
+        if (isset($_POST["toggleBeoCegSelector"])) {
+            $id = intval($_POST["toggleBeoCegSelector"]);
+
+            if (!isset($_SESSION["toggleBeoCegSelector"])) {
+                $_SESSION["toggleBeoCegSelector"] = [];
+            }
+
+            if (isset($_SESSION["toggleBeoCegSelector"][$id])) {
+                unset($_SESSION["toggleBeoCegSelector"][$id]);
+            }
+
+            if ($_POST["open"] == 1) {
+                $_SESSION["toggleBeoCegSelector"][$id] = 1;
+            }
+            die;
+        }
+
+        if (isset($_POST["duplicatereservation"])) {
+            die("funkció kikapcsolva");
+
+            $num = 0;
+            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$_POST["id"]]))) {
+
+                $dayOfWeek = date("N", strtotime($reservationData["datum"]));
+
+                for ($i = 1; $i < 1000; $i++) {
+                    $date = date("Y-m-d H:i:s", strtotime("{$reservationData["datum"]} + ".($i*7)." day"));
+
+                    if (sql_fetch_array(sql_query("select id from foglalasok where datum=? and orvosassigned=?", [$date, $reservationData["orvosassigned"]]))) {
+                        continue;
+                    }
+
+                    $data = [
+                        "parentid" => 0,
+                        "paciensid" => 0,
+                        "cegid" => $reservationData["cegid"],
+                        "datum" => $date,
+                        "rinterval" => $reservationData["rinterval"],
+                        "telephely" => "",
+                        "helyszin" => $reservationData["helyszinid"],
+                        "szurestipus" => $reservationData["szurestipusid"],
+                        "nev" => $reservationData["nev"],
+                        "email" => $reservationData["email"],
+                        "telefon" => $reservationData["telefon"],
+                        "szuldatum" => "0000-00-00 00:00:00",
+                        "szulhely" => "",
+                        "anyjaneve" => "",
+                        "neme" => 0,
+                        "taj" => "",
+                        "irsz" => "0000",
+                        "varos" => "",
+                        "utca" => "",
+                        "megj" => $reservationData["megj"],
+                        "munkakor" => "",
+                        "tudoszuro" => 0,
+                        "lang" => "hu",
+                        "orvosid" => $reservationData["orvosassigned"],
+                        "aktiv" => 1,
+                        "rn" => rand(1000000, 9999999)];
+
+                    $_REQUEST["rinterval"] = $reservationData["rinterval"]; //fix
+
+                    $service = new BookingService();
+                    $fid = $service->addReservationQuery($data);
+
+                    //Foglaljorvost.hu-nak átküldés
+                    $foService = new FoglaljOrvostService();
+                    $foService->newReservation($fid);
+
+                    $api = new BookingSyncApi();
+                    $api->newReservation($fid);
+
+                    $num++;
+                    if ($num == 35) {
+                        break;
+                    }
+                }
+            }
+
+
+
+            echo "Foglalás ismételve {$num} alkalommal";
+            die;
+        }
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {

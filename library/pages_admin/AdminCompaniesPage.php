@@ -120,6 +120,7 @@ class AdminCompaniesPage extends AdminCorePage
         }
 
 
+        //TODO: nem működő hívás
         if (isset($_POST["adddoctortocompany"])) {
             $ids = explode("_", $_POST["adddoctortocompany"]);
 
@@ -127,11 +128,11 @@ class AdminCompaniesPage extends AdminCorePage
             $tipusId = intval($ids[1]);
             $cegId = intval($_POST["companyid"]);
 
-            $beos = sql_query("SELECT * FROM orvos_beosztas WHERE orvosid=? AND INSTR(tipusok, ?) AND aktiv=1 GROUP BY CONCAT(nap, '_', beonap, '_', hetek, '_', tol, ig)", [$orvosId, "|{$tipusId}|"]);
+            $beos = sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND INSTR(tipusok, ?) AND aktiv=1 GROUP BY CONCAT(nap, '_', beonap, '_', hetek, '_', tol, ig)", [$orvosId, "|{$tipusId}|"]);
             foreach ($beos as $beo) {
                 sql_query(
-                    "insert into orvos_beosztas set orvosid=?, helyszinid=?, nap=?, beonap=?, tol=?, ig=?, potig=?, hetek=?, binterval=?, cegid=?, csaksorban=?, tipusok=?, aktiv=1",
-                    [$orvosId, $beo["helyszinid"], $beo["nap"], $beo["beonap"], $beo["tol"], $beo["ig"], $beo["potig"], $beo["hetek"], $beo["binterval"], $cegId, $beo["csaksorban"], "|{$tipusId}|"]
+                    "insert into orvos_beosztas_new set orvosid=?, helyszinid=?, nap=?, beonap=?, tol=?, ig=?, potig=?, hetek=?, binterval=?, cegid=?, beocegek=?, csaksorban=?, tipusok=?, aktiv=1",
+                    [$orvosId, $beo["helyszinid"], $beo["nap"], $beo["beonap"], $beo["tol"], $beo["ig"], $beo["potig"], $beo["hetek"], $beo["binterval"], $cegId, "|".$cegId."|", $beo["csaksorban"], "|{$tipusId}|"]
                 );
             }
 
@@ -139,6 +140,7 @@ class AdminCompaniesPage extends AdminCorePage
             die;
         }
 
+        //TODO: nem működő hívás
         if (isset($_POST["removedoctorfromcompany"])) {
             $ids = explode("_", $_POST["removedoctorfromcompany"]);
 
@@ -146,13 +148,13 @@ class AdminCompaniesPage extends AdminCorePage
             $tipusId = intval($ids[1]);
             $cegId = intval($_POST["companyid"]);
 
-            $beos = sql_query("SELECT * FROM orvos_beosztas WHERE orvosid=? AND INSTR(tipusok, ?) AND cegid=?", [$orvosId, "|{$tipusId}|", $cegId]);
+            $beos = sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND INSTR(tipusok, ?) AND cegid=?", [$orvosId, "|{$tipusId}|", $cegId]);
             foreach ($beos as $beo) {
                 if ($beo["tipusok"] == "|{$tipusId}|") {
-                    sql_query("delete from orvos_beosztas where id=? limit 1", [$beo["id"]]);
+                    sql_query("delete from orvos_beosztas_new where id=? limit 1", [$beo["id"]]);
                 } else {
                     $tipusok = str_replace("|{$tipusId}|", "", $beo["tipusok"]);
-                    sql_query("update orvos_beosztas set tipusok=? where id=? limit 1", [$tipusok, $beo["id"]]);
+                    sql_query("update orvos_beosztas_new set tipusok=? where id=? limit 1", [$tipusok, $beo["id"]]);
                 }
             }
 
@@ -726,12 +728,6 @@ class AdminCompaniesPage extends AdminCorePage
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Visszaigazoló szövegek</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addvisszaigazolo' value='+ Visszaigaziló szöveg hozzáadása'></td></tr>";
 
-            $w = $wc = "";
-            if (!$this->adminUser->allCegJog()) {
-                $w = "and b.cegid in (" . $this->adminUser->getCegList() . ")";
-                $wc = "and id in (" . $this->adminUser->getCegList() . ")";
-            }
-
             $resb = sql_query("select * from visszaigazolok where cegid=? order by id", array($_GET["szerk"]));
 
             $sor = 1;
@@ -752,7 +748,7 @@ class AdminCompaniesPage extends AdminCorePage
 
                 echo "<select name='orvosid{$sor}' style='width:300px;'>";
 
-                $resh = sql_query("SELECT o.* FROM orvosok o LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.`id` WHERE b.`cegid`='{$rowb["cegid"]}' GROUP BY o.id ORDER BY nev");
+                $resh = sql_query("SELECT o.* FROM orvosok o LEFT JOIN orvos_beosztas_new b ON b.`orvosid`=o.`id` WHERE (instr(b.beocegek, '|{$rowb["cegid"]}|') or b.beocegek='') GROUP BY o.id ORDER BY nev");
 
                 if (sql_num_rows($resh) > 1) echo "<option value='0'>Minden orvos</option>";
                 while ($rowh = sql_fetch_array($resh)) {
@@ -948,10 +944,11 @@ class AdminCompaniesPage extends AdminCorePage
 
             echo "</form>";
 
-            echo "<div class='tdsepdiv' style='margin-top:20px;'>{$_POST["megnev"]} orvosai és szolgáltatásai</div>";
-            echo "<div id='doctorlist'>";
-            echo $this->_orvosAndServiceList($row["id"]);
-            echo "</div>";
+            //TODO: át kell nézni, jelenleg nem működik
+            //echo "<div class='tdsepdiv' style='margin-top:20px;'>{$_POST["megnev"]} orvosai és szolgáltatásai</div>";
+            //echo "<div id='doctorlist'>";
+            //echo $this->_orvosAndServiceList($row["id"]);
+            ///echo "</div>";
 
             echo "</div>";
             echo "</div>";
@@ -1019,11 +1016,12 @@ class AdminCompaniesPage extends AdminCorePage
         return $html;
     }
 
+    //TODO: nem működő funkció, át kell nézni
     private function _orvosAndServiceList($cegId): string
     {
         $html = "";
 
-        $res = sql_query("SELECT b.*,o.`nev`,GROUP_CONCAT(DISTINCT b.`tipusok` SEPARATOR '') AS tipusokok FROM orvos_beosztas b
+        $res = sql_query("SELECT b.*,o.`nev`,GROUP_CONCAT(DISTINCT b.`tipusok` SEPARATOR '') AS tipusokok FROM orvos_beosztas_new b
 	        LEFT JOIN orvosok o ON o.id=b.`orvosid`
 	        LEFT JOIN cegek c ON c.id=b.`cegid`
 	        WHERE b.cegid=? and b.aktiv=1 and (nap<10 OR (nap=10 AND beonap>=DATE(NOW()))) and o.parentoid=0 GROUP BY orvosid ORDER BY o.nev", [$cegId]);
@@ -1072,7 +1070,7 @@ class AdminCompaniesPage extends AdminCorePage
         $html .= "<select id='doctoridtocompany'>";
         $html .= "<option value='0'>Válassz orvost és szolgáltatást</option>";
 
-        $doctors = sql_query("SELECT o.nev, GROUP_CONCAT(tipusok SEPARATOR '') AS alltipus, b.* FROM orvos_beosztas b
+        $doctors = sql_query("SELECT o.nev, GROUP_CONCAT(tipusok SEPARATOR '') AS alltipus, b.* FROM orvos_beosztas_new b
                 LEFT JOIN orvosok o ON o.id = b.`orvosid`
                 WHERE b.aktiv=1 and nap<10 OR (nap=10 AND beonap>=DATE(NOW())) and o.parentoid=0
                 GROUP BY orvosid")->fetchAll(PDO::FETCH_ASSOC);

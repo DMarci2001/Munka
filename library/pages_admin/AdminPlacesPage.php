@@ -134,7 +134,7 @@ class AdminPlacesPage extends AdminCorePage {
                 }
 
                 $vanbeo = 0;
-                if (sql_fetch_array(sql_query("select * from orvos_beosztas where helyszinid=? limit 1", array($row["id"])))) $vanbeo = 1;
+                if (sql_fetch_array(sql_query("select * from orvos_beosztas_new where helyszinid=? limit 1", array($row["id"])))) $vanbeo = 1;
 
                 echo "<tr>";
                 echo "<td nowrap valign=top><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["cim"]}</a>" . ($row["cim_en"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>EN</span>" : "") . ($row["cim_de"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>DE</span>" : "") . "</div></td>";

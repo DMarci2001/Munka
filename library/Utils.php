@@ -388,21 +388,6 @@ class Utils {
         return $Result;
     }
 
-
-    function selectOrvosForFoglalas($fid) {
-        $rowf=sql_fetch_array(sql_query("select * from foglalasok where id='{$fid}'"));
-        $nap=substr($rowf["datum"],0,10);
-        $ora=substr($rowf["datum"],11,5);
-
-        if ($rowf["orvosassigned"]!=0) return sql_query("select o.*,o.id as orvosid from orvosok o where id='{$rowf["orvosassigned"]}'");
-
-        return sql_query("SELECT WEEK('{$nap}',3)%2 AS weekmodulo,b.*,o.* FROM orvos_beosztas b 
-		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		WHERE b.`helyszinid`='{$rowf["helyszinid"]}' and (b.cegid='{$rowf["cegid"]}' or b.cegid=0) AND (INSTR(tipusok,'|{$rowf["szurestipusid"]}|') OR tipusok='') AND nap=WEEKDAY('{$nap}')+1 AND TIME(tol)<=TIME('{$ora}') AND TIME(ig)>TIME('{$ora}') AND TRIM(b.tipusok)<>''
-		order by IF (hetek=1,weekmodulo=0,weekmodulo=1)");
-    }
-
-
     public function getTajFromString($str) {
         preg_match_all('/\d+/', $str, $matches);
         foreach ($matches[0] as $val) {

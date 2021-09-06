@@ -355,9 +355,9 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<form name='bform' method='post' enctype='multipart/form-data'>";
             echo "<div class='tdsepdiv' style='margin-top:20px;'>Beutalók</div>";
 
-            $resb = sql_query("SELECT b.*,h.cim FROM orvos_beosztas b 
+            $resb = sql_query("SELECT b.*,h.cim FROM orvos_beosztas_new b 
 	        left join helyszinek h on h.id=b.helyszinid
-	        WHERE b.cegid='{$row["cegid"]}'");
+	        WHERE (instr(b.beocegek, '|{$row["cegid"]}|') or b.beocegek='')");
             while ($rowb = sql_fetch_array($resb)) {
                 $tipusok = explode("|", $rowb["tipusok"]);
                 for ($i=0;$i<count($tipusok);$i++) {

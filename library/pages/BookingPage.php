@@ -459,7 +459,7 @@ class BookingPage extends CorePage {
         $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
         $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas b WHERE b.cegid='{$_SESSION["helyszindata"]["id"]}' and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))");
+        $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))", ["|{$_SESSION["helyszindata"]["id"]}|"]);
         while ($row = sql_fetch_array($res)) {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {

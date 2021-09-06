@@ -69,6 +69,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminUtils.php");
     require_once(__DIR__ . "/library/AdminAjaxService.php");
     require_once(__DIR__ . "/library/AdminBookingEditor.php");
+    require_once(__DIR__ . "/library/AdminBeoEditor.php");
     require_once(__DIR__ . "/library/AdminLeletService.php");
     require_once(__DIR__ . "/library/AdminProtocolService.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");

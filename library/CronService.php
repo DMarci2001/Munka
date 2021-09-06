@@ -319,7 +319,7 @@ class CronService {
             $weekNumber    = date("W", strtotime("+1 day"));
             $paros         = (date("W", strtotime("+1 day"))%2==0?2:1);
 
-            $res=sql_query("SELECT b.orvosid,b.helyszinid,b.cegid,b.tipusok,o.nev,tel FROM orvos_beosztas b 
+            $res=sql_query("SELECT b.orvosid,b.helyszinid,b.cegid,b.tipusok,o.nev,tel FROM orvos_beosztas_new b 
 		        LEFT JOIN orvosok o ON o.id=b.orvosid 
 		        WHERE ((nap='{$holnapWeekDay}' AND hetek IN (0,{$paros})) or (nap=10 and beonap='{$holnapDate}')) AND o.aktiv=1 AND o.tel<>'' and o.smsgroupfoglalas=1
 		        GROUP BY orvosid");

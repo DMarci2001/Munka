@@ -43,7 +43,7 @@ class FoGeneral {
     }
 
     protected function getBeosztasData($beoId) {
-        $res = sql_query("select b.*, o.foid from orvos_beosztas b left join orvosok o on o.id = b.orvosid where b.id=?", [$beoId]);
+        $res = sql_query("select b.*, o.foid from orvos_beosztas_new b left join orvosok o on o.id = b.orvosid where b.id=?", [$beoId]);
         if (!$beo = sql_fetch_array($res)) {
             $beo["error"] = "Beosztás nem található!";
             return $beo;

@@ -5,6 +5,7 @@ class AdminBookingEditor {
     private $adminUtils;
     private $utils;
     private $bookingService;
+    private $beosztasService;
     private $user;
 
     public function __construct()
@@ -12,6 +13,7 @@ class AdminBookingEditor {
         $this->adminUtils = new AdminUtils();
         $this->utils = new Utils();
         $this->bookingService = new BookingService();
+        $this->beosztasService = new BeosztasService();
         $this->user = new AdminUser();
 
         if (isset($_GET["showidoponteditor"])) {
@@ -332,6 +334,9 @@ class AdminBookingEditor {
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
             $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
             $html.= "<a class='middlebutton' href='#' onClick='autoFill(false);return false;'>mezők kitöltése</a> ";
+            if ($this->user->user["username"] == "jns") {
+                $html.= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
+            }
 
             if (!empty(trim($row["taj"])) && !empty($row["szuldatum"])) {
                 $btext = "paciens létrehozása";
@@ -371,13 +376,9 @@ class AdminBookingEditor {
             $html.= "<tr><td width='60'>Cég:</td><td width='226'>";
             $html.= "<select name='cegid' style='width:200px;'>";
             $html.= "<option value='0'>Nincs céghez kötve</option>";
-            $wCeg = $this->user->cegSQLFilter("b.cegid");
-            $resh=sql_query("SELECT c.* FROM orvos_beosztas b 
-                  LEFT JOIN cegek c ON c.`id`=b.`cegid` 
-                  WHERE b.`helyszinid`=? and instr(tipusok,'|{$row["szurestipusid"]}|') {$wCeg} and c.id is not null
-                  GROUP BY b.`cegid` order by c.megnev",array($_SESSION["helyszin"]));
-            while ($rowh=sql_fetch_array($resh)) {
-                $html.= "<option value='{$rowh["id"]}'".($row["cegid"]==$rowh["id"]?" selected":"").">{$rowh["megnev"]}</option>";
+
+            foreach ($this->beosztasService->getPlaceCompanies($_SESSION["helyszin"], $row["szurestipusid"]) as $company) {
+                $html.= "<option value='{$company["id"]}'".($row["cegid"]==$company["id"]?" selected":"").">{$company["megnev"]}</option>";
             }
             $html.= "</select></td>";
 
@@ -386,14 +387,14 @@ class AdminBookingEditor {
             $wora="AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
 
             $html.= "<td width='64'>Orvos:</td><td>";
-            $html.= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' /><select name='orvosassigned' style='width:200px;'>";
+            $html.= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
+            $html.= "<select name='orvosassigned' style='width:200px;'>";
             $html.= "<option value='0'>Nincs orvoshoz kötve</option>";
-            $resh=sql_query("SELECT o.*,
-                  SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
-                  FROM orvos_beosztas b 
+            $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
+                  FROM orvos_beosztas_new b 
                   LEFT JOIN orvosok o ON o.`id`=b.`orvosid` 
-                  WHERE b.`helyszinid`=? and instr(tipusok,'|{$row["szurestipusid"]}|') {$wCeg} 
-                  GROUP BY b.`orvosid` order by beovan desc,o.nev",array($_SESSION["helyszin"]));
+                  WHERE b.helyszinid=? and instr(tipusok, '|{$row["szurestipusid"]}|') and o.pecsetszam<>'temp' 
+                  GROUP BY b.orvosid order by beovan desc, o.nev", [$_SESSION["helyszin"]]);
             while ($rowh=sql_fetch_array($resh)) {
                 $s="";
                 if ($rowh["beovan"]==0) {

@@ -704,6 +704,17 @@ function startAutoFill(id, p) {
     $("#autofill").slideDown();
 }
 
+function duplicateReservation(id, p) {
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: { duplicatereservation:1, id:id, p:p },
+        success: function (data) {
+            alert(data);
+        }
+    });
+}
+
 function autoFill(silent) {
     let taj = $("#editortaj").val().trim();
 
@@ -1637,6 +1648,14 @@ function initDateFilterPicker() {
     $('#vizsg_szures_start,#vizsg_szures_end').datepicker({
         language: 'hu'
     });
+
+    $('.companyselector2').select2({
+        placeholder: "Szűrés cégre",
+        allowClear: true
+    });
+    $('.addressselector2').select2({
+        placeholder: "Válassz helyszínt!"
+    });
 }
 
 function initQueryDatePicker() {
@@ -2357,6 +2376,28 @@ function removeDoctorFromCompany(id) {
 
 }
 
+function toggleElojegyzesTableNaptar(oid, tid) {
+    $("#tablenyito"+oid+"_"+tid).css({'transform' : 'rotate(180deg)'});
+    if ($(".beotable"+oid+"_"+tid).is(":hidden")) {
+        $("#tablenyito"+oid+"_"+tid).css({'transform' : 'rotate(0deg)'});
+    }
+
+    $(".beotable"+oid+"_"+tid).slideToggle(function() {
+        let closed = 0;
+        if($(this).is(":hidden")) {
+            closed = 1;
+        }
+
+        $.ajax({
+            method: "POST",
+            url: "index.php",
+            data: {closebeotable:closed, oid:oid, tid:tid}
+        });
+    });
+
+
+}
+
 function setSynlabStatus() {
     var form = $("#synlabParamsForApplication");
     var arr = [];
@@ -2860,5 +2901,114 @@ function toggleBeoService(button) {
         url: "index.php",
         type: "get",
         data: "page=doctors&savebeosztastipusok=" + beosztasid + "&value=" + encodeURIComponent(tk)
+    });
+}
+
+function toggleBeoCegSelector(groupid) {
+    $("#selectcompanydiv" + groupid).toggle(function () {
+        let open = 1;
+        if ($("#selectcompanydiv" + groupid).is(":hidden")) {
+            open = 0;
+        }
+        $.ajax({
+            method: "POST",
+            url: "index.php",
+            data: { toggleBeoCegSelector: groupid, open: open }
+        });
+    });
+
+}
+
+function toggleBeoCompany(button) {
+    if ($(button).hasClass("serviceselected")) {
+        $(button).removeClass("serviceselected");
+        $(button).addClass("servicenotselected");
+    } else {
+        $(button).removeClass("servicenotselected");
+        $(button).addClass("serviceselected");
+    }
+
+    let num = 0;
+    let cegids = $(button).parent().data("cegids");
+    let doctorId = $(button).parent().data("doctorid");
+    let groupId = $(button).parent().data("beogroupid");
+
+    let ts = [];
+    $("#selectedcompanies" + groupId + " a").each(function () {
+        if ($(this).hasClass("serviceselected")) {
+            ts.push(parseInt($(this).data("cegid")));
+            num++;
+        }
+    });
+
+    ts = ts.sort(function(a, b) {
+        return a - b;
+    });
+    let tk = "|"+ts.join("||")+"|";
+
+    let request = $.ajax({
+        url: "index.php?page=doctors",
+        type: "post",
+        data: "savebeosztascompanies=" + encodeURIComponent(cegids) + "&doctorid=" + doctorId + "&groupid=" + groupId + "&value=" + encodeURIComponent(tk)
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#beoeditor").html(response);
+    });
+}
+
+function addBeoRow(doctorId, groupId) {
+    let request = $.ajax({
+        url: "index.php?page=doctors",
+        type: "post",
+        data: "addbeorow=1&doctorid=" + doctorId + "&groupid=" + groupId
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#beoeditor").html(response);
+    });
+}
+
+function delBeoRow(doctorId, id) {
+    if (!confirm("Biztos törlöd ezt a beosztás sort?")) {
+        return;
+    }
+
+    let request = $.ajax({
+        url: "index.php?page=doctors",
+        type: "post",
+        data: "delbeorow=1&doctorid=" + doctorId + "&id=" + id
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#beoeditor").html(response);
+    });
+}
+
+function addBeoCopy(doctorId, groupId) {
+    if (!confirm("Duplikálod ezt a beosztást?")) {
+        return;
+    }
+
+    let request = $.ajax({
+        url: "index.php?page=doctors",
+        type: "post",
+        data: "addbeocopy=1&doctorid=" + doctorId + "&groupid=" + groupId
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#beoeditor").html(response);
+    });
+}
+
+function addBeoBlock(doctorId) {
+    let request = $.ajax({
+        url: "index.php?page=doctors",
+        type: "post",
+        data: "addbeoblock=1&doctorid=" + doctorId
+    });
+
+    request.done(function (response, textStatus, jqXHR) {
+        $("#beoeditor").html(response);
     });
 }

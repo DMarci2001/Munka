@@ -37,22 +37,24 @@ class BookingSyncApi {
         }
 
         if ($action == "storebeosztas") {
-            $this->storeAllBeosztas($input);
+            //$this->storeAllBeosztas($input);
         }
 
         die("Action not found");
     }
 
 
+    //TODO: nem működő funckció!!
     private function storeAllBeosztas($data) {
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=?", [$data["pecsetszam"]]))) {
             if ($cegData = sql_fetch_array(sql_query("select * from cegek where domain=?", [$data["cegdomain"]]))) {
-                sql_query("delete from orvos_beosztas where cegid=? and orvosid=? and remoteid<>0", [$cegData["id"], $orvosData["id"]]);
+                sql_query("delete from orvos_beosztas_new where cegid=? and orvosid=? and remoteid<>0", [$cegData["id"], $orvosData["id"]]);
 
                 foreach ($data["beosztasok"] as $beoData) {
-                    sql_query("insert into orvos_beosztas set
+                    sql_query("insert into orvos_beosztas_new set
                                orvosid=?,
                                cegid=?,
+                               beocegek=?,
                                helyszinid=?,
                                nap=?,
                                beonap=?,
@@ -66,7 +68,7 @@ class BookingSyncApi {
                                aktiv=?,
                                noreservation=?,
                                remoteid=?                                                           
-                        ", [$orvosData["id"], $cegData["id"], $data["defaulthelyszin"], $beoData["nap"], $beoData["beonap"], $beoData["tol"], $beoData["ig"], $beoData["potig"], $beoData["hetek"], $beoData["binterval"], $beoData["csaksorban"], $beoData["tipusok"], $beoData["aktiv"], $beoData["noreservation"], $beoData["id"]]);
+                        ", [$orvosData["id"], $cegData["id"], "|".$cegData["id"]."|", $data["defaulthelyszin"], $beoData["nap"], $beoData["beonap"], $beoData["tol"], $beoData["ig"], $beoData["potig"], $beoData["hetek"], $beoData["binterval"], $beoData["csaksorban"], $beoData["tipusok"], $beoData["aktiv"], $beoData["noreservation"], $beoData["id"]]);
                 }
             }
         }
@@ -212,9 +214,9 @@ class BookingSyncApi {
 
             if (isset($syncParameters["enablebeocopy"])) {
                 $beosztasok = sql_query("SELECT b.*, c.domain FROM orvosok o
-                LEFT JOIN orvos_beosztas b ON b.`orvosid`=o.id
+                LEFT JOIN orvos_beosztas_new b ON b.`orvosid`=o.id
                 LEFT JOIN cegek c on c.id = b.cegid
-                WHERE o.pecsetszam=? AND b.cegid=? AND b.aktiv=1 AND b.remoteid=0 ORDER BY b.beonap", [$pecsetszam, $cegId])->fetchAll(PDO::FETCH_ASSOC);
+                WHERE o.pecsetszam=? AND instr(b.cegid, ?) AND b.aktiv=1 AND b.remoteid=0 ORDER BY b.beonap", [$pecsetszam, "|{$cegId}|"])->fetchAll(PDO::FETCH_ASSOC);
 
                 $cegData = sql_query("select domain from cegek where id=?", [$cegId])->fetch(PDO::FETCH_ASSOC);
 

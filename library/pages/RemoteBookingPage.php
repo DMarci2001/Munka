@@ -39,7 +39,7 @@ class RemoteBookingPage extends CorePage{
 		if(isset($_GET['orvos'])){
 			$request = sql_query("SELECT * FROM orvosok WHERE md5(concat('orvos',id))=?",array($_GET['orvos']));
 			if( sql_num_rows( $request ) == 1 ){
-				$aktivBeo=sql_query("SELECT * FROM orvos_beosztas WHERE tipusok LIKE '%{$_POST['szurestipus']}%' AND orvosid=? AND aktiv=1",array($_GET['orvos']));
+				$aktivBeo=sql_query("SELECT * FROM orvos_beosztas_new WHERE instr(tipusok, ?) AND orvosid=? AND aktiv=1", ["|{$_POST["szurestipus"]}|", $_GET["orvos"]]);
 				if( sql_num_rows( $request ) == 1 ){
 					$result = sql_fetch_array($request);
 					$_POST['orvosid'] = $result['id'];
@@ -74,8 +74,8 @@ class RemoteBookingPage extends CorePage{
 			$_POST['orvosid']=$_POST['selectorvos'];
 			
 			$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation FROM orvosok o 
-										  LEFT JOIN orvos_beosztas beo ON beo.orvosid=o.id
-										  WHERE o.id=? AND beo.tipusok LIKE '%{$_POST['szurestipus']}%' GROUP BY beo.orvosid ORDER BY o.nev limit 1",array($_POST['orvosid'])));
+										  LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
+										  WHERE o.id=? AND instr(beo.tipusok, ?) GROUP BY beo.orvosid ORDER BY o.nev limit 1" ,[$_POST['orvosid'], "|{$_POST["szurestipus"]}|"]));
 										  
 			if($q['noreservation']==1){
 				 $_POST["datum"] = date("Y-m-d H:i:s");
@@ -144,8 +144,8 @@ class RemoteBookingPage extends CorePage{
 			header('Content-Type: application/json');
 			
 				$q=sql_fetch_array(sql_query("SELECT o.questions,beo.noreservation FROM orvosok o 
-											  LEFT JOIN orvos_beosztas beo ON beo.orvosid=o.id
-											  WHERE o.id=? AND beo.tipusok LIKE '%{$_POST['szurestipus']}%' GROUP BY beo.orvosid ORDER BY o.nev limit 1",array($_POST['orvosid'])));
+											  LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
+											  WHERE o.id=? AND instr(beo.tipusok, ?) GROUP BY beo.orvosid ORDER BY o.nev limit 1", ["|{$_POST["szurestipus"]}|", $_POST["orvosid"]]));
 			
 			$questionArr=json_decode($q['questions'],true);
 			
@@ -197,9 +197,13 @@ class RemoteBookingPage extends CorePage{
 		}
 		
 		//Kérdez/felelek opciók beillesztése:
-		$oq=sql_fetch_array(sql_query("SELECT o.questions,o.id AS orvosid,beo.noreservation FROM orvos_beosztas beo
+        $w = "";
+        if (isset($_POST["orvosid"])) {
+            $w = "AND o.id='".intval($_POST["orvosid"])."'";
+        }
+		$oq=sql_fetch_array(sql_query("SELECT o.questions,o.id AS orvosid,beo.noreservation FROM orvos_beosztas_new beo
 									   LEFT JOIN orvosok o ON o.id=beo.orvosid
-									   WHERE tipusok LIKE '%{$_POST['szurestipus']}%' ".(isset($_POST['orvosid'])?"AND o.id={$_POST['orvosid']}":"")." GROUP BY beo.orvosid ORDER BY o.nev limit 1"));
+									   WHERE instr(tipusok, ?) {$w} GROUP BY beo.orvosid ORDER BY o.nev limit 1", ["|{$_POST["szurestipus"]}|"]));
 		$questionArr=json_decode($oq['questions'],true);
 		
 		
@@ -366,9 +370,9 @@ class RemoteBookingPage extends CorePage{
 		//BACK-END:
 		//Orvosok kilistázása, akik ellátnak ilyen típusú vizsgálatot:
 		$options=$html="";
-		$request=sql_query("SELECT o.id,o.nev FROM orvos_beosztas beo
+		$request=sql_query("SELECT o.id,o.nev FROM orvos_beosztas_new beo
 							LEFT JOIN orvosok o ON o.id=beo.orvosid
-							WHERE tipusok LIKE '%{$szurestipus}%' AND beo.aktiv=1 GROUP BY beo.orvosid ORDER BY o.nev");
+							WHERE instr(tipusok, ?) AND beo.aktiv=1 and o.pecsetszam<>'temp' GROUP BY beo.orvosid ORDER BY o.nev", [$szurestipus]);
 		
 		//if(sql_num_rows($request)>1) $options.="<option value='0'>Válasszon orvost!</option>";
 		while($result=sql_fetch_array($request)){

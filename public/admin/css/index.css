@@ -502,7 +502,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .tdsepdiv {
 	background:#bbb;
 	color:#fff;
-	padding:5px;
+	padding:7px;
+	font-size:14px;
+	font-weight:bold;
+	margin:0px 0px;
+}
+
+.tdsepdivgreen {
+	background:#41b6c6;
+	color:#fff;
+	padding:7px;
 	font-size:14px;
 	font-weight:bold;
 	margin:0px 0px;
@@ -1293,8 +1302,15 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	position: sticky;
 	top:0px;
 	background: #fff;
-	z-index: 100000;
 	border-bottom: 1px solid #888;
+}
+
+.companyselector2 {
+	width:250px;
+}
+
+.s2 {
+
 }
 
 .napfilter {
