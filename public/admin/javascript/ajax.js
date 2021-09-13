@@ -467,6 +467,8 @@ function addIdopont(idopont, szt) {
 
 function afterElojegyzesTableInit() {
     initDateFilterPicker();
+    initIrszAutoFill();
+    initTabOrder();
 }
 
 function refreshNaptar(idopont) {
@@ -2288,6 +2290,10 @@ function initIrszAutoFill() {
                 }
             });
         }
+    });
+
+    $(".bookingeditorselector2").select2({
+        placeholder: "Nincs céghez kötve!"
     });
 }
 

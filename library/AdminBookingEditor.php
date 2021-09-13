@@ -374,10 +374,10 @@ class AdminBookingEditor {
             $html.= "<table style='font-size:12px;'>";
 
             $html.= "<tr><td width='60'>Cég:</td><td width='226'>";
-            $html.= "<select name='cegid' style='width:200px;'>";
+            $html.= "<select class='bookingeditorselector2' name='cegid' style='width:200px;'>";
             $html.= "<option value='0'>Nincs céghez kötve</option>";
 
-            foreach ($this->beosztasService->getPlaceCompanies($_SESSION["helyszin"], $row["szurestipusid"]) as $company) {
+            foreach (sql_query("select * from cegek where true order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
                 $html.= "<option value='{$company["id"]}'".($row["cegid"]==$company["id"]?" selected":"").">{$company["megnev"]}</option>";
             }
             $html.= "</select></td>";
@@ -388,12 +388,12 @@ class AdminBookingEditor {
 
             $html.= "<td width='64'>Orvos:</td><td>";
             $html.= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
-            $html.= "<select name='orvosassigned' style='width:200px;'>";
+            $html.= "<select class='bookingeditorselector2' name='orvosassigned' style='width:200px;'>";
             $html.= "<option value='0'>Nincs orvoshoz kötve</option>";
             $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
                   FROM orvos_beosztas_new b 
                   LEFT JOIN orvosok o ON o.`id`=b.`orvosid` 
-                  WHERE b.helyszinid=? and instr(tipusok, '|{$row["szurestipusid"]}|') and o.pecsetszam<>'temp' 
+                  WHERE b.helyszinid=? and instr(tipusok, '|{$row["szurestipusid"]}|')  
                   GROUP BY b.orvosid order by beovan desc, o.nev", [$_SESSION["helyszin"]]);
             while ($rowh=sql_fetch_array($resh)) {
                 $s="";

@@ -113,7 +113,7 @@ class AdminBookingPage extends AdminCorePage
                 sql_query("insert into orvosok set nev=?, description=?, aktiv=1, pecsetszam='temp', created=now(), createdby=?", [$orvosNev, $orvosMegj, $this->adminUser->user["nev"]]);
                 $return["newOrvosId"] = $orvosId = sql_insert_id();
 
-                sql_query("insert into orvos_beosztas_new set orvosid=?, helyszinid=?, nap=10, beonap=?, tol=?, ig=?, binterval=?, tipusok=?, aktiv=1", [$orvosId, $helyszinId, $nap, $orvosTol, $orvosIg, $orvosInterval, "|{$szuresTipusId}|"]);
+                sql_query("insert into orvos_beosztas_new set orvosid=?, helyszinid=?, nap=10, beonap=?, tol=?, ig=?, binterval=?, tipusok=?, aktiv=1, beocegek='|0|'", [$orvosId, $helyszinId, $nap, $orvosTol, $orvosIg, $orvosInterval, "|{$szuresTipusId}|"]);
             } else {
                 $return["error"] = "Az orvos hozzáadása közben hiba történt!";
             }
@@ -211,6 +211,7 @@ class AdminBookingPage extends AdminCorePage
         $maxOrvosId    = sql_query("select max(id)+1 from orvosok")->fetchColumn();
         $orvosList     = sql_query("select id, nev from orvosok where aktiv=1 order by nev")->fetchAll(PDO::FETCH_ASSOC);
         $existingOrvosTimes = [];
+        $emptySection  = false;
 
         $htmlout.="<div id='filterbox' style='margin-top:10px;'>";
         $htmlout.="<div style='display:table-cell;vertical-align:middle;'>".$this->napFilter2($setDay)."</div>";
@@ -344,7 +345,8 @@ class AdminBookingPage extends AdminCorePage
                 if ($minTol != "24:00") {
                     $htmlout .= "<div class='beotable{$orvosId}_{$szuresTipus["id"]}' style='".($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"])?"display:none;":"")."'>";
 
-                    if (!empty($existingOrvosTimes)) {
+                    if (!empty($existingOrvosTimes) && !$emptySection) {
+                        $emptySection = true;
                         $htmlout.="<div style='border-top:1px solid #ccc;marign-top:3px;padding-top:3px;width:100%;'></div>";
                     }
 
@@ -359,6 +361,7 @@ class AdminBookingPage extends AdminCorePage
                             continue;
                         }
                         $existingOrvosTimes[] = $ora;
+                        $emptySection = false;
 
                         $this->potIdopont = strtotime($ora) >= strtotime($maxIg);
 
@@ -424,16 +427,28 @@ class AdminBookingPage extends AdminCorePage
 
             //beosztás variálás miatt esetleg nem megjelenő foglalások
             if (isset($foglalasok[$szuresTipus["id"]]) && !empty($foglalasok[$szuresTipus["id"]])) {
-                $htmlout .= "<tr>";
-                $htmlout .= "<td>";
-                $htmlout .= "<div style='padding:4px 0px;'>Beosztáson kívüli foglalások:</div>";
-                $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                //orvosok megállapítása
+                $doctors = [];
                 foreach ($foglalasok[$szuresTipus["id"]] as $foglalas) {
-                    $htmlout.= $this->elojegyzesTableRow($foglalas, date("Y-m-d", strtotime($foglalas["datum"])), date("H:i", strtotime($foglalas["datum"])), 0, true);
+                    $doctors[] = $foglalas["orvosnev"];
                 }
-                $htmlout .= "</table>";
-                $htmlout .= "</td>";
-                $htmlout .= "</tr>";
+                $doctors = array_unique($doctors);
+
+                foreach ($doctors as $doctor) {
+                    $htmlout .= "<tr>";
+                    $htmlout .= "<td>";
+                    $htmlout .= "<div style='padding:4px 0px;'>Beosztáson kívüli foglalások - {$doctor}:</div>";
+                    $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                    foreach ($foglalasok[$szuresTipus["id"]] as $foglalas) {
+                        if ($foglalas["orvosnev"] != $doctor) {
+                            continue;
+                        }
+                        $htmlout .= $this->elojegyzesTableRow($foglalas, date("Y-m-d", strtotime($foglalas["datum"])), date("H:i", strtotime($foglalas["datum"])), 0, true);
+                    }
+                    $htmlout .= "</table>";
+                    $htmlout .= "</td>";
+                    $htmlout .= "</tr>";
+                }
             }
 
             if (isset($foglalasok[$szuresTipus["id"]]) && empty($foglalasok[$szuresTipus["id"]])) {
