@@ -781,6 +781,13 @@ function foglalasMentes(page) {
     var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
     $("#naptarloading").show();
 
+    let cegId = $("#cegid").val();
+    if (isNaN(cegId)) {
+        if (!confirm("Új céget készülsz létrehozni ("+cegId+"), biztos vagy benne?")) {
+            return;
+        }
+    }
+
     $.ajax({
         type: "POST",
         url: "index.php",
@@ -2292,8 +2299,13 @@ function initIrszAutoFill() {
         }
     });
 
+    $(".bookingeditorcegselector2").select2({
+        placeholder: "Nincs céghez kötve!",
+        tags: true
+    });
+
     $(".bookingeditorselector2").select2({
-        placeholder: "Nincs céghez kötve!"
+        placeholder: "Nincs orvoshoz kötve!"
     });
 }
 

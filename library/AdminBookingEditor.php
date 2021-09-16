@@ -44,6 +44,11 @@ class AdminBookingEditor {
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
+            if (!is_numeric($_POST["cegid"])) {
+                sql_query("insert into cegek set megnev=?, aktiv=1", [$_POST["cegid"]]);
+                $_POST["cegid"] = sql_insert_id();
+            }
+
             sql_query("update foglalasok set
                 orvosassigned=?,
                 cegid=?,
@@ -374,7 +379,7 @@ class AdminBookingEditor {
             $html.= "<table style='font-size:12px;'>";
 
             $html.= "<tr><td width='60'>Cég:</td><td width='226'>";
-            $html.= "<select class='bookingeditorselector2' name='cegid' style='width:200px;'>";
+            $html.= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
             $html.= "<option value='0'>Nincs céghez kötve</option>";
 
             foreach (sql_query("select * from cegek where true order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
