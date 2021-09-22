@@ -17,6 +17,14 @@ class AdminDicomPage extends AdminCorePage
             die;
         }
 
+        if (isset($_GET["dcegfilter"])) {
+            $this->dicomService->setSelectedCompany($_GET["dcegfilter"]);
+            header("location:index.php?page={$_GET["page"]}");
+            die;
+        }
+
+
+
         if (isset($_GET["getimage"])) {
             $content = $this->dicomService->getRawImage($_GET["getimage"]);
 
@@ -73,7 +81,8 @@ class AdminDicomPage extends AdminCorePage
         $GLOBALS["subtitle"] = "DICOM";
 
         echo "<div style='margin-bottom:20px;'>";
-        echo "<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>";
+        echo $this->cegFilter();
+        echo "&nbsp;&nbsp;<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
         echo "</div>";
 
 
@@ -91,7 +100,9 @@ class AdminDicomPage extends AdminCorePage
         $html.= "<tr style='background:#eee;'>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Időpont</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:10px;'></div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Klinika</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Gép</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:10px;'></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:240px;'>Paciens neve</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>Szül. dátum</td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>TAJ szám</td>";
@@ -100,10 +111,11 @@ class AdminDicomPage extends AdminCorePage
 
         foreach ($images as $row) {
             $patientData = $this->patinentService->getPatinentByTaj($row["patientOtherIDs"]);
+            $machineName = "{$row["manufacturer"]} {$row["manufacturerModelName"]}";
 
             $tc = "tcella";
             if (!isset($first)) {
-                $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                $html.= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first = 1;
             }
             if (empty(trim($row["patientName"]))) {
@@ -118,6 +130,8 @@ class AdminDicomPage extends AdminCorePage
             $html.= "</td>";
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["datum"]))."</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["institutionName"]}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$machineName}</div></td>";
             if (!empty($patientData)) {
                 $html .= "<td nowrap valign='top'><div class='{$tc}'><i title='pacienssel összekapcsolva' class='fas fa-link'></i></div></td>";
                 $html .= "<td nowrap valign='top'><div class='{$tc}'><a target='_blank' href='index.php?page=patients&szerk={$patientData["id"]}'>{$row["patientName"]}</a></div></td>";
@@ -131,9 +145,9 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["studyDescription"]}</div></td>";
 
             $html.= "</tr>";
-            $html.= "<tr><td colspan='8' ><div id='imagerow{$row["uid"]}' style='padding:10px 0px 10px 0px;display:none;'>";
+            $html.= "<tr><td colspan='10' ><div id='imagerow{$row["uid"]}' style='padding:10px 0px 10px 0px;display:none;'>";
             $html.= "</div></td></tr>";
-            $html.= "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            $html.= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         $html.= "</table>";
 
@@ -177,6 +191,12 @@ class AdminDicomPage extends AdminCorePage
         if (!empty($dicomData["contentDate"])) {
             $html .= "<div style='margin-top:15px;'>Készítés időpontja:<br/>{$dicomData["contentDate"]}</div>";
         }
+        if (!empty($dicomData["institutionName"])) {
+            $html .= "<div style='margin-top:15px;'>Intézet:<br/>{$dicomData["institutionName"]}</div>";
+        }
+        if (!empty($dicomData["manufacturer"])) {
+            $html .= "<div style='margin-top:15px;'>Gép:<br/>{$dicomData["manufacturer"]} {$dicomData["manufacturerModelName"]}</div>";
+        }
         if (!empty($dicomData["studyDescription"])) {
             $html .= "<div style='margin-top:15px;'>{$dicomData["studyDescription"]}</div>";
         }
@@ -216,6 +236,25 @@ class AdminDicomPage extends AdminCorePage
             $html.= "</div>";
         }
 
+        return $html;
+    }
+
+
+    private function cegFilter() {
+        $html = "";
+        $html.="<select class='companyselector' name='dcegfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&dcegfilter='+this.value;\">";
+        $html.="<option value=''>Szűrés cégre</option>";
+
+        $companies = $this->dicomService->getCompanies();
+
+        foreach ($companies as $company) {
+            if (empty($company["institutionName"])) {
+                continue;
+            }
+            $html.="<option value='{$company["institutionName"]}'".($this->dicomService->getSelectedCompany()==$company["institutionName"]?" selected":"").">{$company["institutionName"]}</option>";
+        }
+
+        $html.="</select>";
         return $html;
     }
 

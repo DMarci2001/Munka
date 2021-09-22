@@ -13,7 +13,42 @@ class DicomService {
 
     public function teszt() {
         $this->processEntries();
+        //$this->rescanDicomEntries();
         //print_r($dicomEntries);
+    }
+
+
+    public function rescanDicomEntries() {
+        $entries = sql_query("select * from dicom")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($entries as $entry) {
+
+            $manufacturer = $manufacturerModelName = $institutionName = "";
+
+            $xml = simplexml_load_string($entry["xml"]);
+
+            //echo $xml;
+            //die;
+            foreach ($xml->children() as $child){
+                if ($child->getName() == "data-set") {
+                    foreach ($child->children() as $subchild) {
+                        foreach ($subchild->attributes() as $attr) {
+                            if ($attr == "Manufacturer") {
+                                $manufacturer = $subchild;
+                            }
+                            if ($attr == "ManufacturerModelName") {
+                                $manufacturerModelName = $subchild;
+                            }
+                            if ($attr == "InstitutionName") {
+                                $institutionName = $subchild;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            sql_query("update dicom set manufacturer=?, manufacturerModelName=?, institutionName=? where id=?", [$manufacturer, $manufacturerModelName, $institutionName, $entry["id"]]);
+        }
     }
 
     public function processEntries() {
@@ -24,7 +59,7 @@ class DicomService {
                 continue;
             }
 
-            $output = `dcm2xml {$dicomEntry}`;
+            $output = `dcm2xml +Ca latin-1 {$dicomEntry}`;
             $xml = simplexml_load_string($output);
 
             $patientName      = "";
@@ -35,6 +70,9 @@ class DicomService {
             $studyDescription = "";
             $contentTime      = "";
             $contentDate      = "";
+            $manufacturer     = "";
+            $manufacturerModelName = "";
+            $institutionName  = "";
 
             foreach ($xml->children() as $child){
                 if ($child->getName() == "data-set") {
@@ -67,17 +105,31 @@ class DicomService {
                             if ($attr == "StudyDescription") {
                                 $studyDescription = $subchild;
                             }
+                            if ($attr == "Manufacturer") {
+                                $manufacturer = $subchild;
+                            }
+                            if ($attr == "ManufacturerModelName") {
+                                $manufacturerModelName = $subchild;
+                            }
+                            if ($attr == "InstitutionName") {
+                                $institutionName = $subchild;
+                            }
                         }
                     }
                 }
+            }
+
+
+            if ($institutionName == "Az intézet neve") {
+                $institutionName = "KeltexMed";
             }
 
             $contentDate = substr($contentDate,0,4)."-".substr($contentDate,4,2)."-".substr($contentDate,6,2)." ".substr($contentTime,0,2).":".substr($contentTime,2,2).":".substr($contentTime,4,2);
 
             echo "storing {$patientName}\n";
 
-            sql_query("insert into dicom set contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
-                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientID, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription]);
+            sql_query("insert into dicom set contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, manufacturer=?, manufacturerModelName=?, institutionName=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
+                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientID, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $manufacturer, $manufacturerModelName, $institutionName]);
 
         }
 
@@ -88,7 +140,7 @@ class DicomService {
         $d = dir($this->dir);
 
         while (false !== ($entry = $d->read())) {
-            if (substr($entry, 0, 2) == "CR") {
+            if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX") {
                 $entries[] = $this->dir."/".$entry;
             }
         }
@@ -109,7 +161,12 @@ class DicomService {
             $queryParams[] = $params["byuid"];
         }
 
-        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where true {$w} group by d.patientID order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        if (!empty($this->getSelectedCompany())) {
+            $w .= " and d.institutionName=?";
+            $queryParams[] = $this->getSelectedCompany();
+        }
+
+        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where true {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
@@ -182,5 +239,25 @@ class DicomService {
         $num = rand(1,12);
         return imagecreatefromstring(`convert {$this->dir}/skeleton{$num}.png {$param} png:-`);
     }
+
+    public function getCompanies() {
+        return sql_query_common("select institutionName from dicom group by institutionName")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getSelectedCompany():string {
+        if (isset($_COOKIE["dcegfilter"])) {
+            return $_COOKIE["dcegfilter"];
+        }
+        return "";
+    }
+
+    public static function setSelectedCompany($company) {
+        $exp = time() + 60 * 60 * 24 * 365;
+        if ($company == "" || sql_query_common("select id from dicom where institutionName=? limit 1", [$company])->fetchAll(PDO::FETCH_ASSOC)) {
+            setcookie("dcegfilter", $company, $exp, "/");
+            $_COOKIE["dcegfilter"] = $company;
+        }
+    }
+
 }
 
