@@ -373,25 +373,25 @@ class AdminBookingPage extends AdminCorePage
                             $this->addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$this->addIdopontJavaScript} } return false;";
                         }
 
-                        $resf = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f 
+                        $reservations = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join szurestipusok sz on sz.id=f.szurestipusid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
                         where f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) 
-                        group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId]);
+                        group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId])->fetchAll(PDO::FETCH_ASSOC);
 
                         $this->lastIdopont = "";
                         $this->foglalasButtonVolt = 0;
-                        while ($rowf = sql_fetch_array($resf)) {
-                            if (in_array($rowf["id"], $this->displayedReservations) && $beosztas["pecsetszam"] == "temp") {
+                        foreach ($reservations as $reservation) {
+                            if (in_array($reservation["id"], $this->displayedReservations) && $beosztas["pecsetszam"] == "temp") {
                                 continue;
                             }
-                            if (isset($foglalasok[$rowf["szurestipusid"]][$rowf["id"]])) {
-                                unset($foglalasok[$rowf["szurestipusid"]][$rowf["id"]]);
+                            if (isset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]])) {
+                                unset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]]);
                             }
-                            $htmlout .= $this->elojegyzesTableRow($rowf, $nap, $ora, $binterval);
-                            $this->displayedReservations[] = $rowf["id"];
+                            $htmlout .= $this->elojegyzesTableRow($reservation, $nap, $ora, $binterval);
+                            $this->displayedReservations[] = $reservation["id"];
                         }
 
                         if ($this->lastIdopont == "") {
@@ -485,14 +485,20 @@ class AdminBookingPage extends AdminCorePage
     private function elojegyzesTableRow($rowf, $nap, $ora, $binterval, $noAdd = false) {
         $htmlout = "";
 
-        $jogosult = $this->adminUser->cegJog($rowf["cegid"]);
-
         if ($rowf["nev"] == "nincs név") {
             $rowf["nev"] = "Foglalt";
         }
 
-        $idopontShow = date("H:i", strtotime($rowf["datum"]));
-        $cegNev = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
+        $jogosult       = $this->adminUser->cegJog($rowf["cegid"]);
+        $idopontShow    = date("H:i", strtotime($rowf["datum"]));
+        $cegNev         = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
+        $detailURL      = "showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;";
+        $companyWarning = "";
+
+        $warnings = $this->bookingService->foglalasWarnings($rowf);
+        if (!empty($warnings)) {
+            $companyWarning = "<a onclick='{$detailURL}' href='#'><i title='".implode("\n", $warnings)."' class='fas fa-exclamation-circle'></i></a>&nbsp;";
+        }
 
         $htmlout .= "<tr style=''>";
         $htmlout .= "<td valign='top' nowrap>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
@@ -511,7 +517,7 @@ class AdminBookingPage extends AdminCorePage
             }
 
             if ($this->szuresTipusActual["id"] == $rowf["szurestipusid"]) {
-                $htmlout .= "<a onclick='showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
+                $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
             } else {
                 $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
             }
@@ -527,9 +533,9 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
-            $htmlout .= "<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "color:#0a0;") . "'>{$cegNev}</span>";
+            $htmlout .= "{$companyWarning}<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "color:#0a0;") . "'>{$cegNev}</span>";
             if ($rowf["telephely"] != "") {
-                $htmlout .= "&nbsp;<span style='color:#003366'>{$rowf["telephely"]}</span>";
+                $htmlout .= "&nbsp;<span title='telephely' style='color:#003366'>{$rowf["telephely"]}</span>";
             }
             $htmlout .= "&nbsp;&nbsp;";
 

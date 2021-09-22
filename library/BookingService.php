@@ -317,6 +317,10 @@ class BookingService
                 $distFullDay = $preResData["day"]; //ennyi napon belül kell foglalni
                 $binterval   = $napiBeos[0]["binterval"];
 
+                if ($orvosData["pecsetszam"] == "temp") {
+                    continue;
+                }
+
                 $napHTML = "";
                 $napHTML.= "<div style='display:table-cell;text-align:center;vertical-align: top;".($oKey>1 ? "padding-left:3px;" : "")."'>";
                 $napHTML.= "<div style='width:70px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
@@ -1593,6 +1597,24 @@ class BookingService
         }
 
         return $services;
+    }
+
+    public function foglalasWarnings($reservationData):array {
+        $warnings = [];
+
+        if (!in_array($reservationData["nev"], ["Foglalt", "nincs név"])) {
+            if (empty($reservationData["cegnev"])) {
+                $warnings[] = "Nincs cég kiválasztva!";
+            }
+            if ($reservationData["cegid"] == Booking_Constants::DEFAULT_COMPANY_ID && $reservationData["szurestipusid"] == 1 && !empty($reservationData["taj"])) {
+                $warnings[] = "Üzemorvosi vizsgálathoz válassz másik céget!";
+            }
+            if (empty($reservationData["taj"])) {
+                $warnings[] = "A TAJ szám nincs megadva!";
+            }
+
+        }
+        return $warnings;
     }
 
 }

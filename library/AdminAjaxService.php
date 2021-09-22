@@ -431,7 +431,7 @@ class AdminAjaxService {
             $_REQUEST["szuldatum"] = str_replace(".", "-", $_REQUEST["szuldatum"]);
 
             if (empty($_REQUEST["taj"]) || empty($_REQUEST["nev"]) || empty($_REQUEST["cegid"]) || !$this->validateDate($_REQUEST["szuldatum"], "Y-m-d")) {
-                $error .= "A TAJ szám, a név, a születési dátum és a cég megadása kötelező a paciens adatlap léterhozásához!\n";
+                $error .= "A TAJ szám, a név, a születési dátum és a cég megadása kötelező a paciens adatlap létrehozásához!\n";
             }
             if (sql_fetch_array(sql_query("select id from felhasznalok where cegid=? and taj=?", [$_REQUEST["cegid"], $_REQUEST["taj"]]))) {
                 $error.= "Már van paciens adatlap ezzel a taj számmal a kiválasztott cégnél. Használd a paciens adatlap keresés gombot.\n";

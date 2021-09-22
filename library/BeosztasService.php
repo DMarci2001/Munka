@@ -29,7 +29,7 @@ class BeosztasService {
             AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$this->beosztasCompanyFilter}
             group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by o.sorrend, o.nev,nap,tol", [$helyszinId, "|{$szuresTipusId}|", $wd, $day, $day, $day]);
 
-        return $beoRes->fetchAll();
+        return $beoRes->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getTipusByHelyszin($helyszinId) {

@@ -788,6 +788,13 @@ function foglalasMentes(page) {
         }
     }
 
+    let cegId = $("#cegid").val();
+    if (isNaN(cegId)) {
+        if (!confirm("Új céget készülsz létrehozni, biztos vagy benne?")) {
+            return;
+        }
+    }
+
     $.ajax({
         type: "POST",
         url: "index.php",

@@ -1441,3 +1441,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .serviceselected:hover {
 	text-decoration: none;
 }
+
+.select2-container--open {
+	z-index: 9999999
+}
