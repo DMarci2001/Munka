@@ -525,8 +525,6 @@ class BookingPage extends CorePage {
             $_SESSION["enabletest"] = 1;
         }
 
-        $webText = $this->lang->webText;
-
         $html = "";
 
         $html.="<div style='padding:0px 0px 30px 0px;'>";
@@ -539,32 +537,32 @@ class BookingPage extends CorePage {
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
-			$html.= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
+            $html.= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
 
-            $html.= "<div style='display:inline-block;text-align:center;vertical-align: top;margin:0px 10px;'>";
             $html.= "<h2>Időpontfoglalás</h2>".$this->lang->getText("foglalas.inditas","Kattintson a szakrendelés nevére a foglalás indításához!")."<br/><br/>";
             foreach ($services as $tipusData) {
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-                if($tipusData['webdoktor']!=0) {
-                    continue;
+
+                if (empty($tipusData["facode"])) {
+                    $tipusData["facode"] = "<i class='fas fa-hospital'></i>";
                 }
-                $html.= "<div><div style='margin-top:4px;text-align:center;width:320px;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbuttongray'>{$tipusData["megnev"]}</div></div>";
-            }
-            $html.= "</div>";
 
-            $html.= "<div style='display:inline-block;text-align:center;vertical-align: top;margin:0px 10px;'>";
-            $html.= "<h2>Webdoktor</h2>".$this->lang->getText("foglalas.inditas","Kattintson a szakrendelés nevére a foglalás indításához!")."<br/><br/>";
-            foreach ($services as $tipusData) {
-                $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
-                if($tipusData['webdoktor']!=1) {
-                    continue;
+                if ($tipusData["webdoktor"] == 1) {
+                    $tipusData["facode"] = "<i class='fas fa-laptop-medical'></i>";
                 }
-                $html.= "<div><div style='margin-top:4px;text-align:center;width:320px;' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;' class='newbutton'>{$tipusData["megnev"]}</div></div>";
+
+                $html.= "<div class='vizsgalatdoboz".($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor":"")."' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
+                $html.= "<div style=''>";
+                $html.= "<div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
+                $html.= "<div style='font-size:16px;font-family: robotobold;color:#fff;'>{$tipusData["megnev"]}</div>";
+                $html.= "</div>";
+
+                $html.= "<div class='".($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor":"vizsgalatdobozbutton")."'>".($tipusData["webdoktor"] == 1 ? "&nbsp;&nbsp;&nbsp;&nbsp;megrendelem&nbsp;&nbsp;&nbsp;&nbsp;":"időpontfoglalás")."</div>";
+
+                $html.= "</div>";
             }
+
             $html.= "</div>";
-
-			$html.= "</div>";
-
         }
         $html.= "</div>";
 

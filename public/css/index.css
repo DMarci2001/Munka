@@ -363,7 +363,7 @@ input:not([type]), input[type="text"] , input[type="password"]{
     color:#000;
     font-size:32px;
     height:300px;
-    border-bottom: 5px solid #a90000;
+    border-bottom: 5px solid #b90000;
     display:table-cell;
     vertical-align: middle;
 }
@@ -959,4 +959,66 @@ and (max-width: 1200px) {
         border-bottom-right-radius:0px;
     }
 
+}
+
+.vizsgalatdoboz {
+    position: relative;
+    border-radius: 5px;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin:10px;
+    padding:20px 10px 20px 10px;
+    display: inline-block;
+    background-color: #888;
+    color:#fff;
+    width: 202px;
+    height: 200px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.vizsgalatdoboz:hover {
+    background-color: #888;
+}
+
+.vizsgalatdobozwebdoctor {
+    background-color: #b90000;
+    background-image: url(/images/webdoktor.png11111);
+    background-size: 60px;
+    background-repeat: no-repeat;
+}
+.vizsgalatdobozwebdoctor:hover {
+    background: #b90000;
+}
+
+.vizsgalatdobozbutton {
+    position:absolute;
+    border-radius: 3px;
+    bottom:20px;
+    left: 25px;
+    text-transform: uppercase;
+    display:inline-block;
+    padding:5px 10px;
+    box-sizing: border-box;
+    background: #aaa;
+}
+
+.vizsgalatdobozbutton:hover {
+    background: #999;
+}
+
+.vizsgalatdobozbuttonwebdoctor {
+    position:absolute;
+    border-radius: 3px;
+    bottom:20px;
+    left: 25px;
+    text-transform: uppercase;
+    display:inline-block;
+    padding:5px 10px;
+    box-sizing: border-box;
+    background: #c02a2a;
+}
+
+.vizsgalatdobozbuttonwebdoctor:hover {
+    background: #830b0b;
 }

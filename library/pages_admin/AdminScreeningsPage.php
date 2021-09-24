@@ -153,7 +153,8 @@ class AdminScreeningsPage extends AdminCorePage
                     }
                 }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?,infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=? where id=?",array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"],$_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'],$_GET["szerk"]));
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?, facode=?, infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=? where id=?",
+                    array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"], $_POST["facode"], $_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'],$_GET["szerk"]));
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -186,6 +187,7 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td width='100'>Megnevezés:</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev' value='{$_POST["megnev"]}'></td></tr>";
             echo "<tr><td width='100'>Megnevezés (de):</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev_de' value='{$_POST["megnev_de"]}'></td></tr>";
             echo "<tr><td width='100'>Megnevezés (en):</td><td><input class='inputbox' style='width:400px;' type='text' name='megnev_en' value='{$_POST["megnev_en"]}'></td></tr>";
+            echo "<tr><td width='100'>Fontawesome:</td><td><input class='inputbox' style='width:200px;' type='text' name='facode' value='{$_POST["facode"]}'></td></tr>";
 
             echo "<tr><td colspan='2' valign='top'>";
             echo "<input type='checkbox' value='1' name='aktiv'" . ($_POST["aktiv"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
