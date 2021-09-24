@@ -204,7 +204,7 @@ class AdminPatientsPage extends AdminCorePage {
                 echo " [<a onclick='alert(\"TAJ szám nem található a törzs adatok között!\");' href='#'>Adatok automatikus kitöltése</a>]";
             }
             echo "</td></tr>";
-            echo "<tr><td>Név: *</td><td><input class='inputbox' style='width:250px;' type='text' name='nev' placeholder='Paciens neve' value='{$_POST["nev"]}'></td></tr>";
+            echo "<tr><td>Név: *</td><td><input class='inputbox' style='width:250px;' type='text' name='nev' placeholder='Név' value='{$_POST["nev"]}'></td></tr>";
             echo "<tr><td>E-mail: *</td><td><input class='inputbox' autocomplete='off' style='width:250px;' type='text' name='email' placeholder='Paciens e-mail címe' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td>Mobil telefonszám: *</td><td><input class='inputbox' style='width:250px;' type='text' name='telefon' value='{$_POST["telefon"]}' placeholder='Formátum pl: 06301234567' ></td></tr>";
             echo "<tr><td></td><td style='color:#888;'>A felhasználó a telefonszámával és a TAJ számával fog tudni bejelentkezni a felületre, ezért nagyon fontos a mobil telefonszámának is a pontos megadása.</td></tr>";

@@ -430,7 +430,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 // - multbéli beosztásokat nem küldjük
                 // - az inaktiv jelölésű beosztások törlésre kerülnek a foglaljorvosnál, ott nincs aktiv - inaktiv beállítás
                 echo "<div style='margin-top:10px;font-weight: bold'>Beosztás szinkron:</div>";
-                $res = sql_query("select b.* from orvos_beosztas_new b where orvosid=? and instr(cegid, ?) and noreservation=0 AND (beonap>DATE(NOW()) OR nap<>10) order by b.nap desc", [$oid, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"]);
+                $res = sql_query("select b.* from orvos_beosztas_new b where orvosid=? and instr(b.beocegek, ?) and noreservation=0 AND (beonap>DATE(NOW()) OR nap<>10) order by b.nap desc", [$oid, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"]);
                 while ($beo = sql_fetch_array($res)) {
                     if ($beo["fobid"] == 0) {
                         if ($beo["aktiv"] == 1) {

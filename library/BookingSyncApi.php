@@ -89,6 +89,9 @@ class BookingSyncApi {
                 //print_r($externalReservation);die;
                 $bookingService = new BookingService();
                 $newReservationId = $bookingService->addReservationQuery($externalReservation);
+
+                $foService = new FoglaljOrvostService();
+                $foService->newReservation($newReservationId);
                 //die;
             }
 
