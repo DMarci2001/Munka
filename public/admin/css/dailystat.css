@@ -1,0 +1,29 @@
+.monthlytable {
+
+}
+
+.monthlycell {
+    box-sizing: border-box;
+    vertical-align: top;
+    text-align: center;
+    padding: 10px;
+    width: 150px;
+    height: 150px;
+    background: #f8f8f8;
+}
+
+.mtweekday {
+    height: 30px;
+    vertical-align: middle;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    background:#eee;
+}
+
+.mthead {
+    text-align: center;
+    font-size: 22px;
+    padding:20px 0px;
+    font-weight: bold;
+}

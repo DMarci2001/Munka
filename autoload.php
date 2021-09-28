@@ -74,6 +74,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminProtocolService.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
     require_once(__DIR__ . "/library/salary/SalaryCalculator.php");
+    require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminReferralPage.php");
@@ -93,6 +94,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminSettingsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLogPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminStatPage.php");
+    require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminDailyStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminUsersPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminSalaryPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminInvoicesPage.php");
