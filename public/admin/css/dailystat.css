@@ -8,7 +8,7 @@
     text-align: center;
     padding: 10px;
     width: 150px;
-    height: 150px;
+    height: 170px;
     background: #f8f8f8;
 }
 
@@ -26,4 +26,41 @@
     font-size: 22px;
     padding:20px 0px;
     font-weight: bold;
+}
+
+.dailysmallbutton {
+    cursor: pointer;
+    display:inline-block;
+    vertical-align: middle;
+    padding:5px;
+    width: 28px;
+    font-size: 18px;
+    background:#888;
+    color:#fff;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.dailybutton {
+    cursor: pointer;
+    display:inline-block;
+    vertical-align: middle;
+    padding:5px;
+    font-size: 14px;
+    background:#888;
+    color:#fff;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.dailyeditorhead {
+    padding:10px;
+    font-size: 14px;
+    font-weight: bold;
+    background:#0ca3c9;
+    color:#fff;
+}
+
+.dailyeditorheaderror {
+    background: #b90000;
 }
