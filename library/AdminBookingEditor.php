@@ -71,14 +71,17 @@ class AdminBookingEditor {
                 alkalmassagikhet=?,
                 alkalmassagkorl=?,
                 tudoszuroervenyesseg=?,
-                tudoszuro=?,
-                megj=?
+                tudoszuro=?
             where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["nev"], $_POST["munkakor"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["eljott"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["megj"], $fid]);
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["eljott"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $fid]);
 
 
             if (!empty($_POST["paciensid"])) {
                 sql_query("update foglalasok set paciensid=? where id=? and paciensid=0", [$_POST["paciensid"], $fid]);
+            }
+
+            if (!empty($_POST["megj"])) {
+                sql_query("update foglalasok set megj=? where id=?", [$_POST["megj"], $fid]);
             }
 
             $alkalmassagi = "";
@@ -447,7 +450,10 @@ class AdminBookingEditor {
             $html .= "<tr class='pdatarow'><td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td><td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$result['kuponkod']}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <input type='checkbox' name='eljott' value='1' " . ($row["eljott"] == 1 ? "checked" : "") . " /> eljött <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td><td></td><td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td></tr>";
             $html .= "</td></tr>";
-            $html .= "<tr><td width='60'>Megjegyzés:</td><td colspan='3'><textarea data-taborder='14' class='ui-taborder' placeholder='\"Ebédidő\", \"ne foglalj\", stb is ide írd.' style='width:98%;height:60px;' name='megj'>{$row["megj"]}</textarea></td></tr>";
+
+            if ($this->user->paciensMegjegyzesAccess()) {
+                $html .= "<tr><td width='60'>Megjegyzés:</td><td colspan='3'><textarea data-taborder='14' class='ui-taborder' placeholder='\"Ebédidő\", \"ne foglalj\", stb is ide írd.' style='width:98%;height:60px;' name='megj'>{$row["megj"]}</textarea></td></tr>";
+            }
 
             $html.= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
 

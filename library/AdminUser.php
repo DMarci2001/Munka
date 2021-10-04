@@ -332,4 +332,8 @@ class AdminUser {
         return $this->authenticated() && $this->user["jog_vizsg_stat"] == 1;
     }
 
+    public function paciensMegjegyzesAccess():bool {
+        return $this->user["jog_megjegyzes"] == 1;
+    }
+
 }

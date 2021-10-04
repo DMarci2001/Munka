@@ -542,7 +542,9 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"], 1) . "</div>";
             $htmlout .= "</td>";
 
-            $htmlout .= "<td valign='top' nowrap>{$rowf["megj"]}</td>";
+            if ($this->adminUser->paciensMegjegyzesAccess()) {
+                $htmlout .= "<td valign='top' nowrap>{$rowf["megj"]}</td>";
+            }
 
             $this->lastIdopont = $idopontShow;
         } else {
