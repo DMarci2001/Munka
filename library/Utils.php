@@ -439,6 +439,9 @@ class Utils {
             $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/datepicker.min.js"></script>';
             $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
 
+            $htmlout .= '<link href="/admin/javascript/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/admin/javascript/jquery.toast/jquery.toast.min.js"></script>';
+
             $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
             $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
         }

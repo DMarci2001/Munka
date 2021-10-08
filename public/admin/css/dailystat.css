@@ -64,3 +64,13 @@
 .dailyeditorheaderror {
     background: #b90000;
 }
+
+.dailystatuploadbutton {
+    box-sizing: border-box;
+    background:#a9a9a9;
+    color:#fff;
+    padding:2px 5px;
+    border-radius: 3px;
+    text-decoration: none;
+}
+

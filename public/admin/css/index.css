@@ -1379,10 +1379,8 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 
 .upbtn {
 	width: 120px;
-	height: 80px;
 	background: #ccc;
 	color:#fff;
-	padding-top: 40px;
 	font-size: 14px;
 	font-weight: bold;
 	cursor:pointer;
@@ -1391,7 +1389,6 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .upload-btn-wrapper input[type=file] {
-	font-size: 100px;
 	position: absolute;
 	left: 0;
 	top: 0;
