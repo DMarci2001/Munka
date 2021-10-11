@@ -64,3 +64,25 @@
 .dailyeditorheaderror {
     background: #b90000;
 }
+
+.dailystatuploadbutton {
+    box-sizing: border-box;
+    background:#a9a9a9;
+    color:#fff;
+    padding:2px 5px;
+    border-radius: 3px;
+    text-decoration: none;
+}
+
+
+
+
+.yearlycell {
+    box-sizing: border-box;
+    vertical-align: top;
+    text-align: center;
+    padding: 10px;
+    width: 250px;
+    height: 240px;
+    background: #f8f8f8;
+}

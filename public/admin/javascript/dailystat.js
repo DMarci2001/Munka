@@ -17,7 +17,11 @@ function downloadDailyStat(day) {
         data: "day=" + encodeURIComponent(day),
         success: function (response) {
             if (response.error != "") {
-                alert(response.error);
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'error'
+                });
                 return;
             }
         }
@@ -33,8 +37,11 @@ function generateDailyStat(day) {
         data: "day=" + encodeURIComponent(day),
         success: function (response) {
             if (response.error != "") {
-                alert(response.error);
-                return;
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'error'
+                });
             }
 
             $(dayBox).html(response.html);
@@ -70,6 +77,10 @@ function saveDailyCalendar(day) {
         success: function (response) {
             $("#daybox"+day).html(response.html);
             reloadEvents();
+            $.toast({
+                text: 'Mentés sikerült',
+                icon: 'success'
+            })
         }
     });
 }
@@ -92,6 +103,10 @@ function deleteDailyStat(day) {
         success: function (response) {
             $("#daybox"+day).html(response.html);
             reloadEvents();
+            $.toast({
+                text: 'Napi statisztika törölve',
+                icon: 'success'
+            });
         }
     });
 }
@@ -124,8 +139,17 @@ function prepareDailyStatUpload(event) {
             $("#datablock"+day).show();
 
             if (response.error != "") {
-                alert(response.error);
-                return;
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'error',
+                    hideAfter: 5000
+                });
+            } else {
+                $.toast({
+                    text: "A feltöltés sikerült",
+                    icon: 'success'
+                });
             }
 
             $("#daybox"+day).html(response.html);
@@ -144,6 +168,66 @@ function DailyStatMoveMonth(offset) {
         success: function (response, textStatus, jqXHR) {
             $("#dailystattable").html(response);
             reloadEvents();
+        }
+    });
+}
+
+function DailyStatMoveYear(offset) {
+    $.ajax({
+        url: 'index.php?page=monthlystat&moveyear='+offset,
+        type: 'GET',
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response, textStatus, jqXHR) {
+            $("#monthlystattable").html(response);
+            reloadEvents();
+        }
+    });
+}
+
+
+function downloadMonthlyStat(day) {
+    let dayBox = $("#daybox"+day);
+
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=monthlystat&downloadmonthlystat=1",
+        data: "day=" + encodeURIComponent(day),
+        success: function (response) {
+            if (response.error != "") {
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'info'
+                });
+                return;
+            }
+        }
+    });
+}
+
+function downloadCompanyAndDoctorStat(year, month, debug) {
+    let monthBox = $("#monthbox"+month);
+
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=monthlystat&downloadCompanyAndDoctorStat=1",
+        data: "year=" + encodeURIComponent(year)+"&month=" + encodeURIComponent(month),
+        success: function (response) {
+            /*
+            if (response.error != "") {
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'info'
+                });
+                return;
+            }
+
+            $("#monthlystateditor").html(response.debug);
+
+             */
         }
     });
 }

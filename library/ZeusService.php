@@ -57,4 +57,25 @@ class ZeusService {
     public function addLejaratiIdo($userId, $lejarat) {
         $this->sql_query("INSERT INTO vizsgalatilapok SET pid=?,kelte=NOW(),alk_kelte=NOW(),alk_visszarendeles=?,alk_tipus='predata',alk_statusz='alkalmas',vizsgalatid=?,publisher=1", array($userId, $lejarat, self::VIZSGALAT_FOGLEU_ID));
     }
+
+    public function dailyStatQuery($date):array {
+        $start = "{$date} 00:00:00";
+        $end   = "{$date} 23:59:59";
+
+        return $this->sql_query('SELECT  lelet.kelte AS "Vizsgalat/UtolsoModositasDatuma", p.nev AS "Paciens/Nev", 
+            CASE WHEN v.megnev="Fogl. eü." THEN "Foglalkozás-egészségügyi alapellátás" ELSE v.megnev END AS "Szakrendelés", 
+            doktor.fullname AS "Felhasználó", p.taj AS "Paciens/Azonosito", p.szuldatum AS "Paciens/SzuletesiDatum", 
+            c.megnev AS "Egyedi/Telephely", 
+            CASE WHEN p.munkakor="- Válassz! -" THEN "" ELSE p.munkakor END AS "Egyedi/Munkakör", lelet.korlatozas AS "Egyedi/Korlátozás", 
+            lelet.alk_statusz AS "Egyedi/Alkalmasság", NULL AS "Számla", 1 AS "Vizsgálatok száma", 
+            lelet.kelte AS "Vizsgálat ideje", NULL AS "Normaidő"
+            FROM vizsgalatilapok lelet
+            LEFT JOIN paciensek p ON p.id=lelet.pid
+            LEFT JOIN vizsgalatok v ON v.id=lelet.vizsgalatid
+            LEFT JOIN felhasznalok doktor ON doktor.id=lelet.publisher
+            LEFT JOIN cegek c ON c.id=p.cegid
+            WHERE p.cegid IN (42,99) AND lelet.kelte BETWEEN ? AND ?
+            ORDER BY lelet.kelte ASC', [$start, $end])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 }
