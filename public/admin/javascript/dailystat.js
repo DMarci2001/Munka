@@ -171,3 +171,63 @@ function DailyStatMoveMonth(offset) {
         }
     });
 }
+
+function DailyStatMoveYear(offset) {
+    $.ajax({
+        url: 'index.php?page=monthlystat&moveyear='+offset,
+        type: 'GET',
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response, textStatus, jqXHR) {
+            $("#monthlystattable").html(response);
+            reloadEvents();
+        }
+    });
+}
+
+
+function downloadMonthlyStat(day) {
+    let dayBox = $("#daybox"+day);
+
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=monthlystat&downloadmonthlystat=1",
+        data: "day=" + encodeURIComponent(day),
+        success: function (response) {
+            if (response.error != "") {
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'info'
+                });
+                return;
+            }
+        }
+    });
+}
+
+function downloadCompanyAndDoctorStat(year, month, debug) {
+    let monthBox = $("#monthbox"+month);
+
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=monthlystat&downloadCompanyAndDoctorStat=1",
+        data: "year=" + encodeURIComponent(year)+"&month=" + encodeURIComponent(month),
+        success: function (response) {
+            /*
+            if (response.error != "") {
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'info'
+                });
+                return;
+            }
+
+            $("#monthlystateditor").html(response.debug);
+
+             */
+        }
+    });
+}
