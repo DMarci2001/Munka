@@ -1442,3 +1442,9 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .select2-container--open {
 	z-index: 9999999
 }
+
+.recilistacell {
+	display:table-cell;
+	padding:3px 3px 3px 0px;
+	vertical-align: middle;
+}
