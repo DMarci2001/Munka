@@ -839,6 +839,7 @@ class BookingService
                                 and instr(b.tipusok,?) 
                                 and	(instr(b.beocegek, ?) or b.beocegek='') 
                                 and (b.nap=? or (b.nap=10 and b.beonap=?)) 
+                                and b.noreservation=0
                                 and b.aktiv=1 
                                 and o.aktiv=1 {$orvosRestrict}", [$helyszin, "|{$this->szuresTipus}|", "|{$_SESSION['helyszindata']['id']}|", $wd, $day]);
 
