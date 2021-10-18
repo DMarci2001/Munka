@@ -1962,7 +1962,21 @@ function insertPaciensIntoDokirex(pid) {
     $.ajax({
         type: 'POST',
         url: 'index.php',
-        data: { insertPaciensIntoDokirex: true, pid },
+        data: { insertPaciensIntoDokirex: true, pid:pid },
+        success: function (result) {
+            showGeneralPopup(result);
+        }
+    });
+}
+
+function insertPaciensIntoDokirexHMM(pid) {
+    if (!confirm("Biztos a HMM-es Dokirexbe akarsz exportálni?")) {
+        return;
+    }
+    $.ajax({
+        type: 'POST',
+        url: 'index.php',
+        data: { insertPaciensIntoDokirex: true, pid:pid, config: 'hmm' },
         success: function (result) {
             showGeneralPopup(result);
         }

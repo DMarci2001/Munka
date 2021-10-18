@@ -2,17 +2,30 @@
 
 class DokirexService
 {
-
 	private $testing = true;
 	private $bookingService;
 	private $token;
 
 	private $defaultParams = array("Nem" => 3, "Allampolgarsag" => 109,"Orszag"=>109);
 
+    private $dbName;
+    private $dbEmail;
+    private $dbPassword;
+
 	public function __construct()
 	{
-		$this->token = $this->getToken();
-	}
+        $this->dbName     = Booking_Constants::DokiRex_dbName;
+        $this->dbEmail    = Booking_Constants::DokiRex_Email;
+        $this->dbPassword = Booking_Constants::DokiRex_Password;
+
+        if (isset($_REQUEST["config"]) && $_REQUEST["config"] == "hmm") {
+            $this->dbName     = Booking_Constants::DokiRex_HMM_dbName;
+            $this->dbEmail    = Booking_Constants::DokiRex_HMM_Email;
+            $this->dbPassword = Booking_Constants::DokiRex_HMM_Password;
+        }
+
+        $this->token = $this->getToken();
+    }
 
 	public function insertPaciensIntoDokirex($params = array())
 	{
@@ -24,7 +37,7 @@ class DokirexService
 
 		//További adatok a service-ből:
 		$params["token"]  = $this->token;
-		$params["dbName"] = Booking_Constants::DokiRex_dbName;
+		$params["dbName"] = $this->dbName;
 
 		//Alapértelmezett adatok beillesztése a paraméterekbe, ha nem lettek volna deklarálva.
 		foreach ($this->defaultParams as $index => $value) {
@@ -129,7 +142,7 @@ class DokirexService
 
 
 
-			"dbName" => Booking_Constants::DokiRex_dbName
+			"dbName" => $this->dbName
 		);
 
 		echo "<pre>";
@@ -174,7 +187,7 @@ class DokirexService
 			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_POSTFIELDS => array('Email' => Booking_Constants::DokiRex_Email, 'Password' => Booking_Constants::DokiRex_Password),
+			CURLOPT_POSTFIELDS => array('Email' => $this->dbEmail, 'Password' => $this->dbPassword),
 		));
 
 		$response = curl_exec($curl);

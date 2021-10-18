@@ -280,7 +280,7 @@ class AdminBookingEditor {
                 left join cegek c on c.id=f.cegid
                 where f.id=? and f.pass=?",array($id, $p)))) {
 
-            $html.= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
+            $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
 
             $files = $this->adminUtils->showPaciensFiles($row["id"]);
             if (!empty($files) && $row["noreservation"] != 1) {
@@ -298,24 +298,24 @@ class AdminBookingEditor {
                 $oc = "";
                 $sb = "";
                 if ($key != "I") {
-                    $oc="onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
+                    $oc = "onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
                     $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
                 }
-                $html.= "<div style='{$sb}'><input ".($row["alkalmassag"]==$key?"checked":"")." {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
-                if ($key == "I") $html.= "<div style='padding:0px 0px 0px 25px;'>
-                    <input ".($row["alkalmassagido"]==3?"checked":"")." type='radio' name='alkalmassagido' value='3' />3 hó 
-                    <input ".($row["alkalmassagido"]==6?"checked":"")." type='radio' name='alkalmassagido' value='6' />6 hó 
-                    <input ".($row["alkalmassagido"]==12?"checked":"")." type='radio' name='alkalmassagido' value='12' />1 év 
-                    <input ".($row["alkalmassagido"]==24?"checked":"")." type='radio' name='alkalmassagido' value='24' />2 év 
-                    <input ".($row["alkalmassagido"]==36?"checked":"")." type='radio' name='alkalmassagido' value='36' />3 év
+                $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
+                if ($key == "I") $html .= "<div style='padding:0px 0px 0px 25px;'>
+                    <input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó 
+                    <input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó 
+                    <input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év 
+                    <input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év 
+                    <input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év
                     </div>";
                 if ($key == "IN") {
-                    $html.= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
+                    $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
                 }
                 if ($key == "K") {
-                    $html.= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
+                    $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
                 }
-                $html.= "</div>";
+                $html .= "</div>";
             }
 
             $html .= "</div>";
@@ -323,27 +323,27 @@ class AdminBookingEditor {
             $html .= "</div>";
 
 
-            $html.= "<div style='position:relative;background:#e0e0e0;'>";
-            $html.= "<div style='padding:10px;background:#555;color:#fff;'><span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>".$this->adminUtils->magyarDatum($row["datum"])." - {$row["sztipus"]}</span>";
-            $html.= "<div style='display: table-row;'>";
-            if ($row["foglalta"]!="") {
-                $html.= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
+            $html .= "<div style='position:relative;background:#e0e0e0;'>";
+            $html .= "<div style='padding:10px;background:#555;color:#fff;'><span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>" . $this->adminUtils->magyarDatum($row["datum"]) . " - {$row["sztipus"]}</span>";
+            $html .= "<div style='display: table-row;'>";
+            if ($row["foglalta"] != "") {
+                $html .= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
             }
             if (Booking_Constants::FO_CONNECTION_ENABLED) {
                 $foColor = "lightgreen";
                 if ($row["fofid"] == 0) {
                     $foColor = "red";
                 }
-                $html.= "<div class='tdm' style='padding:2px 0px;'><a onclick='foReservationInfo({$row["id"]},\"{$row["pass"]}\");return false;' href='#' style='color:{$foColor};'>Foglaljorvost info</a></div>";
+                $html .= "<div class='tdm' style='padding:2px 0px;'><a onclick='foReservationInfo({$row["id"]},\"{$row["pass"]}\");return false;' href='#' style='color:{$foColor};'>Foglaljorvost info</a></div>";
             }
-            $html.= "</div>";
+            $html .= "</div>";
 
-            $html.= "<div style='margin-top:4px;'>";
-            $html.= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
-            $html.= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
-            $html.= "<a class='middlebutton' href='#' onClick='autoFill(false);return false;'>mezők kitöltése</a> ";
+            $html .= "<div style='margin-top:4px;'>";
+            $html .= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
+            $html .= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
+            $html .= "<a class='middlebutton' href='#' onClick='autoFill(false);return false;'>mezők kitöltése</a> ";
             if ($this->user->user["username"] == "jns") {
-                $html.= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
+                $html .= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
             }
 
             if (!empty(trim($row["taj"])) && !empty($row["szuldatum"])) {
@@ -351,71 +351,71 @@ class AdminBookingEditor {
                 $bstyle = "";
                 if ($row["paciensid"] != 0) {
                     $btext = "paciens szinkronizálása";
-                    $bstyle= "background:#0a0;";
+                    $bstyle = "background:#0a0;";
                 }
-                $html.= "<a class='middlebutton' style='{$bstyle}' href='#' onClick='syncFoglalasDataToUser({$row['id']},\"{$row["pass"]}\");return false;'>{$btext}</a> ";
+                $html .= "<a class='middlebutton' style='{$bstyle}' href='#' onClick='syncFoglalasDataToUser({$row['id']},\"{$row["pass"]}\");return false;'>{$btext}</a> ";
             }
 
-            $html.= "</div>";
-            $html.= "</div>";
-            $html.= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
-            $html.= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+            $html .= "</div>";
+            $html .= "</div>";
+            $html .= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+            $html .= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
 
-            $html.= "<div style='padding:10px;'>";
+            $html .= "<div style='padding:10px;'>";
 
-            if ($row["nev"]!="" && $row["nev"]!="nincs név") {
-                $html.= "<div style='margin-bottom:5px;'>";
+            if ($row["nev"] != "" && $row["nev"] != "nincs név") {
+                $html .= "<div style='margin-bottom:5px;'>";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
-                $html.= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagi&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagi&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
-                $html.= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
-                $html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'>Menedzser sétálólap</a>&nbsp;&nbsp;";
-                $html.= "</div>";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'>Menedzser sétálólap</a>&nbsp;&nbsp;";
+                $html .= "</div>";
             }
 
-            $html.= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
-            $html.= "<input type='hidden' name='paciensid' value='{$row["paciensid"]}'/>";
-            $html.= "<input type='hidden' id='idopontmarker' value='".substr($row["datum"],0,16)."'/>";
-            $html.= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
-            $html.= "<table style='font-size:12px;'>";
+            $html .= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
+            $html .= "<input type='hidden' name='paciensid' value='{$row["paciensid"]}'/>";
+            $html .= "<input type='hidden' id='idopontmarker' value='" . substr($row["datum"], 0, 16) . "'/>";
+            $html .= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
+            $html .= "<table style='font-size:12px;'>";
 
-            $html.= "<tr><td width='60'>Cég:</td><td width='226'>";
-            $html.= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
-            $html.= "<option value='0'>Nincs céghez kötve</option>";
+            $html .= "<tr><td width='60'>Cég:</td><td width='226'>";
+            $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
+            $html .= "<option value='0'>Nincs céghez kötve</option>";
 
             foreach (sql_query("select * from cegek where true order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
-                $html.= "<option value='{$company["id"]}'".($row["cegid"]==$company["id"]?" selected":"").">{$company["megnev"]}</option>";
+                $html .= "<option value='{$company["id"]}'" . ($row["cegid"] == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
             }
-            $html.= "</select></td>";
+            $html .= "</select></td>";
 
-            $nap=substr($row["datum"],0,10);
-            $ora=substr($row["datum"],11,5);
-            $wora="AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
+            $nap = substr($row["datum"], 0, 10);
+            $ora = substr($row["datum"], 11, 5);
+            $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
 
-            $html.= "<td width='64'>Orvos:</td><td>";
-            $html.= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
-            $html.= "<select class='bookingeditorselector2' name='orvosassigned' style='width:200px;'>";
-            $html.= "<option value='0'>Nincs orvoshoz kötve</option>";
+            $html .= "<td width='64'>Orvos:</td><td>";
+            $html .= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
+            $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:200px;'>";
+            $html .= "<option value='0'>Nincs orvoshoz kötve</option>";
             $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
                   FROM orvos_beosztas_new b 
                   LEFT JOIN orvosok o ON o.`id`=b.`orvosid` 
                   WHERE b.helyszinid=? and instr(tipusok, '|{$row["szurestipusid"]}|')  
                   GROUP BY b.orvosid order by beovan desc, o.nev", [$_SESSION["helyszin"]]);
-            while ($rowh=sql_fetch_array($resh)) {
-                $s="";
-                if ($rowh["beovan"]==0) {
-                    $s=" style='color:#aaa;'";
-                    $rowh["nev"].=" / nincs beosztása erre az időpontra";
+            while ($rowh = sql_fetch_array($resh)) {
+                $s = "";
+                if ($rowh["beovan"] == 0) {
+                    $s = " style='color:#aaa;'";
+                    $rowh["nev"] .= " / nincs beosztása erre az időpontra";
                 }
-                $html.= "<option value='{$rowh["id"]}'".($row["orvosassigned"]==$rowh["id"]?" selected":"")." {$s}>{$rowh["nev"]}</option>";
+                $html .= "<option value='{$rowh["id"]}'" . ($row["orvosassigned"] == $rowh["id"] ? " selected" : "") . " {$s}>{$rowh["nev"]}</option>";
             }
-            $html.= "</select></td>";
-            $html.= "</td></tr>";
+            $html .= "</select></td>";
+            $html .= "</td></tr>";
 
             if ($row["nev"] == "nincs név") {
-                $row["nev"]="";
+                $row["nev"] = "";
             }
 
             $result = sql_fetch_array(sql_query("SELECT * FROM kupon_lista WHERE foglalasid={$row["id"]}"));
@@ -455,14 +455,14 @@ class AdminBookingEditor {
                 $html .= "<tr><td width='60'>Megjegyzés:</td><td colspan='3'><textarea data-taborder='14' class='ui-taborder' placeholder='\"Ebédidő\", \"ne foglalj\", stb is ide írd.' style='width:98%;height:60px;' name='megj'>{$row["megj"]}</textarea></td></tr>";
             }
 
-            $html.= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
+            $html .= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
 
 
-            $html.= "<div>Tüdőszűrő dátuma: <input type='text' style='width:80px;' name='tudoszuroervenyesseg' value='{$row["tudoszuroervenyesseg"]}' />&nbsp;&nbsp;";
+            $html .= "<div>Tüdőszűrő dátuma: <input type='text' style='width:80px;' name='tudoszuroervenyesseg' value='{$row["tudoszuroervenyesseg"]}' />&nbsp;&nbsp;";
 
-            $html.= "<div style='display:inline-block;".($row["tudoszuro"]==1?"background:#f00;color:#fff;":"")."'><input type='checkbox' name='tudoszuro' value='1' ".($row["tudoszuro"]==1?"checked":"")." /> tüdőszűrés kell</div>";
+            $html .= "<div style='display:inline-block;" . ($row["tudoszuro"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='tudoszuro' value='1' " . ($row["tudoszuro"] == 1 ? "checked" : "") . " /> tüdőszűrés kell</div>";
 
-            $html.= "</td>";
+            $html .= "</td>";
 
             /*
             $html.= "<td valign='top' style=''>";
@@ -476,19 +476,25 @@ class AdminBookingEditor {
             $html.= "</td>";
             */
 
-            $html.= "</tr>";
-            $html.= "</table>";
+            $html .= "</tr>";
+            $html .= "</table>";
 
             if (isset($_POST["page"])) {
                 $_GET["page"] = $_POST["page"];
             }
-            $html.= "<br><input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\");' value='Mentés'/>&nbsp;&nbsp;";
-            $html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
-            $html.= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
+            $html .= "<br><input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\");' value='Mentés'/>&nbsp;&nbsp;";
+            //$html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
+            $html .= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
 
-            $html.="<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
-            $html.="<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
-            $html.="<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex' style='background:#008080'>&nbsp;&nbsp;";
+            $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
+            //$html .= "<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
+
+            if (Booking_Constants::COMPANY_NAME_SHORT == "Keltexmed") {
+                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex Keltexmed' style='background:#5ed5e3'>&nbsp;&nbsp;";
+                $html .= "<input onClick='insertPaciensIntoDokirexHMM({$row["id"]})' type='button' value='Dokirex HMM' style='background:#9d0202'>&nbsp;&nbsp;";
+            } else {
+                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex' style='background:#008080'>&nbsp;&nbsp;";
+            }
 
             $html.= "</div>";
             $html.= "</div>";
