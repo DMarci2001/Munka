@@ -390,7 +390,7 @@ class AdminBookingPage extends AdminCorePage
                             if (isset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]])) {
                                 unset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]]);
                             }
-                            $htmlout .= $this->elojegyzesTableRow($reservation, $nap, $ora, $binterval);
+                            $htmlout .= $this->elojegyzesTableRow($reservation, $ora, $binterval);
                             $this->displayedReservations[] = $reservation["id"];
                         }
 
@@ -443,7 +443,7 @@ class AdminBookingPage extends AdminCorePage
                         if ($foglalas["orvosnev"] != $doctor) {
                             continue;
                         }
-                        $htmlout .= $this->elojegyzesTableRow($foglalas, date("Y-m-d", strtotime($foglalas["datum"])), date("H:i", strtotime($foglalas["datum"])), 0, true);
+                        $htmlout .= $this->elojegyzesTableRow($foglalas, date("H:i", strtotime($foglalas["datum"])), 0, true);
                     }
                     $htmlout .= "</table>";
                     $htmlout .= "</td>";
@@ -482,20 +482,27 @@ class AdminBookingPage extends AdminCorePage
     private $displayedReservations = [];
     private $szuresTipusActual;
 
-    private function elojegyzesTableRow($rowf, $nap, $ora, $binterval, $noAdd = false) {
+    private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false) {
+        $nap = date("Y-m-d", strtotime($reservationData["datum"]));
+        //$ora = date("H:i", strtotime($rowf["datum"]));
+
         $htmlout = "";
 
-        if ($rowf["nev"] == "nincs név") {
-            $rowf["nev"] = "Foglalt";
+        if ($reservationData["eljott"] == 0 && !empty($reservationData["nev"]) && $reservationData["nev"] !="nincs név" && strtotime("now - 10 minute") > strtotime($reservationData["datum"])) {
+            $reservationData["megj"] = "<span style='color:red;border:1px solid red;padding:0px 2px;'>nem jött el</span> ".$reservationData["megj"];
         }
 
-        $jogosult       = $this->adminUser->cegJog($rowf["cegid"]);
-        $idopontShow    = date("H:i", strtotime($rowf["datum"]));
-        $cegNev         = trim($this->utils->substr_jns($rowf["cegnev"], 0, 20));
-        $detailURL      = "showIdopontEditor(\"{$_GET["page"]}\",\"{$rowf["pass"]}\",{$rowf["id"]});return false;";
+        if ($reservationData["nev"] == "nincs név") {
+            $reservationData["nev"] = "Foglalt";
+        }
+
+        $jogosult       = $this->adminUser->cegJog($reservationData["cegid"]);
+        $idopontShow    = date("H:i", strtotime($reservationData["datum"]));
+        $cegNev         = trim($this->utils->substr_jns($reservationData["cegnev"], 0, 20));
+        $detailURL      = "showIdopontEditor(\"{$_GET["page"]}\",\"{$reservationData["pass"]}\",{$reservationData["id"]});return false;";
         $companyWarning = "";
 
-        $warnings = $this->bookingService->foglalasWarnings($rowf);
+        $warnings = $this->bookingService->foglalasWarnings($reservationData);
         if (!empty($warnings)) {
             $companyWarning = "<a onclick='{$detailURL}' href='#'><i title='".implode("\n", $warnings)."' class='fas fa-exclamation-circle'></i></a>&nbsp;";
         }
@@ -509,41 +516,41 @@ class AdminBookingPage extends AdminCorePage
         }
         $htmlout .= "</td>";
         if ($jogosult) {
-            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$rowf["id"]},\"{$rowf["pass"]}\",\"booking\");return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
+            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$reservationData["id"]},\"{$reservationData["pass"]}\",\"booking\");return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
-            if ($rowf["rinterval"] != $binterval) {
-                $htmlout .= "({$rowf["rinterval"]} perc) ";
+            if ($reservationData["rinterval"] != $binterval) {
+                $htmlout .= "({$reservationData["rinterval"]} perc) ";
             }
 
-            if ($this->szuresTipusActual["id"] == $rowf["szurestipusid"]) {
-                $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($rowf["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$rowf["nev"]}</a>" . ($rowf["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($rowf["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
+            if ($this->szuresTipusActual["id"] == $reservationData["szurestipusid"]) {
+                $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
             } else {
-                $htmlout .= "Foglalva ({$rowf["szurestipusnev"]})&nbsp;&nbsp;";
+                $htmlout .= "Foglalva ({$reservationData["szurestipusnev"]})&nbsp;&nbsp;";
             }
 
-            if (!empty($rowf["externalid"])) {
-                $htmlout.= "<span class='externalmark' title='foglalás forrása'>".str_replace("hungariamed", "hmm", preg_replace('/[0-9]+/', '', $rowf["externalid"]))."</span>&nbsp;&nbsp;";
+            if (!empty($reservationData["externalid"])) {
+                $htmlout.= "<span class='externalmark' title='foglalás forrása'>".str_replace("hungariamed", "hmm", preg_replace('/[0-9]+/', '', $reservationData["externalid"]))."</span>&nbsp;&nbsp;";
             }
 
-            if ($rowf["foglalta"] == "foglaljorvost") {
+            if ($reservationData["foglalta"] == "foglaljorvost") {
                 $htmlout.= "<span class='externalmark' title='foglaljorvost foglalás'>FO</span>&nbsp;&nbsp;";
             }
 
             $htmlout .= "</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
-            $htmlout .= "{$companyWarning}<span style='" . ($rowf["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "color:#0a0;") . "'>{$cegNev}</span>";
-            if ($rowf["telephely"] != "") {
-                $htmlout .= "&nbsp;<span title='telephely' style='color:#003366'>{$rowf["telephely"]}</span>";
+            $htmlout .= "{$companyWarning}<span style='" . ($reservationData["cegid"] == $_SESSION["ecegfilter"] ? "font-weight:bold;color:#00a;" : "color:#0a0;") . "'>{$cegNev}</span>";
+            if ($reservationData["telephely"] != "") {
+                $htmlout .= "&nbsp;<span title='telephely' style='color:#003366'>{$reservationData["telephely"]}</span>";
             }
             $htmlout .= "&nbsp;&nbsp;";
 
-            $htmlout .= "<div id='fiz_szolglist{$rowf["id"]}'>" . $this->adminUtils->showFizSzolg($rowf["id"], 1) . "</div>";
+            $htmlout .= "<div id='fiz_szolglist{$reservationData["id"]}'>" . $this->adminUtils->showFizSzolg($reservationData["id"], 1) . "</div>";
             $htmlout .= "</td>";
 
             if ($this->adminUser->paciensMegjegyzesAccess()) {
-                $htmlout .= "<td valign='top' nowrap>{$rowf["megj"]}</td>";
+                $htmlout .= "<td valign='top' nowrap>{$reservationData["megj"]}</td>";
             }
 
             $this->lastIdopont = $idopontShow;

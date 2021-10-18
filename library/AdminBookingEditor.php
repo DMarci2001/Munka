@@ -396,7 +396,7 @@ class AdminBookingEditor {
 
             $html .= "<td width='64'>Orvos:</td><td>";
             $html .= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
-            $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:200px;'>";
+            $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
             $html .= "<option value='0'>Nincs orvoshoz kötve</option>";
             $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
                   FROM orvos_beosztas_new b 
@@ -411,7 +411,7 @@ class AdminBookingEditor {
                 }
                 $html .= "<option value='{$rowh["id"]}'" . ($row["orvosassigned"] == $rowh["id"] ? " selected" : "") . " {$s}>{$rowh["nev"]}</option>";
             }
-            $html .= "</select></td>";
+            $html .= "</select>&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</td></tr>";
 
             if ($row["nev"] == "nincs név") {
@@ -442,7 +442,7 @@ class AdminBookingEditor {
 
             $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
 
-            $html .= "<tr class='pdatarow'><td width='60'>Taj szám:</td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td><td width='60'>E-mail:</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:200px;' type='text' name='email' value='{$row["email"]}'></td></tr>";
+            $html .= "<tr class='pdatarow'><td width='60'>Taj szám:</td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td><td width='60'>E-mail:</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Név:</td><td><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder' placeholder='Ide csak nevet írj' style='width:200px;' type='text' name='nev' value='{$row["nev"]}'></td><td width='60'>Telefon:</td><td><input data-taborder='8' class='inputbox ui-taborder' style='width:200px;' type='text' name='telefon' value='{$row["telefon"]}'></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Munkakör:</td><td><input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' value='{$row["munkakor"]}'></td><td width='60'>Irsz:</td><td><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder' style='width:40px;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:150px;' type='text' name='varos' id='varos' value='{$row["varos"]}'></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td><td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
