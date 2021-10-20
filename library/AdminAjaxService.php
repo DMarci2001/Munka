@@ -518,6 +518,36 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_POST["eljottcheckboxprotocol"])) {
+            $id = intval($_POST["id"]);
+
+            $data = ["confirm" => "", "html" => ""];
+            if ($reservationData = sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+
+                if (Booking_Constants::COMPANY_NAME_SHORT != "Keltexmed") {
+                    if ($reservationData["eljott"] == 0 && strtotime($reservationData["datum"]) < strtotime("now - 10 minute")) {
+                        $data["confirm"] = "Már régi foglalás, biztos eljöttre állítod?";
+                    }
+
+                    if ($reservationData["eljott"] == 0 && strtotime($reservationData["datum"]) > strtotime("now + 10 minute")) {
+                        $data["confirm"] = "Túl korán jelölöd eljöttre, biztos vagy benne?";
+                    }
+                }
+
+                //if ($adminUser->user["username"] == "jns") {
+                //    $data["confirm"] = "Már régi foglalás, biztos eljöttre állítod?";
+                //}
+
+                if ($data["confirm"] == "" || $_POST["force"] == 1) {
+                    sql_query("update foglalasok set eljott=if(eljott=0, 1, 0) where id=? limit 1", [$id]);
+                }
+
+                $data["html"] = AdminBookingEditor::eljottCheckbox(sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC));
+            }
+            $this->jsonOut($data);
+        }
+
+
         if (isset($_POST["duplicatereservation"])) {
             die("funkció kikapcsolva");
 

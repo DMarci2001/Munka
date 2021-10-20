@@ -3044,3 +3044,43 @@ function addBeoBlock(doctorId) {
         $("#beoeditor").html(response);
     });
 }
+
+function eljottButtonProtocol(el, force) {
+    let id = $(el).data("id");
+
+    $.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { eljottcheckboxprotocol: 1, id: id, force:force },
+        success: function (response) {
+            if (response.confirm != "" && force == 0) {
+                $.confirm({
+                    title: 'Figyelem!',
+                    content: response.confirm,
+                    useBootstrap: false,
+                    boxWidth: '300px',
+                    buttons: {
+                        igenButton: {
+                            text: 'Igen',
+                            btnClass: 'btn-blue',
+                            keys: ['enter', 'shift'],
+                            action: function(){
+                                eljottButtonProtocol(el, 1);
+                            }
+                        },
+                        nemButton: {
+                            text: 'Nem',
+                            btnClass: 'btn-blue',
+                            action: function(){
+
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+
+            $("#eljottchk").html(response.html);
+        }
+    })
+}

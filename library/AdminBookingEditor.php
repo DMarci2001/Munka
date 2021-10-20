@@ -36,7 +36,7 @@ class AdminBookingEditor {
                 $_POST["szuldatum"] = substr($_POST["szuldatum"], 0, 4)."-".substr($_POST["szuldatum"], 4, 2)."-".substr($_POST["szuldatum"], 6, 2);
             }
 
-            if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
+            //if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
             if (!isset($_POST["voltnalunk"])) $_POST["voltnalunk"]=0;
             if (!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]=0;
             if (!isset($_POST["alkalmassagido"])) $_POST["alkalmassagido"]=0;
@@ -64,7 +64,6 @@ class AdminBookingEditor {
                 irsz=?,
                 varos=?,
                 utca=?,
-                eljott=?,
                 voltnalunk=?,
                 alkalmassag=?,
                 alkalmassagido=?,
@@ -73,7 +72,7 @@ class AdminBookingEditor {
                 tudoszuroervenyesseg=?,
                 tudoszuro=?
             where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["nev"], $_POST["munkakor"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["eljott"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $fid]);
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $fid]);
 
 
             if (!empty($_POST["paciensid"])) {
@@ -448,7 +447,7 @@ class AdminBookingEditor {
             $html .= "<tr class='pdatarow'><td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td><td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Szül. hely:</td><td><input data-taborder='5'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szulhely' value='{$row["szulhely"]}'></td><td width='60'>Naplószám:</td><td><input data-taborder='12' class='inputbox ui-taborder' style='width:200px;' type='text' name='nszam' value='{$row["nszam"]}'></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td><td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$result['kuponkod']}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td></tr>";
-            $html .= "<tr class='pdatarow'><td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <input type='checkbox' name='eljott' value='1' " . ($row["eljott"] == 1 ? "checked" : "") . " /> eljött <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td><td></td><td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td></tr>";
+            $html .= "<tr class='pdatarow'><td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> eljött <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td><td></td><td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td></tr>";
             $html .= "</td></tr>";
 
             if ($this->user->paciensMegjegyzesAccess()) {
@@ -506,5 +505,13 @@ class AdminBookingEditor {
         return $html;
     }
 
+    public static function eljottCheckbox($reservationData):string {
+        $icon = "<i class='far fa-square'></i>";
+        if ($reservationData["eljott"] == 1) {
+            $icon = "<i class='fas fa-check-square'></i>";
+        }
+
+        return "<a data-id='{$reservationData["id"]}' href='#' onclick='eljottButtonProtocol(this, 0);return false;' style='font-size: 16px;'>{$icon}</a>";
+    }
 
 }
