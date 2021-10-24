@@ -784,7 +784,7 @@ class Utils {
                 break;
             case "email":
                 if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {
-                    $extraRow = "<tr><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
+                    $extraRow = "<tr class='datarow'><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
                 }
                 break;
             case "nev":
@@ -794,7 +794,7 @@ class Utils {
                 //$extraRow = "<tr><td></td><td>{$webText["mobiltip"]}</td></tr>";
                 break;
             case "szuldatum":
-                $extraHTML = "<tr><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
+                $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
                 break;
             case "szulhely":
                 if ($_SESSION['helyszindata']['id'] == 46) {
@@ -803,7 +803,7 @@ class Utils {
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
-                $extraHTML = "<tr><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
+                $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
                 if ($_SESSION['helyszindata']['id'] == 46) {
@@ -840,7 +840,7 @@ class Utils {
 
         if (!$hidden) {
             if (empty($extraHTML)) {
-                $html.= "<tr><td>{$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
+                $html.= "<tr class='datarow'><td>{$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
             } else {
                 $html.= $extraHTML;
             }

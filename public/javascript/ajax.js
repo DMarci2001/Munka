@@ -119,6 +119,14 @@ function clearIdopontValaszto() {
     $("#idopontvalasztodiv").html("");
     $("#datum").css("background-image", "");
     tappenzCheckRefresh();
+
+    $("#helyszinvalasztowarn").hide();
+    $(".datarow").show();
+    let placeId = $("#helyszin").val();
+    if (placeId == 10) {
+        $("#helyszinvalasztowarn").show();
+        $(".datarow").hide();
+    }
 }
 
 function showTipusMegj(tipusid) {

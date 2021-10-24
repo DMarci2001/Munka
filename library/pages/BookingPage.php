@@ -338,23 +338,23 @@ class BookingPage extends CorePage {
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if (empty($nofoglalasText)) {
-            echo "<tr><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>".$this->_reservationTimeSelector()."</td></tr>";
+            echo "<tr class='datarow'><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>".$this->_reservationTimeSelector()."</td></tr>";
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
-            echo "<tr><td></td><td>{$nofoglalasText}</td></tr>";
+            echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
         }
 
         if (!$this->utils->getFieldHidden("doksi")) {
-            echo "<tr><td></td><td>&nbsp;</td></tr>";
-            echo "<tr><td></td><td>";
-            echo "<div>{$webText["dokfelinfo"]}</div>";
+            echo "<tr class='datarow'><td></td><td>&nbsp;</td></tr>";
+            echo "<tr class='datarow'><td></td><td>";
+            echo "<div class='datarow'>{$webText["dokfelinfo"]}</div>";
             echo "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
             echo "</td></tr>";
-            echo "<tr><td></td><td><div id='paciensfilediv'>" . $this->utils->showPaciensFiles() . "</div></td></tr>";
+            echo "<tr class='datarow'><td></td><td><div id='paciensfilediv'>" . $this->utils->showPaciensFiles() . "</div></td></tr>";
         }
 
         if (trim($_SESSION["helyszindata"]["telephelyek"]) != "") {
-            echo "<tr><td>{$webText["munkaltato"]}: *</td><td><select name='telephely' id='telephely'>";
+            echo "<tr class='datarow'><td>{$webText["munkaltato"]}: *</td><td><select name='telephely' id='telephely'>";
             $telephelyek = explode(",",$_SESSION["helyszindata"]["telephelyek"]);
             echo "<option value=''>{$webText["valasszmunkaltatot"]}!</option>";
             foreach ($telephelyek as $telephely) {
@@ -379,7 +379,7 @@ class BookingPage extends CorePage {
         echo $this->utils->dataField("munkakor");
 
         if (!isset($beutalodata)) {
-            echo "<tr><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
+            echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
             echo "<textarea class='inputbox' style='height:100px;width:400px;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             //apollo tyres kivétel
             if ($_SESSION["helyszindata"]["id"]==43) {
@@ -400,11 +400,11 @@ class BookingPage extends CorePage {
         }
 
         if (!isset($_SESSION["user"])) {
-            echo "<tr><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-            echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
+            echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
+            echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
-        echo "<tr><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["idopontfoglalasa"]}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+        echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["idopontfoglalasa"]}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
 
         echo "</table>";
 
@@ -516,6 +516,9 @@ class BookingPage extends CorePage {
             }
         }
         $html.= "</select>";
+
+        $html .= "<div id='helyszinvalasztowarn' style='display:none;background:#ff6961;color:#fff;font-size:16px;padding:10px;margin:10px 0px 0px 0px;'>Figyelem! Ha a győri címünkre szeretne foglalni, használja a győri bejelentkezési felületünket, majd ott kövesse az \"üzemorvosi vizsgálat\" linket. Foglalását telefonon is megteheted a következő számon: +36 20 373 3343<br/><br/><a class='newbutton' href='https://gyor-bejelentkezes.hungariamed.hu'>Folytatás a győri bejelentkező felületen</a></div>";
+
         return $html;
     }
 
