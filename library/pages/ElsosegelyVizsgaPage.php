@@ -60,6 +60,8 @@ class ElsosegelyVizsgaPage extends CorePage {
 
             if ($result["error"] == "") {
                 sql_query("insert into vizsgavalaszok set datum=now(), adatok=?, osszesvalasz=?, helyesvalasz=?", [json_encode($data), $osszesvalasz, $helyesvalasz]);
+                $_SESSION["vizsgaid"] = sql_insert_id();
+
                 unset($_SESSION["vizsgarandom"]);
             }
 
@@ -104,12 +106,12 @@ class ElsosegelyVizsgaPage extends CorePage {
         [
             "username" => "teszt",
             "password" => "teszt2",
-            "validuntil" => "2021-07-05 00:00:00"
+            "validuntil" => "2021-12-31 00:00:00"
         ],
         [
             "username" => "teszt2",
             "password" => "teszt3",
-            "validuntil" => "2021-07-05 00:00:00"
+            "validuntil" => "2021-12-31 00:00:00"
         ],
     ];
 
@@ -133,7 +135,52 @@ class ElsosegelyVizsgaPage extends CorePage {
             return;
         }
 
-        echo "<div style='margin-bottom:20px;text-align: center;'>Bejelentkezett felhasználó: {$user["username"]} [<a href='index.php?elsosegelylogout'>kijelentkezés</a>]</div>";
+        echo "<div style='margin-bottom:20px;text-align: center;'>Bejelentkezett cég: {$user["username"]} [<a href='index.php?elsosegelylogout'>kijelentkezés</a>]</div>";
+
+
+        //$_SESSION["vizsgaid"] = 8;
+        if (isset($_GET["subpage"]) && $_GET["subpage"] == "done" && isset($_SESSION["vizsgaid"])) {
+
+
+            if ($vizsgaData = sql_query("select * from vizsgavalaszok where id=?", [$_SESSION["vizsgaid"]])->fetch(PDO::FETCH_ASSOC)) {
+                $adatok = json_decode($vizsgaData["adatok"], JSON_OBJECT_AS_ARRAY);
+                $percent = round($vizsgaData["helyesvalasz"] / ($vizsgaData["osszesvalasz"]/100));
+                echo "<div style='margin-top:20px;text-align: center;'><strong>Kedves {$adatok["nev"]}, köszönjük a kitöltést!</strong></div>";
+                echo "<div style='margin-top:20px;text-align: center;'>Az Ön eredménye:</div>";
+                echo "<div style='margin-top:10px;text-align: center;'>{$vizsgaData["osszesvalasz"]} kérdésből, {$vizsgaData["helyesvalasz"]} válasz volt helyes ({$percent}%)</div>";
+
+                $eredmeny = "JELES";
+                if ($percent < 90) {
+                    $eredmeny = "JÓ";
+                }
+                if ($percent < 78) {
+                    $eredmeny = "KÖZEPES";
+                }
+                if ($percent < 66) {
+                    $eredmeny = "ELÉGSÉGES";
+                }
+                if ($percent < 50) {
+                    $eredmeny = "ELÉGTELEN";
+                }
+
+                /*
+                0 - 49% elégtelen (1)
+                50 - 65% elégséges (2)
+                66 - 77% közepes (3)
+                78 - 89% jó (4)
+                90 - 100% jeles (5)
+                */
+
+                echo "<div style='margin-top:20px;text-align: center;font-size: 16px;font-weight: bold;'><span style='padding:2px 5px;border:1px solid #888;'>{$eredmeny}</span></div>";
+            }
+
+
+            echo "</div>";
+
+
+            return;
+        }
+
 
         echo "<form id='vizsgaform'>";
 
@@ -210,7 +257,6 @@ class ElsosegelyVizsgaPage extends CorePage {
 
         //$html .= "<div style='padding:10px;background-color:{$warnColor};color:{$warnTextColor};font-size: 18px;'><strong>{$warn}</strong></div>";
         $html .= "<div style='margin-top:20px;'><strong>Köszönjük a kitöltést!</strong></div>";
-
 
         return $html;
     }

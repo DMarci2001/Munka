@@ -16,7 +16,10 @@ function elsosegelyFormSubmit() {
                 myAlert(result.error);
                 return;
             }
-            $("#vizsgaformdiv").html(result.html);
+
+            window.location.href='index.php?page=elsosegelyvizsga&subpage=done';
+
+            //$("#vizsgaformdiv").html(result.html);
         }
     });
 
