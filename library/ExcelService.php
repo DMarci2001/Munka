@@ -86,6 +86,9 @@ class ExcelService {
         $sor++;
         $total = $totaleljott = 0;
         foreach ($data["companystat"] as $rowData) {
+            if (empty($rowData["ceg"])) {
+                $rowData["ceg"] = "nincs megadva";
+            }
             $this->dataRow("A", $sor, [$rowData["ceg"], $rowData["foglalasok"], $rowData["eljott"]]);
             $total += $rowData["foglalasok"];
             $totaleljott += $rowData["eljott"];
@@ -112,6 +115,50 @@ class ExcelService {
         $this->sheet->getStyle("E{$sor}:G{$sor}")->getFont()->setBold(true);
 
         $this->sheet->getColumnDimension('E')->setWidth(40);
+
+        $this->spreadSheet = $spreadsheet;
+    }
+
+    public function rtgList($data) {
+        $spreadsheet = new Spreadsheet();
+        $this->sheet = $spreadsheet->getActiveSheet();
+
+        $intervalString = date("Y-m-d", strtotime($data["interval"][0]))." - ".date("Y-m-d", strtotime($data["interval"][1]));
+
+        $this->titleRow("A1", Booking_Constants::COMPANY_NAME_SHORT." RTG lista {$intervalString}");
+
+        //lista
+        $sor = 5;
+        $this->headingRow("A", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "db"]);
+
+        $sor++;
+        $total = $totalImage = 0;
+        foreach ($data["list"] as $rowData) {
+            $this->dataRow("A", $sor, [$rowData["contentDate"], $rowData["patientName"], $rowData["patientBirthDate"], $rowData["patientOtherIDs"], $rowData["db"]]);
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            $total ++;
+            $totalImage += $rowData["db"];
+            $sor++;
+        }
+
+        $this->sheet->getColumnDimension('A')->setWidth(30);
+
+        $this->sheet->getColumnDimension('A')->setWidth(30);
+        $this->sheet->getColumnDimension('B')->setWidth(40);
+        $this->sheet->getColumnDimension('C')->setWidth(20);
+        $this->sheet->getColumnDimension('D')->setWidth(20);
+
+
+        $sor = 3;
+        $this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);
+
+
+
+
+        //$this->sheet->getStyle('C:D')->getAlignment()->setHorizontal('center');
+        //$this->totalRow("A", $sor, ["Összesen:", $total, $totaleljott]);
+        //$this->sheet->getColumnDimension('A')->setWidth(40);
+
 
         $this->spreadSheet = $spreadsheet;
     }

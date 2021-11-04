@@ -35,8 +35,16 @@ class MonthlyStatService {
                 unset($result["raw"]);
             }
             die;
+        }
 
-            //$utils->jsonOut($result);
+        if (isset($_REQUEST["downloadRontgenList"])) {
+            $result = $this->rontgenList($_GET["year"], $_GET["month"]);
+
+            if ($_GET["debug"] == 1) {
+                $result["debug"] = "<pre>" . print_r($result["raw"], true) . "</pre>";
+                unset($result["raw"]);
+            }
+            die;
         }
     }
 
@@ -59,7 +67,7 @@ class MonthlyStatService {
 
             $html .= "<div id='datablock{$month}' style='margin-top:10px;'>";
             $html .= "<div><a href='index.php?page={$_GET["page"]}&downloadMonthlyStat=1&year={$year}&month={$month}'>Havi statisztika letöltése</a></div>";
-            $html .= "<div><a onclick='alert(\"fejlesztés alatt...\");return false;' href='index.php?page={$_GET["page"]}&downloadRontgenList=1&year={$year}&month={$month}'>Röntgen lista</a></div>";
+            $html .= "<div><a href='index.php?page={$_GET["page"]}&downloadRontgenList=1&year={$year}&month={$month}'>Röntgen lista</a></div>";
             $html .= "</div>";
 
             $html .= "</div>";
@@ -123,6 +131,22 @@ class MonthlyStatService {
 
         $this->excelService->combinedStat($result["raw"]);
         $this->excelService->setFileName("Bejelentkezo_havi_statisztika_" . date("Y-m", strtotime("{$year}-{$month}-01")) . ".xlsx");
+        $this->excelService->outputSpreadSheet();
+
+        return $result;
+    }
+
+    private function rontgenList($year, $month):array {
+        $result["error"] = "";
+
+        $startDate = date("Y-m-d 00:00:00", strtotime("{$year}-{$month}-01"));
+        $endDate   = date("Y-m-t 23:59:59", strtotime("{$year}-{$month}-01"));
+
+        $result["raw"]["interval"] = [$startDate, $endDate];
+        $result["raw"]["list"] = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName=? GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$startDate, $endDate, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->excelService->rtgList($result["raw"]);
+        $this->excelService->setFileName("RTG_lista_" . date("Y-m", strtotime("{$year}-{$month}-01")) . ".xlsx");
         $this->excelService->outputSpreadSheet();
 
         return $result;
