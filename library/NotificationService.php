@@ -11,6 +11,26 @@ class NotificationService {
         $this->utils = new Utils();
     }
 
+    public function getDefaultMailer():PHPMailer {
+        $mail = new PHPMailer();
+
+        $mail->isSMTP();
+        $mail->Host = "webmail.hungariamed.hu";
+        $mail->SMTPAuth = true;
+        $mail->Username = "web@hungariamed.hu";
+        $mail->Password = "The9vae1";
+        $mail->SMTPSecure = "tls";
+        $mail->Port = 366;
+
+        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+        $mail->FromName = Booking_Constants::COMPANY_NAME;
+        $mail->CharSet = "UTF-8";
+        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+        $mail->IsHTML(true);
+
+        return $mail;
+    }
+
     public function createNotificationRecord($tipus, $objectid, $destination, $subject = "", $text = "") {
         $adminUser = new AdminUser();
         $uid = $adminUser->user["id"] ?? 0;

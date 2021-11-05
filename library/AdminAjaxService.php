@@ -604,7 +604,7 @@ class AdminAjaxService {
                     $api->newReservation($fid);
 
                     $num++;
-                    if ($num == 35) {
+                    if ($num == 30) {
                         break;
                     }
                 }

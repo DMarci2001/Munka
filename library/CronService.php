@@ -52,7 +52,7 @@ class CronService {
             //óránként futó cronok
             $this->_sendReservationReportForDoctors();
             $this->_sendReviewMails();
-            $this->_sendAlkExcel();
+            $this->_sendAlkExcel(); //** régi excel hívást használ, disabled
             $this->_sendAlkExpire();
 
             $this->checkSzabadsagCollisions();
@@ -351,6 +351,7 @@ class CronService {
     }
 
     private function _sendAlkExcel() {
+        /*
         if (date("G") == 18) {
             $request = sql_query("SELECT * FROM cegek WHERE alksend = 1");
             while ($result = sql_fetch_array($request)) {
@@ -358,6 +359,7 @@ class CronService {
                 $this->utils->send_alkExcel($result['id'], $result['alksendint'], $mails);
             }
         }
+        */
     }
 
     private function _sendAlkExpire() {

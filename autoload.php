@@ -60,7 +60,6 @@ require_once(__DIR__ . "/library/AdminUser.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
-require_once(__DIR__ . "/library/other/PHPExcel.php");
 require_once(__DIR__ . "/library/other/SimplePayService.php");
 
 //admin...

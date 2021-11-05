@@ -610,6 +610,7 @@ class Utils {
     }
 
 
+    /*
     public function send_alkExcel($cegid, $intvallType, $mails) {
         require_once("other/PHPExcel.php");
         $rowCount = 2;
@@ -763,6 +764,7 @@ class Utils {
         //$mail->AddAttachment("");
         $mail->Send();
     }
+    */
 
 
     public function dataField($fieldName) {

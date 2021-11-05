@@ -1,4 +1,9 @@
 <?php
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 class AdminReferralPage extends AdminCorePage {
 
     public function __construct()
@@ -57,7 +62,7 @@ class AdminReferralPage extends AdminCorePage {
 				$folder=dirname(__DIR__)."/other/tmp/";
 				
 				$overallExcel = date("Y.m.d")." fogleu lista(Teljes)";
-				$objPHPExcel = new PHPExcel();
+				$objPHPExcel = new Spreadsheet();
 				$objPHPExcel->setActiveSheetIndex(0);
 				$objPHPExcel->getActiveSheet()->setTitle('Állomány');
 				
@@ -177,9 +182,9 @@ class AdminReferralPage extends AdminCorePage {
 					$objPHPExcel->getActiveSheet()->SetCellValue("E{$row}", $result["expiration"]);
 					$objPHPExcel->getActiveSheet()->SetCellValue("F{$row}", round((time()-strtotime($result["expiration"])) / ((60 * 60 * 24)*-1))." nap");
 				}
-				
+
 				//összesítő excel fájl véglegesítése:
-				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+				$objWriter = IOFactory::createWriter($objPHPExcel, 'Xlsx');
 				$objWriter->save($folder.$overallExcel.".xlsx");
 				
 				
@@ -188,12 +193,12 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
 				$mail->FromName = Booking_Constants::COMPANY_NAME;
 				if ( isset( $_POST['saveTest'] )) {
-					$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
-				} else {
-					$mail->AddAddress( "kiss.renata.reka@tigaz.hu" ); 
+                    $mail->AddAddress("email.teszt0807@hungariamed.hu");
+                } else {
+					$mail->AddAddress("kiss.renata.reka@tigaz.hu");
 				}
 				
-				 if (!empty(Booking_Constants::USER_BCC_MAIL)) {
+				if (!empty(Booking_Constants::USER_BCC_MAIL)) {
 					$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 				}
 				$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
@@ -221,7 +226,7 @@ class AdminReferralPage extends AdminCorePage {
 					//és hozzá kell adnom a pdf-eket + tömörítenem is kell őket...
 					$files = array();
 					$filename = date("Y.m.d")." fogleü. lista";
-					$objPHPExcel = new PHPExcel();
+					$objPHPExcel = new Spreadsheet();
 					$objPHPExcel->setActiveSheetIndex(0);
 					$objPHPExcel->getActiveSheet()->setTitle('Állomány');
 					
@@ -258,7 +263,7 @@ class AdminReferralPage extends AdminCorePage {
 					
 					
 					//Fájl véglegesítése:
-					$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+					$objWriter = IOFactory::createWriter($objPHPExcel, 'Xlsx');
 					$objWriter->save($folder.$filename.".xlsx");
 					$files[]=$folder.$filename.".xlsx";
 					$this->utils->create_zip($files, $zipPath,  8);
