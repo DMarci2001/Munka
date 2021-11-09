@@ -52,6 +52,10 @@ class DicomService {
     }
 
     public function processEntries() {
+        if (Booking_Constants::SQL_DB != "hungariamed") {
+            return;
+        }
+
         $dicomEntries = $this->readDir();
 
         foreach ($dicomEntries as $dicomEntry) {

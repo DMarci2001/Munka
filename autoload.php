@@ -121,7 +121,7 @@ function getConfigFile() {
     if (isset($_SERVER["HTTP_HOST"])) {
         $host = $_SERVER["HTTP_HOST"];
 
-        if (substr_count($host, "hungariamed.hu")) {
+        if (substr_count($host, "hungariamed.hu") || substr_count($host, "jns.hu")) {
             $config = "hmm";
             if (substr_count($host, "demo.hungariamed.hu")) {
                 $config = "demo";

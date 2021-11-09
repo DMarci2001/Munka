@@ -29,6 +29,18 @@ class CronService {
             $this->sendMissingDataEmails();
             die("ok");
         }
+
+        if (isset($_GET["sync"])) {
+            $api = new BookingSyncApi();
+            $reservations = sql_query("select * from foglalasok where orvosassigned='418' AND datum>NOW() AND externalid=''");
+            foreach ($reservations as $reservation) {
+                echo "{$reservation["nev"]}\n";
+                //$api->newReservation($reservation["id"]);
+            }
+
+            die("ok\n");
+        }
+
     }
 
     public function run() {

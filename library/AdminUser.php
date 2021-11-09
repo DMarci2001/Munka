@@ -195,13 +195,15 @@ class AdminUser {
     public function getCegListArray():array {
         $cl = [0];
 
-        if ($this->user["jogosultsag"] == 0) {
-            $cl = [-1];
-        }
+        if (!empty($this->user)) {
+            if ($this->user["jogosultsag"] == 0) {
+                $cl = [-1];
+            }
 
-        foreach (explode("|", $this->user["cegjog"]) as $cegId) {
-            if (!empty(trim($cegId))) {
-                $cl[] = intval($cegId);
+            foreach (explode("|", $this->user["cegjog"]) as $cegId) {
+                if (!empty(trim($cegId))) {
+                    $cl[] = intval($cegId);
+                }
             }
         }
         return $cl;
@@ -239,6 +241,13 @@ class AdminUser {
         return $jogosultsagok;
     }
 
+
+    public function tiltottUser():bool {
+        if ($this->authenticated() && $this->user["status"] != 0) {
+            return false;
+        }
+        return true;
+    }
 
     public function readOnlySelectedCegAccess():bool {
         return $this->authenticated() && $this->user["jogosultsag"] == 0;

@@ -777,7 +777,7 @@ Szabó Jenő b muszak +36706027091 Szabojeno720418@gmal.com<br/>
         $html .= "</td>";
         $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["regtime"]}</td>";
         $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["nev"]}</td>";
-        if (isset($formData["utlevel"])) {
+        if (isset($igenyData["utlevel"])) {
             $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["utlevel"]}</td>";
         } else {
             $html .= "<td style='{$background}padding:5px 5px 5px 5px;border-top:1px solid #ccc;'>{$igenyData["csoport"]}</td>";

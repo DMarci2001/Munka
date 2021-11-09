@@ -78,7 +78,7 @@ class AdminPage {
         }
 
         //ha tiltott felhasználó
-        if ($this->adminUser->user["status"] == 0) {
+        if ($this->adminUser->tiltottUser()) {
             $this->skipFrame = true;
             $page = new AdminLoginPage();
         }
