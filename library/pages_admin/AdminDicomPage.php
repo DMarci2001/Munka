@@ -160,9 +160,9 @@ class AdminDicomPage extends AdminCorePage
         $html = "<!DOCTYPE html>";
         $html.= "<head>";
         $html.= "<title>{$dicomData["patientName"]} DICOM image</title>";
-        $html.= "<script src='https://bejelentkezes.hungariamed.hu/javascript/panzoom.min.js'></script>";
-        $html.= "<script src='https://bejelentkezes.hungariamed.hu/javascript/jquery/jquery.js'></script>";
-        $html.= "<script src='https://bejelentkezes.hungariamed.hu/admin/javascript/dicom.js?v=".date("mdHi")."'></script>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/js/panzoom.min.js'></script>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/js/jquery/jquery.js'></script>";
+        $html.= "<script src='https://bejelentkezes.hungariamed.hu/admin/js/dicom.js?v=".date("mdHi")."'></script>";
         $html.= '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">';
         $html.= '<link rel="stylesheet" href="https://bejelentkezes.hungariamed.hu/css/dicom.css?v='.date("mdHi").'" />';
         $html.= "</head>";

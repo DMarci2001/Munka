@@ -417,33 +417,33 @@ class Utils {
         }
 
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-        $htmlout.='<script type="text/javascript" src="/javascript/jquery/jquery.js"></script>';
-        $htmlout.='<script type="text/javascript" src="/javascript/jquery/jquery-ui.js"></script>';
-        $htmlout.='<script type="text/javascript" src="/javascript/sweetalert/sweetalert2.min.js"></script>';
-        $htmlout.="<script type='text/javascript' src='javascript/ajax.js?v={$v}'></script>";
+        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/js/sweetalert/sweetalert2.min.js"></script>';
+        $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
-            $htmlout.="<script type='text/javascript' src='javascript/covidform.js?v={$v}'></script>";
+            $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
         }
 
         if (isset($_GET["page"]) && $_GET["page"] == "oltasigenyfelmeres") {
-            $htmlout.="<script type='text/javascript' src='javascript/oltasigenyform.js?v={$v}'></script>";
+            $htmlout.="<script type='text/javascript' src='js/oltasigenyform.js?v={$v}'></script>";
         }
 
         if (isset($_GET["page"]) && $_GET["page"] == "elsosegelyvizsga") {
-            $htmlout.="<script type='text/javascript' src='javascript/elsosegelyvizsga.js?v={$v}'></script>";
+            $htmlout.="<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
         if (isset($GLOBALS["admin"])) {
-            $htmlout .= '<link href="/javascript/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
-            $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/datepicker.min.js"></script>';
-            $htmlout .= '<script src="/javascript/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
+            $htmlout .= '<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
+            $htmlout .= '<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
 
-            $htmlout .= '<link href="/admin/javascript/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
-            $htmlout .= '<script src="/admin/javascript/jquery.toast/jquery.toast.min.js"></script>';
+            $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 
-            $htmlout .= '<link href="/admin/javascript/confirm/jquery-confirm.css" rel="stylesheet" type="text/css">';
-            $htmlout .= '<script src="/admin/javascript/confirm/jquery-confirm.js"></script>';
+            $htmlout .= '<link href="/admin/js/confirm/jquery-confirm.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/admin/js/confirm/jquery-confirm.js"></script>';
 
             $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
             $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
@@ -459,12 +459,12 @@ class Utils {
         }
         if (isset($GLOBALS["javascript"])) {
             foreach ($GLOBALS["javascript"] as $js) {
-                $htmlout.="<script type='text/javascript' src='javascript/{$js}?v={$v}'></script>";
+                $htmlout.="<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
             }
         }
 		$htmlout.='<link rel="stylesheet" href="/css/fontawesome/css/all.css" />';
-        $htmlout.='<link rel="stylesheet" href="/javascript/jquery/jquery-ui.css">';
-        $htmlout.='<link rel="stylesheet" href="/javascript/sweetalert/sweetalert2.css" type="text/css" />';
+        $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
+        $htmlout.='<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";

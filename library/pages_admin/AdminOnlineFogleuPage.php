@@ -55,7 +55,7 @@ class AdminOnlineFogleuPage extends AdminCorePage
         echo "<div id='alkalmassaglista'>";
         echo $this->showAlkalmassagLista();
         echo "</div>";
-        echo "<script src='/javascript/onlinefogleuform.js'></script>";
+        echo "<script src='/js/onlinefogleuform.js'></script>";
     }
 
     private function showAlkalmassagLista() {

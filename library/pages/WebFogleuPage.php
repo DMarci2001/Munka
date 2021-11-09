@@ -472,7 +472,7 @@ class WebFogleuPage extends CorePage
             echo "<div style='margin-top:30px;text-align: center;'><input type=\"submit\" name=\"online-fogoleu-submit-button\" id=\"online-fogoleu-submit-button\" onclick=\"return false\" class=\"newbutton\" style='opacity: .3;border:none' value=\"Adatok elküldése\" /></div>";
 
             echo "</form>";
-            echo "<script src=\"javascript/onlinefogleuform.js\"></script>";
+            echo "<script src=\"js/onlinefogleuform.js\"></script>";
         }
     }
 
