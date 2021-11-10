@@ -110,9 +110,7 @@ class AdminReferralPage extends AdminCorePage {
 					
 					
 					//Email(ek) készítése:
-					$mail = new PHPMailer\PHPMailer\PHPMailer();
-					$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-					$mail->FromName = Booking_Constants::COMPANY_NAME;
+					$mail = NotificationService::getDefaultMailer();
 					if ( isset( $_POST['saveTest'] )) {
 						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
 					} else {
@@ -121,12 +119,8 @@ class AdminReferralPage extends AdminCorePage {
 					 if (!empty(Booking_Constants::USER_BCC_MAIL)) {
 						$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 					}
-					$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-					$mail->IsHTML(true);
 
-
-					$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "RE: Hamarosan lejár az alkalmassági igazolása!" );
-					//$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Hamarosan lejár az alkalmassági igazolása!" );
+					$t = "RE: Hamarosan lejár az alkalmassági igazolása!";
 
 					//$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
 					//$mbody.= "<p style='font-family:calibri;font-size:16px;font-weight:bold;'>A tegnapi nap folyamán egy rendszer hiba miatt téves fejléccel ellátott alkalmassági beutaló dokumentumot küldtünk ki az ön részére! Kérem az előző levelet tekintse tárgytalannak. Az érvényes beutaló dokumentumot ennek a levélnek a csatolmányából tudja letölteni!</p>";
@@ -155,7 +149,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Üdvözlettel</p>";
 					$mbody.= "<a href='https://www.hungariamed.hu' target='_blank'><img src='https://hungariamed.hu/images/logo.png'/></a>";
 					$mail->Subject = $t;
-					$mail->Body = iconv( "UTF-8", "ISO-8859-2//IGNORE", $mbody );
+					$mail->Body = $mbody;
 					$mail->AddAttachment($attachment);
 					$mail->Send();
 					//Itt helyezem be a vezetői tömbbe az adatokat a páciensről, és a csatolmány elérési útjával felül írom az forráskódját
@@ -189,9 +183,7 @@ class AdminReferralPage extends AdminCorePage {
 				
 				
 				//Email(ek) készítése:
-				$mail = new PHPMailer\PHPMailer\PHPMailer();
-				$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-				$mail->FromName = Booking_Constants::COMPANY_NAME;
+				$mail = NotificationService::getDefaultMailer();
 				if ( isset( $_POST['saveTest'] )) {
                     $mail->AddAddress("email.teszt0807@hungariamed.hu");
                 } else {
@@ -201,10 +193,8 @@ class AdminReferralPage extends AdminCorePage {
 				if (!empty(Booking_Constants::USER_BCC_MAIL)) {
 					$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 				}
-				$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-				$mail->IsHTML(true);
 
-				$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Összesítő lista az értesítésekről - ".date("Y.m.d") );
+				$t = "Összesítő lista az értesítésekről - ".date("Y.m.d");
 
 				$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
 				$mbody.= "<p style='font-family:calibri;font-size:14px'>A csatolmány tartalmazza a kiértesített dolgozókat a ".date("Y.m.d")." dátumon elvégzett csoportos értesítésen.</p>";
@@ -212,7 +202,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mbody.= "<p style='font-family:calibri;;font-size:14px'>Üdvözlettel</p>";
 				$mbody.= "<img src='https://hungariamed.hu/images/logo.png'>";
 				$mail->Subject = $t;
-				$mail->Body = iconv( "UTF-8", "ISO-8859-2//IGNORE", $mbody );
+				$mail->Body = $mbody;
 				$mail->AddAttachment($folder.$overallExcel.".xlsx");
 				$mail->Send();
 				
@@ -269,9 +259,7 @@ class AdminReferralPage extends AdminCorePage {
 					$this->utils->create_zip($files, $zipPath,  8);
 					
 					//Email(ek) készítése:
-					$mail = new PHPMailer\PHPMailer\PHPMailer();
-					$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-					$mail->FromName = Booking_Constants::COMPANY_NAME;
+					$mail = NotificationService::getDefaultMailer();
 					if ( isset( $_POST['saveTest'] )) {
 						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
 					} else {
@@ -280,10 +268,8 @@ class AdminReferralPage extends AdminCorePage {
 					 if (!empty(Booking_Constants::USER_BCC_MAIL)) {
 						$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 					}
-					$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-					$mail->IsHTML(true);
 
-					$t = iconv( "UTF-8", "ISO-8859-2//IGNORE", "Aktuális alkalmassági lejáratok - ".date("Y.m.d") );
+					$t = "Aktuális alkalmassági lejáratok - ".date("Y.m.d");
 
 					
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
@@ -299,7 +285,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mbody.= "<a href='https://www.hungariamed.hu' target='_blank'><img src='https://hungariamed.hu/images/logo.png'/></a>";
 
 					$mail->Subject = $t;
-					$mail->Body = iconv( "UTF-8", "ISO-8859-2//IGNORE", $mbody );
+					$mail->Body = $mbody;
 					$mail->AddAttachment($zipPath);
 					$mail->Send();
 					foreach($files as $file) unlink($file);

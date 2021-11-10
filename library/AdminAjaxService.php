@@ -262,43 +262,15 @@ class AdminAjaxService {
             $worksheet = $excelObj->getSheet(0);
             $lastRow = $worksheet->getHighestRow();
 
-            /*$mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
-            $mail->AddAddress("m.gergely9409@gmail.com", "marton.gergely@hungariamed.hu");
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
-
-            $t=iconv("UTF-8","ISO-8859-2","Orvosi alkalmassági vizsgálata hamarosan lejár!");
-
-            $mbody = "Kedves Márton Gergely,<br/>";
-            $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
-            $mbody.= "Lejárat dátuma: 2018-09-23<br/>";
-            $mbody.= "Kérem foglaljon időpontot honlapunkon:<br/>";
-            $mbody.= "<a href='https://bert.hungariamed.hu'>https://bert.hungariamed.hu</a><br/>";
-            $mbody.= "Tisztelettel,<br/>";
-            $mbody.= "HungáriaMed - M.kft";
-
-            $mail->Subject=$t;
-            $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
-            $mail->AddAttachment($Attachment);
-            if ($mail->Send()) echo "success!";
-            else echo "failed!";*/
-
-            for($row = 2; $row <= $lastRow; $row++)
-            {
+            for($row = 2; $row <= $lastRow; $row++) {
                 //echo $worksheet->getCell('A'.$row)->getValue()." : ".$worksheet->getCell('B'.$row)->getValue()." : ".$worksheet->getCell('C'.$row)->getValue()." : ".$worksheet->getCell('D'.$row)->getValue()."<br/>";
 
-                $mail = new PHPMailer();
-                $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                $mail->FromName = Booking_Constants::COMPANY_NAME;
+                $mail = NotificationService::getDefaultMailer();
                 $mail->AddAddress($worksheet->getCell('C'.$row)->getValue(), $worksheet->getCell('A'.$row)->getValue());
                 $mail->AddAddress($worksheet->getCell('D'.$row)->getValue(), $worksheet->getCell('D'.$row)->getValue());
                 //$mail->AddAddress("m.gergely9409@gmail.com", "Márton Gergely");
-                $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                $mail->IsHTML(true);
 
-                $t=iconv("UTF-8","ISO-8859-2","Orvosi alkalmassági vizsgálata hamarosan lejár!");
+                $subject = "Orvosi alkalmassági vizsgálata hamarosan lejár!";
 
                 $mbody = "Kedves {$worksheet->getCell('A'.$row)->getValue()},<br/>";
                 $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
@@ -308,8 +280,8 @@ class AdminAjaxService {
                 $mbody.= "Tisztelettel,<br/>";
                 $mbody.= "Hungária Med - M.kft";
 
-                $mail->Subject=$t;
-                $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
+                $mail->Subject = $subject;
+                $mail->Body = $mbody;
                 $mail->AddAttachment($Attachment);
                 if($mail->Send()) echo "success!({$worksheet->getCell('A'.$row)->getValue()})<br/>";
                 else echo "failed!({$worksheet->getCell('A'.$row)->getValue()})<br/>";

@@ -11,7 +11,7 @@ class NotificationService {
         $this->utils = new Utils();
     }
 
-    public function getDefaultMailer():PHPMailer {
+    public static function getDefaultMailer():PHPMailer {
         $mail = new PHPMailer();
 
         $mail->isSMTP();
@@ -71,16 +71,11 @@ class NotificationService {
                 $mailTemplate = $this->userMailTemplateWebDoctor($row);
             }
 
-            $mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail = $this->getDefaultMailer();
             $mail->AddAddress($row["email"]);
             if (!empty(Booking_Constants::USER_BCC_MAIL)) {
                 $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
             }
-            $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
 
             $mail->Subject = $mailTemplate["subject"];
             $mail->Body = $mailTemplate["body"];
@@ -139,7 +134,7 @@ class NotificationService {
                         $mailTemplate = $this->orvosMailTemplateRemote($rowf, $rowo);
                     }
 
-                    $mail = new PHPMailer();
+                    $mail = $this->getDefaultMailer();
                     $mail->FromName = Booking_Constants::COMPANY_NAME;
                     if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
@@ -149,8 +144,6 @@ class NotificationService {
 
                     $mail->From = $mailTemplate["from"];
                     $mail->AddReplyTo($mailTemplate["from"]);
-                    $mail->IsHTML(true);
-                    $mail->CharSet = "UTF-8";
                     $mail->Subject = $mailTemplate["subject"];
                     $mail->Body = $mailTemplate["body"];
 
@@ -183,9 +176,7 @@ class NotificationService {
                 if (!self::hasNotification("cegnotification", $row["id"]) || $force == 1) {
                     $packText = $this->_getPackText($row);
 
-                    $mail = new PHPMailer();
-                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                    $mail->FromName = Booking_Constants::COMPANY_NAME;
+                    $mail = $this->getDefaultMailer();
                     if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
@@ -199,11 +190,8 @@ class NotificationService {
                             }
                         }
                     }
-                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                    $mail->IsHTML(true);
-                    $mail->CharSet = "UTF-8";
 
-                    $t = "{$row["cegnev"]} - időpont regisztráció";
+                    $subject = "{$row["cegnev"]} - időpont regisztráció";
 
                     $mbody = "Név: {$row["nev"]}<br>";
                     $mbody .= "Cég: {$row["cegnev"]}<br>";
@@ -221,11 +209,11 @@ class NotificationService {
                         $mbody .= "Értesített orvos: {$row["orvosnev"]} ({$row["orvosemail"]})";
                     }
 
-                    $mail->Subject = $t;
+                    $mail->Subject = $subject;
                     $mail->Body = $mbody;
                     $mail->Send();
 
-                    $this->createNotificationRecord("cegnotification", $row["id"], $row["cegemail"].",".$row["hmedemail"], $t, $mbody);
+                    $this->createNotificationRecord("cegnotification", $row["id"], $row["cegemail"].",".$row["hmedemail"], $subject, $mbody);
                 }
             }
         }
@@ -249,19 +237,14 @@ class NotificationService {
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
-            $mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail = $this->getDefaultMailer();
             $mail->AddAddress($row["email"]);
             if (!empty(Booking_Constants::USER_BCC_MAIL)) {
                 $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
             }
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
-            $mail->CharSet = "UTF-8";
 
             $webTextLocal = $lang->getWebTexts($row["rlang"]);
-            $t = $webTextLocal["mailtitleerositsdmeg"];
+            $subject = $webTextLocal["mailtitleerositsdmeg"];
 
             $mbody = "";
 
@@ -308,12 +291,11 @@ class NotificationService {
                 Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
             }
 
-            $mail->Subject = $t;
+            $mail->Subject = $subject;
             $mail->Body = $mbody;
-            //$mail->AddAttachment("");
             $mail->Send();
 
-            $this->createNotificationRecord("usermegerosito", $id, $row["email"], $t, $mbody);
+            $this->createNotificationRecord("usermegerosito", $id, $row["email"], $subject, $mbody);
         }
     }
 
@@ -321,16 +303,11 @@ class NotificationService {
     public function reservationReminder($data){
         $deleteURL = "http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$data["id"]}&rk={$data["rkod"]}&setlang={$data["rlang"]}";
 
-        $mail = new PHPMailer();
-        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-        $mail->FromName = Booking_Constants::COMPANY_NAME;
+        $mail = $this->getDefaultMailer();
         $mail->AddAddress($data["email"]);
         $mail->AddBCC("jns@jns.hu");
-        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-        $mail->IsHTML(true);
-        $mail->CharSet = "UTF-8";
 
-        $t = "Időpontfoglalás Emlékeztető - {$data["megnev"]}";
+        $subject = "Időpontfoglalás Emlékeztető - {$data["megnev"]}";
 
         $mbody = "<p style='font-size:18px;font-weight:bold;font-family:calibri'>Tisztelt hölgyem/uram!</p>";
         $mbody.= "";
@@ -348,13 +325,13 @@ class NotificationService {
 
         $mbody.= "<p style='font-family:calibri'>Köszönjük, ".Booking_Constants::COMPANY_NAME." Csapata!</p>";
 
-        $mail->Subject = $t;
+        $mail->Subject = $subject;
         $mail->Body = $mbody;
         $mail->Send();
 
         sql_query("UPDATE foglalasok SET emlekezteto_mail = 1 WHERE id=?",array($data['id']));
 
-        $this->createNotificationRecord("emlekezteto", $data["id"], $data["email"], $t, $mbody);
+        $this->createNotificationRecord("emlekezteto", $data["id"], $data["email"], $subject, $mbody);
     }
 
 
@@ -625,25 +602,176 @@ END:VCALENDAR";
             <br/>
             Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
 
-            $mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail = $this->getDefaultMailer();
             //$mail->AddAddress($row["email"]);
             $mail->AddAddress("jnsmobil@gmail.com");
             //if (!empty(Booking_Constants::USER_BCC_MAIL)) {
-            $mail->AddBCC("jns@jns.hu");
+            //$mail->AddBCC("jns@jns.hu");
             //}
-            $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
 
-            $t = "[".Booking_Constants::COMPANY_NAME_SHORT."] Kérjük adja meg az adatait";
-            $mail->Subject = $t;
+            $subject = "[".Booking_Constants::COMPANY_NAME_SHORT."] Kérjük adja meg az adatait";
+            $mail->Subject = $subject;
             $mail->Body = $body;
 
             $mail->Send();
 
-            $this->createNotificationRecord("missingdata", $id, $row["email"], $t, $body);
+            $this->createNotificationRecord("missingdata", $id, $row["email"], $subject, $body);
+        }
+    }
+
+    public function newAdminPassEmail($userData) {
+        $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
+        $p = "";
+        for ($i = 0; $i < 6; $i++) {
+            $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
+        }
+
+        $mail = $this->getDefaultMailer();
+        $mail->AddAddress($userData["email"]);
+
+        $subject = Booking_Constants::SITE_NAME . " - új jelszó";
+
+        $mbody = "Kedves {$userData["nev"]}!<br/><br/>";
+        $mbody .= "A " . Booking_Constants::SITE_NAME . " felületén új jelszó kérését kezdeményezte.<br/><br/>";
+        $mbody .= "Felhasználóneve: <b>{$userData["username"]}</b><br/>";
+        $mbody .= "Az új jelszava: <b>{$p}</b><br>";
+        $mbody .= "<br/>";
+        $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+
+        sql_query("update users set password=? where id=?", [md5($p), $userData["id"]]);
+    }
+
+    public function newUserPassEmail($userData, $lang = "hu") {
+        $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
+        $p = "";
+        for ($i = 0; $i < Booking_Constants::GENERATED_PASSWORD_LENGTH; $i++) {
+            $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
+        }
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($userData["email"]);
+
+        $subject = "Új jelszó kérése";
+
+        $mbody = "Kedves {$userData["nev"]}!<br/><br/>";
+        $mbody .= "Az online bejelentkezési felületünkön új jelszó kérését kezdeményezte.<br/><br/>";
+        $mbody .= "Az új jelszava: <b>{$p}</b><br><br>";
+        $mbody .= "Az új jelszavát bejelentkezés követően az adatmódosítás menüpont alatt tudja megváltoztatni.<br/>";
+        $mbody .= "<br/>";
+        $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
+
+        if ($_COOKIE["lang"] == "de") {
+            $mbody = "Lieber {$userData["nev"]}!<br/><br/>";
+            $mbody .= "Unsere online anmelden Oberfláche sie beginnen eine neue Kennwort anbietten.<br/><br/>";
+            $mbody .= "Die neue Kennwort: <b>{$p}</b><br><br>";
+            $mbody .= "Nach den anmelden können Sie um  einem neuem Kennwort bitten.<br/>";
+            $mbody .= "<br/>";
+            $mbody .= "Freundlichen Grüssen:<br>".Booking_Constants::COMPANY_NAME;
+        }
+        if ($_COOKIE["lang"] == "en") {
+            $mbody = "Dear {$userData["nev"]}!<br/><br/>";
+            $mbody .= "You have requested a new password on our reservation page.<br/><br/>";
+            $mbody .= "Your new password: <b>{$p}</b><br><br>";
+            $mbody .= "You can change your new password under the profile page.<br/>";
+            $mbody .= "<br/>";
+            $mbody .= "Regards<br>".Booking_Constants::COMPANY_NAME;
+        }
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+
+        sql_query("update felhasznalok set jelszo=?	where id=?", [md5($p), $userData["id"]]);
+    }
+
+    public function sendDebugEmail($subject, $mbody) {
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress("jnsmobil@gmail.com");
+        $mail->AddBCC("m.gergely9409@gmail.com");
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
+
+    public function sendEljottMail($foglalasData) {
+        $mail = self::getDefaultMailer();
+        //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
+        //$mail->AddAddress("jns@jns.hu");
+
+        if ($emailData = sql_fetch_array(sql_query("select * from ertekeles_formok where (instr(rule_cegids,'|{$foglalasData["cegid"]}|') or rule_cegids='all') and rule_mail=1 and rule_aftereljott=1"))) {
+            $mailSzoveg = $emailData["mailszoveg_{$foglalasData["rlang"]}"];
+            if ($mailSzoveg == "") $mailSzoveg = $emailData["mailszoveg_hu"];
+            $mailSubject = $emailData["megnev_{$foglalasData["rlang"]}"];
+            if ($mailSubject == "") $mailSubject = $emailData["megnev_hu"];
+            if ($mailSzoveg != "" && $mailSubject != "") {
+                $mailSzoveg = str_replace("#nev#", $foglalasData["nev"], $mailSzoveg);
+                $mail->Subject = $mailSubject;
+                $mail->Body = $mailSzoveg;
+                //$mail->Send();
+                sql_query("update foglalasok set eljottmail=1 where id=?", array($foglalasData["id"]));
+            }
+        }
+    }
+
+    function sendNotConfirmedReservationMessages($reservationId) {
+        /*
+        nem visszaigazolt foglalás esetén:
+        - mail a paciensnek
+        - mail a hmm-nek
+        - sms a paciensnek
+        */
+        $h = "cim";
+        if ($_SESSION["helyszindata"]["nocim"] == 1) {
+            $h = "megnev";
+        }
+
+        $res = sql_query("SELECT h.{$h} AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+        LEFT JOIN cegek c on c.id=f.cegid
+        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+        WHERE f.id=?", [$reservationId]);
+        if ($row = sql_fetch_array($res)) {
+            $mail = self::getDefaultMailer();
+            $mail->AddAddress($row["email"]);
+            //$mail->AddAddress("jns@jns.hu");
+
+            $subject = "Figyelem! Foglalását töröltük!";
+
+            $mbody = "<h2>Foglalását töröltük!</h2>";
+            $mbody .= "Előző levelünkben küldött megerősítő hivatkozásra nem kattintott rá, ezért a {$row["datum"]} időpontra szóló foglalását töröltük.<br/>";
+            $mbody .= "<br/>";
+            $mbody .= "Üdvözlettel:<br/>".Booking_Constants::COMPANY_NAME;
+
+            $mail->Subject = $subject;
+            $mail->Body = $mbody;
+            $mail->Send();
+
+            $mail = self::getDefaultMailer();
+            $mail->AddAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
+
+            $subject = "Egy paciens foglalása törölve lett!";
+
+            $mbody = "<h2>Törölt foglalás</h2>";
+            $mbody .= "A paciens foglalt, de nem igazolta vissza a következő rendelést, ezért azt töröltük:<br/>";
+            $mbody .= "Név: {$row["nev"]}<br/>";
+            $mbody .= "Telefon: {$row["telefon"]}<br/>";
+            $mbody .= "Email: {$row["email"]}<br/>";
+            $mbody .= "<b>Időpont: {$row["datum"]}</b><br/>";
+            $mbody .= "Szűréstípus: {$row["szurestipus"]}<br/>";
+            $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
+            $mbody .= "<br/>";
+            $mbody .= "Hívd fel az ügyfelet egyeztetés céljából.</a><br>";
+
+            $mail->Subject = $subject;
+            $mail->Body = $mbody;
+            $mail->Send();
+
+            $utils = new Utils();
+            $utils->sendSMS($row["telefon"], "Figyelem, {$row["datum"]} foglalását visszaigazolás hiányában töröltük!");
         }
     }
 

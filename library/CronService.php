@@ -264,9 +264,10 @@ class CronService {
 
     private function _deleteNotActivatedReservations() {
         //1 órán belül nem aktivált foglalások törlése
+        $service = new NotificationService();
         $res = sql_query("select * from foglalasok where regdatum<date_sub(now(),interval 1 hour) AND regdatum>DATE_SUB(NOW(),INTERVAL 2 HOUR) and aktiv=0 and externalid=''");
         while ($row = sql_fetch_array($res)) {
-            $this->utils->sendNotConfirmedReservationMessages($row["id"]);
+            $service->sendNotConfirmedReservationMessages($row["id"]);
             $this->bookingService->deleteReservation($row["id"], $row["rkod"], true);
         }
     }
@@ -311,10 +312,11 @@ class CronService {
     }
 
     private function _sendReviewMails() {
+        $service = new NotificationService();
         //érkeztetett foglalásokra elégedettségi form kiküldése
         $res = sql_query("SELECT * FROM foglalasok WHERE eljott=1 AND eljottmail=0 AND datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND datum<NOW() AND email<>'' and externalid=''");
         while ($foglalasData=sql_fetch_array($res)) {
-            $this->utils->sendEljottMail($foglalasData);
+            $service->sendEljottMail($foglalasData);
         }
     }
 
@@ -417,7 +419,8 @@ class CronService {
     private function sendMissingDataEmails() {
         $notificationService = new NotificationService();
 
-        $reservations = sql_query("SELECT id, nev, email, regdatum, datum, CONCAT(SHA1(CONCAT(regdatum, id)), SHA1(CONCAT(nev, regdatum)), SHA1(CONCAT(id, nev, regdatum))) AS h FROM foglalasok WHERE regdatum>DATE_SUB(NOW(), INTERVAL 1 DAY) AND foglalta='foglaljorvost'")->fetchAll(PDO::FETCH_ASSOC);
+        $reservations = sql_query("SELECT id, nev, email, regdatum, datum, CONCAT(SHA1(CONCAT(regdatum, id)), SHA1(CONCAT(nev, regdatum)), SHA1(CONCAT(id, nev, regdatum))) AS h FROM foglalasok 
+            WHERE regdatum>DATE_SUB(NOW(), INTERVAL 1 DAY) AND datum<DATE_ADD(NOW(), INTERVAL 2 DAY) AND foglalta='foglaljorvost'")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($reservations as $reservation) {
             if (!NotificationService::hasNotification("missingdata", $reservation["id"])) {
                 echo $reservation["datum"] . " " . $reservation["nev"] . " " . $reservation["email"] . "\n";

@@ -577,26 +577,21 @@ class AdminCompaniesPage extends AdminCorePage
                     //Sablon szöveg testreszabása az aktuális dolgozóra:
                     $search = array("#nev#", "#domain#", "#cim#");
                     $replace = array($workerinfo["nev"], $ceginfo["domain"], $workerinfo["cim"]);
-                    $subject = $listainfo["uzenet"];
 
                     $uzenet = str_replace($search, $replace, $uzenet);
 
                     //Email kiküldése:
-                    $mail = new PHPMailer\PHPMailer\PHPMailer();
-                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                    $mail->FromName = Booking_Constants::COMPANY_NAME;
+                    $mail = NotificationService::getDefaultMailer();
                     $mail->AddAddress($workerinfo["email"]);
                     $mail->AddAddress("tesztemail@hungariamed.hu");
                     if (!empty(Booking_Constants::USER_BCC_MAIL)) {
                         $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
                     }
-                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                    $mail->IsHTML(true);
 
-                    $t = iconv("UTF-8", "ISO-8859-2//IGNORE", $listainfo["targy"]);
+                    $t = $listainfo["targy"];
 
                     $mail->Subject = $t;
-                    $mail->Body = iconv("UTF-8", "ISO-8859-2//IGNORE", $uzenet);
+                    $mail->Body = $uzenet;
                     $mail->Send();
 
                     sql_query("INSERT INTO ertesites_log SET uid=?,email=?,targy=?,szoveg=?,datum=NOW()", array($workerinfo["id"], $workerinfo["email"], $listainfo["targy"], $uzenet));

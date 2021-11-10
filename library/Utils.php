@@ -14,30 +14,6 @@ class Utils {
         return in_array($_SERVER["REMOTE_ADDR"],array("88.151.97.121","81.182.23.124","5.204.54.10","81.182.23.106","194.143.226.42"));
     }
 
-    public function sendEljottMail($foglalasData) {
-        $mail = new PHPMailer();
-        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-        $mail->FromName = Booking_Constants::COMPANY_NAME;
-        //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
-        //$mail->AddAddress("jns@jns.hu");
-        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-        $mail->IsHTML(true);
-
-        if ($emailData = sql_fetch_array(sql_query("select * from ertekeles_formok where (instr(rule_cegids,'|{$foglalasData["cegid"]}|') or rule_cegids='all') and rule_mail=1 and rule_aftereljott=1"))) {
-            $mailSzoveg = $emailData["mailszoveg_{$foglalasData["rlang"]}"];
-            if ($mailSzoveg == "") $mailSzoveg = $emailData["mailszoveg_hu"];
-            $mailSubject = $emailData["megnev_{$foglalasData["rlang"]}"];
-            if ($mailSubject == "") $mailSubject = $emailData["megnev_hu"];
-            if ($mailSzoveg != "" && $mailSubject != "") {
-                $mailSzoveg = str_replace("#nev#", $foglalasData["nev"], $mailSzoveg);
-                $mail->Subject = iconv("UTF-8", "ISO-8859-2", $mailSubject);
-                $mail->Body = iconv("UTF-8", "ISO-8859-2", $mailSzoveg);
-                //$mail->Send();
-                sql_query("update foglalasok set eljottmail=1 where id=?", array($foglalasData["id"]));
-            }
-        }
-    }
-
     public function sendUserSMSKod($userId)
     {
         if ($rowu = sql_fetch_array(sql_query("SELECT f.* FROM felhasznalok f 
@@ -53,72 +29,6 @@ class Utils {
     {
         if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id='{$userId}'"))) {
             $this->sendSMS($rowu["telefon"], "kód a bejelentkezéshez: {$rowu["rkod"]}");
-        }
-    }
-
-    function sendNotConfirmedReservationMessages($id)
-    {
-        /*
-        nem visszaigazolt foglalás esetén:
-        - mail a paciensnek
-        - mail a hmm-nek
-        - sms a paciensnek
-        */
-        $h = "cim";
-        if ($_SESSION["helyszindata"]["nocim"] == 1) $h = "megnev";;
-
-        $res = sql_query("SELECT h.{$h} AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
-        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-        LEFT JOIN cegek c on c.id=f.cegid
-        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-        WHERE f.id=?", array($id));
-        if ($row = sql_fetch_array($res)) {
-            $mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
-            $mail->AddAddress($row["email"]);
-            //$mail->AddAddress("jns@jns.hu");
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
-
-            $t = iconv("UTF-8", "ISO-8859-2", "Figyelem! Foglalását töröltük!");
-
-            $mbody = "<h2>Foglalását töröltük!</h2>";
-            $mbody .= "Előző levelünkben küldött megerősítő hivatkozásra nem kattintott rá, ezért a {$row["datum"]} időpontra szóló foglalását töröltük.<br/>";
-            $mbody .= "<br/>";
-            $mbody .= "Üdvözlettel:<br/>".Booking_Constants::COMPANY_NAME;
-
-            $mail->Subject = $t;
-            $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-            //$mail->AddAttachment("");
-            $mail->Send();
-
-            $mail = new PHPMailer();
-            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-            $mail->FromName = Booking_Constants::COMPANY_NAME;
-            $mail->AddAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-            $mail->IsHTML(true);
-
-            $t = iconv("UTF-8", "ISO-8859-2", "Egy paciens foglalása törölve lett!");
-
-            $mbody = "<h2>Törölt foglalás</h2>";
-            $mbody .= "A paciens foglalt, de nem igazolta vissza a következő rendelést, ezért azt töröltük:<br/>";
-            $mbody .= "Név: {$row["nev"]}<br/>";
-            $mbody .= "Telefon: {$row["telefon"]}<br/>";
-            $mbody .= "Email: {$row["email"]}<br/>";
-            $mbody .= "<b>Időpont: {$row["datum"]}</b><br/>";
-            $mbody .= "Szűréstípus: {$row["szurestipus"]}<br/>";
-            $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
-            $mbody .= "<br/>";
-            $mbody .= "Hívd fel az ügyfelet egyeztetés céljából.</a><br>";
-
-            $mail->Subject = $t;
-            $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-            //$mail->AddAttachment("");
-            $mail->Send();
-
-            $this->sendSMS($row["telefon"], "Figyelem, {$row["datum"]} foglalását visszaigazolás hiányában töröltük!");
         }
     }
 
@@ -406,7 +316,7 @@ class Utils {
         $htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
         $htmlout.='<head>';
 
-        $v = "ver".date("YmdHi");
+        $v = "version".date("YmdHi");
 
         $htmlout.="<title>{$pageTitle}</title>";
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />";
@@ -551,17 +461,13 @@ class Utils {
             while ($result = sql_fetch_array($query)) {
                 $checkFoglalas = sql_query("SELECT * FROM foglalasok WHERE email=? AND taj=? AND datum>=NOW() AND datum<ADDDATE(NOW(),14)", array($result['umail'], $result['taj']));
                 if ($checkFoglalas->rowCount() == 0) {
-                    $mail = new PHPMailer();
-                    $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                    $mail->FromName = Booking_Constants::COMPANY_NAME;
+                    $mail = NotificationService::getDefaultMailer();
                     $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['umail']));
                     if ($result['hrmail'] != "") {
                         $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
                     }
-                    $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                    $mail->IsHTML(true);
 
-                    $t = iconv("UTF-8","ISO-8859-2","Orvosi alkalmassági vizsgálata hamarosan lejár!");
+                    $subject = "Orvosi alkalmassági vizsgálata hamarosan lejár!";
 
                     $mbody = "Kedves {$result['nev']},<br/>";
                     $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
@@ -571,9 +477,8 @@ class Utils {
                     $mbody.= "Tisztelettel,<br/>";
                     $mbody.= Booking_Constants::COMPANY_NAME;
 
-                    $mail->Subject=$t;
-                    $mail->Body=iconv("UTF-8","ISO-8859-2",$mbody);
-                    //$mail->AddAttachment("");
+                    $mail->Subject = $subject;
+                    $mail->Body = $mbody;
                     if (!$mail->Send()) {
                         sql_query("INSERT INTO alkert_mail SET nev = '{$result['nev']}', email = '{$result['umail']}', eredmeny = '{$mail->ErrorInfo}', datum = NOW() ");
                     } else {

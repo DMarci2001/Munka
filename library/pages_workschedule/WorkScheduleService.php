@@ -83,24 +83,19 @@ class WorkScheduleService {
             $token = $this->workerTokenGen($workerData);
 
             if ($type == "email") {
-                $mail = new PHPMailer();
-                $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-                $mail->FromName = Booking_Constants::COMPANY_NAME;
+                $mail = NotificationService::getDefaultMailer();
                 $mail->AddAddress($workerData["email"]);
-                $mail->CharSet = "UTF-8";
-                $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-                $mail->IsHTML(true);
 
-                $mail->Subject = "[Hungariamed] beosztás változás";
+                $mail->Subject = "[".Booking_Constants::COMPANY_NAME_SHORT."] beosztás változás";
                 $mail->Body = "Kedves Munkatársunk!<br/>
                 <br/>
                 Értesítjük, hogy a beosztásában változás történt.<br/>
                 Beosztásának megtekintéséhez kattintson az alábbi linkre.<br/>
                 <br/>
-                <a href='https://bejelentkezes.hungariamed.hu/admin/index.php?scheduletoken={$token}'>Beosztás megtekintése</a><br/>
+                <a href='".Booking_Constants::MAIN_URL."/admin/index.php?scheduletoken={$token}'>Beosztás megtekintése</a><br/>
                 <br/>
                 Üdvözlettel:<br/>
-                Hungáriamed
+                ".Booking_Constants::COMPANY_NAME."
                 ";
 
                 $mail->Send();

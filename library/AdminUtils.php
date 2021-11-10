@@ -16,38 +16,6 @@ class AdminUtils
         $this->protocolService = new AdminProtocolService();
     }
 
-    public function newPassSend($rowu)
-    {
-        $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
-        $p = "";
-        for ($i = 0; $i < 6; $i++) {
-            $p .= substr($pchars, rand(0, strlen($pchars) - 1), 1);
-        }
-
-        $mail = new PHPMailer();
-        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-        $mail->FromName = Booking_Constants::COMPANY_NAME;
-        $mail->AddAddress($rowu["email"]);
-        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-        $mail->IsHTML(true);
-
-        $t = iconv("UTF-8", "ISO-8859-2", Booking_Constants::SITE_NAME . " - új jelszó");
-
-        $mbody = "Kedves {$rowu["nev"]}!<br/><br/>";
-        $mbody .= "A " . Booking_Constants::SITE_NAME . " felületén új jelszó kérését kezdeményezte.<br/><br/>";
-        $mbody .= "Felhasználóneve: <b>{$rowu["username"]}</b><br/>";
-        $mbody .= "Az új jelszava: <b>{$p}</b><br>";
-        $mbody .= "<br/>";
-        $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
-
-        $mail->Subject = $t;
-        $mail->Body = iconv("UTF-8", "ISO-8859-2", $mbody);
-        //$mail->AddAttachment("");
-        $mail->Send();
-
-        sql_query("update users set password='" . md5($p) . "' where id='{$rowu["id"]}'", array(md5($p), $rowu["id"]));
-    }
-
     public function showCegListSzT($raw, $sor)
     {
         $h = "";

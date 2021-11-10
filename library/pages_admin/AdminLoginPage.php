@@ -35,8 +35,9 @@ class AdminLoginPage extends AdminCorePage {
                 return;
             }
 
+            $service = new NotificationService();
             while ($row=sql_fetch_array($resp1)) {
-                $this->adminUtils->newPassSend($row);
+                $service->newAdminPassEmail($row);
             }
 
             $_SESSION["message"] = "Az új jelszavát a megadott e-mail címre elküldtük.";
