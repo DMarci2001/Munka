@@ -53,7 +53,7 @@ class ElsosegelyVizsgaPage extends CorePage {
                 }
             }
 
-            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["anyjaneve"]) || empty($_POST["szulhely"]) || empty($_POST["oktatasiazonosito"]) || empty($_POST["iskolavegzettseg"]) || empty($_POST["email"]) || empty($_POST["varos"]) || empty($_POST["irsz"]) || empty($_POST["cim"])) {
+            if (empty($_POST["szuldatum"]) || empty($_POST["nev"]) || empty($_POST["anyjaneve"]) || empty($_POST["szulhely"]) || empty($_POST["iskolavegzettseg"]) || empty($_POST["email"]) || empty($_POST["varos"]) || empty($_POST["irsz"]) || empty($_POST["cim"])) {
                 $result["error"] = "Minden mező kitöltése kötelező!";
             }
 
@@ -206,9 +206,9 @@ class ElsosegelyVizsgaPage extends CorePage {
         echo "<div style='margin-top:5px;'>Anyja neve:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='' /></div>";
         echo "<div style='margin-top:5px;'>Születési dátum:</div><div style='padding-top:5px;'>" . $this->utils->datumSelector($_POST["szuldatum"], "szuldatum") . "</div>";
         echo "<div style='margin-top:5px;'>Születési helye:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='szulhely' value='' /></div>";
-        echo "<div style='margin-top:5px;'>Oktatási azonosító:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='oktatasiazonosito' value='' /></div>";
+        //echo "<div style='margin-top:5px;'>Oktatási azonosító:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='oktatasiazonosito' value='' /></div>";
         echo "<div style='margin-top:5px;'>Legmagasabb iskolai végzettsége:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='iskolavegzettseg' value='' /></div>";
-        //echo "<div style='margin-top:5px;'>Adóazonosító jele:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='adoazonosito' value='' /></div>";
+        echo "<div style='margin-top:5px;'>Adóazonosító jele:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='adoazonosito' value='' /></div>";
         echo "<div style='margin-top:5px;'>Email címe:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='email' value='' /></div>";
         echo "<div style='margin-top:20px;'><strong>Adja meg a címét:</strong></div>";
         echo "<div style='margin-top:5px;'>Város:</div><div style='padding-top:5px;'><input class='inputbox' style='width:250px;' type='text' name='varos' value='' /></div>";
