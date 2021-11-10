@@ -777,12 +777,17 @@ function foReservationInfo(id, p) {
     });
 }
 
-function foglalasMentes(page) {
+function foglalasMentes(page, allowNewCompany) {
     var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
     $("#naptarloading").show();
 
     let cegId = $("#cegid").val();
     if (isNaN(cegId)) {
+        if (allowNewCompany == 0) {
+            alert("Új cég bevitele nem engedélyezett, válassz a listából!");
+            return;
+        }
+
         if (!confirm("Új céget készülsz létrehozni ("+cegId+"), biztos vagy benne?")) {
             return;
         }
