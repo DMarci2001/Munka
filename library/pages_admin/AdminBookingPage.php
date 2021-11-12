@@ -350,6 +350,12 @@ class AdminBookingPage extends AdminCorePage
                         $htmlout.="<div style='border-top:1px solid #ccc;marign-top:3px;padding-top:3px;width:100%;'></div>";
                     }
 
+                    $beoComment = trim($beosztas["bmegj"]);
+                    if (!empty($beoComment)) {
+                        $beoComment.= " ({$minTol} - {$maxIg})";
+                        $htmlout.= "<div style='margin:5px 0px;padding:2px 5px;background: red;color:#fff;display: inline-block;'>{$beoComment}</div>";
+                    }
+
                     $htmlout .= "<table cellpadding='0' cellspacing='0'>";
                     for ($o = 0; $o < 3600; $o += $binterval) {
                         $ora = date("H:i", strtotime("{$minTol}:00 +{$o} minute"));
