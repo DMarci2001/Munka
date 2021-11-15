@@ -158,7 +158,7 @@ class BookingPage extends CorePage
             }
             if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
                 if (empty($_POST["szulhely"])) {
-                    $this->errors[] = "{$webText["szuletesidatum"]}!";
+                    $this->errors[] = "{$webText["szulhelykotelezo"]}!";
                 }
             }
             if (!$this->utils->getFieldHidden("szuldatum") && $this->utils->getFieldRequired("szuldatum")) {
