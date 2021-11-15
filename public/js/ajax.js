@@ -23,6 +23,28 @@ function myAlert(szoveg, tipus) {
     });
 }
 
+$(document).ready(function () {
+    $(".vaccination-question-elements").change(function () {
+        checkVaccinationElements();
+    });
+
+});
+
+function checkVaccinationElements(){
+    let isVaccinated = $('input[name=is-vaccinated]:checked', '#iform').val();
+
+    if(isVaccinated==="1"){
+        $("#vaccination-info-vaccine-type").show();
+        $("#vaccination-info-first-vaccine").show();
+        $("#vaccination-info-second-vaccine").show();
+    }else{
+        $("#vaccination-info-vaccine-type").hide();
+        $("#vaccination-info-first-vaccine").hide();
+        $("#vaccination-info-second-vaccine").hide();
+    }
+    
+}
+
 function showIdoPontValasztoV2(honnan, orvosid) {
     if (orvosid === undefined) {
         orvosid = 0;

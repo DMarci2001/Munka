@@ -1,6 +1,7 @@
 <?php
 
-class BookingPage extends CorePage {
+class BookingPage extends CorePage
+{
 
     private $bookingService;
     public $beutaloData = null;
@@ -53,7 +54,7 @@ class BookingPage extends CorePage {
         }
 
         if (isset($_GET["remotereserve"])) {
-            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id=? and rkod=?",array($_GET["fid"], $_GET["fkod"])))) {
+            if ($rowu = sql_fetch_array(sql_query("select * from felhasznalok where id=? and rkod=?", array($_GET["fid"], $_GET["fkod"])))) {
                 $_SESSION["remotebeutalo"] = $_GET["remotereserve"];
                 $_SESSION["loggeduser"] = $rowu["id"];
                 header("location:index.php?setbeutalo=" . intval($_GET["remotereserve"]));
@@ -62,7 +63,7 @@ class BookingPage extends CorePage {
         }
 
         if (isset($_GET["setbeutalo"])) {
-            if ($row = sql_fetch_array(sql_query("select * from beutalok where id=? and userid=?",array($_GET["setbeutalo"], $_SESSION["user"]["id"])))) {
+            if ($row = sql_fetch_array(sql_query("select * from beutalok where id=? and userid=?", array($_GET["setbeutalo"], $_SESSION["user"]["id"])))) {
                 $_SESSION["beutaloid"] = $row["id"];
             }
             header("location:index.php?page=booking");
@@ -83,7 +84,7 @@ class BookingPage extends CorePage {
             if (!isset($_POST["nev"]))       $_POST["nev"] = "";
             if (!isset($_POST["telefon"]))   $_POST["telefon"] = "";
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
-			if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
+            if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
 
             if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -112,20 +113,38 @@ class BookingPage extends CorePage {
             $this->bookingService->setHelyszin($_POST["helyszin"]);
             $this->bookingService->setNeme($_POST["neme"]);
 
-            
+            if ($_SESSION["helyszindata"]["covid_oltas_bekeres"] == 1) {
+                if ($_POST["is-vaccinated"] == 1) {
+                    if (empty($_POST["vaccination-type"])) {
+                        $this->errors[] = "A vakcina típusának megadása kötelező!";
+                    }
+                    if (checkdate($_POST["first-vaccine-month"], $_POST["first-vaccine-day"], $_POST["first-vaccine-year"])) {
+                        $_POST["first-vaccine-date"] = $_POST["first-vaccine-year"] . "-" . $_POST["first-vaccine-month"] . "-" . $_POST["first-vaccine-day"];
+                    } else {
+                        $this->errors[] = "A megadott 1. oltási dátum helytelen!";
+                    }
+
+                    if (!empty($_POST["second-vaccine-year"]) || !empty($_POST["second-vaccine-month"]) || !empty($_POST["second-vaccine-day"])) {
+                        if (checkdate($_POST["second-vaccine-month"], $_POST["second-vaccine-day"], $_POST["second-vaccine-year"])) {
+                            $_POST["second-vaccine-date"] = $_POST["second-vaccine-year"] . "-" . $_POST["second-vaccine-month"] . "-" . $_POST["second-vaccine-day"];
+                        } else {
+                            $this->errors[] = "A megadott 2. oltási dátum helytelen!";
+                        }
+                    }
+                }
+            }
 
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
-                
+
                 if (empty($_POST["email"])) {
-                    if($_SESSION["helyszindata"]["id"]!=129){
+                    if ($_SESSION["helyszindata"]["id"] != 129) {
                         $this->errors[] = "{$webText["emailkotelezo"]}";
-                    } 
+                    }
                 }
-                
-				if(!empty($_POST["email"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)){
-					$this->errors[] = "{$webText["hibasemail"]}";
-				}
-				
+
+                if (!empty($_POST["email"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
+                    $this->errors[] = "{$webText["hibasemail"]}";
+                }
             }
             if (!$this->utils->getFieldHidden("nev") && $this->utils->getFieldRequired("nev")) {
                 if (empty($_POST["nev"])) {
@@ -152,17 +171,17 @@ class BookingPage extends CorePage {
             }
             if (!$this->utils->getFieldHidden("irsz") && $this->utils->getFieldRequired("irsz")) {
                 if (empty($_POST["irsz"])) {
-                    $this->errors[] ="Az irányítószám megadása kötelező!";
+                    $this->errors[] = "Az irányítószám megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("varos") && $this->utils->getFieldRequired("varos")) {
                 if (empty($_POST["varos"])) {
-                    $this->errors[] ="A város megadása kötelező!";
+                    $this->errors[] = "A város megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("utca") && $this->utils->getFieldRequired("utca")) {
                 if (empty($_POST["utca"])) {
-                    $this->errors[] ="Az utca megadása kötelező!";
+                    $this->errors[] = "Az utca megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("munkakor") && $this->utils->getFieldRequired("munkakor")) {
@@ -192,8 +211,8 @@ class BookingPage extends CorePage {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
-            if ($_POST["orvosselected"]!="") {
-                $_POST["orvosid"]=$_POST["orvosselected"];
+            if ($_POST["orvosselected"] != "") {
+                $_POST["orvosid"] = $_POST["orvosselected"];
             }
             if (isset($_SESSION["orvosselected"])) {
                 $_POST["orvosid"] = $_SESSION["orvosselected"];
@@ -214,18 +233,20 @@ class BookingPage extends CorePage {
 
             if (empty($this->errors)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
+                $fid = $this->bookingService->newReservationId;
+                $this->record_covid_vaccination_data($fid,$_POST);
                 header("location:{$forwardURL}");
                 die();
             }
         }
     }
 
-    public function showPage() {
+    public function showPage()
+    {
         $webText = $this->lang->webText;
-		
-		if(isset($_POST['szurestipus'])){
-			
-		}
+
+        if (isset($_POST['szurestipus'])) {
+        }
 
         if (!isset($_POST["helyszin"])) {
             $_POST["helyszin"] = $_POST["szurestipus"] = "";
@@ -256,11 +277,11 @@ class BookingPage extends CorePage {
         echo $this->displayFejlec();
         echo $this->showErrors();
 
-        if ($_SESSION["helyszindata"]["onlybeutalo"]==1) {
+        if ($_SESSION["helyszindata"]["onlybeutalo"] == 1) {
             $_SESSION["helyszindata"]["onlyreg"] = 1;
         }
 
-        if ($_SESSION["helyszindata"]["onlybeutalo"]==1 && isset($_SESSION["user"]) && !isset($_SESSION["beutaloid"])) {
+        if ($_SESSION["helyszindata"]["onlybeutalo"] == 1 && isset($_SESSION["user"]) && !isset($_SESSION["beutaloid"])) {
             echo "<div style=''>{$webText["csakbeutalodesc"]}</div>";
             echo "<div style='margin-top:10px;'><a class='simabutton' href='index.php?page=beutalok'>{$webText["showbeutalobutton"]}</a></div>";
             return;
@@ -274,10 +295,10 @@ class BookingPage extends CorePage {
             }
         }
 
-        if ($_SESSION["helyszindata"]["onlyreg"]==1 && !isset($_SESSION["user"])) {
+        if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
             $btext = $webText["mainudvozles"];
 
-            if ($rowsz=sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'",array($_SESSION["helyszindata"]["id"])))) {
+            if ($rowsz = sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'", array($_SESSION["helyszindata"]["id"])))) {
                 $btext = $rowsz["szoveg"];
             }
 
@@ -300,7 +321,7 @@ class BookingPage extends CorePage {
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
-        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_COOKIE["lang"]!="hu" && trim($_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"])!="") {
+        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_COOKIE["lang"] != "hu" && trim($_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"]) != "") {
             $_SESSION["helyszindata"]["beutaloszoveg"] = $_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];
         }
 
@@ -308,37 +329,37 @@ class BookingPage extends CorePage {
         if (isset($beutalodata)) {
             //beutalóval fix választás
 
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
+            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>";
             echo "<select name='helyszin' id='helyszin'>";
-            $res = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h where h.id='{$beutalodata["helyszinid"]}'");
+            $res = sql_query("SELECT h.*," . $this->utils->cimLangQuery() . " FROM helyszinek h where h.id='{$beutalodata["helyszinid"]}'");
             if ($rowt = sql_fetch_array($res)) {
                 echo "<option value='{$rowt["id"]}' selected>{$rowt["cim"]}</option>";
             }
             echo "</select>";
             echo "</td></tr>";
 
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>".$this->_szuresTipusValasztoNew($beutalodata["szurestipusid"],1)."</div></td></tr>";
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($beutalodata["szurestipusid"], 1) . "</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $beutalodata["szurestipusid"], $beutalodata["helyszinid"]);
             if (!empty($tipusMegj)) {
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
             //beutaló nélkül szabad választás
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"]!="") {
+            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
-            echo "<tr><td></td><td><div id='szurestipusmegj'>".$this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"],$_POST["szurestipus"],$_POST["helyszin"])."</div></td></tr>";
-            echo "<tr><td></td><td><div id='tappenzcheck'>".$this->bookingService->tappenzCheckHTML($_POST["helyszin"])."</div></td></tr>";
+            echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";
+            echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
         }
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if (empty($nofoglalasText)) {
-            echo "<tr class='datarow'><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>".$this->_reservationTimeSelector()."</td></tr>";
+            echo "<tr class='datarow'><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>" . $this->_reservationTimeSelector() . "</td></tr>";
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
             echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
@@ -355,16 +376,16 @@ class BookingPage extends CorePage {
 
         if (trim($_SESSION["helyszindata"]["telephelyek"]) != "") {
             echo "<tr class='datarow'><td>{$webText["munkaltato"]}: *</td><td><select name='telephely' id='telephely'>";
-            $telephelyek = explode(",",$_SESSION["helyszindata"]["telephelyek"]);
+            $telephelyek = explode(",", $_SESSION["helyszindata"]["telephelyek"]);
             echo "<option value=''>{$webText["valasszmunkaltatot"]}!</option>";
             foreach ($telephelyek as $telephely) {
                 $telephely = trim($telephely);
-                echo "<option value='{$telephely}'".($_POST["telephely"]==$telephely?" selected":"").">{$telephely}</option>";
+                echo "<option value='{$telephely}'" . ($_POST["telephely"] == $telephely ? " selected" : "") . ">{$telephely}</option>";
             }
             echo "</select></td></tr>";
         }
 
-        if($_SESSION["helyszindata"]["id"]!=129){
+        if ($_SESSION["helyszindata"]["id"] != 129) {
             echo $this->utils->dataField("email");
         }
         echo $this->utils->dataField("nev");
@@ -378,11 +399,86 @@ class BookingPage extends CorePage {
         echo $this->utils->dataField("utca");
         echo $this->utils->dataField("munkakor");
 
+
+        //Oltási  adatok elkérése:
+        if ($_SESSION["helyszindata"]["covid_oltas_bekeres"] == 1) {
+            echo "<tr><td><strong>Kapott már oltást?</strong></td>";
+            echo "<td><input class=\"vaccination-question-elements\" type=\"radio\" value=\"1\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "checked" : "") . " name=\"is-vaccinated\">&nbsp;Igen</div>";
+            echo "<input class=\"vaccination-question-elements\" type=\"radio\" value=\"0\" " . (!isset($_POST["is-vaccinated"]) || (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 0) ? "checked" : "") . " name=\"is-vaccinated\">&nbsp;Nem";
+            echo "</td></tr>";
+
+            echo "<tr id=\"vaccination-info-vaccine-type\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>Vakcina típusa: *</td>";
+            echo "<td><select style=\"width:250px\" name=\"vaccination-type\">";
+            echo "<option value=\"0\">Vakcina</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "sinopharm" ? "selected=\"true\"" : "") . " value=\"sinopharm\">Sinopharm vakcina</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "pfizer" ? "selected=\"true\"" : "") . " value=\"pfizer\">Pfizer</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "johnson" ? "selected=\"true\"" : "") . " value=\"johnson\">Johnson & Johnson</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "moderna" ? "selected=\"true\"" : "") . " value=\"moderna\">Moderna</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "astrazeneca" ? "selected=\"true\"" : "") . " value=\"astrazeneca\">AstraZeneca</option>";
+            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "szputnyik" ? "selected=\"true\"" : "") . " value=\"szputnyik\">Szputnyik V</option>";
+            echo "</select></td></tr>";
+
+            echo "<tr id=\"vaccination-info-first-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>1. oltás dátuma: *</td>";
+            echo "<td>";
+
+            echo "<select name=\"first-vaccine-year\">";
+            echo "<option value=\"0\">Év</option>";
+            $startYear = 2020;
+            do {
+                echo "<option " . (isset($_POST["first-vaccine-year"]) && $_POST["first-vaccine-year"] == $startYear ? "selected=\"true\"" : "") . " value=\"{$startYear}\">{$startYear}</option>";
+                $startYear++;
+            } while ($startYear <= date("Y"));
+            echo "</select>&nbsp;";
+            echo "<select name=\"first-vaccine-month\">";
+            echo "<option value=\"0\">Hónap</option>";
+            echo "<option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "01" ? "selected=\"true\"" : "") . " value=\"01\">Január</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "02" ? "selected=\"true\"" : "") . " value=\"02\">Február</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "03" ? "selected=\"true\"" : "") . " value=\"03\">Március</option>";
+            echo "<option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "04" ? "selected=\"true\"" : "") . " value=\"04\">Április</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "05" ? "selected=\"true\"" : "") . " value=\"05\">Május</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "06" ? "selected=\"true\"" : "") . " value=\"06\">Június</option>";
+            echo "<option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "07" ? "selected=\"true\"" : "") . " value=\"07\">Július</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "08" ? "selected=\"true\"" : "") . " value=\"08\">Augusztus</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "09" ? "selected=\"true\"" : "") . " value=\"09\">Szeptember</option>";
+            echo "<option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "10" ? "selected=\"true\"" : "") . " value=\"10\">Október</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "11" ? "selected=\"true\"" : "") . " value=\"11\">November</option><option " . (isset($_POST["first-vaccine-month"]) && $_POST["first-vaccine-month"] == "12" ? "selected=\"true\"" : "") . " value=\"12\">December</option>";
+            echo "</select>&nbsp;";
+            echo "<select name=\"first-vaccine-day\">";
+            echo "<option value=\"0\">Nap</option>";
+            for ($i = 1; $i <= 31; $i++) {
+                $value = ($i < 10 ? "0" : "") . $i;
+                echo "<option " . ($_POST["first-vaccine-day"] == $value ? "selected=\"true\"" : "") . " value=\"{$value}\">{$i}</option>";
+            }
+            echo "</select>";
+            echo "</td></tr>";
+
+            echo "<tr id=\"vaccination-info-second-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>2. oltás dátuma:</td>";
+            echo "<td>";
+            echo "<select name=\"second-vaccine-year\">";
+            echo "<option value=\"0\">Év</option>";
+            $startYear = 2020;
+            do {
+                echo "<option " . (isset($_POST["second-vaccine-year"]) && $_POST["second-vaccine-year"] == $startYear ? "selected=\"true\"" : "") . " value=\"{$startYear}\">{$startYear}</option>";
+                $startYear++;
+            } while ($startYear <= date("Y"));
+            echo "</select>&nbsp;";
+            echo "<select name=\"second-vaccine-month\">";
+            echo "<option value=\"0\">Hónap</option>";
+            echo "<option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "01" ? "selected=\"true\"" : "") . " value=\"01\">Január</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "02" ? "selected=\"true\"" : "") . " value=\"02\">Február</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "03" ? "selected=\"true\"" : "") . " value=\"03\">Március</option>";
+            echo "<option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "04" ? "selected=\"true\"" : "") . " value=\"04\">Április</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "05" ? "selected=\"true\"" : "") . " value=\"05\">Május</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "06" ? "selected=\"true\"" : "") . " value=\"06\">Június</option>";
+            echo "<option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "07" ? "selected=\"true\"" : "") . " value=\"07\">Július</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "08" ? "selected=\"true\"" : "") . " value=\"08\">Augusztus</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "09" ? "selected=\"true\"" : "") . " value=\"09\">Szeptember</option>";
+            echo "<option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "10" ? "selected=\"true\"" : "") . " value=\"10\">Október</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "11" ? "selected=\"true\"" : "") . " value=\"11\">November</option><option " . (isset($_POST["second-vaccine-month"]) && $_POST["second-vaccine-month"] == "12" ? "selected=\"true\"" : "") . " value=\"12\">December</option>";
+            echo "</select>&nbsp;";
+            echo "<select name=\"second-vaccine-day\">";
+            echo "<option value=\"0\">Nap</option>";
+            for ($i = 1; $i <= 31; $i++) {
+                $value = ($i < 10 ? "0" : "") . $i;
+                echo "<option " . ($_POST["second-vaccine-day"] == $value ? "selected=\"true\"" : "") . " value=\"{$value}\">{$i}</option>";
+            }
+            echo "</select>";
+            echo "</td></tr>";
+        }
+
+
+
         if (!isset($beutalodata)) {
             echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
             echo "<textarea class='inputbox' style='height:100px;width:400px;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             //apollo tyres kivétel
-            if ($_SESSION["helyszindata"]["id"]==43) {
+            if ($_SESSION["helyszindata"]["id"] == 43) {
                 echo "<div>";
                 //Indiába menő, előzetes, soron kívüli, Indiából hazatérő. Illetve: Hollandiába menő, előzetes, soron kívüli, Hollandiából hazatérő
                 echo "<span class='addmegjlink'>Indiába menő</span> &bull; ";
@@ -394,14 +490,16 @@ class BookingPage extends CorePage {
                 echo "<span class='addmegjlink'>Soron kívüli</span> &bull; ";
                 echo "<span class='addmegjlink'>Hollandiából hazatérő</span>";
                 echo "</div>";
-
             }
             echo "</td></tr>";
         }
 
+
+
+
         if (!isset($_SESSION["user"])) {
             echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-            echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelf"]}</div></td></tr>";
+            echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
         echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["idopontfoglalasa"]}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
@@ -418,27 +516,42 @@ class BookingPage extends CorePage {
         echo "</form>";
     }
 
-    private function _reservationTimeSelector() {
+    private function record_covid_vaccination_data($fid, $data)
+    {
+        if ($foglalasData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($fid)))) {
+            sql_query(
+                "UPDATE foglalasok SET covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=? WHERE id=?",
+                array($data["vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $fid)
+            );
+            
+            return "SUCCESS";
+        }
+        else return "FAILED";
+    }
+
+    private function _reservationTimeSelector()
+    {
         $webText = $this->lang->webText;
 
-        $dateStyle = (!empty($_POST["datum"])?"background-image:url(images/check.png);":"")."background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
+        $dateStyle = (!empty($_POST["datum"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
         $dateVal = substr($_POST["datum"], 0, 16);
 
         $html = "";
-        $html.= "<div style='display:table;'>";
-        $html.= "<div style='display:table-row;'>";
-        $html.= "<div style='display:table-cell;'>";
-        $html.= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-        $html.= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
-        $html.= "</div>";
-        $html.= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
-        $html.= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
-        $html.= "</div>";
-        $html.= "</div>";
+        $html .= "<div style='display:table;'>";
+        $html .= "<div style='display:table-row;'>";
+        $html .= "<div style='display:table-cell;'>";
+        $html .= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
+        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
+        $html .= "</div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
+        $html .= "</div>";
+        $html .= "</div>";
         return $html;
     }
 
-    private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0) {
+    private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0)
+    {
         $tipusok = [];
         $tipusnevek = [];
 
@@ -495,7 +608,8 @@ class BookingPage extends CorePage {
         return $htmlout;
     }
 
-    private function _reservationPlaceSelectorNew() {
+    private function _reservationPlaceSelectorNew()
+    {
         $html        = "";
         $szuresTipus = $_POST["szurestipus"];
         $webText     = $this->lang->webText;
@@ -504,18 +618,18 @@ class BookingPage extends CorePage {
 
         $_SESSION["orvosselected"] = 0;
 
-        $html.= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
-        $html.= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
+        $html .= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
+        $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         foreach ($helyszinek as $rowt) {
             if ($_SESSION["helyszindata"]["nocim"] == 1) {
                 $rowt["cim"] = $rowt["megnev"];
             }
-            $html.= "<option value='{$rowt["id"]}'".($_POST["helyszin"]==$rowt["id"] || $numOfH==1?" selected":"").">{$rowt["cim"]}</option>";
+            $html .= "<option value='{$rowt["id"]}'" . ($_POST["helyszin"] == $rowt["id"] || $numOfH == 1 ? " selected" : "") . ">{$rowt["cim"]}</option>";
             if ($numOfH == 1) {
                 $_POST["helyszin"] = $rowt["id"];
             }
         }
-        $html.= "</select>";
+        $html .= "</select>";
 
         $html .= "<div id='helyszinvalasztowarn' style='display:none;background:#ff6961;color:#fff;font-size:16px;padding:10px;margin:10px 0px 0px 0px;'>Figyelem! Ha a győri címünkre szeretne foglalni, használja a győri bejelentkezési felületünket, majd ott kövesse az \"üzemorvosi vizsgálat\" linket. Foglalását telefonon is megteheted a következő számon: +36 20 373 3343<br/><br/><a class='newbutton' href='https://gyor-bejelentkezes.hungariamed.hu'>Folytatás a győri bejelentkező felületen</a></div>";
 
@@ -523,26 +637,27 @@ class BookingPage extends CorePage {
     }
 
 
-    private function _preSelectForm() {
+    private function _preSelectForm()
+    {
         if (isset($_GET["enabletest"])) {
             $_SESSION["enabletest"] = 1;
         }
 
         $html = "";
 
-        $html.="<div style='padding:0px 0px 30px 0px;'>";
+        $html .= "<div style='padding:0px 0px 30px 0px;'>";
 
-        $html.="<h2 style='font-size:32px;font-family:robotolight;'>".$this->lang->getText("miert.bennunket","Miért bennünket válasszon?")."</h2>";
-        $html.=$this->lang->getText("miert.bennunket.description.2","");
+        $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
+        $html .= $this->lang->getText("miert.bennunket.description.2", "");
 
-        $html.="<div>";
+        $html .= "<div>";
 
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
-            $html.= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
+            $html .= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
 
-            $html.= "<h2>Időpontfoglalás</h2>".$this->lang->getText("foglalas.inditas","Kattintson a szakrendelés nevére a foglalás indításához!")."<br/><br/>";
+            $html .= "<h2>Időpontfoglalás</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
             foreach ($services as $tipusData) {
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
@@ -554,23 +669,21 @@ class BookingPage extends CorePage {
                     $tipusData["facode"] = "<i class='fas fa-laptop-medical'></i>";
                 }
 
-                $html.= "<div class='vizsgalatdoboz".($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor":"")."' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
-                $html.= "<div style=''>";
-                $html.= "<div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
-                $html.= "<div style='font-size:16px;font-family: robotobold;color:#fff;'>{$tipusData["megnev"]}</div>";
-                $html.= "</div>";
+                $html .= "<div class='vizsgalatdoboz" . ($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor" : "") . "' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
+                $html .= "<div style=''>";
+                $html .= "<div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
+                $html .= "<div style='font-size:16px;font-family: robotobold;color:#fff;'>{$tipusData["megnev"]}</div>";
+                $html .= "</div>";
 
-                $html.= "<div class='".($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor":"vizsgalatdobozbutton")."'>".($tipusData["webdoktor"] == 1 ? "&nbsp;&nbsp;&nbsp;&nbsp;megrendelem&nbsp;&nbsp;&nbsp;&nbsp;":"időpontfoglalás")."</div>";
+                $html .= "<div class='" . ($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor" : "vizsgalatdobozbutton") . "'>" . ($tipusData["webdoktor"] == 1 ? "&nbsp;&nbsp;&nbsp;&nbsp;megrendelem&nbsp;&nbsp;&nbsp;&nbsp;" : "időpontfoglalás") . "</div>";
 
-                $html.= "</div>";
+                $html .= "</div>";
             }
 
-            $html.= "</div>";
+            $html .= "</div>";
         }
-        $html.= "</div>";
+        $html .= "</div>";
 
         return $html;
     }
-
 }
-

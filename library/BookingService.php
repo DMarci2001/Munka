@@ -20,6 +20,7 @@ class BookingService
     public $notificationService;
     private $taj;
     private $adminUser;
+    public $newReservationId;
 
     public function __construct()
     {
@@ -1214,6 +1215,8 @@ class BookingService
         if (!isset($data['orvosid'])) $data["orvosid"] = 0;
 
         $fid = $this->addReservationQuery($data);
+
+        $this->newReservationId=$fid;
 
         if (!isset($data["noreservation"])) {
             $data["noreservation"] = 0;
