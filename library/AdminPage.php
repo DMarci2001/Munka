@@ -196,10 +196,15 @@ class AdminPage {
     }
 
     private function _contentHeader($menu) {
+        $title = $menu["megnev"];
+        if (!empty($this->page->subtitle)) {
+            $title = $this->page->subtitle;
+        }
+
         $html = "";
 
         $html.= "<div class='pagehead'>";
-        $html.= "<div style='display:table-cell;vertical-align:middle;'>{$menu["megnev"]}".($_GET["page"]=="elojegyzestdfdabla"?"&nbsp;&nbsp;<span style='background:#0a0;color:#fff;font-size:16px;font-weight:bold;padding:3px 8px;border-radius:10px;'>BÉTA</span>":"")."</div>";
+        $html.= "<div style='display:table-cell;vertical-align:middle;'>{$title}</div>";
         if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
             $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
         }
