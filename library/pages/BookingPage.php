@@ -125,8 +125,8 @@ class BookingPage extends CorePage
 
             if ($_SESSION["helyszindata"]["covid_oltas_bekeres"] == 1) {
                 if ($_POST["is-vaccinated"] == 1) {
-                    if (empty($_POST["vaccination-type"])) {
-                        $this->errors[] = "A vakcina típusának megadása kötelező!";
+                    if (empty($_POST["first-vaccination-type"])) {
+                        $this->errors[] = "Az 1. vakcina típusának megadása kötelező!";
                     }
                     if (checkdate($_POST["first-vaccine-month"], $_POST["first-vaccine-day"], $_POST["first-vaccine-year"])) {
                         $_POST["first-vaccine-date"] = $_POST["first-vaccine-year"] . "-" . $_POST["first-vaccine-month"] . "-" . $_POST["first-vaccine-day"];
@@ -134,19 +134,25 @@ class BookingPage extends CorePage
                         $this->errors[] = "A megadott 1. oltási dátum helytelen!";
                     }
 
-                    if (!empty($_POST["second-vaccine-year"]) || !empty($_POST["second-vaccine-month"]) || !empty($_POST["second-vaccine-day"])) {
+                    if (!empty($_POST["second-vaccine-year"]) || !empty($_POST["second-vaccine-month"]) || !empty($_POST["second-vaccine-day"]) || !empty($_POST["second-vaccination-type"])) {
                         if (checkdate($_POST["second-vaccine-month"], $_POST["second-vaccine-day"], $_POST["second-vaccine-year"])) {
                             $_POST["second-vaccine-date"] = $_POST["second-vaccine-year"] . "-" . $_POST["second-vaccine-month"] . "-" . $_POST["second-vaccine-day"];
                         } else {
                             $this->errors[] = "A megadott 2. oltási dátum helytelen!";
                         }
+                        if (empty($_POST["second-vaccination-type"])) {
+                            $this->errors[] = "Az 2. vakcina típusának megadása kötelező!";
+                        }
                     }
 
-                    if (!empty($_POST["third-vaccine-year"]) || !empty($_POST["third-vaccine-month"]) || !empty($_POST["third-vaccine-day"])) {
+                    if (!empty($_POST["third-vaccine-year"]) || !empty($_POST["third-vaccine-month"]) || !empty($_POST["third-vaccine-day"]) || !empty($_POST["third-vaccination-type"])) {
                         if (checkdate($_POST["third-vaccine-month"], $_POST["third-vaccine-day"], $_POST["third-vaccine-year"])) {
                             $_POST["third-vaccine-date"] = $_POST["third-vaccine-year"] . "-" . $_POST["third-vaccine-month"] . "-" . $_POST["third-vaccine-day"];
                         } else {
                             $this->errors[] = "A megadott 3. oltási dátum helytelen!";
+                        }
+                        if (empty($_POST["third-vaccination-type"])) {
+                            $this->errors[] = "Az 3. vakcina típusának megadása kötelező!";
                         }
                     }
                 }
@@ -432,19 +438,18 @@ class BookingPage extends CorePage
             echo "<input class=\"vaccination-question-elements\" type=\"radio\" value=\"0\" " . (!isset($_POST["is-vaccinated"]) || (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 0) ? "checked" : "") . " name=\"is-vaccinated\">&nbsp;Nem";
             echo "</td></tr>";
 
-            echo "<tr id=\"vaccination-info-vaccine-type\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>Vakcina típusa: *</td>";
-            echo "<td><select style=\"width:250px\" name=\"vaccination-type\">";
-            echo "<option value=\"0\">Vakcina</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "sinopharm" ? "selected=\"true\"" : "") . " value=\"sinopharm\">Sinopharm vakcina</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "pfizer" ? "selected=\"true\"" : "") . " value=\"pfizer\">Pfizer</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "johnson" ? "selected=\"true\"" : "") . " value=\"johnson\">Johnson & Johnson</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "moderna" ? "selected=\"true\"" : "") . " value=\"moderna\">Moderna</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "astrazeneca" ? "selected=\"true\"" : "") . " value=\"astrazeneca\">AstraZeneca</option>";
-            echo "<option " . (isset($_POST["vaccination-type"]) && $_POST["vaccination-type"] == "szputnyik" ? "selected=\"true\"" : "") . " value=\"szputnyik\">Szputnyik V</option>";
-            echo "</select></td></tr>";
-
             echo "<tr id=\"vaccination-info-first-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>1. oltás dátuma: *</td>";
             echo "<td>";
+
+            echo "<select style=\"width:250px\" name=\"first-vaccination-type\">";
+            echo "<option value=\"0\">Vakcina</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "sinopharm" ? "selected=\"true\"" : "") . " value=\"sinopharm\">Sinopharm vakcina</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "pfizer" ? "selected=\"true\"" : "") . " value=\"pfizer\">Pfizer</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "johnson" ? "selected=\"true\"" : "") . " value=\"johnson\">Johnson & Johnson</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "moderna" ? "selected=\"true\"" : "") . " value=\"moderna\">Moderna</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "astrazeneca" ? "selected=\"true\"" : "") . " value=\"astrazeneca\">AstraZeneca</option>";
+            echo "<option " . (isset($_POST["first-vaccination-type"]) && $_POST["first-vaccination-type"] == "szputnyik" ? "selected=\"true\"" : "") . " value=\"szputnyik\">Szputnyik V</option>";
+            echo "</select>";
 
             echo "<select name=\"first-vaccine-year\">";
             echo "<option value=\"0\">Év</option>";
@@ -472,6 +477,17 @@ class BookingPage extends CorePage
 
             echo "<tr id=\"vaccination-info-second-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>2. oltás dátuma:</td>";
             echo "<td>";
+
+            echo "<select style=\"width:250px\" name=\"second-vaccination-type\">";
+            echo "<option value=\"0\">Vakcina</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "sinopharm" ? "selected=\"true\"" : "") . " value=\"sinopharm\">Sinopharm vakcina</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "pfizer" ? "selected=\"true\"" : "") . " value=\"pfizer\">Pfizer</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "johnson" ? "selected=\"true\"" : "") . " value=\"johnson\">Johnson & Johnson</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "moderna" ? "selected=\"true\"" : "") . " value=\"moderna\">Moderna</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "astrazeneca" ? "selected=\"true\"" : "") . " value=\"astrazeneca\">AstraZeneca</option>";
+            echo "<option " . (isset($_POST["second-vaccination-type"]) && $_POST["second-vaccination-type"] == "szputnyik" ? "selected=\"true\"" : "") . " value=\"szputnyik\">Szputnyik V</option>";
+            echo "</select>";
+
             echo "<select name=\"second-vaccine-year\">";
             echo "<option value=\"0\">Év</option>";
             $startYear = 2020;
@@ -498,6 +514,17 @@ class BookingPage extends CorePage
 
             echo "<tr id=\"vaccination-info-third-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>3. oltás dátuma:</td>";
             echo "<td>";
+
+            echo "<select style=\"width:250px\" name=\"third-vaccination-type\">";
+            echo "<option value=\"0\">Vakcina</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "sinopharm" ? "selected=\"true\"" : "") . " value=\"sinopharm\">Sinopharm vakcina</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "pfizer" ? "selected=\"true\"" : "") . " value=\"pfizer\">Pfizer</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "johnson" ? "selected=\"true\"" : "") . " value=\"johnson\">Johnson & Johnson</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "moderna" ? "selected=\"true\"" : "") . " value=\"moderna\">Moderna</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "astrazeneca" ? "selected=\"true\"" : "") . " value=\"astrazeneca\">AstraZeneca</option>";
+            echo "<option " . (isset($_POST["third-vaccination-type"]) && $_POST["third-vaccination-type"] == "szputnyik" ? "selected=\"true\"" : "") . " value=\"szputnyik\">Szputnyik V</option>";
+            echo "</select>";
+
             echo "<select name=\"third-vaccine-year\">";
             echo "<option value=\"0\">Év</option>";
             $startYear = 2020;
@@ -571,8 +598,8 @@ class BookingPage extends CorePage
     {
         if ($foglalasData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($fid)))) {
             sql_query(
-                "UPDATE foglalasok SET covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=?,harmadik_covid_oltas=? WHERE id=?",
-                array($data["vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $data["third-vaccine-date"], $fid)
+                "UPDATE foglalasok SET elso_covid_vakcina_tipus=?, masodik_covid_vakcina_tipus=?, harmadik_covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=?,harmadik_covid_oltas=? WHERE id=?",
+                array($data["first-vaccination-type"], $data["second-vaccination-type"], $data["third-vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $data["third-vaccine-date"], $fid)
             );
             
             return "SUCCESS";
