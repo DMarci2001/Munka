@@ -20,6 +20,12 @@ class AjaxService {
             die();
         }
 
+        if(isset($_GET["getInfoPageText"])){
+            $bookingService = new BookingService();
+            echo $bookingService->getInfoPageText($_GET["getInfoPageText"]);
+            die();
+        }
+
         if (isset($_POST["gettipusmegj"])) {
             $bookingService = new BookingService();
             echo $bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["tid"], $_POST["hid"]);

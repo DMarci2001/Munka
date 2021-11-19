@@ -30,6 +30,10 @@ $(document).ready(function () {
 
 });
 
+$(document).ready(function () {
+    showInfoPageText($("#szurestipus").val());
+});
+
 function checkVaccinationElements(){
     let isVaccinated = $('input[name=is-vaccinated]:checked', '#iform').val();
 
@@ -37,10 +41,12 @@ function checkVaccinationElements(){
         $("#vaccination-info-vaccine-type").show();
         $("#vaccination-info-first-vaccine").show();
         $("#vaccination-info-second-vaccine").show();
+        $("#vaccination-info-third-vaccine").show();
     }else{
         $("#vaccination-info-vaccine-type").hide();
         $("#vaccination-info-first-vaccine").hide();
         $("#vaccination-info-second-vaccine").hide();
+        $("#vaccination-info-third-vaccine").hide();
     }
     
 }
@@ -135,10 +141,23 @@ function tappenzCheckRefresh() {
     });
 }
 
+function showInfoPageText(szurestipusid){
+
+    console.log(szurestipusid);
+    $.ajax({
+        method: "GET",
+        url: "index.php",
+        data: { page: "booking", getInfoPageText: szurestipusid }
+    }).done(function (msg) {
+        $("#infopagetext").html(msg);
+    });
+}
+
 function clearIdopontValaszto() {
     clearSelectedDoctor();
     $("#datum").val("");
     $("#idopontvalasztodiv").html("");
+    $("#infopagetext").html("");
     $("#datum").css("background-image", "");
     tappenzCheckRefresh();
 

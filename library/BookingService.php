@@ -1603,4 +1603,10 @@ class BookingService
         return $warnings;
     }
 
+    public function getInfoPageText($szurestipusid){
+        //echo "itt vagyok!";
+        $data = sql_fetch_array(sql_query("SELECT infopagetext FROM szurestipusok WHERE id=?",array($szurestipusid)));
+        return $data["infopagetext"];
+    }
+
 }

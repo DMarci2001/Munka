@@ -86,6 +86,19 @@ class BookingPage extends CorePage
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
 
+            if(isset($_POST["labor-csomagok"]) && $_POST["labor-csomagok"]==1){
+                $laborszoveg="";
+                if(isset($_POST["kisrutin"])&&$_POST["kisrutin"]==1)$laborszoveg.=", Kisrutin";
+                if(isset($_POST["nagyrutin"])&&$_POST["nagyrutin"]==1)$laborszoveg.=", Nagyrutin";
+                if(isset($_POST["pajzsmirigy"])&&$_POST["pajzsmirigy"]==1)$laborszoveg.=", Pajzsmirigy";
+                if(isset($_POST["noi-tumormarker"])&&$_POST["noi-tumormarker"]==1)$laborszoveg.=", Női tumormarker";
+
+                $laborszoveg = substr($laborszoveg, 2);
+
+                $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
+
+            }
+
             if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
             }
@@ -129,6 +142,14 @@ class BookingPage extends CorePage
                             $_POST["second-vaccine-date"] = $_POST["second-vaccine-year"] . "-" . $_POST["second-vaccine-month"] . "-" . $_POST["second-vaccine-day"];
                         } else {
                             $this->errors[] = "A megadott 2. oltási dátum helytelen!";
+                        }
+                    }
+
+                    if (!empty($_POST["third-vaccine-year"]) || !empty($_POST["third-vaccine-month"]) || !empty($_POST["third-vaccine-day"])) {
+                        if (checkdate($_POST["third-vaccine-month"], $_POST["third-vaccine-day"], $_POST["third-vaccine-year"])) {
+                            $_POST["third-vaccine-date"] = $_POST["third-vaccine-year"] . "-" . $_POST["third-vaccine-month"] . "-" . $_POST["third-vaccine-day"];
+                        } else {
+                            $this->errors[] = "A megadott 3. oltási dátum helytelen!";
                         }
                     }
                 }
@@ -352,6 +373,8 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
+            echo "<tr><td></td><td><div id=\"infopagetext\"></div></td></tr>";
+            
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
@@ -470,6 +493,32 @@ class BookingPage extends CorePage
             }
             echo "</select>";
             echo "</td></tr>";
+
+            echo "<tr id=\"vaccination-info-third-vaccine\" " . (isset($_POST["is-vaccinated"]) && $_POST["is-vaccinated"] == 1 ? "" : "style=\"display:none;\"") . "><td>3. oltás dátuma:</td>";
+            echo "<td>";
+            echo "<select name=\"third-vaccine-year\">";
+            echo "<option value=\"0\">Év</option>";
+            $startYear = 2020;
+            do {
+                echo "<option " . (isset($_POST["third-vaccine-year"]) && $_POST["third-vaccine-year"] == $startYear ? "selected=\"true\"" : "") . " value=\"{$startYear}\">{$startYear}</option>";
+                $startYear++;
+            } while ($startYear <= date("Y"));
+            echo "</select>&nbsp;";
+            echo "<select name=\"third-vaccine-month\">";
+            echo "<option value=\"0\">Hónap</option>";
+            echo "<option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "01" ? "selected=\"true\"" : "") . " value=\"01\">Január</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "02" ? "selected=\"true\"" : "") . " value=\"02\">Február</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "03" ? "selected=\"true\"" : "") . " value=\"03\">Március</option>";
+            echo "<option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "04" ? "selected=\"true\"" : "") . " value=\"04\">Április</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "05" ? "selected=\"true\"" : "") . " value=\"05\">Május</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "06" ? "selected=\"true\"" : "") . " value=\"06\">Június</option>";
+            echo "<option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "07" ? "selected=\"true\"" : "") . " value=\"07\">Július</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "08" ? "selected=\"true\"" : "") . " value=\"08\">Augusztus</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "09" ? "selected=\"true\"" : "") . " value=\"09\">Szeptember</option>";
+            echo "<option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "10" ? "selected=\"true\"" : "") . " value=\"10\">Október</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "11" ? "selected=\"true\"" : "") . " value=\"11\">November</option><option " . (isset($_POST["third-vaccine-month"]) && $_POST["third-vaccine-month"] == "12" ? "selected=\"true\"" : "") . " value=\"12\">December</option>";
+            echo "</select>&nbsp;";
+            echo "<select name=\"third-vaccine-day\">";
+            echo "<option value=\"0\">Nap</option>";
+            for ($i = 1; $i <= 31; $i++) {
+                $value = ($i < 10 ? "0" : "") . $i;
+                echo "<option " . ($_POST["third-vaccine-day"] == $value ? "selected=\"true\"" : "") . " value=\"{$value}\">{$i}</option>";
+            }
+            echo "</select>";
+            echo "</td></tr>";
         }
 
 
@@ -520,8 +569,8 @@ class BookingPage extends CorePage
     {
         if ($foglalasData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($fid)))) {
             sql_query(
-                "UPDATE foglalasok SET covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=? WHERE id=?",
-                array($data["vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $fid)
+                "UPDATE foglalasok SET covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=?,harmadik_covid_oltas=? WHERE id=?",
+                array($data["vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $data["third-vaccine-date"], $fid)
             );
             
             return "SUCCESS";
@@ -569,7 +618,7 @@ class BookingPage extends CorePage
         }
         $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
         $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showInfoPageText(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
         $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
         $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))", ["|{$_SESSION["helyszindata"]["id"]}|"]);
