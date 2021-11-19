@@ -1603,10 +1603,19 @@ class BookingService
         return $warnings;
     }
 
-    public function getInfoPageText($szurestipusid){
-        //echo "itt vagyok!";
+    public function getInfoPageText($szurestipusid, $inputData = null){
+        $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
+
         $data = sql_fetch_array(sql_query("SELECT infopagetext FROM szurestipusok WHERE id=?",array($szurestipusid)));
-        return $data["infopagetext"];
+        $text = $data["infopagetext"];
+
+        foreach ($checkboxes as $checkbox) {
+           if (isset($inputData[$checkbox])) {
+               $text = str_replace("id='{$checkbox}'", "id='{$checkbox}' checked ", $text);
+           }
+        }
+
+        return $text;
     }
 
 }

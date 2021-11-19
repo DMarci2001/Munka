@@ -381,7 +381,7 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
             }
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
-            echo "<tr><td></td><td><div id=\"infopagetext\"></div></td></tr>";
+            echo "<tr><td></td><td><div id=\"infopagetext\">".$this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST)."</div></td></tr>";
             
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";

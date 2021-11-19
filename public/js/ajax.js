@@ -30,10 +30,6 @@ $(document).ready(function () {
 
 });
 
-$(document).ready(function () {
-    showInfoPageText($("#szurestipus").val());
-});
-
 function checkVaccinationElements(){
     let isVaccinated = $('input[name=is-vaccinated]:checked', '#iform').val();
 
