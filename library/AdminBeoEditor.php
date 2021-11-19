@@ -6,7 +6,7 @@ class AdminBeoEditor {
     private $adminUtils;
     public $beosztasService;
 
-        public function __construct()
+    public function __construct()
     {
         $this->adminUser = new AdminUser();
         $this->adminUtils = new AdminUtils();
@@ -192,11 +192,17 @@ class AdminBeoEditor {
 
             $html.= "<span title='Nincs időpontfoglalás'><input value='1' type='checkbox' id='noreservation{$sor}' name='noreservation{$sor}'" . ($beo["noreservation"] == 1 ? " checked" : "") . ">Nincs időpontfoglalás&nbsp;</span> ";
 
-            $html.= "<a href='#' onclick='delBeoRow({$doctorId},{$beo["id"]});return false;'><img align='baseline' src='/images/trash.png' title='Sor törlése'/></a>";
+            $html.= "<a href='#' title='Sor törlése' onclick='delBeoRow({$doctorId},{$beo["id"]});return false;'><i class='fas fa-trash-alt'></i></a> ";
+            $html.= "<a href='#' title='Extra adatok' onclick='$(\"#extradata{$beo["id"]}\").toggle();return false;'><i class='fas fa-bars'></i></a>";
 
             if ($beo["fobid"] != 0) {
                 $html.= " <span style='border:1px solid #080;color:#080;cursor:pointer;' title='id: {$beo["fobid"]}'>FO</span>";
             }
+
+            $html .= "<div id='extradata{$beo["id"]}' style='padding:2px 0px 2px 25px;".($this->isExtraData($beo)?"":"display:none;")."'>";
+            $html .= "Érvényesség: <input id='validfrom{$sor}' name='validfrom{$sor}' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input id='validto{$sor}' name='validto{$sor}' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
+            $html .= "Megjegyzés: <input id='bmegj{$sor}' name='bmegj{$sor}' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
+            $html .= "</div>";
 
             $html.= "<div id='tipusvalaszto{$beo["id"]}'></div>";
 
@@ -237,6 +243,9 @@ class AdminBeoEditor {
         return $html;
     }
 
+    private function isExtraData($beo):bool {
+        return ($beo["validfrom"] != "0000-00-00" || $beo["validto"] != "0000-00-00" || !empty($beo["bmegj"]));
+    }
 
     private function addBeoButton($doctorId, $groupId) {
         $html = "";

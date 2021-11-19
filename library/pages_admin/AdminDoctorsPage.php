@@ -121,9 +121,12 @@ class AdminDoctorsPage extends AdminCorePage {
                                noreservation=?,
                                fobid=?,
                                remoteid=?,
-                               groupid=?,
-                               beocegek=''
-                        ", [$beoData["orvosid"], $beoData["helyszinid"], $beoData["nap"], $beoData["beonap"], $beoData["tol"], $beoData["ig"], $beoData["potig"], $beoData["hetek"], $beoData["binterval"], $beoData["csaksorban"], $beoData["tipusok"], $beoData["aktiv"], $beoData["noreservation"], $beoData["fobid"], $beoData["remoteid"], $groupId]);
+                               beocegek='',
+                               validfrom=?,
+                               validto=?,
+                               bmegj=?,
+                               groupid=?
+                        ", [$beoData["orvosid"], $beoData["helyszinid"], $beoData["nap"], $beoData["beonap"], $beoData["tol"], $beoData["ig"], $beoData["potig"], $beoData["hetek"], $beoData["binterval"], $beoData["csaksorban"], $beoData["tipusok"], $beoData["aktiv"], $beoData["noreservation"], $beoData["fobid"], $beoData["remoteid"], $beoData["validfrom"], $beoData["validto"], $beoData["bmegj"], $groupId]);
                 }
             }
 
@@ -307,8 +310,14 @@ class AdminDoctorsPage extends AdminCorePage {
                             $potig = "";
                         }
 
-                        $params = array($_POST["weekday{$sor}"], $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $noreservation, $_POST["beosztasid{$sor}"]);
-                        sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=? where id=?", $params);
+                        $nap = $_POST["weekday{$sor}"];
+                        if ($nap == 10) {
+                            $_POST["validfrom{$sor}"] = "0000-00-00";
+                            $_POST["validto{$sor}"] = "0000-00-00";
+                        }
+
+                        $params = [$nap, $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $noreservation, $_POST["validfrom{$sor}"], $_POST["validto{$sor}"], $_POST["bmegj{$sor}"], $_POST["beosztasid{$sor}"]];
+                        sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=? where id=?", $params);
                         $sor++;
                     }
 
@@ -619,7 +628,7 @@ class AdminDoctorsPage extends AdminCorePage {
             $doctorData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]));
             $_POST = $doctorData;
 
-            $GLOBALS["subtitle"] = $doctorData["nev"];
+            $GLOBALS["subtitle"] = $this->subtitle = $doctorData["nev"];
 
             //scan foglalások
             $api = new BookingSyncApi();

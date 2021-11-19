@@ -13,6 +13,7 @@ class AdminCorePage {
     public $success = [];
     public $patinentService;
     public $pageData = null;
+    public $subtitle = "";
 
     public function __construct()
     {
