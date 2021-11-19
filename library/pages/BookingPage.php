@@ -94,9 +94,6 @@ class BookingPage extends CorePage
                 if(isset($_POST["noi-tumormarker"])&&$_POST["noi-tumormarker"]==1)$laborszoveg.=", Női tumormarker";
 
                 $laborszoveg = substr($laborszoveg, 2);
-
-                $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
-
             }
 
             if (isset($_POST["szuldatumev"])) {
@@ -253,6 +250,11 @@ class BookingPage extends CorePage
             }
 
             if (empty($this->errors)) {
+
+                if(!empty($laborszoveg)){
+                    $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
+                }
+
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
                 $this->record_covid_vaccination_data($fid,$_POST);
