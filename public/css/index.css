@@ -1022,3 +1022,57 @@ and (max-width: 1200px) {
 .vizsgalatdobozbuttonwebdoctor:hover {
     background: #830b0b;
 }
+.recilistacell {
+	display:table-cell;
+	padding:3px 3px 3px 0px;
+	vertical-align: middle;
+}
+.covid-oltas-lista{
+    border-collapse: collapse;
+    width:100%;
+    /*border:1px solid black;*/
+}
+
+.covid-oltas-lista tr:first-child td{
+	font-size:16px;
+	font-weight:bold;
+	text-align:center;
+}
+.covid-oltas-lista td{
+    border-bottom:1px solid black;
+    padding:10px 5px 10px;
+    text-align:center;
+}
+.covid-oltas-lista td:first-child,td:last-child{
+    white-space: nowrap;
+}
+.covid-oltas-mentes-button {
+    height: auto !important;
+	background-color:#44c767;
+	border-radius:28px;
+	border:1px solid #18ab29;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:17px;
+	padding:6px 31px !important;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #2f6627;
+    width:90%;
+}
+.covid-oltas-mentes-button:hover {
+	background-color:#5cbf2a;
+}
+.covid-oltas-mentes-button:active {
+	position:relative;
+	top:1px;
+}
+.oltas-mezo{
+    width:90%;
+    padding :5px 15px 5px;
+}
+.covid-oltas-buttons{
+    font-size:18px;
+    cursor:pointer;
+}

@@ -330,7 +330,11 @@ class Utils {
         $htmlout.='<script type="text/javascript" src="/js/jquery/jquery.js"></script>';
         $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
         $htmlout.='<script type="text/javascript" src="/js/sweetalert/sweetalert2.min.js"></script>';
+        $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
+        $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
+        $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
         $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
+        
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
             $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
@@ -345,9 +349,7 @@ class Utils {
         }
 
         if (isset($GLOBALS["admin"])) {
-            $htmlout .= '<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
-            $htmlout .= '<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
-            $htmlout .= '<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
+            
 
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';

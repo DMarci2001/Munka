@@ -7,6 +7,9 @@ $(document).ready(function () {
         $("#foglmegj").val(($("#foglmegj").val() + " " + adds).trim());
     });
 
+
+    initDateFilterPicker();
+
 });
 
 
@@ -634,6 +637,73 @@ function startServiceOrderPay(fizId) {
                 return;
             } else {
                 alert(response);
+            }
+        }
+    })
+}
+
+function initDateFilterPicker() {
+    $('#napfilter').datepicker({
+        language: 'hu',
+        onSelect: function (formattedDate, date, inst) {
+            inst.hide();
+            //setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+}
+
+function initModifyFilterPicker(extraId) {
+    $("input[name='vaccine-date"+extraId+"'").datepicker({
+        language: 'hu',
+        onSelect: function (formattedDate, date, inst) {
+            inst.hide();
+            //setListDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+}
+
+
+function modify_covid_data(cid){
+
+    $.ajax({
+        type: "POST",
+        url: "?page=covidoltasnaplo",
+        data: { modify_covid_data: true, covId: cid },
+        success: function (response) {
+            if(response!=""){
+                $("#covid-data-id-"+cid).html(response);
+                extraId = "-"+cid;
+                initModifyFilterPicker(extraId);
+            }
+        }
+    })
+}
+
+
+function cancel_covid_data(cid){
+
+    $.ajax({
+        type: "POST",
+        url: "?page=covidoltasnaplo",
+        data: { cancel_covid_data: true, covId: cid },
+        success: function (response) {
+            if(response!=""){
+                $("#covid-data-id-"+cid).html(response);
+            }
+        }
+    })
+}
+
+function save_covid_data(cid){
+    $.ajax({
+        type: "POST",
+        url: "?page=covidoltasnaplo",
+        data: { save_covid_data: true, covId: cid,oltas_tipus:$("select[name='vaccination-type-"+cid+"']").children("option:selected").val(),oltas_datum:$("input[name='vaccine-date-"+cid+"']").val(),sorszam:$("input[name='serial-number-"+cid+"']").val()},
+        success: function (response) {
+            if(response!=""){
+                $("#covid-data-id-"+cid).html(response);
             }
         }
     })
