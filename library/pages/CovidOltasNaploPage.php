@@ -213,8 +213,6 @@ class CovidOltasNaploPage extends CorePage
     }
     private function new_covid_oltas_naplo($post, $action = null)
     {
-        $assets = $this->docAgent->getAssetsByType(DocAgent::ASSET_COVIDPASS_IMAGE, $post["id"]);
-
         $html = $buttons = $extraId = "";
         if (!empty($action)) {
             if ($action == "modify") {
@@ -228,7 +226,12 @@ class CovidOltasNaploPage extends CorePage
         $html .= "<td>" . (!empty($action) ? $post["regdatum"] : "") . "</td>";
         $html .= "<td>" . $this->oltoanyagok($post) . "</td>";
         $html .= "<td>" . $this->napFilter($post) . "</td>";
-        $html .= "<td><input type=\"file\" id=\"covid-validation-image\" name=\"covid-validation-image{$extraId}\" /></td>";
+
+        if (isset($post["id"])) {
+            $html .= "<td><div id='asseteditor{$post["id"]}'>" . $this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDPASS_IMAGE, $post["id"]) . "</div></td>";
+        }
+        //$html .= "<td><input type=\"file\" id=\"covid-validation-image\" name=\"covid-validation-image{$extraId}\" /></td>";
+
         $html .= "<td><input type=\"number\" class=\"design-put oltas-mezo\" value=\"" . (isset($post["serial-number"]) ? $post["serial-number"] : "") . "\" name=\"serial-number{$extraId}\" value=\"\" /></td>";
         $html .= "<td>" . (!empty($action) ? $buttons : "") . "</td>";
         return $html;
