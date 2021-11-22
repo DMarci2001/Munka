@@ -40,6 +40,7 @@ require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
 require_once(__DIR__ . "/library/pages/OltasIgenyFelmeresPage.php");
 require_once(__DIR__ . "/library/pages/OltasJelentkezesPage.php");
 require_once(__DIR__ . "/library/pages/ElsosegelyVizsgaPage.php");
+require_once(__DIR__ . "/library/pages/CovidOltasNaploPage.php");
 require_once(__DIR__ . "/library/pages/MissingDataPage.php");
 require_once(__DIR__ . "/library/pages/ServicesPage.php");
 require_once(__DIR__ . "/library/Page.php");

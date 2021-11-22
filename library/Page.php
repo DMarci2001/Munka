@@ -121,6 +121,7 @@ class Page
                 $html .= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
                 $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["idopontfoglalas"]) . "</a> &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=bookinglist'>" . ucfirst($webText["foglalasok"]) . "</a>" . ($rowf["hany"] > 0 ? " <span class='ujnumber'>{$rowf["hany"]}</span>" : "") . " &bull; ";
+                $html .= "<a class='toplink' href='index.php?page=covidoltasnaplo'>" . ucfirst($webText["covidoltasnaplo"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'></span>" : "") . " &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
                 //leletek oldal határozatlan ideig szüntetel
