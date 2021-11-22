@@ -594,7 +594,7 @@ class AdminAjaxService {
         return $d && $d->format($format)==$date;
     }
 
-    private function jsonOut($data) {
+    private static function jsonOut($data) {
         header('Content-Type: application/json');
         echo json_encode($data);
         die();

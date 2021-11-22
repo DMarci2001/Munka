@@ -2252,7 +2252,7 @@ function preparePhotoUpload(event) {
     });
 }
 
-function deleteAsset(tipus, id) {
+function deleteAsset(tipus, id, assetId) {
     if (!confirm("Biztos törlöd ezt a képet?")) {
         return;
     }

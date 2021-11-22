@@ -1,6 +1,6 @@
 $(document).ready(function () {
     $("#paciensfile").on("change", prepareUpload);
-
+    initUploadRoutine();
 
     $(".addmegjlink").click(function () {
         adds = "(" + $(this).html() + ")";
@@ -469,6 +469,71 @@ function prepareUpload(event) {
     });
 
 }
+
+function initUploadRoutine() {
+    $("#assetphotofile").on("change", preparePhotoUpload);
+}
+
+function preparePhotoUpload(event) {
+    let tipus = $(this).data("tipus");
+    let id = $(this).data("id");
+
+    files = event.target.files;
+
+    $("#ajaxloader").show();
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    var data = new FormData();
+    data.append("uploadasset", id)
+    data.append("tipus", tipus)
+    $.each(files, function (key, value) {
+        data.append(key, value);
+    });
+
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: data,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response, textStatus, jqXHR) {
+            $("#ajaxloader").hide();
+
+            $("#asseteditor").html(response.html);
+            $("#asseteditor"+id).html(response.html);
+            initUploadRoutine();
+
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+        }, error: function (jqXHR, textStatus, errorThrown) {
+            $("#ajaxloader").hide();
+            console.log('ERRORS: ' + textStatus);
+        }
+    });
+}
+
+function deleteAsset(tipus, id, assetId) {
+    if (!confirm("Biztos törli ezt a képet?")) {
+        return;
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: 'index.php',
+        data: { deleteasset: id, tipus: tipus },
+        success: function (result) {
+            $("#asseteditor").html(result.html);
+            $("#asseteditor"+assetId).html(result.html);
+            initUploadRoutine();
+        }
+    });
+}
+
 
 function deletePaciensFile(id, k) {
     $.ajax({

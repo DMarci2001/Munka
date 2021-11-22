@@ -4,6 +4,7 @@
 class DocAgent {
     const ASSET_DOCTOR_PHOTO = "orvosphoto";
     const ASSET_SERVICE_ILLUSTRATION_IMAGE = "serviceimage";
+    const ASSET_COVIDPASS_IMAGE = "covidpassimage";
     const ASSET_SERVICE_DEFAULT_IMAGE = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE = "/images/doctor_male.png";
     const ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE = "/images/doctor_female.png";
@@ -34,11 +35,16 @@ class DocAgent {
         return $path;
     }
 
-    public function getAssetImageURL($tipus, $id) {
+    public function getAssetImageURL($tipus, $id, $full = false) {
         $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
         if (!is_file($path)) {
             //return "";
         }
+
+        if ($full) {
+            return $path;
+        }
+
         return str_replace("/var/www/onlinebejelentkezes_keltexmed/public", "", $path);
     }
 
@@ -148,7 +154,7 @@ class DocAgent {
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
             if (in_array($extension, ["jpg", "jpeg", "png"])) {
-                sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?", [$tipus, $oid, $fileName, $extension, $fileSize]);
+                sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
                 $fileId = sql_insert_id();
                 $path = $this->_getAssetImagePath($fileId);
 
@@ -172,6 +178,9 @@ class DocAgent {
                 }
 
                 $scale = [512, 512];
+                if ($tipus == self::ASSET_COVIDPASS_IMAGE) {
+                    $scale = [1600, 1600];
+                }
 
                 if ($ysize > $scale[1]) {
                     $xscale = $scale[0];
@@ -210,18 +219,33 @@ class DocAgent {
     public function showAssetEditor($tipus, $dataId):string {
         $html = "";
 
+        $uploadButton= "<div style='display:inline-block;vertical-align: top;'>";
+        $uploadButton.= "<div class='upload-btn-wrapper'><div class='upbtn'>Fotó feltöltése</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' id='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+        $uploadButton.= "</div>";
+
         $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
+        if ($tipus == self::ASSET_COVIDPASS_IMAGE) {
+            foreach ($images as $imageData) {
+                //$photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
+                $html.= "<div style='display:inline-block;'>";
+                $html.= "<div><a target='_blank' href='index.php?showfoto={$imageData["id"]}&c={$imageData["kod"]}'>Fotó megtekintése</a></div>";
+                $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Fotó törlése</a></div>";
+                $html.= "</div>";
+
+                //$html.= $uploadButton;
+                return $html;
+            }
+
+        }
         foreach ($images as $imageData) {
             $photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
             $html.= "<div style='display:inline-block;'>";
             $html.= "<a href='{$photoURL}' target='_blank'><img class='assetimageitem' src='{$photoURL}' /></a>";
-            $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]});return false;'>Kép törlése</a></div>";
+            $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Kép törlése</a></div>";
             $html.= "</div>";
         }
 
-        $html.= "<div style='display:inline-block;vertical-align: top;'>";
-        $html.= "<div class='upload-btn-wrapper'><div class='upbtn'>kép<br/>hozzáadása</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' id='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
-        $html.= "</div>";
+        $html.= $uploadButton;
 
         return $html;
     }

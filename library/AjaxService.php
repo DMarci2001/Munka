@@ -94,6 +94,48 @@ class AjaxService {
             die();
         }
 
+        if (isset($_POST["uploadasset"])) {
+            $dataId = intval($_POST["uploadasset"]);
+            $tipus  = $_POST["tipus"];
+
+            $docAgent = new DocAgent();
+            $result = $docAgent->uploadAssetImage($tipus, $dataId, $_FILES[0]);
+
+            $result["html"] = $docAgent->showAssetEditor($tipus, $dataId);
+            Utils::jsonOut($result);
+
+            die;
+        }
+
+        if (isset($_POST["deleteasset"])) {
+            $id = intval($_POST["deleteasset"]);
+            $tipus  = $_POST["tipus"];
+
+            $data = sql_fetch_array(sql_query("select dataid from dokumentumok where id=? and assetid=?", [$id, $tipus]));
+            $dataId = $data["dataid"];
+
+            $docAgent = new DocAgent();
+            $docAgent->deleteAsset($tipus, $id);
+
+            $result["html"] = $docAgent->showAssetEditor($tipus, $dataId);
+            Utils::jsonOut($result);
+
+            die;
+        }
+
+
+        if (isset($_GET["showfoto"])) {
+            if ($image = sql_query("select * from dokumentumok where id=? and kod=?", [$_GET["showfoto"], $_GET["c"]])->fetch(PDO::FETCH_ASSOC)) {
+                $docAgent = new DocAgent();
+
+                $photoPath = $docAgent->getAssetImageURL($image["assetid"], $image["id"], true);
+
+                header('Content-Disposition: inline; filename="covidPassPhoto'.$image["id"].'.jpg"');
+                header("Content-Type: image/jpeg");
+                echo file_get_contents($photoPath);
+            }
+            die;
+        }
 
     }
 
