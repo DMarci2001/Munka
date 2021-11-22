@@ -801,7 +801,7 @@ class Utils {
         return $error;
     }
 
-    public function jsonOut($data) {
+    public static function jsonOut($data) {
         header('Content-Type: application/json');
         echo json_encode($data);
         die();
