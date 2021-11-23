@@ -147,10 +147,14 @@ class CovidOltasNaploPage extends CorePage
     {
         $html = "";
 
+        $this->readSzervezetiEgysegCsv();
+        $egysegek = $this->szervezetiEgysegek[$_SESSION["helyszindata"]["domain"]];
+        ksort($egysegek);
+
         if (isset($this->szervezetiEgysegek[$_SESSION["helyszindata"]["domain"]])) {
             $select = "<select name='szervezetiegyseg'>";
             $select .= "<option value='0'>Válasszon!</option>";
-            foreach ($this->szervezetiEgysegek[$_SESSION["helyszindata"]["domain"]] as $szervezetiEgyseg) {
+            foreach ($egysegek as $szervezetiEgyseg) {
                 $select .= "<option value='{$szervezetiEgyseg["code"]}'" . ($this->user->user["szervezetiegyseg"] == $szervezetiEgyseg["code"] ? " selected" : "") . ">{$szervezetiEgyseg["name"]}</option>";
             }
             $select .= "</select>";
@@ -298,4 +302,113 @@ class CovidOltasNaploPage extends CorePage
             $this->errors[] = "Az oltás száma csak szám lehet!";
         }
     }
+
+
+    private function readSzervezetiEgysegCsv() {
+        $this->szervezetiEgysegek["hc"] = [];
+        $rows = explode("\n", $this->szervezetiEgysegCsv);
+        foreach ($rows as $row) {
+            $fields = explode(";", $row);
+
+            if ($fields[1] == "Hosszú név") {
+                continue;
+            }
+
+            $data = [
+                "code" => $fields[0],
+                "name" => $fields[1],
+                "short" => $fields[2]
+            ];
+
+            $this->szervezetiEgysegek["hc"][$fields[1]] = $data;
+        }
+    }
+
+
+    private $szervezetiEgysegCsv = "Szervezeti egység kód;Hosszú név;Rövid név;;;;;;;;;1
+20000;Vezérigazgató;VZIG;;;;;;;;;0
+20001;Single Sky csoport;SSCS;;;;;;;;;
+21000;ATM légiforgalmi igazgatóság;ATMI;;;;;;;;;
+21010;AIS osztály;AISO;;;;;;;;;
+21011;NOTAM csoport;NOTA;;;;;;;;;
+21012;Meterológiai csoport;RMET;;;;;;;;;
+21013;Kiadványszerkesztő (PUB/SD) csoport;PSDU;;;;;;;;;
+21020;Módszertani és koordinációs osztály;LMKO;;;;;;;;;
+21021;Módszertani csoport;MTCS;;;;;;;;;
+21022;Koordinációs csoport;RKCS;;;;;;;;;
+21023;Eljárás- és Légtértervezési Csoport;LTCS;;;;;;;;;
+21030;ATM képzési és szolgálatvezetési osztály;ATKO;;;;;;;;;
+21031;Szolgálatvezetési csoport;SVCS;;;;;;;;;
+21032;ATM Képzési Csoport;AKCS;;;;;;;;;
+21100;ATS főosztály;ATSF;;;;;;;;;
+21101;Áramlásszervező és légtérgazdálkodó részleg;ATFC;;;;;;;;;
+21102;Repülési adatkezelő és bejelentő részleg;FDRU;;;;;;;;;
+21110;Körzeti irányítási osztály;KIRO;;;;;;;;;
+21111;Körzeti irányító részleg;BACC;;;;;;;;;
+21112;Körzeti repüléstájékoztató részleg;BFIC;;;;;;;;;
+21120;Terminál irányítási osztály;TIRO;;;;;;;;;
+21121;Bevezető irányító részleg;BAPP;;;;;;;;;
+21122;Repülőtéri irányító részleg;BTWR;;;;;;;;;
+22000;Gazdasági igazgatóság;GZDI;;;;;;;;;
+22010;Beszerzési és anyaggazdálkodási osztály;BSZO;;;;;;;;;
+22011;Anyaggazdálkodási csoport;AGCS;;;;;;;;;
+22020;Humán erőforrás osztály;HERO;;;;;;;;;
+22021;HR fejlesztési csoport;HFCS;;;;;;;;;
+22022;HR üzleti partner csoport;HRCS;;;;;;;;;
+22023;HR kontrolling és bérszámfejtési csoport;HKCS;;;;;;;;;
+22030;Kontrolling és nemzetközi pénzügyek osztály;KNPO;;;;;;;;;
+22031;Nemzetközi kontrolling csoport;NKCS;;;;;;;;;
+22032;Operatív kontrolling csoport;OKCS;;;;;;;;;
+22033;Vállalati kontrolling csoport;VKCS;;;;;;;;;
+22040;Pénzügyi és számviteli osztály;PSZO;;;;;;;;;
+22041;Adó csoport;AVCS;;;;;;;;;
+22042;Eszköznyilvántartási csoport;ENCS;;;;;;;;;
+22043;Főkönyvi és beszámolói csoport;FKCS;;;;;;;;;
+22044;Számlakezelési csoport;SKCS;;;;;;;;;
+22045;Treasury csoport;TRCS;;;;;;;;;
+22050;Projektmérnök és üzemeltetési osztály;PRMO;;;;;;;;;
+22051;Alapinfrastruktúra fejlesztési csoport;AFCS;;;;;;;;;
+22052;Alapinfrastruktúra üzemeltetési csoport;AÜCS;;;;;;;;;
+22053;Védelmi csoport;VÉCS;;;;;;;;;
+23000;Technológiai igazgatóság;TCHI;;;;;;;;;
+23010;ATS rendszerfejlesztési osztály;ATRO;;;;;;;;;
+23011;ATS rendszerfejlesztés MATIAS csoport;ATSM;;;;;;;;;
+23012;ATS rendszerfejlesztés repülőterek csoport;TWRQ;;;;;;;;;
+23020;CNS osztály;CNSO;;;;;;;;;
+23024;Rádiókommunikációs csoport;RÜCS;;;;;;;;;
+23025;Útvonal navigációs csoport;UNCS;;;;;;;;;
+23026;Távüzem radar csoport;TRAD;;;;;;;;;
+23030;Infokommunikációs szolgáltatások osztály;ICTS;;;;;;;;;
+23031;Kibervédelmi és információbiztonsági csoport;CDIS;;;;;;;;;
+23032;Vállalati folyamat- és szolgáltatásmenedzsment csoport;EPSM;;;;;;;;;
+23033;Vállalati IT infrastruktúra csoport;EITM;;;;;;;;;
+23034;IT service desk csoport;ITSD;;;;;;;;;
+23040;Műszaki üzemeltetési és fejlesztési osztály;MÜFO;;;;;;;;;
+23041;Irányítási rendszerek csoport;IRCS;;;;;;;;;
+23042;Műszaki fejlesztési csoport;MFCS;;;;;;;;;
+23043;Repülőtéri rendszerek csoport;RRCS;;;;;;;;;
+23044;Távközlési és hálózati csoport;THCS;;;;;;;;;
+24000;Üzletfejlesztési igazgatóság;ÜFIG;;;;;;;;;
+24010;Értékesítési és marketing osztály;ÉRMO;;;;;;;;;
+24011;Marketing csoport;MARK;;;;;;;;;
+24012;Értékesítési csoport;ÉRCS;;;;;;;;;
+24020;Stratégiai és projektmenedzsment osztály;SPMO;;;;;;;;;
+24030;Szakmai fejlesztési osztály;SZFO;;;;;;;;;
+24031;Szimuláció és validáció csoport;SZIM;;;;;;;;;
+24032;Kutatás-fejlesztési csoport;KFCS;;;;;;;;;
+25000;Jogi és compliance igazgatóság;JMFI;;;;;;;;;
+25001;Jogi és szabályozási csoport;JSCS;;;;;;;;;
+25002;Légi- és nemzetközi jogi csoport;LNCS;;;;;;;;;
+25003;Compliance csoport;COMP;;;;;;;;;
+25004;Adminisztrációs csoport;ADMC;;;;;;;;;
+26000;Kommunikációs és kormányzati kapcsolatok igazgatóság;KKKI;;;;;;;;;
+26001;Kommunikációs csoport;KMCS;;;;;;;;;
+26002;Kormányzati kapcsolatok és protokoll csoport;KPCS;;;;;;;;;
+27000;Repülésbiztonsági, minőségirányítási és belső ellenőrzési igazgatóság;RMBI;;;;;;;;;
+27001;SQM kockázatértékelő és eseménykivizsgáló csoport;SQKE;;;;;;;;;
+27002;SQM rendszerfejlesztő és monitoring csoport;SQRM;;;;;;;;;
+27003;Internal audit csoport;IACS;;;;;;;;;";
+
+
+
 }
