@@ -4,7 +4,10 @@
 class DocAgent {
     const ASSET_DOCTOR_PHOTO = "orvosphoto";
     const ASSET_SERVICE_ILLUSTRATION_IMAGE = "serviceimage";
+
     const ASSET_COVIDPASS_IMAGE = "covidpassimage";
+    const ASSET_COVIDEGS_IMAGE = "covidegsimage";
+
     const ASSET_SERVICE_DEFAULT_IMAGE = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE = "/images/doctor_male.png";
     const ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE = "/images/doctor_female.png";
@@ -178,7 +181,7 @@ class DocAgent {
                 }
 
                 $scale = [512, 512];
-                if ($tipus == self::ASSET_COVIDPASS_IMAGE) {
+                if ($tipus == self::ASSET_COVIDPASS_IMAGE || $tipus == self::ASSET_COVIDEGS_IMAGE) {
                     $scale = [1600, 1600];
                 }
 
@@ -224,7 +227,7 @@ class DocAgent {
         $uploadButton.= "</div>";
 
         $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
-        if ($tipus == self::ASSET_COVIDPASS_IMAGE) {
+        if ($tipus == self::ASSET_COVIDPASS_IMAGE || $tipus == self::ASSET_COVIDEGS_IMAGE) {
             foreach ($images as $imageData) {
                 //$photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
                 $html.= "<div style='display:inline-block;'>";

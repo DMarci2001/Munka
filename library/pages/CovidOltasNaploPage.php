@@ -176,8 +176,13 @@ class CovidOltasNaploPage extends CorePage
         $html .= "<input type='hidden' name='oltasadatok' value='1'/>";
         $html .= "<table>";
         $html .= "<tr><td>Szervezeti egység:<div style='margin-top: 5px;'>{$select}</div></td></tr>";
-        $html .= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='nocovid1' value='1' " . ($this->user->user["nocovid1"] == 1 ? "checked" : "") . "/> egészségügyi okból nem oltható</div></td></tr>";
-        $html .= "<tr><td><div style='margin-top:5px;'><input type='checkbox' name='nocovid2' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div></td></tr>";
+        $html .= "<tr><td>";
+        $html .= "<div style='margin-top:10px;'><input type='checkbox' name='nocovid1' id='nocovid1' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid1"] == 1 ? "checked" : "") . "/> egészségügyi okból nem oltható</div>";
+
+        $html .= "<div id='igazolasuploaddiv' style='margin:10px 0px 0px 25px;".($this->user->user["nocovid1"] == 1?"":"display:none;")."'>Kérjük töltsön fel egy képet az igazolásról:<br/><div id='asseteditor_".DocAgent::ASSET_COVIDEGS_IMAGE."'>".$this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDEGS_IMAGE, $this->user->user["id"])."</div></div>";
+
+        $html .= "</td></tr>";
+        $html .= "<tr><td><div style='margin-top:5px;'><input type='checkbox' name='nocovid2' id='nocovid2' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div></td></tr>";
         $html .= "<tr><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Adatok mentése</a></td></tr>";
         $html .= "</table>";
         $html .= "</form>";

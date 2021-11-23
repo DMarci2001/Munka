@@ -503,6 +503,7 @@ function preparePhotoUpload(event) {
             $("#ajaxloader").hide();
 
             $("#asseteditor").html(response.html);
+            $("#asseteditor_"+tipus).html(response.html);
             $("#asseteditor"+id).html(response.html);
             initUploadRoutine();
 
@@ -528,6 +529,7 @@ function deleteAsset(tipus, id, assetId) {
         data: { deleteasset: id, tipus: tipus },
         success: function (result) {
             $("#asseteditor").html(result.html);
+            $("#asseteditor_"+tipus).html(result.html);
             $("#asseteditor"+assetId).html(result.html);
             initUploadRoutine();
         }
@@ -786,4 +788,31 @@ function delete_covid_data(cid){
             $("#covid-data-id-"+cid).remove();
         }
     })
+}
+
+
+function covidFormCheckboxCheck(el) {
+    let id = $(el).attr("id");
+
+    let nocovid1 = $("#nocovid1").prop("checked");
+    let nocovid2 = $("#nocovid1").prop("checked");
+
+
+    if (id == "nocovid1" && nocovid1) {
+        $( "#nocovid2" ).prop("checked", false);
+    }
+
+    if (id == "nocovid2" && nocovid2) {
+        $( "#nocovid1" ).prop("checked", false);
+    }
+
+    nocovid1 = $("#nocovid1").prop("checked");
+
+    if (nocovid1) {
+        $("#igazolasuploaddiv").slideDown();
+    } else {
+        $("#igazolasuploaddiv").slideUp();
+    }
+
+
 }

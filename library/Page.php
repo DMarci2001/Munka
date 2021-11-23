@@ -31,10 +31,10 @@ class Page
             $_GET["page"] =  $_POST["page"];
         }
         if (!isset($_GET["page"]) && isset($_SESSION["user"])) {
-            $_GET["page"] = "booking";
+            $_GET["page"] = $this->_getLandingPage();
         }
         if (!isset($_GET["page"])) {
-            $_GET["page"] = "booking";
+            $_GET["page"] = $this->_getLandingPage();
         }
 
         $pageName = ucfirst(str_replace("_", "", $_GET["page"])) . "Page";
@@ -46,6 +46,14 @@ class Page
 
         if (isset($_SESSION["user"]) && $_SESSION["user"]["validated"] == 0) {
             $page = new ValidateLoginPage();
+        }
+        return $page;
+    }
+
+    private function _getLandingPage():string {
+        $page = "booking";
+        if (CompanyService::isHungarocontrol()) {
+            $page = "covidoltasnaplo";
         }
         return $page;
     }
@@ -119,11 +127,19 @@ class Page
                 $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
 
                 $html .= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
-                $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["idopontfoglalas"]) . "</a> &bull; ";
-                $html .= "<a class='toplink' href='index.php?page=bookinglist'>" . ucfirst($webText["foglalasok"]) . "</a>" . ($rowf["hany"] > 0 ? " <span class='ujnumber'>{$rowf["hany"]}</span>" : "") . " &bull; ";
-                $html .= "<a class='toplink' href='index.php?page=covidoltasnaplo'>" . ucfirst($webText["covidoltasnaplo"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'></span>" : "") . " &bull; ";
-                $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
-                $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
+                if ($this->_idopontfoglalasMenuPolicy()) {
+                    $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["idopontfoglalas"]) . "</a> &bull; ";
+                    $html .= "<a class='toplink' href='index.php?page=bookinglist'>" . ucfirst($webText["foglalasok"]) . "</a>" . ($rowf["hany"] > 0 ? " <span class='ujnumber'>{$rowf["hany"]}</span>" : "") . " &bull; ";
+                }
+                if ($this->_covidOltasNaploMenuPolicy()) {
+                    $html .= "<a class='toplink' href='index.php?page=covidoltasnaplo'>" . ucfirst($webText["covidoltasnaplo"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'></span>" : "") . " &bull; ";
+                }
+                if ($this->_beutalokMenuPolicy()) {
+                    $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
+                }
+                if ($this->_dokumentumokMenuPolicy()) {
+                    $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
+                }
                 //leletek oldal határozatlan ideig szüntetel
                 //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
                 $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
@@ -156,6 +172,39 @@ class Page
         $html .= "</div>";
         return $html;
     }
+
+    private function _idopontfoglalasMenuPolicy():bool {
+        $show = true;
+        if (CompanyService::isHungarocontrol()) {
+            $show = false;
+        }
+        return $show;
+    }
+
+    private function _beutalokMenuPolicy():bool {
+        $show = true;
+        if (CompanyService::isHungarocontrol()) {
+            $show = false;
+        }
+        return $show;
+    }
+
+    private function _dokumentumokMenuPolicy():bool {
+        $show = true;
+        if (CompanyService::isHungarocontrol()) {
+            $show = false;
+        }
+        return $show;
+    }
+
+    private function _covidOltasNaploMenuPolicy():bool {
+        $show = false;
+        if (CompanyService::isHungarocontrol()) {
+            $show = true;
+        }
+        return $show;
+    }
+
 
     private function _pageFooter()
     {

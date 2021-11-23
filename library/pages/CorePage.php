@@ -60,6 +60,9 @@ class CorePage {
             return $html;
         } else {
             $text = trim("{$img} {$_SESSION["helyszindata"]["megnev"]} - ".strtolower($webText["idopontfoglalas"]).($title != "" ? " - {$title}" : ""));
+            if (CompanyService::isHungarocontrol()) {
+                $text = trim("{$img} {$_SESSION["helyszindata"]["megnev"]}".($title != "" ? " - {$title}" : ""));
+            }
             if ($custom) {
                 $text = $title;
             }

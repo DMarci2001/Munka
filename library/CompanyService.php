@@ -66,5 +66,8 @@ class CompanyService {
         return $domain;
     }
 
+    public static function isHungarocontrol():bool {
+        return $_SESSION["helyszindata"]["domain"] == "hc";
+    }
 
 }
