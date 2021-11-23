@@ -57,7 +57,9 @@ class CovidOltasNaploPage extends CorePage
                     "INSERT INTO covid_oltas_naplo SET userid=?, oltas_tipus=?,oltas_datum=?,sorszam=?,regdatum=NOW()",
                     array($_SESSION["user"]["id"], $_POST["vaccination-type"], $_POST["vaccine-date"], $_POST["serial-number"])
                 );
-                $_POST = null;
+                unset($_POST);
+                header("Location:index.php?page=covidoltasnaplo");
+                exit();
             }
         }
 
@@ -266,7 +268,7 @@ class CovidOltasNaploPage extends CorePage
         $html .= "<td>" . $this->oltoanyagok($post) . "</td>";
         $html .= "<td>" . $this->napFilter($post) . "</td>";
         $html .= "<td><input type=\"number\" class=\"design-put oltas-mezo\" style=\"text-align:center\" placeholder=\"Sorszám\" value=\"" . (isset($post["serial-number"]) ? $post["serial-number"] : "") . "\" name=\"serial-number{$extraId}\" value=\"\" /></td>";
-        
+
 
         if (isset($post["id"])) {
             $html .= "<td><div id='asseteditor{$post["id"]}'>" . $this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDPASS_IMAGE, $post["id"]) . "</div></td>";
