@@ -41,22 +41,29 @@ class CovidOltasNaploPage extends CorePage
         }
 
         if (isset($_POST["oltasadatok"])) {
-            $nocovid1 = isset($_POST["nocovid1"]) ? 1:0;
-            $nocovid2 = isset($_POST["nocovid2"]) ? 1:0;
+            $nocovid1 = isset($_POST["nocovid1"]) ? 1 : 0;
+            $nocovid2 = isset($_POST["nocovid2"]) ? 1 : 0;
             sql_query("update felhasznalok set szervezetiegyseg=?, nocovid1=?, nocovid2=? where id=?", [$_POST["szervezetiegyseg"], $nocovid1, $nocovid2, $this->user->user["id"]]);
             header("location:index.php?page={$_GET["page"]}");
             die;
         }
 
         if (isset($_POST["uj-oltas-mentes"])) {
-            sql_query(
-                "INSERT INTO covid_oltas_naplo SET userid=?, oltas_tipus=?,oltas_datum=?,sorszam=?,regdatum=NOW()",
-                array($_SESSION["user"]["id"], $_POST["vaccination-type"], $_POST["vaccine-date"], $_POST["serial-number"])
-            );
-            $_POST = null;
+
+            $this->checkOltasData($_POST,"new");
+
+            if (empty($this->errors)) {
+                sql_query(
+                    "INSERT INTO covid_oltas_naplo SET userid=?, oltas_tipus=?,oltas_datum=?,sorszam=?,regdatum=NOW()",
+                    array($_SESSION["user"]["id"], $_POST["vaccination-type"], $_POST["vaccine-date"], $_POST["serial-number"])
+                );
+                $_POST = null;
+            }
         }
 
         if (isset($_POST["modify_covid_data"]) && $_POST["modify_covid_data"] == true) {
+
+            $this->checkOltasData($_POST,"modify");
             if ($data = sql_fetch_array(sql_query("SELECT id,regdatum,oltas_tipus as 'vaccination-type',oltas_datum as 'vaccine-date',sorszam as 'serial-number' FROM covid_oltas_naplo WHERE id=?", array($_POST["covId"])))) {
                 echo $this->new_covid_oltas_naplo($data, "modify");
             }
@@ -67,7 +74,10 @@ class CovidOltasNaploPage extends CorePage
             $query = sql_query("SELECT * FROM covid_oltas_naplo WHERE id=?", array($_POST["covId"]));
 
             if (!empty(sql_num_rows($query))) {
-                sql_query("UPDATE covid_oltas_naplo SET oltas_tipus=?,oltas_datum=?,sorszam=? WHERE id=?", array($_POST["oltas_tipus"], $_POST["oltas_datum"], $_POST["sorszam"], $_POST["covId"]));
+                sql_query(
+                    "UPDATE covid_oltas_naplo SET oltas_tipus=?,oltas_datum=?,sorszam=? WHERE id=?",
+                    array($_POST["oltas_tipus"], $_POST["oltas_datum"], $_POST["sorszam"], $_POST["covId"])
+                );
 
                 $covid_data = $this->select_covid_oltas_naplo($_POST["covId"]);
                 echo $this->_covidRow($covid_data[0]);
@@ -84,9 +94,10 @@ class CovidOltasNaploPage extends CorePage
         }
     }
 
-    public function showPage() {
+    public function showPage()
+    {
         echo $this->displayFejlec("Oltás napló");
-        echo $this->showFormErrors();
+        echo $this->showErrors();
 
         if (empty($this->user->user)) {
             echo "Kérjük jelentkezzen be, vagy regisztráljon!";
@@ -118,20 +129,22 @@ class CovidOltasNaploPage extends CorePage
         echo "</form>";
     }
 
-    private function _covidRow($data):string {
+    private function _covidRow($data): string
+    {
         $html = "<td>{$data["regdatum"]}</td>";
-        $html.= "<td>{$data["oltas_tipus"]}</td>";
-        $html.= "<td>{$data["oltas_datum"]}</td>";
-        $html.= "<td><div id='asseteditor{$data["id"]}'>".$this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDPASS_IMAGE, $data["id"])."</div></td>";
-        $html.= "<td>{$data["sorszam"]}</td>";
-        $html.= "<td>";
-        $html.= "<i title=\"Oltás adatainak módosítása\" onClick='modify_covid_data({$data["id"]})' class=\"fas fa-pen covid-oltas-buttons\"></i>&nbsp;&nbsp;";
-        $html.= "<i title=\"Oltási bejegyzés törlése\" onClick='delete_covid_data({$data["id"]})' class=\"fas fa-trash covid-oltas-buttons\"></i>";
-        $html.= "</td>";
+        $html .= "<td>" . $this->oltoanyag_nev($data["oltas_tipus"]) . "</td>";
+        $html .= "<td>{$data["oltas_datum"]}</td>";
+        $html .= "<td><div id='asseteditor{$data["id"]}'>" . $this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDPASS_IMAGE, $data["id"]) . "</div></td>";
+        $html .= "<td>{$data["sorszam"]}</td>";
+        $html .= "<td>";
+        $html .= "<i title=\"Oltás adatainak módosítása\" onClick='modify_covid_data({$data["id"]})' class=\"fas fa-pen covid-oltas-buttons\"></i>&nbsp;&nbsp;";
+        $html .= "<i title=\"Oltási bejegyzés törlése\" onClick='delete_covid_data({$data["id"]})' class=\"fas fa-trash covid-oltas-buttons\"></i>";
+        $html .= "</td>";
         return $html;
     }
 
-    private function adatForm():string {
+    private function adatForm(): string
+    {
         $html = "";
 
         if (isset($this->szervezetiEgysegek[$_SESSION["helyszindata"]["domain"]])) {
@@ -144,16 +157,17 @@ class CovidOltasNaploPage extends CorePage
         }
 
 
-        $html.= "<div style='border-bottom:1px solid #ccc;padding-bottom:20px;margin-bottom:20px;'>";
-        $html.= "<form name='iform' method='post' enctype='multipart/form-data'>";
-        $html.= "<input type='hidden' name='oltasadatok' value='1'/>";
-        $html.= "<table>";
-        $html.= "<tr><td>Szervezeti egység:<div style='margin-top: 5px;'>{$select}</div></td></tr>";
-        $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='nocovid1' value='1' ".($this->user->user["nocovid1"]==1?"checked":"")."/> egészségügyi okból nem oltható</div></td></tr>";
-        $html.= "<tr><td><div style='margin-top:5px;'><input type='checkbox' name='nocovid2' value='1' ".($this->user->user["nocovid2"]==1?"checked":"")."/> nem igényel oltást</div></td></tr>";
-        $html.= "<tr><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Adatok mentése</a></td></tr>";
-        $html.= "</table>";
-        $html.= "</div>";
+        $html .= "<div style='border-bottom:1px solid #ccc;padding-bottom:20px;margin-bottom:20px;'>";
+        $html .= "<form name='iform' method='post' enctype='multipart/form-data'>";
+        $html .= "<input type='hidden' name='oltasadatok' value='1'/>";
+        $html .= "<table>";
+        $html .= "<tr><td>Szervezeti egység:<div style='margin-top: 5px;'>{$select}</div></td></tr>";
+        $html .= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='nocovid1' value='1' " . ($this->user->user["nocovid1"] == 1 ? "checked" : "") . "/> egészségügyi okból nem oltható</div></td></tr>";
+        $html .= "<tr><td><div style='margin-top:5px;'><input type='checkbox' name='nocovid2' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div></td></tr>";
+        $html .= "<tr><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Adatok mentése</a></td></tr>";
+        $html .= "</table>";
+        $html .= "</form>";
+        $html .= "</div>";
 
         return $html;
     }
@@ -232,8 +246,56 @@ class CovidOltasNaploPage extends CorePage
         }
         //$html .= "<td><input type=\"file\" id=\"covid-validation-image\" name=\"covid-validation-image{$extraId}\" /></td>";
 
-        $html .= "<td><input type=\"number\" class=\"design-put oltas-mezo\" value=\"" . (isset($post["serial-number"]) ? $post["serial-number"] : "") . "\" name=\"serial-number{$extraId}\" value=\"\" /></td>";
+        $html .= "<td><input type=\"number\" class=\"design-put oltas-mezo\" style=\"text-align:center\" value=\"" . (isset($post["serial-number"]) ? $post["serial-number"] : "") . "\" name=\"serial-number{$extraId}\" value=\"\" /></td>";
         $html .= "<td>" . (!empty($action) ? $buttons : "") . "</td>";
         return $html;
+    }
+
+    private function checkOltasData($post,$type){
+
+        $variables["new"] = array(
+            "type" => "vaccination-type",
+            "date" => "vaccine-date",
+            "serial" => "serial-number"
+        );
+
+        $variables["modify"] = array(
+            "type" => "oltas_tipus",
+            "date" => "oltas_datum",
+            "serial" => "sorszam"
+        );
+
+        //Ha üres a tipus:
+        if (empty($post[$variables[$type]["type"]])) {
+            $this->errors[] = "Az oltás tipus megadása kötelező!";
+        }
+        //Ha nem üres a tipus de hibás az azonositó:
+        if (!empty($post[$variables[$type]["type"]])) {
+            $key = array_search($post[$variables[$type]["type"]], array_column($this->oltoanyagok, "id"));
+            if ($key === false) {
+                $this->errors[] = "A megadott oltás tipus nem megfelelő!";
+            }
+        }
+        //Ha üres az oltási dátum:
+        if (empty($post[$variables[$type]["date"]])) {
+            $this->errors[] = "Az oltás dátuma megadása kötelező!";
+        }
+
+        //Ha nem üres az oltási dátum de hibás a dátum forma:
+        if (!empty($post[$variables[$type]["date"]])) {
+            if (!$this->utils->validateDate($post[$variables[$type]["date"]], "Y-m-d")) {
+                $this->errors[] = "Az oltás dátum formátuma hibás!";
+            }
+        }
+
+        //Ha üres az oltás sorszáma:
+        if (empty($post[$variables[$type]["serial"]])) {
+            $this->errors[] = "Az oltás sorszámának megadása kötelező!";
+        }
+
+        //Ha üres az oltás sorszáma:
+        if (!empty($post[$variables[$type]["serial"]]) && !is_numeric($post[$variables[$type]["serial"]])) {
+            $this->errors[] = "Az oltás száma csak szám lehet!";
+        }
     }
 }
