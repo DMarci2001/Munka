@@ -1043,7 +1043,7 @@ and (max-width: 1200px) {
     padding:10px 5px 10px;
     text-align:center;
 }
-.covid-oltas-lista td:first-child,td:last-child{
+.covid-oltas-lista td:first-child, .covid-oltas-lista td:last-child{
     white-space: nowrap;
 }
 .covid-oltas-mentes-button {

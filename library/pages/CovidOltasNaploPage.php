@@ -182,7 +182,12 @@ class CovidOltasNaploPage extends CorePage
         $html .= "<div id='igazolasuploaddiv' style='margin:10px 0px 0px 25px;".($this->user->user["nocovid1"] == 1?"":"display:none;")."'>Kérjük töltsön fel egy képet az igazolásról:<br/><div id='asseteditor_".DocAgent::ASSET_COVIDEGS_IMAGE."'>".$this->docAgent->showAssetEditor(DocAgent::ASSET_COVIDEGS_IMAGE, $this->user->user["id"])."</div></div>";
 
         $html .= "</td></tr>";
-        $html .= "<tr><td><div style='margin-top:5px;'><input type='checkbox' name='nocovid2' id='nocovid2' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div></td></tr>";
+        $html .= "<tr><td>";
+        $html .= "<div style='margin-top:5px;'><input type='checkbox' name='nocovid2' id='nocovid2' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div>";
+        
+        $html .= "<div id='covidnyilatkozatdiv' style='margin:10px 0px 0px 25px;".($this->user->user["nocovid2"] == 1?"":"display:none;")."'><p>„Nyilatkozom, hogy COVID-19 elleni teljes körű védőoltásban nem részesültem. (Teljes körű védőoltásnak minősül az egydózisú oltás, vagy a kétdózisú oltás esetén mindkét oltás felvétel.)”</p></div></div>";
+        
+        $html .= "</td></tr>";
         $html .= "<tr><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Adatok mentése</a></td></tr>";
         $html .= "</table>";
         $html .= "</form>";

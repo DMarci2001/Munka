@@ -807,11 +807,18 @@ function covidFormCheckboxCheck(el) {
     }
 
     nocovid1 = $("#nocovid1").prop("checked");
+    nocovid2 = $("#nocovid2").prop("checked");
 
     if (nocovid1) {
         $("#igazolasuploaddiv").slideDown();
     } else {
         $("#igazolasuploaddiv").slideUp();
+    }
+
+    if (nocovid2) {
+        $("#covidnyilatkozatdiv").slideDown();
+    } else {
+        $("#covidnyilatkozatdiv").slideUp();
     }
 
 
