@@ -773,3 +773,17 @@ function save_covid_data(cid){
         }
     })
 }
+function delete_covid_data(cid){
+    if (!confirm("Biztos törli ezt az oltási eseményt?")) {
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "?page=covidoltasnaplo",
+        data: { delete_covid_data: true, covId: cid},
+        success: function (response) {
+            $("#covid-data-id-"+cid).remove();
+        }
+    })
+}
