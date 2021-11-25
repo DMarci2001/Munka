@@ -126,10 +126,10 @@ class AdminPatientsPage extends AdminCorePage {
             //if ($_POST["telefon"]=="") $this->formError.="A telefonszám megadása kötelező!<br/>";
             if (!ctype_digit($_POST["telefon"]) && $_POST["telefon"]!="") $this->formError.="A telefonszám szám formátuma nem megfelelő!<br/>";
 
-            if ($_POST["szuldatum"]=="") $this->formError.="A születési dátum megadása kötelező!<br/>";
-            if (!$this->utils->validateDate($_POST["szuldatum"],"Y-m-d")) $this->formError.="A születési dátum formátuma nem megfelelő!<br/>";
-            if (!isset($_POST["neme"])) $this->formError.="A neme megadása kötelező!<br/>";
-            if (!$this->utils->checkSzulDatum($_POST["szuldatum"])) $this->formError.="A születési dátum formátuma nem megfelelő<br/>";
+            //if ($_POST["szuldatum"]=="") $this->formError.="A születési dátum megadása kötelező!<br/>";
+            //if (!$this->utils->validateDate($_POST["szuldatum"],"Y-m-d")) $this->formError.="A születési dátum formátuma nem megfelelő!<br/>";
+            //if (!isset($_POST["neme"])) $this->formError.="A neme megadása kötelező!<br/>";
+            //if (!$this->utils->checkSzulDatum($_POST["szuldatum"])) $this->formError.="A születési dátum formátuma nem megfelelő<br/>";
 
             //if ($_POST["munkakor"]=="") $this->formError.="A munkakör megadása kötelező!<br/>";
 

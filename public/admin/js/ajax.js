@@ -3089,3 +3089,14 @@ function eljottButtonProtocol(el, force) {
         }
     })
 }
+
+function setCovidListStatus(status, id) {
+    $.ajax({
+        url: "index.php?page=covidlist",
+        method: "POST",
+        data: { setstatus: status, id: id },
+        success: function (response) {
+            $("#covidsor"+id).html(response);
+        }
+    })
+}

@@ -132,7 +132,21 @@ class CovidOltasNaploPage extends CorePage
         //Új oltás rögzitése:
         echo "<tr>" . $this->new_covid_oltas_naplo($_POST) . "</tr>";
         echo "      <tr>";
-        echo "          <td colspan=\"6\" style=\"text-align:center\"><input type=\"submit\" class=\"covid-oltas-mentes-button\" name=\"uj-oltas-mentes\" value=\"Oltás hozzáadása\" /></td>";
+        echo "          <td colspan=\"6\" style=\"text-align:center\"><input 
+          onclick=\"
+          
+          if ($('#nocovid1').prop('checked')) {
+            alert('Nem tud oltást hozzáadni, mert azt jelölte be, hogy egészségügyi okokból nem oltható!');
+            return false;
+          }
+
+          if ($('#nocovid2').prop('checked')) {
+            alert('Nem tud oltást hozzáadni, mert arról nyilatkozott, hogy nem részesült teljes körű védőoltásban!');
+            return false;
+          }
+          
+          \"
+          type=\"submit\" class=\"covid-oltas-mentes-button\" name=\"uj-oltas-mentes\" value=\"Oltás hozzáadása\" /></td>";
         echo "      </tr>";
         echo "  </table>";
         echo "</form>";

@@ -9,6 +9,25 @@ class AdminCovidListPage extends AdminCorePage
     {
         parent::__construct();
 
+        if (isset($_POST["setstatus"])) {
+            if ($data = sql_fetch_array(sql_query("select n.*,d1.id AS covidigazolasid, d1.kod AS covidigazolaskod, d2.id AS covidegsid, d2.kod AS covidegskod from covid_oltas_naplo n 
+                LEFT JOIN dokumentumok d1 ON d1.dataid = n.id AND d1.assetid='covidpassimage'
+                LEFT JOIN dokumentumok d2 ON d2.dataid = n.userid AND d2.assetid='covidegsimage'
+                where n.id=?", [$_POST["id"]]))) {
+                if ($data["statusz"] != $_POST["setstatus"]) {
+                    sql_query("update covid_oltas_naplo set statusz=? where id=?", [$_POST["setstatus"], $_POST["id"]]);
+                    $data["statusz"] = $_POST["setstatus"];
+                    //értesítés
+
+                    $service = new NotificationService();
+                    $service->covidListMessage($data["id"]);
+                }
+
+                echo $this->covidSor($data);
+                die;
+            }
+            die;
+        }
 
     }
 
@@ -58,17 +77,31 @@ class AdminCovidListPage extends AdminCorePage
             }
 
 
-            echo "<tr style=''><td colspan='18' style='padding-bottom:10px;'>";
-            echo "{$user["sorszam"]}. {$user["oltas_datum"]} {$user["oltas_tipus"]} {$user["statusz"]} ";
-            if (!empty($user["covidigazolasid"])) {
-                echo "<a target='_blank' href='index.php?showfoto={$user["covidigazolasid"]}&c={$user["covidigazolaskod"]}'>Fotó</a>";
-            }
-            echo "</td></tr>";
+            echo "<tr style='' id='covidsor{$user["id"]}'>".$this->covidSor($user)."</tr>";
 
         }
         echo "</table>";
 
 
+    }
+
+    private function covidSor($data):string {
+        $html = "";
+
+        $html.= "<td colspan='18' style='padding-bottom:10px;'>";
+
+        $html.= "<div onclick='setCovidListStatus(\"IN PROGRESS\", {$data["id"]});' style='display:inline-block;background:".($data["statusz"] == "IN PROGRESS" ? "#888":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;border-right:1px solid #888;'>IN PROGRESS</div>";
+        $html.= "<div onclick='setCovidListStatus(\"APPROVED\", {$data["id"]});' style='display:inline-block;background:".($data["statusz"] == "APPROVED" ? "green":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;border-right:1px solid #888;'>APPROVED</div>";
+        $html.= "<div onclick='setCovidListStatus(\"DENIED\", {$data["id"]});' style='display:inline-block;background:".($data["statusz"] == "DENIED" ? "red":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;'>DENIED</div>";
+        $html.= "&nbsp;&nbsp;";
+
+        $html.= "{$data["sorszam"]}. {$data["oltas_datum"]} {$data["oltas_tipus"]} ";
+        if (!empty($data["covidigazolasid"])) {
+            $html.= "<a target='_blank' href='index.php?showfoto={$data["covidigazolasid"]}&c={$data["covidigazolaskod"]}'>Fotó</a>";
+        }
+        $html.= "</td>";
+
+        return $html;
     }
 
 

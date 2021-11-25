@@ -775,4 +775,58 @@ END:VCALENDAR";
         }
     }
 
+    public function covidListMessage($covidListId) {
+        $res = sql_query("SELECT f.email, n.* 
+        FROM covid_oltas_naplo n
+        LEFT JOIN felhasznalok f ON f.id=n.userid
+        WHERE n.id=? and n.statusz in ('APPROVED', 'DENIED')", [$covidListId]);
+
+        if ($data = sql_fetch_array($res)) {
+            if ($data["statusz"] == "APPROVED") {
+                $subject = "Oltás esemény regisztráció feldolgozva";
+
+                $body = "Tisztelt Hölgyem/Uram!<br/>
+                <br/>
+                Az Ön által megadott adatokat sikeresen feldolgoztuk és leellenőriztük. <br/>
+                A " . $data["regdatum"] . " időpontban megadott oltási eseményt hitelesítettük, ha további kérdése lenne, kérem forduljon bizalommal a HR osztályhoz.<br/>
+                Köszönjük a részévételét a felmérésben!<br/>
+                <br/>
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
+                ;
+            }
+
+            if ($data["statusz"] == "DENIED") {
+                $subject = "Oltás esemény regisztráció feldolgozva";
+
+                $body = "Tisztelt Hölgyem/Uram!<br/>
+                <br/>
+                Az Ön által megadott adatokat sikeresen feldolgoztuk és leellenőriztük. 
+                A " . $data["regdatum"] . " időpontban megadott oltási eseményt nem tudtuk hitelesíteni, a megadott adatok nem egyeznek meg a regisztrált adatokkal, kérem, vegye fel a kapcsolatot kollegánkkal egyeztetés céljából!<br/>
+                <br/>
+                <br/>
+                Telefonszám: +36 30 750 0257<br/>
+                E-mail: petrovszky.gergo@hungariamed.hu<br/>
+                <br/>
+                Köszönjük a részévételét a felmérésben!<br/>
+                <br/>
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
+                ;
+            }
+
+            $mail = $this->getDefaultMailer();
+            $mail->AddAddress($data["email"]);
+            //$mail->AddBCC("jnsmobil@gmail.com");
+
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+
+            $mail->Send();
+
+            $this->createNotificationRecord("covidlistmessage", $covidListId, $data["email"], $subject, $body);
+        }
+
+    }
+
 }

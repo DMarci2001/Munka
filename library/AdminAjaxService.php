@@ -17,6 +17,19 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_GET["showfoto"])) {
+            if ($image = sql_query("select * from dokumentumok where id=? and kod=?", [$_GET["showfoto"], $_GET["c"]])->fetch(PDO::FETCH_ASSOC)) {
+                $docAgent = new DocAgent();
+
+                $photoPath = $docAgent->getAssetImageURL($image["assetid"], $image["id"], true);
+
+                header('Content-Disposition: inline; filename="covidPassPhoto'.$image["id"].'.jpg"');
+                header("Content-Type: image/jpeg");
+                echo file_get_contents($photoPath);
+            }
+            die;
+        }
+
         if (isset($_GET["simpletest"])) {
             $simpleService = new SimplePayService();
             $simpleService->startPay(131688);
