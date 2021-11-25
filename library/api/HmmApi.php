@@ -10,6 +10,7 @@ class HmmApi {
     private $postParams;
     private $postBody;
     private $requestMethod;
+    private $tokenData;
 
     private $utils;
     private $bookingService;
@@ -41,7 +42,12 @@ class HmmApi {
         $result = null;
 
         if (!empty($this->apiMethod)) {
-            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID,  !empty($this->postBody) ? $this->postBody : print_r($_REQUEST, true), "", "", $this->apiMethod."/".$this->apiParam));
+            $savedMethod = $this->apiMethod;
+            if ($this->apiParam != "") {
+                $savedMethod.= "/".$this->apiMethod;
+            }
+
+            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID,  !empty($this->postBody) ? $this->postBody : print_r($_REQUEST, true), "", "", $savedMethod));
             $logId = sql_insert_id();
         }
 
@@ -85,6 +91,9 @@ class HmmApi {
             $result = $this->reservationsDelete();
         }
 
+        if ($this->apiMethod == "dokirexInsertVizsglapAdatok") {
+            $result = ["{$this->apiMethod}" => "ok"];
+        }
 
         $this->utils->jsonOut($result);
     }
@@ -184,7 +193,7 @@ class HmmApi {
         foreach (getallheaders() as $value) {
             if (substr_count($value, "Bearer ")) {
                 $bearer = str_replace("Bearer ", "", $value);
-                if (sql_fetch_array(sql_query("select * from tokens where token=? and expires>=now()", [$bearer]))) {
+                if ($this->tokenData = sql_fetch_array(sql_query("select * from tokens where token=? and expires>=now()", [$bearer]))) {
                     return true;
                 }
             }
@@ -282,12 +291,12 @@ class HmmApi {
     //csak a pácienssel kapcsolatos adatok módosíthatók, illetve a megjegyzés.
     private function reservationsPut():array {
         if (!empty($this->apiParam)) {
-            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and source=?", [intval($this->apiParam), self::PROVIDER_NAME]))) {
+            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and foglalta=?", [intval($this->apiParam), $this->tokenData["username"]]))) {
 
                 $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
                 $this->_checkReservationBody($body);
 
-                sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=? where id=? and teladoccode=?",
+                sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=? where id=? and pass=?",
                     [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $reservationData["id"], $body["authorizationCode"]]);
 
                 return $this->_reservationArray(sql_fetch_array(sql_query("select * from foglalasok where id=?", [$reservationData["id"]])));
@@ -303,7 +312,7 @@ class HmmApi {
     //A hívás segítségével a Szolgáltató rendszerében rögzített foglalás törölhető.
     private function reservationsDelete():array {
         if (!empty($this->apiParam)) {
-            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and source=?", [intval($this->apiParam), self::PROVIDER_NAME]))) {
+            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and foglalta=?", [intval($this->apiParam), $this->tokenData["username"]]))) {
                 $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
                 return [];
             } else {
@@ -349,11 +358,11 @@ class HmmApi {
         }
 
 
-        if ($paciensData = sql_fetch_array(sql_query("select id from felhasznalok where source=? and email=? and nev=? limit 1", [self::PROVIDER_NAME, $patientEmail, $patientName]))) {
+        if ($paciensData = sql_fetch_array(sql_query("select id from felhasznalok where createdby=? and email=? and nev=? limit 1", [$this->tokenData["username"], $patientEmail, $patientName]))) {
             $paciensId = $paciensData["id"];
         } else {
-            sql_query("insert into felhasznalok set source=?, cegid=?, regtime=now(), nev=?, email=?, telefon=?, szuldatum=?, anyjaneve=?, taj=?, flang=?, rkod=?, validated=1",
-                [self::PROVIDER_NAME, $cegId, $patientName, $patientEmail, $patientPhone, $patientDateOfBirth, $patientMothersName, $taj, "hu", rand(11000, 98000)]);
+            sql_query("insert into felhasznalok set createdby=?, cegid=?, regtime=now(), nev=?, email=?, telefon=?, szuldatum=?, anyjaneve=?, taj=?, flang=?, rkod=?, validated=1",
+                [$this->tokenData["username"], $cegId, $patientName, $patientEmail, $patientPhone, $patientDateOfBirth, $patientMothersName, $taj, "hu", rand(11000, 98000)]);
             $paciensId = sql_insert_id();
         }
 
@@ -390,7 +399,7 @@ class HmmApi {
         $reservationId = $this->bookingService->addReservationQuery($data);
 
         //set authcode
-        sql_query("update foglalasok set teladoccode=?, foglalta=?, source=? where id=?", [$authorizationCode, self::PROVIDER_NAME, self::PROVIDER_NAME, $reservationId]);
+        sql_query("update foglalasok set pass=?, foglalta=? where id=?", [$authorizationCode, $this->tokenData["username"], $reservationId]);
 
         //$unionService = new UnionService();
         //$unionService->newReservation($fid);
