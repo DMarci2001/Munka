@@ -183,9 +183,9 @@ class CovidOltasNaploPage extends CorePage
 
         $html .= "</td></tr>";
         $html .= "<tr><td>";
-        $html .= "<div style='margin-top:5px;'><input type='checkbox' name='nocovid2' id='nocovid2' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/> nem igényel oltást</div>";
+        $html .= "<div style='margin-top:5px;'><input type='checkbox' name='nocovid2' id='nocovid2' onchange='covidFormCheckboxCheck(this);' value='1' " . ($this->user->user["nocovid2"] == 1 ? "checked" : "") . "/><label for='nocovid2'>„Nyilatkozom, hogy COVID-19 elleni teljes körű védőoltásban nem részesültem. (Teljes körű védőoltásnak minősül az egydózisú oltás, vagy a kétdózisú oltás esetén mindkét oltás felvétel.)”</label></div>";
         
-        $html .= "<div id='covidnyilatkozatdiv' style='margin:10px 0px 0px 25px;".($this->user->user["nocovid2"] == 1?"":"display:none;")."'><p>„Nyilatkozom, hogy COVID-19 elleni teljes körű védőoltásban nem részesültem. (Teljes körű védőoltásnak minősül az egydózisú oltás, vagy a kétdózisú oltás esetén mindkét oltás felvétel.)”</p></div></div>";
+        //$html .= "<div id='covidnyilatkozatdiv' style='margin:10px 0px 0px 25px;".($this->user->user["nocovid2"] == 1?"":"display:none;")."'><p></p></div></div>";
         
         $html .= "</td></tr>";
         $html .= "<tr><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>Adatok mentése</a></td></tr>";

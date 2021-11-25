@@ -30,7 +30,6 @@ $(document).ready(function () {
     $(".vaccination-question-elements").change(function () {
         checkVaccinationElements();
     });
-
 });
 
 function checkVaccinationElements(){
@@ -471,7 +470,7 @@ function prepareUpload(event) {
 }
 
 function initUploadRoutine() {
-    $("#assetphotofile").on("change", preparePhotoUpload);
+    $(".assetphotofile").on("change", preparePhotoUpload);
 }
 
 function preparePhotoUpload(event) {
@@ -480,7 +479,7 @@ function preparePhotoUpload(event) {
 
     files = event.target.files;
 
-    $("#ajaxloader").show();
+    $("#ajaxloader_"+tipus+"_"+id).show();
 
     event.stopPropagation();
     event.preventDefault();
@@ -500,7 +499,7 @@ function preparePhotoUpload(event) {
         processData: false,
         contentType: false,
         success: function (response, textStatus, jqXHR) {
-            $("#ajaxloader").hide();
+            $("#ajaxloader_"+tipus+"_"+id).hide();
 
             $("#asseteditor").html(response.html);
             $("#asseteditor_"+tipus).html(response.html);
@@ -512,7 +511,7 @@ function preparePhotoUpload(event) {
                 return;
             }
         }, error: function (jqXHR, textStatus, errorThrown) {
-            $("#ajaxloader").hide();
+            $("#ajaxloader_"+tipus+"_"+id).hide();
             console.log('ERRORS: ' + textStatus);
         }
     });

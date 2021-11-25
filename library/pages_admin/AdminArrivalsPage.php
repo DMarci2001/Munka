@@ -151,7 +151,7 @@ class AdminArrivalsPage extends AdminCorePage
         echo "</div>";
 
         if (session_id() == "6jiq4etuv291688obcmt98k76d" || true) {
-            echo "<div style='margin-top:10px;'>[<a href='#' onclick='$(\"#covidformlist\").toggle();return false;'>Covid form</a>] [<a href='index.php?page=onlinefogleu'>Online Fogl eü paciensek</a>] [<a href='index.php?page=elsosegelyvizsga'>Elsősegély vizsgázók</a>]</div>";
+            echo "<div style='margin-top:10px;'>[<a href='#' onclick='$(\"#covidformlist\").toggle();return false;'>Covid form</a>] [<a href='index.php?page=onlinefogleu'>Online Fogl eü paciensek</a>] [<a href='index.php?page=elsosegelyvizsga'>Elsősegély vizsgázók</a>] [<a href='index.php?page=covidlist'>Covid lista</a>]</div>";
 
             echo "<div id='covidformlist' style='margin-top:10px;display: none;'>";
 

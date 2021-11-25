@@ -223,7 +223,7 @@ class DocAgent {
         $html = "";
 
         $uploadButton= "<div style='display:inline-block;vertical-align: top;'>";
-        $uploadButton.= "<div class='upload-btn-wrapper'><div class='upbtn'>Fotó feltöltése</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' id='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+        $uploadButton.= "<div class='upload-btn-wrapper'><div class='upbtn'>Fotó feltöltése</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' class='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader_{$tipus}_{$dataId}' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
         $uploadButton.= "</div>";
 
         $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
