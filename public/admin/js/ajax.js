@@ -3100,3 +3100,7 @@ function setCovidListStatus(status, id) {
         }
     })
 }
+
+function setCovidListFilter(status) {
+    window.location.href="index.php?page=covidlist&statusfilter="+encodeURIComponent(status);
+}

@@ -37,17 +37,30 @@ class AdminCovidListPage extends AdminCorePage
         //    return;
         //}
 
-        $docAgent = new DocAgent();
+        if (empty($_GET["statusfilter"])) {
+            $_GET["statusfilter"] = "";
+        }
+        if (in_array($_GET["statusfilter"], ["IN PROGRESS", "APPROVED", "DENIED"])) {
+            $statusFilter = $_GET["statusfilter"];
+        }
+
+
+        echo "<div>Szűrés: ";
+        echo "<div onclick='setCovidListFilter(\"\");' style='display:inline-block;background:".($statusFilter == "" ? "#888":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;border-right:1px solid #888;'>ALL</div>";
+        echo "<div onclick='setCovidListFilter(\"IN PROGRESS\");' style='display:inline-block;background:".($statusFilter == "IN PROGRESS" ? "#888":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;border-right:1px solid #888;'>IN PROGRESS</div>";
+        echo "<div onclick='setCovidListFilter(\"APPROVED\");' style='display:inline-block;background:".($statusFilter == "APPROVED" ? "green":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;border-right:1px solid #888;'>APPROVED</div>";
+        echo "<div onclick='setCovidListFilter(\"DENIED\");' style='display:inline-block;background:".($statusFilter == "DENIED" ? "red":"#CCC").";color:#fff;padding:2px 5px;cursor:pointer;'>DENIED</div>";
+        echo "</div>";
 
         $users = sql_query("SELECT n.*, f.taj, f.nev, f.email, f.telefon, f.nocovid1, f.nocovid2, d1.id AS covidigazolasid, d1.kod AS covidigazolaskod, d2.id AS covidegsid, d2.kod AS covidegskod FROM covid_oltas_naplo n
             LEFT JOIN felhasznalok f ON f.id = n.userid
             LEFT JOIN dokumentumok d1 ON d1.dataid = n.id AND d1.assetid='covidpassimage'
             LEFT JOIN dokumentumok d2 ON d2.dataid = f.id AND d2.assetid='covidegsimage'
-            WHERE f.id IS NOT NULL
+            WHERE f.id IS NOT NULL ".(empty($statusFilter)?"":"and n.statusz='{$statusFilter}'")."
             GROUP BY n.id
             ORDER BY f.nev, f.id, n.sorszam")->fetchAll(PDO::FETCH_ASSOC);
 
-        echo "<table cellpadding='0' cellspacing='0' border='0'>";
+        echo "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;'>";
         echo "<tr style='background:#eee;'>";
         echo "<td nowrap valign='top' style='padding:5px 5px 5px 5px;'>Név</div></td>";
         echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>TAJ</div></td>";
@@ -59,11 +72,14 @@ class AdminCovidListPage extends AdminCorePage
 
         $lastUser = "";
 
+        $userNum = $covidNum = 0;
+
         foreach ($users as $user) {
             $tc = "tcella";
 
             if ($lastUser != $user["userid"]) {
                 $lastUser = $user["userid"];
+                $userNum++;
                 //echo "<tr><td colspan='18' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 echo "<tr style='background: #eee;'>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>&nbsp;&nbsp;{$user["nev"]}</div></td>";
@@ -78,10 +94,12 @@ class AdminCovidListPage extends AdminCorePage
 
 
             echo "<tr style='' id='covidsor{$user["id"]}'>".$this->covidSor($user)."</tr>";
+            $covidNum++;
 
         }
         echo "</table>";
 
+        echo "<div style='margin-top:20px;'>Felhasználók: {$userNum}, bejegyzések: {$covidNum}</div>";
 
     }
 
