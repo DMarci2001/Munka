@@ -26,6 +26,8 @@ class Lang {
             }
 
             $webText[$rowL["kulcs"]] = str_replace("#adatvedelmilink#", Booking_Constants::ADATVEDELMI_URL, $webText[$rowL["kulcs"]]);
+
+            $webText[$rowL["kulcs"]] = str_replace("#adatvedelmilinkhc#", "https://hc.hungariamed.hu/images/aszf_covid_hmm_hc.pdf", $webText[$rowL["kulcs"]]);
         }
         return $webText;
     }

@@ -125,7 +125,14 @@ class RegistrationPage extends CorePage {
             echo "<tr><td>{$webText["utca"]}:</td><td><input class='inputbox' style='width:250px;' type='text' name='utca' value='{$_POST["utca"]}'></td></tr>";
         }
         echo "<tr><td></td><td><div style='margin-top:5px;' class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-        echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelfhc"]}</div></td></tr>";
+
+        if (CompanyService::isHungarocontrol()) {
+            echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfelhc"]}</div></td></tr>";
+        }else{
+            echo "<tr><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszfel"]}</div></td></tr>";
+        }
+
+        
         echo "<tr><td></td><td><br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["regisztracio"]}</a></td></tr>";
         echo "</table>";
         echo "</form>";
