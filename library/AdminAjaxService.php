@@ -22,10 +22,18 @@ class AdminAjaxService {
                 $docAgent = new DocAgent();
 
                 $photoPath = $docAgent->getAssetImageURL($image["assetid"], $image["id"], true);
+                if (!is_file($photoPath)) {
+                    $photoPath = str_replace(".jpg", ".jpeg", $photoPath);
+                }
+                if (!is_file($photoPath)) {
+                    die("A kep nem talalhato, valoszínuleg torolve lett!");
+                }
 
                 header('Content-Disposition: inline; filename="covidPassPhoto'.$image["id"].'.jpg"');
                 header("Content-Type: image/jpeg");
                 echo file_get_contents($photoPath);
+            } else {
+                die("A kep nem talalhato, valoszinuleg torolve lett!");
             }
             die;
         }

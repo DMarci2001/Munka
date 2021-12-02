@@ -3091,14 +3091,29 @@ function eljottButtonProtocol(el, force) {
 }
 
 function setCovidListStatus(status, id) {
+    if (status == "DENIED") {
+        $("#coviddeniedrow"+id).slideToggle();
+        return;
+    }
+
+    let deniedText = "";
+    if (status == "DENIEDCONFIRM") {
+        status = "DENIED";
+        deniedText = $("#coviddeniedtext"+id).val();
+    }
+
     $.ajax({
         url: "index.php?page=covidlist",
         method: "POST",
-        data: { setstatus: status, id: id },
+        data: { setstatus: status, id: id, deniedText:deniedText },
         success: function (response) {
             $("#covidsor"+id).html(response);
         }
     })
+}
+
+function setCovidListFilter(status) {
+    window.location.href="index.php?page=covidlist&statusfilter="+encodeURIComponent(status);
 }
 
 function setCovidListFilter(status) {
