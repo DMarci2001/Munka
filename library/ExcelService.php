@@ -129,12 +129,12 @@ class ExcelService {
 
         //lista
         $sor = 5;
-        $this->headingRow("A", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "db"]);
+        $this->headingRow("A", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "Cég", "db"]);
 
         $sor++;
         $total = $totalImage = 0;
         foreach ($data["list"] as $rowData) {
-            $this->dataRow("A", $sor, [$rowData["contentDate"], $rowData["patientName"], $rowData["patientBirthDate"], $rowData["patientOtherIDs"], $rowData["db"]]);
+            $this->dataRow("A", $sor, [$rowData["contentDate"], $rowData["patientName"], $rowData["patientBirthDate"], $rowData["patientOtherIDs"], $rowData["studyDescription"], $rowData["db"]]);
             $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
             $total ++;
             $totalImage += $rowData["db"];
@@ -146,7 +146,8 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(30);
         $this->sheet->getColumnDimension('B')->setWidth(40);
         $this->sheet->getColumnDimension('C')->setWidth(20);
-        $this->sheet->getColumnDimension('D')->setWidth(20);
+        $this->sheet->getColumnDimension('D')->setWidth(40);
+        $this->sheet->getColumnDimension('E')->setWidth(20);
 
 
         $sor = 3;

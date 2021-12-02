@@ -243,7 +243,7 @@ class AdminDicomPage extends AdminCorePage
     private function cegFilter() {
         $html = "";
         $html.="<select class='companyselector' name='dcegfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&dcegfilter='+this.value;\">";
-        $html.="<option value=''>Szűrés cégre</option>";
+        $html.="<option value=''>Szűrés klinikára</option>";
 
         $companies = $this->dicomService->getCompanies();
 
