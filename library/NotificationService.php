@@ -797,14 +797,19 @@ END:VCALENDAR";
             }
 
             if ($data["statusz"] == "DENIED") {
+                $reason = "";
+                if (!empty(trim($data["deniedtext"]))) {
+                    $reason = "<strong>Az elutasítás oka:</strong><br/>".nl2br($data["deniedtext"])."<br/><br/>";
+                }
+
                 $subject = "Oltás esemény regisztráció feldolgozva";
 
                 $body = "Tisztelt Hölgyem/Uram!<br/>
                 <br/>
-                Az Ön által megadott adatokat sikeresen feldolgoztuk és leellenőriztük. 
+                Az Ön által megadott adatokat sikeresen feldolgoztuk és leellenőriztük.<br/> 
                 A " . $data["regdatum"] . " időpontban megadott oltási eseményt nem tudtuk hitelesíteni, a megadott adatok nem egyeznek meg a regisztrált adatokkal, kérem, vegye fel a kapcsolatot kollegánkkal egyeztetés céljából!<br/>
                 <br/>
-                <br/>
+                {$reason}
                 Telefonszám: +36 30 750 0257<br/>
                 E-mail: petrovszky.gergo@hungariamed.hu<br/>
                 <br/>
