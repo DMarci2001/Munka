@@ -93,6 +93,54 @@ class BookingPage extends CorePage
                 if(isset($_POST["pajzsmirigy"])&&$_POST["pajzsmirigy"]==1)$laborszoveg.=", Pajzsmirigy";
                 if(isset($_POST["noi-tumormarker"])&&$_POST["noi-tumormarker"]==1)$laborszoveg.=", Női tumormarker";
 
+                if(isset($_POST["elnijo"])&&$_POST["elnijo"]==1)$laborszoveg.=", Élni jó csomag";
+                if(isset($_POST["paros"])&&$_POST["paros"]==1)$laborszoveg.=", Páros csomag";
+                if(isset($_POST["dvitamin"])&&$_POST["dvitamin"]==1)$laborszoveg.=", D-vitamin csomag";
+                if(isset($_POST["manager"])&&$_POST["manager"]==1)$laborszoveg.=", Manager csomag";
+                if(isset($_POST["holgyegeszseg"])&&$_POST["holgyegeszseg"]==1)$laborszoveg.=", Egészség 50+ csomag hölgyeknek";
+                if(isset($_POST["ferfiegeszseg"])&&$_POST["ferfiegeszseg"]==1)$laborszoveg.=", Egészség 50+ csomag férfiaknak";
+                if(isset($_POST["prosztata"])&&$_POST["prosztata"]==1)$laborszoveg.=", Prosztata csomag";
+                if(isset($_POST["cukor"])&&$_POST["cukor"]==1)$laborszoveg.=", Cukor-kontroll csomag";
+                if(isset($_POST["inzulin"])&&$_POST["inzulin"]==1)$laborszoveg.=", Inzulinrezisztencia csomag";
+                if(isset($_POST["kerek"])&&$_POST["kerek"]==1)$laborszoveg.=", Kerek csomag";
+                if(isset($_POST["noihajhullas"])&&$_POST["noihajhullas"]==1)$laborszoveg.=", Hajhullás női csomag";
+                if(isset($_POST["ferfihajhullas"])&&$_POST["ferfihajhullas"]==1)$laborszoveg.=", Hajhullás férfi csomag";
+                if(isset($_POST["noihormon3"])&&$_POST["noihormon3"]==1)$laborszoveg.=", Női hormon ciklus 3-5. nap, kiegészítő csomag";
+                if(isset($_POST["noihormon21"])&&$_POST["noihormon21"]==1)$laborszoveg.=", Női hormon ciklus 21-23. nap, kiegészítő csomag";
+                if(isset($_POST["csontritkulas"])&&$_POST["csontritkulas"]==1)$laborszoveg.=", Csontritkulás csomag";
+                if(isset($_POST["pajzsmirigybazis"])&&$_POST["pajzsmirigybazis"]==1)$laborszoveg.=", Pajzsmirigy Bázis csomag";
+                if(isset($_POST["pajzsmirigybovitett"])&&$_POST["pajzsmirigybovitett"]==1)$laborszoveg.=", Pajzsmirigy Bővített csomag";
+                if(isset($_POST["pajzsmirigymax"])&&$_POST["pajzsmirigymax"]==1)$laborszoveg.=", Pajzsmirigy Max csomag";
+                if(isset($_POST["pcos"])&&$_POST["pcos"]==1)$laborszoveg.=", PCOS csomag";
+                if(isset($_POST["csaladholgyeknek"])&&$_POST["csaladholgyeknek"]==1)$laborszoveg.=", Családtervező csomag hölgyeknek";
+                if(isset($_POST["golya1"])&&$_POST["golya1"]==1)$laborszoveg.=", Gólya csomag I. trimeszter";
+                if(isset($_POST["golya2"])&&$_POST["golya2"]==1)$laborszoveg.=", Gólya csomag II. trimeszter (16. hét)";
+                if(isset($_POST["golya3"])&&$_POST["golya3"]==1)$laborszoveg.=", Gólya csomag III, trimeszter (24. - 28. hét)";
+                if(isset($_POST["hepab"])&&$_POST["hepab"]==1)$laborszoveg.=", Hepatitis B vírus (HBV) csomag";
+                if(isset($_POST["torchalap"])&&$_POST["torchalap"]==1)$laborszoveg.=", TORCH alapcsomag";
+                if(isset($_POST["torchbovitett"])&&$_POST["torchbovitett"]==1)$laborszoveg.=", TORCH bővített csomag";
+                if(isset($_POST["tumorferfi1"])&&$_POST["tumorferfi1"]==1)$laborszoveg.=", Tumormarker csomag férfiaknak I.";
+                if(isset($_POST["tumorferfi2"])&&$_POST["tumorferfi2"]==1)$laborszoveg.=", Tumormarker csomag férfiaknak II.";
+                if(isset($_POST["tumorholgy1"])&&$_POST["tumorholgy1"]==1)$laborszoveg.=", Tumormarker csomag hölgyeknek I.";
+                if(isset($_POST["tumorholgy2"])&&$_POST["tumorholgy2"]==1)$laborszoveg.=", Tumormarker csomag hölgyeknek II.";
+                if(isset($_POST["ateresztoalap"])&&$_POST["ateresztoalap"]==1)$laborszoveg.=", Áteresztő bél szindróma Alap csomag";
+                if(isset($_POST["ateresztobovitett"])&&$_POST["ateresztobovitett"]==1)$laborszoveg.=", Áteresztő bél szindróma Bővített csomag";
+                if(isset($_POST["ateresztopremium"])&&$_POST["ateresztopremium"]==1)$laborszoveg.=", Áteresztő bél szindróma Prémium csomag";
+                if(isset($_POST["sportbasic"])&&$_POST["sportbasic"]==1)$laborszoveg.=", Sport Basic csomag*";
+                if(isset($_POST["sportextendedferfi"])&&$_POST["sportextendedferfi"]==1)$laborszoveg.=", Sport Extended Férfi csomag*";
+                if(isset($_POST["sportpro"])&&$_POST["sportpro"]==1)$laborszoveg.=", Sport Pro csomag*";
+                if(isset($_POST["fitkontroll"])&&$_POST["fitkontroll"]==1)$laborszoveg.=", Fitkontroll csomag*";
+                if(isset($_POST["covidpajzsalap"])&&$_POST["covidpajzsalap"]==1)$laborszoveg.=", COVID Pajzs alapcsomag";
+                if(isset($_POST["covidpajzsxxl"])&&$_POST["covidpajzsxxl"]==1)$laborszoveg.=", COVID Pajzs XXL csomag";
+                if(isset($_POST["postcovid"])&&$_POST["postcovid"]==1)$laborszoveg.=", POST COVID csomag";
+                if(isset($_POST["nyomelem"])&&$_POST["nyomelem"]==1)$laborszoveg.=", Nyomelem csomag";
+                if(isset($_POST["teljesvitamin"])&&$_POST["teljesvitamin"]==1)$laborszoveg.=", Teljes vitamin csomag";
+                if(isset($_POST["cdvitamin"])&&$_POST["cdvitamin"]==1)$laborszoveg.=", C- és D-vitamin csomag";
+                if(isset($_POST["bvitamin"])&&$_POST["bvitamin"]==1)$laborszoveg.=", B-vitamin csomag";
+                if(isset($_POST["faradtvitamin"])&&$_POST["faradtvitamin"]==1)$laborszoveg.=", Fáradtság vitamin csomag";
+                if(isset($_POST["antioxidans"])&&$_POST["antioxidans"]==1)$laborszoveg.=", Antioxidáns vitamin csomag";
+                if(isset($_POST["vastagbel"])&&$_POST["vastagbel"]==1)$laborszoveg.=", Vastagbéldaganat szűrőcsomag";
+
                 $laborszoveg = substr($laborszoveg, 2);
             }
 
@@ -238,13 +286,27 @@ class BookingPage extends CorePage
             if ($_POST["orvosselected"] != "") {
                 $_POST["orvosid"] = $_POST["orvosselected"];
             }
-            if (isset($_SESSION["orvosselected"])) {
+            if (isset($_SESSION["orvosselected"]) && $_SESSION["orvosselected"]!=0) {
                 $_POST["orvosid"] = $_SESSION["orvosselected"];
             }
 
-            if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
-                $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+            if($_SESSION["helyszindata"]["manual_booking_option"]!=1){
+                if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
+                    $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+                }
             }
+
+            if($_SESSION["helyszindata"]["manual_booking_option"]==1){
+                if($_POST["datum"]!="Időpont egyeztetés"){
+                    if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
+                        $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+                    }
+                }else{
+                    $_POST["datum"]="1900-01-01 00:00:01";
+                }
+            }
+
+            
             if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 

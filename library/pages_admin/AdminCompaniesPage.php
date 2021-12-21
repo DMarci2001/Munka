@@ -476,7 +476,7 @@ class AdminCompaniesPage extends AdminCorePage
                         } else {
                             $selectedList[] = $_POST["szid"];
                         }
-                        sql_query("UPDATE egyeni_ertesitesi_listak SET szervek=?", array(json_encode($selectedList, true)));
+                        sql_query("UPDATE egyeni_ertesitesi_listak SET szervek=? WHERE id=?", array(json_encode($selectedList, true),$_POST["list"]));
                         echo count($selectedList) . " egység";
                     }
                 }
@@ -507,7 +507,7 @@ class AdminCompaniesPage extends AdminCorePage
                 $content = $html = "";
                 $row = 0;
                 $tdCSS = "style='padding: 8px 8px 8px 0px;border-bottom:1px solid gray'";
-                $columns = array("#.", "Teljesnév", "Szül. dátum", "Munkakör", "TAJ", "E-mail", "<span id='checkBoxSwitcher' onClick='switchCheckBoxes(\"referral-checker\",\"disable\")' style='color:red;cursor:pointer'>Egyikse</span>");
+                $columns = array("#.", "Teljesnév", "Szül. dátum", "Munkakör", "TAJ", "E-mail","Utolsó vizsgálat", "<span id='checkBoxSwitcher' onClick='switchCheckBoxes(\"referral-checker\",\"disable\")' style='color:red;cursor:pointer'>Egyikse</span>");
                 $columnTitle = implode("</td><td {$tdCSS}>", $columns);
 
                 $erintettek = sql_query("SELECT * FROM felhasznalok WHERE szid IN(" . implode(",", $szervinfo) . ") ORDER BY nev ASC");
@@ -533,6 +533,10 @@ class AdminCompaniesPage extends AdminCorePage
                         }
                     }
 
+                    if(!$lastVisit=sql_fetch_array(sql_query("SELECT MAX(ervenyesseg) as ervenyesseg FROM alkalmassagi_meta_adatok WHERE paciensid=?",array($staff["id"])))){
+                        $lastVisit["ervenyesseg"] = null;
+                    }
+
                     $content .= "<tr>";
                     $content .= "<td {$tdCSS}>#" . ($row + 1) . "</td>";
                     $content .= "<td {$tdCSS}>{$staff['nev']}</td>";
@@ -540,6 +544,7 @@ class AdminCompaniesPage extends AdminCorePage
                     $content .= "<td {$tdCSS}>{$staff['munkakor']}</td>";
                     $content .= "<td {$tdCSS}>{$staff['taj']}</td>";
                     $content .= "<td {$tdCSS}>{$staff['email']}</td>";
+                    $content .= "<td {$tdCSS}>{$lastVisit['ervenyesseg']}</td>";
                     $content .= "<td {$tdCSS} align='center' onClick='toggleCheckBox(\"#{$staff['id']}\")'><input type='checkbox' onClick='toggleCheckBox(\"#{$staff['id']}\")' {$checkStatus} class='referral-checker' name='selected-data[]' id='{$staff['id']}' value='{$staff['id']}'/></td>";
                     $content .= "</tr>";
                     $row++;

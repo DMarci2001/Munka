@@ -1,0 +1,495 @@
+<?php
+
+use mikehaertl\pdftk\Pdf;
+
+class SynlabService
+{
+    private $patient = array();
+
+    public function __construct()
+    {
+    }
+
+    public function createLabItem()
+    {
+    }
+
+    public function setApplicationFormList($AppId)
+    {
+
+        $option = "";
+        $request = sql_query("SELECT * FROM synlab_labor_kerolapok WHERE aktiv=1 ORDER BY name ASC");
+
+        if (sql_num_rows($request) > 0) {
+            $option = "<option value=\"0\">Válassz egy kérőlapot!</option>";
+            while ($result = sql_fetch_array($request)) {
+                if (isset($AppId) && $AppId == $result["id"]) {
+                    $selected = "selected";
+                } else {
+                    $selected = "";
+                }
+                $option .= "<option {$selected} value=\"{$result["id"]}\">{$result["name"]}</option>";
+            }
+        } else {
+            $option = "<option value=\"0\"> - Üres - </option>";
+        }
+
+
+        return $option;
+    }
+
+    public function setItemTablesForApplicationForm($appId, $data)
+    {
+        $categories = $packArray = array();
+        $max = null;
+        //Group by olni kell és ki kell szűrni az összes kategóriát a laborkérő->tételek->tétel kategóriák mentén.
+
+        if (isset($data["PackId"]) && $data["PackId"] != 0) {
+            $packArray = json_decode(implode("", sql_fetch_row(sql_query("SELECT items FROM synlab_labor_csomagok WHERE id=?", array($data["PackId"])))), true);
+        }
+
+        $qc = sql_query("SELECT sltk.*, (SELECT count(id) FROM synlab_labor_tetelek WHERE appform=slt.appform AND category=sltk.id) AS itemdb FROM synlab_labor_tetelek slt
+                           LEFT JOIN synlab_labor_tetel_kategoriak sltk on sltk.id=slt.category
+                           WHERE slt.appform = ?
+                           GROUP BY sltk.id
+                           ORDER BY 
+                           CASE WHEN sltk.name LIKE \"%Egyéb%\" THEN INSERT(sltk.name,1,0,\"Z\") ELSE sltk.name END
+                           ASC", array($appId));
+
+
+        //Itt kell le generálnom a táblákat
+        while ($resc = sql_fetch_array($qc)) {
+            if (empty($max)) {
+                $max = 14;
+            }
+            echo "<div style=\"display:inline-block;background-color:#088DA5;color:white;float:left;border:1px solid black;margin:2px;min-width:300px;width:24.6%;height:" . ($max * 27) . "px;overflow-y:auto\"><table style=\"display:inline-block;float:left;width:300px\">";
+            echo "<tr><td colspan=\"3\" style=\"font-size:20px;white-space:wrap;\"><strong>{$resc["name"]}</strong>";
+
+            //Ha van mennyiség megadási kötelezettség:
+
+            if (!empty($resc["measure"] || !empty($resc["time"]))) {
+                echo "<br>";
+            }
+
+            if (!empty($resc["measure"])) {
+                echo "<input style=\"width:40px\" style=\"width:40px\" type=\"textbox\" name=\"sltkm-{$resc["id"]}\">&nbsp;{$resc["measure"]}";
+            }
+            if (!empty($resc["time"])) {
+                echo "&nbsp;&nbsp;/&nbsp;<input style=\"width:40px\" type=\"textbox\" name=\"sltkt-{$resc["id"]}\">&nbsp;{$resc["time"]}";
+            }
+            echo "</td></tr>";
+
+            $qt = sql_query("SELECT * FROM synlab_labor_tetelek WHERE appform=? AND category=?", array($appId, $resc["id"]));
+
+            while ($rest = sql_fetch_array($qt)) {
+                echo "<tr><td style=\"width:100%\">{$rest["name"]}";
+                if (!empty($rest["select"])) {
+                    echo "&nbsp;&nbsp;<select style=\"width:100px\" name=\"slts-{$rest["id"]}\">";
+                    echo "<option value=\"\">Válasszon egyet!</option>";
+                    foreach (json_decode($rest["select"], true) as $option) {
+                        echo "<option value=\"{$option}\">{$option}</option>";
+                    }
+                    echo "</select>";
+                }
+
+                //Meg kell vizsgálnom a csomag árát és a benne szereplő tételeket, majd ehhez az árhoz hozzá kell adnom a további elemek árát. PackId, if substring contains "sltc-x" and get sltp-x value as price
+
+                echo "</td>";
+
+                //Mennyiség beállítása:
+                echo "<td style=\"white-space: nowrap;float:right\">";
+                if (!empty($rest["measure"])) {
+                    echo "<input type=\"textbox\" style=\"width:20px\" name=\"sltu-{$rest["id"]}\">&nbsp;{$rest["measure"]}&nbsp;&nbsp;";
+                }
+
+                //Idő Beállítása:
+                if (!empty($rest["time"])) {
+                    $hours = $minutes = "";
+                    for ($i = 0; $i <= 24; $i++) {
+                        if ($i < 10) {
+                            $value = "0" . $i;
+                        } else {
+                            $value = $i;
+                        }
+                        $hours .= "<option value=\"{$value}\">{$value}</option>";
+                    }
+                    for ($i = 0; $i <= 59; $i++) {
+                        if ($i < 10) {
+                            $value = "0" . $i;
+                        } else {
+                            $value = $i;
+                        }
+                        $minutes .= "<option value=\"$value\">{$value}</option>";
+                    }
+                    echo "<select style=\"text-align:center\" name=\"slth-{$rest["id"]}\">{$hours}</select>&nbsp;<span style=\"font-weight:bold;font-size:16px\">:</span>&nbsp;<select style=\"text-align:center\" name=\"sltm-{$rest["id"]}\">{$minutes}</select>&nbsp;&nbsp;";
+                }
+
+                echo "<input type=\"textbox\" style=\"width:60px\" onFocusOut=\"setSynlabStatus()\" name=\"sltp-{$rest["id"]}\" value=\"{$rest["price"]}\"></td>";
+                echo "<td style=\"padding-right:20px\"><input onChange=\"setSynlabStatus()\" type=\"checkbox\" " . (isset($data["sltc-{$rest["id"]}"]) || (!empty($packArray) && in_array($rest["id"], $packArray)) ? "checked" : "") . "  name=\"sltc-{$rest["id"]}\" value=\"{$rest["id"]}\"></td></tr>";
+            }
+
+            echo "</table></div>";
+        }
+    }
+
+    //Páciens adatokat le kezeli:
+    public function setPatientData($arr = array(), $data = null)
+    {
+
+
+        if (!isset($arr["nev"])) $arr["nev"] = "";
+        if (!isset($arr["szulhely"])) $arr["szulhely"] = "";
+        if (!isset($arr["szulnev"])) $arr["szulnev"] = "";
+        if (!isset($arr["taj"])) $arr["taj"] = "";
+        if (!isset($arr["szuldatum"])) $arr["szuldatum"] = "";
+        if (!isset($arr["telefon"])) $arr["telefon"] = "";
+        if (!isset($arr["varos"])) $arr["varos"] = "";
+        if (!isset($arr["cim"])) $arr["cim"] = "";
+        if (!isset($arr["email"])) $arr["email"] = "";
+        if (!isset($arr["bno"])) $arr["bno"] = "";
+        if (!isset($arr["terhessegihet"])) $arr["terhessegihet"] = "";
+        if (!isset($arr["neme"])) $arr["neme"] = "";
+
+        $htmlout = "";
+        $htmlout .= "<table style=\"width:50%;min-height:483px;min-width:600px;background-color:gray;color:white;padding:5px;display:inline-block;float:left\">";
+        $htmlout .= "<tr><td text-align=\"middle\" style=\"padding:5px;\" colspan=\"4\"><span style=\"font-size:18px;font-weight:bold;\">Páciens adatok</span>&nbsp;&nbsp;&nbsp;";
+
+        $htmlout .= "<div style=\"display:inline;position:absolute\">";
+        $htmlout .= "<input type=\"text\" value=\"\" name=\"\" id=\"searchbar\" onkeyup=\"setPatientDroplist($(this).val())\"><input type=\"hidden\" id=\"aid\">";
+        $htmlout .= "&nbsp;&nbsp;<select id=\"data-source\"><option value=\"foglalasok\">Előjegyzés</option><option value=\"felhasznalok\">Profil</option></select>";
+        $htmlout .= '&nbsp;&nbsp;<input type="button" onClick=\'setLaborPatientData($("#aid").val(),$("#data-source").val())\' value="Kiválasztás">';
+        $htmlout .= "<select style=\"position:absolute;top:24px;left:0px;display:none;\" onChange=\"setAId($(this).val())\" id=\"patientlist\"></option></select>";
+        $htmlout .= "</div>";
+
+        $htmlout .= "</td></tr>";
+
+        $htmlout .= "<tbody id=\"patientData\"><tr><td>Név:</td><td><input type=\"textbox\" name=\"nev\" value=\"{$arr["nev"]}\"></td>";
+        $htmlout .= "<td>Szül. hely:</td><td><input type=\"textbox\" name=\"szulhely\" value=\"{$arr["szulhely"]}\"></td></tr>";
+        $htmlout .= "<tr><td>Születési neve:</td><td><input type=\"textbox\" name=\"szulnev\" value=\"{$arr["szulnev"]}\"></td>";
+        $htmlout .= "<td>TAJ:</td><td><input type=\"textbox\" name=\"taj\" value=\"{$arr["taj"]}\"></td></tr>";
+        $htmlout .= "<tr><td>Szül. dátum:</td><td><input type=\"textbox\" name=\"szuldatum\" value=\"{$arr["szuldatum"]}\"></td>";
+        $htmlout .= "<td>Telefon:</td><td><input type=\"textbox\" name=\"telefon\" value=\"{$arr["telefon"]}\"></td></tr>";
+        $htmlout .= "<tr><td>Lakcím (helyiség):</td><td><input type=\"textbox\" name=\"varos\" value=\"{$arr["varos"]}\"></td>";
+        $htmlout .= "<td>Lakcím (utca,hsz.):</td><td><input type=\"textbox\" name=\"cim\" value=\"{$arr["cim"]}\"></td></tr>";
+        $htmlout .= "<tr><td>Leletküldés e-mail:</td><td><input type=\"textbox\" name=\"email\" value=\"{$arr["email"]}\"></td>";
+        $htmlout .= "<td>Neme:</td><td>Férfi<input type=\"radio\" name=\"neme\" " . ($arr["neme"] == "ferfi" ? "checked" : "") . " value=\"ferfi\">&nbsp;Nő<input type=\"radio\" name=\"neme\" " . ($arr["neme"] == "no" ? "checked" : "") . " value=\"no\"></td></tr>";
+        $htmlout .= "<tr><td>Iránydiag./ BNO:</td><td><input type=\"textbox\" name=\"bno\" value=\"{$arr["bno"]}\"></td>";
+        $htmlout .= "<td>Terhességi hét:</td><td><input type=\"textbox\" name=\"terhessegihet\" value=\"{$arr["terhessegihet"]}\"></td></tr></tbody>";
+        $htmlout .= "</table>";
+
+        return $htmlout;
+    }
+
+    public function showAppFormStatus($packId = null, $data = null)
+    {
+
+        $htmlout = $methodOption = $templateOption = "";
+        $unit = $price = 0;
+        $template = array();
+
+        //Mintavétel:
+        $methods = array("", "Synlabnál", "Hozzott minta", "Synlab + hozott", "Kiszállásos mv", "Laborban tároltból", "Beküldőnél");
+
+        //Kiválasztott sablon adatok betöltése:
+        if (!empty($data)) {
+            $template = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_info_sablonok WHERE id=?", array($data["synlabInfo"])));
+        }
+
+        $repayment = "<option value=\"ures\"></option>";
+        $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "helybenfizeto" ? "selected" : "") . " value=\"helybenfizeto\">Helyben fizető</option>";
+        $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "csekkelelore" ? "selected" : "") . " value=\"csekkelelore\">Csekkel előre</option>";
+        $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "atutalaselore" ? "selected" : "") . " value=\"atutalaselore\">Átutalás előre</option>";
+
+
+        foreach ($methods as $method) {
+            $methodOption .= "<option>{$method}</option>";
+        }
+
+        //Csomag:
+        if (!empty($packId)) {
+            $pack = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?", array($packId)));
+
+            $unit = count(json_decode($pack["items"], true));
+            $price = $pack["price"];
+        }
+
+        //Sablonok:
+        $rs = sql_query("SELECT * FROM synlab_labor_info_sablonok ORDER BY name ASC");
+        while ($res = sql_fetch_array($rs)) {
+            $templateOption .= "<option " . (isset($data["synlabInfo"]) && $data["synlabInfo"] == $res["id"] ? "selected" : "") . " value=\"{$res["id"]}\">{$res["name"]}</option>";
+        }
+
+
+
+
+        $htmlout .= "<table style=\"width:50%;min-height:264px;min-width:600px;background-color:red;color:white;padding:5px;display:inline-block;float:left\">";
+        $htmlout .= "<tr><td colspan=\"4\"><span style=\"font-size:18px;font-weight:bold;\">Synlab laborkérő információk</span>";
+        $htmlout .= "&nbsp;&nbsp;<select style=\"max-width:250px;width:250px\" name=\"synlabInfo\">{$templateOption}</select>&nbsp;&nbsp;<input type=\"submit\" name=\"setSynlabInfoTemplate\" value=\"Kiválasztás\">";
+        $htmlout .= "<br><br>Sablon név:&nbsp;<input type=\"textbox\" name=\"template_name\">&nbsp;<input type=\"submit\" style=\"background-color:#33b53d\" name=\"createTemplate\" value=\"+ Mentés\"><br><br>";
+        $htmlout .= "</td></tr>";
+        $htmlout .= "<tr><td>Synlab telephely:</td><td><input type=\"textbox\" name=\"synlabtelephely\" value=\"" . (isset($template["synlabtelephely"]) ? $template["synlabtelephely"] : "") . "\"></td>";
+        $htmlout .= "<td>9 jegyű kód:</td><td><input type=\"textbox\" name=\"bekuldokod\" value=\"" . (isset($template["bekuldokod"]) ? $template["bekuldokod"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td>Beküldő neve:</td><td><input type=\"textbox\" name=\"bekuldonev\" value=\"" . (isset($template["bekuldonev"]) ? $template["bekuldonev"] : "") . "\"></td>";
+        $htmlout .= "<td>Beküldő címe:</td><td><input type=\"textbox\" name=\"bekuldocim\" value=\"" . (isset($template["bekuldocim"]) ? $template["bekuldocim"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td>Orvos neve:</td><td><input type=\"textbox\" name=\"orvosnev\" value=\"" . (isset($template["orvosnev"]) ? $template["orvosnev"] : "") . "\"></td>";
+        $htmlout .= "<td>Orvos pecsét száma:</td><td><input type=\"textbox\" name=\"pecsetszam\" value=\"" . (isset($template["pecsetszam"]) ? $template["pecsetszam"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td>Leletküldés e-mail:</td><td><input type=\"textbox\" name=\"kuldesiemail\" value=\"" . (isset($template["kuldesiemail"]) ? $template["kuldesiemail"] : "") . "\"></td><td></td></tr>";
+        $htmlout .= "<tr><td>Térítés módja:	</td><td><select name=\"terites\">{$repayment}</select></td>";
+        $htmlout .= "<td>Bef. azon.:</td><td><input type=\"textbox\" name=\"befazon\" value=\"" . (isset($template["befazon"]) ? $template["befazon"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td>Számlázási név:</td><td><input type=\"textbox\" name=\"szamlazasinev\" value=\"" . (isset($template["szamlazasinev"]) ? $template["szamlazasinev"] : "") . "\"></td>";
+        $htmlout .= "<td>Számlázási cím:</td><td><input type=\"textbox\" name=\"szamlazasicim\" value=\"" . (isset($template["szamlazasicim"]) ? $template["szamlazasicim"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td>Mintavét dátuma:</td><td><input type=\"textbox\" name=\"mintavetdatum\" value=\"" . (isset($template["mintavetdatum"]) ? $template["mintavetdatum"] : "") . "\"></td>";
+        $htmlout .= "<td>Kitöltés dátuma:</td><td><input type=\"textbox\" name=\"kitoltesdatum\" value=\"" . (isset($template["kitoltesdatum"]) ? $template["kitoltesdatum"] : "") . "\"></td></tr>";
+        $htmlout .= "<tr><td style=\"border-bottom:2px solid white;padding:5px;\" colspan=\"4\"></tr>";
+        $htmlout .= "<tr><td style=\"padding:5px;\" colspan=\"4\"></tr>";
+
+        $htmlout .= "<tr><td>Mintavétel</td><td><select name=\"mintaveteltipus\">{$methodOption}</select></td>";
+        $htmlout .= "<td>Bejelölt:</td><td id=\"item_numb\" style=\"font-size:16px;font-weight:bold;\">{$unit} db</td></tr>";
+        $htmlout .= "<tr><td></td><td></td><td id=\"required_tubes\" colspan=\"2\" style=\"border-left:2px solid white;padding:5px;\">";
+        $htmlout .= "<table id=\"required_tubes\" style=\"min-height:94px\">";
+
+        /*9 db van.... 2 sorban kéne így redukálom min 5 sorra*/
+        if (!empty($packId)) {
+            $htmlout .= $this->setTubeList($pack, "packegeSetup");
+        }
+
+
+        $htmlout .= "</table>";
+        $htmlout .= "</td></tr>";
+        $htmlout .= "<tr><td style=\"padding:10px;\" colspan=\"4\"></tr>";
+        $htmlout .= "<tr><td style=\"font-size:18px;font-weight:bold\">Végösszeg:</td><td id=\"grand_total\" style=\"font-size:18px;font-weight:bold;\">" . number_format($price, 2) . ".-</td></tr>";
+        $htmlout .= "</table>";
+        $htmlout .= "<input type=\"hidden\" name=\"grand_total_int\" value=\"{$price}\">";
+
+        return $htmlout;
+    }
+
+    public function setApplicationFormPackages($AppId, $PackId = null)
+    {
+        $option = $htmlout = "";
+        $request = sql_query("SELECT * FROM synlab_labor_csomagok WHERE appform=?", array($AppId));
+        if (sql_num_rows($request) > 0) {
+            $option = "<option value=\"0\">Válassz egy csomagot!</option>";
+            while ($result = sql_fetch_array($request)) {
+                if (isset($PackId) && $PackId == $result["id"]) {
+                    $selected = "selected";
+                    $selectedPrice = $result["price"];
+                } else {
+                    $selected = "";
+                }
+                $option .= "<option {$selected} value=\"{$result["id"]}\">{$result["name"]}</option>";
+            }
+        } else {
+            $option = "<option value=\"0\"> - Üres - </option>";
+        }
+
+        $htmlout .= "<select name=\"PackId\">{$option}</select>";
+        $htmlout .= "&nbsp;&nbsp;<input type=\"submit\" name=\"setPack\" value=\"Kiválasztás\">";
+        if (!empty($PackId)) {
+
+            //if (!confirm("Biztos másolod ezt a beosztást a kijelölt cégekhez?")) {return false;} $("#orvosmentesandcopy").val(1);document.iform.submit();
+            $htmlout .= "&nbsp;&nbsp;Ár:&nbsp;&nbsp;<input type=\"textbox\" style=\"width:60px\" name=\"packPrice\" value=\"{$selectedPrice}\">";
+            $htmlout .= "&nbsp;&nbsp;<input type=\"submit\" style=\"background-color:red\" name=\"deleteThisPack\" value=\"- Csomag törlése\" onClick='if (!confirm(\"Biztos törlöd a kijelölt csomagot?\")) {return false;}'>";
+            $htmlout .= "&nbsp;&nbsp;<input type=\"submit\"style=\"background-color:#088DA5\" name=\"saveThisPack\" value=\"~ Módosítás mentése\" onClick='if (!confirm(\"Biztos menteni akarod a kijelölt csomagot?\")) {return false;}'>";
+        }
+
+        return $htmlout;
+    }
+
+    public function setTubeList($data, $method)
+    {
+        //Itt megkell vizsgálnom  kiválasztott tételeket, és meghatároznom milyen csövekre lesz szükség a vérvétel elvégzéséhez.
+        $htmlout = "";
+        $counter = 1;
+        $required_tubes = array();
+        $tubes = array(
+            "T" => "<td>T (tiszta):</td>", "Y" => "<td>Y (nyál):</td>", "N" => "<td>N (natív):</td>", "L" => "<td>L (Lila, EDTA):</td>", "Z" => "<td>Z (zöld, Li-heparinos):</td>",
+            "K" => "<td>K (kék):</td>", "F" => "<td>F (szürke):</td>", "V" => "<td>V (vizelet):</td>", "S" => "<td>S (széklet):</td>"
+        );
+
+        $tube_conditions = array(
+            "N" => array(
+                array("return @value>=15;" => "return 1+floor((@value/15));")
+            )
+        );
+
+        $sample_conditions = array();
+
+        //Ha a csomagot kell felépíteni más a küldött adat.
+        if ($method == "packegeSetup") {
+            $items = json_decode($data["items"], true);
+        }
+        if ($method == "ajax") {
+            foreach ($data as $index => $value) {
+                $items[] = $index;
+            }
+        }
+
+        foreach ($items as $item) {
+            $item = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_tetelek WHERE id=?", array($item)));
+
+            //Ha még nincsen minta számolva:
+            if (!isset($required_tubes[$item["sample_tube"]])) {
+                $required_tubes[$item["sample_tube"]]["sample_unit"] = 1;
+                if (!empty($item["required_extra_tube"])) {
+                    $required_tubes[$item["sample_tube"]]["extra_tube"] = $item["required_extra_tube"];
+                }
+                //Ha már van minta felvéve a tömbbe:
+            } else {
+                $required_tubes[$item["sample_tube"]]["sample_unit"] = ($required_tubes[$item["sample_tube"]]["sample_unit"] + 1);
+                if (!empty($item["required_extra_tube"])) {
+                    if (!isset($required_tubes[$item["sample_tube"]]["extra_tube"])) {
+                        $required_tubes[$item["sample_tube"]]["extra_tube"] = $item["required_extra_tube"];
+                    } else {
+                        $required_tubes[$item["sample_tube"]]["extra_tube"] = ($required_tubes[$item["sample_tube"]]["extra_tube"] + $item["required_extra_tube"]);
+                    }
+                }
+            }
+        }
+
+        foreach ($required_tubes as $index => $contains) {
+
+            if (empty($htmlout) || $counter % 2 != 0) {
+                $htmlout .= "<tr>";
+            }
+
+            $unit = 1;
+
+            if (isset($tube_conditions[$index])) {
+                foreach ($tube_conditions[$index] as $conditions) {
+                    foreach ($conditions as $condition => $then) {
+                        $condition = str_replace("@value", $required_tubes[$index]["sample_unit"], $condition);
+                        if (eval($condition)) {
+                            $then = str_replace("@value", $required_tubes[$index]["sample_unit"], $then);
+                            $unit = eval($then);
+                        }
+                    }
+                }
+            }
+
+            //Ha van extra cső igény bizonyos tételek miatt:
+            if (!empty($required_tubes[$index]["extra_tube"]) && $required_tubes[$index]["sample_unit"] > 1) {
+                $unit = ($unit + $required_tubes[$index]["extra_tube"]);
+            }
+
+            $htmlout .= $tubes[$index] . "<td style=\"min-width:40px\">" . floor($unit) . " db<input type=\"hidden\" name=\"{$index}-tube\" value=\"{$unit}\"></td>";
+            if ($counter % 2 == 0 || ($counter - 1) == count($required_tubes)) {
+                $htmlout .= "</tr>";
+            }
+
+            $counter++;
+        }
+
+        return $htmlout;
+    }
+
+    public function createPDF($data)
+    {
+
+        $custom = false;
+        $filename = "Laborkérő(" . rand(200, 1200000) . ") - Egyéni.pdf";
+
+        //Meg kell határoznom az input értékeket:
+        $input = [
+            //Páciens adatok:
+            "nev" => $_POST["nev"],
+            "szulnev" => $_POST["szulnev"],
+            "taj" => $_POST["taj"],
+            "szuldatum" => $_POST["szuldatum"],
+            "varos" => $_POST["varos"],
+            "cim" => $_POST["cim"],
+            "bno" => $_POST["bno"],
+            "terhessegihet" => $_POST["terhessegihet"],
+            "telefon" => $_POST["telefon"],
+
+            //Beküldő adatok:
+            "bekuldonev" => $_POST["bekuldonev"],
+            "bekuldocim" => $_POST["bekuldocim"],
+            "bekuldokod" => $_POST["bekuldokod"],
+            "orvosnev" => $_POST["orvosnev"],
+            "pecsetszam" => $_POST["pecsetszam"],
+            $_POST["terites"] => "Yes",
+            "befazon" => $_POST["befazon"],
+            "szamlazasinev" => $_POST["szamlazasinev"],
+            "szamlazasicim" => $_POST["szamlazasicim"],
+            "kuldesiemail" => $_POST["kuldesiemail"],
+            "kitoltesdatum" => $_POST["kitoltesdatum"],
+            "mintavetdatum" => $_POST["mintavetdatum"]
+        ];
+
+        if (isset($_POST["neme"])) $input[$_POST["neme"]] = "Yes";
+
+        //Laborkérő fájl név meg határozása:
+        if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+            $pack = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?", array($_POST["PackId"])));
+            $items = json_decode($pack["items"], true);
+        }
+
+        //Labor tételek beállítása:
+        foreach ($data as $index => $value) {
+            //Checkboxok beállítása:
+            if (strpos($index, "sltc") !== false) {
+                $input[$index] = "Yes";
+
+                if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+                    //Ellenőrzés, van-e csomagon felüli tétel:
+                    if (!in_array($value, $items)) {
+                        $custom = true;
+                    }
+                }
+            }
+
+            //Mennyiségek beállítása:
+            if (strpos($index, "sltu") !== false) {
+                $input[$index] = $_POST[$index];
+            }
+            //Legördülő mezők beállítása:
+            if (strpos($index, "slts") !== false) {
+                $input[$index] = $_POST[$index];
+            }
+
+            //Kategórikus mennyiségek beállítása:
+            if (strpos($index, "sltkm") !== false) {
+                $input[$index] = $_POST[$index];
+            }
+
+            //Kategórikus idő beállítása:
+            if (strpos($index, "sltkt") !== false) {
+                $input[$index] = $_POST[$index];
+            }
+
+            //Idő beállítása:
+            if (strpos($index, "slth") !== false) {
+                $id = explode("-", $index);
+                if ($_POST["slth-" . $id[1]] != "00" && $_POST["sltm-" . $id[1]] != "00") {
+                    $input["sltmh-" . $id[1]] = "(" . $_POST["slth-" . $id[1]] . ":" . $_POST["sltm-" . $id[1]] . ")";
+                }
+            }
+
+            //Cső igény beállítása:
+            if (strpos($index, "tube") !== false) {
+                $input[$index] = $_POST[$index];
+            }
+        }
+
+        if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+            $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$pack["name"]} csomag.pdf";
+            if ($custom == true) {
+                $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$pack["name"]} csomag + Egyéni.pdf";
+            }
+        }
+
+        $pdf = new Pdf("../../public/admin/templates/klinikai_kemia.pdf");
+        $result = $pdf->fillForm($input)
+            ->flatten()
+            ->saveAs("../../public/admin/templates/" . $filename);
+
+        if ($result === false) {
+            $error = $pdf->getError();
+
+            var_dump($error);
+        }
+
+        return $filename;
+    }
+}
