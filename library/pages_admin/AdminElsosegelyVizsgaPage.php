@@ -10,6 +10,19 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
         parent::__construct();
 
 
+        if (isset($_GET["download"])) {
+
+            $service = new ExcelService();
+
+            $valaszok["list"] = sql_query("SELECT * FROM vizsgavalaszok where true order by datum")->fetchAll(PDO::FETCH_ASSOC);
+
+            $service->vizsgaList($valaszok);
+            $service->setFileName("Elsosegely_vizsgazok_lista_" . date("Y-m-d").".xlsx");
+            $service->outputSpreadSheet();
+
+
+        }
+
     }
 
     public function showPage()
@@ -17,6 +30,9 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
         //if (!$this->adminUtils->szurestipusModJog()) {
         //    return;
         //}
+
+
+        echo "<div style='margin-bottom:10px;'><a href='index.php?page={$_GET["page"]}&download'>Letöltés</a></div>";
 
 
         $datumok = sql_query("SELECT DATE(datum) AS datum FROM vizsgavalaszok GROUP BY DATE(datum) ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
@@ -30,6 +46,7 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
 
 
             echo "<table cellpadding='0' cellspacing='0' border='0'>";
+
 
             echo "<tr style='background:#eee;'>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 5px;'>Időpont</div></td>";
