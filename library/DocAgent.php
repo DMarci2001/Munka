@@ -38,8 +38,13 @@ class DocAgent {
         return $path;
     }
 
-    public function getAssetImageURL($tipus, $id, $full = false) {
-        $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
+    public function getAssetImageURL($imageData, $full = false) {
+        $extension = $imageData["tipus"];
+        if ($extension == "png") {
+            $extension = "jpg";
+        }
+
+        $path = self::_getAssetImagePath($imageData["id"])."{$imageData["assetid"]}_{$imageData["id"]}.{$extension}";
         if (!is_file($path)) {
             //return "";
         }
@@ -201,8 +206,22 @@ class DocAgent {
                     $xsize = $newxsize;
                     $ysize = $newysize;
                 }
+                $success = true;
+            }
 
-            } else {
+            if (in_array($extension, ["pdf"])) {
+                sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
+                $fileId = sql_insert_id();
+                $path = $this->_getAssetImagePath($fileId);
+
+                $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
+                @move_uploaded_file($uploadedFile["tmp_name"], $kepfile);
+
+                //$result["error"] = "Pdf feltöltése egyelőre nem lehetséges!";
+                $success = true;
+            }
+
+            if (!isset($success)) {
                 $result["error"] = "A feltöltött file csak jpg vagy png lehet!";
             }
         } else {
@@ -229,7 +248,6 @@ class DocAgent {
         $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
         if ($tipus == self::ASSET_COVIDPASS_IMAGE || $tipus == self::ASSET_COVIDEGS_IMAGE) {
             foreach ($images as $imageData) {
-                //$photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
                 $html.= "<div style='display:inline-block;'>";
                 $html.= "<div><a target='_blank' href='index.php?showfoto={$imageData["id"]}&c={$imageData["kod"]}'>Fotó megtekintése</a></div>";
                 $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Fotó törlése</a></div>";
@@ -241,7 +259,7 @@ class DocAgent {
 
         }
         foreach ($images as $imageData) {
-            $photoURL = $this->getAssetImageURL($tipus, $imageData["id"])."?v=".date("YmdHis");
+            $photoURL = $this->getAssetImageURL($imageData)."?v=".date("YmdHis");
             $html.= "<div style='display:inline-block;'>";
             $html.= "<a href='{$photoURL}' target='_blank'><img class='assetimageitem' src='{$photoURL}' /></a>";
             $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Kép törlése</a></div>";
@@ -255,9 +273,9 @@ class DocAgent {
 
     public function getAssetsByType($tipus, $dataId):array {
         $assets = [];
-        $images = sql_query("select id, filename from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
+        $images = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($images as $imageData) {
-            $imageData["url"] = $this->getAssetImageURL($tipus, $imageData["id"]);
+            $imageData["url"] = $this->getAssetImageURL($imageData);
             $assets[] = $imageData;
         }
 
@@ -278,6 +296,36 @@ class DocAgent {
         }
 
         return $assets;
+    }
+
+    public function outputAsset($id, $code) {
+        if ($asset = sql_query("select * from dokumentumok where id=? and kod=?", [$id, $code])->fetch(PDO::FETCH_ASSOC)) {
+            $photoPath = $this->getAssetImageURL($asset, true);
+
+            if (!is_file($photoPath)) {
+                $photoPath = str_replace(".jpg", ".jpeg", $photoPath);
+            }
+            if (!is_file($photoPath)) {
+                die("A kep nem talalhato, valoszínuleg torolve lett!");
+            }
+
+            header('Content-Disposition: inline; filename="covidPassPhoto'.$asset["id"].'.'.$asset["tipus"]);
+
+            if ($asset["tipus"] == "pdf") {
+                header("Content-Type: application/pdf");
+            }
+            if ($asset["tipus"] == "jpg" || $asset["tipus"] == "jpeg") {
+                header("Content-Type: image/jpeg");
+            }
+            if ($asset["tipus"] == "png") {
+                header("Content-Type: image/png");
+            }
+
+            echo file_get_contents($photoPath);
+        } else {
+            die("A kep nem talalhato, valoszinuleg torolve lett!");
+        }
+        die;
     }
 
 }

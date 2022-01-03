@@ -18,24 +18,8 @@ class AdminAjaxService {
         }
 
         if (isset($_GET["showfoto"])) {
-            if ($image = sql_query("select * from dokumentumok where id=? and kod=?", [$_GET["showfoto"], $_GET["c"]])->fetch(PDO::FETCH_ASSOC)) {
-                $docAgent = new DocAgent();
-
-                $photoPath = $docAgent->getAssetImageURL($image["assetid"], $image["id"], true);
-                if (!is_file($photoPath)) {
-                    $photoPath = str_replace(".jpg", ".jpeg", $photoPath);
-                }
-                if (!is_file($photoPath)) {
-                    die("A kep nem talalhato, valoszínuleg torolve lett!");
-                }
-
-                header('Content-Disposition: inline; filename="covidPassPhoto'.$image["id"].'.jpg"');
-                header("Content-Type: image/jpeg");
-                echo file_get_contents($photoPath);
-            } else {
-                die("A kep nem talalhato, valoszinuleg torolve lett!");
-            }
-            die;
+            $service = new DocAgent();
+            $service->outputAsset($_GET["showfoto"], $_GET["c"]);
         }
 
         if (isset($_GET["simpletest"])) {
