@@ -20,6 +20,14 @@ class WorkScheduleService {
         $this->recalcAllCollisions();
     }
 
+    public static function getDailySchedule($day):array {
+        return sql_query("SELECT IF(TRIM(w.`teljesnev`) <> '', w.teljesnev, w.nev) AS workername, t.megnev AS tipusnev, r.megnev AS rolename, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj FROM schedule_mapping m
+            LEFT JOIN schedule_workers w ON w.id = m.workerid
+            LEFT JOIN schedule_tipusok t ON t.id = m.tipusid
+            LEFT JOIN schedule_roles r ON r.id = m.roleid
+            WHERE m.datumfrom>=? AND m.datumfrom<=? and w.id is not null and t.id is not null order by m.datumfrom, m.roleid", ["{$day} 00:00:00", "{$day} 23:59:59"])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function reloadScheduleMapping() {
         $this->scheduleMapping = [];
         $res = sql_query("SELECT m.*,w.nev AS workernev, n.nev AS novernev FROM schedule_mapping m

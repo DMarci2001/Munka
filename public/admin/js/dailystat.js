@@ -11,11 +11,20 @@ function reloadEvents() {
 function downloadDailyStat(day) {
     let dayBox = $("#daybox"+day);
 
+    $("#dailystatloader"+day).show();
+    $("#datablock"+day).hide();
+
     $.ajax({
         type: "POST",
         url: "index.php?page=dailystat&downloaddailystat=1",
         data: "day=" + encodeURIComponent(day),
         success: function (response) {
+            $("#dailystatloader"+day).hide();
+            $("#datablock"+day).show();
+
+            if (response.debughtml != "") {
+                $("#debugarea").html(response.debughtml);
+            }
             if (response.error != "") {
                 $.toast({
                     heading: "Hiba",
@@ -24,6 +33,9 @@ function downloadDailyStat(day) {
                 });
                 return;
             }
+
+            window.location.href='index.php?page=dailystat&downloaddailystatfile='+encodeURIComponent(day);
+            return;
         }
     });
 }
@@ -41,6 +53,13 @@ function generateDailyStat(day) {
                     heading: "Hiba",
                     text: response.error,
                     icon: 'error'
+                });
+            }
+            if (response.info != "") {
+                $.toast({
+                    heading: "Info",
+                    text: response.info,
+                    icon: 'info'
                 });
             }
 

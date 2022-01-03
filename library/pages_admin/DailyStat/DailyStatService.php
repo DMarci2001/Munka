@@ -13,9 +13,21 @@ class DailyStatService {
         }
 
         if (isset($_REQUEST["downloaddailystat"])) {
-            //$day = $_POST["day"];
-            $result["error"] = "Fejlesztés alatt...";
+            sleep(1);
+            $result = $this->generateDailyStat($_POST["day"]);
             $utils->jsonOut($result);
+        }
+
+        if (isset($_REQUEST["downloaddailystatfile"])) {
+            $data = $this->getDayData($_REQUEST["downloaddailystatfile"]);
+            if (empty($data)) {
+                die("error 88444");
+            }
+
+            $excelService = new ExcelService();
+            $excelService->napiStat($data);
+            $excelService->setFileName(Booking_Constants::COMPANY_NAME_SHORT." napi statisztika " . date("Y-m-d", strtotime($_REQUEST["downloaddailystatfile"])) . ".xlsx");
+            $excelService->outputSpreadSheet();
         }
 
         if (isset($_REQUEST["getdailystateditor"])) {
@@ -28,7 +40,11 @@ class DailyStatService {
         if (isset($_REQUEST["generatedailystat"])) {
             $day = $_POST["day"];
 
-            $result["error"] = "Fejlesztés alatt...";
+            $this->beosztasQuery($day);
+            $this->zeuszQuery($day);
+
+            $result["info"] = "Frissítés kész... {$day}";
+            $result["error"] = "";
             $result["html"] = $this->displayCalendarDayBox($day);
             $utils->jsonOut($result);
         }
@@ -64,9 +80,6 @@ class DailyStatService {
                     break;
                 }
             }
-
-            $this->zeuszQuery($day);
-            $this->beosztasQuery($day);
 
             $return["html"] = $this->displayCalendarDayBox($day);
             $utils->jsonOut($return);
@@ -122,6 +135,11 @@ class DailyStatService {
     }
 
     private function processUploadedFile($uploadedFile, $day) {
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+
         if (is_uploaded_file($uploadedFile["tmp_name"])) {
             $ok = false;
             $fileName = strtolower($uploadedFile["name"]);
@@ -283,23 +301,31 @@ class DailyStatService {
                     }
                 }
 
-                //zeusz vizsgálatok
+                //zeusz vizsgálatok + dokirex excel
                 $sheet = $spreadsheet->getSheet(0);
+                $days = [];
+
                 if (!empty($sheet)) {
                     $testCell = $sheet->getCell("A1")->getValue();
                     if ($testCell == "Vizsgalat/UtolsoModositasDatuma") {
-                        $result = [];
+                        //$result = [];
                         $rowNr = 2;
                         while (true) {
                             $datum = $sheet->getCell("A{$rowNr}")->getFormattedValue();
+
                             if (empty($datum)) {
                                 break;
                             }
 
-                            if ($day != date("Y-m-d", strtotime($datum))) {
-                                $rowNr++;
-                                continue;
+                            $day = date("Y-m-d", strtotime($datum));
+                            if (!isset($days[$day])) {
+                                $days[$day] = [];
                             }
+
+                            //if ($day != date("Y-m-d", strtotime($datum))) {
+                            //    $rowNr++;
+                            //   continue;
+                            //}
 
                             $row = [
                                 "datum" => date("Y-m-d H:i:d", strtotime($datum)),
@@ -317,20 +343,26 @@ class DailyStatService {
                                 "vizsgalatideje" => date("Y-m-d H:i:d", strtotime($sheet->getCell("M{$rowNr}")->getValue())),
                                 "normaido" => $sheet->getCell("N{$rowNr}")->getValue()
                             ];
-                            $result[] = $row;
+
+                            $days[$day][] = $row;
+                            //$result[] = $row;
                             $rowNr++;
                         }
 
-                        if (empty($result)) {
-                            return "A feltöltött file tartalmaz zeusz vizsgálatokat, de nem a kiválasztott napra";
-                        }
+                        //if (empty($result)) {
+                        //    return "A feltöltött file tartalmaz zeusz vizsgálatokat, de nem a kiválasztott napra";
+                        //}
 
-                        $this->insertDayIfNotExist($day);
-                        sql_query("update dailystat set zeuszresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-                        return "";
                     }
                 }
 
+                if (!empty($days)) {
+                    foreach ($days as $day => $result) {
+                        $this->insertDayIfNotExist($day);
+                        sql_query("update dailystat set dokirexvizsgalatokresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
+                    }
+                    return "";
+                }
 
                 return "A feltöltött file-t nem sikerült beazonosítani, vagy erre a napra nincsenek benne adatok";
             } else {
@@ -438,6 +470,8 @@ class DailyStatService {
     private function resetDay($day) {
         $this->deleteDay($day);
         sql_query("insert into dailystat set day=?", [$day]);
+        $this->beosztasQuery($day);
+        $this->zeuszQuery($day);
     }
 
     private function deleteDay($day) {
@@ -445,24 +479,23 @@ class DailyStatService {
     }
 
     private function zeuszQuery($day) {
+        if (Booking_Constants::SQL_DB != "hungariamed") {
+            return;
+        }
+
         $data = $this->getDayData($day);
         if (empty($data["zeuszresult"])) {
             $zeuszService = new ZeusService();
             $result = $zeuszService->dailyStatQuery($day);
-            sql_query("update dailystat set zeuszresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
+            if (!empty($result)) {
+                sql_query("update dailystat set zeuszresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
+            }
         }
     }
 
     private function beosztasQuery($day) {
-        $data = $this->getDayData($day);
-
-        if (empty($data["beosztasresult"])) {
-            $beosztasResult = sql_query("SELECT w.`teljesnev` AS workername, t.megnev AS tipusnev, r.megnev AS rolename, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj FROM schedule_mapping m
-                LEFT JOIN schedule_workers w ON w.id = m.workerid
-                LEFT JOIN schedule_tipusok t ON t.id = m.tipusid
-                LEFT JOIN schedule_roles r ON r.id = m.roleid
-                WHERE m.datumfrom>='2021-06-24 00:00:00' AND m.datumfrom<='2021-06-24 23:59:59'")->fetchAll(PDO::FETCH_ASSOC);
-
+        $beosztasResult = WorkScheduleService::getDailySchedule($day);
+        if (!empty($beosztasResult)) {
             sql_query("update dailystat set beosztasresult=? where day=?", [json_encode($beosztasResult, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
         }
     }
@@ -476,4 +509,115 @@ class DailyStatService {
         sql_query("update dailystat set status=? where day=?", [json_encode($status, JSON_PRETTY_PRINT), $day]);
     }
 
+
+    /*
+
+
+    */
+
+
+    private function generateDailyStat($day):array {
+        $result = [
+            "error" => "",
+            "debughtml" => ""
+        ];
+
+        $dailyStatData = [];
+
+        $data = $this->getDayData($day);
+
+        $szakrendelesek = $orvosok = [];
+
+        $dokirexData = json_decode($data["dokirexvizsgalatokresult"], JSON_OBJECT_AS_ARRAY);
+        $beosztasData = json_decode($data["beosztasresult"], JSON_OBJECT_AS_ARRAY);
+
+        foreach ($dokirexData as $vizsgalat) {
+            $szakrendelesek[] = $vizsgalat["szakrendeles"];
+            $orvosok[] = $vizsgalat["orvos"];
+        }
+
+        $szakrendelesek = array_unique($szakrendelesek);
+        $orvosok = array_unique($orvosok);
+
+        foreach ($szakrendelesek as $szakrendeles) {
+            $paciensekDb      = 0;
+            $szakterOsszesIdo = 0;
+            $normaIdoMinute   = 15;
+
+            foreach ($dokirexData as $vizsgalat) {
+                if ($vizsgalat["szakrendeles"] == $szakrendeles) {
+                    $paciensekDb++;
+                }
+            }
+
+            $szakrendelesOrvos = [];
+
+            foreach ($orvosok as $orvos) {
+                $orvosPaciensekDb = $osszesido = 0;
+                $minTime = "{$day} 23:59:59";
+                $maxTime = "{$day} 00:00:00";
+                $beoTime = "nincs megadva";
+                $nover = "";
+                $orvosBeosztas = [];
+
+                foreach ($dokirexData as $vizsgalat) {
+                    if ($vizsgalat["orvos"] == $orvos && $vizsgalat["szakrendeles"] == $szakrendeles) {
+                        $orvosPaciensekDb++;
+                        if (strtotime($minTime) > strtotime($vizsgalat["datum"])) {
+                            $minTime = $vizsgalat["datum"];
+                        }
+                        if (strtotime($maxTime) < strtotime($vizsgalat["datum"])) {
+                            $maxTime = $vizsgalat["datum"];
+                        }
+                    }
+                }
+
+                if ($orvosPaciensekDb > 0) {
+                    $osszesido = (strtotime($maxTime) - strtotime($minTime)) + ($normaIdoMinute*60);
+                    $atlagido = $osszesido / $orvosPaciensekDb;
+
+                    foreach ($beosztasData as $beosztas) {
+                        if ($beosztas["workername"] == $orvos) {
+                            $orvosBeosztas[] = $beosztas;
+                        }
+                    }
+
+                    if (!empty($orvosBeosztas)) {
+                        $beo = $orvosBeosztas[0];
+                        $beoTime = date("H:i", strtotime($beo["datumfrom"])) . " - " . date("H:i", strtotime($beo["datumto"]));
+                    }
+
+                    $szakrendelesOrvos[$orvos] = [
+                        "name" => $orvos,
+                        "db" => $orvosPaciensekDb,
+                        "nover" => $nover,
+                        "mintime" => $minTime,
+                        "maxtime" => $maxTime,
+                        "osszesido" => round($osszesido/60, 2),
+                        "atlagido" => round($atlagido/60, 2),
+                        "beo" => $beoTime
+                    ];
+                }
+
+                $szakterOsszesIdo += $osszesido;
+            }
+
+
+            $dailyStatData["day"] = $day;
+            $dailyStatData["szakrendelesek"][$szakrendeles] = [
+                "name" => $szakrendeles,
+                "db" => $paciensekDb,
+                "normaido" => $normaIdoMinute,
+                "osszesido" => round($szakterOsszesIdo/60 ,2),
+                "atlagido" => round(($szakterOsszesIdo / $paciensekDb) / 60, 2),
+                "orvosok" => $szakrendelesOrvos
+            ];
+        }
+
+        sql_query("update dailystat set finalresult=? where day=?", [json_encode($dailyStatData, JSON_PRETTY_PRINT), $day]);
+
+        //$result["debughtml"] = "<pre>".print_r($dailyStatData, true)."</pre>";
+
+        return $result;
+    }
 }

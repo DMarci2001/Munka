@@ -199,7 +199,7 @@ class AdminSalaryPage extends AdminCorePage
 
         $orvosok = sql_query("select o.* from orvosok o 
         left join salarydata sd on sd.orvosid=o.id
-        where o.pecsetszam<>'temp' and (sd.orvosid is not null)
+        where o.pecsetszam<>'temp' 
         group by o.id order by o.nev")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($orvosok as $orvos) {
@@ -208,86 +208,85 @@ class AdminSalaryPage extends AdminCorePage
             $html.= "<div style='margin-top:10px;'>[<a href='#' onclick='$(\"#salarydataeditor{$orvos["id"]}\").toggle();return false;'>Fizetési adatok megadása</a>]</div>";
             $html.= "<div id='salarydataeditor{$orvos["id"]}' style='display:none;padding-top:10px;'>".$this->salaryDataEditor($orvos["id"])."</div>";
 
-            $html.= "<div style='margin-top:10px;'>Elszámolási időszak: {$dateFrom} - {$dateTo}</div>";
-
             $salaryData = $this->salaryCalculator->getDoctorSalary($orvos["id"], $dateFrom, $dateTo);
 
-            $html.= "<table cellpadding='0' cellspacing='0' style='margin-top:10px;'>";
-            $html.= "<tr style='background:#eee;font-weight: bold;'>";
-            $html.= "<td class='bercella' style='padding:4px 2px;'>Jogcím</td>";
-            $html.= "<td class='bercella'>Érvényesség</td>";
-            $html.= "<td class='bercella bcellkozep'>Mennyiség</td>";
-            $html.= "<td class='bercella bcellkozep'>Bér</td>";
-            $html.= "</tr>";
+            if (!empty($salaryData)) {
+                $html .= "<div style='margin-top:10px;'>Elszámolási időszak: {$dateFrom} - {$dateTo}</div>";
+                $html .= "<table cellpadding='0' cellspacing='0' style='margin-top:10px;'>";
+                $html .= "<tr style='background:#eee;font-weight: bold;'>";
+                $html .= "<td class='bercella' style='padding:4px 2px;'>Jogcím</td>";
+                $html .= "<td class='bercella'>Időszak</td>";
+                $html .= "<td class='bercella bcellkozep'>Mennyiség</td>";
+                $html .= "<td class='bercella bcellkozep'>Bér</td>";
+                $html .= "</tr>";
 
-            $total = 0;
+                $total = 0;
 
-            foreach ($salaryData as $key => $salaryItem) {
+                foreach ($salaryData as $key => $salaryItem) {
 
-                if ($key == "monthly") {
-                    foreach ($salaryItem as $month => $item) {
-                        $html.= "<tr>";
-                        $html.= "<td class='bercella'>Havi fizetés</td>";
-                        $html.= "<td class='bercella'>{$month} hó</td>";
-                        $html.= "<td class='bercella bcelljobb'>".round($item["workeddays"]/$item["workdays"], 1)." hónap</td>";
-                        $html.= "<td class='bercella bcelljobb'>".$this->moneyFormat($item["price"])." Ft</td>";
-                        $html.= "</tr>";
-                        $total+= $item["price"];
-                    }
-                }
-
-                if ($key == "perhour") {
-                    foreach ($salaryItem as $day => $items) {
-                        foreach ($items as $item) {
-                            $html.= "<tr>";
-                            $html.= "<td class='bercella'>Órabér (".$this->moneyFormat($item["unitprice"])." Ft/óra)</td>";
-                            $html.= "<td class='bercella'>{$day}</td>";
-                            $html.= "<td class='bercella bcelljobb'>{$item["hour"]} óra</td>";
-                            $html.= "<td class='bercella bcelljobb'>".$this->moneyFormat($item["price"])." Ft</td>";
-                            $html.= "</tr>";
-                            $total+= $item["price"];
+                    if ($key == "monthly") {
+                        foreach ($salaryItem as $month => $item) {
+                            $html .= "<tr>";
+                            $html .= "<td class='bercella'>Havi fizetés</td>";
+                            $html .= "<td class='bercella'>{$month} hó</td>";
+                            $html .= "<td class='bercella bcelljobb'>" . round($item["workeddays"] / $item["workdays"], 1) . " hónap</td>";
+                            $html .= "<td class='bercella bcelljobb'>" . $this->moneyFormat($item["price"]) . " Ft</td>";
+                            $html .= "</tr>";
+                            $total += $item["price"];
                         }
                     }
-                }
 
-                if ($key == "perpatient") {
-                    foreach ($salaryItem as $day => $items) {
-                        foreach ($items as $item) {
-                            $html.= "<tr>";
-                            $html.= "<td class='bercella'>Fejpénz (".$this->moneyFormat($item["unitprice"])." Ft/paciens)</td>";
-                            $html.= "<td class='bercella'>{$day}</td>";
-                            $html.= "<td class='bercella bcelljobb'>".count($item["reservations"])." paciens</td>";
-                            $html.= "<td class='bercella bcelljobb'>".$this->moneyFormat($item["price"])." Ft</td>";
-                            $html.= "</tr>";
-                            $total+= $item["price"];
+                    if ($key == "perhour") {
+                        foreach ($salaryItem as $day => $items) {
+                            foreach ($items as $item) {
+                                $html .= "<tr>";
+                                $html .= "<td class='bercella'>Órabér (" . $this->moneyFormat($item["unitprice"]) . " Ft/óra)</td>";
+                                $html .= "<td class='bercella'>{$day}</td>";
+                                $html .= "<td class='bercella bcelljobb'>{$item["hour"]} óra</td>";
+                                $html .= "<td class='bercella bcelljobb'>" . $this->moneyFormat($item["price"]) . " Ft</td>";
+                                $html .= "</tr>";
+                                $total += $item["price"];
+                            }
                         }
                     }
-                }
 
-                if ($key == "onetime") {
-                    foreach ($salaryItem as $day => $items) {
-                        foreach ($items as $item) {
-                            $html.= "<tr>";
-                            $html.= "<td class='bercella'>{$item["description"]}</td>";
-                            $html.= "<td class='bercella'>{$day}</td>";
-                            $html.= "<td class='bercella bcelljobb'>1 db</td>";
-                            $html.= "<td class='bercella bcelljobb'>".$this->moneyFormat($item["price"])." Ft</td>";
-                            $html.= "</tr>";
-                            $total+= $item["price"];
+                    if ($key == "perpatient") {
+                        foreach ($salaryItem as $day => $items) {
+                            foreach ($items as $item) {
+                                $html .= "<tr>";
+                                $html .= "<td class='bercella'>Fejpénz (" . $this->moneyFormat($item["unitprice"]) . " Ft/paciens)</td>";
+                                $html .= "<td class='bercella'>{$day}</td>";
+                                $html .= "<td class='bercella bcelljobb'>" . count($item["reservations"]) . " paciens</td>";
+                                $html .= "<td class='bercella bcelljobb'>" . $this->moneyFormat($item["price"]) . " Ft</td>";
+                                $html .= "</tr>";
+                                $total += $item["price"];
+                            }
                         }
                     }
+
+                    if ($key == "onetime") {
+                        foreach ($salaryItem as $day => $items) {
+                            foreach ($items as $item) {
+                                $html .= "<tr>";
+                                $html .= "<td class='bercella'>{$item["description"]}</td>";
+                                $html .= "<td class='bercella'>{$day}</td>";
+                                $html .= "<td class='bercella bcelljobb'>1 db</td>";
+                                $html .= "<td class='bercella bcelljobb'>" . $this->moneyFormat($item["price"]) . " Ft</td>";
+                                $html .= "</tr>";
+                                $total += $item["price"];
+                            }
+                        }
+                    }
+
                 }
 
+                $html .= "<tr style='font-weight: bold;'>";
+                $html .= "<td class='bercella'>Összesen</td>";
+                $html .= "<td class='bercella bcelljobb' colspan='3'>" . $this->moneyFormat($total) . " Ft</td>";
+                $html .= "</tr>";
+
+                $html .= "</table>";
             }
-
-            $html.= "<tr style='font-weight: bold;'>";
-            $html.= "<td class='bercella'>Összesen</td>";
-            $html.= "<td class='bercella bcelljobb' colspan='3'>".$this->moneyFormat($total)." Ft</td>";
-            $html.= "</tr>";
-
-
-            $html.= "</table>";
-
 
             //$html.= "<pre>".print_r($salaryData, true)."</pre>";
         }

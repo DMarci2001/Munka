@@ -23,6 +23,8 @@ class AdminDailyStatPage extends AdminCorePage
             return;
         }
 
+        echo "<div id='debugarea'></div>";
+
         echo "<div id='dailystattable'>";
         echo $this->service->displayCalendar($_SESSION["dailystatoffset"]);
         echo "</div>";
