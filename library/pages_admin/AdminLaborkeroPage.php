@@ -95,7 +95,6 @@ class AdminLaborkeroPage extends AdminCorePage
         }
 
         if (isset($_POST["printSynlab"])) {
-
             $synlab = new SynlabService();
 
             $filename = $synlab->createPDF($_POST);
@@ -111,29 +110,17 @@ class AdminLaborkeroPage extends AdminCorePage
 
         if (isset($_POST["saveDoc"])) {
             $synlab = new SynlabService();
+            $docAgent = new DocAgent();
             $filename = $synlab->createPDF($_POST);
             $path = "../../public/admin/templates/";
-            $size = filesize($path . $filename);
-            $extension =  pathinfo($path . $filename, PATHINFO_EXTENSION);
+            //$size = filesize($path . $filename);
+            //$extension =  pathinfo($path . $filename, PATHINFO_EXTENSION);
 
-            if (in_array($extension, array("pdf", "doc", "xls", "docx", "xlsx", "jpg", "jpeg"))) {
-                sql_query(
-                    "INSERT  INTO dokumentumok SET 
-                     foglalasid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    array($_GET["fid"], $filename, $filename, $size, $extension)
-                );
-                $id = sql_insert_id();
-
-                $id = (int)$id;
-                $destinationFile = Booking_Constants::DOCUMENT_PATH . floor($id / 1000);
-                if (!is_dir($destinationFile)) mkdir($destinationFile);
-                $destinationFile .= "/{$id}.bin";
-
-                rename($path . $filename, $destinationFile);
-
+            $result = $docAgent->saveLocalDoc($path.$filename, ["fid" => $_GET["fid"]]);
+            if ($result == "0") {
                 $this->success .= "<p style=\"color:#278d2f;font-weight:bold;font-size:16px;margin:2px;\"> - Fájl mentése sikerült!!</p>";
             } else {
-                $this->error = "<p style=\"color:red;font-weight:bold;font-size:16px;margin:2px;\">Fájl feltöltés sikertelen!</p>";
+                $this->error = "<p style=\"color:red;font-weight:bold;font-size:16px;margin:2px;\">{$result}</p>";
             }
         }
 
@@ -238,6 +225,7 @@ class AdminLaborkeroPage extends AdminCorePage
 
     public function showPage()
     {
+        $GLOBALS["subtitle"] = "Synlab laborkérő";
 
         $synlab = new SynlabService();
         $patient = array();

@@ -201,6 +201,10 @@ class AdminPage {
             $title = $this->page->subtitle;
         }
 
+        if (empty($title)) {
+            return "";
+        }
+
         $html = "";
 
         $html.= "<div class='pagehead'>";

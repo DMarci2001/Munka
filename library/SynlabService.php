@@ -53,7 +53,7 @@ class SynlabService
                            WHERE slt.appform = ?
                            GROUP BY sltk.id
                            ORDER BY 
-                           CASE WHEN sltk.name LIKE \"%Egyéb%\" THEN INSERT(sltk.name,1,0,\"Z\") ELSE sltk.name END
+                           CASE WHEN sltk.name LIKE '%Egyéb%' THEN INSERT(sltk.name,1,0,'Z') ELSE sltk.name END
                            ASC", array($appId));
 
 

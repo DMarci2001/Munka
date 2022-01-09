@@ -95,6 +95,36 @@ class DocAgent {
         }
     }
 
+    public function saveLocalDoc($fileName, $fileData) {
+        if (is_file($fileName)) {
+            $fileSize = filesize($fileName);
+            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+            if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
+                if (empty($fileData["userid"])) {
+                    $reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]));
+                    $fileData["userid"] = $reservationData["paciensid"];
+                }
+
+                sql_query("insert into dokumentumok set 
+                    foglalasid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
+                    [$fileData["fid"], $fileData["userid"], pathinfo($fileName, PATHINFO_FILENAME), pathinfo($fileName, PATHINFO_FILENAME), $fileSize, $extension]);
+                $id = sql_insert_id();
+
+                $destinationFile = $this->_getDocPath($id);
+                rename($fileName, $destinationFile);
+                return "0";
+            } else {
+                return "A feltöltött file formátuma nem megfelelő (csak jpg, pdf, és word dokumentumot lehet feltölteni)";
+            }
+
+
+        } else {
+            return "Nincs feltöltött file!";
+        }
+    }
+
+
     public function deleteDoc($id, $code) {
         if (sql_fetch_array(sql_query("select * from dokumentumok where id=? and kod=?",array($id, $code)))) {
             sql_query("delete from dokumentumok where id=?",array($id));

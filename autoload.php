@@ -58,6 +58,7 @@ require_once(__DIR__ . "/library/ExcelService.php");
 require_once(__DIR__ . "/library/BookingSyncApi.php");
 require_once(__DIR__ . "/library/PatientService.php");
 require_once(__DIR__ . "/library/AdminUser.php");
+require_once(__DIR__ . "/library/SynlabService.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
@@ -106,11 +107,24 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminOltasIgenyekPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminDicomPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLaborkeroPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLabortetelekPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/NotifySubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/PrintSubPage.php");
+
+    //ehhez a pluginhoz megszűnt a composer support php 7.1-hez, ezért kézzel kellett beletenni
+    require_once 'vendor/mikehaertl/php-tmpfile/src/File.php';
+    require_once 'vendor/mikehaertl/php-shellcommand/src/Command.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/Command.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/DataFields.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/FdfFile.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/InfoFields.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/Pdf.php';
+    require_once 'vendor/mikehaertl/php-pdftk/src/XfdfFile.php';
+    //ehhez a pluginhoz megszűnt a composer support php 7.1-hez, ezért kézzel kellett beletenni
 }
 
 function getConfigFile() {
