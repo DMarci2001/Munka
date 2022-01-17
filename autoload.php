@@ -34,6 +34,7 @@ require_once(__DIR__ . "/library/pages/DocumentsPage.php");
 require_once(__DIR__ . "/library/pages/BeutalokPage.php");
 require_once(__DIR__ . "/library/pages/LeletekPage.php");
 require_once(__DIR__ . "/library/pages/AlkalmassagiTajekoztatoPage.php");
+require_once(__DIR__ . "/library/pages/AutoertesitesleiratkozasPage.php");
 require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
 require_once(__DIR__ . "/library/pages/CovidFormPage.php");
 require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
