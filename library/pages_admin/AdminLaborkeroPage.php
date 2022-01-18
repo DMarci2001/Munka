@@ -95,6 +95,7 @@ class AdminLaborkeroPage extends AdminCorePage
         }
 
         if (isset($_POST["printSynlab"])) {
+
             $synlab = new SynlabService();
 
             $filename = $synlab->createPDF($_POST);

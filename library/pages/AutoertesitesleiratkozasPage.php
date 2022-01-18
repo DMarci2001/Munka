@@ -39,10 +39,6 @@ class AutoertesitesleiratkozasPage extends CorePage {
             return;
         }
 
-        echo "<pre>";
-        print_r($this->data);
-        echo "</pre>";
-
         echo $this->showErrors();
         echo $this->showPageDescription("Az alábbi beállítással tudunk küldeni az Ön részére egy emlékeztető üzenetet, hogy időben megjelenhessen az éves vizsgálatán!");
         echo "<div>";
