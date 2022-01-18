@@ -259,7 +259,7 @@ class SynlabService
         $htmlout .= "<tr><td style=\"padding:10px;\" colspan=\"4\"></tr>";
         $htmlout .= "<tr><td style=\"font-size:18px;font-weight:bold\">Végösszeg:</td><td id=\"grand_total\" style=\"font-size:18px;font-weight:bold;\">" . number_format($price, 2) . ".-</td></tr>";
         $htmlout .= "</table>";
-        $htmlout .= "<input type=\"hidden\" name=\"grand_total_int\" value=\"{$price}\">";
+        $htmlout .= "<input type=\"hidden\" name=\"grand_total_int\" id=\"grand_total_int\" value=\"{$price}\">";
 
         return $htmlout;
     }

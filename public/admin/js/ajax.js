@@ -2456,9 +2456,10 @@ function setSynlabStatus() {
         data: { getsynlabstatus: true, items: arr, packId: $("select[name='PackId']").val() },
         success: function (response) {
             response = $.parseJSON(response);
+
             $("#item_numb").html(response.unit + " db");
             $("#grand_total").html(response.price + ".-");
-            $("#grand_total_int").val(parseInt(response.price));
+            $("#grand_total_int").val(response.total_price);
             $("#required_tubes").html(response.tubes);
         }
     });
