@@ -212,6 +212,7 @@ class AdminBookingPage extends AdminCorePage
         $orvosList     = sql_query("select id, nev from orvosok where aktiv=1 order by nev")->fetchAll(PDO::FETCH_ASSOC);
         $existingOrvosTimes = [];
         $emptySection  = false;
+        $ExtraButtons = [];
 
         $htmlout.="<div id='filterbox' style='margin-top:10px;'>";
         $htmlout.="<div style='display:table-cell;vertical-align:middle;'>".$this->napFilter2($setDay)."</div>";
@@ -236,13 +237,24 @@ class AdminBookingPage extends AdminCorePage
             $tipusok[] = 0;
         }
         $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'menedzser'), megnev");
+        
+
         while ($szuresTipus = sql_fetch_array($szuresTipusok)) {
             $this->szuresTipusActual = $szuresTipus;
             $lastOrvosId = 0;
 
+            
+
             $beosztasok = $this->bookingService->beosztasService->getBookingPageBeosztasok($nap, $_SESSION["helyszin"], $szuresTipus["id"]);
             foreach ($beosztasok as $beosztas) {
-                $rendelesek++;
+
+                /*echo "<pre>";
+                print_r($beosztas);
+                echo "</pre>";*/
+
+                
+
+                 $rendelesek++;
                 //$cegek = array_unique(explode(",", $beosztas["cegek"]));
                 $minTol = "24:00";
                 $maxIg = "00:00";
@@ -255,6 +267,10 @@ class AdminBookingPage extends AdminCorePage
                 $szabiURL = $szabi ? "szabadságon" : "<a onclick='return confirm(\"Biztos beállítod szabadságra erre a napra?\");' href='{$_SERVER['PHP_SELF']}?page={$_GET["page"]}&szabira={$nap}&orvosid={$orvosId}'>szabadságra</a>";
                 $helyettesites = sql_fetch_array(sql_query("select h.*, o.nev as helyettesitoorvos from helyettesites h left join orvosok o on o.id = h.helyettesitoorvosid where h.nap=? and h.oid=? and h.tipusid=?", [$nap, $beosztas["orvosid"], $szuresTipus["id"]]));
                 $helyettesitesLink = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}').slideDown();return false;\" href='#'>helyettesítés</a>";
+
+                if($beosztas["extrabuttonrequired"]==1){
+                    $ExtraButtons[] = array("id"=>$orvosId,"nev"=>$beosztas["orvosnev"],"free"=>1);
+                }
 
                 if (isset($helyettesites["id"])) {
                     $helyettesitesLink = "";
@@ -429,6 +445,7 @@ class AdminBookingPage extends AdminCorePage
 
                 $htmlout .= "</td>";
                 $htmlout .= "</tr>";
+
             }
 
             //beosztás variálás miatt esetleg nem megjelenő foglalások
@@ -470,15 +487,30 @@ class AdminBookingPage extends AdminCorePage
         if (count($tipusLinks) > 1) {
             $links = [];
             foreach ($tipusLinks as $link) {
+                
                 $tlink = "<a class='tipuslink' href='{$link["url"]}'>{$link["nev"]} <span style='".(isset($link["free"]) && $link["free"] == 0?"font-weight:bold;border-radius:20px;background:#888;color:#fff;opacity:.3;":"font-weight:bold;border-radius:20px;background:#0a0;color:#fff;")."'>".(isset($link["free"])?"&nbsp;{$link["free"]}&nbsp;":"")."</span></a>";
                 $links[] = $tlink;
             }
+
+            //Extra gyors gombok beillesztése:
+            $links = $this->addExtraShortCutLinks($links,$ExtraButtons);
+
             $htmlout = str_replace("#tipuslinksplace#", "<div class='tipuslinksbox'>". implode(" ", $links) . "</div>", $htmlout);
         } else {
             $htmlout = str_replace("#tipuslinksplace#", "", $htmlout);
         }
 
         return $htmlout;
+    }
+
+    private function addExtraShortCutLinks($links = array(),$ExtraButtons){
+
+        foreach($ExtraButtons as $link){
+            $url = "javascript:scrollTo(\"orvosdiv{$link["id"]}\");";
+            $extraLink = "<a class='tipuslink' href='{$url}'>{$link["nev"]} <span style='font-weight:bold;border-radius:20px;background:#0a0;color:#fff;'></span></a>";
+            $links[] = $extraLink;
+        }
+        return $links;
     }
 
 
