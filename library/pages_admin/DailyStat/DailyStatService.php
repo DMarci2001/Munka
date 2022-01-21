@@ -15,14 +15,17 @@ class DailyStatService {
         if (isset($_REQUEST["downloaddailystat"])) {
             sleep(1);
             $result = $this->generateDailyStat($_POST["day"]);
+            $_SESSION["lastgeneratedstat"]["finalresult"] = json_encode($result["result"]);
+            $_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["day"]));
+            $_SESSION["lastgeneratedstat"]["beosztasresult"] = json_encode(WorkScheduleService::getDailySchedule($_POST["day"]));
             $utils->jsonOut($result);
         }
 
         if (isset($_REQUEST["downloaddailystatfile"])) {
-            $data = $this->getDayData($_REQUEST["downloaddailystatfile"]);
-            if (empty($data)) {
+            if (empty($_SESSION["lastgeneratedstat"])) {
                 die("error 88444");
             }
+            $data = $_SESSION["lastgeneratedstat"];
 
             $excelService = new ExcelService();
             $excelService->napiStat($data);
@@ -34,38 +37,6 @@ class DailyStatService {
             $day = $_POST["day"];
             $result["error"] = "";
             $result["html"] = $this->dailyStatEditor($day);
-            $utils->jsonOut($result);
-        }
-
-        if (isset($_REQUEST["generatedailystat"])) {
-            $day = $_POST["day"];
-
-            $this->beosztasQuery($day);
-            $this->zeuszQuery($day);
-
-            $result["info"] = "Frissítés kész... {$day}";
-            $result["error"] = "";
-            $result["html"] = $this->displayCalendarDayBox($day);
-            $utils->jsonOut($result);
-        }
-
-        if (isset($_POST["deletedailystat"])) {
-            $day = $_POST["day"];
-
-            sql_query("delete from dailystat where day=?", [$day]);
-
-            $result["html"] = $this->displayCalendarDayBox($day);
-            $utils->jsonOut($result);
-        }
-
-
-        if (isset($_REQUEST["savedailystat"])) {
-            $day = $_POST["day"];
-
-            sql_query("update dailystat set beosztasresult=?, recepcioresult=?, dokirexvizsgalatokresult=?, dokirexszamlakresult=?, zeuszresult=? where day=?",
-                [$_POST["beosztasresult"], $_POST["recepcioresult"], $_POST["dokirexvizsgalatokresult"], $_POST["dokirexszamlakresult"], $_POST["zeuszresult"], $day]);
-
-            $result["html"] = $this->displayCalendarDayBox($day);
             $utils->jsonOut($result);
         }
 
@@ -93,6 +64,7 @@ class DailyStatService {
 
     }
 
+    /*
     private function dailyStatEditor($day) {
         $html = "";
         $html.= "<div class='dailybutton' onclick=\"backToDailyCalendar();\" title='Letöltés'><i class='fas fa-arrow-left'></i> Vissza</div>&nbsp;";
@@ -114,8 +86,9 @@ class DailyStatService {
         $html.= "</div>";
         return $html;
     }
+    */
 
-
+    /*
     private function jsonEditor($dayData, $field, $title) {
         $html = "";
         $data = json_decode($dayData[$field], JSON_OBJECT_AS_ARRAY);
@@ -133,6 +106,7 @@ class DailyStatService {
         $html.= "</div>";
         return $html;
     }
+    */
 
     private function processUploadedFile($uploadedFile, $day) {
 
@@ -146,111 +120,6 @@ class DailyStatService {
             $fileSize = $uploadedFile["size"];
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
-            if ($extension == "csv") {
-                $tempFile = Booking_Constants::DOCUMENT_PATH.session_id().".{$extension}";
-                @move_uploaded_file($uploadedFile["tmp_name"], $tempFile);
-
-                $detectedFormat = "";
-                $result = [];
-                $file = fopen($tempFile, "r");
-                $rowNr = 0;
-                while (($csvRow = fgetcsv($file, 2000, ";", "\"")) !== FALSE) {
-                    if ($rowNr == 0 && substr_count($csvRow[0], "Vizsgalat/UtolsoModositasDatuma")) {
-                        $detectedFormat = "dokirexvizsgalatok";
-                        $rowNr++;
-                        continue;
-                    } else {
-                        if ($rowNr == 0) {
-                            break;
-                        }
-                    }
-
-                    if ($day != date("Y-m-d", strtotime(str_replace(".", "-", substr($csvRow[0], 0, 10))))) {
-                        $rowNr++;
-                        continue;
-                    }
-
-                    $row = [
-                        "datum" => $csvRow[0],
-                        "nev" => $csvRow[1],
-                        "szakrendeles" => $csvRow[2],
-                        "orvos" => $csvRow[3],
-                        "paciensid" => $csvRow[4],
-                        "szuldatum" => $csvRow[5],
-                        "telephely" => $csvRow[6],
-                        "munkakor" => $csvRow[7],
-                        "korlatozas" => $csvRow[8],
-                        "alkalmassag" => $csvRow[9],
-                        "ervenyesseg" => $csvRow[10]
-                    ];
-
-                    $result[] = $row;
-                    $rowNr++;
-                }
-                fclose($file);
-
-                $file = fopen($tempFile, "r");
-                $rowNr = 0;
-                while (($csvRow = fgetcsv($file, 2000, ";", "\"")) !== FALSE) {
-                    if ($rowNr == 0 && substr_count($csvRow[0], "Paciens/Nev")) {
-                        $detectedFormat = "dokirexszamlak";
-                        $rowNr++;
-                        continue;
-                    } else {
-                        if ($rowNr == 0) {
-                            break;
-                        }
-                    }
-
-                    if ($day != date("Y-m-d", strtotime(str_replace(".", "-", substr($csvRow[11], 0, 10))))) {
-                        $rowNr++;
-                        continue;
-                    }
-
-                    $row = [
-                        "nev" => $csvRow[0],
-                        "paciensid" => $csvRow[1],
-                        "szuldatum" => $csvRow[2],
-                        "szamlazas_szamlaszam" => $csvRow[3],
-                        "szamlazas_osszertek" => $csvRow[4],
-                        "szamlazas_nettoar" => $csvRow[5],
-                        "szamlazas_artetel" => $csvRow[6],
-                        "szamlazas_megjegyzes" => $csvRow[7],
-                        "szamlazas_fizetesimod" => $csvRow[8],
-                        "szakrendeles" => $csvRow[9],
-                        "szamlazas_felveteldatuma" => str_replace(".", "-", $csvRow[10]),
-                        "szamlazas_szamlazasdatuma" => str_replace(".", "-", $csvRow[11]),
-                        "felhasznalo" => $csvRow[12]                    ];
-
-                    $result[] = $row;
-                    $rowNr++;
-                }
-                fclose($file);
-
-
-                //dokirex vizsgálatok
-                if ($detectedFormat == "dokirexvizsgalatok") {
-                    if (empty($result)) {
-                        return "A feltöltött file tartalmaz dokirex vizsgálatokat, de nem a kiválasztott napra";
-                    }
-                    $this->insertDayIfNotExist($day);
-                    sql_query("update dailystat set dokirexvizsgalatokresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-                    return "";
-                }
-
-                //dokirex számlák
-                if ($detectedFormat == "dokirexszamlak") {
-                    if (empty($result)) {
-                        return "A feltöltött file tartalmaz dokirex számlákat, de nem a kiválasztott napra";
-                    }
-                    $this->insertDayIfNotExist($day);
-                    sql_query("update dailystat set dokirexszamlakresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-                    return "";
-                }
-
-                return "A feltöltött file-t nem sikerült beazonosítani, vagy erre a napra nincsenek benne adatok";
-            }
-
             if (in_array($extension, array("xls","xlsx"))) {
                 $tempFile = Booking_Constants::DOCUMENT_PATH.session_id().".{$extension}";
                 @move_uploaded_file($uploadedFile["tmp_name"], $tempFile);
@@ -262,44 +131,6 @@ class DailyStatService {
                 $sheetName = date("Y.m.d.", strtotime($day));
                 //$sheetName = "2021.09.24.";
 
-                $sheet = $spreadsheet->getSheetByName($sheetName);
-                if (!empty($sheet)) {
-                    $testCell = $sheet->getCell("A1")->getValue();
-
-                    //recepció xls
-                    if ($testCell == "Név") {
-                        $sheet = $spreadsheet->getSheetByName($sheetName);
-                        $result = [];
-                        $rowNr = 2;
-                        while (true) {
-                            $nev = $sheet->getCell("A{$rowNr}")->getValue();
-                            if (empty($nev)) {
-                                break;
-                            }
-
-                            $vizsgalat = $sheet->getCell("D{$rowNr}")->getValue();
-                            $row = [
-                                "nev" => $nev,
-                                "taj" => $sheet->getCell("B{$rowNr}")->getValue(),
-                                "ceg" => $sheet->getCell("C{$rowNr}")->getValue(),
-                                "vizsgalat" => $vizsgalat,
-                                "vizsgalta" => $sheet->getCell("E{$rowNr}")->getValue(),
-                                "mrtglabor" => $sheet->getCell("F{$rowNr}")->getValue(),
-                                "mrtg" => (substr_count($vizsgalat, "rtg") ? 1 : 0),
-                                "alk" => (substr_count($vizsgalat, "alk") ? 1 : 0),
-                                "uh" => (substr_count($vizsgalat, "uh") || substr_count($vizsgalat, "ultrahang") ? 1 : 0),
-                                "covid" => (substr_count($vizsgalat, "covid") ? 1 : 0),
-                                "labor" => (substr_count($vizsgalat, "labor") ? 1 : 0)
-                            ];
-                            $result[] = $row;
-                            $rowNr++;
-                        }
-
-                        $this->insertDayIfNotExist($day);
-                        sql_query("update dailystat set recepcioresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-                        return "";
-                    }
-                }
 
                 //zeusz vizsgálatok + dokirex excel
                 $sheet = $spreadsheet->getSheet(0);
@@ -317,15 +148,7 @@ class DailyStatService {
                                 break;
                             }
 
-                            $day = date("Y-m-d", strtotime($datum));
-                            if (!isset($days[$day])) {
-                                $days[$day] = [];
-                            }
-
-                            //if ($day != date("Y-m-d", strtotime($datum))) {
-                            //    $rowNr++;
-                            //   continue;
-                            //}
+                            $datum = str_replace(".", "-", $datum);
 
                             $row = [
                                 "datum" => date("Y-m-d H:i:d", strtotime($datum)),
@@ -338,28 +161,18 @@ class DailyStatService {
                                 "munkakor" => $sheet->getCell("H{$rowNr}")->getValue(),
                                 "korlatozas" => $sheet->getCell("I{$rowNr}")->getValue(),
                                 "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
-                                "szamla" => $sheet->getCell("K{$rowNr}")->getValue(),
-                                "vizsgalatokszama" => $sheet->getCell("L{$rowNr}")->getValue(),
-                                "vizsgalatideje" => date("Y-m-d H:i:d", strtotime($sheet->getCell("M{$rowNr}")->getValue())),
-                                "normaido" => $sheet->getCell("N{$rowNr}")->getValue()
+                                "ervenyesseg" => date("Y-m-d H:i:d", strtotime($sheet->getCell("K{$rowNr}")->getValue()))
                             ];
 
-                            $days[$day][] = $row;
-                            //$result[] = $row;
+                            sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                            sql_query("insert into dokirex_vizsgalatok set 
+                                    datum=:datum, nev=:nev,
+                                    szakrendeles=:szakrendeles, orvos=:orvos,
+                                    paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
+                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg", $row);
+
                             $rowNr++;
                         }
-
-                        //if (empty($result)) {
-                        //    return "A feltöltött file tartalmaz zeusz vizsgálatokat, de nem a kiválasztott napra";
-                        //}
-
-                    }
-                }
-
-                if (!empty($days)) {
-                    foreach ($days as $day => $result) {
-                        $this->insertDayIfNotExist($day);
-                        sql_query("update dailystat set dokirexvizsgalatokresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
                     }
                     return "";
                 }
@@ -373,6 +186,17 @@ class DailyStatService {
         }
     }
 
+    private function getDokirexVizsgalatok($from, $to = ""):array {
+        if (empty($to)) {
+            $to = $from;
+        }
+
+        $from = date("Y-m-d 00:00:00", strtotime($from));
+        $to = date("Y-m-d 23:59:59", strtotime($to));
+
+        return sql_query("select * from dokirex_vizsgalatok where datum>=? and datum<=?", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 
     private function displayCalendarDayBox($day):string {
         $html = "";
@@ -383,31 +207,30 @@ class DailyStatService {
         $boxStyle = ($diff == 0?"background:#f0e0e0":"");
 
         $html.= "<div class='monthlycell' style='{$boxStyle}'>";
-        $html.= "<div style='text-align: center;font-weight: bold;font-size: 16px;'><div title='' onclick='alert(\"{$day}\");' class='{$napClass}'>".date("d", strtotime($day))."</div></div>";
+        $html.= "<div style='text-align: center;font-weight: bold;font-size: 22px;'><div title='' onclick='alert(\"{$day}\");' class='{$napClass}'>".date("d", strtotime($day))."</div></div>";
 
         if (strtotime("now") > strtotime($day)) {
             $html .= "<div data-day='{$day}' id='daytext{$day}' style='padding-top:0px;'>";
 
-            $dayData = $this->getDayData($day);
+            $dokirex = $this->getDokirexVizsgalatok($day);
+            $workers = [];
+            $beosztas = WorkScheduleService::getDailySchedule($day);
+            foreach ($beosztas as $beo) {
+                $workers[] = $beo["workername"];
+            }
 
-            $html .= "<div class='upload-btn-wrapper'><a href='#' onclick='return false;' class='dailystatuploadbutton'>Feltöltés</a><input data-day='{$day}' type='file' id='dailystatfile' class='dailystatfile' name='dailystatfile[]' multiple /></div>";
+
             $html .= "<div><img id='dailystatloader{$day}' style='display:none;opacity:.5;height:30px;margin-top:10px;' src='/images/loading_transparent.svg' /></div>";
 
-            if (isset($dayData["id"])) {
-                $html .= "<div id='datablock{$day}'>";
-                $html .= "<div>dokirex vizsgálatok" . (empty($dayData["dokirexvizsgalatokresult"]) ? "" : " <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-                $html .= "<div>dokirex számlák" . (empty($dayData["dokirexszamlakresult"]) ? "" : " <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-                $html .= "<div>zeusz vizsgálatok" . (empty($dayData["zeuszresult"]) ? "" : " <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-                $html .= "<div>beosztás" . (empty($dayData["beosztasresult"]) ? "" : " <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-                $html .= "<div>recepció" . (empty($dayData["recepcioresult"]) ? "" : " <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-                $html .= "<div style='margin-top:10px;'>";
-                $html .= "<div class='dailysmallbutton' onclick='downloadDailyStat(\"$day\")' title='Letöltés'><i class='fas fa-file-download'></i></div> ";
-                $html .= "<div class='dailysmallbutton' onclick='editDailyStat(\"$day\")' title='Szerkesztés'><i class='fas fa-pen-square'></i></div> ";
-                $html .= "<div class='dailysmallbutton' onclick='generateDailyStat(\"$day\")' title='Újragenerálás'><i class='fas fa-sync-alt'></i></div> ";
-                $html .= "<div class='dailysmallbutton' onclick='deleteDailyStat(\"$day\")' title='Napi statisztika törlése'><i class='fas fa-trash-alt'></i></div> ";
-                $html .= "</div>";
-                $html .= "</div>";
-            }
+            $html .= "<div id='datablock{$day}' style='margin-top:10px;'>";
+            $html .= "<div style='height:70px;overflow: hidden;'>";
+            $html .= "<div>" . (empty($this->getDokirexVizsgalatok($day)) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex)." dokirex vizsgálat <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
+            $html .= "<div>" . (empty($beosztas) ? "beosztás <i style='color:red' class='fas fa-times-circle'></i>" : "<span title='".implode(", ", array_unique($workers))."'>".count(array_unique($workers))." dolgozó</span> <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
+            $html .= "</div>";
+            $html .= "<div style='margin-top:10px;'>";
+            $html .= "<div class='dailysmallbutton' onclick='downloadDailyStat(\"$day\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i></div> ";
+            $html .= "</div>";
+            $html .= "</div>";
 
             $html .= "</div>";
         }
@@ -461,75 +284,20 @@ class DailyStatService {
         return $html;
     }
 
-    private function insertDayIfNotExist($day) {
-        if (empty($this->getDayData($day))) {
-            $this->resetDay($day);
-        }
-    }
-
-    private function resetDay($day) {
-        $this->deleteDay($day);
-        sql_query("insert into dailystat set day=?", [$day]);
-        $this->beosztasQuery($day);
-        $this->zeuszQuery($day);
-    }
-
-    private function deleteDay($day) {
-        sql_query("delete from dailystat where day=?", [$day]);
-    }
-
-    private function zeuszQuery($day) {
-        if (Booking_Constants::SQL_DB != "hungariamed") {
-            return;
-        }
-
-        $data = $this->getDayData($day);
-        if (empty($data["zeuszresult"])) {
-            $zeuszService = new ZeusService();
-            $result = $zeuszService->dailyStatQuery($day);
-            if (!empty($result)) {
-                sql_query("update dailystat set zeuszresult=? where day=?", [json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-            }
-        }
-    }
-
-    private function beosztasQuery($day) {
-        $beosztasResult = WorkScheduleService::getDailySchedule($day);
-        if (!empty($beosztasResult)) {
-            sql_query("update dailystat set beosztasresult=? where day=?", [json_encode($beosztasResult, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $day]);
-        }
-    }
-
-
-    private function getDayData($day) {
-        return sql_query("select * from dailystat where day=?", [$day])->fetch(PDO::FETCH_ASSOC);
-    }
-
-    private function setDayStatus($day, $status) {
-        sql_query("update dailystat set status=? where day=?", [json_encode($status, JSON_PRETTY_PRINT), $day]);
-    }
-
-
-    /*
-
-
-    */
-
 
     private function generateDailyStat($day):array {
         $result = [
             "error" => "",
-            "debughtml" => ""
+            "debughtml" => "",
+            "result" => ""
         ];
 
         $dailyStatData = [];
 
-        $data = $this->getDayData($day);
-
         $szakrendelesek = $orvosok = [];
 
-        $dokirexData = json_decode($data["dokirexvizsgalatokresult"], JSON_OBJECT_AS_ARRAY);
-        $beosztasData = json_decode($data["beosztasresult"], JSON_OBJECT_AS_ARRAY);
+        $dokirexData = $this->getDokirexVizsgalatok($day);
+        $beosztasData = WorkScheduleService::getDailySchedule($day);
 
         foreach ($dokirexData as $vizsgalat) {
             $szakrendelesek[] = $vizsgalat["szakrendeles"];
@@ -614,9 +382,10 @@ class DailyStatService {
             ];
         }
 
-        sql_query("update dailystat set finalresult=? where day=?", [json_encode($dailyStatData, JSON_PRETTY_PRINT), $day]);
+        //sql_query("update dailystat set finalresult=? where day=?", [json_encode($dailyStatData, JSON_PRETTY_PRINT), $day]);
 
-        //$result["debughtml"] = "<pre>".print_r($dailyStatData, true)."</pre>";
+        $result["result"] = $dailyStatData;
+        $result["debughtml"] = "<pre>".print_r($dailyStatData, true)."</pre>";
 
         return $result;
     }

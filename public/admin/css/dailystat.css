@@ -66,14 +66,18 @@
 }
 
 .dailystatuploadbutton {
+    font-size: 14px;
     box-sizing: border-box;
     background:#a9a9a9;
     color:#fff;
-    padding:2px 5px;
+    padding:8px 10px;
     border-radius: 3px;
     text-decoration: none;
 }
 
+.dailystatuploadbutton:hover {
+    text-decoration: none;
+}
 
 
 
