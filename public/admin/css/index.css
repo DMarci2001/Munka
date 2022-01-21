@@ -1278,7 +1278,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .tipuslinksbox {
-	margin-top:5px;
+	margin:3px 0px;
 }
 
 .tipuslink {

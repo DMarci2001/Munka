@@ -293,7 +293,7 @@ class AdminPatientsPage extends AdminCorePage {
                     echo "<td valign='top'><div class='{$tc}'>{$rowf["helyszin"]}</div></td>";
                     echo "<td valign='top'><div class='{$tc}'>{$rowf["szurestipus"]}</div></td>";
                     echo "<td valign='top'><div class='{$tc}'>{$rowf["orvos"]}</div></td>";
-                    echo "<td valign='top'><div class='{$tc}'><a target='laborkero' href='index.php?page=laborkero&fid={$rowf["id"]}&p={$rowf["pass"]}'>+ Labor lelet</a></div></td>";
+                    echo "<td valign='top'><div class='{$tc}'><a target='laborkero' href='index.php?page=laborkero&fid={$rowf["id"]}&p={$rowf["pass"]}'>+ Laborkérő</a></div></td>";
                     echo "</tr>";
 
                     echo "<tr id='bmegj{$rowf["id"]}' style='display:none;'><td colspan='7'><div style='display:inline-block;background:#eee;padding:5px;margin:0px 0px 10px 10px;'>".nl2br($rowf["beutalomegj"])."</div></td></tr>";
