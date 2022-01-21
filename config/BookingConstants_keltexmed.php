@@ -56,8 +56,8 @@ class Booking_Constants {
     const DokiRex_HMM_dbName		= "hungaria";
 
     //simplePay public sandbox
-    //const SIMPLEPAY_MERCHANT_ID     = "PUBLICTESTHUF";
-    //const SIMPLEPAY_MERCHANT_SECRET = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
+    const SIMPLEPAY_MERCHANT_ID_SANDBOX     = "PUBLICTESTHUF";
+    const SIMPLEPAY_MERCHANT_SECRET_SANDBOX = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
 
     //simplePay hmm sandbox
     const SIMPLEPAY_MERCHANT_ID     = "S076901";

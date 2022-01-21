@@ -25,7 +25,7 @@ if (isset($_GET["ack"])) {
     ];
 
     if (substr_count($result->orderRef, "gyor") == 0) {
-        if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$result->orderRef]))) {
+        if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [str_replace(Booking_Constants::SQL_DB,"", $result->orderRef)]))) {
             die("reservation not found");
         }
         if ($result->status == "FINISHED") {
@@ -59,13 +59,12 @@ if (isset($_GET["ack"])) {
 if (isset($_GET["r"]) && isset($_GET["s"])) {
     $data = json_decode(base64_decode($_GET["r"]));
 
-    //print_r($_SERVER);die;
     $transId  = $data->t;
     $event    = $data->e;
     $merchant = $data->m;
     $orderRef = $data->o;
 
-    if (!$foglalasData = sql_fetch_array(sql_query("select f.*, b.foglalasid, b.merchant, b.id as banktransid from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [$orderRef]))) {
+    if (!$foglalasData = sql_fetch_array(sql_query("select f.*, b.foglalasid, b.merchant, b.id as banktransid from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [str_replace(Booking_Constants::SQL_DB,"", $orderRef)]))) {
         die("reservation not found");
     }
 

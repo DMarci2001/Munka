@@ -227,7 +227,11 @@ class AdminBookingPage extends AdminCorePage
         }
 
         $htmlout.= "</div>";
-        $htmlout.= "<div class='stickytablefilter' id='stickytablefilter'>#tipuslinksplace#</div>";
+
+        $htmlout .= "<div class='stickytablefilter' id='stickytablefilter'>";
+        $htmlout .= "<div class='tdm' style='padding:2px 10px 0px 0px;font-size: 16px;'>".$nap."</div>";
+        $htmlout .= "<div class='tdm'>#tipuslinksplace#</div>";
+        $htmlout .= "</div>";
 
         $htmlout.= "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
 

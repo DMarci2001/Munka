@@ -1243,8 +1243,8 @@ class BookingService
 
         $this->addSubReservation($data, $fid);
 
-        if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0) {
-            //orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
+        if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0 || $this->isOnlineTipus($data["szurestipus"])) {
+            //ha fizetős, vagy orvos jött, akkor nem kérünk visszaigazolást, megyünk visszaigazolni automatikusan
             $forwardURL = "index.php?page=bookingvalidate&id={$fid}&rk={$rn}";
         } else {
             //visszaigazolást kérünk
@@ -1616,6 +1616,19 @@ class BookingService
         }
 
         return $text;
+    }
+
+    public function isOnlineTipus($tipusId):bool {
+        if ($tipusData = sql_fetch_array(sql_query("select webdoktor, simplepayaktiv, onlysimplepay from szurestipusok where id=?", [$tipusId]))) {
+            if ($tipusData["webdoktor"] == 1 && $tipusData["simplepayaktiv"] == 1 && $this->getPriceData($tipusId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function getPriceData($tipusId) {
+        return sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$tipusId]));
     }
 
 }

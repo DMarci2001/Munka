@@ -822,3 +822,7 @@ function covidFormCheckboxCheck(el) {
 
 
 }
+
+function selectedTipus(tipusId) {
+    window.location.href='index.php?page=booking&szurestipus='+tipusId;
+}

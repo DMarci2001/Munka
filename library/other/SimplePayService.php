@@ -13,8 +13,9 @@ class SimplePayService {
 
     public function __construct()
     {
-
-
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $this->setSandBox(true);
+        }
     }
 
     public function setSandBox($value) {
@@ -147,22 +148,30 @@ class SimplePayService {
 
     public function addNewTransactionLog() {
         sql_query("insert into banktransactions set datum=now(), merchant=?, provider=?, foglalasid=?, result='PENDING'", [$this->_getMerchantId(), self::PROVIDER_NAME, $this->orderId]);
-        return sql_insert_id();
+
+        $id = sql_insert_id();
+        if (Booking_Constants::SQL_DB != "hungariamed") {
+            $id = Booking_Constants::SQL_DB.$id;
+        }
+
+        return $id;
     }
 
     public function setTransactionLog($logId, $transid, $event, $price = 0) {
-        sql_query("update banktransactions set result=?, transid=? where id=?", [$event, $transid, $logId]);
+        sql_query("update banktransactions set result=?, transid=? where id=?", [$event, $transid, str_replace(Booking_Constants::SQL_DB,"", $logId)]);
         if ($price != 0) {
-            sql_query("update banktransactions set osszeg=? where id=?", [$price, $logId]);
+            sql_query("update banktransactions set osszeg=? where id=?", [$price, str_replace(Booking_Constants::SQL_DB,"", $logId)]);
         }
     }
 
     public function setAckLog($id, $json) {
-        sql_query("update banktransactions set ackdate=now(), ack=? where id=? ", [$json, $id]);
+        sql_query("update banktransactions set ackdate=now(), ack=? where id=? ", [$json, str_replace(Booking_Constants::SQL_DB,"", $id)]);
     }
 
     public function getTransactionLog($foglalasId) {
-        return sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [$this->_getMerchantId(), self::PROVIDER_NAME, $foglalasId]));
+        $row = sql_fetch_array(sql_query("select * from banktransactions where merchant=? and provider=? and foglalasid=? order by datum desc limit 1", [$this->_getMerchantId(), self::PROVIDER_NAME, $foglalasId]));
+        //print_r($row);
+        return $row;
     }
 
     public function simpleLogo() {
@@ -208,6 +217,11 @@ class SimplePayService {
         $transactionData = sql_fetch_array(sql_query("select * from banktransactions where id=?", [$id]));
 
         $html = "";
+
+        if (Booking_Constants::SQL_DB != "hungariamed") {
+            $id = Booking_Constants::SQL_DB.$id;
+        }
+
         $request = [
             "salt" => $this->getSalt(),
             "orderRef" => $id,
