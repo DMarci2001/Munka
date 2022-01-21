@@ -133,10 +133,8 @@ function deleteDailyStat(day) {
 
 function prepareDailyStatUpload(event) {
     let files = event.target.files;
-    let day = $(this).data("day");
 
-    $("#dailystatloader"+day).show();
-    $("#datablock"+day).hide();
+    $("#dailystatloader").show();
 
     event.stopPropagation();
     event.preventDefault();
@@ -147,15 +145,14 @@ function prepareDailyStatUpload(event) {
     });
 
     $.ajax({
-        url: 'index.php?page=dailystat&adddailystatfiles&day='+encodeURIComponent(day),
+        url: 'index.php?page=dailystat&adddailystatfiles',
         type: 'POST',
         data: data,
         cache: false,
         processData: false,
         contentType: false,
         success: function (response, textStatus, jqXHR) {
-            $("#dailystatloader"+day).hide();
-            $("#datablock"+day).show();
+            $("#dailystatloader").hide();
 
             if (response.error != "") {
                 $.toast({
@@ -171,7 +168,6 @@ function prepareDailyStatUpload(event) {
                 });
             }
 
-            $("#daybox"+day).html(response.html);
             reloadEvents();
         }
     });
