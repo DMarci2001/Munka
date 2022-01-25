@@ -306,7 +306,15 @@ class BookingPage extends CorePage
                 }
             }
 
-            
+            if ($this->bookingService->isOnlineTipus($_POST["szurestipus"]) && !isset($_POST["simplepay"])) {
+                $this->errors[] = "A simplepay felhasználási feltételeit a vásárláshoz el kell elfogadnia!";
+            }
+
+            if (isset($_POST["simplepay"]) && $_POST["simplepay"] == 1) {
+                $priceData = $this->bookingService->getPriceData($_POST["szurestipus"]);
+                $_POST["totalprice"] = $priceData["price"];
+            }
+
             if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
@@ -317,12 +325,12 @@ class BookingPage extends CorePage
                 }
             }
 
+
+            if(!empty($laborszoveg)){
+                $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
+            }
+
             if (empty($this->errors)) {
-
-                if(!empty($laborszoveg)){
-                    $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
-                }
-
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
                 $this->record_covid_vaccination_data($fid,$_POST);
@@ -336,12 +344,14 @@ class BookingPage extends CorePage
     {
         $webText = $this->lang->webText;
 
-        if (isset($_POST['szurestipus'])) {
-        }
-
         if (!isset($_POST["helyszin"])) {
             $_POST["helyszin"] = $_POST["szurestipus"] = "";
         }
+
+        if (isset($_GET["szurestipus"])) {
+            $_POST["szurestipus"] = $_GET["szurestipus"];
+        }
+
         if (!isset($_POST["email"])) {
             $_POST["datum"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
             $_POST["rinterval"] = 0;
@@ -416,13 +426,12 @@ class BookingPage extends CorePage
             $_SESSION["helyszindata"]["beutaloszoveg"] = $_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];
         }
 
+        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
+            echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
+        }
 
         if (isset($beutalodata)) {
             //beutalóval fix választás
-
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
-                echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
-            }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td>";
             echo "<select name='helyszin' id='helyszin'>";
             $res = sql_query("SELECT h.*," . $this->utils->cimLangQuery() . " FROM helyszinek h where h.id='{$beutalodata["helyszinid"]}'");
@@ -439,9 +448,6 @@ class BookingPage extends CorePage
             }
         } else {
             //beutaló nélkül szabad választás
-            if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
-                echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
-            }
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
             echo "<tr><td></td><td><div id=\"infopagetext\">".$this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST)."</div></td></tr>";
             
@@ -642,7 +648,15 @@ class BookingPage extends CorePage
             echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
-        echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["idopontfoglalasa"]}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+        $submitButtonText = $webText["idopontfoglalasa"];
+
+        if ($this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
+            $priceData = $this->bookingService->getPriceData($_POST["szurestipus"]);
+            $submitButtonText.= " és fizetés ({$priceData["price"]} Ft)";
+            echo "<tr><td></td><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' ".(isset($_POST["simplepay"])?"checked":"")."/> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
+        }
+
+        echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
 
         echo "</table>";
 
@@ -709,7 +723,7 @@ class BookingPage extends CorePage
         }
         $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
         $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='clearIdopontValaszto();clearHelyszinSelector(this.value);showInfoPageText(this.value);showTipusMegj(this.value);{$megjBox};{$addJava}'>";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='selectedTipus(this.value);'>";
         $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
         $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))", ["|{$_SESSION["helyszindata"]["id"]}|"]);

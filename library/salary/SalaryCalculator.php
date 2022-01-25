@@ -31,7 +31,7 @@ class SalaryCalculator {
             "daily" => false
         ],
         "onetime" => [
-            "description" => "Egyszeri juttatás",
+            "description" => "Egyszeri kiadás",
             "tag" => "alkalmi kifizetés",
             "monthly" => false,
             "daily" => false
