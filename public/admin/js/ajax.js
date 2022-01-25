@@ -3120,3 +3120,58 @@ function setCovidListFilter(status) {
 function setCovidListFilter(status) {
     window.location.href="index.php?page=covidlist&statusfilter="+encodeURIComponent(status);
 }
+
+function setPreBookingStatus(id,value){
+    $.ajax({
+        url: "index.php?page=prebookingmanagement",
+        method: "POST",
+        data: { setPreBookingStatus:id,indicator:value },
+        success: function (response) {
+            $("#pbindicatorcontainer"+id).html(response);
+        }
+    })
+}
+
+var t;
+function autoSaveTextArea(id,text){
+    clearTimeout(t);
+    $("#pbtext"+id).css({"border":"1px solid orange","outline":"none"});
+    t = setTimeout(function() {
+        $.ajax({
+            url: "index.php?page=prebookingmanagement",
+            method: "POST",
+            data: { autoSaveTextArea:id,text:text },
+            success: function (response) {
+                $("#pbtext"+id).css({"border":"1px solid #ccc","outline":"none"});
+            }
+        })
+    }, 2000);
+}
+
+function downloadTargetFile(fileType,id){
+    $.ajax({
+        url: "index.php?page=prebookingmanagement",
+        method: "POST",
+        data: { downloadTargetFile:id,type:fileType },
+        success: function (response) {
+            console.log(response);
+          //window.location=response;
+        }
+    });
+}
+
+function copyToClipboard(element) {
+    var $temp = $("<input>");
+    $("body").append($temp);
+    $temp.val($(element).html()).select();
+    document.execCommand("copy");
+    $temp.remove();
+
+    var tooltip = $("#"+$(element).attr("id")+"tooltip");
+    tooltip.html("Copied");
+  }
+  
+  function outFunc(element) {
+    var tooltip = $("#"+$(element).attr("id")+"tooltip");
+    tooltip.html("Copy to clipboard");
+  }
