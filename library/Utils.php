@@ -381,6 +381,30 @@ class Utils {
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
 
+        if (!isset($_GLOBALS["admin"])) {
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $htmlout.='<meta name="facebook-domain-verification" content="rwr3rpdmypu9vnv6jqwyuxvhpgxisw" />';
+                $htmlout.="<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '944162703126175');
+fbq('track', 'PageView');
+</script>
+<noscript><img height=\"1\" width=\"1\" style=\"display:none\"
+src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
+/></noscript>
+<!-- End Meta Pixel Code -->";
+            }
+        }
+
+
         $htmlout.="</head>";
         return $htmlout;
     }
