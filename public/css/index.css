@@ -47,9 +47,16 @@ a:hover {
     border-radius:5px;
 }
 
-.footercontainer {
-    /* background:#3786be; */
+.footercontainer_hungariamed {
     background: #b90000;
+    color:#fff;
+    padding:20px;
+    border-bottom-left-radius:5px;
+    border-bottom-right-radius:5px;
+}
+
+.footercontainer_keltexmed {
+    background: #739db0;
     color:#fff;
     padding:20px;
     border-bottom-left-radius:5px;
@@ -354,7 +361,7 @@ input:not([type]), input[type="text"] , input[type="password"]{
     border-top-right-radius: 5px;
 }
 
-.fejlecdiv_hmm {
+.fejlecdiv_hungariamed {
     background-image:url(https://www.hungariamed.hu/images/slide004.jpg);
     /*background-image:url(/images/house.jpg);*/
     background-position: center top;
@@ -368,8 +375,32 @@ input:not([type]), input[type="text"] , input[type="password"]{
     vertical-align: middle;
 }
 
-.hmm_inner_text {
+.fejlecdiv_keltexmed {
+    background-image:url(/images/dr_stock.jpg);
+    /*background-image:url(/images/house.jpg);*/
+    background-position: center top;
+    background-size:cover;
+    font-family:robotolight;
+    color:#000;
+    font-size:32px;
+    height:300px;
+    border-bottom: 5px solid #7697aa;
+    display:table-cell;
+    vertical-align: middle;
+}
+
+
+.inner_text_hungariamed {
     margin:20px 20px 20px 20px;
+    padding:20px;
+    font-size: 28px;
+    font-family: robotolight;
+    display:inline-block;
+    background-color: rgba(255,255,255,.5);
+}
+
+.inner_text_keltexmed {
+    margin:20px 20px 20px 60px;
     padding:20px;
     font-size: 28px;
     font-family: robotolight;
@@ -961,7 +992,7 @@ and (max-width: 1200px) {
 
 }
 
-.vizsgalatdoboz {
+.vizsgalatdoboz_hungariamed {
     position: relative;
     border-radius: 5px;
     cursor: pointer;
@@ -977,8 +1008,28 @@ and (max-width: 1200px) {
     overflow: hidden;
 }
 
-.vizsgalatdoboz:hover {
+.vizsgalatdoboz_hungariamed:hover {
     background-color: #888;
+}
+
+.vizsgalatdoboz_keltexmed {
+    position: relative;
+    border-radius: 5px;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin:10px;
+    padding:20px 10px 20px 10px;
+    display: inline-block;
+    background-color: #5c95af;
+    color:#fff;
+    width: 202px;
+    height: 200px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.vizsgalatdoboz_keltexmed:hover {
+    background-color: #5c95af;
 }
 
 .vizsgalatdobozwebdoctor {
@@ -991,7 +1042,7 @@ and (max-width: 1200px) {
     background: #b90000;
 }
 
-.vizsgalatdobozbutton {
+.vizsgalatdobozbutton_hungariamed {
     position:absolute;
     border-radius: 3px;
     bottom:20px;
@@ -1003,8 +1054,24 @@ and (max-width: 1200px) {
     background: #aaa;
 }
 
-.vizsgalatdobozbutton:hover {
+.vizsgalatdobozbutton_hungariamed:hover {
     background: #999;
+}
+
+.vizsgalatdobozbutton_keltexmed {
+    position:absolute;
+    border-radius: 3px;
+    bottom:20px;
+    left: 25px;
+    text-transform: uppercase;
+    display:inline-block;
+    padding:5px 10px;
+    box-sizing: border-box;
+    background: #318bb4;
+}
+
+.vizsgalatdobozbutton_keltexmed:hover {
+    background: #0884bd;
 }
 
 .vizsgalatdobozbuttonwebdoctor {

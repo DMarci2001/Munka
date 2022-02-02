@@ -14,22 +14,29 @@ class DailyStatService {
 
         if (isset($_REQUEST["downloaddailystat"])) {
             sleep(1);
-            $result = $this->generateDailyStat($_POST["day"]);
+            $result = $this->generateDailyStat($_POST["dayFrom"], $_POST["dayTo"]);
             $_SESSION["lastgeneratedstat"]["finalresult"] = json_encode($result["result"]);
-            $_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["day"]));
-            $_SESSION["lastgeneratedstat"]["beosztasresult"] = json_encode(WorkScheduleService::getDailySchedule($_POST["day"]));
+            $_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["dayFrom"]));
+            $_SESSION["lastgeneratedstat"]["beosztasresult"] = json_encode(WorkScheduleService::getDailySchedule($_POST["dayFrom"]));
             $utils->jsonOut($result);
         }
 
         if (isset($_REQUEST["downloaddailystatfile"])) {
+            $from = $_REQUEST["downloaddailystatfile"];
+            $to = $_REQUEST["dayTo"];
             if (empty($_SESSION["lastgeneratedstat"])) {
                 die("error 88444");
             }
             $data = $_SESSION["lastgeneratedstat"];
 
+            $fileName = Booking_Constants::COMPANY_NAME_SHORT." napi statisztika " . date("Y-m-d", strtotime($from)) . ".xlsx";
+            if ($from != $to) {
+                $fileName = Booking_Constants::COMPANY_NAME_SHORT." statisztika " . date("Y-m-d", strtotime($from)) . " - " . date("Y-m-d", strtotime($to)) . ".xlsx";
+            }
+
             $excelService = new ExcelService();
             $excelService->napiStat($data);
-            $excelService->setFileName(Booking_Constants::COMPANY_NAME_SHORT." napi statisztika " . date("Y-m-d", strtotime($_REQUEST["downloaddailystatfile"])) . ".xlsx");
+            $excelService->setFileName($fileName);
             $excelService->outputSpreadSheet();
         }
 
@@ -224,11 +231,13 @@ class DailyStatService {
 
             $html .= "<div id='datablock{$day}' style='margin-top:10px;'>";
             $html .= "<div style='height:70px;overflow: hidden;'>";
-            $html .= "<div>" . (empty($this->getDokirexVizsgalatok($day)) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex)." dokirex vizsgálat <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
+            $html .= "<div>" . (empty($dokirex) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex)." dokirex vizsgálat <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
             $html .= "<div>" . (empty($beosztas) ? "beosztás <i style='color:red' class='fas fa-times-circle'></i>" : "<span title='".implode(", ", array_unique($workers))."'>".count(array_unique($workers))." dolgozó</span> <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
             $html .= "</div>";
             $html .= "<div style='margin-top:10px;'>";
-            $html .= "<div class='dailysmallbutton' onclick='downloadDailyStat(\"$day\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i></div> ";
+            if (!empty($dokirex) || !empty($beosztas)) {
+                $html .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$day\", \"$day\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika</div> ";
+            }
             $html .= "</div>";
             $html .= "</div>";
 
@@ -247,12 +256,14 @@ class DailyStatService {
         $monthText    = date("F",strtotime("{$now} +{$offset} month"));
         $numberOfDays = date("t",strtotime("{$now} +{$offset} month"));
         $firstDay     = date("N",strtotime("first day of {$year} {$monthText}"));
+        $firstDate    = date("Y-m-d",strtotime("first day of {$year} {$monthText}"));
+        $lastDate     = date("Y-m-d",strtotime("last day of {$year} {$monthText}"));
         $weekDay      = 0;
 
         $html.= "<table class='montlytable' style='margin:0px;padding:0px;'>";
         $html.= "<tr>";
         $html.= "<td colspan='1' class='montlycell mthead' style='text-align: left;'><a href='#' onclick='DailyStatMoveMonth(-1);return false;'><i class='fas fa-chevron-circle-left'></i></a></td>";
-        $html.= "<td colspan='5' class='montlycell mthead'>&nbsp;&nbsp;{$year} ".$this->months[$month]."&nbsp;&nbsp;</td>";
+        $html.= "<td colspan='5' class='montlycell mthead'>&nbsp;&nbsp;{$year} ".$this->months[$month]."&nbsp;&nbsp;<div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDate}\", \"{$lastDate}\")' title='Havi statisztika letöltése'><i class='fas fa-file-download'></i> havi statisztika</div></td>";
         $html.= "<td colspan='1' class='montlycell mthead' style='text-align: right;'><a href='#' onclick='DailyStatMoveMonth(1);return false;'><i class='fas fa-chevron-circle-right'></i></a></td>";
         $html.= "</tr>";
         $html.= "<tr>";
@@ -266,16 +277,25 @@ class DailyStatService {
             $html.= "<td class='monthlycell' style='background: white;'>&nbsp;</td>";
         }
 
+        $weekHtml = "";
         for ($nap = 1; $nap <= $numberOfDays; $nap++) {
+            $thisDay = "{$year}-".substr("00{$month}",-2)."-".substr("00{$nap}",-2);
+
             if ($weekDay++ >= 7) {
+                $weekStartDay = date("Y-m-d", strtotime("{$thisDay} - 7 day"));
+                $weekEndDay = date("Y-m-d", strtotime("{$thisDay} - 1 day"));
+                $numberOfWeek = date("W", strtotime($weekEndDay));
+                $html.= "<td style='text-align: center;padding:10px;'><div style='font-size: 18px;font-weight: bold;margin-bottom:10px;'>{$numberOfWeek}. hét</div>";
+                $html.= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"{$weekStartDay}\", \"{$weekEndDay}\")' title='Heti statisztika letöltése'><i class='fas fa-file-download'></i> heti statisztika</div> ";
+                $html.= "</td>";
                 $html.= "</tr><tr>";
                 $weekDay = 1;
             }
 
-            $thisDay = "{$year}-".substr("00{$month}",-2)."-".substr("00{$nap}",-2);
-
             $html.= "<td id='daybox{$thisDay}'>";
-            $html.= $this->displayCalendarDayBox($thisDay);
+            $dayBox = $this->displayCalendarDayBox($thisDay);
+            $weekHtml.= $dayBox;
+            $html.= $dayBox;
             $html.= "</td>";
         }
 
@@ -285,7 +305,7 @@ class DailyStatService {
     }
 
 
-    private function generateDailyStat($day):array {
+    private function generateDailyStat($dayFrom, $dayTo):array {
         $result = [
             "error" => "",
             "debughtml" => "",
@@ -296,8 +316,8 @@ class DailyStatService {
 
         $szakrendelesek = $orvosok = [];
 
-        $dokirexData = $this->getDokirexVizsgalatok($day);
-        $beosztasData = WorkScheduleService::getDailySchedule($day);
+        $dokirexData = $this->getDokirexVizsgalatok($dayFrom);
+        $beosztasData = WorkScheduleService::getDailySchedule($dayFrom);
 
         foreach ($dokirexData as $vizsgalat) {
             $szakrendelesek[] = $vizsgalat["szakrendeles"];
@@ -322,8 +342,8 @@ class DailyStatService {
 
             foreach ($orvosok as $orvos) {
                 $orvosPaciensekDb = $osszesido = 0;
-                $minTime = "{$day} 23:59:59";
-                $maxTime = "{$day} 00:00:00";
+                $minTime = "{$dayFrom} 23:59:59";
+                $maxTime = "{$dayFrom} 00:00:00";
                 $beoTime = "nincs megadva";
                 $nover = "";
                 $orvosBeosztas = [];
@@ -371,7 +391,9 @@ class DailyStatService {
             }
 
 
-            $dailyStatData["day"] = $day;
+            $dailyStatData["day"] = $dayFrom;
+            $dailyStatData["dayFrom"] = $dayFrom;
+            $dailyStatData["dayTo"] = $dayTo;
             $dailyStatData["szakrendelesek"][$szakrendeles] = [
                 "name" => $szakrendeles,
                 "db" => $paciensekDb,
@@ -385,7 +407,7 @@ class DailyStatService {
         //sql_query("update dailystat set finalresult=? where day=?", [json_encode($dailyStatData, JSON_PRETTY_PRINT), $day]);
 
         $result["result"] = $dailyStatData;
-        $result["debughtml"] = "<pre>".print_r($dailyStatData, true)."</pre>";
+        //$result["debughtml"] = "<pre>".print_r($dailyStatData, true)."</pre>";
 
         return $result;
     }

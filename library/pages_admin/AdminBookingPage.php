@@ -229,7 +229,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout.= "</div>";
 
         $htmlout .= "<div class='stickytablefilter' id='stickytablefilter'>";
-        $htmlout .= "<div class='tdm' style='padding:2px 10px 0px 0px;font-size: 16px;'>".$nap."</div>";
+        $htmlout .= "<div class='tdm' style='padding:2px 10px 0px 0px;font-size: 16px;white-space: nowrap;'>".$nap."<br/>".$this->adminUtils->settings->hetnap[$wd]."</div>";
         $htmlout .= "<div class='tdm'>#tipuslinksplace#</div>";
         $htmlout .= "</div>";
 

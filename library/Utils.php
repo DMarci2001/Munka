@@ -706,36 +706,36 @@ class Utils {
                 $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
                 break;
             case "szulhely":
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
                 $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "irsz":
                 $width = 60;
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "varos":
                 //temp 1
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "utca":
                 //temp 2
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "munkakor":
                 if (!in_array($_SESSION["helyszindata"]["domain"], ["bejelentkezes", "gyor-bejelentkezes"])) {

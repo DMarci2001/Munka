@@ -8,19 +8,17 @@ function reloadEvents() {
     $(".dailystatfile").on("change", prepareDailyStatUpload);
 }
 
-function downloadDailyStat(day) {
-    let dayBox = $("#daybox"+day);
-
-    $("#dailystatloader"+day).show();
-    $("#datablock"+day).hide();
+function downloadDailyStat(dayFrom, dayTo) {
+    $("#dailystatloader"+dayFrom).show();
+    $("#datablock"+dayFrom).hide();
 
     $.ajax({
         type: "POST",
         url: "index.php?page=dailystat&downloaddailystat=1",
-        data: "day=" + encodeURIComponent(day),
+        data: "dayFrom=" + encodeURIComponent(dayFrom)+"&dayTo=" + encodeURIComponent(dayTo),
         success: function (response) {
-            $("#dailystatloader"+day).hide();
-            $("#datablock"+day).show();
+            $("#dailystatloader"+dayFrom).hide();
+            $("#datablock"+dayFrom).show();
 
             if (response.debughtml != "") {
                 $("#debugarea").html(response.debughtml);
@@ -34,36 +32,8 @@ function downloadDailyStat(day) {
                 return;
             }
 
-            window.location.href='index.php?page=dailystat&downloaddailystatfile='+encodeURIComponent(day);
+            window.location.href='index.php?page=dailystat&downloaddailystatfile='+encodeURIComponent(dayFrom)+"&dayTo="+encodeURIComponent(dayTo);
             return;
-        }
-    });
-}
-
-function generateDailyStat(day) {
-    let dayBox = $("#daybox"+day);
-
-    $.ajax({
-        type: "POST",
-        url: "index.php?page=dailystat&generatedailystat=1",
-        data: "day=" + encodeURIComponent(day),
-        success: function (response) {
-            if (response.error != "") {
-                $.toast({
-                    heading: "Hiba",
-                    text: response.error,
-                    icon: 'error'
-                });
-            }
-            if (response.info != "") {
-                $.toast({
-                    heading: "Info",
-                    text: response.info,
-                    icon: 'info'
-                });
-            }
-
-            $(dayBox).html(response.html);
         }
     });
 }

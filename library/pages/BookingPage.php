@@ -352,6 +352,12 @@ class BookingPage extends CorePage
             $_POST["szurestipus"] = $_GET["szurestipus"];
         }
 
+        if (isset($_GET["helyszin"])) {
+            $_POST["helyszin"] = $_GET["helyszin"];
+        }
+
+        $tipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$_POST["szurestipus"]]));
+
         if (!isset($_POST["email"])) {
             $_POST["datum"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
             $_POST["rinterval"] = 0;
@@ -415,6 +421,15 @@ class BookingPage extends CorePage
         }
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
+
+        if ($this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
+            echo "<div style='margin-bottom:20px;'>Tudnivalók a telemedicina szolgáltatásunkkal kapcsolatban:
+            Köszönjük, hogy <strong>\"{$tipusData["megnev"]}\"</strong> szolgáltatásunkat választotta.  
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br/><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>";
+        }
+
+
+
         echo "<table cellpadding='3' cellspacing='0'>";
 
         echo $this->utils->dataField("taj");
@@ -426,7 +441,7 @@ class BookingPage extends CorePage
             $_SESSION["helyszindata"]["beutaloszoveg"] = $_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];
         }
 
-        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "") {
+        if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "" && !$this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
             echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
         }
 
@@ -723,7 +738,7 @@ class BookingPage extends CorePage
         }
         $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
         $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='selectedTipus(this.value);'>";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='selectedTipus(this.value, {$_POST["helyszin"]});'>";
         $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
         $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))", ["|{$_SESSION["helyszindata"]["id"]}|"]);
@@ -799,17 +814,20 @@ class BookingPage extends CorePage
 
         $html = "";
 
-        $html .= "<div style='padding:0px 0px 30px 0px;'>";
+        $introText = $this->lang->getText("miert.bennunket.description.2", "");
 
-        $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
-        $html .= $this->lang->getText("miert.bennunket.description.2", "");
+        $html .= "<div style='padding:0px 0px 30px 0px;'>";
+        if (!empty($introText)) {
+            $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
+            $html .= $introText;
+        }
 
         $html .= "<div>";
 
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
-            $html .= "<div style='text-align:center;margin-top:30px;border-top:1px solid #888;'>";
+            $html .= "<div style='text-align:center;margin-top:30px;".(empty($introText)?"":"border-top:1px solid #888;")."'>";
 
             $html .= "<h2>Időpontfoglalás</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
             foreach ($services as $tipusData) {
@@ -823,13 +841,13 @@ class BookingPage extends CorePage
                     $tipusData["facode"] = "<i class='fas fa-laptop-medical'></i>";
                 }
 
-                $html .= "<div class='vizsgalatdoboz" . ($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor" : "") . "' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
+                $html .= "<div class='vizsgalatdoboz_".Booking_Constants::SQL_DB . ($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor" : "") . "' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
                 $html .= "<div style=''>";
                 $html .= "<div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
                 $html .= "<div style='font-size:16px;font-family: robotobold;color:#fff;'>{$tipusData["megnev"]}</div>";
                 $html .= "</div>";
 
-                $html .= "<div class='" . ($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor" : "vizsgalatdobozbutton") . "'>" . ($tipusData["webdoktor"] == 1 ? "&nbsp;&nbsp;&nbsp;&nbsp;megrendelem&nbsp;&nbsp;&nbsp;&nbsp;" : "időpontfoglalás") . "</div>";
+                $html .= "<div class='" . ($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor" : "vizsgalatdobozbutton_".Booking_Constants::SQL_DB) . "'>" . ($tipusData["webdoktor"] == 1 ? "&nbsp;&nbsp;&nbsp;&nbsp;megrendelem&nbsp;&nbsp;&nbsp;&nbsp;" : "időpontfoglalás") . "</div>";
 
                 $html .= "</div>";
             }

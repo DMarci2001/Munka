@@ -1534,7 +1534,7 @@ class BookingService
     public function removeIdopont($id, $code)
     {
         if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", array($id, $code)))) {
-            logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", print_r($_POST, true));
+            logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", json_encode($rowf, JSON_PRETTY_PRINT));
             $this->deleteReservation($id, $code);
         }
     }
@@ -1557,6 +1557,7 @@ class BookingService
         $rest = sql_query("SELECT b.* FROM orvos_beosztas_new b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE (instr(b.beocegek, ?) or b.beocegek='') AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
+            AND (b.nap<10 or (b.nap=10 and b.beonap>=date(now())))
 			GROUP BY b.tipusok", ["|{$_SESSION["helyszindata"]["id"]}|", $helyszinId]);
 
         $tipusok = [0];
