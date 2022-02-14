@@ -208,7 +208,7 @@ class Page
 
     private function _pageFooter()
     {
-        $class = "footercontainer";
+        $class = "footercontainer_".Booking_Constants::SQL_DB;
         if ($this->page->showSuzukiLogo || !empty($this->page->customLogo)) {
             $class = "footercontainer_suzuki";
         }

@@ -381,6 +381,30 @@ class Utils {
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
 
+        if (!isset($_GLOBALS["admin"])) {
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $htmlout.='<meta name="facebook-domain-verification" content="rwr3rpdmypu9vnv6jqwyuxvhpgxisw" />';
+                $htmlout.="<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '944162703126175');
+fbq('track', 'PageView');
+</script>
+<noscript><img height=\"1\" width=\"1\" style=\"display:none\"
+src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
+/></noscript>
+<!-- End Meta Pixel Code -->";
+            }
+        }
+
+
         $htmlout.="</head>";
         return $htmlout;
     }
@@ -706,36 +730,36 @@ class Utils {
                 $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
                 break;
             case "szulhely":
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
                 $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "irsz":
                 $width = 60;
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "varos":
                 //temp 1
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "utca":
                 //temp 2
-                if ($_SESSION['helyszindata']['id'] == 46) {
-                    $hidden = true;
-                }
+                //if ($_SESSION['helyszindata']['id'] == 46) {
+                //    $hidden = true;
+                //}
                 break;
             case "munkakor":
                 if (!in_array($_SESSION["helyszindata"]["domain"], ["bejelentkezes", "gyor-bejelentkezes"])) {

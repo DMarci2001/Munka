@@ -91,10 +91,11 @@ class AdminLaborkeroPage extends AdminCorePage
             $tubeSetup = $synlab->setTubeList($_POST["items"], "ajax");
             //die($tubeSetup);
 
-            die(json_encode(array("price" => number_format($total, 2), "unit" => count($_POST["items"]), "tubes" => $tubeSetup), true));
+            die(json_encode(array("total_price" => $total, "price" => number_format($total, 2), "unit" => count($_POST["items"]), "tubes" => $tubeSetup), true));
         }
 
         if (isset($_POST["printSynlab"])) {
+
             $synlab = new SynlabService();
 
             $filename = $synlab->createPDF($_POST);

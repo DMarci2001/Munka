@@ -33,8 +33,8 @@
     display:inline-block;
     vertical-align: middle;
     padding:5px;
-    width: 28px;
-    font-size: 18px;
+    width: auto;
+    font-size: 14px;
     background:#888;
     color:#fff;
     border-radius: 4px;
@@ -66,14 +66,18 @@
 }
 
 .dailystatuploadbutton {
+    font-size: 14px;
     box-sizing: border-box;
     background:#a9a9a9;
     color:#fff;
-    padding:2px 5px;
+    padding:8px 10px;
     border-radius: 3px;
     text-decoration: none;
 }
 
+.dailystatuploadbutton:hover {
+    text-decoration: none;
+}
 
 
 

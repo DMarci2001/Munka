@@ -9,7 +9,8 @@ class PrintService
         "vizsgalatilap"      => "vizsgalatilap.html",
         "karton"             => "karton.html",
         "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
-        "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf"
+        "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf",
+        "matrica"            => "matrica.html"
     );
 
     private $inputs = array(

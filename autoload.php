@@ -34,6 +34,7 @@ require_once(__DIR__ . "/library/pages/DocumentsPage.php");
 require_once(__DIR__ . "/library/pages/BeutalokPage.php");
 require_once(__DIR__ . "/library/pages/LeletekPage.php");
 require_once(__DIR__ . "/library/pages/AlkalmassagiTajekoztatoPage.php");
+require_once(__DIR__ . "/library/pages/AutoertesitesleiratkozasPage.php");
 require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
 require_once(__DIR__ . "/library/pages/CovidFormPage.php");
 require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
@@ -114,6 +115,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/NotifySubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/PrintSubPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminPreBookingManagementPage.php");
 
     //ehhez a pluginhoz megszűnt a composer support php 7.1-hez, ezért kézzel kellett beletenni
     require_once 'vendor/mikehaertl/php-tmpfile/src/File.php';

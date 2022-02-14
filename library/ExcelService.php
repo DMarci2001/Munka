@@ -360,7 +360,7 @@ class ExcelService {
 
         $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
             LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-            WHERE datum>'{$day} 00:00:00' AND datum<'{$day} 23:59:59' GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE f.datum>'{$day} 00:00:00' AND f.datum<'{$day} 23:59:59' and f.eljott=1 GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($tipusok as $tipus) {
