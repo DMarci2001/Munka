@@ -46,6 +46,12 @@ class AjaxService {
             }
 
             if ($odata["onlytel"] == 1 && $odata["tel"] != "") {
+
+                if($_SESSION["helyszindata"]["manual_booking_option"]==1){
+                    echo "Teszt.";
+                    die();
+                }
+
                 echo "Erre a rendelésre az online bejelentkezés jelenleg nem üzemel kérjük jelentkezzen be ezen a telefon számon: " . $odata["tel"];
                 die();
             }

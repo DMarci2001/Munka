@@ -26,6 +26,51 @@ function myAlert(szoveg, tipus) {
     });
 }
 
+function manualBookingConfirm(){
+    swal({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          swal(
+            'Deleted!',
+            'Your file has been deleted.',
+            'success'
+          )
+        }
+      })
+}
+
+
+function manualBookingConfirm(orvos){
+    swal({
+        title: "Időpont egyeztetés szükséges!",
+        text: "Az időpontfoglalást kollégánk végzi el, további egyeztetés céljából felfogja venni Önnel a kapcsolatot az itt megadott e-mail cimen keresztül. Kérem, a megjegyzés rovatban adjon meg egy intervallumot, amikor Önnek megfelelő lenne az időpontfoglalás az itt látható naptárt alapul véve.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b90000',
+        cancelButtonColor: '#808080',
+        confirmButtonText: 'Rendben',
+		cancelButtonText: 'Bezárás'
+      }).then((result) => {
+        if (result.isConfirmed) {
+			$("#datum").css("background-image", "");
+            $("#datum").val("Manuális időpont foglalás");
+            $("#rinterval").val(15);
+            $("#orvosselected").val(orvos);
+            animateIdoPontValaszto();
+            //$("#warnidopontpress").show();
+            return;
+        }
+      })
+}
+
+
 $(document).ready(function () {
     $(".vaccination-question-elements").change(function () {
         checkVaccinationElements();
@@ -216,6 +261,10 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
             $("#orvosselected").val(orvos);
             animateIdoPontValaszto();
             $("#warnidopontpress").show();
+            return;
+        }
+        if(msg == "manual_booking"){
+            manualBookingConfirm(orvos);
             return;
         }
         myAlert(msg);
