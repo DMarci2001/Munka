@@ -26,26 +26,29 @@ function myAlert(szoveg, tipus) {
     });
 }
 
-function manualBookingConfirm(){
+function manualBookingConfirm(orvos){
     swal({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
+        title: "Időpont egyeztetés szükséges!",
+        text: "Az időpontfoglalást kollégánk végzi el, további egyeztetés céljából felfogja venni Önnel a kapcsolatot az itt megadott e-mail cimen keresztül. Kérem, a megjegyzés rovatban adjon meg egy intervallumot, amikor Önnek megfelelő lenne az időpontfoglalás az itt látható naptárt alapul véve.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
+        confirmButtonColor: '#b90000',
+        cancelButtonColor: '#808080',
+        confirmButtonText: 'Rendben',
+		cancelButtonText: 'Bezárás'
       }).then((result) => {
-        if (result.isConfirmed) {
-          swal(
-            'Deleted!',
-            'Your file has been deleted.',
-            'success'
-          )
+		  console.table(result);
+        if (result) {
+			$("#datum").css("background-image", "");
+            $("#datum").val("Időpont egyeztetés");
+            $("#rinterval").val(15);
+            $("#orvosselected").val(orvos);
+            animateIdoPontValaszto();
+            //$("#warnidopontpress").show();
+            return;
         }
       })
 }
-
 
 function manualBookingConfirm(orvos){
     swal({
