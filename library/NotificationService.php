@@ -498,6 +498,25 @@ class NotificationService {
         return $template;
     }
 
+    private function userMailTemplateManualBooking($row) {
+
+        $cegInfo = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($row["cegid"])));
+
+        $deleteLink = "http://{$cegInfo["megnev"]}.hungariamed.hu/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}";
+
+        $mbody = "<p><span style=\"font-size: 14pt;\">Köszönjük, hogy időpontfoglaló rendszerünkben jelezte foglalási szándékát!</span></p>
+        <p>Kollégánk hamarosan felveszi Önnel a kapcsolatot.</p>
+        <p>Ha módosítani szeretné az időpontjának esedékességét, kérem, törölje a jelenlegi foglalását az alábbi gombra kattintva:</p>
+        <p>&nbsp;</p>
+        <div style=\"height: 50px; text-align: center; padding-top: 25px;\">
+        <a style=\"text-decoration: none; cursor: pointer; font-weight: bold; color: white; border-radius: 3px; bottom: 20px; text-transform: uppercase; padding: 15px 20px; box-sizing: border-box; background: #c02a2a;\" 
+        href=\"{$deleteLink}\">Foglalási szándék törlése</a></div>";
+
+        $template["subject"] = "Időpont egyeztetés céljából hamarason keresni fogjuk!";
+        $template["body"] = $mbody;
+        return $template;
+    }
+
 
     private function _getPackText($reservationData) {
         $packText = "";
