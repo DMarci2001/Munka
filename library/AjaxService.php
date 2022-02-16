@@ -48,7 +48,7 @@ class AjaxService {
             if ($odata["onlytel"] == 1 && $odata["tel"] != "") {
 
                 if($_SESSION["helyszindata"]["manual_booking_option"]==1){
-                    echo "Teszt.";
+                    echo "manual_booking";
                     die();
                 }
 
