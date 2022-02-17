@@ -33,6 +33,15 @@ class BookingDeletePage extends CorePage {
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
         WHERE f.id=? and (f.rkod=? or f.pass=?)",array($id, $rk, $rk)))) {
+
+            if($row["datum"]=="1900-01-01 00:00:01"){
+                $idopont = "Egyeztetés alatt";
+            }else{
+                $idopont = substr($row["datum"],0,16);
+            }
+
+           
+
             echo "{$webText["kedves"]} {$row["nev"]}!<br>
             <br>
             {$webText["torleskezd"]}:<br/>
@@ -41,7 +50,7 @@ class BookingDeletePage extends CorePage {
             
             {$webText["nev"]}: {$row["nev"]}<br>
             {$webText["telefon"]}: {$row["telefon"]}<br>
-            <b>{$webText["idopont"]}: ".substr($row["datum"],0,16)."</b><br>
+            <b>{$webText["idopont"]}: {$idopont}</b><br>
             {$webText["szurestipus"]}: {$row["szurestipus"]}<br>
             {$webText["helyszin"]}: {$row["helyszin"]}<br>
             <br/>
