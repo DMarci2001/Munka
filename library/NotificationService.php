@@ -65,9 +65,11 @@ class NotificationService {
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
-            if ($row["noreservation"] == 0) {
+            if ($row["noreservation"] == 0 && $row["datum"]!="1900-01-01 00:00:01"]) {
                 $mailTemplate = $this->userMailTemplate($row);
-            } else {
+            } elseif($row["noreservation"] == 0 && $row["datum"]=="1900-01-01 00:00:01"]) {
+                $mailTemplate = $this->userMailTemplateManualBooking($row);
+            }elseif($row["noreservation"]==1){
                 $mailTemplate = $this->userMailTemplateWebDoctor($row);
             }
 
