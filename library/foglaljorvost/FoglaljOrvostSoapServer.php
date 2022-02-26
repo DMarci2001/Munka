@@ -201,7 +201,7 @@ class FoglaljOrvostSoapServer {
             sql_query("delete from foglalasok where fofid=? and fofid<>0", [$appointmentId]);
             return $this->messageOutput("0", $reservationData["id"]);
         }
-        return $this->messageOutput("NO_APPOINTMENT", "A foglalás nem található a klinika rendszerében");
+        return $this->messageOutput("NO_APPOINTMENT", "A foglalás nem található a klinika rendszerében, vagy időközben törölve lett");
     }
 
     public function messageOutput($code, $message) {

@@ -486,7 +486,8 @@ class AdminBookingEditor {
                 $_GET["page"] = $_POST["page"];
             }
 
-            $allowNewCompany = Booking_Constants::COMPANY_NAME_SHORT == "Hungariamed" ? 1:0;
+            //$allowNewCompany = Booking_Constants::SQL_DB == "hungariamed" ? 1:0;
+            $allowNewCompany = 1;
 
             $html .= "<br><input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});' value='Mentés'/>&nbsp;&nbsp;";
             //$html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
