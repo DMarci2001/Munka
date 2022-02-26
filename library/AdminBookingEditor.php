@@ -36,6 +36,9 @@ class AdminBookingEditor {
                 $_POST["szuldatum"] = str_replace(".", "", $_POST["szuldatum"]);
                 $_POST["szuldatum"] = str_replace("-", "", $_POST["szuldatum"]);
                 $_POST["szuldatum"] = substr($_POST["szuldatum"], 0, 4)."-".substr($_POST["szuldatum"], 4, 2)."-".substr($_POST["szuldatum"], 6, 2);
+                if (empty(str_replace("-", "", str_replace(" ", "", $_POST["szuldatum"])))) {
+                    $_POST["szuldatum"] = "";
+                }
             }
 
             //if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
@@ -82,7 +85,7 @@ class AdminBookingEditor {
                 sql_query("update foglalasok set paciensid=? where id=? and paciensid=0", [$_POST["paciensid"], $fid]);
             }
 
-            if (!empty($_POST["megj"])) {
+            if (isset($_POST["megj"])) {
                 sql_query("update foglalasok set megj=? where id=?", [$_POST["megj"], $fid]);
             }
 
@@ -448,7 +451,11 @@ class AdminBookingEditor {
             $html .= "<tr class='pdatarow'><td width='60'>Taj szám:</td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td><td width='60'>E-mail:</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Név:</td><td><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder' placeholder='Ide csak nevet írj' style='width:200px;' type='text' name='nev' value='{$row["nev"]}'></td><td width='60'>Telefon:</td><td><input data-taborder='8' class='inputbox ui-taborder' style='width:200px;' type='text' name='telefon' value='{$row["telefon"]}'></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Munkakör:</td><td><input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' value='{$row["munkakor"]}'></td><td width='60'>Irsz:</td><td><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder' style='width:40px;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:150px;' type='text' name='varos' id='varos' value='{$row["varos"]}'></td></tr>";
-            $html .= "<tr class='pdatarow'><td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td><td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
+            //if (session_id() == "13m7glnh2lgbkrnfo0usuvr1c1") {
+                $html .= "<tr class='pdatarow'><td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td><td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
+            //} else {
+            //    $html .= "<tr class='pdatarow'><td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td><td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td></tr>";
+            //}
             $html .= "<tr class='pdatarow'><td width='60'>Szül. hely:</td><td><input data-taborder='5'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szulhely' value='{$row["szulhely"]}'></td><td width='60'>Naplószám:</td><td><input data-taborder='12' class='inputbox ui-taborder' style='width:200px;' type='text' name='nszam' value='{$row["nszam"]}'></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td><td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$result['kuponkod']}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td></tr>";
             $html .= "<tr class='pdatarow'><td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> eljött <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td><td></td><td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td></tr>";
