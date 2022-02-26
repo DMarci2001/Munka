@@ -65,12 +65,14 @@ class NotificationService {
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
-            if ($row["noreservation"] == 0 && $row["datum"]!="1900-01-01 00:00:01"]) {
-                $mailTemplate = $this->userMailTemplate($row);
-            } elseif($row["noreservation"] == 0 && $row["datum"]=="1900-01-01 00:00:01"]) {
+            if ($row["datum"] == "1900-01-01 00:00:01") {
                 $mailTemplate = $this->userMailTemplateManualBooking($row);
-            }elseif($row["noreservation"]==1){
-                $mailTemplate = $this->userMailTemplateWebDoctor($row);
+            } else {
+                if ($row["noreservation"] == 0) {
+                    $mailTemplate = $this->userMailTemplate($row);
+                } else {
+                    $mailTemplate = $this->userMailTemplateWebDoctor($row);
+                }
             }
 
             $mail = $this->getDefaultMailer();
@@ -810,7 +812,7 @@ END:VCALENDAR";
                 <br/>
                 Az Ön által megadott adatokat sikeresen feldolgoztuk és leellenőriztük. <br/>
                 A " . $data["regdatum"] . " időpontban megadott oltási eseményt hitelesítettük, ha további kérdése lenne, kérem forduljon bizalommal a HR osztályhoz.<br/>
-                Köszönjük a részévételét a felmérésben!<br/>
+                Köszönjük a részvételét a felmérésben!<br/>
                 <br/>
                 Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
                 <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
@@ -834,7 +836,7 @@ END:VCALENDAR";
                 Telefonszám: +36 30 750 0257<br/>
                 E-mail: petrovszky.gergo@hungariamed.hu<br/>
                 <br/>
-                Köszönjük a részévételét a felmérésben!<br/>
+                Köszönjük a részvételét a felmérésben!<br/>
                 <br/>
                 Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
                 <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
