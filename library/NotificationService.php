@@ -855,4 +855,20 @@ END:VCALENDAR";
 
     }
 
+
+    public function newCompanyNotification($companyId) {
+        if ($companyData = sql_query("select * from cegek where id=?", [$companyId])->fetch(PDO::FETCH_ASSOC)) {
+            $adminUser = new AdminUser();
+            $mail = self::getDefaultMailer();
+
+            foreach (explode(",", Booking_Constants::REPORT_MAILS) as $email) {
+                $mail->addAddress(trim($email));
+            }
+
+            $mail->Subject = "Új cég rögzítve a ".Booking_Constants::FOOTER_COPYRIGHT." bejelentkezőbe";
+
+            $mail->Body = "Cég neve: {$companyData["megnev"]}<br/>Rögzítette: ".$adminUser->user["username"];
+            $mail->send();
+        }
+    }
 }

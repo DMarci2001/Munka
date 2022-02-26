@@ -7,6 +7,7 @@ class AdminBookingEditor {
     private $bookingService;
     private $beosztasService;
     private $user;
+    private $notificationService;
 
     public function __construct()
     {
@@ -15,6 +16,7 @@ class AdminBookingEditor {
         $this->bookingService = new BookingService();
         $this->beosztasService = new BeosztasService();
         $this->user = new AdminUser();
+        $this->notifyService = new NotificationService();
 
         if (isset($_GET["showidoponteditor"])) {
             echo $this->_showBookingEditor($_GET["showidoponteditor"], $_GET["p"]);
@@ -47,6 +49,7 @@ class AdminBookingEditor {
             if (!is_numeric($_POST["cegid"])) {
                 sql_query("insert into cegek set megnev=?, aktiv=1", [$_POST["cegid"]]);
                 $_POST["cegid"] = sql_insert_id();
+                $this->notifyService->newCompanyNotification($_POST["cegid"]);
             }
 
             sql_query("update foglalasok set
