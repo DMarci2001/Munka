@@ -21,6 +21,7 @@ class BookingService
     private $taj;
     private $adminUser;
     public $newReservationId;
+    public $munkakorVizsgalatok;
 
     public function __construct()
     {
@@ -28,6 +29,7 @@ class BookingService
         $this->beosztasService = new BeosztasService();
         $this->notificationService = new NotificationService();
         $this->adminUser = new AdminUser();
+        $this->munkakorVizsgalatok = new MunkakorVizsgalatok();
     }
 
 
