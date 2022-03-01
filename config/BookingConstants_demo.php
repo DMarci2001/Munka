@@ -56,4 +56,6 @@ class Booking_Constants {
 
     const DEFAULT_PLACE_IDS         = [1]; //jász utca
     const DEFAULT_COMPANY_ID       = 11;
+
+    const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com";
 }

@@ -663,7 +663,8 @@ class BookingPage extends CorePage
             echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
-        $submitButtonText = $webText["idopontfoglalasa"];
+        //$submitButtonText = $webText["idopontfoglalasa"];
+        $submitButtonText = $this->lang->getText("foglalasveglegesitese", "Foglalás véglegesítése");
 
         if ($this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
             $priceData = $this->bookingService->getPriceData($_POST["szurestipus"]);

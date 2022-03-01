@@ -17,6 +17,19 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_GET["delassets22222222222222"])) {
+            $docAgent = new DocAgent();
+            $images = sql_query("SELECT * FROM dokumentumok WHERE assetid IN ('covidpassimage', 'covidegsimage') order by id desc limit 1000")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($images as $image) {
+                echo $image["id"]. " ".$image["filename"]. " ";
+                //die;
+                $docAgent->deleteAsset($image["assetid"], $image["id"]);
+                //$docAgent->deleteDoc($image["id"], $image["kod"]);
+                //die;
+            }
+            die;
+        }
+
         if (isset($_GET["showfoto"])) {
             $service = new DocAgent();
             $service->outputAsset($_GET["showfoto"], $_GET["c"]);
@@ -526,7 +539,7 @@ class AdminAjaxService {
 
 
         if (isset($_POST["duplicatereservation"])) {
-            die("funkció kikapcsolva");
+            //die("funkció kikapcsolva");
 
             $num = 0;
             if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [$_POST["id"]]))) {
@@ -581,7 +594,7 @@ class AdminAjaxService {
                     $api->newReservation($fid);
 
                     $num++;
-                    if ($num == 30) {
+                    if ($num == 52) {
                         break;
                     }
                 }

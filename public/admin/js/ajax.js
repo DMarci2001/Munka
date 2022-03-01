@@ -469,6 +469,7 @@ function afterElojegyzesTableInit() {
     initDateFilterPicker();
     initIrszAutoFill();
     initTabOrder();
+    initDateInput();
 }
 
 function refreshNaptar(idopont) {
@@ -665,6 +666,7 @@ function showIdopontEditor(page, p, id) {
             initIrszAutoFill();
             initTabOrder();
             initTajEditor();
+            initDateInput();
         }
     });
 }
@@ -2338,6 +2340,31 @@ function initTabOrder() {
         }
     });
 }
+
+function initDateInput() {
+    var el = document.getElementById("editorszuldatum");
+
+    el.onkeyup = function(evt) {
+        if((evt.keyCode >= 48 && evt.keyCode <= 57) || (evt.keyCode >= 96 &&
+            evt.keyCode <= 105)) {
+            evt = evt || window.event;
+
+            var size = document.getElementById('editorszuldatum').value.length;
+
+            if ((size == 4 && document.getElementById('editorszuldatum').value > 2500)|| (size == 7 && Number(document.getElementById('editorszuldatum').value.split('-')[1]) > 12) || (size == 10 && Number(document.getElementById('editorszuldatum').value.split('-')[2]) > 31)) {
+                alert('Invalid Date');
+                document.getElementById('editorszuldatum').value = '';
+                return;
+            }
+
+            if ((size == 4 && document.getElementById('editorszuldatum').value < 2500)|| (size == 7 && Number(document.getElementById('editorszuldatum').value.split('-')[1]) < 13)) {
+                document.getElementById('editorszuldatum').value += '-';
+            }
+
+        }
+    }
+}
+
 
 function initGeneralSearch() {
     $("#generalsearch").keypress(function (e) {

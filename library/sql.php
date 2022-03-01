@@ -9,7 +9,8 @@ function sql_connect() {
     try {
         $GLOBALS["db"] = new PDO("mysql:host=".Booking_Constants::SQL_HOST.";dbname=".Booking_Constants::SQL_DB.";charset=utf8", Booking_Constants::SQL_USER, Booking_Constants::SQL_PASS);
     } catch (PDOException $e) {
-        print "Error: " . $e->getMessage();
+        echo "Error 1420<br/>Kérjük próbálkozzon később!";
+        //print "Error: " . $e->getMessage();
         die();
     }
 }

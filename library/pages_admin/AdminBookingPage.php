@@ -540,6 +540,10 @@ class AdminBookingPage extends AdminCorePage
             $reservationData["megj"] = "<span style='color:red;border:1px solid red;padding:0px 2px;'>nem jött el</span> ".$reservationData["megj"];
         }
 
+        if ($munkakorVizsgalat = $this->bookingService->munkakorVizsgalatok->getMunkakorVizsgalat($reservationData["munkakor"])) {
+            $reservationData["megj"] = "<span title='Munkakör alapján szükséges plusz vizsgálatok' style='cursor:pointer;background:red;color:white;border:1px solid red;padding:0px 2px;'>+ {$munkakorVizsgalat}</span> ".$reservationData["megj"];
+        }
+
         if ($reservationData["nev"] == "nincs név") {
             $reservationData["nev"] = "Foglalt";
         }

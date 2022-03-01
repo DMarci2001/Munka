@@ -123,6 +123,7 @@ class DicomService {
                 }
             }
 
+            $patientUniqueId= md5(trim($patientName).trim($patientBirthDate).trim($patientOtherIDs));
 
             if ($institutionName == "Az intézet neve") {
                 $institutionName = "KeltexMed";
@@ -133,7 +134,7 @@ class DicomService {
             echo "storing {$patientName}\n";
 
             sql_query("insert into dicom set contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, manufacturer=?, manufacturerModelName=?, institutionName=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
-                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientID, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $manufacturer, $manufacturerModelName, $institutionName]);
+                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientUniqueId, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $manufacturer, $manufacturerModelName, $institutionName]);
 
         }
 

@@ -106,12 +106,12 @@ class ElsosegelyVizsgaPage extends CorePage {
         [
             "username" => "teszt",
             "password" => "teszt2",
-            "validuntil" => "2021-12-31 00:00:00"
+            "validuntil" => "2022-12-31 00:00:00"
         ],
         [
             "username" => "teszt2",
             "password" => "teszt3",
-            "validuntil" => "2021-12-31 00:00:00"
+            "validuntil" => "2022-12-31 00:00:00"
         ],
     ];
 
