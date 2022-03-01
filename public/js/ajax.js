@@ -29,7 +29,7 @@ function myAlert(szoveg, tipus) {
 function manualBookingConfirm(orvos){
     swal({
         title: "Időpont egyeztetés szükséges!",
-        text: "Az időpontfoglalást kollégánk végzi el, további egyeztetés céljából felfogja venni Önnel a kapcsolatot az itt megadott e-mail cimen keresztül. Kérem, a megjegyzés rovatban adjon meg egy intervallumot, amikor Önnek megfelelő lenne az időpontfoglalás az itt látható naptárt alapul véve.",
+        text: "Kedves Ügyfelünk! Az online időpont foglalás technikai okok miatt ebben a rendelőnkben jelenleg nem működik. Az időpont foglalásában egyik kolléganőnk fog segíteni Önnek. Kérem, a megjegyzés rovatban adjon meg egy időpontot vagy időintervallumot, amikor Önnek megfelelő a vizsgálat a felületen látható naptárat alapul véve. Eszerint kolléganőnk hamarosan keresni fogja email-ben javasolt időpontokkal.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#b90000',
