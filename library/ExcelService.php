@@ -205,39 +205,6 @@ class ExcelService {
         $this->spreadSheet = $spreadsheet;
     }
 
-    /*
-
-        "szakrendelesek": {
-        "Foglalkoz\u00e1s-eg\u00e9szs\u00e9g\u00fcgy": {
-            "name": "Foglalkoz\u00e1s-eg\u00e9szs\u00e9g\u00fcgy",
-            "db": 30,
-            "normaido": 15,
-            "osszesido": 560,
-            "atlagido": 18.67,
-            "orvosok": {
-                "Dr. Nagy K\u00e1roly": {
-                    "name": "Dr. Nagy K\u00e1roly",
-                    "db": 8,
-                    "nover": "",
-                    "mintime": "2021-10-06 08:07:06",
-                    "maxtime": "2021-10-06 09:25:06",
-                    "osszesido": 93,
-                    "atlagido": 11.63,
-                    "beo": "07:00 - 09:00"
-                },
-                "Dr. Orosz Edit": {
-                    "name": "Dr. Orosz Edit",
-                    "db": 22,
-                    "nover": "",
-                    "mintime": "2021-10-06 08:08:06",
-                    "maxtime": "2021-10-06 15:40:06",
-                    "osszesido": 467,
-                    "atlagido": 21.23,
-                    "beo": "nincs megadva"
-                }
-            }
-        },
-    */
 
     private function setAutoWidth($range) {
         foreach($range as $columnID) {
@@ -245,88 +212,171 @@ class ExcelService {
         }
     }
 
-    public function napiStat($rawInput) {
+
+    private function _vizsgalatKimutatas($sheetId, $rawInput, $from, $to) {
         $salaryService = new SalaryCalculator();
-        $spreadsheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-
-
-
-        //echo "fejlesztés alatt..<br/>";
-        //die();
-        /*
-        vizsgálatok kimutatás tab
-        */
-        $this->sheet = $spreadsheet->getActiveSheet();
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("Vizsgálatok-kimutatás");
 
-        $data = json_decode($rawInput["finalresult"], JSON_OBJECT_AS_ARRAY);
-        $day = $data["day"];
+        if (isset($data["day"])) {
+            $data = json_decode($rawInput["finalresult"], JSON_OBJECT_AS_ARRAY);
+            $day = $data["day"];
 
-        $this->titleRow("A1", "Napi statisztika - {$day}");
+            $this->titleRow("A1", "Napi statisztika - {$day}");
 
 
-        $sor = 3;
-        $this->headingRow("B", $sor, ["Terület", "Ellátott paciensek", "Összes vizsgálati idő", "Átlagos vizsgálati idő"]);
-        $sor ++;
-
-        $total = $totalTime = 0;
-        foreach ($data["szakrendelesek"] as $szakrendelesData) {
-            $this->dataRow("B", $sor, [$szakrendelesData["name"], $szakrendelesData["db"], $szakrendelesData["osszesido"], $szakrendelesData["atlagido"]]);
+            $sor = 3;
+            $this->headingRow("B", $sor, ["Terület", "Ellátott paciensek", "Összes vizsgálati idő", "Átlagos vizsgálati idő"]);
             $sor++;
 
-            $total+= $szakrendelesData["db"];
-            $totalTime+= $szakrendelesData["osszesido"];
-        }
-        $this->totalRow("B", $sor, ["Összesen:", $total, $totalTime, round($totalTime/$total, 2)]);
-        $sor++;
-
-        $sor++;
-
-        foreach ($data["szakrendelesek"] as $szakrendelesData) {
-            $this->titleRow("A{$sor}", "{$szakrendelesData["name"]}");
-            $sor += 2;
-
-            $this->headingRow("A", $sor, ["Orvos", "Nővér", "Beosztás", "Ellátott paciensek", "Összes vizsgálati idő", "Átlagos vizsgálati idő", "Költség", "Költségelemek"]);
-            $sor++;
-
-            $total = $totalTime = $totalPrice = 0;
-            foreach ($szakrendelesData["orvosok"] as $orvosData) {
-                $salaryService->manualNumberOfPatients = $orvosData["db"];
-                $salaryService->manualNumberOfHours = round($orvosData["osszesido"]/60,2);
-                $doctorSalary = $salaryService->getDoctorSalary($orvosData["name"], $day, $day);
-                $salaryTextData = $salaryService->getSalaryText($doctorSalary);
-
-                //echo print_r($salaryTextData["text"], true);
-                //die;
-
-                $this->dataRow("A", $sor, [$orvosData["name"], $orvosData["nover"], $orvosData["beo"], $orvosData["db"], $orvosData["osszesido"], $orvosData["atlagido"], $salaryTextData["total"], implode(" + ", $salaryTextData["text"])]);
+            $total = $totalTime = 0;
+            foreach ($data["szakrendelesek"] as $szakrendelesData) {
+                $this->dataRow("B", $sor, [$szakrendelesData["name"], $szakrendelesData["db"], $szakrendelesData["osszesido"], $szakrendelesData["atlagido"]]);
                 $sor++;
-                $total+= $orvosData["db"];
-                $totalTime+= $orvosData["osszesido"];
-                $totalPrice+= $salaryTextData["total"];
+
+                $total += $szakrendelesData["db"];
+                $totalTime += $szakrendelesData["osszesido"];
+            }
+            $this->totalRow("B", $sor, ["Összesen:", $total, $totalTime, round($totalTime / $total, 2)]);
+            $sor++;
+
+            $sor++;
+
+            foreach ($data["szakrendelesek"] as $szakrendelesData) {
+                $this->titleRow("A{$sor}", "{$szakrendelesData["name"]}");
+                $sor += 2;
+
+                $this->headingRow("A", $sor, ["Orvos", "Nővér", "Beosztás", "Ellátott paciensek", "Összes vizsgálati idő", "Átlagos vizsgálati idő", "Költség", "Költségelemek"]);
+                $sor++;
+
+                $total = $totalTime = $totalPrice = 0;
+                foreach ($szakrendelesData["orvosok"] as $orvosData) {
+                    $salaryService->manualNumberOfPatients = $orvosData["db"];
+                    $salaryService->manualNumberOfHours = round($orvosData["osszesido"] / 60, 2);
+                    $doctorSalary = $salaryService->getDoctorSalary($orvosData["name"], $day, $day);
+                    $salaryTextData = $salaryService->getSalaryText($doctorSalary);
+
+                    //echo print_r($salaryTextData["text"], true);
+                    //die;
+
+                    $this->dataRow("A", $sor, [$orvosData["name"], $orvosData["nover"], $orvosData["beo"], $orvosData["db"], $orvosData["osszesido"], $orvosData["atlagido"], $salaryTextData["total"], implode(" + ", $salaryTextData["text"])]);
+                    $sor++;
+                    $total += $orvosData["db"];
+                    $totalTime += $orvosData["osszesido"];
+                    $totalPrice += $salaryTextData["total"];
+                }
+
+                $this->totalRow("A", $sor, ["Összesen:", "", "", $total, $totalTime, round($totalTime / $total, 2), $totalPrice]);
+                $sor++;
+
+                //$this->dataRow("B", $sor, [$szakrendelesData["name"], $szakrendelesData["db"], $szakrendelesData["osszesido"], $szakrendelesData["atlagido"]]);
+                $sor++;
             }
 
-            $this->totalRow("A", $sor, ["Összesen:", "", "", $total, $totalTime, round($totalTime/$total, 2), $totalPrice]);
+            $this->setAutoWidth(range('A', 'H'));
+        }
+    }
+
+    private function _bejelentkezoFoglalasokLista($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Foglalások lista");
+        $this->titleRow("A1", "Foglalások - {$from} - {$to} (forrás: bejelentkező)");
+        $this->sheet->SetCellValue("A2", "* csak eljöttek");
+
+        $sor = 4;
+
+        $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
+            LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($tipusok as $tipus) {
+            $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
+            $sor+=2;
+
+            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum","Megjegyzés"]);
             $sor++;
 
-            //$this->dataRow("B", $sor, [$szakrendelesData["name"], $szakrendelesData["db"], $szakrendelesData["osszesido"], $szakrendelesData["atlagido"]]);
+            $reservations = sql_query("SELECT t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
+                LEFT JOIN orvosok o ON o.id=f.orvosassigned
+                LEFT JOIN cegek c ON c.id=f.cegid
+                LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+
+
+            foreach ($reservations as $reservation) {
+                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["megj"]]);
+                $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+                $sor++;
+            }
             $sor++;
         }
 
-        $this->setAutoWidth(range('A','H'));
+        $this->setAutoWidth(range('B','K'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
 
-        //error_reporting(E_ALL);
-        //ini_set('display_errors', 1);
+    private function _kiegeszitoFoglalasokLista($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Kiegészítő vizsgálatok");
+        $this->titleRow("A1", "Kiegészítő vizsgálatok - {$from} - {$to} (forrás: bejelentkező)");
+        $this->sheet->SetCellValue("A2", "* csak eljöttek, és megjegyzésben szerepel a 'kiegészítő' szó");
 
-        /*
-        vizsgálatok lista tab
-        */
-        $spreadsheet->createSheet();
-        $spreadsheet->setActiveSheetIndex(1);
-        $this->sheet = $spreadsheet->getActiveSheet();
-        $this->sheet->setTitle("Vizsgálat lista");
-        $this->titleRow("A1", "Vizsgálatok - {$day} (forrás: dokirex)");
+        $sor = 4;
+
+        $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
+            LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' and f.eljott=1 and f.`szurestipusid` IN (102, 85, 103, 101) and instr(f.megj, 'kiegészítő') GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($tipusok as $tipus) {
+            $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
+            $sor+=2;
+
+            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum","Megjegyzés"]);
+            $sor++;
+
+            $reservations = sql_query("SELECT t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
+                LEFT JOIN orvosok o ON o.id=f.orvosassigned
+                LEFT JOIN cegek c ON c.id=f.cegid
+                LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? and f.eljott=1 and f.`szurestipusid` IN (102, 85, 103, 101) and instr(f.megj, 'kiegészítő') order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+
+
+            foreach ($reservations as $reservation) {
+                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["megj"]]);
+                $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+                $sor++;
+            }
+            $sor++;
+
+        }
+
+        $this->setAutoWidth(range('B','K'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
+
+    private function _dokirexVizsgalatokLista($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Dokirex vizsgálat lista");
+        $this->titleRow("A1", "Vizsgálatok - {$from} - {$to} (forrás: dokirex)");
 
         $data = json_decode($rawInput["dokirexvizsgalatokresult"], JSON_OBJECT_AS_ARRAY);
 
@@ -340,63 +390,129 @@ class ExcelService {
         });
 
         foreach ($data as $item) {
-            $this->dataRow("A", $sor, [$item["datum"], $item["nev"], $item["szakrendeles"], $item["orvos"], $item["paciensid"], $item["szuldatum"], $item["telephely"], $item["munkakor"], $item["korlatozas"], $item["alkalmas"], $item["szamla"]]);
+            $this->dataRow("A", $sor, [$item["datum"], $item["nev"], $item["szakrendeles"], $item["orvos"], $item["paciensid"], $item["szuldatum"], $item["telephely"], $item["munkakor"], $item["korlatozas"], $item["alkalmassag"], $item["szamla"]]);
             $sor++;
         }
 
         $this->setAutoWidth(range('B','K'));
         $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
 
-        /*
-        bejelentkező foglalások lista tab
-        */
-        $spreadsheet->createSheet();
-        $spreadsheet->setActiveSheetIndex(2);
-        $this->sheet = $spreadsheet->getActiveSheet();
-        $this->sheet->setTitle("Foglalások lista");
-        $this->titleRow("A1", "Foglalások - {$day} (forrás: bejelentkező)");
+
+    public function _rtgLista($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("RTG lista");
+
+        $data = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName=? GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$from, $to, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->titleRow("A1", " RTG lista {$from} - {$to}");
+
+        //lista
+        $sor = 5;
+        $this->headingRow("A", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "Cég", "db"]);
+
+        $sor++;
+        $total = $totalImage = 0;
+        foreach ($data as $rowData) {
+            $this->dataRow("A", $sor, [$rowData["contentDate"], $rowData["patientName"], $rowData["patientBirthDate"], $rowData["patientOtherIDs"], $rowData["studyDescription"], $rowData["db"]]);
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            $total ++;
+            $totalImage += $rowData["db"];
+            $sor++;
+        }
+
+        $this->sheet->getColumnDimension('A')->setWidth(30);
+        $this->sheet->getColumnDimension('A')->setWidth(30);
+        $this->sheet->getColumnDimension('B')->setWidth(40);
+        $this->sheet->getColumnDimension('C')->setWidth(20);
+        $this->sheet->getColumnDimension('D')->setWidth(40);
+        $this->sheet->getColumnDimension('E')->setWidth(20);
 
         $sor = 3;
+        $this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);
+    }
 
-        $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
-            LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-            WHERE f.datum>'{$day} 00:00:00' AND f.datum<'{$day} 23:59:59' and f.eljott=1 GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
-
-
-        foreach ($tipusok as $tipus) {
-            $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
-            $sor+=2;
-
-            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum","Eljött"]);
-            $sor++;
-
-            $reservations = sql_query("SELECT t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
-                LEFT JOIN orvosok o ON o.id=f.orvosassigned
-                LEFT JOIN cegek c ON c.id=f.cegid
-                LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-                WHERE datum>'{$day} 00:00:00' AND datum<'{$day} 23:59:59' and f.szurestipusid=? order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
-
-
-            foreach ($reservations as $reservation) {
-                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["eljott"]==1?"igen":""]);
-                $sor++;
-            }
-            $sor++;
-
+    public function _cegEsOrvosStat($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
         }
 
-        $this->setAutoWidth(range('B','K'));
-        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Cég és orvos stat");
+
+        $this->titleRow("A1", "Cég és orvos statisztika {$from} - {$to}");
+
+        $companyStat = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS foglalasok, SUM(IF(f.eljott=1, 1, 0)) AS eljott FROM foglalasok f
+            LEFT JOIN cegek c ON c.id=f.cegid
+            WHERE f.aktiv=1 AND f.nev NOT IN ('nincs név', 'ne foglalj', 'ebéd', 'ebédszünet')
+            AND datum>? AND datum<=? AND f.`externalid`=''
+            GROUP BY c.id, megnev ORDER BY c.megnev", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+
+        $doctorStat = sql_query("SELECT o.nev AS orvos, COUNT(*) AS foglalasok, SUM(IF(eljott=1, 1, 0)) AS eljott FROM foglalasok f
+            LEFT JOIN orvosok o ON o.id=f.orvosassigned
+            WHERE f.aktiv=1 AND f.nev NOT IN ('nincs név', 'ne foglalj', 'ebéd', 'ebédszünet')
+            AND datum>=? AND datum<=? AND f.`externalid`=''
+            GROUP BY (IF (o.parentoid<>0, o.parentoid, o.id)) ORDER BY o.nev", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
 
-        /*
-        beosztások lista tab
-        */
-        $spreadsheet->createSheet();
-        $spreadsheet->setActiveSheetIndex(3);
-        $this->sheet = $spreadsheet->getActiveSheet();
+        //céges stat
+        $sor = 3;
+        $this->headingRow("A", $sor, ["Cég", "Foglalások", "Eljött"]);
+
+        $sor++;
+        $total = $totaleljott = 0;
+        foreach ($companyStat as $rowData) {
+            if (empty($rowData["ceg"])) {
+                $rowData["ceg"] = "nincs megadva";
+            }
+            $this->dataRow("A", $sor, [$rowData["ceg"], $rowData["foglalasok"], $rowData["eljott"]]);
+            $total += $rowData["foglalasok"];
+            $totaleljott += $rowData["eljott"];
+            $sor++;
+        }
+
+        $this->totalRow("A", $sor, ["Összesen:", $total, $totaleljott]);
+        $this->sheet->getColumnDimension('A')->setWidth(40);
+
+        //orvos stat
+        $sor = 3;
+        $this->headingRow("E", $sor, ["Orvos", "Foglalások", "Eljött"]);
+
+        $sor++;
+        $total = $totaleljott = 0;
+        foreach ($doctorStat as $rowData) {
+            $this->dataRow("E", $sor, [$rowData["orvos"], $rowData["foglalasok"], $rowData["eljott"]]);
+            $total += $rowData["foglalasok"];
+            $totaleljott += $rowData["eljott"];
+            $sor++;
+        }
+
+        $this->totalRow("E", $sor, ["Összesen:", $total, $totaleljott]);
+        $this->sheet->getStyle("E{$sor}:G{$sor}")->getFont()->setBold(true);
+
+        $this->sheet->getColumnDimension('E')->setWidth(40);
+    }
+
+    private function _beosztasLista($sheetId, $rawInput, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+
         $this->sheet->setTitle("Beosztás lista");
-        $this->titleRow("A1", "Beosztások - {$day}");
+
+        if ($from != $to) {
+            $this->titleRow("A1", "A beosztás lista csak napi lekérdezés esetén elérhető!");
+            return;
+        }
+
+        $this->titleRow("A1", "Beosztások - {$from}");
 
         $data = json_decode($rawInput["beosztasresult"], JSON_OBJECT_AS_ARRAY);
 
@@ -411,18 +527,20 @@ class ExcelService {
 
         $this->setAutoWidth(range('A','K'));
         $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
 
+    private function _fizetesLista($sheetId, $rawInput, $from, $to) {
+        $salaryService = new SalaryCalculator();
 
-        /*
-        fizetések tab
-        */
-        $spreadsheet->createSheet();
-        $spreadsheet->setActiveSheetIndex(4);
-        $this->sheet = $spreadsheet->getActiveSheet();
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("Bérek");
-        $this->titleRow("A1", "{$day} napon aktuális bérek");
+        $this->titleRow("A1", "{$from} napon aktuális bérek");
 
-        $salaryList = $salaryService->getAllSalaryDataForDay($day);
+        $salaryList = $salaryService->getAllSalaryDataForDay($from);
 
         $sor = 3;
         $this->headingRow("A", $sor, ["Dolgozó", "Összeg", "Elszámolás", "Érvényesség", "Megjegyzés"]);
@@ -440,15 +558,25 @@ class ExcelService {
 
         $this->setAutoWidth(range('A','K'));
         $this->sheet->getColumnDimension('A')->setWidth(20);
-
-
-
-        $spreadsheet->setActiveSheetIndex(0);
-        $this->spreadSheet = $spreadsheet;
     }
 
 
-    /*
+    public function napiStat($rawInput, $from, $to) {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-    */
+        //error_reporting(E_ALL);
+        //ini_set('display_errors', 1);
+
+        //$this->_vizsgalatKimutatas(0, $rawInput, $from, $to);
+        $this->_bejelentkezoFoglalasokLista(0, $rawInput, $from, $to);
+        $this->_kiegeszitoFoglalasokLista(1, $rawInput, $from, $to);
+        $this->_dokirexVizsgalatokLista(2, $rawInput, $from, $to);
+        $this->_beosztasLista(3, $rawInput, $from, $to);
+        $this->_rtgLista(4, $rawInput, $from, $to);
+        $this->_cegEsOrvosStat(5, $rawInput, $from, $to);
+        //$this->_fizetesLista(4, $rawInput, $from, $to);
+
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
 }

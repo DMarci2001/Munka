@@ -22,6 +22,9 @@ class DailyStatService {
         }
 
         if (isset($_REQUEST["downloaddailystatfile"])) {
+            //error_reporting(E_ALL);
+            //ini_set('display_errors', 1);
+
             $from = $_REQUEST["downloaddailystatfile"];
             $to = $_REQUEST["dayTo"];
             if (empty($_SESSION["lastgeneratedstat"])) {
@@ -35,7 +38,7 @@ class DailyStatService {
             }
 
             $excelService = new ExcelService();
-            $excelService->napiStat($data);
+            $excelService->napiStat($data, $from, $to);
             $excelService->setFileName($fileName);
             $excelService->outputSpreadSheet();
         }
@@ -116,10 +119,8 @@ class DailyStatService {
     */
 
     private function processUploadedFile($uploadedFile, $day) {
-
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
-
 
         if (is_uploaded_file($uploadedFile["tmp_name"])) {
             $ok = false;
@@ -145,40 +146,70 @@ class DailyStatService {
 
                 if (!empty($sheet)) {
                     $testCell = $sheet->getCell("A1")->getValue();
-                    if ($testCell == "Vizsgalat/UtolsoModositasDatuma") {
-                        //$result = [];
+                    $testCellKieg = $sheet->getCell("H1")->getValue();
+                    if ($testCell == "Vizsgalat/UtolsoModositasDatuma" || $testCell == "Vizsgalat/FelvetelDatuma") {
                         $rowNr = 2;
-                        while (true) {
-                            $datum = $sheet->getCell("A{$rowNr}")->getFormattedValue();
+                        if ($testCellKieg == "Egyedi/Tüdőszűrő helyszíne") {
+                            //kiegészítő vizsgálatos tábla
+                            while (true) {
+                                $datum = $sheet->getCell("A{$rowNr}")->getFormattedValue();
+                                $modDatum = $sheet->getCell("P{$rowNr}")->getFormattedValue();
+                                if (empty($datum)) {
+                                    break;
+                                }
 
-                            if (empty($datum)) {
-                                break;
+                                $datum = date("Y-m-d H:i:s", strtotime(str_replace(".", "-", $datum)));
+                                $modDatum = date("Y-m-d H:i:s", strtotime(str_replace(".", "-", $modDatum)));
+                                $nev = $sheet->getCell("B{$rowNr}")->getValue();
+
+                                $row = [
+                                    "tudoszuro" => trim($sheet->getCell("H{$rowNr}")->getValue()) == "1117 Budapest, Fehérvári út 44." ? 1:0,
+                                    "ekg" => trim($sheet->getCell("J{$rowNr}")->getValue()) == "Nem" ? 0:1,
+                                    "hallasvizsgalat" => trim($sheet->getCell("K{$rowNr}")->getValue()) == "Nem" ? 0:1,
+                                    "labor" => trim($sheet->getCell("N{$rowNr}")->getValue()) == "" ? 0:1,
+                                    "datum" => $datum,
+                                    "moddatum" => $modDatum,
+                                    "nev" => $nev
+                                ];
+
+                                sql_query("update dokirex_vizsgalatok set tudoszuro=:tudoszuro, ekg=:ekg, hallasvizsgalat=:hallasvizsgalat, labor=:labor, datum=:datum, updated=1 where moddatum=:moddatum and nev=:nev", $row);
+
+                                $rowNr++;
                             }
+                        } else {
+                            //$result = [];
+                            while (true) {
+                                $datum = $sheet->getCell("A{$rowNr}")->getFormattedValue();
 
-                            $datum = str_replace(".", "-", $datum);
+                                if (empty($datum)) {
+                                    break;
+                                }
 
-                            $row = [
-                                "datum" => date("Y-m-d H:i:d", strtotime($datum)),
-                                "nev" => $sheet->getCell("B{$rowNr}")->getValue(),
-                                "szakrendeles" => $sheet->getCell("C{$rowNr}")->getValue(),
-                                "orvos" => $sheet->getCell("D{$rowNr}")->getValue(),
-                                "paciensid" => $sheet->getCell("E{$rowNr}")->getValue(),
-                                "szuldatum" => $sheet->getCell("F{$rowNr}")->getValue(),
-                                "telephely" => $sheet->getCell("G{$rowNr}")->getValue(),
-                                "munkakor" => $sheet->getCell("H{$rowNr}")->getValue(),
-                                "korlatozas" => $sheet->getCell("I{$rowNr}")->getValue(),
-                                "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
-                                "ervenyesseg" => date("Y-m-d H:i:d", strtotime($sheet->getCell("K{$rowNr}")->getValue()))
-                            ];
+                                $datum = str_replace(".", "-", $datum);
 
-                            sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
-                            sql_query("insert into dokirex_vizsgalatok set 
-                                    datum=:datum, nev=:nev,
+                                $row = [
+                                    "datum" => date("Y-m-d H:i:s", strtotime($datum)),
+                                    "nev" => $sheet->getCell("B{$rowNr}")->getValue(),
+                                    "szakrendeles" => $sheet->getCell("C{$rowNr}")->getValue(),
+                                    "orvos" => $sheet->getCell("D{$rowNr}")->getValue(),
+                                    "paciensid" => $sheet->getCell("E{$rowNr}")->getValue(),
+                                    "szuldatum" => $sheet->getCell("F{$rowNr}")->getValue(),
+                                    "telephely" => $sheet->getCell("G{$rowNr}")->getValue(),
+                                    "munkakor" => $sheet->getCell("H{$rowNr}")->getValue(),
+                                    "korlatozas" => $sheet->getCell("I{$rowNr}")->getValue(),
+                                    "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
+                                    "ervenyesseg" => date("Y-m-d H:i:s", strtotime($sheet->getCell("K{$rowNr}")->getValue()))
+                                ];
+
+                                sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                                sql_query("insert into dokirex_vizsgalatok set 
+                                    datum=:datum, moddatum=:datum, nev=:nev,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
                                     paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
                                     korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg", $row);
 
-                            $rowNr++;
+                                $rowNr++;
+                            }
                         }
                     }
                     return "";

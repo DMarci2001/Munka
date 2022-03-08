@@ -12,6 +12,9 @@ class AdminBookingPage extends AdminCorePage
         parent::__construct();
         $this->bookingService = new BookingService();
 
+        $GLOBALS["css"][] = "dailystat.css";
+        $GLOBALS["javascript"][] = "dailystat.js";
+
         if (!isset($_SESSION["helyszin"])) $_SESSION["helyszin"] = 0;
         if (!isset($_SESSION["helyszinceg"])) $_SESSION["helyszinceg"] = 0;
         if (!isset($_SESSION["naptarszurestipus"])) $_SESSION["naptarszurestipus"] = 0;
@@ -503,6 +506,13 @@ class AdminBookingPage extends AdminCorePage
         } else {
             $htmlout = str_replace("#tipuslinksplace#", "", $htmlout);
         }
+
+        if ($this->adminUser->statAccess() && strtotime($nap) < strtotime(date("Y-m-d"))) {
+            $htmlout .= "<div style='margin-top:20px;padding-top:20px;border-top:1px solid #888;'>";
+            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$nap\", \"$nap\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika {$nap}</div>";
+            $htmlout .= "</div>";
+        }
+
 
         return $htmlout;
     }
