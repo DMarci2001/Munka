@@ -605,6 +605,18 @@ class AdminAjaxService {
             echo "Foglalás ismételve {$num} alkalommal";
             die;
         }
+
+        if (isset($_GET["mailteszt"])) {
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+            error_reporting(E_ALL);
+
+            $service = new NotificationService();
+            $service->tesztMessage();
+
+            echo "mailteszt";
+            die;
+        }
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {

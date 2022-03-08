@@ -15,7 +15,7 @@ class NotificationService {
         $mail = new PHPMailer();
 
         $mail->isSMTP();
-        $mail->Host = "webmail.hungariamed.hu";
+        $mail->Host = "mail.hungariamed.hu";
         $mail->SMTPAuth = true;
         $mail->Username = "web@hungariamed.hu";
         $mail->Password = "The9vae1";
@@ -873,4 +873,14 @@ END:VCALENDAR";
             $mail->send();
         }
     }
+
+    public function tesztMessage() {
+        $mail = self::getDefaultMailer();
+
+        $mail->addAddress("jnsmobil@gmail.com");
+        $mail->Subject = "Új teszt mail";
+        $mail->Body = "ez egy teszt mail";
+        $mail->send();
+    }
+
 }

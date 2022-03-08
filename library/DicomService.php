@@ -129,6 +129,10 @@ class DicomService {
                 $institutionName = "KeltexMed";
             }
 
+            if ($manufacturer == "PROTEC") {
+                $institutionName = "Hungáriamed-M Győr";
+            }
+
             $contentDate = substr($contentDate,0,4)."-".substr($contentDate,4,2)."-".substr($contentDate,6,2)." ".substr($contentTime,0,2).":".substr($contentTime,2,2).":".substr($contentTime,4,2);
 
             echo "storing {$patientName}\n";
