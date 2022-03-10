@@ -12,7 +12,7 @@ class AdminStatPage extends AdminCorePage {
         parent::__construct();
 
         if (!isset($_SESSION["idoszak"])) {
-            $_SESSION["idoszak"] = date("Y-m");
+            $_SESSION["idoszak"] = date("Y-m", strtotime("now -1 month"));
         }
         if (isset($_GET["idoszak"])) {
             $_SESSION["idoszak"]=$_GET["idoszak"];
@@ -59,9 +59,12 @@ class AdminStatPage extends AdminCorePage {
         $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
 
         $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a></div>";
-        $html.= "<table cellpadding='0' cellspacing='4' border='0' style='margin-top:10px;'>";
+        $html.= "<div style='margin-top:10px;'>* csak eljöttek</div>";
 
-        $html.= "<tr><td colspan='10' style='background:#eee;font-size:16px;color:#888;padding:5px 10px;margin-top:20px;'>{$rowc["megnev"]}</td></tr>";
+        $html.= "<h1>{$rowc["megnev"]} foglalásai</h1>";
+
+        $html.= "<table cellpadding='4' cellspacing='0' border='0' style='margin-top:10px;'>";
+
         $reso = sql_query("SELECT o.nev AS orvosnev,h.cim AS helyszincim,t.`megnev` AS szurestipus,COUNT(*) AS hany,SUM(eljott) AS hanyeljott,f.* FROM foglalasok f
         LEFT JOIN orvosok o ON o.id=f.orvosassigned
         LEFT JOIN szurestipusok t ON t.`id`=f.`szurestipusid`
@@ -70,24 +73,24 @@ class AdminStatPage extends AdminCorePage {
         GROUP BY orvosassigned,szurestipusid	
         ORDER BY orvosnev", array($this->tol, $this->ig, $rowc["id"]));
 
-        $html.= "<tr>";
-        $html.= "<td>Orvos</td>";
-        $html.= "<td>Szűréstípus</td>";
-        $html.= "<td align='right'>Összes időpont</td>";
-        $html.= "<td align='right'>Ebből eljött</td>";
-        $html.= "<td>&nbsp;</td>";
+        $html.= "<tr style='font-weight: bold;'>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Orvos</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Szűréstípus</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;text-align: right;'>Összes foglalás</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;text-align: right;'>Ebből eljött</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;text-align: right;'>&nbsp;</td>";
         $html.= "</tr>";
         while ($rowo = sql_fetch_array($reso)) {
             $html.= "<tr>";
             $html.= "<td>{$rowo["orvosnev"]}</td>";
             $html.= "<td>{$rowo["szurestipus"]}</td>";
-            $html.= "<td align='right'>{$rowo["hany"]}</td>";
-            $html.= "<td align='right'>{$rowo["hanyeljott"]}</td>";
-            $html.= "<td align='right'>&nbsp;&nbsp;&nbsp;[<a href='#' onclick='$(\"#orvosdetail{$rowo["orvosassigned"]}\").toggle();return false;'>részletek</a>]</td>";
+            $html.= "<td style='text-align: right;'>{$rowo["hany"]}</td>";
+            $html.= "<td style='text-align: right;'>{$rowo["hanyeljott"]}</td>";
+            $html.= "<td style='text-align: right;'>&nbsp;&nbsp;&nbsp;[<a href='#' onclick='$(\"#orvosdetail{$rowo["orvosassigned"]}\").toggle();return false;'>részletek</a>]</td>";
             $html.= "</tr>";
 
-            $html.= "<tr><td colspan='10'>";
-            $html.= "<div id='orvosdetail{$rowo["orvosassigned"]}' style='background:#eee;padding:5px;display:inline-block;display:none;'>";
+            $html.= "<tr id='orvosdetail{$rowo["orvosassigned"]}' style='display:none;'><td colspan='10'>";
+            $html.= "<div style='background:#eee;padding:5px;'>";
 
 
             $html.= "<table cellpadding='0' cellspacing='4' border='0' style=''>";
@@ -95,12 +98,10 @@ class AdminStatPage extends AdminCorePage {
             $ress = sql_query("SELECT o.nev AS orvosnev,h.cim AS helyszincim,f.* FROM foglalasok f
             LEFT JOIN orvosok o ON o.id=f.orvosassigned
             LEFT JOIN helyszinek h ON h.id=f.helyszinid
-            WHERE f.datum>? and f.datum<? and f.aktiv=1 AND f.cegid=? and f.orvosassigned=? AND (f.taj<>'' OR f.nev<>'') AND f.nev<>'nincs név' 
+            WHERE f.datum>? and f.datum<? and f.aktiv=1 AND f.cegid=? and f.orvosassigned=? AND (f.taj<>'' OR f.nev<>'') AND f.nev<>'nincs név' and f.eljott=1
             order by datum", array($this->tol, $this->ig, $rowc["id"], $rowo["orvosassigned"]));
 
-            $html.= "<tr>";
-            $html.= "<td title='Eljött'>E</td>";
-            $html.= "<td title='Alkalmasság'>A</td>";
+            $html.= "<tr style='font-weight: bold;'>";
             $html.= "<td>Foglalás időpontja</td>";
             $html.= "<td>Név</td>";
             $html.= "<td>Telefon</td>";
@@ -108,17 +109,9 @@ class AdminStatPage extends AdminCorePage {
             $html.= "<td>TAJ szám</td>";
             $html.= "<td>Orvos</td>";
             $html.= "<td></td>";
-            $html.= "<td>Regisztráció időpontja</td>";
             $html.= "</tr>";
             while ($rows = sql_fetch_array($ress)) {
                 $html.= "<tr>";
-                $html.= "<td>".($rows["eljott"]==1?"*":"")."</td>";
-                $html.= "<td>";
-                $html.= $rows["alkalmassag"];
-                if ($rows["alkalmassag"]=="I") {
-                    $html.= $rows["alkalmassagido"];
-                }
-                $html.= "</td>";
                 $html.= "<td>".substr($rows["datum"],0,16)."</td>";
                 $html.= "<td>{$rows["nev"]}</td>";
                 $html.= "<td>{$rows["telefon"]}</td>";
@@ -126,7 +119,6 @@ class AdminStatPage extends AdminCorePage {
                 $html.= "<td>{$rows["taj"]}</td>";
                 $html.= "<td>{$rows["orvosnev"]}</td>";
                 $html.= "<td>{$rows["helyszincim"]}</td>";
-                $html.= "<td>".substr($rows["regdatum"],0,16)."</td>";
                 $html.= "</tr>";
             }
             $html.= "</table>";
@@ -157,46 +149,65 @@ class AdminStatPage extends AdminCorePage {
 
     private function _showTetelStat() {
         $html = "";
-        $cegid = intval($_GET["cegid"]);
+        $cegId = intval($_GET["cegid"]);
 
-        $rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev", [$cegid]));
+        if (!$rowc = sql_fetch_array(sql_query("SELECT * from cegek c where c.id=? ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev", [$cegId]))) {
+            die("company permission error!");
+        }
 
-        $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a> | <a href='index.php?page={$_GET["page"]}&lista=tetel&cegid={$_GET["cegid"]}&downloadcsv'>Letöltés</a></div>";
-        $html.= "<div style='margin-top:10px;'>* = Eljött. Alkalmasság: I = Alkalmas, N = Nem alkalmas, IK = Ideiglenesen nem alkalmas, K = Korlátozottan alkalmas</div>";
+        $html.= "<div style='margin-top:20px;'><a href='index.php?page=stat'>Vissza</a> | <a href='index.php?page={$_GET["page"]}&lista=tetel&cegid={$_GET["cegid"]}&downloadexcel'>Letöltés</a></div>";
+        $html.= "<div style='margin-top:10px;'>* csak eljöttek</div>";
 
-        $html.= "<table cellpadding='0' cellspacing='4' border='0' style='margin-top:10px;'>";
+        $html.= "<h1>{$rowc["megnev"]} foglalásai</h1>";
 
-        $html.= "<tr><td colspan='10' style='background:#eee;font-size:16px;color:#888;padding:5px 10px;margin-top:20px;'>{$rowc["megnev"]}</td></tr>";
+        $html.= "<table cellpadding='4' cellspacing='0' border='0' style='margin-top:10px;'>";
 
-        $ress = sql_query("SELECT o.nev AS orvosnev,h.cim AS helyszincim,f.* FROM foglalasok f
+
+        $data = sql_query("SELECT o.nev AS orvosnev,h.cim AS helyszincim, t.megnev as tipusnev, f.* FROM foglalasok f
+        LEFT JOIN szurestipusok t on t.id = f.szurestipusid
         LEFT JOIN orvosok o ON o.id=f.orvosassigned
         LEFT JOIN helyszinek h ON h.id=f.helyszinid
-        WHERE f.datum>? and f.datum<? and f.aktiv=1 AND f.cegid=? AND (f.taj<>'' OR f.nev<>'') AND f.nev<>'nincs név' order by datum", array($this->tol, $this->ig, $rowc["id"]));
+        WHERE f.datum>? and f.datum<? and f.aktiv=1 AND f.eljott=1 AND f.cegid=? AND (f.taj<>'' OR f.nev<>'') AND f.nev<>'nincs név' order by datum", array($this->tol, $this->ig, $rowc["id"]))->fetchAll(PDO::FETCH_ASSOC);
 
-        $html.= "<tr>";
-        $html.= "<td nowrap title='Eljött'>E</td>";
-        $html.= "<td nowrap title='Alkalmasság'>Alkalmasság</td>";
-        $html.= "<td nowrap>Foglalás időpontja</td>";
-        $html.= "<td nowrap>Név</td>";
-        $html.= "<td nowrap>Telefon</td>";
-        $html.= "<td nowrap></td>";
-        $html.= "<td nowrap>TAJ szám</td>";
-        $html.= "<td nowrap>Orvos</td>";
-        $html.= "<td></td>";
-        $html.= "<td nowrap>Regisztráció időpontja</td>";
+        if (isset($_GET["downloadexcel"])) {
+            $service = new ExcelService();
+
+            $statData = [
+                "data" => $data,
+                "cegId" => $cegId,
+                "cegNev" => $rowc["megnev"],
+                "from" => $this->tol,
+                "to" => $this->ig
+            ];
+
+            $service->cegFoglalasList($statData);
+            $service->setFileName("{$rowc["megnev"]} foglalásai ".date("Y-m-d", strtotime($this->tol))." - ".date("Y-m-d", strtotime($this->ig)).".xlsx");
+            $service->outputSpreadSheet();
+        }
+
+
+        $html.= "<tr style='font-weight: bold;'>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Foglalás időpontja</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Típus</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Név</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Telefon</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Munkakör</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>TAJ szám</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Orvos</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'></td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Megjegyzés</td>";
         $html.= "</tr>";
-        while ($rows = sql_fetch_array($ress)) {
+        foreach ($data as $rows) {
             $html.= "<tr>";
-            $html.= "<td nowrap>".($rows["eljott"]==1?"*":"")."</td>";
-            $html.= "<td nowrap>".$this->_alkalmassagColumn($rows)."&nbsp;</td>";
             $html.= "<td nowrap>".substr($rows["datum"],0,16)."</td>";
+            $html.= "<td nowrap>{$rows["tipusnev"]}</td>";
             $html.= "<td nowrap>{$rows["nev"]}</td>";
             $html.= "<td nowrap>{$rows["telefon"]}</td>";
             $html.= "<td nowrap>{$rows["munkakor"]}</td>";
             $html.= "<td nowrap>{$rows["taj"]}</td>";
             $html.= "<td nowrap>{$rows["orvosnev"]}</td>";
             $html.= "<td nowrap>{$rows["helyszincim"]}</td>";
-            $html.= "<td nowrap>".substr($rows["regdatum"],0,16)."</td>";
+            $html.= "<td nowrap>{$rows["megj"]}</td>";
 
             if ($rows["taj"] == "") {
                 $rows["taj"] = "000000000";
@@ -218,24 +229,55 @@ class AdminStatPage extends AdminCorePage {
 
         $res = sql_query("SELECT * from cegek c where true ".$this->adminUser->cegSQLFilter("c.id")." ORDER BY megnev");
 
-        $html.= "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;'>";
+        /*
+        echo "<table cellpadding='0' cellspacing='0' border='0'>";
         while ($row = sql_fetch_array($res)) {
             $tc = "tcella";
+            if (!isset($first)) {
+                echo "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                $first = 1;
+            }
+            if (trim($row["megnev"]) == "") {
+                $row["megnev"] = "nincs neve";
+            }
+
+            $options = "";
+            if ($row["onlyreg"] == 1) $options .= "<div>Csak regisztráltaknak</div>";
+            if ($row["onlybeutalo"] == 1) $options .= "<div>Csak beutalóval lehet foglalni</div>";
+            if ($row["no_doctor_select"] == 1) $options .= "<div>Nincs orvos választás a foglalásnál</div>";
+            if ($row["fieldoptions"] != "") $options .= "<div>" . $this->displayFieldOptions($row["fieldoptions"]) . "</div>";
+
+            echo "<tr>";
+            echo "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a></div></td>";
+
+            $url = Booking_Constants::SITE_PROTOCOL . "://{$row["domain"]}." . Booking_Constants::SITE_DOMAIN;
+
+            echo "<td nowrap valign='top'><div class='{$tc}'>" . ($row["domain"] == "" ? "" : "{$url} (<a target='_blank' href='{$url}'>open</a>)") . "</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;padding-right: 10px;'>{$options}</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            echo "</tr>";
+            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+        }
+        echo "</table>";
+        */
+
+
+        $tc = "tcella";
+
+        $html.= "<table cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;'>";
+
+        $html.= "<tr style='font-weight: bold;'>";
+        $html.= "<td nowrap valign='top'><div class={$tc}>Cég neve</div></td>";
+        $html.= "<td nowrap valign='top'><div class={$tc}>Foglalások száma</div></td>";
+        $html.= "<td nowrap valign='top'><div class={$tc}>Eljöttek</div></td>";
+        $html.= "<td nowrap valign='top'><div class={$tc}></div></td>";
+        $html.= "</tr>";
+
+        while ($row = sql_fetch_array($res)) {
             if (empty(trim($row["megnev"]))) {
                 $row["megnev"] = "nincs neve";
             }
-            $html.= "<tr style='background:#eee;'>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}' style='font-size:16px;color:#888;padding:5px 10px;'>{$row["megnev"]}</div></td>";
-            //$html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
-            //$html.= "<td nowrap valign='top'><div class='{$tc}'>".($row["domain"]==""?"":"http://{$row["domain"]}.hungariamed.hu (<a target='_blank' href='http://{$row["domain"]}.hungariamed.hu'>open</a>)")."</div></td>";
-            //$html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["cimek"]}</div></td>";
-            //$html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>".($row["aktiv"]==1?"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>":"<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>")."</div></td>";
-            //$html.= "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
-            $html.= "</tr>";
-
-            $html.= "<tr>";
-            $html.= "<td nowrap colspan='2' valign='top'>";
-            $html.= "<div style='margin:5px 10px;color:#888;'>";
 
             $all = $eljott = 0;
             $ress = sql_query("SELECT nev,eljott FROM foglalasok WHERE datum>? and datum<? and aktiv=1 AND cegid=? AND (taj<>'' OR nev<>'') AND nev<>'nincs név'", array($this->tol, $this->ig, $row["id"]));
@@ -246,24 +288,19 @@ class AdminStatPage extends AdminCorePage {
                 }
             }
 
-            $html.= "<div style='display:table;'>";
-            $html.= "<div style='display:table-row;'>";
-            $html.= "<div style='display:table-cell;'>Foglalások száma:&nbsp;&nbsp;</div><div style='display:table-cell;text-align:right;'>{$all}</div>";
+
+            $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+
+            $html.= "<tr>";
+            $html.= "<td nowrap valign='top'><div class={$tc}>{$row["megnev"]}&nbsp;&nbsp;</div></td>";
+            $html.= "<td nowrap valign='top'><div class={$tc} style='".($all!=0?"font-weight:bold;":"")."'>&nbsp;{$all}</div></td>";
+            $html.= "<td nowrap valign='top'><div class={$tc} style='".($all!=0?"font-weight:bold;":"")."'>&nbsp;{$eljott}</div></td>";
+            $html.= "<td nowrap valign='top'><div class={$tc}>";
             if ($all > 0) {
-                $html.= "<div style='display:table-cell;padding-left:20px;'>[<a href='index.php?page=stat&lista=tetel&cegid={$row["id"]}'>Tételes lista</a>] [<a href='index.php?page=stat&lista=orvos&cegid={$row["id"]}'>Orvos lista</a>]</div>";
+                $html.= "[<a href='index.php?page=stat&lista=tetel&cegid={$row["id"]}'>Tételes lista</a>] [<a href='index.php?page=stat&lista=orvos&cegid={$row["id"]}'>Orvos lista</a>]";
             }
-            $html.= "</div>";
-            $html.= "<div style='display:table-row;'>";
-            $html.= "<div style='display:table-cell;'>Eljött:&nbsp;&nbsp;</div><div style='display:table-cell;text-align:right;'>{$eljott}</div>";
-            $html.= "</div>";
-            $html.= "</div>";
-
-            $html.= "</div>";
-
-            $html.= "</td>";
+            $html.= "</div></td>";
             $html.= "</tr>";
-
-
         }
         $html.= "</table>";
         return $html;

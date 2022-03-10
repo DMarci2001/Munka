@@ -173,7 +173,7 @@ class ExcelService {
 
         //lista
         $sor = 3;
-        $this->headingRow("A", $sor, ["Időpont", "Eredemény", "Vizsgázó neve", "Iskolai végzettség", "Szül. dátum", "Email", "Irsz", "Város", "Cím"]);
+        $this->headingRow("A", $sor, ["Időpont", "Eredmény", "Vizsgázó neve", "Iskolai végzettség", "Szül. dátum", "Email", "Irsz", "Város", "Cím"]);
 
         $sor++;
         $total = $totalImage = 0;
@@ -198,6 +198,67 @@ class ExcelService {
         $this->sheet->getColumnDimension('H')->setWidth(40);
         $this->sheet->getColumnDimension('I')->setWidth(40);
         $this->sheet->getColumnDimension('J')->setWidth(40);
+
+        //$sor = 3;
+        //$this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);
+
+        $this->spreadSheet = $spreadsheet;
+    }
+
+
+    /*        $html.= "<tr style='font-weight: bold;'>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Foglalás időpontja</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Típus</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Név</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Telefon</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Munkakör</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>TAJ szám</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'>Orvos</td>";
+        $html.= "<td nowrap style='border-bottom: 1px solid #888;padding:3px;'></td>";
+        $html.= "</tr>";
+        foreach ($data as $rows) {
+            $html.= "<tr>";
+            $html.= "<td nowrap>".substr($rows["datum"],0,16)."</td>";
+            $html.= "<td nowrap>{$rows["tipusnev"]}</td>";
+            $html.= "<td nowrap>{$rows["nev"]}</td>";
+            $html.= "<td nowrap>{$rows["telefon"]}</td>";
+            $html.= "<td nowrap>{$rows["munkakor"]}</td>";
+            $html.= "<td nowrap>{$rows["taj"]}</td>";
+            $html.= "<td nowrap>{$rows["orvosnev"]}</td>";
+            $html.= "<td nowrap>{$rows["helyszincim"]}</td>";
+
+            if ($rows["taj"] == "") {
+                $rows["taj"] = "000000000";
+            }
+*/
+    public function cegFoglalasList($data) {
+        $spreadsheet = new Spreadsheet();
+        $this->sheet = $spreadsheet->getActiveSheet();
+
+        $this->titleRow("A1", "{$data["cegNev"]} foglalásai ".date("Y-m-d", strtotime($data["from"]))." - ".date("Y-m-d", strtotime($data["to"]))."");
+        $this->dataRow("A", 2, ["Forrás: ".Booking_Constants::FOOTER_COPYRIGHT." bejelentkező, csak eljöttnek jelölt foglalások"]);
+
+        //lista
+        $sor = 4;
+        $this->headingRow("A", $sor, ["Foglalás időpontja", "Típus", "Név", "Telefon", "Munkakör", "TAJ szám", "Orvos", "", "Megjegyzés"]);
+
+        $sor++;
+        foreach ($data["data"] as $rowData) {
+            $this->dataRow("A", $sor, [substr($rowData["datum"], 0, 16), $rowData["tipusnev"], $rowData["nev"], $rowData["telefon"], $rowData["munkakor"], $rowData["taj"], $rowData["orvosnev"], $rowData["helyszincim"], $rowData["megj"]]);
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("left");
+            $sor++;
+        }
+
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('B')->setWidth(20);
+        $this->sheet->getColumnDimension('C')->setWidth(40);
+        $this->sheet->getColumnDimension('D')->setWidth(20);
+        $this->sheet->getColumnDimension('E')->setWidth(20);
+        $this->sheet->getColumnDimension('F')->setWidth(20);
+        $this->sheet->getColumnDimension('G')->setWidth(20);
+        $this->sheet->getColumnDimension('H')->setWidth(40);
+        $this->sheet->getColumnDimension('I')->setWidth(100);
 
         //$sor = 3;
         //$this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);

@@ -235,6 +235,29 @@ class DailyStatService {
         return sql_query("select * from dokirex_vizsgalatok where datum>=? and datum<=?", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    private function getFoglalasok($from, $to = ""):array {
+        if (empty($to)) {
+            $to = $from;
+        }
+
+        $from = date("Y-m-d 00:00:00", strtotime($from));
+        $to = date("Y-m-d 23:59:59", strtotime($to));
+
+        return sql_query("select * from foglalasok f where f.datum>=? and f.datum<=? and f.eljott=1", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function getRontgen($from, $to = ""):array {
+        if (empty($to)) {
+            $to = $from;
+        }
+
+        $from = date("Y-m-d 00:00:00", strtotime($from));
+        $to = date("Y-m-d 23:59:59", strtotime($to));
+
+        return sql_query_common("select * from dicom d where d.contentDate>=? and d.contentDate<=? and d.institutionName=? group by d.patientID, d.patientBirthDate", [$from, $to, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
 
     private function displayCalendarDayBox($day):string {
         $html = "";
@@ -251,22 +274,29 @@ class DailyStatService {
             $html .= "<div data-day='{$day}' id='daytext{$day}' style='padding-top:0px;'>";
 
             $dokirex = $this->getDokirexVizsgalatok($day);
-            $workers = [];
+            $reservations = $this->getFoglalasok($day);
+            $rontgen = $this->getRontgen($day);
             $beosztas = WorkScheduleService::getDailySchedule($day);
+            $workers = [];
             foreach ($beosztas as $beo) {
                 $workers[] = $beo["workername"];
             }
 
+            $emptyAll = empty($dokirex) && empty($beosztas) && empty($reservations) && empty($rontgen);
 
             $html .= "<div><img id='dailystatloader{$day}' style='display:none;opacity:.5;height:30px;margin-top:10px;' src='/images/loading_transparent.svg' /></div>";
 
             $html .= "<div id='datablock{$day}' style='margin-top:10px;'>";
             $html .= "<div style='height:70px;overflow: hidden;'>";
-            $html .= "<div>" . (empty($dokirex) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex)." dokirex vizsgálat <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
-            $html .= "<div>" . (empty($beosztas) ? "beosztás <i style='color:red' class='fas fa-times-circle'></i>" : "<span title='".implode(", ", array_unique($workers))."'>".count(array_unique($workers))." dolgozó</span> <i style='color:green' class='fas fa-check-circle'></i>") . "</div>";
+            if (!$emptyAll) {
+                $html .= "<div>" . (empty($reservations) ? "foglalás  <i style='color:red' class='fas fa-times-circle'></i>" : count($reservations) . " foglalás") . "</div>";
+                $html .= "<div>" . (empty($rontgen) ? "röntgen  <i style='color:red' class='fas fa-times-circle'></i>" : count($rontgen) . " röntgen") . "</div>";
+                $html .= "<div>" . (empty($dokirex) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex) . " dokirex vizsgálat") . "</div>";
+                $html .= "<div>" . (empty($beosztas) ? "beosztás <i style='color:red' class='fas fa-times-circle'></i>" : "<span title='" . implode(", ", array_unique($workers)) . "'>" . count(array_unique($workers)) . " dolgozó</span>") . "</div>";
+            }
             $html .= "</div>";
             $html .= "<div style='margin-top:10px;'>";
-            if (!empty($dokirex) || !empty($beosztas)) {
+            if (!$emptyAll) {
                 $html .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$day\", \"$day\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika</div> ";
             }
             $html .= "</div>";
@@ -291,10 +321,25 @@ class DailyStatService {
         $lastDate     = date("Y-m-d",strtotime("last day of {$year} {$monthText}"));
         $weekDay      = 0;
 
+        $dokirex = $this->getDokirexVizsgalatok($firstDate, $lastDate);
+        $reservations = $this->getFoglalasok($firstDate, $lastDate);
+        $rontgen = $this->getRontgen($firstDate, $lastDate);
+        $emptyAll = empty($dokirex) && empty($reservations) && empty($rontgen);
+
         $html.= "<table class='montlytable' style='margin:0px;padding:0px;'>";
         $html.= "<tr>";
         $html.= "<td colspan='1' class='montlycell mthead' style='text-align: left;'><a href='#' onclick='DailyStatMoveMonth(-1);return false;'><i class='fas fa-chevron-circle-left'></i></a></td>";
-        $html.= "<td colspan='5' class='montlycell mthead'>&nbsp;&nbsp;{$year} ".$this->months[$month]."&nbsp;&nbsp;<div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDate}\", \"{$lastDate}\")' title='Havi statisztika letöltése'><i class='fas fa-file-download'></i> havi statisztika</div></td>";
+        $html.= "<td colspan='5' class='montlycell mthead'>";
+
+            $html .= "<div>&nbsp;&nbsp;{$year} " . $this->months[$month] . "&nbsp;&nbsp;</div>";
+
+        if (!$emptyAll) {
+            $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($reservations) ? "foglalás  <i style='color:red' class='fas fa-times-circle'></i>" : count($reservations) . " foglalás") . "</div>";
+            $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($rontgen) ? "röntgen  <i style='color:red' class='fas fa-times-circle'></i>" : count($rontgen) . " röntgen") . "</div>";
+            $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($dokirex) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex) . " dokirex vizsgálat</i>") . "</div>";
+            $html.= "<div style='padding-top: 5px;'><div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDate}\", \"{$lastDate}\")' title='Havi statisztika letöltése'><i class='fas fa-file-download'></i> havi statisztika</div></div>";
+        }
+        $html.= "</td>";
         $html.= "<td colspan='1' class='montlycell mthead' style='text-align: right;'><a href='#' onclick='DailyStatMoveMonth(1);return false;'><i class='fas fa-chevron-circle-right'></i></a></td>";
         $html.= "</tr>";
         $html.= "<tr>";
@@ -316,9 +361,9 @@ class DailyStatService {
                 $weekStartDay = date("Y-m-d", strtotime("{$thisDay} - 7 day"));
                 $weekEndDay = date("Y-m-d", strtotime("{$thisDay} - 1 day"));
                 $numberOfWeek = date("W", strtotime($weekEndDay));
-                $html.= "<td style='text-align: center;padding:10px;'><div style='font-size: 18px;font-weight: bold;margin-bottom:10px;'>{$numberOfWeek}. hét</div>";
-                $html.= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"{$weekStartDay}\", \"{$weekEndDay}\")' title='Heti statisztika letöltése'><i class='fas fa-file-download'></i> heti statisztika</div> ";
-                $html.= "</td>";
+                //$html.= "<td style='text-align: center;padding:10px;'><div style='font-size: 18px;font-weight: bold;margin-bottom:10px;'>{$numberOfWeek}. hét</div>";
+                //$html.= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"{$weekStartDay}\", \"{$weekEndDay}\")' title='Heti statisztika letöltése'><i class='fas fa-file-download'></i> heti statisztika</div> ";
+                //$html.= "</td>";
                 $html.= "</tr><tr>";
                 $weekDay = 1;
             }
