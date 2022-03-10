@@ -167,10 +167,72 @@ class AdminAjaxService {
             $html = $response = "";
             $error = array();
             $dokirexService = new DokirexService();
+            if ($dokirexService->version == 2) {
+                error_reporting(E_ALL);
+                ini_set('display_errors', 1);
 
-            $required = array("Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon");
+                $required = ["Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon"];
 
-            $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', '2' AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
+                $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', '2' AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
+                                                        fogl.szulhely AS 'SzuletesiHely', fogl.anyjaneve AS 'AnyjaNeve', CASE WHEN fogl.neme = 0 THEN 3 ELSE fogl.neme END AS 'NemID',
+                                                        fogl.nev AS 'SzuletesiNev', '109' AS 'AllampolgarsagID', fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon',
+													    fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', 
+													    fogl.email AS 'Email', null AS 'SzigSzam', null AS 'KozgyogyTol', null AS 'KozgyogyIg', null AS 'KozgyogySzam', 
+                                                        '3' AS 'FelvevoID', '3' AS 'UtolsoModositoID'                                            
+											    FROM foglalasok fogl WHERE id=?", [$_POST["pid"]]));
+
+                $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
+                $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
+                $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4) . "-" . substr($params["SzuletesiDatum"], 4, 2) . "-" . substr($params["SzuletesiDatum"], 6, 2);
+
+                foreach ($params as $index => $value) {
+                    if ($value == "" && in_array($index, $required)) {
+                        $error[] = "<span style='color:red'>*{$index} mező megadása kötelező!</span>";
+                    }
+                }
+
+                echo "<div class='loginbox' style='width:800px;padding:10px;'>".print_r($params, true)."</div>";
+                die;
+
+                if (empty($error)) {
+                    $response = $dokirexService->insertPaciensIntoDokirex($params);
+                }
+
+                $html .= "<div style='color:#444;text-align:center;'>";
+                $html .= "<div id='loginbox' class='loginbox'>";
+                $html .= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
+
+                $html .= "<div style='padding:20px;text-align:center;'>";
+
+                if (count($error) > 0) {
+                    for ($i = 0; $i < count($error); $i++) {
+                        $html .= "<div style='margin-top:10px;text-align:left'>{$error[$i]}</div>";
+                    }
+                } else {
+                    $html .= "<div style='margin-top:10px;'>";
+                    if (is_array($response)) {
+                        foreach ($response as $index => $value) {
+                            $html .= "$index = $value <br>";
+                        }
+                    } else {
+                        $html .= $response;
+                    }
+
+                    $html .= "</div>";
+                }
+
+                $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
+                $html .= "</div>";
+
+                $html .= "</div>";
+                $html .= "</div>";
+
+                die($html);
+            } else {
+
+                $required = array("Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev", "Telefon", "Mobiltelefon");
+
+                $params = sql_fetch_array(sql_query("SELECT fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', '2' AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
                                                         fogl.szulhely AS 'SzuletesiHely', fogl.anyjaneve AS 'AnyjaNeve', CASE WHEN fogl.neme = 0 THEN 3 ELSE fogl.neme END AS 'NemID',
                                                         fogl.nev AS 'SzuletesiNev', '109' AS 'AllampolgarsagID', fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon',
 													    fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', 
@@ -179,54 +241,51 @@ class AdminAjaxService {
                                                         
 											    FROM foglalasok fogl WHERE id=?", array($_POST["pid"])));
 
-            $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
-            $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
-            $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4)."-".substr($params["SzuletesiDatum"], 4, 2)."-".substr($params["SzuletesiDatum"], 6, 2);
+                $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
+                $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
+                $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4) . "-" . substr($params["SzuletesiDatum"], 4, 2) . "-" . substr($params["SzuletesiDatum"], 6, 2);
 
-            foreach ($params as $index => $value) {
-                if ($value == "" && in_array($index, $required)) {
-                    $error[] = "<span style='color:red'>*{$index} mező megadása kötelező!</span>";
+                foreach ($params as $index => $value) {
+                    if ($value == "" && in_array($index, $required)) {
+                        $error[] = "<span style='color:red'>*{$index} mező megadása kötelező!</span>";
+                    }
                 }
-            }
 
-            if (empty($error)) {
-                $response = $dokirexService->insertPaciensIntoDokirex($params);
-            }
-
-            $html = "";
-            $html .= "<div style='color:#444;text-align:center;'>";
-            $html .= "<div id='loginbox' class='loginbox'>";
-            $html .= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
-
-            $html .= "<div style='padding:20px;text-align:center;'>";
-
-            if (count($error) > 0) {
-                for ($i = 0; $i < count($error); $i++) {
-                    $html .= "<div style='margin-top:10px;text-align:left'>{$error[$i]}</div>";
+                if (empty($error)) {
+                    $response = $dokirexService->insertPaciensIntoDokirex($params);
                 }
-            } else {
-                $html .= "<div style='margin-top:10px;'>";
-                if (is_array($response)) {
-                    foreach ($response as $index => $value) {
-                        $html .= "$index = $value <br>";
+
+                $html .= "<div style='color:#444;text-align:center;'>";
+                $html .= "<div id='loginbox' class='loginbox'>";
+                $html .= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
+
+                $html .= "<div style='padding:20px;text-align:center;'>";
+
+                if (count($error) > 0) {
+                    for ($i = 0; $i < count($error); $i++) {
+                        $html .= "<div style='margin-top:10px;text-align:left'>{$error[$i]}</div>";
                     }
                 } else {
-                    $html .= $response;
+                    $html .= "<div style='margin-top:10px;'>";
+                    if (is_array($response)) {
+                        foreach ($response as $index => $value) {
+                            $html .= "$index = $value <br>";
+                        }
+                    } else {
+                        $html .= $response;
+                    }
+
+                    $html .= "</div>";
                 }
 
+                $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
                 $html .= "</div>";
+
+                $html .= "</div>";
+                $html .= "</div>";
+
+                die($html);
             }
-
-            //$html.= "<div style='padding-top:5px;'><input type='text' style='width:100px;' id='refundprice' placeholder='' value='{$transactionData["osszeg"]}' /></div>";
-            //$html.= "<div style='margin-top:10px;display:none;' id='transferresult'></div>";
-
-            $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
-            $html .= "</div>";
-
-            $html .= "</div>";
-            $html .= "</div>";
-
-            die($html);
         }
 
         if (isset($_POST['manualNotificationSend']) && $_POST['manualNotificationSend'] == true) {

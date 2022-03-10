@@ -5,6 +5,7 @@ class DokirexService
 	private $testing = true;
 	private $bookingService;
 	private $token;
+    public $version = 1;
 
 	private $defaultParams = array("Nem" => 3, "Allampolgarsag" => 109,"Orszag"=>109);
 
