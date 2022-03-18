@@ -54,7 +54,7 @@ require_once(__DIR__ . "/library/ZeusService.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoGeneral.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoglaljOrvostService.php");
 require_once(__DIR__ . "/library/ReservationExportService.php");
-require_once(__DIR__ . "/library/DokirexService.php");
+require_once(__DIR__ . "/library/DokirexServiceV2.php");
 require_once(__DIR__ . "/library/DicomService.php");
 require_once(__DIR__ . "/library/ExcelService.php");
 require_once(__DIR__ . "/library/BookingSyncApi.php");
