@@ -111,6 +111,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminDicomPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLaborkeroPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLabortetelekPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminWebPageDataPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");

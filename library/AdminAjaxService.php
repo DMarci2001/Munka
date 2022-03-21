@@ -84,6 +84,9 @@ class AdminAjaxService {
                 sql_query("insert into users set nev='Új felhasználó'");
                 logActivity("user", sql_insert_id(), "felhasználó létrehozva");
             }
+            if ($_GET["page"] == "webpagedata") {
+                sql_query("insert into webpagedata set domain='aaaaaa.hu'");
+            }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
