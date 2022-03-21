@@ -125,7 +125,7 @@ class AdminPage {
             echo "<td></td>";
         }
         echo "<td>";
-        echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT."</div>";
+        echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT." | ".session_id()."</div>";
         echo "</td></tr>";
 
         echo "</table>";

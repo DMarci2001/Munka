@@ -36,7 +36,7 @@ function manualBookingConfirm(orvos){
         cancelButtonColor: '#808080',
         confirmButtonText: 'Rendben',
 		cancelButtonText: 'Bezárás'
-      }).then((result) => {
+      }).then(function(result) {
 		  console.table(result);
         if (result) {
 			$("#datum").css("background-image", "");
@@ -47,7 +47,7 @@ function manualBookingConfirm(orvos){
             //$("#warnidopontpress").show();
             return;
         }
-      })
+      });
 }
 
 $(document).ready(function () {
