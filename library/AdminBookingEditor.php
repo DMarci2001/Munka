@@ -155,7 +155,23 @@ class AdminBookingEditor {
             $api = new BookingSyncApi();
             $api->modifyReservation($fid);
 
-            echo $this->_showBookingEditor($fid, $_POST["p"]);
+
+            $status = "";
+
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                //error_reporting(E_ALL);
+                //ini_set('display_errors', 1);
+
+                if ($reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ? and szurestipusid=1 and tudoszuro=1", [$fid]))) {
+                    //tüdőszűréshez másolás
+                    $replicationStatus = $this->bookingService->replicateReservationToAnotherService($reservationData, 102);
+                    $status.= $replicationStatus;
+                }
+            }
+
+
+            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"])]);
+            //echo $this->_showBookingEditor($fid, $_POST["p"]);
             die;
         }
 

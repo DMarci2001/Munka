@@ -1294,8 +1294,7 @@ class BookingService
         }
     }
 
-    public function addReservationQuery($data)
-    {
+    public function addReservationQuery($data) {
         if (!isset($data["szulhely"])) $data["szulhely"] = "";
         if (!isset($data["telephely"])) $data["telephely"] = "";
         if (!isset($data["anyjaneve"])) $data["anyjaneve"] = "";
@@ -1318,6 +1317,8 @@ class BookingService
         if (!isset($data["totalprice"])) $data["totalprice"] = 0;
         if (!isset($data["exportdata"])) $data["exportdata"] = "";
         if (!isset($data["currency"])) $data["currency"] = 0;
+        if (!isset($data["lang"])) $data["lang"] = "hu";
+        if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
 
         sql_query(
             "insert into foglalasok set 
@@ -1632,6 +1633,74 @@ class BookingService
 
     public function getPriceData($tipusId) {
         return sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$tipusId]));
+    }
+
+    public function replicateReservationToAnotherService($reservationData, $tipusId):string {
+        $status = "";
+        if (sql_fetch_array(sql_query("select * from foglalasok where nev=? and taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["nev"], $reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
+            return $status;
+        }
+
+        $date = date("Y-m-d", strtotime($reservationData["datum"]));
+        $foundTimes = [];
+        $binterval = 0;
+        $orvosId = 0;
+        $weekDay = date("N", strtotime($reservationData["datum"]));
+        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND b.nap=?", ["|{$tipusId}|", $weekDay]);
+        while ($beoData = sql_fetch_array($beoRes)) {
+            $binterval = $beoData["binterval"];
+            $orvosId = $beoData["orvosid"];
+
+            $o = 0;
+            $startTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["tol"]}"));
+            $lastTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["ig"]}"));
+            while (true) {
+                $addMinute = $o * $beoData["binterval"];
+                $checkTime = date("Y-m-d H:i:s", strtotime("{$startTime} + {$addMinute} minute"));
+
+                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=?", [$checkTime, $tipusId]))) {
+                    $foundTimes[] = $checkTime;
+                }
+
+                $o++;
+                if (strtotime($checkTime) >= strtotime($lastTime) || $o > 100) {
+                    break;
+                }
+            }
+        }
+
+        if (!empty($foundTimes)) {
+            $diff = 1000000;
+            $optimalTime = "";
+
+            foreach ($foundTimes as $foundTime) {
+                $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime));
+                if ($checkDiff < $diff) {
+                    $diff = $checkDiff;
+                    $optimalTime = $foundTime;
+                }
+            }
+
+            $reservationData["datum"] = $optimalTime;
+            $reservationData["rinterval"] = $binterval;
+            $reservationData["orvosid"] = $orvosId;
+            $reservationData["szurestipus"] = $tipusId;
+            $reservationData["tudoszuro"] = 0;
+            $reservationData["helyszin"] = $reservationData["helyszinid"];
+            $newReservationId = $this->addReservationQuery($reservationData);
+
+            //Foglaljorvost.hu-nak átküldés
+            //$foService = new FoglaljOrvostService();
+            //$foService->newReservation($newReservationId);
+
+            //$api = new BookingSyncApi();
+            //$api->newReservation($newReservationId);
+
+            $status = "Tüdőszűrő időpont foglalva: {$checkTime}";
+
+        }
+
+        return $status;
     }
 
 }
