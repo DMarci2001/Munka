@@ -175,6 +175,11 @@ class DicomService {
             $queryParams[] = $this->getSelectedCompany();
         }
 
+        if (!empty($this->getSelectedModel())) {
+            $w .= " and d.manufacturer=?";
+            $queryParams[] = $this->getSelectedModel();
+        }
+
         return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where true {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -253,9 +258,20 @@ class DicomService {
         return sql_query_common("select institutionName from dicom group by institutionName")->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getModels() {
+        return sql_query_common("select concat(manufacturerModelName,\" \",manufacturer) as name, manufacturer from dicom group by manufacturer")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getSelectedCompany():string {
         if (isset($_COOKIE["dcegfilter"])) {
             return $_COOKIE["dcegfilter"];
+        }
+        return "";
+    }
+
+    public function getSelectedModel():string {
+        if (isset($_COOKIE["deszkozfilter"])) {
+            return $_COOKIE["deszkozfilter"];
         }
         return "";
     }
@@ -265,6 +281,14 @@ class DicomService {
         if ($company == "" || sql_query_common("select id from dicom where institutionName=? limit 1", [$company])->fetchAll(PDO::FETCH_ASSOC)) {
             setcookie("dcegfilter", $company, $exp, "/");
             $_COOKIE["dcegfilter"] = $company;
+        }
+    }
+
+    public static function setSelectedModel($model) {
+        $exp = time() + 60 * 60 * 24 * 365;
+        if ($model == "" || sql_query_common("select id from dicom where manufacturer=? limit 1", [$model])->fetchAll(PDO::FETCH_ASSOC)) {
+            setcookie("deszkozfilter", $model, $exp, "/");
+            $_COOKIE["deszkozfilter"] = $model;
         }
     }
 

@@ -23,6 +23,12 @@ class AdminDicomPage extends AdminCorePage
             die;
         }
 
+        if (isset($_GET["deszkozfilter"])) {
+            $this->dicomService->setSelectedModel($_GET["deszkozfilter"]);
+            header("location:index.php?page={$_GET["page"]}");
+            die;
+        }
+
 
 
         if (isset($_GET["getimage"])) {
@@ -82,6 +88,7 @@ class AdminDicomPage extends AdminCorePage
 
         echo "<div style='margin-bottom:20px;'>";
         echo $this->cegFilter();
+        echo $this->eszkozFilter();
         echo "&nbsp;&nbsp;<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
         echo "</div>";
 
@@ -252,6 +259,25 @@ class AdminDicomPage extends AdminCorePage
                 continue;
             }
             $html.="<option value='{$company["institutionName"]}'".($this->dicomService->getSelectedCompany()==$company["institutionName"]?" selected":"").">{$company["institutionName"]}</option>";
+        }
+
+        $html.="</select>";
+        return $html;
+    }
+
+
+    private function eszkozFilter() {
+        $html = "";
+        $html.="<select class='companyselector' name='deszkozfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&deszkozfilter='+this.value;\">";
+        $html.="<option value=''>Szűrés Eszközre</option>";
+
+        $models = $this->dicomService->getModels();
+
+        foreach ($models as $model) {
+            if (empty($model["manufacturer"])) {
+                continue;
+            }
+            $html.="<option value='{$model["manufacturer"]}'".($this->dicomService->getSelectedModel()==$model["manufacturer"]?" selected":"").">{$model["name"]}</option>";
         }
 
         $html.="</select>";
