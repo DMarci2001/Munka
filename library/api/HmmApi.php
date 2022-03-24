@@ -14,6 +14,7 @@ class HmmApi {
 
     private $utils;
     private $bookingService;
+    private $authNeeded = true;
 
     public function __construct() {
         $params = explode("/", strtok($_SERVER["REQUEST_URI"], "?"));
@@ -51,12 +52,17 @@ class HmmApi {
             $logId = sql_insert_id();
         }
 
+        //auth nélkül használható végpontok
+        if ($this->apiMethod == "webpagedata") {
+            $result = $this->webPageData();
+        }
+
         if ($this->apiMethod == "token") {
             $result = $this->token();
-        } else {
-            if (!$this->checkBearer()) {
-                $this->apiError(401, "invalid auth key", "Auth key hiányzik, vagy nem érvényes");
-            }
+        }
+
+        if (!$this->checkBearer()) {
+            $this->apiError(401, "invalid auth key", "Auth key hiányzik, vagy nem érvényes");
         }
 
         if ($this->apiMethod == "doctors") {
@@ -148,7 +154,39 @@ class HmmApi {
         return $locationArray;
     }
 
+    private function webPageData():array {
+        $webPageData = new WebPageData();
+
+        $this->authNeeded = false;
+
+        if (!isset($this->postParams["domain"])) {
+            $this->apiError(500, "missing parameter", "Missing parameter domain");
+        }
+
+        $domain = $this->postParams["domain"];
+        if (!$domainData = sql_fetch_array(sql_query("select * from webpagedata where instr(domain, ?) limit 1", [$domain]))) {
+            $this->apiError(500, "domain not found", "Domain not found!");
+        }
+
+        $pageParams = json_decode($domainData["params"], JSON_OBJECT_AS_ARRAY);
+        foreach ($webPageData->params as $key => $paramData) {
+            if (!isset($pageParams[$key])) {
+                $pageParams[$key] = $webPageData->getOrokoltParam($domainData["parent"], $key);
+            }
+        }
+
+        $domainData["params"] = $pageParams;
+
+        return [
+            "webpagedata" => $domainData,
+        ];
+    }
+
     private function token():array {
+        $this->authNeeded = false;
+
+
+
         //if (!isset($this->postParams["username"])) {
         //    print_r($_POST);
         //    echo "aaa".$this->postBody;die;
@@ -190,6 +228,10 @@ class HmmApi {
     }
 
     private function checkBearer():bool {
+        if (!$this->authNeeded) {
+            return true;
+        }
+
         foreach (getallheaders() as $value) {
             if (substr_count($value, "Bearer ")) {
                 $bearer = str_replace("Bearer ", "", $value);

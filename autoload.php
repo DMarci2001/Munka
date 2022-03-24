@@ -61,6 +61,7 @@ require_once(__DIR__ . "/library/BookingSyncApi.php");
 require_once(__DIR__ . "/library/PatientService.php");
 require_once(__DIR__ . "/library/AdminUser.php");
 require_once(__DIR__ . "/library/SynlabService.php");
+require_once(__DIR__ . "/library/WebPageData.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
