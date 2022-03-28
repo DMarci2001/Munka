@@ -171,11 +171,23 @@ class HmmApi {
         $pageParams = json_decode($domainData["params"], JSON_OBJECT_AS_ARRAY);
         foreach ($webPageData->params as $key => $paramData) {
             if (!isset($pageParams[$key])) {
-                $pageParams[$key] = $webPageData->getOrokoltParam($domainData["parent"], $key);
+                $pageParams[$key] = $webPageData->getOrokoltParam($domainData["parent"], $key, $paramData);
+            }
+            if ($paramData["type"] == "image") {
+                $pageParams[$key] = $webPageData->getImageParam($key, $paramData["imagetype"], $domainData["id"]);
             }
         }
 
         $domainData["params"] = $pageParams;
+
+        if ($pageParams["tipusid"] != 0) {
+            $domainData["orvosok"] = sql_query("SELECT b.`orvosid`, o.nev FROM orvos_beosztas_new b
+                LEFT JOIN orvosok o ON o.id=b.`orvosid` 
+                WHERE INSTR(b.`tipusok`, ?) AND b.aktiv=1 AND o.pecsetszam<>'temp' AND TRIM(o.pecsetszam)<>''
+                GROUP BY b.orvosid", ["|{$pageParams["tipusid"]}|"])->fetchAll(PDO::FETCH_ASSOC);
+
+            $domainData["arak"] = sql_query("SELECT price, megnev FROM arak WHERE tipusid=8 AND INSTR(cegid, '|243|')", [$pageParams["tipusid"]])->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         return [
             "webpagedata" => $domainData,

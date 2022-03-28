@@ -2,27 +2,37 @@
 
 class AdminWebPageDataPage extends AdminCorePage {
 
-    private $webPageData;
+    private WebPageData $webPageData;
+    private DocAgent $docAgent;
 
     public function __construct()
     {
         parent::__construct();
 
         $this->webPageData = new WebPageData();
+        $this->docAgent = new DocAgent();
 
         if (isset($_GET["addnew"])) {
-            sql_query("insert into webpagedata set domain='aaaaa.hu'");
+            sql_query("insert into webpagedata set domain='aaaaa.hu', parent=?", [WebPageData::DEFAULT_DATA_ID]);
+        }
+
+        if (isset($_POST["getImageUploadDiv"])) {
+            echo $this->docAgent->showAssetEditor($_POST["tipus"], intval($_POST["id"]));
+            die;
         }
 
         if (isset($_POST["webpagedatasave"])) {
             $params = [];
-            foreach ($this->params as $key => $pageParam) {
+            foreach ($this->webPageData->params as $key => $pageParam) {
                 if (isset($_POST["{$key}_orokles"])) {
                     continue;
                 }
 
-                if ($pageParam["type"] == "textbox") {
+                if ($pageParam["type"] == "textbox" || $pageParam["type"] == "tipuskapcs") {
                     $params[$key] = $_POST[$key];
+                }
+                if ($pageParam["type"] == "image") {
+                    $params[$key] = "uploaded";
                 }
                 if ($pageParam["type"] == "checkbox") {
                     if (!isset($_POST[$key])) {
@@ -34,10 +44,12 @@ class AdminWebPageDataPage extends AdminCorePage {
                     $index = 1;
                     $mainblocks = [];
                     while (isset($_POST["mainblock_cim{$index}"])) {
-                        $mainblocks[] = [
-                            "title" => $_POST["mainblock_cim{$index}"],
-                            "content" => $_POST["mainblock_content{$index}"],
-                        ];
+                        if (!empty($_POST["mainblock_cim{$index}"]) || !empty($_POST["mainblock_content{$index}"])) {
+                            $mainblocks[] = [
+                                "title" => $_POST["mainblock_cim{$index}"],
+                                "content" => $_POST["mainblock_content{$index}"],
+                            ];
+                        }
                         $index++;
                     }
                     if (!empty($mainblocks)) {
@@ -87,30 +99,49 @@ class AdminWebPageDataPage extends AdminCorePage {
             }
             echo "</select>";
             echo "</div>";
-            echo "<div style='margin-top:{$koz}px;margin-bottom:10px;padding-bottom:10px;border-bottom: 1px solid #888;'>";
+            echo "<div style='margin-top:{$koz}px;margin-bottom:10px;padding-bottom:10px;'>";
             echo "<input type='checkbox' value='1' name='aktiv'" . ($data["aktiv"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
             echo "</div>";
 
             foreach ($this->webPageData->params as $key => $pageParam) {
+                $orokolt = false;
                 if (isset($params[$key])) {
                     $value = $params[$key];
                 } else {
-                    $value = $this->webPageData->getOrokoltParam($data["parent"], $key);
+                    $value = $this->webPageData->getOrokoltParam($data["parent"], $key, $pageParam);
+                    $orokolt = true;
                 }
 
                 echo "<div style='margin-top:{$koz}px;'>";
+                if ($pageParam["type"] == "felirat") {
+                    echo "<div style='background:#ccc;margin:20px 0px 10px 0px;padding:10px 10px 10px 10px;border-top:1px solid #888;border-bottom:1px solid #888;font-weight: bold;'>{$pageParam["title"]}</div>";
+                }
                 if ($pageParam["type"] == "textbox") {
                     echo "<div style=''>{$pageParam["title"]} ".$this->_oroklesCheckbox($data, $key, $params)."</div>";
-                    echo "<div style=''><input type='text' name='{$key}' style='{$textBoxStyle}' value='{$value}' /></div>";
+                    echo "<div style=''><input onchange='oroklesSet(\"{$key}_orokles\");' type='text' name='{$key}' style='{$textBoxStyle}' value='{$value}' /></div>";
+                }
+                if ($pageParam["type"] == "image") {
+                    echo "<div style=''>{$pageParam["title"]} ".$this->_oroklesImageCheckbox($data, $key, $params, $pageParam["imagetype"])."</div>";
+                    echo "<div style=''><div id='asseteditor_".$pageParam["imagetype"]."'>".$this->docAgent->showAssetEditor($pageParam["imagetype"], ($orokolt?$data["parent"]:$id))."</div></div>";
                 }
                 if ($pageParam["type"] == "checkbox") {
                     echo "<div style=''><input name='{$key}' type='checkbox' value='1' ".($value == 1?"checked":"")." /> {$pageParam["title"]} ".$this->_oroklesCheckbox($data, $key, $params)."</div>";
                 }
+                if ($pageParam["type"] == "tipuskapcs") {
+                    echo "<div style=''>{$pageParam["title"]} ".$this->_oroklesCheckbox($data, $key, $params)."</div>";
+                    echo "<div style=''><select onchange='oroklesSet(\"{$key}_orokles\");' name='{$key}' style='{$textBoxStyle}'>";
+                    echo "<option value='0'>Nincs kapcsolódó típus</option>";
+                    $tipusok = sql_query("select id, megnev from szurestipusok order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($tipusok as $tipus) {
+                        echo "<option value='{$tipus["id"]}'".($tipus["id"] == $value?" selected":"").">{$tipus["megnev"]}</option>";
+                    }
+                    echo "</select></div>";
+                }
 
                 if ($pageParam["type"] == "mainpageblocks") {
                     $index = 1;
-                    echo "<div style='margin-top:10px;padding-top: 10px;border-top:1px solid #888;'>";
-                    echo "<div style='font-weight: bold;'>{$pageParam["title"]} ".$this->_oroklesCheckbox($data, $key, $params)."</div>";
+                    echo "<div style=''>";
+                    echo "<div style='font-weight: bold;'>Tartalmi blokkok".$this->_oroklesCheckbox($data, $key, $params)."</div>";
                     foreach ($value as $mainPageBlock) {
                         echo $this->_mainPageBlockEditor($mainPageBlock, $index);
                         $index++;
@@ -150,7 +181,20 @@ class AdminWebPageDataPage extends AdminCorePage {
             if (!isset($params[$key])) {
                 $checked = "checked";
             }
-            $html.= " | <input type='checkbox' name='{$key}_orokles' value='1' {$checked}/> örökölt érték";
+            $html.= " | <input type='checkbox' id='{$key}_orokles' name='{$key}_orokles' value='1' {$checked}/> örökölt érték";
+        }
+
+        return $html;
+    }
+
+    private function _oroklesImageCheckbox($data, $key, $params, $imageTipus):string {
+        $html = $checked = "";
+
+        if ($data["parent"] != 0) {
+            if (!isset($params[$key])) {
+                $checked = "checked";
+            }
+            $html.= " | <input onchange='oroklesImageToggle(this, \"{$key}\", \"{$imageTipus}\", {$data["id"]}, {$data["parent"]});' type='checkbox' id='{$key}_orokles' name='{$key}_orokles' value='1' {$checked}/> örökölt érték";
         }
 
         return $html;
@@ -164,7 +208,7 @@ class AdminWebPageDataPage extends AdminCorePage {
             ];
         }
         $html = "";
-        $html.= "<div style='margin-top:10px;padding-top:10px;border-top:1px solid #888;'>Cím</div>";
+        $html.= "<div style='margin-top:5px;'>Cím</div>";
         $html.= "<div style=''><input type='text' name='mainblock_cim{$index}' style='width:400px;' value='{$mainPageBlock["title"]}' /></div>";
         $html.= "<div style='margin-top:5px;'>Tartalom</div>";
         $html.= "<div style=''><textarea type='text' name='mainblock_content{$index}' style='width:700px;height:100px;'>{$mainPageBlock["content"]}</textarea></div>";
@@ -178,8 +222,10 @@ class AdminWebPageDataPage extends AdminCorePage {
         while ($rowData = sql_fetch_array($resData)) {
             $html.= "<div style='display:table-row;'>";
             $html.= "<div class='langtd' style=''>".str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level).($level==0?"":" - ")."<a href='index.php?page={$_GET["page"]}&szerk={$rowData["id"]}'>{$rowData["domain"]}</a></div>";
-            $html.= "<div class='langtd' style=''><a target='_blank' href='http://{$rowData["domain"]}'>megnyitás</a></div>";
-            $html.= "<div class='langtd' style=''>".($rowData["aktiv"]==1?"<span style='color:green;'>Aktív</span>":"Inaktív")."</div>";
+            if ($rowData["id"] != WebPageData::DEFAULT_DATA_ID) {
+                $html .= "<div class='langtd' style=''><a target='_blank' href='http://{$rowData["domain"]}'>megnyitás</a></div>";
+                $html .= "<div class='langtd' style=''>" . ($rowData["aktiv"] == 1 ? "<span style='color:green;'>Aktív</span>" : "Inaktív") . "</div>";
+            }
             $html.= "<div class='langtd' style=''></div>";
             $html.= "</div>";
             $html.= $this->_domainList($rowData["id"], $level+1);

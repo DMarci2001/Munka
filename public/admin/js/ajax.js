@@ -18,6 +18,8 @@ $(document).ready(function () {
     initGeneralSearch();
     initDateFilterPicker();
     initQueryDatePicker();
+
+
 });
 
 
@@ -800,7 +802,10 @@ function foglalasMentes(page, allowNewCompany) {
         url: "index.php",
         data: data,
         success: function (response) {
-            $("#idoponteditor").html(response);
+            if (response.status != "") {
+                alert(response.status);
+            }
+            $("#idoponteditor").html(response.html);
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
                     afterElojegyzesTableInit();
@@ -819,19 +824,8 @@ function foglalasOrvosErtesites() {
         url: "index.php?page=booking",
         data: data,
         success: function (response) {
-            $("#idoponteditor").html(response);
+            $("#idoponteditor").html(response.html);
             alert("Értesítés elküldve!");
-        }
-    });
-}
-
-function foglalasOrvosErtesitesOnly(fid) {
-    $.ajax({
-        type: "POST",
-        url: "index.php",
-        data: "fid=" + encodeURIComponent(fid) + "&foglalasorvosertesitesonly=1",
-        success: function (response) {
-            alert(response);
         }
     });
 }
@@ -2210,6 +2204,7 @@ function salaryDataSave(oid) {
 
 function initUploadRoutine() {
     $("#assetphotofile").on("change", preparePhotoUpload);
+    $(".assetphotofile").on("change", preparePhotoUpload);
 }
 
 function preparePhotoUpload(event) {
@@ -2241,6 +2236,7 @@ function preparePhotoUpload(event) {
             $("#ajaxloader").hide();
 
             $("#asseteditor").html(response.html);
+            $("#asseteditor_"+tipus).html(response.html);
             initUploadRoutine();
 
             if (response.error != "") {
@@ -2265,6 +2261,7 @@ function deleteAsset(tipus, id, assetId) {
         data: { deleteasset: id, tipus: tipus },
         success: function (result) {
             $("#asseteditor").html(result.html);
+            $("#asseteditor_"+tipus).html(result.html);
             initUploadRoutine();
         }
     });
@@ -3198,7 +3195,28 @@ function copyToClipboard(element) {
     tooltip.html("Copied");
   }
   
-  function outFunc(element) {
+function outFunc(element) {
     var tooltip = $("#"+$(element).attr("id")+"tooltip");
     tooltip.html("Copy to clipboard");
-  }
+}
+
+
+function oroklesSet(id) {
+    $("#"+id).prop( "checked", false);
+}
+
+function oroklesImageToggle(el, key, tipus, id, parent) {
+    if ($(el).is(":checked")) {
+        id = parent;
+    }
+
+    $.ajax({
+        url: "index.php?page=webpagedata",
+        method: "POST",
+        data: { getImageUploadDiv:1, key:key, tipus:tipus, id:id },
+        success: function (response) {
+            $("#asseteditor_"+tipus).html(response);
+            initUploadRoutine();
+        }
+    });
+}

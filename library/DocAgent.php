@@ -2,17 +2,18 @@
 
 
 class DocAgent {
-    const ASSET_DOCTOR_PHOTO = "orvosphoto";
-    const ASSET_SERVICE_ILLUSTRATION_IMAGE = "serviceimage";
+    const ASSET_DOCTOR_PHOTO                = "orvosphoto";
+    const ASSET_SERVICE_ILLUSTRATION_IMAGE  = "serviceimage";
+    const ASSET_COVIDPASS_IMAGE             = "covidpassimage";
+    const ASSET_COVIDEGS_IMAGE              = "covidegsimage";
+    const ASSET_WEB_HERO                    = "webhero";
 
-    const ASSET_COVIDPASS_IMAGE = "covidpassimage";
-    const ASSET_COVIDEGS_IMAGE = "covidegsimage";
-
-    const ASSET_SERVICE_DEFAULT_IMAGE = "/images/szakter_default.jpg";
-    const ASSET_DOCTOR_DEFAULT_IMAGE_MALE = "/images/doctor_male.png";
+    const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
+    const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";
     const ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE = "/images/doctor_female.png";
 
     public $showDefaultAsset = false;
+    public $newUploadButton  = true;
 
     public function __construct()
     {
@@ -216,7 +217,7 @@ class DocAgent {
                 }
 
                 $scale = [512, 512];
-                if ($tipus == self::ASSET_COVIDPASS_IMAGE || $tipus == self::ASSET_COVIDEGS_IMAGE) {
+                if (in_array($tipus, [self::ASSET_COVIDPASS_IMAGE, self::ASSET_COVIDEGS_IMAGE, self::ASSET_WEB_HERO])) {
                     $scale = [1600, 1600];
                 }
 
@@ -272,7 +273,7 @@ class DocAgent {
         $html = "";
 
         $uploadButton= "<div style='display:inline-block;vertical-align: top;'>";
-        $uploadButton.= "<div class='upload-btn-wrapper'><div class='upbtn'>Fotó feltöltése</div><input data-tipus='{$tipus}' data-id='{$dataId}' type='file' class='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader_{$tipus}_{$dataId}' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
+        $uploadButton.= "<div class='upload-btn-wrapper'><div class='upbtn' style='display:table-cell;height:120px;vertical-align: center;'>Fotó feltöltése</div><input style='height:120px;' data-tipus='{$tipus}' data-id='{$dataId}' type='file' class='assetphotofile' name='assetphotofile' /></div><img id='ajaxloader_{$tipus}_{$dataId}' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
         $uploadButton.= "</div>";
 
         $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);

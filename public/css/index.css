@@ -576,7 +576,6 @@ input:not([type]), input[type="text"] , input[type="password"]{
     overflow: hidden;
     display: inline-block;
     cursor:pointer;
-    margin-top: 5px;
 }
 
 
