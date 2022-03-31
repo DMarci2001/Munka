@@ -49,7 +49,7 @@ class NotificationService {
     public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
-        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev 
+        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.onlytel as orvostelefon 
         FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
@@ -510,6 +510,7 @@ class NotificationService {
 
         $mbody = "<p><span style=\"font-size: 14pt;\">Köszönjük, hogy időpontfoglaló rendszerünkben jelezte foglalási szándékát!</span></p>
         <p>Kollégánk hamarosan felveszi Önnel a kapcsolatot.</p>
+        <p>A kijelölt rendelőbe az alábbi telefonszámon tud időpontot egyeztetni: {$row["orvostelefon"]}</p>
         <p>Ha módosítani szeretné az időpontjának esedékességét, kérem, törölje a jelenlegi foglalását az alábbi gombra kattintva:</p>
         <p>&nbsp;</p>
         <div style=\"height: 50px; text-align: center; padding-top: 25px;\">
