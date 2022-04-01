@@ -65,6 +65,10 @@ class HmmApi {
             $this->apiError(401, "invalid auth key", "Auth key hiányzik, vagy nem érvényes");
         }
 
+        if ($this->apiMethod == "getReservationPatients") {
+            $result = $this->getReservationPatients();
+        }
+
         if ($this->apiMethod == "doctors") {
             $result = $this->doctors();
         }
@@ -187,10 +191,41 @@ class HmmApi {
                 GROUP BY b.orvosid", ["|{$pageParams["tipusid"]}|"])->fetchAll(PDO::FETCH_ASSOC);
 
             $domainData["arak"] = sql_query("SELECT price, megnev FROM arak WHERE tipusid=8 AND INSTR(cegid, '|243|')", [$pageParams["tipusid"]])->fetchAll(PDO::FETCH_ASSOC);
+            $domainData["egeszsegpenztarak"] = sql_query("SELECT * FROM egeszsegpenztarak order by megnev")->fetchAll(PDO::FETCH_ASSOC);
         }
 
         return [
             "webpagedata" => $domainData,
+        ];
+    }
+
+    private function getReservationPatients():array {
+        //$this->authNeeded = false;
+
+        $usersWithReservation = [];
+        $userIds = [];
+
+        $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+        if (!isset($body["users"])) {
+            $this->apiError(500, "missing parameter", "Missing parameter 'users'");
+        }
+
+
+        foreach ($body["users"] as $userId) {
+            $userIds[] = intval($userId);
+        }
+
+        if (!empty($userIds)) {
+            $ids = sql_query("select f.dokirex_userid from foglalasok f where f.dokirex_userid in (".implode(",", $userIds).") and datum>date_sub(now(), interval 1 week) and f.aktiv=1")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($ids as $id) {
+                $usersWithReservation[] = intval($id["dokirex_userid"]);
+            }
+        }
+
+
+        return [
+            "usersWithReservation" => json_encode($usersWithReservation),
         ];
     }
 

@@ -68,6 +68,15 @@ class WebPageData {
             "type" => "textbox",
             "placeholder" => "",
         ],
+        "felirat_galeria" => [
+            "title" => "Galéria",
+            "type" => "felirat"
+        ],
+        "galeriaimages" => [
+            "title" => "Galéria képek",
+            "type" => "image",
+            "imagetype" => DocAgent::ASSET_WEB_GALLERY
+        ],
         "felirat3" => [
             "title" => "Főoldali tartalom elemek",
             "type" => "felirat"
