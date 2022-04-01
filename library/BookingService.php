@@ -473,12 +473,12 @@ class BookingService
             if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
                 //cib
                 $dist = "24 hour";
-                if (date("N") == 4) {
+                /*if (date("N") == 4) {
                     $dist = "48 hour";
                 }
                 if (date("N") == 5) {
                     $dist = "72 hour";
-                }
+                }*/
             }
 
             if ($cegId == 6) {
