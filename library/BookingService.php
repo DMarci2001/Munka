@@ -497,7 +497,7 @@ class BookingService
                 $dist = "0 hour";
             }
 
-            if ($cegId == 46) {
+            /*if ($cegId == 46) {
                 //vodafone
                 $dist = "72 hour";
                 if (date("N") == 4) {
@@ -506,7 +506,7 @@ class BookingService
                 if (date("N") == 5) {
                     $dist = "120 hour";
                 }
-            }
+            }*/
 
             if ($orvosId == 36) {
                 //36 - dr Bodonyi Melinda
