@@ -509,13 +509,18 @@ class NotificationService {
         $deleteLink = "http://{$cegInfo["megnev"]}.hungariamed.hu/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}";
 
         $mbody = "<p><span style=\"font-size: 14pt;\">Köszönjük, hogy időpontfoglaló rendszerünkben jelezte foglalási szándékát!</span></p>
-        <p>Kollégánk hamarosan felveszi Önnel a kapcsolatot.</p>
-        <p>A kijelölt rendelőbe az alábbi telefonszámon tud időpontot egyeztetni: {$row["orvostelefon"]}</p>
+        <p>Technikai okok miatt a megadott rendelőben jelenleg nem működik az online foglaló rendszer, ezért elnézését kérjük.</p>
+        <p>Legyen szíves a kijelölt rendelőbe az alábbi telefonszámon időpontot egyeztetni: {$row["orvostelefon"]}</p>
+        <p>Kérdés esetén keressen bennünket bátran a <a href=\"mailto:vodafone@hungariamed.hu\">vodafone@hungariamed.hu</a> e-mail címen.</p>
+
         <p>Ha módosítani szeretné az időpontjának esedékességét, kérem, törölje a jelenlegi foglalását az alábbi gombra kattintva:</p>
         <p>&nbsp;</p>
         <div style=\"height: 50px; text-align: center; padding-top: 25px;\">
         <a style=\"text-decoration: none; cursor: pointer; font-weight: bold; color: white; border-radius: 3px; bottom: 20px; text-transform: uppercase; padding: 15px 20px; box-sizing: border-box; background: #c02a2a;\" 
-        href=\"{$deleteLink}\">Foglalási szándék törlése</a></div>";
+        href=\"{$deleteLink}\">Foglalási szándék törlése</a></div>
+        
+        <p>Üdvözlettel,</p>
+        <p>Hungária Med-M Kft.</p>";
 
         $template["subject"] = "Időpont egyeztetés céljából hamarason keresni fogjuk!";
         $template["body"] = $mbody;
