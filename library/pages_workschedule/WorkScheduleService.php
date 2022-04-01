@@ -33,7 +33,7 @@ class WorkScheduleService {
         $res = sql_query("SELECT m.*,w.nev AS workernev, n.nev AS novernev FROM schedule_mapping m
         LEFT JOIN schedule_workers w ON m.`workerid`=w.`id`
         LEFT JOIN schedule_workers n ON m.`noverid`=n.`id`
-        where datumfrom > date_sub(now(), interval 7 day) order by m.datumfrom, w.nev");
+        where datumfrom > date_sub(now(), interval 100 day) order by m.datumfrom, w.nev");
         while ($row = sql_fetch_array($res)) {
             if ($row["napszak"] == 2) {
                 $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_2_{$row["tipusid"]}";
