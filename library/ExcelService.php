@@ -357,7 +357,7 @@ class ExcelService {
 
         $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
             LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' and f.eljott=1 GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($tipusok as $tipus) {
@@ -371,7 +371,7 @@ class ExcelService {
                 LEFT JOIN orvosok o ON o.id=f.orvosassigned
                 LEFT JOIN cegek c ON c.id=f.cegid
                 LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? and f.eljott=1 order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
 
             foreach ($reservations as $reservation) {

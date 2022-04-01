@@ -20,6 +20,10 @@ class ElsosegelyVizsgaPage extends CorePage {
         $this->pageTitle = "Elsősegély teszt - Hungáriamed";
 
         if (isset($_REQUEST["vizsgaformsavedata"])) {
+            if (isset($_POST["cegid"])) {
+                $_SESSION["elsosegelyuser"] = $_POST["cegid"];
+            }
+
             $result = ["error" => "", "html" => $this->donePage()];
 
             $data = $_POST;
@@ -59,7 +63,7 @@ class ElsosegelyVizsgaPage extends CorePage {
 
 
             if ($result["error"] == "") {
-                sql_query("insert into vizsgavalaszok set datum=now(), adatok=?, osszesvalasz=?, helyesvalasz=?", [json_encode($data), $osszesvalasz, $helyesvalasz]);
+                sql_query("insert into vizsgavalaszok set datum=now(), cegid=?, adatok=?, osszesvalasz=?, helyesvalasz=?", [$_SESSION["elsosegelyuser"], json_encode($data), $osszesvalasz, $helyesvalasz]);
                 $_SESSION["vizsgaid"] = sql_insert_id();
 
                 unset($_SESSION["vizsgarandom"]);
@@ -104,14 +108,19 @@ class ElsosegelyVizsgaPage extends CorePage {
 
     private $users = [
         [
+            "username" => "null",
+            "password" => "null12345",
+            "validuntil" => "2025-12-31 00:00:00"
+        ],
+        [
             "username" => "teszt",
             "password" => "teszt2",
-            "validuntil" => "2022-12-31 00:00:00"
+            "validuntil" => "2021-12-31 00:00:00"
         ],
         [
             "username" => "teszt2",
             "password" => "teszt3",
-            "validuntil" => "2022-12-31 00:00:00"
+            "validuntil" => "2021-12-31 00:00:00"
         ],
     ];
 
@@ -184,6 +193,7 @@ class ElsosegelyVizsgaPage extends CorePage {
 
         echo "<form id='vizsgaform'>";
 
+        echo "<input type='hidden' name='cegid' id='cegid' value='{$_SESSION["elsosegelyuser"]}'/>";
         echo "<div style='text-align: center;margin:0px 0px 20px 0px;' id='videodiv'>";
         echo "Kérjük nézze végig a következő videót, majd kattintson a vizsga indítása gombra:<br/><br/>";
         echo "<div style='margin-top:10px;'>";

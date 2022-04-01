@@ -84,7 +84,7 @@ class FoglaljOrvostSoapServer {
         $patientEmail           = (string)$xml->APPOINTMENT["PATIENT_EMAIL"];
         $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
         $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
-        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId));
+        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId, $fieldId));
         $locationId             = Booking_Constants::DEFAULT_PLACE_IDS[0];
 
         if (empty(trim($patientName))) {
@@ -156,7 +156,7 @@ class FoglaljOrvostSoapServer {
         $patientEmail           = (string)$xml->APPOINTMENT["PATIENT_EMAIL"];
         $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
         $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
-        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId));
+        $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId, $fieldId));
 
         if (!$this->checkDoctor($doctorOwnId)) {
             return $this->messageOutput("NO_DOCTOR", "Az orvos nem található a klinika rendszerében ({$doctorOwnId})");
@@ -218,12 +218,15 @@ class FoglaljOrvostSoapServer {
         return $message;
     }
 
-    private function getServiceString($srvId) {
+    private function getServiceString($srvId, $fieldId) {
         $return = "";
-        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus in ('service','field') and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $srvId]))) {
-            $return = "Szolgáltatás: ".$data["megnev"];
+        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus in ('service') and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $srvId]))) {
+            $return = " Tipus: ".$data["megnev"];
         }
-        return $return;
+        if ($data = sql_fetch_array(sql_query("select megnev from remoteids where provider=? and tipus in ('field') and remoteid=?", [FoglaljOrvostService::PROVIDER_NAME, $fieldId]))) {
+            $return = " Szolgáltatás: ".$data["megnev"];
+        }
+        return trim($return);
     }
 
     private function checkRotateHash($hash) {
