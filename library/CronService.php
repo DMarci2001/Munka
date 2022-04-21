@@ -52,6 +52,7 @@ class CronService {
             $this->_sendFoglaljOrvostHeartBeat();
 			$this->sendReservationReminders();
 			$this->sendMissingDataEmails();
+            $this->checkOneWebPage();
 
 			$dicomService = new DicomService();
 			$dicomService->processEntries();
@@ -426,6 +427,23 @@ class CronService {
                 echo $reservation["datum"] . " " . $reservation["nev"] . " " . $reservation["email"] . "\n";
                 $notificationService->sendMissingDataEmail($reservation["id"]);
             }
+        }
+    }
+
+    private function checkOneWebPage() {
+        if ($data = sql_query("SELECT id, domain FROM webpagedata d WHERE d.checkdate<DATE_SUB(NOW(), INTERVAL 1 WEEK) AND INSTR(domain, 'www.') LIMIT 1")->fetch(PDO::FETCH_ASSOC)) {
+
+            $status = "not found";
+            $page = file_get_contents("http://".idn_to_ascii($data["domain"]));
+            if (substr_count($page, "<title>")) {
+                $status = "found";
+            }
+
+            if (substr_count($page, "HMM SubPage Engine")) {
+                $status = "ok";
+            }
+
+            sql_query("update webpagedata set checkresult=?, checkdate=now() where id=?", [$status, $data["id"]]);
         }
     }
 

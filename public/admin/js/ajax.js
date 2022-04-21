@@ -2322,6 +2322,12 @@ function initIrszAutoFill() {
         tags: true
     });
 
+    $(".bookingeditormunkakorselector2").select2({
+        placeholder: "Nincs munkakör megadva!",
+        minimumInputLength: 2,
+        tags: true
+    });
+
     $(".bookingeditorselector2").select2({
         placeholder: "Nincs orvoshoz kötve!"
     });

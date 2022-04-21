@@ -16,7 +16,7 @@ class DailyStatService {
             sleep(1);
             $result = $this->generateDailyStat($_POST["dayFrom"], $_POST["dayTo"]);
             $_SESSION["lastgeneratedstat"]["finalresult"] = json_encode($result["result"]);
-            $_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["dayFrom"]));
+            $_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["dayFrom"], $_POST["dayTo"]));
             $_SESSION["lastgeneratedstat"]["beosztasresult"] = json_encode(WorkScheduleService::getDailySchedule($_POST["dayFrom"]));
             $utils->jsonOut($result);
         }
@@ -179,13 +179,16 @@ class DailyStatService {
                         } else {
                             //$result = [];
                             while (true) {
-                                $datum = $sheet->getCell("A{$rowNr}")->getFormattedValue();
+                                $datum = str_replace(".", "-", $sheet->getCell("A{$rowNr}")->getFormattedValue());
 
                                 if (empty($datum)) {
                                     break;
                                 }
 
-                                $datum = str_replace(".", "-", $datum);
+                                $ervenyesseg = str_replace(".", "-", $sheet->getCell("K{$rowNr}")->getFormattedValue());
+                                if (empty($ervenyesseg)) {
+                                    $ervenyesseg = "2000-01-01";
+                                }
 
                                 $row = [
                                     "datum" => date("Y-m-d H:i:s", strtotime($datum)),
@@ -198,7 +201,7 @@ class DailyStatService {
                                     "munkakor" => $sheet->getCell("H{$rowNr}")->getValue(),
                                     "korlatozas" => $sheet->getCell("I{$rowNr}")->getValue(),
                                     "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
-                                    "ervenyesseg" => date("Y-m-d H:i:s", strtotime($sheet->getCell("K{$rowNr}")->getValue()))
+                                    "ervenyesseg" => $ervenyesseg
                                 ];
 
                                 sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
@@ -318,7 +321,9 @@ class DailyStatService {
         $numberOfDays = date("t",strtotime("{$now} +{$offset} month"));
         $firstDay     = date("N",strtotime("first day of {$year} {$monthText}"));
         $firstDate    = date("Y-m-d",strtotime("first day of {$year} {$monthText}"));
+        $firstDateY   = date("Y-01-01",strtotime("first day of {$year}"));
         $lastDate     = date("Y-m-d",strtotime("last day of {$year} {$monthText}"));
+        $lastDateY    = date("Y-m-d");
         $weekDay      = 0;
 
         $dokirex = $this->getDokirexVizsgalatok($firstDate, $lastDate);
@@ -337,7 +342,7 @@ class DailyStatService {
             $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($reservations) ? "foglalás  <i style='color:red' class='fas fa-times-circle'></i>" : count($reservations) . " foglalás") . "</div>";
             $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($rontgen) ? "röntgen  <i style='color:red' class='fas fa-times-circle'></i>" : count($rontgen) . " röntgen") . "</div>";
             $html.= "<div style='font-weight: normal;font-size: 12px;'>" . (empty($dokirex) ? "dokirex vizsgálatok  <i style='color:red' class='fas fa-times-circle'></i>" : count($dokirex) . " dokirex vizsgálat</i>") . "</div>";
-            $html.= "<div style='padding-top: 5px;'><div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDate}\", \"{$lastDate}\")' title='Havi statisztika letöltése'><i class='fas fa-file-download'></i> havi statisztika</div></div>";
+            $html.= "<div style='padding-top: 5px;'><div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDateY}\", \"{$lastDateY}\")' title='Éves statisztika letöltése'><i class='fas fa-file-download'></i> éves statisztika</div>&nbsp;&nbsp;<div class='dailysmallbutton' onclick='downloadDailyStat(\"{$firstDate}\", \"{$lastDate}\")' title='Havi statisztika letöltése'><i class='fas fa-file-download'></i> havi statisztika</div></div>";
         }
         $html.= "</td>";
         $html.= "<td colspan='1' class='montlycell mthead' style='text-align: right;'><a href='#' onclick='DailyStatMoveMonth(1);return false;'><i class='fas fa-chevron-circle-right'></i></a></td>";

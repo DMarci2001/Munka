@@ -57,6 +57,10 @@ class HmmApi {
             $result = $this->webPageData();
         }
 
+        if ($this->apiMethod == "getReservationPatients") {
+            $result = $this->getReservationPatients();
+        }
+
         if ($this->apiMethod == "token") {
             $result = $this->token();
         }
@@ -190,7 +194,7 @@ class HmmApi {
                 WHERE INSTR(b.`tipusok`, ?) AND b.aktiv=1 AND o.pecsetszam<>'temp' AND TRIM(o.pecsetszam)<>''
                 GROUP BY b.orvosid", ["|{$pageParams["tipusid"]}|"])->fetchAll(PDO::FETCH_ASSOC);
 
-            $domainData["arak"] = sql_query("SELECT price, megnev FROM arak WHERE tipusid=8 AND INSTR(cegid, '|243|')", [$pageParams["tipusid"]])->fetchAll(PDO::FETCH_ASSOC);
+            $domainData["arak"] = sql_query("SELECT price, megnev FROM arak WHERE tipusid=? AND INSTR(cegid, '|243|')", [$pageParams["tipusid"]])->fetchAll(PDO::FETCH_ASSOC);
             $domainData["egeszsegpenztarak"] = sql_query("SELECT * FROM egeszsegpenztarak order by megnev")->fetchAll(PDO::FETCH_ASSOC);
         }
 
@@ -225,14 +229,12 @@ class HmmApi {
 
 
         return [
-            "usersWithReservation" => json_encode($usersWithReservation),
+            "usersWithReservation" => $usersWithReservation,
         ];
     }
 
     private function token():array {
         $this->authNeeded = false;
-
-
 
         //if (!isset($this->postParams["username"])) {
         //    print_r($_POST);

@@ -58,8 +58,8 @@ class AdminWebPageDataPage extends AdminCorePage {
                 }
             }
 
-            sql_query("update webpagedata set domain=?, parent=?, params=?, aktiv=? where id=?", [$_POST["domain"], $_POST["parent"], json_encode($params, JSON_PRETTY_PRINT), isset($_POST["aktiv"])?1:0, $_GET["szerk"]]);
-
+            sql_query("update webpagedata set domain=?, parent=?, params=?, aktiv=?, checkdate='0000-00-00 00:00:00' where id=?", [$_POST["domain"], $_POST["parent"], json_encode($params, JSON_PRETTY_PRINT), isset($_POST["aktiv"])?1:0, $_GET["szerk"]]);
+            sql_query("update webpagedata set checkdate='0000-00-00 00:00:00' where parent=?", [$_GET["szerk"]]);
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
@@ -95,7 +95,7 @@ class AdminWebPageDataPage extends AdminCorePage {
             echo "<option value='0'>Alapértelmezett</option>";
             $parents = sql_query("select * from webpagedata where id<>? order by domain", [$id])->fetchAll(PDO::FETCH_ASSOC);
             foreach ($parents as $parent) {
-                echo "<option value='{$parent["id"]}'".($parent["id"] == $data["parent"] ? " selected":"").">{$parent["domain"]}</option>";
+                echo "<option value='{$parent["id"]}'".($parent["id"] == $data["parent"] ? " selected":"").">".(in_array($parent["parent"], [0, 183]) || $parent["id"] == $data["parent"] ? "": "&nbsp;&nbsp;&nbsp;")."{$parent["domain"]}</option>";
             }
             echo "</select>";
             echo "</div>";
@@ -217,16 +217,28 @@ class AdminWebPageDataPage extends AdminCorePage {
 
     private function _domainList($parent, $level) {
         $html = "";
-        $resData = sql_query("select id, domain, aktiv from webpagedata d where parent=? order by d.domain", [$parent]);
+        $resData = sql_query("select id, domain, aktiv, checkresult from webpagedata d where parent=? order by d.aktiv desc, d.domain", [$parent]);
 
         while ($rowData = sql_fetch_array($resData)) {
-            $html.= "<div style='display:table-row;'>";
+            $html.= "<div style='display:table-row;" . ($rowData["aktiv"] == 1 ? "" : "opacity:.5;") . "'>";
             $html.= "<div class='langtd' style=''>".str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level).($level==0?"":" - ")."<a href='index.php?page={$_GET["page"]}&szerk={$rowData["id"]}'>{$rowData["domain"]}</a></div>";
             if ($rowData["id"] != WebPageData::DEFAULT_DATA_ID) {
+
+                $status = "";
+                if ($rowData["checkresult"] == "not found") {
+                    $status = "<span style='color:#f00;'>nem létező domain</span>";
+                }
+                if ($rowData["checkresult"] == "found") {
+                    $status = "régi oldal!";
+                }
+                if ($rowData["checkresult"] == "ok") {
+                    $status = "<span style='background:#0a0;color:#fff;'>új oldal ok</span>";
+                }
+
                 $html .= "<div class='langtd' style=''><a target='_blank' href='http://{$rowData["domain"]}'>megnyitás</a></div>";
                 $html .= "<div class='langtd' style=''>" . ($rowData["aktiv"] == 1 ? "<span style='color:green;'>Aktív</span>" : "Inaktív") . "</div>";
+                $html .= "<div class='langtd' style=''>{$status}</div>";
             }
-            $html.= "<div class='langtd' style=''></div>";
             $html.= "</div>";
             $html.= $this->_domainList($rowData["id"], $level+1);
         }
