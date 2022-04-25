@@ -29,7 +29,7 @@ class Booking_Settings
         $GLOBALS["hetnap"] = $this->hetnap;
     }
 
-    public $validIntervals = [3,5,6,8,10,15,20,30,40,45,60];
+    public $validIntervals = [3,5,6,8,10,12,15,20,30,40,45,60];
 
     public function getMunkaszunetiNapok() {
         return $this->munkaszunetiNapok;
