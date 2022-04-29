@@ -202,6 +202,7 @@ class AdminBeoEditor {
             $html .= "<div id='extradata{$beo["id"]}' style='padding:2px 0px 2px 25px;".($this->isExtraData($beo)?"":"display:none;")."'>";
             $html .= "Érvényesség: <input id='validfrom{$sor}' name='validfrom{$sor}' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input id='validto{$sor}' name='validto{$sor}' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
             $html .= "Megjegyzés: <input id='bmegj{$sor}' name='bmegj{$sor}' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
+            $html .= "<input value='1' type='checkbox' id='nopack{$sor}' name='nopack{$sor}'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
             $html .= "</div>";
 
             $html.= "<div id='tipusvalaszto{$beo["id"]}'></div>";

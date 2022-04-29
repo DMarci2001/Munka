@@ -303,7 +303,8 @@ class AdminDoctorsPage extends AdminCorePage {
                         $aktiv  = isset($_POST["aktiv{$sor}"])?1:0;
                         $sorban = isset($_POST["csaksorban{$sor}"])?1:0;
                         $sorban = isset($_POST["csakvsorban{$sor}"])?2:$sorban;
-						$noreservation = isset($_POST["noreservation{$sor}"])?1:0;
+                        $noreservation = isset($_POST["noreservation{$sor}"])?1:0;
+                        $nopack = isset($_POST["nopack{$sor}"])?1:0;
                         $potig = $_POST["potig{$sor}"];
 
                         if (!preg_match("/(2[0-3]|[01][0-9]):([0-5][0-9])/", $potig)) {
@@ -316,8 +317,8 @@ class AdminDoctorsPage extends AdminCorePage {
                             $_POST["validto{$sor}"] = "0000-00-00";
                         }
 
-                        $params = [$nap, $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $noreservation, $_POST["validfrom{$sor}"], $_POST["validto{$sor}"], $_POST["bmegj{$sor}"], $_POST["beosztasid{$sor}"]];
-                        sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=? where id=?", $params);
+                        $params = [$nap, $_POST["beonap{$sor}"], $_POST["hetek{$sor}"], $_POST["helyszinid{$sor}"], $sorban, $aktiv, $_POST["tol{$sor}"], $_POST["ig{$sor}"], $potig, $noreservation, $_POST["validfrom{$sor}"], $_POST["validto{$sor}"], $_POST["bmegj{$sor}"], $nopack, $_POST["beosztasid{$sor}"]];
+                        sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=? where id=?", $params);
                         $sor++;
                     }
 
