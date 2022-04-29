@@ -231,6 +231,9 @@ class AdminWebPageDataPage extends AdminCorePage {
                 if ($rowData["checkresult"] == "found") {
                     $status = "régi oldal!";
                 }
+                if ($rowData["checkresult"] == "joomla") {
+                    $status = "hungariamed.hu-ra irányítva!";
+                }
                 if ($rowData["checkresult"] == "ok") {
                     $status = "<span style='background:#0a0;color:#fff;'>új oldal ok</span>";
                 }

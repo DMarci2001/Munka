@@ -438,7 +438,9 @@ class CronService {
             if (substr_count($page, "<title>")) {
                 $status = "found";
             }
-
+            if (substr_count($page, "Joomla!")) {
+                $status = "joomla";
+            }
             if (substr_count($page, "HMM SubPage Engine")) {
                 $status = "ok";
             }
