@@ -279,6 +279,13 @@ class BookingPage extends CorePage
                 $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
+            //Helszín korlátozás VodaFone esetén
+            if (isset($_POST["telephely"]) && in_array($_SESSION["helyszindata"]["id"] ,[46, 221])) {
+                if ($_POST["telephely"] != "VSSB Zrt." && $_POST["helyszin"] == 320) {
+                    $this->errors[] = "A kiválasztott helyszínre csak VSSB Zrt. alkalmazott foglalhat.";
+                }
+            }
+
             //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}

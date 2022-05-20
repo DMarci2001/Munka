@@ -1309,7 +1309,8 @@ class BookingService
             foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
                 if ($parentReservationData["szurestipusid"] == $subTypeId) {
                     //a parent tipus időpontját pontosítjuk
-                    sql_query("update foglalasok set datum=?, orvosassigned=? where id=?", array($subData["idopont"], $subData["orvosid"], $parentId));
+                    //sql_query("update foglalasok set datum=?, orvosassigned=? where id=?", array($subData["idopont"], $subData["orvosid"], $parentId));
+                    sql_query("update foglalasok set orvosassigned=? where id=?", [$subData["orvosid"], $parentId]);
                     continue;
                 }
 
