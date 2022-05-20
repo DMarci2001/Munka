@@ -237,6 +237,7 @@ class BookingService
     }
 
     public function showIdoPontValasztoV2() {
+        
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -283,6 +284,8 @@ class BookingService
             $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
         }
 
+       
+
         $html .= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
         $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
@@ -304,6 +307,41 @@ class BookingService
             }
 
             $html.="<div style='display:table;width:100%;'>";
+
+            //<-- MARCI KÓDJA, HA VALAMI NEM STIMMELNE :) -->
+
+            //Végig kell mennyek az orvos listán hogy lecsekkoljam van-e köztük várólistás:
+            foreach($orvosList as $orvos){
+                //lekérem a beosztásokat majd listázom őket
+                $napiBeos = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvos);
+                $keys = array_keys(array_column($napiBeos,"waitlist"));
+
+                if(count($keys)!=0){
+                    foreach($keys as $key){
+                        if(empty($napiBeos[$key]["waitlist"])) continue;
+                        //Megkapom a rendelési időt percben
+                        $rendelesi_ido =  round(abs(strtotime($napiBeos[$key]["ig"]) - strtotime($napiBeos[$key]["tol"])) / 60,2);
+                        $foglalasok = array();
+                        
+                        //Lekérem a beosztáshoz tartozó adatokat:
+                        $waitlist = sql_fetch_array(sql_query("SELECT * FROM orvos_beosztas_new WHERE id = {$napiBeos[$key]["waitlist"]}"));
+                    
+                        if($waitlist["aktiv"]==0){
+                            //Minden foglalás rintervalját kilistázom ami az adott napra, orvoshoz és helyszínen van
+                            $foglalasokq = sql_query("SELECT rinterval FROM foglalasok WHERE datum >'{$nap} 00:00:00' AND datum < '{$nap} 23:59:59' AND orvosassigned={$napiBeos[$key]["orvosid"]} AND helyszinid = {$napiBeos[$key]["helyszinid"]}");
+                            while($foglalasokq_fetch = sql_fetch_array($foglalasokq)){$foglalasok[] = $foglalasokq_fetch["rinterval"];}
+    
+                            //Megvizsgálom, hogy a kifoglalt idő megegyezik-e vagy meghaladja-e a rendelési idő tartamát
+                            if(array_sum($foglalasok)>=$rendelesi_ido){
+                                //Ha igen, akkor aktiválom a beosztáshoz tartozó várólistát:
+                                sql_query("UPDATE orvos_beosztas_new SET aktiv=1 WHERE id=?",array($napiBeos[$key]["waitlist"]));
+                            }
+                        }
+                    }
+                }
+            }
+            $orvosList = $this->getOrvosListForIdopontValaszto($nap);
+            
 
             foreach ($orvosList as $oKey => $orvosId) {
                 $orvosData   = sql_query("select * from orvosok where id=?", [$orvosId])->fetch();
@@ -333,6 +371,7 @@ class BookingService
                     $buttonTitle = "";
                     $buttonClass = "foglaltbtn";
                     $buttonJava  = "nemfog();return false;";
+                    $buttonStyle = "";
                     $beoData     = [];
                     $step        ++;
 
@@ -344,6 +383,9 @@ class BookingService
                     if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) {
                         //szabad orvos kiválasztása
                         foreach ($beos as &$beoData) {
+
+                            //Meg kell találnom azokat a beokat, amiknél jelezve van, hogy van backup plan-jük. vagy orvost? Nézzük meg orvosra, úgy talán
+
                             if ($this->orvosIdopontIsFree("{$nap} {$ora}", $beoData["orvosid"], $binterval)) {
                                 $free = true;
 
@@ -362,10 +404,12 @@ class BookingService
                         }
                     }
 
+
                     //csak sorban foglalható időpontok intézése
                     if (isset($beoData) && $beoData["csaksorban"] == 1 && isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
                         $buttonJava = "nemfogs(\"{$elsoIdopont[$nap]}\");return false;";
                         $buttonClass .= " halv";
+                        
                     }
                     if (!isset($elsoIdopont[$nap]) && $buttonClass == "foglalhatobtn") {
                         $elsoIdopont[$nap] = $ora;
@@ -401,7 +445,12 @@ class BookingService
                         }
                     }
 
-                    $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
+                    if(isset($beoData) && $beoData["csaksorban"] == 1 && strpos($beoData["orvosnev"],"Várólista")!==false){
+                        $ora = $step.".";
+                        $buttonStyle = "width:37px";
+                    }
+
+                    $btn = "<a class='{$buttonClass}' style='{$buttonStyle}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a>";
 
                     //csak fordított sorrendben időpontok intézése
                     if (isset($beoData) && $beoData["csaksorban"] == 2 && $buttonClass == "foglalhatobtn") {
