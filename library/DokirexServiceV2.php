@@ -30,6 +30,12 @@ class DokirexService {
             $this->dbPassword = Booking_Constants::DOKIREX_V2_HMM_PASSWORD;
         }
 
+        if (isset($_REQUEST["config"]) && $_REQUEST["config"] == "keltexmed") {
+            $this->dbName = Booking_Constants::DOKIREX_V2_KELTEXMED_DB;
+            $this->dbEmail = Booking_Constants::DOKIREX_V2_KELTEXMED_EMAIL;
+            $this->dbPassword = Booking_Constants::DOKIREX_V2_KELTEXMED_PASSWORD;
+        }
+
         $this->token = $this->getToken();
     }
 
@@ -69,7 +75,9 @@ class DokirexService {
 
         if ($response["message"] == "OK") {
             $dokirexUserId = reset($response["data"][0]);
-            sql_query("update foglalasok set dokirex_userid=? where id=? limit 1", [$dokirexUserId, $params["fid"]]);
+            if (!isset($_REQUEST["config"])) {
+                sql_query("update foglalasok set dokirex_userid=? where id=? limit 1", [$dokirexUserId, $params["fid"]]);
+            }
 
             return "Sikeres adatküldés!";
         } else {

@@ -50,6 +50,10 @@ class Booking_Constants {
     const DOKIREX_V2_PASSWORD       = "qmqkUSwDdPAM!can";
     const DOKIREX_V2_DB             = "hungaria";
 
+    const DOKIREX_V2_KELTEXMED_EMAIL = "api@keltexmed.hu";
+    const DOKIREX_V2_KELTEXMED_PASSWORD = "L4oJNRjFFtq!Tz!y";
+    const DOKIREX_V2_KELTEXMED_DB = "BE602C35";
+
     //simplePay public sandbox
     const SIMPLEPAY_MERCHANT_ID_SANDBOX     = "PUBLICTESTHUF";
     const SIMPLEPAY_MERCHANT_SECRET_SANDBOX = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
