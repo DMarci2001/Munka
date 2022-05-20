@@ -412,10 +412,23 @@ class BookingService
                     }
 
                     //csomag override
+                    //új managerfoglalás módszer
+                    if (!empty($this->packContentTypes)) {
+                        if (!isset($availableData[$nap])) {
+                            $availableData[$nap] = $this->getPackageAvailabilityForDay($nap);
+                        }
+                        if (!empty($availableData[$nap]["error"])) {
+                            $buttonTitle = "";
+                            $buttonClass = "foglaltbtn";
+                            $buttonJava = "nemfog();return false;";
+                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                            $dayError = "<div style='font-size:11px;width:100px;margin: 10px auto;'>{$availableData[$nap]["error"]}</div>";
+                        }
+                    }
+                    /*
                     if (!empty($this->packContentTypes)) {
                         $btn = "";
                         $availableData = $this->getPackageAvailabilityForDay($nap);
-                        //$btn.= print_r($availableData, true);
                         if (empty($availableData["error"])) {
                             $buttonTitle = "";
                             $buttonClass = "foglalhatobtn";
@@ -430,9 +443,30 @@ class BookingService
                         $btn .= "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
                         $btn .= "<div style='font-size:11px;width:100px;'>{$availableData["error"]}</div>";
                     }
+                    */
 
                     $napHTML .= "<div style='text-align:center;'>{$btn}</div>";
                 }
+
+                if (isset($dayError)) {
+                    $napHTML.= $dayError;
+                    unset($dayError);
+                }
+
+                //debugdata
+                /*
+                if ($this->adminUser->managerTest() && isset($availableData[$nap])) {
+                    foreach ($availableData[$nap]["timeTableForPackage"] as $key => $data) {
+                        if ($key != $this->szuresTipus) {
+                            $napHTML .= "<div style='font-size:11px;margin-top:10px;'>";
+                            $napHTML .= "<div><strong>{$data["tipusnev"]}</strong></div>";
+                            $napHTML .= "<div>{$data["orvosnev"]}</div>";
+                            $napHTML .= "<div>";
+                        }
+                    }
+                    //$napHTML.= print_r($availableData[$nap], true);
+                }
+                */
 
                 $napHTML.= "</div>";
 
@@ -683,6 +717,7 @@ class BookingService
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
                     $orvosId     = $beoData["orvosid"];
+                    $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];
                     $step        = 0;
                     $beoMinMax   = $this->getMinMaxPack($packTypeId, $orvosId, $day);
@@ -701,7 +736,7 @@ class BookingService
                         $step++;
 
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
-                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId];
+                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
                             break 2;
                         }
                     }
@@ -1618,6 +1653,21 @@ class BookingService
                $text = str_replace("id='{$checkbox}'", "id='{$checkbox}' checked ", $text);
            }
         }
+
+        $tipusData = sql_query("select * from szurestipusok t where t.id=?", [$szurestipusid])->fetch(PDO::FETCH_ASSOC);
+        if ($tipusData["ispack"] == 1) {
+            $pack = sql_query("select t.megnev, t.id  from szurescsomagok_kapcs k 
+             left join szurestipusok t on t.id = k.szurestipusid
+             where k.csomagid=? order by t.megnev", [$szurestipusid])->fetchAll(PDO::FETCH_ASSOC);
+
+            $text.= "<div>";
+            $text.= "<div>{$tipusData["megnev"]} tartalma:</div><ul>";
+            foreach ($pack as $packData) {
+                $text.= "<li>{$packData["megnev"]}</li>";
+            }
+            $text.= "</ul></div>";
+        }
+
 
         return $text;
     }
