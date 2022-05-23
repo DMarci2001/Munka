@@ -37,7 +37,6 @@ function manualBookingConfirm(orvos){
         confirmButtonText: 'Rendben',
 		cancelButtonText: 'Bezárás'
       }).then(function(result) {
-		  console.table(result);
         if (result) {
 			$("#datum").css("background-image", "");
             $("#datum").val("Időpont egyeztetés");
@@ -853,4 +852,68 @@ function covidFormCheckboxCheck(el) {
 
 function selectedTipus(tipusId, helyszin) {
     window.location.href='index.php?page=booking&szurestipus='+tipusId+"&helyszin="+helyszin;
+}
+
+function uniqaServiceCheck(){
+    if($("#szurestipus").val()==0){
+        swal({
+            title: "Kedves Kolléga!",
+            text: "A továbblépéshez kérlek, válassz egy szűréstípust!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#b90000',
+            cancelButtonColor: '#808080',
+            confirmButtonText: 'Értem',
+            cancelButtonText: 'Bezárás'
+          }).then(function(result) {
+            if (result) {
+                $("input[name='email']").blur();
+            }
+          });
+    }
+}
+
+function uniqaEmailCheck(email){
+    if($("#szurestipus").val()!=0){
+        $.ajax({
+            type: "POST",
+            url: "?page=booking",
+            data: { uniqaEmailCheck: true, email: email, szurestipus: $("#szurestipus").val()},
+            success: function (response) {
+               console.table(response);
+              if(response.blacklistScenario==true && response.isFree==true){
+                swal({
+                    title: "Kedves Kolléga!",
+                    text: "Mivel az áprilisi Egészségnap alkalmával már részt vettél ingyenes vizsgálaton, ezért most erre nincs lehetőséged. Térítés ellenében vérvételre vagy hasi Ultranhang vizsgálatra tudsz regisztrálni. Megértésedet és együttműködésedet köszönjük!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#b90000',
+                    cancelButtonColor: '#808080',
+                    confirmButtonText: 'Értem',
+                    cancelButtonText: 'Bezárás'
+                  }).then(function(result) {
+                    if (result) {
+                        return;
+                    }
+                  });
+              }
+              if(response.alreadyBookedForFreeScenario==true && response.isFree==true){
+                swal({
+                    title: "Kedves Kolléga!",
+                    text: "Egy ingyenes szűrővizsgálati lehetőséget tudunk számodra biztosítani, melyre már regisztráltál. Térítés ellenében vérvételre vagy hasi Ultranhang vizsgálatra tudsz még jelentkezni. Megértésedet és együttműködésedet köszönjük!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#b90000',
+                    cancelButtonColor: '#808080',
+                    confirmButtonText: 'Értem',
+                    cancelButtonText: 'Bezárás'
+                  }).then(function(result) {
+                    if (result) {
+                        return;
+                    }
+                  });
+              }
+            }
+        });    
+    }
 }

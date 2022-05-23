@@ -25,6 +25,31 @@ class BookingPage extends CorePage
             die();
         }
 
+        if(isset($_POST["uniqaEmailCheck"])){
+           if($_POST["email"]!=null){
+               $freeBooking = array(157,158,159);
+               $blacklistScenario = $alreadyBookedForFreeScenario = $isFree = false;
+                //Ha feketelistás:
+               if($blacklisted=sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=?",array($_POST["email"])))){
+                   $blacklistScenario = true;
+               }
+
+               //Le kell csekkolnom, ha már foglalt ingyenesre, ha igen, akkor fusson ebbe bele, ez az üzi azoknak szól akik nem fekete listásak O.o: 
+               if($alreadybookedforfree=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE email=? AND szurestipusid IN(158,159,157) AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59'",array($_POST["email"])))){
+                $alreadyBookedForFreeScenario = true;
+               }
+
+               //Megkell nézzem milyen vizsgálatra jelentkezik:
+               if(in_array($_POST["szurestipus"],$freeBooking)){
+                $isFree=true;
+               }
+
+           }
+           $this->utils->jsonOut(array("blacklistScenario" => $blacklistScenario, "alreadyBookedForFreeScenario" => $alreadyBookedForFreeScenario, "isFree"=>$isFree));
+           die();
+           //die();
+        }
+
         if (isset($_REQUEST["addpaciensfiles"])) {
             if (!isset($_SESSION["filefix"])) $_SESSION["filefix"] = rand(10000, 99999);
             $fileFix = $_SESSION["filefix"];
@@ -283,6 +308,22 @@ class BookingPage extends CorePage
             if (isset($_POST["telephely"]) && in_array($_SESSION["helyszindata"]["id"] ,[46, 221])) {
                 if ($_POST["telephely"] != "VSSB Zrt." && $_POST["helyszin"] == 320) {
                     $this->errors[] = "A kiválasztott helyszínre csak VSSB Zrt. alkalmazott foglalhat.";
+                }
+            }
+
+            //CSAK AZ UNIQÁNAK ERRE A SZŰRÉSRE
+            if($blacklistEmail = sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=? ",array($_POST["email"])))){
+                if(in_array($_POST["szurestipus"],array(157,158,159))){
+                    $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (fekete listás ellenőrzés)";
+                }
+            }
+            if(in_array($_POST["szurestipus"],array(157,158,159))){
+                if($onlyOneFreeAllowed=sql_fetch_array(
+                    sql_query("SELECT * FROM foglalasok WHERE cegid=? 
+                                                        AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59' 
+                                                        AND szurestipusid IN(157,158,159) 
+                                                        AND email = ?", array(200,$_POST["email"])))){
+                    $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (ingyenes vizsgálat ellenőrzés)";
                 }
             }
 
