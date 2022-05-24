@@ -769,7 +769,7 @@ class BookingPage extends CorePage
         $html .= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
         $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
         $html .= "</div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(7);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(".($_SESSION["helyszindata"]["id"]==200?"7":"0").");return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";
