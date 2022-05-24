@@ -773,14 +773,16 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
 
         if($_SESSION["helyszindata"]["id"]==200 && $fieldName=="email"){
             $jsCall = "onfocusout=\"uniqaEmailCheck($(this).val())\" onClick=\"uniqaServiceCheck()\"";
+            $extraNameTag = "Céges";
         }else{
-            $jsCall = "";
+            $jsCall = $extraNameTag = "";
+            
         }
         
 
         if (!$hidden) {
             if (empty($extraHTML)) {
-                $html.= "<tr class='datarow'><td>{$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$jsCall} style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
+                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$jsCall} style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
             } else {
                 $html.= $extraHTML;
             }

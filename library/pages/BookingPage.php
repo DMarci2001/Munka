@@ -28,7 +28,7 @@ class BookingPage extends CorePage
         if(isset($_POST["uniqaEmailCheck"])){
            if($_POST["email"]!=null){
                $freeBooking = array(157,158,159);
-               $blacklistScenario = $alreadyBookedForFreeScenario = $isFree = false;
+               $blacklistScenario = $alreadyBookedForFreeScenario = $isFree = $companyEmail = false;
                 //Ha feketelistás:
                if($blacklisted=sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=?",array($_POST["email"])))){
                    $blacklistScenario = true;
@@ -44,8 +44,12 @@ class BookingPage extends CorePage
                 $isFree=true;
                }
 
+               if (preg_match('/@uniqa.hu|@uniqa.net/i', $_POST["email"])){
+                   $companyEmail=true;
+               }
+              
            }
-           $this->utils->jsonOut(array("blacklistScenario" => $blacklistScenario, "alreadyBookedForFreeScenario" => $alreadyBookedForFreeScenario, "isFree"=>$isFree));
+           $this->utils->jsonOut(array("blacklistScenario" => $blacklistScenario, "alreadyBookedForFreeScenario" => $alreadyBookedForFreeScenario, "isFree"=>$isFree, "companyEmail"=> $companyEmail));
            die();
            //die();
         }
@@ -325,6 +329,10 @@ class BookingPage extends CorePage
                                                         AND email = ?", array(200,$_POST["email"])))){
                     $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (ingyenes vizsgálat ellenőrzés)";
                 }
+            }
+            if (preg_match('/@uniqa.hu|@uniqa.net/i', $_POST["email"])){
+            }else{
+                $this->errors[] = "Az időpontfoglaláshoz céges e-mail címet kell megadni!";
             }
 
             //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
@@ -761,7 +769,7 @@ class BookingPage extends CorePage
         $html .= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
         $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
         $html .= "</div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(0);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(7);return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";

@@ -880,7 +880,24 @@ function uniqaEmailCheck(email){
             url: "?page=booking",
             data: { uniqaEmailCheck: true, email: email, szurestipus: $("#szurestipus").val()},
             success: function (response) {
-               console.table(response);
+
+              if(response.companyEmail==false){
+                swal({
+                    title: "Kedves Kolléga!",
+                    text: "Kérlek, a céges e-mail címedet add meg az időpontfoglaláshoz!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#b90000',
+                    cancelButtonColor: '#808080',
+                    confirmButtonText: 'Értem',
+                    cancelButtonText: 'Bezárás'
+                  }).then(function(result) {
+                    if (result) {
+                        return;
+                    }
+                  });
+              }
+              
               if(response.blacklistScenario==true && response.isFree==true){
                 swal({
                     title: "Kedves Kolléga!",
