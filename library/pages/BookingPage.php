@@ -316,23 +316,25 @@ class BookingPage extends CorePage
             }
 
             //CSAK AZ UNIQÁNAK ERRE A SZŰRÉSRE
-            if($blacklistEmail = sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=? ",array($_POST["email"])))){
+            if($_SESSION["helyszindata"]["id"]==200){
+                if($blacklistEmail = sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=? ",array($_POST["email"])))){
+                    if(in_array($_POST["szurestipus"],array(157,158,159))){
+                        $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (fekete listás ellenőrzés)";
+                    }
+                }
                 if(in_array($_POST["szurestipus"],array(157,158,159))){
-                    $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (fekete listás ellenőrzés)";
+                    if($onlyOneFreeAllowed=sql_fetch_array(
+                        sql_query("SELECT * FROM foglalasok WHERE cegid=? 
+                                                            AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59' 
+                                                            AND szurestipusid IN(157,158,159) 
+                                                            AND email = ?", array(200,$_POST["email"])))){
+                        $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (ingyenes vizsgálat ellenőrzés)";
+                    }
                 }
-            }
-            if(in_array($_POST["szurestipus"],array(157,158,159))){
-                if($onlyOneFreeAllowed=sql_fetch_array(
-                    sql_query("SELECT * FROM foglalasok WHERE cegid=? 
-                                                        AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59' 
-                                                        AND szurestipusid IN(157,158,159) 
-                                                        AND email = ?", array(200,$_POST["email"])))){
-                    $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (ingyenes vizsgálat ellenőrzés)";
+                if (preg_match('/@uniqa.hu|@uniqa.net/i', $_POST["email"])){
+                }else{
+                    $this->errors[] = "Az időpontfoglaláshoz céges e-mail címet kell megadni!";
                 }
-            }
-            if (preg_match('/@uniqa.hu|@uniqa.net/i', $_POST["email"])){
-            }else{
-                $this->errors[] = "Az időpontfoglaláshoz céges e-mail címet kell megadni!";
             }
 
             //if ($rowe=sql_fetch_array(sql_query("select id,datum,rkod from foglalasok where cegid='".addslashes($_SESSION["helyszindata"]["id"])."' and taj='".addslashes($_POST["taj"])."' and now()<datum"))) {
@@ -712,7 +714,7 @@ class BookingPage extends CorePage
         }
 
 
-        $extaASZF = "valamint a foglalás elküldésével elfogadom, hogy tudomásom van arról, hogy a Biztosító a Rendezvény megszervezése, a Rendezvényre történő regisztráció lebonyolítása és az általam kért vizsgálatok elvégzése céljából igénybe veszi a Hungária-Med M Kft. (HUNGÁRIA-MED M Kereskedelmi és Szolgáltató Korlátolt Felelősségű Társaság, székhely: 1132 Budapest, Csanády u. 6. B. ép. V. em. 2., a továbbiakban: „Hungária-Med M” vagy „Adatfeldolgozó”) orvosi szolgáltatásait.";
+        $extaASZF = "Valamint a foglalás elküldésével elfogadom, hogy tudomásom van arról, hogy a Biztosító a Rendezvény megszervezése, a Rendezvényre történő regisztráció lebonyolítása és az általam kért vizsgálatok elvégzése céljából igénybe veszi a Hungária-Med M Kft. (HUNGÁRIA-MED M Kereskedelmi és Szolgáltató Korlátolt Felelősségű Társaság, székhely: 1132 Budapest, Csanády u. 6. B. ép. V. em. 2., a továbbiakban: „Hungária-Med M” vagy „Adatfeldolgozó”) orvosi szolgáltatásait.";
 
         if (!isset($_SESSION["user"])) {
             echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
