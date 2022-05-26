@@ -344,13 +344,15 @@ class Utils {
             $htmlout.="<script type='text/javascript' src='js/oltasigenyform.js?v={$v}'></script>";
         }
 
+        if (isset($_GET["page"]) && $_GET["page"] == "suzukiform") {
+            $htmlout.="<script type='text/javascript' src='js/suzukiform.js?v={$v}'></script>";
+        }
+
         if (isset($_GET["page"]) && $_GET["page"] == "elsosegelyvizsga") {
             $htmlout.="<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
         if (isset($GLOBALS["admin"])) {
-            
-
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 

@@ -30,6 +30,13 @@ class CompanyService {
                     return;
                 }
 
+                if ($d == "suzukiform") {
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "suzukiform";
+                    }
+                    return;
+                }
+
                 if ($d == "mscoltas") {
                     if (!isset($GLOBALS["admin"])) {
                         $_GET["page"] = "oltasigenyfelmeres";
