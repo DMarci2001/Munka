@@ -35,9 +35,9 @@ class BookingPage extends CorePage
                }
 
                //Le kell csekkolnom, ha már foglalt ingyenesre, ha igen, akkor fusson ebbe bele, ez az üzi azoknak szól akik nem fekete listásak O.o: 
-               if($alreadybookedforfree=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE email=? AND szurestipusid IN(158,159,157) AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59'",array($_POST["email"])))){
+               /*if($alreadybookedforfree=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE email=? AND szurestipusid IN(158,159,157) AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59'",array($_POST["email"])))){
                 $alreadyBookedForFreeScenario = true;
-               }
+               }*/
 
                //Megkell nézzem milyen vizsgálatra jelentkezik:
                if(in_array($_POST["szurestipus"],$freeBooking)){
