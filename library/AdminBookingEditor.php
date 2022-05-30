@@ -46,6 +46,7 @@ class AdminBookingEditor {
             if (!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]=0;
             if (!isset($_POST["alkalmassagido"])) $_POST["alkalmassagido"]=0;
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
+            if (!isset($_POST["vernyomas"])) $_POST["vernyomas"] = "";
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -76,7 +77,8 @@ class AdminBookingEditor {
                 alkalmassagikhet=?,
                 alkalmassagkorl=?,
                 tudoszuroervenyesseg=?,
-                tudoszuro=?
+                tudoszuro=?,
+                vernyomas=?
             where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["nev"], $_POST["munkakor"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
                 $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $fid]);
 
@@ -338,6 +340,8 @@ class AdminBookingEditor {
                 }
                 $html .= "</div>";
             }
+
+            $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
 
             $html .= "</div>";
             $html .= "</div>";

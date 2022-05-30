@@ -315,8 +315,19 @@ class BookingPage extends CorePage
                 }
             }
 
+            if (CompanyService::isFesztivalOnkentes()) {
+                $_POST["questions"] = "";
+                foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
+                    if ($question["required"] && !isset($_POST["question{$key}"])) {
+                        $this->errors[] = "Kérjük válaszoljon az egészségügyi kérdésekre!";
+                        break;
+                    }
+                    $_POST["questions"] .= "{$question["question"]}: ". ($_POST["question{$key}"] == 1 ? "IGEN" : "NEM"). "\n";
+                }
+            }
+
             //CSAK AZ UNIQÁNAK ERRE A SZŰRÉSRE
-            if($_SESSION["helyszindata"]["id"]==200){
+            if (CompanyService::isUniqa()){
                 if($blacklistEmail = sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=? ",array($_POST["email"])))){
                     if(in_array($_POST["szurestipus"],array(157,158,159))){
                         $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (fekete listás ellenőrzés)";
@@ -571,6 +582,15 @@ class BookingPage extends CorePage
         echo $this->utils->dataField("utca");
         echo $this->utils->dataField("munkakor");
 
+        if (CompanyService::isFesztivalOnkentes()) {
+            foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
+                echo "<tr><td>{$question["question"]}".($question["required"]?" *":"")."</td>";
+                echo "<td>";
+                echo "<input type='radio' value='1' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 1 ? "checked" : "") . " name='question{$key}'>&nbsp;Igen</div>";
+                echo "<input type='radio' value='0' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 0 ? "checked" : "") . " name='question{$key}'>&nbsp;Nem";
+                echo "</td></tr>";
+            }
+        }
 
         //Oltási  adatok elkérése:
         if ($_SESSION["helyszindata"]["covid_oltas_bekeres"] == 1) {
@@ -713,13 +733,17 @@ class BookingPage extends CorePage
             echo "</td></tr>";
         }
 
-        if($_SESSION["helyszindata"]["id"]==200){
+        if (CompanyService::isUniqa()) {
             $webText["aszfelf"] = "Az <a href=\"#adatvedelmilink#\" target=\"_blank\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok, valamint a foglalás elküldésével elfogadom, hogy tudomásom van arról, hogy a Biztosító a Rendezvény megszervezése, a Rendezvényre történő regisztráció lebonyolítása és az általam kért vizsgálatok elvégzése céljából igénybe veszi a Hungária-Med M Kft. (HUNGÁRIA-MED M Kereskedelmi és Szolgáltató Korlátolt Felelősségű Társaság, székhely: 1132 Budapest, Csanády u. 6. B. ép. V. em. 2., a továbbiakban: „Hungária-Med M” vagy „Adatfeldolgozó”) orvosi szolgáltatásait.";
+        }
+
+        if (CompanyService::isFesztivalOnkentes()) {
+            $webText["aszfelf"].= " <br/>Ezen kívül kijelentem, hogy eltitkolt betegségem nincs.";
         }
 
         if (!isset($_SESSION["user"])) {
             echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-            echo "<tr class='datarow'><td><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
         }
 
         //$submitButtonText = $webText["idopontfoglalasa"];

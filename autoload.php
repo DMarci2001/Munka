@@ -39,6 +39,7 @@ require_once(__DIR__ . "/library/pages/AutoertesitesleiratkozasPage.php");
 require_once(__DIR__ . "/library/pages/RemoteBookingPage.php");
 require_once(__DIR__ . "/library/pages/CovidFormPage.php");
 require_once(__DIR__ . "/library/pages/WebFogleuPage.php");
+require_once(__DIR__ . "/library/pages/SuzukiFormPage.php");
 require_once(__DIR__ . "/library/pages/OltasIgenyFelmeresPage.php");
 require_once(__DIR__ . "/library/pages/OltasJelentkezesPage.php");
 require_once(__DIR__ . "/library/pages/ElsosegelyVizsgaPage.php");

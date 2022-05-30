@@ -30,6 +30,13 @@ class CompanyService {
                     return;
                 }
 
+                if ($d == "suzukiform") {
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "suzukiform";
+                    }
+                    return;
+                }
+
                 if ($d == "mscoltas") {
                     if (!isset($GLOBALS["admin"])) {
                         $_GET["page"] = "oltasigenyfelmeres";
@@ -68,6 +75,21 @@ class CompanyService {
 
     public static function isHungarocontrol():bool {
         return $_SESSION["helyszindata"]["domain"] == "hc";
+    }
+
+    public static function isUniqa():bool {
+        return $_SESSION["helyszindata"]["domain"] == "uniqa";
+    }
+
+    public static $fesztivalOnkentesQuestions = [
+        1 => ["type" => "igennem", "required" => true, "question" => "Allergiája van?"],
+        2 => ["type" => "igennem", "required" => true, "question" => "Gyógyszerérzékenysége van?"],
+        3 => ["type" => "igennem", "required" => true, "question" => "Szed rendszeresen gyógyszert?"],
+        4 => ["type" => "igennem", "required" => true, "question" => "Kezelik valamilyen betegséggel?"],
+    ];
+
+    public static function isFesztivalOnkentes():bool {
+        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes";
     }
 
 }
