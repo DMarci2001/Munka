@@ -333,7 +333,7 @@ class BookingPage extends CorePage
                         $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (fekete listás ellenőrzés)";
                     }
                 }
-                if(in_array($_POST["szurestipus"],array(157,158,159))){
+                /*if(in_array($_POST["szurestipus"],array(157,158,159))){
                     if($onlyOneFreeAllowed=sql_fetch_array(
                         sql_query("SELECT * FROM foglalasok WHERE cegid=? 
                                                             AND datum BETWEEN '2022-05-31 00:00:00' AND '2022-05-31 23:59:59' 
@@ -341,7 +341,7 @@ class BookingPage extends CorePage
                                                             AND email = ?", array(200,$_POST["email"])))){
                         $this->errors[] = "A kiválasztott vizsgálatra nem lehetséges az időpont foglalás, kérem, válasszon egy másik vizsgálat típust. (ingyenes vizsgálat ellenőrzés)";
                     }
-                }
+                }*/
                 if (preg_match('/@uniqa.hu|@uniqa.net/i', $_POST["email"])){
                 }else{
                     $this->errors[] = "Az időpontfoglaláshoz céges e-mail címet kell megadni!";
