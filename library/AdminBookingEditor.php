@@ -576,27 +576,15 @@ class AdminBookingEditor {
 
     private function munkakorInput($row) {
         $html = "";
-        if (true || session_id() == "r0jiaadtv7m05coqi8md6vrlkh") {
-            $html .= "<select class='bookingeditormunkakorselector2 ui-taborder' data-taborder='3' name='munkakor' id='munkakor' style='width:200px;'>";
-            $html .= "<option value=''>Nincs munkakör</option>";
 
-            $wasSelected = false;
-            foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE regdatum>'2022-02-01 00:00:00' and munkakor IS NOT NULL AND munkakor<>'' GROUP BY TRIM(munkakor) ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
-                $s = "";
-                if ($row["munkakor"] == $munkakor["munkakor"]) {
-                    $s = "selected";
-                    $wasSelected = true;
-                }
+        $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
-                $html .= "<option value='{$munkakor["munkakor"]}' {$s}>{$munkakor["munkakor"]}</option>";
-            }
-            if (!$wasSelected && !empty($row["munkakor"])) {
-                $html .= "<option value='{$row["munkakor"]}' selected>{$row["munkakor"]}</option>";
-            }
-            $html .= "</select>";
-        } else {
-            $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' value='{$row["munkakor"]}'>";
+        $items = [];
+        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>'2022-02-01 00:00:00' and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
+            $items[] = "'".str_replace("'", "", $munkakor["munkakor"])."'";
         }
+
+        $html.= "<script>$(function() { var munkakorok = [".implode(",", $items)."];$('#bookingeditormunkakor').autocomplete({source: function(request, response) { var results = $.ui.autocomplete.filter(munkakorok, request.term);response(results.slice(0, 14)); }}); });</script>";
         return $html;
     }
 
