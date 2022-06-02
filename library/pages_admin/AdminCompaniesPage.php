@@ -14,7 +14,10 @@ class AdminCompaniesPage extends AdminCorePage
         "irsz"      => "Irányítószám",
         "varos"     => "Város",
         "utca"      => "Utca",
+        "email"     => "Email",
+        "telefon"   => "Telefon",
         "munkakor"  => "Munkakör",
+        "torzsszam" => "Törzsszám",
         "doksi"     => "Dokumentum feltöltés"
     ];
 

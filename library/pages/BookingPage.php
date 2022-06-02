@@ -252,6 +252,11 @@ class BookingPage extends CorePage
                     $this->errors[] = "{$webText["nevkotelezo"]}";
                 }
             }
+            if (!$this->utils->getFieldHidden("torzsszam") && $this->utils->getFieldRequired("torzsszam")) {
+                if (empty($_POST["torzsszam"])) {
+                    $this->errors[] = "A törzsszám megadása kötelező!";
+                }
+            }
             if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
                 if (empty($_POST["telefon"])) {
                     $this->errors[] = "{$webText["telkotelezo"]}";
@@ -581,6 +586,7 @@ class BookingPage extends CorePage
         echo $this->utils->dataField("varos");
         echo $this->utils->dataField("utca");
         echo $this->utils->dataField("munkakor");
+        echo $this->utils->dataField("torzsszam");
 
         if (CompanyService::isFesztivalOnkentes()) {
             foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {

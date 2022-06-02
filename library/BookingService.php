@@ -1383,6 +1383,7 @@ class BookingService
         if (!isset($data["szulhely"])) $data["szulhely"] = "";
         if (!isset($data["telephely"])) $data["telephely"] = "";
         if (!isset($data["anyjaneve"])) $data["anyjaneve"] = "";
+        if (!isset($data["torzsszam"])) $data["torzsszam"] = "";
         if (!isset($data["taj"])) $data["taj"] = "";
         if (!isset($data["rinterval"])) $data["rinterval"] = 0;
         if (!isset($data["helyszin"])) $data["helyszin"] = 0;
@@ -1424,6 +1425,7 @@ class BookingService
             anyjaneve=?,
             neme=?,
             taj=?,
+            torzsszam=?,
             irsz=?,
             varos=?,
             utca=?,
@@ -1460,6 +1462,7 @@ class BookingService
                 $data["anyjaneve"],
                 $data["neme"],
                 $data["taj"],
+                $data["torzsszam"],
                 $data["irsz"],
                 $data["varos"],
                 $data["utca"],
