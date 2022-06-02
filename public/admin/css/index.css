@@ -1502,3 +1502,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	visibility: visible;
 	opacity: 1;
   }
+
+.ui-autocomplete {
+	z-index:300000 !important;
+}

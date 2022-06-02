@@ -1,11 +1,14 @@
 <?php
 
+use mikehaertl\pdftk\Pdf;
+
 class PrintService
 {
 
     private $templates = array(
         "menedzserkerdoiv"   => "menedzserkerdoiv.html",
         "alkalmassagi"       => "alkalmassagi.html",
+        "alkalmassagipdf"    => "alkalmassagi_form2.pdf",
         "vizsgalatilap"      => "vizsgalatilap.html",
         "karton"             => "karton.html",
         "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
@@ -58,6 +61,12 @@ class PrintService
         if (empty($this->templateId)) {
             die("error code 1256");
         }
+
+        if ($this->templateId == "alkalmassagipdf") {
+            $this->printAlkalmassagi();
+            return;
+        }
+
         //HTML alapú dokumentumok:
         if (strpos($this->templateFileName, ".html") !== false) {
             header("Content-type: text/html; charset=UTF-8");
@@ -98,6 +107,67 @@ class PrintService
             die();
         }
     }
+
+    private function printAlkalmassagi() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $alkalmasMark = $nemalkalmasMark = $ideiglenesennemalkalmasMark = $ervenyes = "";
+        if ($this->reservationData["alkalmassag"] == "I" || $this->reservationData["alkalmassag"] == "K") {
+            $alkalmasMark = "_____________________";
+            $ervenyes = date("Y. m. d.", strtotime($this->reservationData["fsfsfs"]. " +{$this->reservationData["alkalmassagido"]} month"));
+        }
+        if ($this->reservationData["alkalmassag"] == "N") {
+            $nemalkalmasMark = "________________________";
+        }
+        if ($this->reservationData["alkalmassag"] == "IN") {
+            $ideiglenesennemalkalmasMark = "________________________________________";
+        }
+
+        $input = [
+            "nev" => $this->pdfChars($this->reservationData["nev"]),
+            "szuldatum" => date("Y. m. d.", strtotime($this->reservationData["szuldatum"])),
+            "szulev" => date("Y", strtotime($this->reservationData["szuldatum"])),
+            "szulho" => date("m", strtotime($this->reservationData["szuldatum"])),
+            "szulnap" => date("d", strtotime($this->reservationData["szuldatum"])),
+            "munkakor" => $this->pdfChars($this->reservationData["munkakor"]),
+            "alkalmas" => $alkalmasMark,
+            "nem_alkalmas" => $nemalkalmasMark,
+            "ideiglenesen_nem_alkalmas" => $ideiglenesennemalkalmasMark,
+            "kelte" => "Budapest, ".date("Y. m. d.", strtotime($this->reservationData["datum"])),
+            "ervenyes" => $ervenyes,
+            "korlatozas" => $this->pdfChars($this->reservationData["alkalmassagkorl"]),
+            "ida_het" => $this->reservationData["alkalmassagikhet"]
+        ];
+
+        $fileName = "alkalmassagi_".date("Y_m_d", strtotime($this->reservationData["datum"]))."_{$this->reservationData["nev"]}.pdf";
+
+        if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
+            $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
+        }
+
+        $pdf = new Pdf("templates/{$this->templateFileName}");
+
+
+        $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($raw === false) {
+            $error = $pdf->getError();
+            var_dump($error);
+        } else {
+            header("Pragma: no-cache");
+            header("Cache-Control: no-store, no-cache");
+            header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must-revalidate");
+            header('Content-transfer-encoding: binary');
+            header("Content-Type: application/octet-stream");
+            header('Content-Disposition: attachment; filename="'.$fileName.'"');
+            //header("Content-Type: application/pdf");
+            echo $raw;
+        }
+    }
+
 
     private function printKartonPDF()
     {
@@ -190,5 +260,15 @@ class PrintService
     private function pdfString($s)
     {
         return iconv("UTF-8", "ISO-8859-2", $s);
+    }
+
+    private function pdfChars($text) {
+        $text = str_replace("ő", "ö", $text);
+        $text = str_replace("ű", "ü", $text);
+        $text = str_replace("í", "i", $text);
+        $text = str_replace("Ő", "Ö", $text);
+        $text = str_replace("Ű", "Ü", $text);
+        $text = str_replace("Í", "I", $text);
+        return $text;
     }
 }

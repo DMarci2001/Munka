@@ -241,6 +241,13 @@ class AdminUser {
         return $jogosultsagok;
     }
 
+    public function getLockPage():string {
+        if ($this->authenticated()) {
+            return $this->user["lockpage"];
+        } else {
+            return "";
+        }
+    }
 
     public function tiltottUser():bool {
         if ($this->authenticated() && $this->user["status"] != 0) {

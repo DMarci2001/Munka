@@ -11,7 +11,8 @@ class AdminPage {
     public $page;
     public $pageData;
 
-    private $skipFrame = false;
+    private bool $skipFrame = false;
+    private bool $skipMenu = false;
     private $adminMenu = [];
 
     public function __construct()
@@ -40,13 +41,21 @@ class AdminPage {
             if ($this->adminUser->oltasAccess()) {
                 $_GET["page"] = "oltasigenyek";
             }
-
         }
+
+        if ($this->adminUser->getLockPage() != "") {
+            $this->skipMenu = true;
+            $_GET["page"] = $this->adminUser->getLockPage();
+        }
+
         if (!isset($_SESSION["helyid"])) {
             $_SESSION["helyid"] = 1;
         }
 
         $this->pageData = sql_fetch_array(sql_query("select * from adminmenu where pageid=?", array($_GET["page"])));
+        if ($this->adminUser->getLockPage() != "") {
+            $this->pageData["skipmenu"] = 1;
+        }
 
         $pageName = "Admin".ucfirst($_GET["page"])."Page";
 
@@ -105,7 +114,7 @@ class AdminPage {
         echo "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr>";
 
-        if ($this->pageData["skipmenu"] == 0) {
+        if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
             echo "<td valign='top' width='150' class='menuoszlop'>";
             echo $this->_menuColumn();
             echo "</td>";

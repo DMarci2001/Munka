@@ -38,8 +38,9 @@ function manualBookingConfirm(orvos){
 		cancelButtonText: 'Bezárás'
       }).then(function(result) {
         if (result) {
-			$("#datum").css("background-image", "");
             $("#datum").val("Időpont egyeztetés");
+            $("#datumText").css("background-image", "");
+            $("#datumText").val("Időpont egyeztetés");
             $("#rinterval").val(15);
             $("#orvosselected").val(orvos);
             animateIdoPontValaszto();
@@ -177,9 +178,10 @@ function showInfoPageText(szurestipusid){
 function clearIdopontValaszto() {
     clearSelectedDoctor();
     $("#datum").val("");
+    $("#datumText").val("");
     $("#idopontvalasztodiv").html("");
     $("#infopagetext").html("");
-    $("#datum").css("background-image", "");
+    $("#datumText").css("background-image", "");
     tappenzCheckRefresh();
 
     $("#helyszinvalasztowarn").hide();
@@ -214,7 +216,7 @@ function showTipusMegj(tipusid) {
 function clearHelyszinSelector(tid) {
     $("#helyszinvalaszto").load("index.php?page=booking&helyszinrefresh=" + tid);
     $("#szurestipusmegj").html("");
-    $("#datum").css("background-image", "");
+    $("#datumText").css("background-image", "");
     //$("#tappenzcheck").load("index.php?tappenzcheckrefresh="+tid);
     //showTipusMegj($("#szurestipus").val());
 }
@@ -225,6 +227,8 @@ function toggleCheckBox(id) {
     return;
 }
 
+var varolista = 0;
+
 function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
     if (orvos === undefined) orvos = 0;
     $.ajax({
@@ -233,7 +237,14 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
         data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), szurestipusid: szurestipusid, orvos: orvos }
     }).done(function (msg) {
         if (msg == "ok") {
-            $("#datum").css("background-image", "");
+            $("#datumText").css("background-image", "");
+
+            if (varolista == 1) {
+                $("#datumText").val("Várólista");
+            } else {
+                $("#datumText").val(idopont);
+            }
+
             $("#datum").val(idopont);
             $("#rinterval").val(rinterval);
             $("#orvosselected").val(orvos);
@@ -251,23 +262,23 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
 
 function animateIdoPontValaszto() {
     $("#idopontvalasztodiv").slideUp(400, function () {
-        $("#datum").animate({
+        $("#datumText").animate({
             backgroundColor: '#41b6c6',
             color: '#fff'
         }, 100, function () {
-            $("#datum").animate({
+            $("#datumText").animate({
                 backgroundColor: '#fff',
                 color: '#555'
             }, 100, function () {
-                $("#datum").animate({
+                $("#datumText").animate({
                     backgroundColor: '#41b6c6',
                     color: '#fff'
                 }, 100, function () {
-                    $("#datum").animate({
+                    $("#datumText").animate({
                         backgroundColor: '#fff',
                         color: '#555'
                     }, 100, function () {
-                        $("#datum").css("background-image", "url(images/check.png)");
+                        $("#datumText").css("background-image", "url(images/check.png)");
                     });
                 });
             });

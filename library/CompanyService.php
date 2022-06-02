@@ -88,8 +88,15 @@ class CompanyService {
         4 => ["type" => "igennem", "required" => true, "question" => "Kezelik valamilyen betegséggel?"],
     ];
 
-    public static function isFesztivalOnkentes():bool {
-        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes";
+    public static function fesztivalCompanyIds() {
+        return [138, 275];
+    }
+
+    public static function isFesztivalCompany($companyId = 0):bool {
+        if ($companyId != 0) {
+            return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
+        }
+        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny";
     }
 
 }

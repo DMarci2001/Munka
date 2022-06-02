@@ -767,15 +767,21 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                 if (!in_array($_SESSION["helyszindata"]["domain"], ["bejelentkezes", "gyor-bejelentkezes"])) {
                     //$hidden = true;
                 }
-                if ($_SESSION["helyszindata"]["domain"] == "fesztivalonkentes") {
+                if (CompanyService::isFesztivalCompany($_SESSION["helyszindata"]["id"])) {
                     //forced default
                     $_POST[$field] = "rendezvény kisegítő";
                 }
-                if($_SESSION["helyszindata"]["id"]=="bp-teszt"){
+                if($_SESSION["helyszindata"]["domain"]=="bp-teszt"){
                     if(empty($_POST[$field]) || !isset($_POST[$field])){
                         $_POST[$field] = "Képernyő előtti szellemi munkavégzés";
                     }
                 }
+                break;
+            case "torzsszam":
+                if ($_SESSION["helyszindata"]["domain"]=="bp-teszt" || $_SESSION["helyszindata"]["domain"]=="bp"){
+                    $webText[$translateKey] = "NTID";
+                }
+                break;
         }
 
         if($_SESSION["helyszindata"]["id"]==200 && $fieldName=="email"){

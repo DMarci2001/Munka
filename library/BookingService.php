@@ -242,12 +242,16 @@ class BookingService
         $webText = $this->lang->webText;
 
         $html = "";
-        $this->setHelyszin($_GET["helyszin"]);
+        if (isset($_GET["helyszin"]) && $_GET["helyszin"] != "undefined") {
+            $this->setHelyszin($_GET["helyszin"]);
+        }
         $this->setNeme($_GET["neme"]);
         if (isset($_GET["szurestipus"])) {
             $this->setSzuresTipus($_GET["szurestipus"]);
         }
-        $this->honnan = intval($_GET["honnan"]);
+        if (isset($_GET["honnan"])) {
+            $this->honnan = intval($_GET["honnan"]);
+        }
         $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
         $cegId = $_SESSION["helyszindata"]["id"];
 
@@ -396,8 +400,12 @@ class BookingService
                                 if ($free) {
                                     $freeTimes++;
                                     $buttonClass = "foglalhatobtn";
+                                    $varolista = 0;
+                                    if ($beoData["csaksorban"] == 1 && strpos($beoData["orvosnev"],"Várólista")!==false) {
+                                        $varolista = 1;
+                                    }
                                     $buttonTitle = "{$orvosData["nev"]}";
-                                    $buttonJava  = "chooseIdoPont(\"{$nap} {$ora}\",{$binterval},{$orvosId},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
+                                    $buttonJava  = "varolista={$varolista};chooseIdoPont(\"{$nap} {$ora}\",{$binterval},{$orvosId},{$_GET['helyszin']},{$_GET['szurestipus']});return false;";
                                     break;
                                 }
                             }
@@ -625,6 +633,11 @@ class BookingService
         $korlatozottDatum = date("Y-m-d", strtotime("{$pdata['datum']} + " . ($pdata['alkalmassagido'] - $korlatozottOrvosok[$oid]['restrict_time']) . " months"));
 
         return array("orvosok" => $korlatozottOrvosok, "datum" => $korlatozottDatum);
+    }
+
+    public function setHonnan($honnan)
+    {
+        $this->honnan = intval($honnan);
     }
 
     public function setHelyszin($helyszinId)
@@ -1255,6 +1268,11 @@ class BookingService
 
             $api = new BookingSyncApi();
             $api->deleteReservation($row);
+
+            if (in_array($row["orvosassigned"], [11111111111, 1111111111])) {
+                $notificationService = new NotificationService();
+                $notificationService->deleteMessage($row["id"]);
+            }
 
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));

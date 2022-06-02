@@ -75,6 +75,10 @@ class NotificationService {
                 }
             }
 
+            if ($this->isVarolista($row)) {
+                $mailTemplate = $this->userMailTemplateVarolista($row);
+            }
+
             $mail = $this->getDefaultMailer();
             $mail->AddAddress($row["email"]);
             if (!empty(Booking_Constants::USER_BCC_MAIL)) {
@@ -85,7 +89,7 @@ class NotificationService {
             $mail->Body = $mailTemplate["body"];
             //$mail->AddAttachment("");
 
-            if ($row["noreservation"] == 0) {
+            if ($row["noreservation"] == 0 && !$this->isVarolista($row)) {
                 //csak ha nem webdoctor
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
@@ -408,6 +412,27 @@ class NotificationService {
         return $template;
     }
 
+    private function isVarolista($reservationData) {
+        return substr_count($reservationData["orvosnev"], "Várólista") != 0;
+    }
+
+    private function userMailTemplateVarolista($row) {
+        $lang = new Lang();
+        $webTextLocal = $lang->getWebTexts($row["rlang"]);
+
+        $mbody = "Kedves Hölgyem/Uram!<br/>
+            <br/>
+            Köszönjük, hogy jelezte foglalási szándékát a várólistán, amennyiben lesz üresedés mindenképp értesíteni fogjuk Önt!<br/>
+            <br/>
+            Tisztelettel,<br/>
+            Hungária Med-M";
+
+        $template["subject"] = "{$webTextLocal["sikeresidopontreg"]}";
+        $template["body"] = $mbody;
+        return $template;
+    }
+
+
     private function userMailTemplate($row) {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
@@ -426,7 +451,9 @@ class NotificationService {
         $mbody .= "<h1>{$row["datum"]} - {$row["helyszin"]}</h1>";
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
-        $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
+        if (!$this->isVarolista($row)) {
+            $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
+        }
         $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
         $mbody .= "{$packText}";
@@ -888,5 +915,38 @@ END:VCALENDAR";
         $mail->Body = "ez egy teszt mail";
         $mail->send();
     }
+
+    function deleteMessage($reservationId) {
+        $res = sql_query("SELECT o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+        LEFT JOIN cegek c on c.id=f.cegid
+        LEFT JOIN orvosok o on o.id=f.orvosassigned
+        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+        WHERE f.id=?", [$reservationId]);
+
+        if ($row = sql_fetch_array($res)) {
+            $mail = self::getDefaultMailer();
+            $mail->AddAddress("jns@jns.hu");
+            //$mail->AddAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
+
+            $subject = "Egy foglalás törölve lett! {$row["orvosnev"]} - {$row["helyszin"]}";
+
+            $mbody = "<h2>Törölt foglalás adatai</h2>";
+            $mbody .= "Orvos: {$row["orvosnev"]}<br/>";
+            $mbody .= "Név: {$row["nev"]}<br/>";
+            $mbody .= "Telefon: {$row["telefon"]}<br/>";
+            $mbody .= "Email: {$row["email"]}<br/>";
+            $mbody .= "<b>Időpont: {$row["datum"]}</b><br/>";
+            $mbody .= "Szűréstípus: {$row["szurestipus"]}<br/>";
+            $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
+            $mbody .= "<br/>";
+
+            $mail->Subject = $subject;
+            $mail->Body = $mbody;
+            $mail->Send();
+        }
+    }
+
+
 
 }

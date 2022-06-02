@@ -320,7 +320,7 @@ class BookingPage extends CorePage
                 }
             }
 
-            if (CompanyService::isFesztivalOnkentes()) {
+            if (CompanyService::isFesztivalCompany()) {
                 $_POST["questions"] = "";
                 foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
                     if ($question["required"] && !isset($_POST["question{$key}"])) {
@@ -588,7 +588,7 @@ class BookingPage extends CorePage
         echo $this->utils->dataField("munkakor");
         echo $this->utils->dataField("torzsszam");
 
-        if (CompanyService::isFesztivalOnkentes()) {
+        if (CompanyService::isFesztivalCompany()) {
             foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
                 echo "<tr><td>{$question["question"]}".($question["required"]?" *":"")."</td>";
                 echo "<td>";
@@ -743,7 +743,7 @@ class BookingPage extends CorePage
             $webText["aszfelf"] = "Az <a href=\"#adatvedelmilink#\" target=\"_blank\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok, valamint a foglalás elküldésével elfogadom, hogy tudomásom van arról, hogy a Biztosító a Rendezvény megszervezése, a Rendezvényre történő regisztráció lebonyolítása és az általam kért vizsgálatok elvégzése céljából igénybe veszi a Hungária-Med M Kft. (HUNGÁRIA-MED M Kereskedelmi és Szolgáltató Korlátolt Felelősségű Társaság, székhely: 1132 Budapest, Csanády u. 6. B. ép. V. em. 2., a továbbiakban: „Hungária-Med M” vagy „Adatfeldolgozó”) orvosi szolgáltatásait.";
         }
 
-        if (CompanyService::isFesztivalOnkentes()) {
+        if (CompanyService::isFesztivalCompany()) {
             $webText["aszfelf"].= " <br/>Ezen kívül kijelentem, hogy eltitkolt betegségem nincs.";
         }
 
@@ -800,9 +800,10 @@ class BookingPage extends CorePage
         $html .= "<div style='display:table-row;'>";
         $html .= "<div style='display:table-cell;'>";
         $html .= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datum' id='datum' value='{$dateVal}' />";
+        $html .= "<input type='hidden' name='datum' id='datum' value='{$dateVal}' />";
+        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText' id='datumText' value='{$_POST["datumText"]}' />";
         $html .= "</div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2(".($_SESSION["helyszindata"]["id"]==200?"7":"0").");return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";

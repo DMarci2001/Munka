@@ -42,11 +42,13 @@ class AdminBookingEditor {
             }
 
             //if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
+            if (!isset($_POST["alkalmassaguserid"])) $_POST["alkalmassaguserid"]=0;
             if (!isset($_POST["voltnalunk"])) $_POST["voltnalunk"]=0;
             if (!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]=0;
             if (!isset($_POST["alkalmassagido"])) $_POST["alkalmassagido"]=0;
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
             if (!isset($_POST["vernyomas"])) $_POST["vernyomas"] = "";
+            if (!isset($_POST["orvosszoveg"])) $_POST["orvosszoveg"] = "";
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -78,9 +80,11 @@ class AdminBookingEditor {
                 alkalmassagkorl=?,
                 tudoszuroervenyesseg=?,
                 tudoszuro=?,
-                vernyomas=?
+                vernyomas=?,
+                orvosszoveg=?,
+                alkalmassaguserid=?
             where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["nev"], $_POST["munkakor"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $fid]);
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], $_POST["alkalmassaguserid"], $fid]);
 
 
             if (!empty($_POST["paciensid"])) {
@@ -94,19 +98,19 @@ class AdminBookingEditor {
             $alkalmassagi = "";
             if($_POST['alkalmassag'] === "I") {
                 $alkalmassagi = date("Y-m-d",strtotime("Now + {$_POST['alkalmassagido']} months"));
-                echo "I";
+                //echo "I";
             }
             if($_POST['alkalmassag'] === "N") {
                 $alkalmassagi = "0000-00-00 00:00:00";
-                echo "N";
+                //echo "N";
             }
             if($_POST['alkalmassag'] === "IN") {
                 $alkalmassagi = date("Y-m-d",strtotime("Now + {$_POST['alkalmassagikhet']} weeks"));
-                echo "IN";
+                //echo "IN";
             }
             if($_POST['alkalmassag'] === "K") {
                 $alkalmassagi = date("Y-m-d",strtotime("Now + {$_POST['alkalmassagido']} months"));
-                echo "K";
+                //echo "K";
             }
 
             $request = sql_query("SELECT id FROM felhasznalok WHERE email = '{$_POST['email']}' AND taj = '{$_POST['taj']}' ");
@@ -307,16 +311,24 @@ class AdminBookingEditor {
 
             $files = $this->adminUtils->showPaciensFiles($row["id"]);
             if (!empty($files) && $row["noreservation"] != 1) {
-                $html .= "<div id='uploadfilesfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
+                $html .= "<div id='uploadfilesfolder' style='position:absolute;margin-top:70px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
                 $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='feltöltött fájlok' onclick='toggleUploadFiles();' src='images/Files-PNG-File.png' style='width:30px;cursor:pointer;' /></div></div>";
                 $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;width:200px;background:#ddd;overflow:hidden;'><div style='width:1000px;'>{$files}</div></div></div>";
                 $html .= "</div>";
             }
 
-            $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:170px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
+            $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
             $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
             $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
 
+            if (CompanyService::isFesztivalCompany($row["cegid"])) {
+                $text = nl2br($row["questions"]);
+                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
+                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
+                $html.= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+            }
+
+            $html.= "<div class='mainalkform'>";
             foreach ($this->adminUtils->settings->alkalmassagvariaciok as $key => $value) {
                 $oc = "";
                 $sb = "";
@@ -342,6 +354,32 @@ class AdminBookingEditor {
             }
 
             $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
+
+
+            $html .= "</div>"; //mainalkform end
+            $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+
+            $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
+            $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
+            $html .= "</div>";
+
+            if (!empty($this->user->user["pecsetszam"])) {
+                $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
+            }
+
+
+            $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
+            $html .= "<select name='alkalmassaguserid' style='width:170px;'>";
+            $html .= "<option value='0'>Válasszon!</option>";
+            foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
+                $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
+            }
+            $html .= "</select>";
+            $html .= "</div>";
+
+            if (!empty($this->user->user["pecsetszam"])) {
+                $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
+            }
 
             $html .= "</div>";
             $html .= "</div>";
@@ -391,7 +429,7 @@ class AdminBookingEditor {
             if ($row["nev"] != "" && $row["nev"] != "nincs név") {
                 $html .= "<div style='margin-bottom:5px;'>";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagi&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
