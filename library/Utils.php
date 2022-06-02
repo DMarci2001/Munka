@@ -771,6 +771,11 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                     //forced default
                     $_POST[$field] = "rendezvény kisegítő";
                 }
+                if($_SESSION["helyszindata"]["id"]=="bp-teszt"){
+                    if(empty($_POST[$field]) || !isset($_POST[$field])){
+                        $_POST[$field] = "Képernyő előtti szellemi munkavégzés";
+                    }
+                }
         }
 
         if($_SESSION["helyszindata"]["id"]==200 && $fieldName=="email"){
