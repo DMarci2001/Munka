@@ -794,6 +794,23 @@ class BookingPage extends CorePage
 
         $dateStyle = (!empty($_POST["datum"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
         $dateVal = substr($_POST["datum"], 0, 16);
+        $dateValText = "";
+
+        $firstFreeDay = 0;
+        $testDay = 0;
+        while ($testDay < 28) {
+            $this->bookingService->setHelyszin($_POST["helyszin"]);
+            $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
+            $this->bookingService->setHonnan($testDay);
+            $json = $this->bookingService->showIdoPontValasztoV2($testDay);
+
+            if (substr_count($json, "foglalhatobtn")) {
+                $firstFreeDay = $testDay;
+                break;
+            }
+
+            $testDay += 7;
+        }
 
         $html = "";
         $html .= "<div style='display:table;'>";
