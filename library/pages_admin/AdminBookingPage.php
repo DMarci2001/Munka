@@ -590,6 +590,15 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "({$reservationData["rinterval"]} perc) ";
             }
 
+            if (!empty($reservationData["alkalmassag"])) {
+                $title = $this->settings->alkalmassagvariaciok[$reservationData["alkalmassag"]];
+                $acolor = "#0a0";
+                if ($reservationData["alkalmassag"] != "I") {
+                    $acolor = "#a00";
+                }
+                $htmlout .= "<span title='{$title}' style='color:{$acolor};'><i class='fas fa-circle'></i></span>&nbsp;&nbsp;";
+            }
+
             if ($this->szuresTipusActual["id"] == $reservationData["szurestipusid"]) {
                 $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
             } else {

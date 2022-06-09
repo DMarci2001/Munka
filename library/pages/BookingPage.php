@@ -273,6 +273,10 @@ class BookingPage extends CorePage
                 }
                 if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) {
                     $this->errors[] = "{$webText["szulformat"]}";
+                } else {
+                    if (strtotime($_POST["szuldatum"]) > strtotime("now - 1 day")) {
+                        $this->errors[] = "A születési dátum nem megfelelő!";
+                    }
                 }
             }
             if (!$this->utils->getFieldHidden("irsz") && $this->utils->getFieldRequired("irsz")) {

@@ -555,6 +555,10 @@ class BookingService
                 //jász utca bármikor foglalható
                 $dist = "0 hour";
             }
+            if (CompanyService::isFesztivalCompany()) {
+                //fesztivál bármikor foglalhat
+                $dist = "0 hour";
+            }
             if (in_array($orvosId, [74])) {
                 //74 - Dr. Kővári Gábor
                 $dist = "24 hour";

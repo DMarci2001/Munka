@@ -3226,3 +3226,15 @@ function oroklesImageToggle(el, key, tipus, id, parent) {
         }
     });
 }
+
+function orvosVelemenyEnter() {
+    $("#orvosszoveg").height(216);
+    $(".mainalkform").hide();
+    $(".ovsubmit").show();
+}
+
+function orvosVelemenyExit() {
+    $("#orvosszoveg").height(40);
+    $(".mainalkform").show();
+    $(".ovsubmit").hide();
+}

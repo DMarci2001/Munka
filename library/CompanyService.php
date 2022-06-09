@@ -81,6 +81,24 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "uniqa";
     }
 
+    const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos
+
+Munkakör: 
+
+Panasz: nincs
+Ismert krónikus betegség: nem ismert
+Gyógyszerszedés: nincs
+
+Allergia: nincs
+Cave: nincs
+
+ 
+Státusz:
+Kp táplált, exanthema, oedema, icterus, cyanosis nincs, sclera fehér. Részarányos mellkas, puha sejtes alaplégzés. Tiszta, ritmusos, kellően ékelt szívhangok, zörej nem hallható. Has puha, betapintható, kóros rezisztencia nem tapintható, nyomásérzékenységet nem jelez, máj-lép nem tapintható. Mozgásszervek alakilag és funkcionálisan épek. Durva neurológiai eltérés nincs, pupillák o, =.
+Tüdőszűrés: neg ()
+V: 1.0 1.0 .    KV: Cs IV
+";
+
     public static $fesztivalOnkentesQuestions = [
         1 => ["type" => "igennem", "required" => true, "question" => "Allergiája van?"],
         2 => ["type" => "igennem", "required" => true, "question" => "Gyógyszerérzékenysége van?"],

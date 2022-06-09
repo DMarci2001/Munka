@@ -20,11 +20,13 @@ class AdminAlkalmassagiPage extends AdminCorePage
 
     public function showPage()
     {
-        $cegData = sql_query("select * from cegek where id=?", [$this->companyId])->fetch(PDO::FETCH_ASSOC);
+        //echo "select * from cegek where id in (".implode(",", $this->companyIds).")";
+        $cegData = sql_query("select * from cegek where id in (".implode(",", $this->companyIds).")")->fetch(PDO::FETCH_ASSOC);
+
 
         $reservations = sql_query("SELECT f.*, c.megnev as cegnev FROM foglalasok f 
            left join cegek c on c.id = f.cegid
-           where f.cegid in (".implode(",", $this->companyIds).") and f.aktiv=1 ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
+           where c.id in (".implode(",", $this->companyIds).") and f.aktiv=1 and f.cegid<>0 and f.cegid is not null and f.datum>'2022-01-01 00:00:00' ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
 
         echo "<h1>{$cegData["megnev"]}</h1>";
 

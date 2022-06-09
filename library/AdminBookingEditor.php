@@ -326,6 +326,9 @@ class AdminBookingEditor {
                 $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
                 $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
                 $html.= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+                if (empty($row["orvosszoveg"])) {
+                    $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
+                }
             }
 
             $html.= "<div class='mainalkform'>";
@@ -369,7 +372,7 @@ class AdminBookingEditor {
 
 
             $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
-            $html .= "<select name='alkalmassaguserid' style='width:170px;'>";
+            $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
             $html .= "<option value='0'>Válasszon!</option>";
             foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
                 $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
