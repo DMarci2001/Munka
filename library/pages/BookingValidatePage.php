@@ -46,7 +46,7 @@ class BookingValidatePage extends CorePage {
         $bookingService = new BookingService();
         $simpleService = new SimplePayService();
 
-        echo $this->displayFejlec(Booking_Constants::FOOTER_COPYRIGHT." - ".$this->foglalasData["szurestipus"],true);
+        echo $this->displayFejlec();
 
         if (!empty($this->foglalasData)) {
             sql_query("update foglalasok set aktiv=1 where id=?", array($this->foglalasData["id"]));
@@ -90,10 +90,18 @@ class BookingValidatePage extends CorePage {
 
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";
             } else {
+                $successText = $webText["foglalassuccesstext"];
+                if ($this->foglalasData["fgroupid"] != 0) {
+                    $successText = "A választott időpontjait sikeresen rögzítettük.<br/>
+                    Amint kollégánk visszaigazolja az egyik időpontját, arról visszaigazoló email-t fogunk küldeni. Ennek átfutási ideje kb. 1-2 óra.<br/>
+                    Kérdés esetén hívja ügyfélszolgáltunkat<br/>
+                    <br/>
+                    ";
+                }
                 echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
                 echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>
                 <br>
-                {$webText["foglalassuccesstext"]}
+                {$successText}
                 
                 <a href='/'>{$webText["visszafooldal"]}</a>";
 

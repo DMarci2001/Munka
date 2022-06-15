@@ -2,6 +2,11 @@
 
 class CompanyService {
 
+    const CIB_ID            = 6;
+    const UNIQA_ID          = 200;
+    const HUNGAROCONTROL_ID = 201;
+    const WABERERS_ID       = 129;
+
     public function __construct()
     {
         //cgi indítás esetén nem kell
@@ -81,6 +86,15 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "uniqa";
     }
 
+    public static function isCib($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "cib" || $companyId == self::CIB_ID;
+    }
+
+    public static function isWaberers($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "wszl" || $companyId == self::WABERERS_ID;
+    }
+
+
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos
 
 Munkakör: 
@@ -107,14 +121,14 @@ V: 1.0 1.0 .    KV: Cs IV
     ];
 
     public static function fesztivalCompanyIds() {
-        return [138, 275];
+        return [138, 275, 261];
     }
 
     public static function isFesztivalCompany($companyId = 0):bool {
         if ($companyId != 0) {
             return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
         }
-        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny";
+        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg";
     }
 
 }

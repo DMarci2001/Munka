@@ -62,6 +62,10 @@ class NotificationService {
                 return;
             }
 
+            if ($row["fgroupid"] != "0") {
+                return;
+            }
+
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
             if ($row["rlang"] == "de" && $row["szurestipus_de"] != "") $row["szurestipus"] = $row["szurestipus_de"];
 
@@ -142,12 +146,20 @@ class NotificationService {
                         $mailTemplate = $this->orvosMailTemplateRemote($rowf, $rowo);
                     }
 
+                    if ($rowf["fgroupid"] != 0) {
+                        $mailTemplate = $this->orvosMailTemplateMultiTime($rowf, $rowo);
+                    }
+
                     $mail = $this->getDefaultMailer();
                     $mail->FromName = Booking_Constants::COMPANY_NAME;
                     if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
                         $mail->AddAddress($rowo["email"]);
+                    }
+
+                    if ($rowf["fgroupid"] != 0) {
+                        $mail->addAddress("jnsmobil@gmail.com");
                     }
 
                     $mail->From = $mailTemplate["from"];
@@ -161,7 +173,7 @@ class NotificationService {
                         }
                     }
 
-                    if ($rowf["noreservation"] == 0) {
+                    if ($rowf["noreservation"] == 0 && $rowf["fgroupid"] == 0) {
                         $mail->addStringAttachment($this->getCalendarItem($rowf), 'foglalas.ics', 'base64', 'text/calendar');
                     }
 
@@ -409,6 +421,44 @@ class NotificationService {
             $template["docs"][] = $docData;
         }
 
+        return $template;
+    }
+
+    private function orvosMailTemplateMultiTime($rowf, $rowo):array {
+        $mbody = "";
+
+        $from = Booking_Constants::NO_REPLY_ADDRESS;;
+
+        if ($rowo["visszaigazol"] == 1 && $rowo["visszaigazolemail"] != "") {
+            $dateLinks = "";
+
+            $reservations = sql_query("select id, pass, datum from foglalasok where fgroupid=? and regdatum>=? order by datum",[$rowf["fgroupid"], date("Y-m-d 00:00:00", strtotime($rowf["regdatum"]))])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($reservations as $reservation) {
+                $dateLinks.= "<a href='".Booking_Constants::MAIN_URL."/index.php?selectthistime={$reservation["id"]}&p={$reservation["pass"]}'>".date("Y.m.d. H:i", strtotime($reservation["datum"]))."</a><br/>";
+            }
+
+            $mbody .= "Kedves {$rowo["nev"]}!<br>
+                            <br>
+                            Foglalása érkezett a " . Booking_Constants::COMPANY_NAME_SHORT . " foglalási rendszerén keresztül az alábbi adatokkal. Kérjük a következő időpontok közül kattintson arra, amelyik megfelelő, és tudja fogadni a pacienst:<br>
+                            <br>{$dateLinks}
+                            <hr>
+                            <br>";
+            $from = $rowo["visszaigazolemail"];
+        }
+
+        $mbody .= "Név: {$rowf["nev"]}<br>";
+        $mbody .= "Cég: {$rowf["cegnev"]}<br>";
+        $mbody .= "TAJ: {$rowf["taj"]}<br>";
+        $mbody .= "Munkakor: {$rowf["munkakor"]}<br>";
+        $mbody .= "Telefon: {$rowf["telefon"]}<br>";
+        $mbody .= "Szűréstípus: {$rowf["szurestipus"]}<br>";
+        $mbody .= "Helyszín: {$rowf["helyszin"]}<br>";
+        if ($rowf["megj"] != "") $mbody .= "Megjegyzés: {$rowf["megj"]}<br>";
+        $mbody .= "<br/>";
+
+        $template["subject"] = "{$rowf["cegnev"]} - időpont kiválasztás {$rowo["nev"]} részére";
+        $template["body"] = $mbody;
+        $template["from"] = $from;
         return $template;
     }
 
