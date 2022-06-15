@@ -52,8 +52,10 @@ class AjaxService {
                     die();
                 }
 
-                echo "Erre a rendelésre az online bejelentkezés jelenleg nem üzemel kérjük jelentkezzen be ezen a telefon számon: " . $odata["tel"];
-                die();
+                if ($bookingService->numberOfReservationRequired() <= 1) { //cib kivétel
+                    echo "Erre a rendelésre az online bejelentkezés jelenleg nem üzemel kérjük jelentkezzen be ezen a telefon számon: " . $odata["tel"];
+                    die();
+                }
             }
 
             $statement = $_SERVER['REQUEST_URI'];
@@ -135,6 +137,39 @@ class AjaxService {
             $service->outputAsset($_GET["showfoto"], $_GET["c"]);
         }
 
+
+        if (isset($_GET["selectthistime"])) {
+            $bookingService = new BookingService();
+
+            if ($reservationSelected = sql_query("select * from foglalasok where id=? and pass=?", [$_GET["selectthistime"], $_GET["p"]])->fetch(PDO::FETCH_ASSOC)) {
+                if ($reservationSelected["fgroupid"] == 0) {
+                    echo "Ez a foglalás már jóvá lett hagyva!";
+                    die;
+                }
+
+                if (!isset($_GET["confirm"])) {
+                    echo "Erősítse meg, hogy megfelelő Önnek a következő időpont: <strong>" . date("Y.m.d H:i", strtotime($reservationSelected["datum"])) . "</strong><br/><br/>";
+                    echo "<a href='index.php?selectthistime={$_GET["selectthistime"]}&p={$_GET["p"]}&confirm'>Megerősítem</a>";
+                }
+                if (isset($_GET["confirm"])) {
+                    $reservations = sql_query("select id, pass from foglalasok where fgroupid=? and fgroupid<>0", [$reservationSelected["fgroupid"]])->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($reservations as $reservation) {
+                        if (intval($reservation["id"]) == intval($reservationSelected["id"])) {
+                            sql_query("update foglalasok set fgroupid=0 where id=?", [$reservation["id"]]);
+                            $bookingService->notificationService->sendToCegAndOrvos($reservation["id"]);
+                            $bookingService->notificationService->sendUserReservationNotification($reservation["id"]);
+                        } else {
+                            $bookingService->deleteReservation($reservation["id"], $reservation["pass"]);
+                        }
+                    }
+
+                    echo "Köszönjük, az időpont kiválasztása megtörtént.";
+                }
+            } else {
+                echo "Foglalás nem található!";
+            }
+            die;
+        }
     }
 
 }

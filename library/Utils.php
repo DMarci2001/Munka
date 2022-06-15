@@ -412,9 +412,9 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
     }
 
     public function setupLongSession() {
-        $sessionUp = 2; //óra
-        ini_set('session.gc_maxlifetime', $sessionUp*60*60);
-        session_set_cookie_params($sessionUp*60*60);
+        //$sessionUp = 2; //óra
+        //ini_set('session.gc_maxlifetime', $sessionUp*60*60);
+        //session_set_cookie_params($sessionUp*60*60);
 
         $_SESSION["LAST_ACTIVITY"] = time();
     }

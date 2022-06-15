@@ -38,11 +38,11 @@ function manualBookingConfirm(orvos){
 		cancelButtonText: 'Bezárás'
       }).then(function(result) {
         if (result) {
-            $("#datum").val("Időpont egyeztetés");
-            $("#datumText").css("background-image", "");
-            $("#datumText").val("Időpont egyeztetés");
-            $("#rinterval").val(15);
-            $("#orvosselected").val(orvos);
+            $("#datum"+datumIndex).val("Időpont egyeztetés");
+            $("#datumText"+datumIndex).css("background-image", "");
+            $("#datumText"+datumIndex).val("Időpont egyeztetés");
+            $("#rinterval"+datumIndex).val(15);
+            $("#orvosselected"+datumIndex).val(orvos);
             animateIdoPontValaszto();
             //$("#warnidopontpress").show();
             return;
@@ -73,6 +73,12 @@ function checkVaccinationElements(){
     
 }
 
+var datumIndex = "";
+
+function setDatumIndex(i) {
+    datumIndex = i;
+}
+
 function showIdoPontValasztoV2(honnan, orvosid) {
     if (orvosid === undefined) {
         orvosid = 0;
@@ -83,7 +89,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         neme = 0;
     }
 
-    $("#loadingspinner").show();
+    $("#loadingspinner"+datumIndex).show();
 
     $.ajax({
         method: "GET",
@@ -96,7 +102,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             $("#idopontvalasztodiv").html(data.html);
             $("#idopontvalasztodiv").slideDown();
         }
-        $("#loadingspinner").hide();
+        $("#loadingspinner"+datumIndex).hide();
     });
 
 }
@@ -178,10 +184,19 @@ function showInfoPageText(szurestipusid){
 function clearIdopontValaszto() {
     clearSelectedDoctor();
     $("#datum").val("");
+    $("#datum1").val("");
+    $("#datum2").val("");
+    $("#datum3").val("");
     $("#datumText").val("");
+    $("#datumText1").val("");
+    $("#datumText2").val("");
+    $("#datumText3").val("");
     $("#idopontvalasztodiv").html("");
     $("#infopagetext").html("");
     $("#datumText").css("background-image", "");
+    $("#datumText1").css("background-image", "");
+    $("#datumText2").css("background-image", "");
+    $("#datumText3").css("background-image", "");
     tappenzCheckRefresh();
 
     $("#helyszinvalasztowarn").hide();
@@ -217,6 +232,9 @@ function clearHelyszinSelector(tid) {
     $("#helyszinvalaszto").load("index.php?page=booking&helyszinrefresh=" + tid);
     $("#szurestipusmegj").html("");
     $("#datumText").css("background-image", "");
+    $("#datumText1").css("background-image", "");
+    $("#datumText2").css("background-image", "");
+    $("#datumText3").css("background-image", "");
     //$("#tappenzcheck").load("index.php?tappenzcheckrefresh="+tid);
     //showTipusMegj($("#szurestipus").val());
 }
@@ -237,17 +255,17 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
         data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), szurestipusid: szurestipusid, orvos: orvos }
     }).done(function (msg) {
         if (msg == "ok") {
-            $("#datumText").css("background-image", "");
+            $("#datumText"+datumIndex).css("background-image", "");
 
             if (varolista == 1) {
-                $("#datumText").val("Várólista");
+                $("#datumText"+datumIndex).val("Várólista");
             } else {
-                $("#datumText").val(idopont);
+                $("#datumText"+datumIndex).val(idopont);
             }
 
-            $("#datum").val(idopont);
-            $("#rinterval").val(rinterval);
-            $("#orvosselected").val(orvos);
+            $("#datum"+datumIndex).val(idopont);
+            $("#rinterval"+datumIndex).val(rinterval);
+            $("#orvosselected"+datumIndex).val(orvos);
             animateIdoPontValaszto();
             $("#warnidopontpress").show();
             return;
@@ -262,23 +280,23 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
 
 function animateIdoPontValaszto() {
     $("#idopontvalasztodiv").slideUp(400, function () {
-        $("#datumText").animate({
+        $("#datumText"+datumIndex).animate({
             backgroundColor: '#41b6c6',
             color: '#fff'
         }, 100, function () {
-            $("#datumText").animate({
+            $("#datumText"+datumIndex).animate({
                 backgroundColor: '#fff',
                 color: '#555'
             }, 100, function () {
-                $("#datumText").animate({
+                $("#datumText"+datumIndex).animate({
                     backgroundColor: '#41b6c6',
                     color: '#fff'
                 }, 100, function () {
-                    $("#datumText").animate({
+                    $("#datumText"+datumIndex).animate({
                         backgroundColor: '#fff',
                         color: '#555'
                     }, 100, function () {
-                        $("#datumText").css("background-image", "url(images/check.png)");
+                        $("#datumText"+datumIndex).css("background-image", "url(images/check.png)");
                     });
                 });
             });

@@ -115,63 +115,7 @@ class BookingPage extends CorePage
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
 
-            if(isset($_POST["labor-csomagok"]) && $_POST["labor-csomagok"]==1){
-                $laborszoveg="";
-                if(isset($_POST["kisrutin"])&&$_POST["kisrutin"]==1)$laborszoveg.=", Kisrutin";
-                if(isset($_POST["nagyrutin"])&&$_POST["nagyrutin"]==1)$laborszoveg.=", Nagyrutin";
-                if(isset($_POST["pajzsmirigy"])&&$_POST["pajzsmirigy"]==1)$laborszoveg.=", Pajzsmirigy";
-                if(isset($_POST["noi-tumormarker"])&&$_POST["noi-tumormarker"]==1)$laborszoveg.=", Női tumormarker";
-
-                if(isset($_POST["elnijo"])&&$_POST["elnijo"]==1)$laborszoveg.=", Élni jó csomag";
-                if(isset($_POST["paros"])&&$_POST["paros"]==1)$laborszoveg.=", Páros csomag";
-                if(isset($_POST["dvitamin"])&&$_POST["dvitamin"]==1)$laborszoveg.=", D-vitamin csomag";
-                if(isset($_POST["manager"])&&$_POST["manager"]==1)$laborszoveg.=", Manager csomag";
-                if(isset($_POST["holgyegeszseg"])&&$_POST["holgyegeszseg"]==1)$laborszoveg.=", Egészség 50+ csomag hölgyeknek";
-                if(isset($_POST["ferfiegeszseg"])&&$_POST["ferfiegeszseg"]==1)$laborszoveg.=", Egészség 50+ csomag férfiaknak";
-                if(isset($_POST["prosztata"])&&$_POST["prosztata"]==1)$laborszoveg.=", Prosztata csomag";
-                if(isset($_POST["cukor"])&&$_POST["cukor"]==1)$laborszoveg.=", Cukor-kontroll csomag";
-                if(isset($_POST["inzulin"])&&$_POST["inzulin"]==1)$laborszoveg.=", Inzulinrezisztencia csomag";
-                if(isset($_POST["kerek"])&&$_POST["kerek"]==1)$laborszoveg.=", Kerek csomag";
-                if(isset($_POST["noihajhullas"])&&$_POST["noihajhullas"]==1)$laborszoveg.=", Hajhullás női csomag";
-                if(isset($_POST["ferfihajhullas"])&&$_POST["ferfihajhullas"]==1)$laborszoveg.=", Hajhullás férfi csomag";
-                if(isset($_POST["noihormon3"])&&$_POST["noihormon3"]==1)$laborszoveg.=", Női hormon ciklus 3-5. nap, kiegészítő csomag";
-                if(isset($_POST["noihormon21"])&&$_POST["noihormon21"]==1)$laborszoveg.=", Női hormon ciklus 21-23. nap, kiegészítő csomag";
-                if(isset($_POST["csontritkulas"])&&$_POST["csontritkulas"]==1)$laborszoveg.=", Csontritkulás csomag";
-                if(isset($_POST["pajzsmirigybazis"])&&$_POST["pajzsmirigybazis"]==1)$laborszoveg.=", Pajzsmirigy Bázis csomag";
-                if(isset($_POST["pajzsmirigybovitett"])&&$_POST["pajzsmirigybovitett"]==1)$laborszoveg.=", Pajzsmirigy Bővített csomag";
-                if(isset($_POST["pajzsmirigymax"])&&$_POST["pajzsmirigymax"]==1)$laborszoveg.=", Pajzsmirigy Max csomag";
-                if(isset($_POST["pcos"])&&$_POST["pcos"]==1)$laborszoveg.=", PCOS csomag";
-                if(isset($_POST["csaladholgyeknek"])&&$_POST["csaladholgyeknek"]==1)$laborszoveg.=", Családtervező csomag hölgyeknek";
-                if(isset($_POST["golya1"])&&$_POST["golya1"]==1)$laborszoveg.=", Gólya csomag I. trimeszter";
-                if(isset($_POST["golya2"])&&$_POST["golya2"]==1)$laborszoveg.=", Gólya csomag II. trimeszter (16. hét)";
-                if(isset($_POST["golya3"])&&$_POST["golya3"]==1)$laborszoveg.=", Gólya csomag III, trimeszter (24. - 28. hét)";
-                if(isset($_POST["hepab"])&&$_POST["hepab"]==1)$laborszoveg.=", Hepatitis B vírus (HBV) csomag";
-                if(isset($_POST["torchalap"])&&$_POST["torchalap"]==1)$laborszoveg.=", TORCH alapcsomag";
-                if(isset($_POST["torchbovitett"])&&$_POST["torchbovitett"]==1)$laborszoveg.=", TORCH bővített csomag";
-                if(isset($_POST["tumorferfi1"])&&$_POST["tumorferfi1"]==1)$laborszoveg.=", Tumormarker csomag férfiaknak I.";
-                if(isset($_POST["tumorferfi2"])&&$_POST["tumorferfi2"]==1)$laborszoveg.=", Tumormarker csomag férfiaknak II.";
-                if(isset($_POST["tumorholgy1"])&&$_POST["tumorholgy1"]==1)$laborszoveg.=", Tumormarker csomag hölgyeknek I.";
-                if(isset($_POST["tumorholgy2"])&&$_POST["tumorholgy2"]==1)$laborszoveg.=", Tumormarker csomag hölgyeknek II.";
-                if(isset($_POST["ateresztoalap"])&&$_POST["ateresztoalap"]==1)$laborszoveg.=", Áteresztő bél szindróma Alap csomag";
-                if(isset($_POST["ateresztobovitett"])&&$_POST["ateresztobovitett"]==1)$laborszoveg.=", Áteresztő bél szindróma Bővített csomag";
-                if(isset($_POST["ateresztopremium"])&&$_POST["ateresztopremium"]==1)$laborszoveg.=", Áteresztő bél szindróma Prémium csomag";
-                if(isset($_POST["sportbasic"])&&$_POST["sportbasic"]==1)$laborszoveg.=", Sport Basic csomag*";
-                if(isset($_POST["sportextendedferfi"])&&$_POST["sportextendedferfi"]==1)$laborszoveg.=", Sport Extended Férfi csomag*";
-                if(isset($_POST["sportpro"])&&$_POST["sportpro"]==1)$laborszoveg.=", Sport Pro csomag*";
-                if(isset($_POST["fitkontroll"])&&$_POST["fitkontroll"]==1)$laborszoveg.=", Fitkontroll csomag*";
-                if(isset($_POST["covidpajzsalap"])&&$_POST["covidpajzsalap"]==1)$laborszoveg.=", COVID Pajzs alapcsomag";
-                if(isset($_POST["covidpajzsxxl"])&&$_POST["covidpajzsxxl"]==1)$laborszoveg.=", COVID Pajzs XXL csomag";
-                if(isset($_POST["postcovid"])&&$_POST["postcovid"]==1)$laborszoveg.=", POST COVID csomag";
-                if(isset($_POST["nyomelem"])&&$_POST["nyomelem"]==1)$laborszoveg.=", Nyomelem csomag";
-                if(isset($_POST["teljesvitamin"])&&$_POST["teljesvitamin"]==1)$laborszoveg.=", Teljes vitamin csomag";
-                if(isset($_POST["cdvitamin"])&&$_POST["cdvitamin"]==1)$laborszoveg.=", C- és D-vitamin csomag";
-                if(isset($_POST["bvitamin"])&&$_POST["bvitamin"]==1)$laborszoveg.=", B-vitamin csomag";
-                if(isset($_POST["faradtvitamin"])&&$_POST["faradtvitamin"]==1)$laborszoveg.=", Fáradtság vitamin csomag";
-                if(isset($_POST["antioxidans"])&&$_POST["antioxidans"]==1)$laborszoveg.=", Antioxidáns vitamin csomag";
-                if(isset($_POST["vastagbel"])&&$_POST["vastagbel"]==1)$laborszoveg.=", Vastagbéldaganat szűrőcsomag";
-
-                $laborszoveg = substr($laborszoveg, 2);
-            }
+            $laborszoveg = $this->bookingService->getLaborSzoveg();
 
             if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -189,16 +133,40 @@ class BookingPage extends CorePage
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
             if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
             if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";
-            if ($_POST["datum"] == "") $this->errors[] = "{$webText["idopontkotelezo"]}";
             if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
-
-            /*if($_POST["helyszin"]==98989898989898){
-                $_POST["helyszin"]=1;
-            }*/
 
             $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
             $this->bookingService->setHelyszin($_POST["helyszin"]);
             $this->bookingService->setNeme($_POST["neme"]);
+
+            //több dátum check
+            if (isset($_POST["datum1"])) {
+                $numberOfTimes = $this->bookingService->numberOfReservationRequired();
+
+                $multipleTimes = $days = [];
+                for ($i = 1; $i <= $numberOfTimes; $i++) {
+                    if ($_POST["datum{$i}"] == "") {
+                        $this->errors[] = "Kérjük adja meg a {$numberOfTimes} időpontot!";
+                        break;
+                    }
+                    $multipleTimes[] = ["datum" => $_POST["datum{$i}"], "rinterval" => $_POST["rinterval{$i}"], "orvosselected" => $_POST["orvosselected{$i}"]];
+                    $days[] = date("Y-m-d", strtotime($_POST["datum{$i}"]));
+
+                    if (!$this->bookingService->checkIdopontSzabad(["datum" => $_POST["datum{$i}"], "orvosselected" => $_POST["orvosselected{$i}"]])) {
+                        $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+                    }
+
+                }
+
+                if (count($days) == $numberOfTimes && count(array_unique($days)) != $numberOfTimes) {
+                    $this->errors[] = "Kérjük különböző napokat jelöljön meg a {$numberOfTimes} időpont esetében!";
+                }
+
+            } else {
+                if ($_POST["datum"] == "") {
+                    $this->errors[] = "{$webText["idopontkotelezo"]}";
+                }
+            }
 
             if ($_SESSION["helyszindata"]["covid_oltas_bekeres"] == 1) {
                 if ($_POST["is-vaccinated"] == 1) {
@@ -238,7 +206,7 @@ class BookingPage extends CorePage
             if (!$this->utils->getFieldHidden("email") && $this->utils->getFieldRequired("email")) {
 
                 if (empty($_POST["email"])) {
-                    if ($_SESSION["helyszindata"]["id"] != 129) {
+                    if (!CompanyService::isWaberers()) {
                         $this->errors[] = "{$webText["emailkotelezo"]}";
                     }
                 }
@@ -408,6 +376,28 @@ class BookingPage extends CorePage
                 $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
             }
 
+            if (empty($this->errors) && isset($multipleTimes)) {
+                //leágazás több időpont esetén
+                foreach ($multipleTimes as $time) {
+                    $_POST["datum"] = $time["datum"];
+                    $_POST["rinterval"] = $time["rinterval"];
+                    $_POST["orvosselected"] = $_POST["orvosid"] = $time["orvosselected"];
+                    $forwardURL = $this->bookingService->addReservation($_POST);
+                    $fid = $this->bookingService->newReservationId;
+                    if (!isset($firstReservationId)) {
+                        $firstReservationId = $fid;
+                    }
+
+                    sql_query("update foglalasok set aktiv=1, fgroupid=? where id=? limit 1", [$firstReservationId, $fid]);
+                }
+
+                if (isset($forwardURL)) {
+                    header("location:{$forwardURL}");
+                }
+
+                die;
+            }
+
             if (empty($this->errors)) {
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
@@ -510,8 +500,6 @@ class BookingPage extends CorePage
 
         echo "<table cellpadding='3' cellspacing='0'>";
 
-        echo $this->utils->dataField("taj");
-        //echo "<tr><td width='140'>{$webText["tajszam"]}: *</td><td><input class='inputbox' style='width:120px;' type='text' id='tajszam' name='taj' value='{$_POST["taj"]}'></td></tr>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
@@ -551,7 +539,17 @@ class BookingPage extends CorePage
 
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if (empty($nofoglalasText)) {
-            echo "<tr class='datarow'><td valign='middle'><div style=''>{$webText["idopont"]}: *</div></td><td>" . $this->_reservationTimeSelector() . "</td></tr>";
+            $numberTexts = ["" => $webText["idopont"], 1 => "Első időpont", 2 => "Második időpont", 3 => "Harmadik időpont"];
+            $this->bookingService->setHelyszin($_POST["helyszin"]);
+            $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
+            $numberOfTimes = $this->bookingService->numberOfReservationRequired();
+            for ($i = 1; $i <= $numberOfTimes; $i++) {
+                $index = "";
+                if ($numberOfTimes > 1) {
+                    $index = $i;
+                }
+                echo "<tr class='datarow'><td valign='middle'<div style=''>{$numberTexts[$index]}: *</div></td><td>" . $this->_reservationTimeSelector($index) . "</td></tr>";
+            }
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
             echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
@@ -577,7 +575,8 @@ class BookingPage extends CorePage
             echo "</select></td></tr>";
         }
 
-        if ($_SESSION["helyszindata"]["id"] != 129) {
+        echo $this->utils->dataField("taj");
+        if (!CompanyService::isWaberers()) {
             echo $this->utils->dataField("email");
         }
         echo $this->utils->dataField("nev");
@@ -774,7 +773,7 @@ class BookingPage extends CorePage
         if (isset($_SESSION["user"])) echo "<input type='hidden' name='aszf' value='1'/>";
         echo "<input type='hidden' name='idopontfoglalas' value='1'/>";
         echo "<input type='hidden' name='version2' value='1'/>";
-        echo "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_SESSION["orvosselected"]}'/>";
+        //echo "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_SESSION["orvosselected"]}'/>";
 
         echo "</form>";
     }
@@ -792,13 +791,16 @@ class BookingPage extends CorePage
         else return "FAILED";
     }
 
-    private function _reservationTimeSelector()
-    {
+    private function _reservationTimeSelector($index = "") {
         $webText = $this->lang->webText;
 
-        $dateStyle = (!empty($_POST["datum"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
-        $dateVal = substr($_POST["datum"], 0, 16);
+        $dateStyle = (!empty($_POST["datum{$index}"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
+        $dateVal = substr($_POST["datum{$index}"], 0, 16);
         $dateValText = "";
+
+        if (!isset($_POST["orvosselected{$index}"])) {
+            $_POST["orvosselected{$index}"] = 0;
+        }
 
         $firstFreeDay = 0;
         $testDay = 0;
@@ -820,12 +822,13 @@ class BookingPage extends CorePage
         $html .= "<div style='display:table;'>";
         $html .= "<div style='display:table-row;'>";
         $html .= "<div style='display:table-cell;'>";
-        $html .= "<input type='hidden' name='rinterval' id='rinterval' value='{$_POST["rinterval"]}' />";
-        $html .= "<input type='hidden' name='datum' id='datum' value='{$dateVal}' />";
-        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText' id='datumText' value='{$_POST["datumText"]}' />";
+        $html .= "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_POST["orvosselected{$index}"]}'/>";
+        $html .= "<input type='hidden' name='rinterval{$index}' id='rinterval{$index}' value='{$_POST["rinterval{$index}"]}' />";
+        $html .= "<input type='hidden' name='datum{$index}' id='datum{$index}' value='{$dateVal}' />";
+        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' />";
         $html .= "</div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner{$index}' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";
         return $html;
@@ -899,7 +902,7 @@ class BookingPage extends CorePage
 
         $_SESSION["orvosselected"] = 0;
 
-        $html .= "<select name='helyszin' id='helyszin' onchange='clearIdopontValaszto();'>";
+        $html .= "<select name='helyszin' id='helyszin' onchange='selectedTipus({$_REQUEST["szurestipus"]}, this.value);'>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         foreach ($helyszinek as $rowt) {
             if ($_SESSION["helyszindata"]["nocim"] == 1) {

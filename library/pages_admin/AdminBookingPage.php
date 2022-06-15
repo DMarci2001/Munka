@@ -317,7 +317,7 @@ class AdminBookingPage extends AdminCorePage
                     $htmlout .= "<div>#foglalt{$orvosId}_{$szuresTipus["id"]}# #szabad{$orvosId}_{$szuresTipus["id"]}#</div>";
                     $htmlout .= "<div>{$beosztas["description"]}</div>";
 
-                    if (Booking_Constants::SQL_DB == "keltexmed" && in_array($orvosId, [399, 416, 417]) && in_array($nap, ["2022-05-20", "2022-05-23", "2022-05-24", "2022-06-03", "2022-06-16", "2022-06-17"])) {
+                    if (Booking_Constants::SQL_DB == "keltexmed" && in_array($orvosId, [399, 416, 417]) && in_array($nap, ["2022-05-20", "2022-05-23", "2022-05-24", "2022-06-03", "2022-06-16", "2022-06-17", "2022-06-10"])) {
                         $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>DR. KIZMAN EZEN A NAPON NEM ELÉRHETŐ, EZÉRT TÜDŐSZŰRÉSRE NEM LEHET FOGLALNI!</span></div>";
                     }
 
