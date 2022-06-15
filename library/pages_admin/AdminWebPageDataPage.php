@@ -69,6 +69,12 @@ class AdminWebPageDataPage extends AdminCorePage {
 
 
     public function showPage() {
+
+        if (!$this->adminUser->beallitasWebAdatokAccess()) {
+            echo $this->noPermissionMessage();
+            return;
+        }
+
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 

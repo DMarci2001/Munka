@@ -83,6 +83,22 @@ class AdminUser {
         "jog_oltasigenyek" => [
             "name" => "céges oltások kezelése"
         ],
+
+        "jog_munkaszunetinapok" => [
+            "name" => "Munkaszünetinapok kezelése"
+        ],
+        "jog_tevekenysegnaplo" => [
+            "name" => "Tevékenység napló kezelése"
+        ],
+        "jog_lang" => [
+            "name" => "Több nyelvű szövegek kezelése"
+        ],
+        "jog_webadatok" => [
+            "name" => "Web adatok kezelése"
+        ],
+        "jog_bp_seged_tabla" => [
+            "name" => "BP segéd tábla kezelése"
+        ],
     ];
 
     public function __construct()
@@ -351,5 +367,28 @@ class AdminUser {
     public function paciensMegjegyzesAccess():bool {
         return $this->user["jog_megjegyzes"] == 1;
     }
+
+
+    public function beallitasMunkaszunetinapokAccess():bool {
+        return $this->user["jog_munkaszunetinapok"] == 1;
+    }
+
+    public function beallitasTevekenysegnaploAccess():bool {
+        return $this->user["jog_tevekenysegnaplo"] == 1;
+    }
+
+    public function beallitasLangAccess():bool {
+        return $this->user["jog_lang"] == 1;
+    }
+
+    public function beallitasWebAdatokAccess():bool {
+        return $this->user["jog_webadatok"] == 1;
+    }
+
+    public function beallitasBPsegedtablaAccess():bool {
+        return $this->user["jog_bp_seged_tabla"] == 1;
+    }
+
+    
 
 }

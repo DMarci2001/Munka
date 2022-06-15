@@ -100,6 +100,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminDoctorsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLangSettingsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminSettingsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminBpSettingsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLogPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminRecepcioListaPage.php");

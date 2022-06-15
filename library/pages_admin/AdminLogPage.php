@@ -45,6 +45,12 @@ class AdminLogPage extends AdminCorePage {
     }
 
     public function showPage() {
+        
+        if (!$this->adminUser->beallitasLangAccess()) {
+            echo $this->noPermissionMessage();
+            return;
+        }
+
         echo "<div style='padding:5px;background-color:#eee;margin-bottom:10px;'>";
 
         echo "<form name='f1' method='post' style='padding:0px;margin:0px;'>";

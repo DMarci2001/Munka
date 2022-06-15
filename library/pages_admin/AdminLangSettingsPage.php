@@ -16,6 +16,11 @@ class AdminLangSettingsPage extends AdminCorePage {
 
     public function showPage() {
 
+        if (!$this->adminUser->beallitasTevekenysegnaploAccess()) {
+            echo $this->noPermissionMessage();
+            return;
+        }
+
         echo "<div style='margin-bottom:20px;'>";
         echo "<a href='index.php?page=settings'>Vissza</a>";
         echo "</div>";
