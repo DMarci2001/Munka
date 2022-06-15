@@ -110,7 +110,7 @@ class DocAgent {
 
                 sql_query("insert into dokumentumok set 
                     foglalasid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    [$fileData["fid"], $fileData["userid"], pathinfo($fileName, PATHINFO_FILENAME), pathinfo($fileName, PATHINFO_FILENAME), $fileSize, $extension]);
+                    [$fileData["fid"], $fileData["userid"], pathinfo($fileName, PATHINFO_BASENAME), pathinfo($fileName, PATHINFO_BASENAME), $fileSize, $extension]);
                 $id = sql_insert_id();
 
                 $destinationFile = $this->_getDocPath($id);

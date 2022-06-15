@@ -2,6 +2,7 @@
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use mikehaertl\pdftk\Pdf;
 
 class BookingService
 {
@@ -22,6 +23,11 @@ class BookingService
     private $adminUser;
     public $newReservationId;
     public $munkakorVizsgalatok;
+
+    private $availableDocs = array(
+        array("name" => "Éjszakai", "value" => "bp-nightshift", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
+        array("name" => "Nappali", "value" => "bp-normal", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
+    );
 
     public function __construct()
     {
@@ -1326,6 +1332,29 @@ class BookingService
 
         $this->newReservationId=$fid;
 
+        //Ha BP-s dolgozóról van szó, lerakok neki egy beutalót mindenképp mint hozott fájl
+        if($data["cegid"]==276){
+            
+            $referalType="bp-normal";
+            //El kell döntenem, hogy a dolgozó milyen beutalót kell kapjon, ehhez lesz egy segéd tábla
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid FROM foglalasok fogl
+                                   LEFT JOIN bp_beutalo_seged_tabla helpdesk ON helpdesk.ntid=fogl.torzsszam
+                                   LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                                   WHERE fogl.id=?",array($fid));
+            if($referalData=sql_fetch_array($refQuery)){
+                //Ha éjszakairól van szó átállítom éjszakaira a típust
+                if($referalData["type"]=="night"){
+                    $referalType="bp-nightshift";
+                }
+                //Ha üres az ntid, azaz, nemtaláltam a listában egyezést, akkor automatikusan újbelépő
+                if(empty($referalData["ntid"])){
+                    $referalData["vizsgalat"]="Előzetes- Foglalkozás Egészségügyi vizsgálat";
+                }
+                echo $this->createReferalDoc($referalData,$referalType);
+            }
+            
+        }
+
         if (!isset($data["noreservation"])) {
             $data["noreservation"] = 0;
         }
@@ -1826,6 +1855,54 @@ class BookingService
         }
 
         return $status;
+    }
+
+    public function createReferalDoc($data, $docName)
+    {
+        //Dokumentum kikeresése név alapján
+        $key = array_search($docName, array_column($this->availableDocs, "value"));
+        $pdf = new Pdf($this->availableDocs[$key]["filename"]);
+
+        $filename = "{$data["nev"]}-{$data["taj"]}-{$data["szuldatum"]}-{$this->availableDocs[$key]["name"]}-(" . rand(200, 1200000) . ").pdf";
+
+        $input = [
+            "nev" => $this->pdfChars($data["nev"]),
+            "taj" => $data["taj"],
+            "szuldatum" => date("Y.m.d", strtotime($data["szuldatum"])),
+            "munkakor" => $this->pdfChars($data["munkakor"]),
+            "vizsgalat"=> $this->pdfChars($data["vizsgalat"]),
+            "telephely"=> $this->pdfChars($data["worklocation"]),
+            "kelte" => date("Y.m.d", strtotime($data["regdatum"]))
+        ];
+
+
+        $result = $pdf->fillForm($input)
+            ->flatten()
+            ->saveAs("../public/admin/templates/" . $filename);
+
+        if ($result === false) {
+            $error = $pdf->getError();
+
+            var_dump($error);
+        } else {
+            $docAgent= new DocAgent();
+            $docAgent->saveLocalDoc("../public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
+            return $filename;
+        }
+    }
+
+    private function pdfChars($text) {
+        $search = array("ő","ű","í","Ő","Ű","Í");
+        $replace = array("ö","ü","i","Ö","Ü","I");
+
+        $text = str_replace($search,$replace,$text);
+        /*$text = str_replace("ő", "ö", $text);
+        $text = str_replace("ű", "ü", $text);
+        $text = str_replace("í", "i", $text);
+        $text = str_replace("Ő", "Ö", $text);
+        $text = str_replace("Ű", "Ü", $text);
+        $text = str_replace("Í", "I", $text);*/
+        return $text;
     }
 
 }
