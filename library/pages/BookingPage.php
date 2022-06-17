@@ -427,7 +427,7 @@ class BookingPage extends CorePage
         $tipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$_POST["szurestipus"]]));
 
         if (!isset($_POST["email"])) {
-            $_POST["datum"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
+            $_POST["datum"] = $_POST["datumText"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
             $_POST["rinterval"] = 0;
             if (isset($_SESSION["user"])) {
                 $_POST["taj"]       = $_SESSION["user"]["taj"];
@@ -780,7 +780,7 @@ class BookingPage extends CorePage
 
     private function record_covid_vaccination_data($fid, $data)
     {
-        if ($foglalasData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($fid)))) {
+        if (isset($data["first-vaccination-type"]) && $foglalasData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($fid)))) {
             sql_query(
                 "UPDATE foglalasok SET elso_covid_vakcina_tipus=?, masodik_covid_vakcina_tipus=?, harmadik_covid_vakcina_tipus=?, elso_covid_oltas=?, masodik_covid_oltas=?,harmadik_covid_oltas=? WHERE id=?",
                 array($data["first-vaccination-type"], $data["second-vaccination-type"], $data["third-vaccination-type"], $data["first-vaccine-date"], $data["second-vaccine-date"], $data["third-vaccine-date"], $fid)

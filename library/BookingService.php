@@ -10,7 +10,7 @@ class BookingService
     private $utils;
     public $packContentTypes = [];
     private $honnan = 0;
-    private $neme;
+    private $neme = 0;
     public $helyszin = 0;
     public $szuresTipus = 0;
     public $szuresTipusData;
@@ -251,7 +251,9 @@ class BookingService
         if (isset($_GET["helyszin"]) && $_GET["helyszin"] != "undefined") {
             $this->setHelyszin($_GET["helyszin"]);
         }
-        $this->setNeme($_GET["neme"]);
+        if (isset($_GET["neme"])) {
+            $this->setNeme($_GET["neme"]);
+        }
         if (isset($_GET["szurestipus"])) {
             $this->setSzuresTipus($_GET["szurestipus"]);
         }
@@ -296,16 +298,20 @@ class BookingService
 
        
 
-        $html .= "<div style='display:inline-block;margin:10px 0px 10px 0px;'>";
+        $html .= "<div style='margin:10px 0px 10px 0px;'>";
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
         $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
-        $html .= "<table cellpadding='0' cellspacing='0'><tr>";
+        $html .= "<table style='width:100%;' cellpadding='0' cellspacing='0'><tr>";
 
         for ($i = 0; $i <= 6; $i++) {
             $fix       = $i + $this->honnan;
             $nap       = date("Y-m-d", strtotime("this week monday +{$fix} day"));
             $wd        = date("N", strtotime($nap));
             $orvosList = $this->getOrvosListForIdopontValaszto($nap);
+
+            if (($wd == 6 || $wd == 7) && empty($orvosList)) {
+                //continue;
+            }
 
             $html .= "<td valign='top'>";
             $html .= "<div style='" . ($nap == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
@@ -374,7 +380,7 @@ class BookingService
 
                 $napHTML = "";
                 $napHTML.= "<div style='display:table-cell;text-align:center;vertical-align: top;".($oKey>1 ? "padding-left:3px;" : "")."'>";
-                $napHTML.= "<div style='width:70px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
+                $napHTML.= "<div style='width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
 
                 while (!$timeLoopEnd) {
                     $ora         = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
@@ -964,7 +970,7 @@ class BookingService
     private function getPackContentTypes($szuresTipusId)
     {
         $types = [];
-        if ($this->szuresTipusData["ispack"] == 1) {
+        if (isset($this->szuresTipusData["ispack"]) && $this->szuresTipusData["ispack"] == 1) {
             $res = sql_query("select * from szurescsomagok_kapcs where csomagid=? and noreservation=0", array($szuresTipusId));
             while ($row = sql_fetch_array($res)) {
                 if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme) {
@@ -1194,7 +1200,7 @@ class BookingService
                 $h .= "</div>";
             }
         }
-        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $tid == 1) {
+        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $tid == 1 && in_array($helyszinId, [1, 100])) {
             $h .= "<div><input type='checkbox' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"])?"checked":"")."/>Tüdőszűrővel nem rendelkezik</div>";
         }
         return $h;

@@ -294,7 +294,9 @@ class AdminDoctorsPage extends AdminCorePage {
             $sor = 1;
 			$restrict = 1;
             $oid = intval($_GET["szerk"]);
-            $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
+            if (isset($_POST["orvosbeosztascegfilter"])) {
+                $_SESSION["orvosbeosztascegfilter"] = $_POST["orvosbeosztascegfilter"];
+            }
 			
             if ($this->adminUser->doctorsAccess()) {
 				
@@ -389,10 +391,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     hmedemail=?,
                     visszaigazol=?,
                     visszaigazolemail=?,
-                    szurestipusok=?,
                     gender=?,
                     aktiv=?
-                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["szurestipusok"], $_POST["gender"], $_POST["aktiv"], $oid));
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["aktiv"], $oid));
 
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
