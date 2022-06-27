@@ -2,9 +2,6 @@
 
 class AdminScreeningsPage extends AdminCorePage
 {
-
-    private $bookingService;
-	
 	private $optionalFields = [
 		"nev"			 => "Teljesnév",
 		"telefon"		 => "Telefonszám",
@@ -133,7 +130,7 @@ class AdminScreeningsPage extends AdminCorePage
 
                 $sor = 1;
                 while (isset($_POST["arid{$sor}"])) {
-                    sql_query("update arak set megnev=?,price=? where id=?",array($_POST["megnev{$sor}"],$_POST["price{$sor}"],$_POST["arid{$sor}"]));
+                    sql_query("update arak set megnev=?, price=?, plusminute=?, paciens=? where id=?", [$_POST["megnev{$sor}"], $_POST["price{$sor}"], $_POST["plusminute{$sor}"], isset($_POST["paciens{$sor}"])?1:0, $_POST["arid{$sor}"]]);
                     $sor++;
                 }
 				
@@ -285,22 +282,24 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addprice' value='+ ár hozzáadása'></td></tr>";
 
 
-            $resb = sql_query("select * from arak where tipusid=? and csomag=0 order by megnev", array($_GET["szerk"]));
 
             $sor = 1;
 
             echo "<tr><td colspan='2'>";
             echo "<table cellpadding='0' cellspacing='0'>";
 
-            while ($rowb = sql_fetch_array($resb)) {
+            $prices = sql_query("select * from arak where tipusid=? and csomag=0 order by megnev", [$_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($prices as $price) {
                 echo "<tr>";
                 echo "<td>";
-                echo "<input type='hidden' name='arid{$sor}' id='arid{$sor}' value='{$rowb["id"]}'/>";
-                echo "<div id='ceglist{$sor}' style='max-width:500px;'>" . $this->adminUtils->showCegListSzT($rowb["cegid"], $sor) . "</div>";
+                echo "<input type='hidden' name='arid{$sor}' id='arid{$sor}' value='{$price["id"]}'/>";
+                echo "<div id='ceglist{$sor}' style='max-width:500px;'>" . $this->adminUtils->showCegListSzT($price["cegid"], $sor) . "</div>";
                 echo "</td>";
-                echo "<td><input type='text' name='megnev{$sor}' value='{$rowb["megnev"]}' style='width:350px;margin:2px 0px 2px 10px;' placeholder='megnevezés' /></td>";
-                echo "<td><input type='text' name='price{$sor}' value='{$rowb["price"]}' style='width:50px;margin:2px 0px 2px 10px;' placeholder='ár'/>&nbsp;HUF</td>";
-                echo "<td>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deltipar={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt az árat?\")'><img src='images/trash.png' title='Sor törlése'/></a><br/></td>";
+                echo "<td><input type='checkbox' title='paciens által is kiválasztható' name='paciens{$sor}' value='1' ".($price["paciens"] == 1 ? "checked":"")."/></td>";
+                echo "<td><input type='text' name='megnev{$sor}' value='{$price["megnev"]}' style='width:350px;margin:2px 0px 2px 10px;' placeholder='megnevezés' /></td>";
+                echo "<td><input type='text' name='plusminute{$sor}' value='{$price["plusminute"]}' style='width:14px;margin:2px 0px 2px 10px;' placeholder='időtartam' title='időtartam módosító'/> </td>";
+                echo "<td><input type='text' name='price{$sor}' value='{$price["price"]}' style='width:50px;margin:2px 0px 2px 10px;' placeholder='ár'/>&nbsp;HUF</td>";
+                echo "<td style='font-size: 14px;'>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deltipar={$price["id"]}' onclick='return confirm(\"Biztos törlöd ezt az árat?\")'><i class='fas fa-trash'></i></a><br/></td>";
                 echo "</tr>";
                 echo "<tr><td colspan='4'><div id='cegadd{$sor}' style='display:none;max-width:600px;'>" . $this->adminUtils->cegAddSorSzT($sor) . "</div></td></tr>";
                 $sor++;

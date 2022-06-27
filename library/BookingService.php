@@ -1094,8 +1094,8 @@ class BookingService
             $h .= "</div>";
         }
 
-        if ($helyszinId == 1 && $_SERVER["REMOTE_ADDR"] == "88.151.97.121") {
-            $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0", array("|{$cegid}|", $tid));
+        if ($helyszinId == 1) {
+            $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
                 $h .= "<div style='margin:10px 0px;'>";
                 $h .= "<div style='font-weight:bold;'>Ha kér, válasszon kiegészítő szolgáltatást:</div>";
@@ -1126,6 +1126,35 @@ class BookingService
         }
         return false;
     }
+
+    public function checkIdopontSzabadForServices($data):array {
+        $result = [];
+
+        $plusMinute = 0;
+        $serviceName = "";
+        $prices = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", ["|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]]);
+        foreach ($prices as $price) {
+            if (isset($data["altipus{$price["id"]}"])) {
+                if ($price["plusminute"] > $plusMinute) {
+                    $plusMinute = $price["plusminute"];
+                    $serviceName = $price["megnev"];
+                }
+            }
+        }
+
+        if ($plusMinute > 0 && !empty($data["datum"]) && !empty($data["rinterval"]) && !empty($data["orvosselected"])) {
+            $nap = date("Y-m-d", strtotime($data["datum"]));
+            $allInterval = $plusMinute > $data["rinterval"] ? $plusMinute : $data["rinterval"];
+            if (sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=?
+                   AND ((datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE)) OR (datum>=? AND datum<DATE_ADD(?, INTERVAL ? MINUTE)))
+                   AND orvosassigned=?", ["{$nap} 00:00:00", $data["datum"], $data["datum"], $data["datum"], $data["datum"], $allInterval, $data["orvosselected"]]))) {
+                $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
+            }
+
+        }
+        return $result;
+    }
+
 
     public function updateFoglalasData($id)
     {

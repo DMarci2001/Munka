@@ -337,8 +337,20 @@ class BookingPage extends CorePage
             }
 
             if($_SESSION["helyszindata"]["manual_booking_option"]!=1){
-                if ($_POST["datum"] != "" && !$this->bookingService->checkIdopontSzabad($_POST)) {
-                    $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+                if ($_POST["datum"] != "") {
+                    if (!$this->bookingService->checkIdopontSzabad($_POST)) {
+                        $this->errors[] = "{$webText["idopontlefoglaltak"]}";
+                    } else {
+                        //további check, hogy az esetleg kiválasztott szolgáltatás is belefér-e
+                        $result = $this->bookingService->checkIdopontSzabadForServices($_POST);
+                        if (!empty($result)) {
+                            $this->errors[] = $result["error"];
+                        }
+                    }
+                }
+
+                if ($_POST["datum"] != "") {
+
                 }
             }
 
