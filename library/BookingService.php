@@ -16,7 +16,6 @@ class BookingService
     public $szuresTipusData;
     public $szuresTipusMap = [];
     public $betegallomany = false;
-    public $restrictParameters = [];
     public $beosztasService;
     public $notificationService;
     private $taj;
@@ -65,17 +64,6 @@ class BookingService
         if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
             $result["error"] = "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.";
             return $result;
-        }
-
-        if ($this->checkBookingRestrictionProtocol($this->helyszin)) {
-            //Ha nem adott meg tajszámot:
-            if ($this->taj == 0) {
-                $result["error"] = "Időpontválasztás előtt kérem adja meg a TAJ számát!";
-                return $result;
-            }
-
-            //Paraméterek beállítása a korlátozáshoz:
-            $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
         }
 
         $this->lang = new Lang();
@@ -181,18 +169,6 @@ class BookingService
                         $idopontData["status"] = "reserved";
                     }
 
-                    //Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
-                    if (count($this->restrictParameters) != 0 && $this->betegallomany != true) {
-                        $orvosok = $this->restrictParameters['orvosok'];
-                        $oid = array_search($orvosId, array_column($orvosok, "orvosid"));
-                        if ($oid !== false) {
-                            if (strtotime("{$nap} {$ora}") <= strtotime($this->restrictParameters['datum'])) {
-                                $idopontData["message"] = "Nem foglalható, vagy foglalt időpont!";
-                                $idopontData["status"] = "reserved";
-                            }
-                        }
-                    }
-
                     //csak fordított sorrendben időpontok intézése
                     if (isset($beoData) && $beoData["csaksorban"] == 2 && $idopontData["status"] == "free") {
                         $lastButton = $idopontData;
@@ -283,20 +259,6 @@ class BookingService
         if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
             return json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
         }
-
-        //Foglalás korlátozáshoz szükséges a TAJ szám, ez alapján ellenőrzi vissza, hogy mikortól jelentkezhet vizsgálatra:
-        //Először meg kell néznem, hogy az adott helyszínhez tartozik-e (emelett az orvost és céget is meg kell néznem) korlátozás:
-        if ($this->checkBookingRestrictionProtocol($this->helyszin)) {
-            //Ha nem adott meg tajszámot:
-            if ($this->taj == 0) {
-                return json_encode(array("error" => "Időpontválasztás előtt kérem adja meg a TAJ számát!", "html" => ""));
-            }
-
-            //Paraméterek beállítása a korlátozáshoz:
-            $this->restrictParameters = $this->setRestrictParameters($this->helyszin);
-        }
-
-       
 
         $html .= "<div style='margin:10px 0px 10px 0px;'>";
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
@@ -450,19 +412,6 @@ class BookingService
                         $buttonTitle = "";
                         $buttonClass = "foglaltbtn";
                         $buttonJava = "nemfog();return false;";
-                    }
-
-                    //Ha korlátozás van az orvosnál beállítva az adott cégre akkor vizsgáljam meg, hogy korlátozási időn belül van-e a foglalási szándék!
-                    if (count($this->restrictParameters) != 0 && $this->betegallomany != true) {
-                        $orvosok = $this->restrictParameters['orvosok'];
-                        $oid = array_search($orvosId, array_column($orvosok, "orvosid"));
-                        if ($oid !== false) {
-                            if (strtotime("{$nap} {$ora}") <= strtotime($this->restrictParameters['datum'])) {
-                                $buttonTitle = "";
-                                $buttonClass = "foglaltbtn";
-                                $buttonJava = "nemfog();return false;";
-                            }
-                        }
                     }
 
                     if(isset($beoData["csaksorban"]) && $beoData["csaksorban"] == 1 && strpos($beoData["orvosnev"],"Várólista")!==false){
@@ -619,32 +568,11 @@ class BookingService
         return ["hour" => $dist, "day" => $distFullDay];
     }
 
-    public function checkBookingRestrictionProtocol($helyszinId) {
-        if (empty($helyszinId)) {
-            return false;
+    public function needTappenzCheckbox($helyszinId):bool {
+        if ($helyszinId == 253 && $_SESSION["helyszindata"]["id"] == 74) {
+            return true;
         }
-        return sql_num_rows(sql_query("SELECT * FROM foglalas_korlatozasok WHERE helyszinid=? AND cegek LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", array($helyszinId))) > 0;
-    }
-
-    public function setRestrictParameters($helyszinId)
-    {
-        $korlatozottOrvosok = [];
-        $korlatozottDatum = "";
-
-        //Orvos->korlátozás idő
-        $request = sql_query("SELECT orvosid,restrict_time FROM foglalas_korlatozasok WHERE helyszinid=?", array($helyszinId));
-        while ($result = sql_fetch_array($request)) {
-            array_push($korlatozottOrvosok, array("orvosid" => $result['orvosid'], "restrict_time" => $result['restrict_time']));
-        }
-
-        $oid = array_search($_SESSION['orvosselected'], array_column($korlatozottOrvosok, "orvosid"));
-
-        //Páciens utolsó alkalmasságija:
-        $pdata = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj=? AND datum < NOW() ORDER BY datum desc LIMIT 1", array($this->taj)));
-
-        $korlatozottDatum = date("Y-m-d", strtotime("{$pdata['datum']} + " . ($pdata['alkalmassagido'] - $korlatozottOrvosok[$oid]['restrict_time']) . " months"));
-
-        return array("orvosok" => $korlatozottOrvosok, "datum" => $korlatozottDatum);
+        return false;
     }
 
     public function setHonnan($honnan)
@@ -863,28 +791,6 @@ class BookingService
                 return false;
             }
         }
-
-        //Ha a BP cég az aktuális cég:
-        /*if($_SESSION["helyszindata"]["id"]==74){
-            //Ha a fantom helyszínt választják ki:
-            
-            //Ha a jász utcát:
-            if($helyszin==1){
-                $orvosRestrict=" AND b.orvosid NOT IN(282,285)";
-                if(!empty($orvos)){
-                    $orvos="";
-                }
-            }
-
-            if($helyszin==98989898989898){
-                $orvosRestrict=" AND b.orvosid IN(282,285)";
-                $helyszin=1;
-                if(!empty($orvos)){
-                    $orvos="";
-                }
-            }
-        }*/
-
 
         //időpontra beosztott orvosok kiolvasása
         $resb = sql_query("SELECT * FROM orvos_beosztas_new b 
@@ -1683,11 +1589,11 @@ class BookingService
         }
     }
 
-    public function tappenzCheckHTML($val) {
+    public function tappenzCheckHTML($helyszinId) {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
         $html = "";
-        if ($this->checkBookingRestrictionProtocol($val)) {
+        if ($this->needTappenzCheckbox($helyszinId)) {
             $html.= "<input type='checkbox' id='betegallomanynyilatkozat' value='1' name='betegallomanynyilatkozat'>";
             $html.= "<span style='cursor:pointer' onClick='toggleCheckBox(\"#betegallomanynyilatkozat\");'><strong>".$webText["betegallomanynyilatkozat"]."</strong></span>";
         }

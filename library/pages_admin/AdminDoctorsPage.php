@@ -228,31 +228,6 @@ class AdminDoctorsPage extends AdminCorePage {
             die();
         }
 		
-		if (isset($_GET["showcegvalasztov2"])) {
-            if (!$this->adminUser->doctorsCalendarAccess()) {
-                die();
-            }
-            $restrictid = intval($_GET["showcegvalasztov2"]);
-            $rowo = sql_fetch_array(sql_query("SELECT * FROM foglalas_korlatozasok WHERE id=?", array($restrictid)));
-			
-			//Kilistázom az összes céget amihez van beoja:
-            $companies = $this->beoEditor->beosztasService->getDoctorCompanies($rowo["orvosid"]);
-
-            echo "<div style='width:750px;'>";
-            foreach ($companies as $company) {
-                echo "<label><input onchange='saveceglistav2({$restrictid})' type='checkbox' name='cegvalasztov2{$restrictid}_{$company["id"]}' value='{$company["megnev"]}' ".(substr_count($rowo["cegek"],"|{$company["id"]}|")>0?"checked":"")."/>{$company["megnev"]}&nbsp;&nbsp;</label>";
-            }
-
-            echo "<div style=''><input type='button' onclick='showcegvalasztov2({$restrictid});' value='OK'></div>";
-            echo "</div>";
-            die();
-        }
-		
-		if (isset($_GET["savecegekv2"])) {
-            sql_query("UPDATE foglalas_korlatozasok SET cegek=? WHERE id=?", array($_GET["value"], intval($_GET["savecegekv2"])));
-            die();
-        }
-
         if (isset($_POST["savebeosztascompanies"])) {
             $oldCompanies = $_POST["savebeosztascompanies"];
             $doctorId = intval($_POST["doctorid"]);
@@ -279,17 +254,6 @@ class AdminDoctorsPage extends AdminCorePage {
             die();
         }
 		
-		if(isset($_POST['restricttobooking'])){
-			sql_query("INSERT INTO foglalas_korlatozasok SET orvosid=?,uid=?,datum=?",array(intval($_GET['szerk']),$this->adminUser->user["id"],date("Y-m-d H:i:s")));
-			$_POST["orvosmentes"]=1;
-		}
-		if (isset($_GET["delrestriction"])) {
-            sql_query("DELETE FROM foglalas_korlatozasok WHERE id=? AND orvosid=?",array($_GET['delrestriction'],$_GET["szerk"]));
-            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
-            die();
-        }
-		
-
         if (isset($_POST["orvosmentes"]) || isset($_POST["orvosform"])) {
             $sor = 1;
 			$restrict = 1;
@@ -323,21 +287,7 @@ class AdminDoctorsPage extends AdminCorePage {
                         sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=? where id=?", $params);
                         $sor++;
                     }
-
-					//korlátozások mentése:
-					while (isset($_POST["restrictid{$restrict}"])) {
-                        $aktiv=0;
-                        if (isset($_POST["restrictionstatus{$restrict}"])) $aktiv=1;
-						
-						//echo "helyszinid=".$_POST['restrict_helyszin'.$restrict].", datasource=".$_POST['datasource'.$restrict].", restrict_time=".$_POST['restrict_time'.$restrict].", aktiv=".$_POST['restrictionstatus'.$restrict];
-						
-						$columns = "helyszinid=?, datasource=?, restrict_time=?, aktiv=?";
-						$data    = array($_POST["restrict_helyszin{$restrict}"],$_POST["datasource{$restrict}"],$_POST["restrict_time{$restrict}"],$aktiv,$_POST["restrictid{$restrict}"]);
-                        //cegid='".addslashes($_POST["cegid{$sor}"])."',
-                        sql_query("UPDATE foglalas_korlatozasok SET {$columns} WHERE id=?",$data);
-                        $restrict++;
-                    }
-                }
+		        }
 
                 $sor=1;
                 while (isset($_POST["phoneid{$sor}"])) {
@@ -689,46 +639,6 @@ class AdminDoctorsPage extends AdminCorePage {
             }
             echo "<div><input class='inputbox' style='width:100px;' type='text' name='szabadsagtol' value='' placeholder='-tól dátum'> - <input class='inputbox' style='width:100px;' type='text' name='szabadsagig' value='' placeholder='-ig dátum'> <input type='submit' onClick='return checkSzabiData()' name='addszabadsag' value='+ szabadság hozzáadása'></div>";
             echo "</td></tr>";
-
-			echo "<tr><td colspan='2'><div class='tdsepdiv'>Foglalások korlátozása</div></td></tr>";
-
-			$resb = sql_query("SELECT * FROM foglalas_korlatozasok WHERE orvosid=? ORDER BY datum",array($_GET['szerk']));
-			$sor = 1;
-			while($rowb = sql_fetch_array($resb)){	
-				echo "<tr><td colspan='2'>";
-				echo "<input type='hidden' name='restrictid{$sor}' value='{$rowb["id"]}'/>";
-				echo "<div>";
-				echo "<input type='checkbox' name='restrictionstatus{$sor}' ".($rowb["aktiv"]>0?"checked":"")." value='1' />";
-				//echo "<select type='text' name=''> value=''/> Forrás<>";
-				echo "<strong>Adatforrás:&nbsp;&nbsp;</strong><select name='datasource{$sor}'>";
-				echo "	<option value='bejelentkezo'>Bejelentkező</option>";
-				echo "	<option value='zeus'>Zeus</option>";
-				echo "</select>&nbsp;&nbsp;";
-				echo "<strong>Korlátozás:&nbsp;&nbsp;</strong><select name='restrict_time{$sor}'>";
-				echo "	<option value='1' ".($rowb['restrict_time']=="1"?"selected":"")." >1 hónap</option>";
-				echo "	<option value='2' ".($rowb['restrict_time']=="2"?"selected":"").">2 hónap</option>";
-				echo "	<option value='3' ".($rowb['restrict_time']=="3"?"selected":"").">3 hónap</option>";
-				echo "</select>&nbsp;&nbsp;";
-				echo "<select name='restrict_helyszin{$sor}'>";
-				echo "	<option>Válassz címet!</option>";
-				//Kilistázom az összes olyan címhelyet ahol rendel a doki
-				$resa = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo LEFT JOIN helyszinek h ON h.id=beo.helyszinid WHERE beo.orvosid=? GROUP BY beo.helyszinid",array($_GET['szerk']));
-				while($rowa=sql_fetch_array($resa)){
-					echo "<option ".($rowb['helyszinid']==$rowa['helyszinid']?"selected":"")." value='{$rowa['helyszinid']}'>{$rowa['cim']}</option>";
-				}
-				echo "</select>&nbsp;&nbsp;";
-				$cegdb = (empty($rowb['cegek'])?0:count(explode(",",str_replace(array("||","|"),array(",",""),$rowb['cegek']))));
-		
-				$cegek = (empty($rowb['cegek'])?"":implode("",sql_fetch_row(sql_query("SELECT group_concat(' ',megnev) FROM cegek WHERE id IN(".str_replace(array("||","|"),array(",",""),$rowb['cegek']).")"))));
-				echo "<span id='cegstatusz{$rowb['id']}'><a class='tlink' href='#' title='{$cegek}' onClick='showcegvalasztov2({$rowb['id']});return false'>{$cegdb} cég</a></span>";
-				//cégek listája
-				echo "&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&delrestriction={$rowb["id"]}' onclick='return confirm(\"Biztos törlöd ezt az egységet?\")'><img src='images/trash.png' title='Sor törlése'/></a>";
-				echo "</div>";
-				echo "<div id='cegvalasztov2{$rowb['id']}'></div>";
-				echo "</td></tr>";
-			}
-			
-			echo "<tr><td colspan='2' valign='top'><input type='submit' name='restricttobooking' value='+ Korlátozás hozzáadása'></td></tr>";
 
             $docAgent = new DocAgent();
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Fotó</div></td></tr>";

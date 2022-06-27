@@ -109,42 +109,6 @@ function showTipusValaszto(beosztasid) {
     });
 }
 
-function showcegvalasztov2(restrictid) {
-    if ($.trim($("#cegvalasztov2" + restrictid).html())) {
-        $("#cegvalasztov2" + restrictid).html("");
-        return;
-    }
-    $("#cegvalasztov2" + restrictid).load("index.php?page=doctors&showcegvalasztov2=" + restrictid);
-}
-
-function saveceglistav2(restrictid) {
-    var tk = "";
-    var num = 0;
-    var t = "nincs cég hozzárendelve";
-    var tlist = "";
-
-    $("#cegvalasztov2" + restrictid + " input:checked").each(function () {
-        tk = tk + "|" + $(this).attr("name").replace("cegvalasztov2" + restrictid + "_", "") + "|";
-        num++;
-        tlist = tlist + ", " + $(this).attr("value");
-    });
-
-    if (num > 0) t = tlist.substring(2);
-
-    $("#cegstatusz" + restrictid).html("<a href='#' class='tlink' title='" + t + "' onclick='showcegvalasztov2(" + restrictid + ");return false;'>" + num + " cég</a>");
-
-    request = $.ajax({
-        url: "index.php",
-        type: "get",
-        data: { page: "doctors", savecegekv2: restrictid, value: tk }
-    });
-
-    request.done(function (response, textStatus, jqXHR) {
-        respo = response;
-    });
-
-
-}
 
 var actualprefix = 0
 
