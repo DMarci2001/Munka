@@ -637,10 +637,14 @@ function showIdopontEditor(page, p, id) {
     });
 }
 
+var lastTaj = "";
 function initTajEditor() {
+    $(".editortaj2").keydown(function () {
+       lastTaj = $(this).val();
+    });
     $(".editortaj2").keyup(function () {
         let taj = $(this).val();
-        if (taj.length >= 9) {
+        if (taj.length >= 9 && taj != lastTaj) {
             autoFill(true);
         }
     });

@@ -280,10 +280,15 @@ class AdminBookingEditor {
             }
 
             $TAJ = $_REQUEST['AFForm'];
-            if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ?", [$TAJ]))) {
+            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ?", [$TAJ]))) {
+                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ?", [$TAJ]))) {
+                    $data["id"] = 0;
+                } else {
+                    $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+                }
+            }
+            if (!isset($data["error"])) {
                 $data["error"] = "";
-            } else {
-                $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
             }
 
             $this->utils->jsonOut($data);
