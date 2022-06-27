@@ -106,7 +106,7 @@ class HmmApi {
         }
 
         if ($this->apiMethod == "dokirexInsertVizsglapAdatok") {
-            $result = ["{$this->apiMethod}" => "ok"];
+            $result = $this->dokirexInsertVizsglapAdatok();
         }
 
         $this->utils->jsonOut($result);
@@ -653,5 +653,18 @@ class HmmApi {
 
         return $slots;
     }
+
+    private function dokirexInsertVizsglapAdatok():array {
+        if (!empty($this->postBody)) {
+            $data = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+            sql_query("insert into dokirexvizsglaplog set VizsgalatiLapLogID=?, VizsgalatiLapID=?, PaciensID=?, FelhasznaloSzakrendelesID=?, Datum=?, Muvelet=?", [$data["VizsgalatiLapLogID"], $data["VizsgalatiLapID"], $data["PaciensID"], $data["FelhasznaloSzakrendelesID"], $data["Datum"], $data["Muvelet"]]);
+        } else {
+            $this->apiError(500, "Empty request", "The request was empty");
+        }
+
+        return ["{$this->apiMethod}" => "ok"];
+    }
+
 
 }
