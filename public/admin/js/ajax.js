@@ -3213,7 +3213,7 @@ function beutaloHozzadasa(fid){
         method: "POST",
         data: { beutaloHozzadasBox:true},
         success: function (result) {
-            showGeneralPopup($result);
+            showGeneralPopup(result);
         }
     });
 }
