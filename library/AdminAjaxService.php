@@ -637,7 +637,7 @@ class AdminAjaxService {
 
             $html .= "<div style='padding:20px;text-align:center;'>";
             $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy típust és egy telephelyet a legördülő listákból.</div>";
-            $html .= "<div><select id=\"beutaloSelector\">";
+            $html .= "<div style=\"padding-bottom:3px\"><select id=\"beutaloSelector\">";
             foreach($service->availableDocs as $beutalo){
                 $html .= "<option value=\"{$beutalo["value"]}\">{$beutalo["name"]} munkavégézés</option>";
             }
@@ -660,7 +660,7 @@ class AdminAjaxService {
 
         if(isset($_POST["beutalohozzadasafinish"])){
             $service = new BookingService();
-            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as kelte,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE id=?",array($_POST["fid"])));
+            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as kelte,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
             $p["telephely"] = $_POST["tname"];
 
             echo $service->createReferalDoc($p,$_POST["bid"]);
