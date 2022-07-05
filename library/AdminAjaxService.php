@@ -647,7 +647,7 @@ class AdminAjaxService {
             $html .= "<option value=\"Budapest\">Budapest</option>";
             $html .= "<option value=\"Szeged\">Szeged</option>";
             $html .= "</select></div>";
-            $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),$(\"#telephelySelector\").val(),{$_POST["beutaloHozzadasBox"]})' value=\"Kiválaszt\">";
+            $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),{$_POST["beutaloHozzadasBox"]},$(\"#telephelySelector\").val())' value=\"Kiválaszt\">";
             $html .= "<input onclick='hideGeneralPopup();return false;' type=\"button\" id=\"simplerefundclosebutton\" value=\"Bezárás\"></div>";
 
             $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
