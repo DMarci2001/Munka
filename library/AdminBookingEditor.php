@@ -316,11 +316,15 @@ class AdminBookingEditor {
             $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
 
             $files = $this->adminUtils->showPaciensFiles($row["id"]);
-            if (!empty($files) && $row["noreservation"] != 1) {
+            if ((!empty($files) && $row["noreservation"] != 1) || $this->user->beutaloHozzadasAccess()==1) {
                 $html .= "<div id='uploadfilesfolder' style='position:absolute;margin-top:70px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
                 $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='feltöltött fájlok' onclick='toggleUploadFiles();' src='images/Files-PNG-File.png' style='width:30px;cursor:pointer;' /></div></div>";
-                $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;width:200px;background:#ddd;overflow:hidden;'><div style='width:1000px;'>{$files}</div></div></div>";
-                $html .= "</div>";
+                $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;width:200px;background:#ddd;overflow:hidden;'><div style='width:1000px;'>{$files}</div>";
+                if($this->user->beutaloHozzadasAccess()==1){
+                    $html.="<div style=\"padding:1px 4px;\"><a href=\"#\" onclick='beutaloHozzadasa({$id});return false'>+Beutaló hozzáadása+</a></div>";
+                }
+                
+                $html .= "</div></div></div>";
             }
 
             $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";

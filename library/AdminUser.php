@@ -389,6 +389,10 @@ class AdminUser {
         return $this->user["jog_bp_seged_tabla"] == 1;
     }
 
+    public function beutaloHozzadasAccess():bool {
+        return $this->user["jog_beutalo_hozzadas"] == 1;
+    }
+
     
 
 }

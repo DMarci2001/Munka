@@ -3206,3 +3206,14 @@ function orvosVelemenyExit() {
     $(".mainalkform").show();
     $(".ovsubmit").hide();
 }
+
+function beutaloHozzadasa(fid){
+	$.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { beutaloHozzadasBox:true},
+        success: function (result) {
+            showGeneralPopup($result);
+        }
+    });
+}

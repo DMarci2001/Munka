@@ -625,6 +625,23 @@ class AdminAjaxService {
             echo "mailteszt";
             die;
         }
+
+        if(isset($_POST["beutaloHozzadasBox"])){
+            $html = "";
+
+            $html .= "<div style='color:#444;text-align:center;'>";
+            $html .= "<div id='loginbox' class='loginbox'>";
+            $html .= "<div class='loginhead'>Beutaló hozzáadása</div>";
+
+            $html .= "<div style='padding:20px;text-align:center;'>";
+
+            $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
+            $html .= "</div>";
+
+            $html .= "</div>";
+            $html .= "</div>";
+            die($html);
+        }
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {
