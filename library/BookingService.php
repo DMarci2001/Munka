@@ -23,7 +23,7 @@ class BookingService
     public $newReservationId;
     public $munkakorVizsgalatok;
 
-    private $availableDocs = array(
+    public $availableDocs = array(
         array("name" => "Éjszakai", "value" => "bp-nightshift", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
         array("name" => "Nappali", "value" => "bp-normal", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
     );

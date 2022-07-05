@@ -3211,9 +3211,20 @@ function beutaloHozzadasa(fid){
 	$.ajax({
         url: "index.php",
         method: "POST",
-        data: { beutaloHozzadasBox:true},
+        data: { beutaloHozzadasBox:fid},
         success: function (result) {
             showGeneralPopup(result);
+        }
+    });
+}
+
+function beutalohozzadasafinish(bid,fid,tname){
+	$.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { beutalohozzadasafinish:true,bid:bid,fid:fid,tname:tname},
+        success: function (result) {
+            console.log(result);
         }
     });
 }

@@ -629,11 +629,26 @@ class AdminAjaxService {
         if(isset($_POST["beutaloHozzadasBox"])){
             $html = "";
 
+            $service = new BookingService();
+
             $html .= "<div style='color:#444;text-align:center;'>";
             $html .= "<div id='loginbox' class='loginbox'>";
             $html .= "<div class='loginhead'>Beutaló hozzáadása</div>";
 
             $html .= "<div style='padding:20px;text-align:center;'>";
+            $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy típust és egy telephelyet a legördülő listákból.</div>";
+            $html .= "<div><select id=\"beutaloSelector\">";
+            foreach($service->availableDocs as $beutalo){
+                $html .= "<option value=\"{$beutalo["value"]}\">{$beutalo["name"]} munkavégézés</option>";
+            }
+            $html .= "</select></div>";
+
+            $html .= "<div><select id=\"telephelySelector\">";
+            $html .= "<option value=\"Budapest\">Budapest</option>";
+            $html .= "<option value=\"Szeged\">Szeged</option>";
+            $html .= "</select></div>";
+            $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),$(\"#telephelySelector\").val(),{$_POST["beutaloHozzadasBox"]})' value=\"Kiválaszt\">";
+            $html .= "<input onclick='hideGeneralPopup();return false;' type=\"button\" id=\"simplerefundclosebutton\" value=\"Bezárás\"></div>";
 
             $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
             $html .= "</div>";
@@ -641,6 +656,15 @@ class AdminAjaxService {
             $html .= "</div>";
             $html .= "</div>";
             die($html);
+        }
+
+        if(isset($_POST["beutalohozzadasafinish"])){
+            $service = new BookingService();
+            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as kelte,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE id=?",array($_POST["fid"])));
+            $p["telephely"] = $_POST["tname"];
+
+            echo $service->createReferalDoc($p,$_POST["bid"]);
+            die();
         }
     }
 
