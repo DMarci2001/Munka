@@ -647,10 +647,9 @@ class AdminAjaxService {
             $html .= "<option value=\"Budapest\">Budapest</option>";
             $html .= "<option value=\"Szeged\">Szeged</option>";
             $html .= "</select></div>";
-            $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),{$_POST["beutaloHozzadasBox"]},$(\"#telephelySelector\").val())' value=\"Kiválaszt\">";
-            $html .= "<input onclick='hideGeneralPopup();return false;' type=\"button\" id=\"simplerefundclosebutton\" value=\"Bezárás\"></div>";
+            $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),{$_POST["beutaloHozzadasBox"]},$(\"#telephelySelector\").val())' value=\"Kiválaszt\"></div>";
+            $html .= "<div style=\"padding-top:10px;\"><input onclick='hideGeneralPopup();return false;' type=\"button\" id=\"simplerefundclosebutton\" value=\"Bezárás\"></div>";
 
-            $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
             $html .= "</div>";
 
             $html .= "</div>";
@@ -660,8 +659,8 @@ class AdminAjaxService {
 
         if(isset($_POST["beutalohozzadasafinish"])){
             $service = new BookingService();
-            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as kelte,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
-            $p["telephely"] = $_POST["tname"];
+            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as regdatum,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
+            $p["worklocation"] = $_POST["tname"];
 
             echo $service->createReferalDoc($p,$_POST["bid"]);
             die();
