@@ -246,18 +246,18 @@ class BookingService
         }
 
         if ($this->helyszin == 0) {
-            return json_encode(array("error" => "Az időpont kiválasztásához válassza ki a helyszínt!", "html" => ""));
+            return json_encode(array("error" => $webText["valasszhelyszint"], "html" => ""));
         }
         if ($this->szuresTipus == 0) {
-            return json_encode(array("error" => "Az időpont kiválasztásához válassza ki a szűrés tipusát!", "html" => ""));
+            return json_encode(array("error" => $webText["valasszszurestipust"], "html" => ""));
         }
 
         if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
-            return json_encode(array("error" => "Szűréscsomag választása esetén előbb adja meg a nemét!", "html" => ""));
+            return json_encode(array("error" => $webText["valassznemet"], "html" => ""));
         }
 
         if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
-            return json_encode(array("error" => "Erre a szűrés típusra nincsenek beállítva rendelési időpontok.", "html" => ""));
+            return json_encode(array("error" => $webText["nincssuresreidopontbeallitva"], "html" => ""));
         }
 
         $html .= "<div style='margin:10px 0px 10px 0px;'>";
