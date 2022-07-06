@@ -243,23 +243,23 @@ class BookingPage extends CorePage
                     $this->errors[] = "{$webText["szulformat"]}";
                 } else {
                     if (strtotime($_POST["szuldatum"]) > strtotime("now - 1 day")) {
-                        $this->errors[] = "A születési dátum nem megfelelő!";
+                        $this->errors[] = "{$webText["szulformat"]}";
                     }
                 }
             }
             if (!$this->utils->getFieldHidden("irsz") && $this->utils->getFieldRequired("irsz")) {
                 if (empty($_POST["irsz"])) {
-                    $this->errors[] = "Az irányítószám megadása kötelező!";
+                    $this->errors[] = "{$webText["irszkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("varos") && $this->utils->getFieldRequired("varos")) {
                 if (empty($_POST["varos"])) {
-                    $this->errors[] = "A város megadása kötelező!";
+                    $this->errors[] = "{$webText["varoskotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("utca") && $this->utils->getFieldRequired("utca")) {
                 if (empty($_POST["utca"])) {
-                    $this->errors[] = "Az utca megadása kötelező!";
+                    $this->errors[] = "{$webText["utcakotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("munkakor") && $this->utils->getFieldRequired("munkakor")) {
