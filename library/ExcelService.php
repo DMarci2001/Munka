@@ -468,6 +468,9 @@ class ExcelService {
         $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("RTG lista");
 
+        $from.= " 00:00:00";
+        $to.= " 23:59:59";
+
         $data = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName=? GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$from, $to, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
 
         $this->titleRow("A1", " RTG lista {$from} - {$to}");
@@ -505,6 +508,9 @@ class ExcelService {
 
         $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("Cég és orvos stat");
+
+        $from.= " 00:00:00";
+        $to.= " 23:59:59";
 
         $this->titleRow("A1", "Cég és orvos statisztika {$from} - {$to}");
 
@@ -641,3 +647,19 @@ class ExcelService {
     }
 
 }
+
+/*
+
+SELECT a.telephely, COUNT(*) AS db FROM (
+
+SELECT datum, telephely, nev, orvos, paciensid, munkakor, MAX(ervenyesseg) AS ervenyes FROM dokirex_vizsgalatok v WHERE v.szakrendeles='Foglalkozás-egészségügy' AND v.paciensid<>''
+AND v.`telephely`<>''
+GROUP BY v.paciensid
+HAVING ervenyes<NOW() AND ervenyes>'2021-01-01'
+
+ORDER BY v.`telephely`
+) a
+
+GROUP BY a.telephely
+;
+ */
