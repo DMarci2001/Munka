@@ -220,6 +220,7 @@ class Page
         $html .= "<br clear='all'/>";
 
         $html .= "&copy; " . date("Y") . " " . Booking_Constants::FOOTER_COPYRIGHT;
+        $html .= " ".session_id();
         $html .= "</div>";
         return $html;
     }

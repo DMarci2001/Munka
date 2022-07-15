@@ -329,21 +329,19 @@ class NotificationService {
 
         $subject = "Időpontfoglalás Emlékeztető - {$data["megnev"]}";
 
-        $mbody = "<p style='font-size:18px;font-weight:bold;font-family:calibri'>Tisztelt hölgyem/uram!</p>";
+        $mbody = "<p style='font-size:18px;font-weight:bold;'>Tisztelt hölgyem/uram!</p>";
         $mbody.= "";
-        $mbody.= "<p style='font-family:calibri'>Szeretnénk emlékeztetni, hogy <strong>".date("Y.m.d H:i",strtotime($data["datum"]))."-ra</strong> időpontfoglalása van,<br><br>";
+        $mbody.= "<p style=''>Szeretnénk emlékeztetni, hogy <strong>".date("Y.m.d H:i",strtotime($data["datum"]))."-ra</strong> időpontfoglalása van,<br><br>";
 
-        $mbody.= "<table style='font-family:calibri'>";
-        $mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátás megnevezése:</td><td style='padding:0px 10px'>{$data["megnev"]},</td></tr>";
-        $mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Helyszín:</td><td style='padding:0px 10px'>{$data["cim"]},</td></tr>";
-        $mbody.= "<tr><td style='font-weight:bold'> - <td/><td style='font-weight:bold'>Ellátó orvos vagy<br> rendelő megnevezése:</td><td style='padding:0px 10px' valign='middle'>{$data["nev"]}</td></tr>";
-        $mbody.= "</table>";
+        $mbody.= "<strong>Ellátás megnevezése:</strong><br/>{$data["megnev"]}<br/>";
+        $mbody.= "<strong>Helyszín:</strong><br/>{$data["cim"]}<br/>";
+        $mbody.= "<strong>Ellátó orvos vagy rendelő megnevezése:</strong></br>{$data["nev"]}<br/>";
 
         $mbody.= "<br><br>";
         $mbody.= "Az ellátás folytonossága érdekében kérjük, hogy legalább <strong>15 percel</strong> a lefoglalt időpont előtt sziveskedjék megjelenni!<br>";
         $mbody.= "Ha bármilyen okból nem tud megjelenni a vizsgálaton, vagy lemondaná a foglalást kérem <a style='color:#a00;' href='{$deleteURL}' target='_blank'>kattintson ide az időpont törléséhez.</a></p>";
 
-        $mbody.= "<p style='font-family:calibri'>Köszönjük, ".Booking_Constants::COMPANY_NAME." Csapata!</p>";
+        $mbody.= "<p>Köszönjük, ".Booking_Constants::COMPANY_NAME." Csapata!</p>";
 
         $mail->Subject = $subject;
         $mail->Body = $mbody;

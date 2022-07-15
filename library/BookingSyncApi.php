@@ -105,7 +105,11 @@ class BookingSyncApi {
             if ($reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
                 $externalReservation["orvosid"] = $orvosData["id"];
                 $externalReservation = $this->_fixReservation($externalReservation, $data);
-
+                $this->_updateReservation($externalReservation);
+            } else {
+                sql_query("insert into foglalasok set pass=?, orvosassigned=?, externalid=?", [$externalReservation["pass"], $orvosData["id"], $data["source"].$externalReservation["id"]]);
+                $externalReservation["orvosid"] = $orvosData["id"];
+                $externalReservation = $this->_fixReservation($externalReservation, $data);
                 $this->_updateReservation($externalReservation);
             }
         }

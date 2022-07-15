@@ -18,7 +18,7 @@ class Booking_Constants {
 
     const ADATVEDELMI_URL           = "https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf";
 
-    const FOOTER_ADDRESS_PARAM      = "<b>KeltextMed<br/>Egészségügyi Szolgáltató Kft.</b><br/><br/>Budapest, 1117 Fehérvári út 44.<br/>Csonka János Irodaház, I. emelet";
+    const FOOTER_ADDRESS_PARAM      = "<b>KeltexMed<br/>Egészségügyi Szolgáltató Kft.</b><br/><br/>Budapest, 1117 Fehérvári út 44.<br/>Csonka János Irodaház, I. emelet";
     const FOOTER_CONTACT_PARAM      = "<b>Telefon:</b><br/>+36 1 203 0091<br/><br/><b>E-mail:</b><br/>keltexmed@keltexmed.hu";
     const FOOTER_COPYRIGHT          = "KeltexMed";
     const COMPANY_NAME              = "Keltexmed Kft.";

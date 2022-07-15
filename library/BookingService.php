@@ -24,8 +24,8 @@ class BookingService
     public $munkakorVizsgalatok;
 
     public $availableDocs = array(
-        array("name" => "Éjszakai", "value" => "bp-nightshift", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
-        array("name" => "Nappali", "value" => "bp-normal", "filename" => "../public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
+        array("name" => "Éjszakai", "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
+        array("name" => "Nappali", "value" => "bp-normal", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
     );
 
     public function __construct()
@@ -549,7 +549,7 @@ class BookingService
                 $dist = "0 hour";
             }
 
-            if ($cegId == 46) {
+            if ($cegId == 46 && $helyszinId != 320) {
                 //vodafone
                 $dist = "72 hour";
                 if (date("N") == 4) {
@@ -565,6 +565,8 @@ class BookingService
                 $distFullDay = "2 day";
             }
         }
+
+        //echo "|{$dist}|";
         return ["hour" => $dist, "day" => $distFullDay];
     }
 
@@ -1114,7 +1116,6 @@ class BookingService
 
     public function checkIdopontSzabad($data)
     {
-        //TODO: időpont szabadság vizsgálása még kell ide..
         //$_POST["datum"]
         //$_POST["helyszin"]
         //$_POST["szurestipus"]
@@ -1515,7 +1516,7 @@ class BookingService
                     //die("errorEz az orvos csak a telefonjára fogad foglalást!");
                 }
                 if ($orvosData["externalonly"] == 1) {
-                    die("errorEhhez az orvoshoz a recepció nem rögzíthet foglalást!");
+                    //die("errorEhhez az orvoshoz a recepció nem rögzíthet foglalást!");
                 }
             }
 
@@ -1815,7 +1816,7 @@ class BookingService
 
         $result = $pdf->fillForm($input)
             ->flatten()
-            ->saveAs("../public/admin/templates/" . $filename);
+            ->saveAs("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
 
         if ($result === false) {
             $error = $pdf->getError();
@@ -1823,23 +1824,13 @@ class BookingService
             var_dump($error);
         } else {
             $docAgent= new DocAgent();
-            $docAgent->saveLocalDoc("../public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
+            $docAgent->saveLocalDoc("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
             return $filename;
         }
     }
 
     private function pdfChars($text) {
-        $search = array("ő","ű","í","Ő","Ű","Í");
-        $replace = array("ö","ü","i","Ö","Ü","I");
-
-        $text = str_replace($search,$replace,$text);
-        /*$text = str_replace("ő", "ö", $text);
-        $text = str_replace("ű", "ü", $text);
-        $text = str_replace("í", "i", $text);
-        $text = str_replace("Ő", "Ö", $text);
-        $text = str_replace("Ű", "Ü", $text);
-        $text = str_replace("Í", "I", $text);*/
-        return $text;
+        return str_replace(["ő","ű","í","Ő","Ű","Í"], ["ö","ü","i","Ö","Ü","I"], $text);
     }
 
 

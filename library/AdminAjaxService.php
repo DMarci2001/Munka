@@ -168,7 +168,6 @@ class AdminAjaxService {
 
         if (isset($_POST["insertPaciensIntoDokirex"]) && $_POST["insertPaciensIntoDokirex"] == true) {
             $html = $response = "";
-            $error = array();
             $dokirexService = new DokirexService();
 
             error_reporting(E_ALL);
@@ -176,23 +175,8 @@ class AdminAjaxService {
 
             $required = ["Nev", "SzuletesiDatum", "Azonosito", "Nem", "Iranyitoszam", "Telepules", "Cim", "SzuletesiNev"];
 
-            $params = sql_fetch_array(sql_query("SELECT fogl.id as fid, fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', '2' AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
-                                                    fogl.szulhely AS 'SzuletesiHely', fogl.anyjaneve AS 'AnyjaNeve', CASE WHEN fogl.neme = 0 THEN 3 ELSE fogl.neme END AS 'NemID',
-                                                    fogl.nev AS 'SzuletesiNev', '109' AS 'AllampolgarsagID', fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon',
-                                                    fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', 
-                                                    fogl.email AS 'Email', null AS 'SzigSzam', null AS 'KozgyogyTol', null AS 'KozgyogyIg', null AS 'KozgyogySzam', 
-                                                    '3' AS 'FelvevoID', '3' AS 'UtolsoModositoID'                                            
-                                            FROM foglalasok fogl WHERE id=?", [$_POST["pid"]]));
-
-            $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
-            $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
-            $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4) . "-" . substr($params["SzuletesiDatum"], 4, 2) . "-" . substr($params["SzuletesiDatum"], 6, 2);
-
-            foreach ($params as $index => $value) {
-                if ($value == "" && in_array($index, $required)) {
-                    $error[] = "<span style='color:red'>*{$index} mező megadása kötelező!</span>";
-                }
-            }
+            $params = $dokirexService->getUserParamsFromReservation($_POST["pid"]);
+            $error = $dokirexService->checkUserParamErrors($params);
 
             if (empty($error)) {
                 $response = $dokirexService->insertPaciensIntoDokirex($params);
