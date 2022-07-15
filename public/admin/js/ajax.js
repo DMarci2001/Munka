@@ -1606,6 +1606,15 @@ function initDateFilterPicker() {
         }
     })
 
+    $('#naptarfilter').datepicker({
+        language: 'hu',
+        onSelect: function (formattedDate, date, inst) {
+            inst.hide();
+            setNaptarDay(formattedDate);
+            //window.location.href="index.php?page="+$("#napfilter").data("page")+"&setday="+formattedDate;
+        }
+    })
+
     $('#datefrom').datepicker({
         language: 'hu',
         onSelect: function (formattedDate, date, inst) {
@@ -3205,6 +3214,17 @@ function orvosVelemenyExit() {
     $("#orvosszoveg").height(40);
     $(".mainalkform").show();
     $(".ovsubmit").hide();
+}
+
+
+function setNaptarDay(day) {
+    $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
+    $("#naptartable").load("index.php?page=varoterem&showtable&setday="+encodeURIComponent(day),null,
+        function(responseText){
+            initDateFilterPicker();
+            $("#napfilter").css("background-image","url('/images/empty-128.png')");
+        }
+    );
 }
 
 function beutaloHozzadasa(fid){

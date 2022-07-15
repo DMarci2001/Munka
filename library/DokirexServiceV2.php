@@ -2,22 +2,23 @@
 
 
 class DokirexService {
-    private $apiURL = "http://api-v2.dokirex.hu";
+    private string $apiURL = "http://api-v2.dokirex.hu";
 
     private $token;
-    public $version = 2;
+    public int $version = 2;
+    public array $requiredUserParams = ["Nev", "SzuletesiDatum", "Azonosito", "Nem", "SzuletesiNev"];
 
     const LOG_ID = 33;
 
-    private $defaultParams = [
+    private array $defaultParams = [
         "Nem" => 3,
         "Allampolgarsag" => 109,
         "Orszag" => 109
     ];
 
-    private $dbName;
-    private $dbEmail;
-    private $dbPassword;
+    private string $dbName;
+    private string $dbEmail;
+    private string $dbPassword;
 
     public function __construct() {
         $this->dbName = Booking_Constants::DOKIREX_V2_DB;
@@ -114,5 +115,136 @@ class DokirexService {
 
     private function log($action, $params, $response) {
         sql_query("insert into webservicelog set datum=now(), action=?, tipus=?, postkeres=?, response=?", [$action, self::LOG_ID, $params, $response]);
+    }
+
+
+    public function listPaciens():string {
+        $action = "/api/public/listPaciens";
+
+        $params["token"] = $this->token;
+        $params["skip"] = 0;
+        $params["take"] = 10;
+        //$params["PaciensID"] = 9;
+        $params["columns"] = [
+            "PaciensID" => true,
+            "Nev" => true,
+            "Azonosito" => false,
+            "AzonositoTipusID" => false,
+            "SzuletesiDatum" => false,
+            "SzuletesiHely" => false,
+            "AnyjaNeve" => false,
+            "NemID" => false,
+            "SzuletesiNev" => false,
+            "AllampolgarsagID" => false,
+            "Telefon" => false,
+            "Mobiltelefon" => false,
+            "Iranyitoszam" => false,
+            "Telepules" => false,
+            "Cim" => false,
+            "Email" => false,
+            "SzigSzam" => false,
+            "KozgyogyTol" => false,
+            "KozgyogyIg" => false,
+            "KozgyogySzam" => false,
+            "FelvetelDatuma" => false,
+            "UtolsoModositasDatuma" => false,
+            "CegTelephelyID" => false,
+            "Megjegyzes" => false,
+            "PenztarID" => false,
+            "TagKod" => false,
+            "Biztosito" => false,
+            "Orszag" => false,
+            "StatusData" => false
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+        $response = curl_exec($ch);
+        $this->log($action, json_encode($params), $response);
+
+        curl_close($ch);
+
+        return $response;
+    }
+
+
+    public function listFelhasznaloSzakrendeles():string {
+        $action = "/api/public/listFelhasznaloSzakrendeles?Tipus=2";
+
+        $params["token"] = $this->token;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+        $response = curl_exec($ch);
+        $this->log($action, json_encode($params), $response);
+
+        curl_close($ch);
+
+        return $response;
+    }
+
+    public function getPaciensByID($id):string {
+        $action = "/api/public/getPaciensByID";
+        //További adatok a service-ből:
+        $params["token"] = $this->token;
+        $params["PaciensID"] = $id;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+        $response = curl_exec($ch);
+        $this->log($action, json_encode($params), $response);
+
+        curl_close($ch);
+
+        return $response;
+    }
+
+
+    public function getUserParamsFromReservation($reservationId) {
+        $params = sql_fetch_array(sql_query("SELECT fogl.id as fid, fogl.nev AS 'Nev', fogl.taj AS 'Azonosito', '2' AS 'AzonositoTipusID',fogl.szuldatum AS 'SzuletesiDatum', 
+                                                    fogl.szulhely AS 'SzuletesiHely', fogl.anyjaneve AS 'AnyjaNeve', CASE WHEN fogl.neme = 0 THEN 3 ELSE fogl.neme END AS 'NemID',
+                                                    fogl.nev AS 'SzuletesiNev', '109' AS 'AllampolgarsagID', fogl.telefon AS 'Telefon', fogl.telefon AS 'Mobiltelefon',
+                                                    fogl.irsz AS 'Iranyitoszam', fogl.varos AS 'Telepules', fogl.utca AS 'Cim', 
+                                                    fogl.email AS 'Email', null AS 'SzigSzam', null AS 'KozgyogyTol', null AS 'KozgyogyIg', null AS 'KozgyogySzam', 
+                                                    '3' AS 'FelvevoID', '3' AS 'UtolsoModositoID'                                            
+                                            FROM foglalasok fogl WHERE id=?", [$reservationId]));
+
+        $params["SzuletesiDatum"] = str_replace(".", "", $params["SzuletesiDatum"]);
+        $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
+        $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4) . "-" . substr($params["SzuletesiDatum"], 4, 2) . "-" . substr($params["SzuletesiDatum"], 6, 2);
+
+        return $params;
+    }
+
+
+    public function checkUserParamErrors($params) {
+        $error = [];
+        foreach ($params as $index => $value) {
+            if ($value == "" && in_array($index, $this->requiredUserParams)) {
+                $error[] = "<span style='color:red'>*{$index} mező megadása kötelező!</span>";
+            }
+        }
+        return $error;
     }
 }

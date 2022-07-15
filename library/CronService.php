@@ -90,12 +90,54 @@ class CronService {
         //$this->_sendAlkExcel();
         //$this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
         //$this->sendSzabadsag2FoglaljOrvostBatch();
-        $this->checkSzabadsagCollisions();
-        $this->checkCollisions();
+        //$this->checkSzabadsagCollisions();
+        //$this->checkCollisions();
+        $this->dokirexUserIdFill();
 
         echo "teszt\n";
         die();
     }
+
+    private function dokirexUserIdFill() {
+        $dokirexService = new DokirexService();
+
+
+        $result = $dokirexService->listPaciens();
+
+        echo json_encode(json_decode($result, JSON_OBJECT_AS_ARRAY), JSON_PRETTY_PRINT);echo "\n";die;
+
+        $reservations = sql_query("SELECT * FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) AND nev<>'nincs név' AND szuldatum<>'' AND taj<>'' AND helyszinid=1 AND dokirex_userid=0 limit 100")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            echo "user: {$reservation["szuldatum"]} {$reservation["taj"]} {$reservation["nev"]}\n";
+
+            $params = $dokirexService->getUserParamsFromReservation($reservation["id"]);
+            $error = $dokirexService->checkUserParamErrors($params);
+
+            if (empty($error)) {
+                $response = $dokirexService->insertPaciensIntoDokirex($params);
+                print_r($response);
+                //break;
+            } else {
+                print_r($error);
+            }
+            echo "\n";
+
+        }
+        /*
+        $logs = sql_query("SELECT l.* FROM dokirexvizsglaplog l
+            LEFT JOIN foglalasok f ON f.`dokirex_userid`=l.`PaciensID`
+            WHERE DATE(l.Datum)='2022-06-30' AND f.id IS NULL
+            GROUP BY l.`PaciensID`")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($logs as $log) {
+            echo "userid: ".$log["PaciensID"]."\n";
+            $data = $dokirexService->getPaciensByID($log["PaciensID"]);
+            print_r($data);
+            break;
+        }
+        */
+    }
+
 
     private function checkSzabadsagCollisions() {
         $szabadsagok = sql_query("SELECT sz.*, o.nev as orvosnev  FROM szabadsag sz left join orvosok o on o.id = sz.oid WHERE sz.datumtol>=DATE(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchAll(PDO::FETCH_ASSOC);
