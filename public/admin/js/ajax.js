@@ -3248,3 +3248,21 @@ function beutalohozzadasafinish(bid,fid,tname){
         }
     });
 }
+
+
+function elojegyzesSearchStart() {
+    let key = $("#eljegyzessearchkey").val();
+    $("#elojegyzessearchloading").show();
+    $("#elojegyzessearchresult").html("");
+
+    $.ajax({
+        url: "index.php?page=booking",
+        method: "POST",
+        data: { searchkey:key },
+        success: function (response) {
+            $("#elojegyzessearchloading").hide();
+            $("#elojegyzessearchresult").html(response);
+        }
+    });
+
+}

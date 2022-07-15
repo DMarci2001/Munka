@@ -18,6 +18,7 @@ class AdminBookingPage extends AdminCorePage
         if (!isset($_SESSION["helyszin"])) $_SESSION["helyszin"] = 0;
         if (!isset($_SESSION["helyszinceg"])) $_SESSION["helyszinceg"] = 0;
         if (!isset($_SESSION["naptarszurestipus"])) $_SESSION["naptarszurestipus"] = 0;
+        if (!isset($_SESSION["esearchkey"])) $_SESSION["esearchkey"] = "";
         if (!isset($_SESSION["ecegfilter"])) $_SESSION["ecegfilter"] = 0;
         if (!isset($_SESSION["setday"])) $_SESSION["setday"] = date("Y-m-d");
         if (isset($_GET["setday"])) $_SESSION["setday"] = $_GET["setday"];
@@ -185,6 +186,54 @@ class AdminBookingPage extends AdminCorePage
             }
             $this->utils->jsonOut(["result" => $result]);
         }
+
+        if (isset($_POST["searchkey"])) {
+            $key = $_SESSION["esearchkey"] = $_POST["searchkey"];
+
+            $results = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f
+                    left join cegek c on c.id=f.cegid
+                    left join szurestipusok sz on sz.id=f.szurestipusid
+                    left join orvosok o on o.id=f.orvosassigned
+                    left join dokumentumok d on d.foglalasid=f.id
+                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid
+                order by f.datum desc
+                
+                limit 100",
+                ["key" => $key, "helyszinid" => $_SESSION["helyszin"]])->fetchAll(PDO::FETCH_ASSOC);
+
+            echo "<div style='padding:10px 0px;'>";
+
+            if (empty($results)) {
+                echo "Nincs találat!";
+            } else {
+                echo "<div style='display:table;'>";
+                echo "<div style='display:table-row;font-weight: bold;'>";
+                echo "<div class='searchrowcell'>időpont</div>";
+                echo "<div class='searchrowcell'>taj</div>";
+                echo "<div class='searchrowcell'>név</div>";
+                echo "<div class='searchrowcell'>szül. dátum</div>";
+                echo "<div class='searchrowcell'>orvos</div>";
+                echo "<div class='searchrowcell'>típus</div>";
+                echo "<div class='searchrowcell'>cég</div>";
+                echo "</div>";
+                foreach ($results as $result) {
+                    echo "<div style='display:table-row;'>";
+                    echo "<div class='searchrowcell'><a href='#' title='ugrás a naphoz' onclick='setListDay(\"".date("Y-m-d", strtotime($result["datum"]))."\");return false;'><i class='fas fa-arrow-right'></i> " . date("Y-m-d H:i", strtotime($result["datum"])) . "</a></div>";
+                    echo "<div class='searchrowcell'>{$result["taj"]}</div>";
+                    echo "<div class='searchrowcell'>{$result["nev"]}</div>";
+                    echo "<div class='searchrowcell'>{$result["szuldatum"]}</div>";
+                    echo "<div class='searchrowcell'>{$result["orvosnev"]}</div>";
+                    echo "<div class='searchrowcell'>{$result["szurestipusnev"]}</div>";
+                    echo "<div class='searchrowcell'>{$result["cegnev"]}</div>";
+
+                    echo "</div>";
+                }
+                echo "</div>";
+            }
+            echo "</div>";
+
+            die;
+        }
     }
 
     public function showPage()
@@ -231,6 +280,15 @@ class AdminBookingPage extends AdminCorePage
 
         $htmlout.= "</div>";
 
+        //searchbox
+        $htmlout .= "<div class='elojegyzessearchbox'>";
+        $htmlout.= "<form name='keresform' method='post' onsubmit='elojegyzesSearchStart();return false;'>";
+        $htmlout.= "<input type='text' value='{$_SESSION["esearchkey"]}' name='kereskulcs' id='eljegyzessearchkey' placeholder='keresés névre, taj számra, email címre, szül. dátumra..' style='width:300px;'/> <input style='padding:3px 10px;' type='submit' value='Keresés' name='keresgo' />";
+        $htmlout.= "</form>";
+        $htmlout.= "<div id='elojegyzessearchloading' style='display:none;'><img src='/images/loading.svg' alt='' style='width:30px;opacity: .5;padding:10px 0px;' /></div>";
+        $htmlout.= "<div id='elojegyzessearchresult'></div>";
+        $htmlout.= "</div>";
+
         $htmlout .= "<div class='stickytablefilter' id='stickytablefilter'>";
         $htmlout .= "<div class='tdm' style='padding:2px 10px 0px 0px;font-size: 16px;white-space: nowrap;'>".$nap."<br/>".$this->adminUtils->settings->hetnap[$wd]."</div>";
         $htmlout .= "<div class='tdm'>#tipuslinksplace#</div>";
@@ -250,18 +308,9 @@ class AdminBookingPage extends AdminCorePage
             $this->szuresTipusActual = $szuresTipus;
             $lastOrvosId = 0;
 
-            
-
             $beosztasok = $this->bookingService->beosztasService->getBookingPageBeosztasok($nap, $_SESSION["helyszin"], $szuresTipus["id"]);
             foreach ($beosztasok as $beosztas) {
-
-                /*echo "<pre>";
-                print_r($beosztas);
-                echo "</pre>";*/
-
-                
-
-                 $rendelesek++;
+                $rendelesek++;
                 //$cegek = array_unique(explode(",", $beosztas["cegek"]));
                 $minTol = "24:00";
                 $maxIg = "00:00";
@@ -317,7 +366,7 @@ class AdminBookingPage extends AdminCorePage
                     $htmlout .= "<div>#foglalt{$orvosId}_{$szuresTipus["id"]}# #szabad{$orvosId}_{$szuresTipus["id"]}#</div>";
                     $htmlout .= "<div>{$beosztas["description"]}</div>";
 
-                    if (Booking_Constants::SQL_DB == "keltexmed" && in_array($orvosId, [399, 416, 417]) && in_array($nap, ["2022-05-20", "2022-05-23", "2022-05-24", "2022-06-03", "2022-06-16", "2022-06-17", "2022-06-10"])) {
+                    if (Booking_Constants::SQL_DB == "keltexmed" && in_array($orvosId, [399, 416, 417]) && in_array($nap, ["2022-07-18", "2022-07-19", "2022-07-20", "2022-07-21", "2022-07-22"])) {
                         $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>DR. KIZMAN EZEN A NAPON NEM ELÉRHETŐ, EZÉRT TÜDŐSZŰRÉSRE NEM LEHET FOGLALNI!</span></div>";
                     }
 
@@ -433,6 +482,9 @@ class AdminBookingPage extends AdminCorePage
                             $htmlout .= "<tr style=''>";
                             $htmlout .= "<td valign='top' nowrap style='".$this->datePastStyle($nap, $ora)."'>{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</td>";
                             $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
+                            if ($szabi) {
+                                $htmlout.= "<td valign='top'>Szabadság miatt nem foglalható</td>";
+                            }
                             $htmlout .= "</tr>";
                             if (!$szabi) {
                                 $freeCounter++;
@@ -664,7 +716,7 @@ class AdminBookingPage extends AdminCorePage
 
 
     private function cimFilter():string {
-        $html = "<select class='s2 addressselector2' name='helyszin' onchange='setHelyszin2(this.value);'>";
+        $html = "<select class='s2 addressselector2' name='helyszin' style='width:300px;' onchange='setHelyszin2(this.value);'>";
         $html.= "<option value='0'>Válassz helyszínt!</option>";
         $res = sql_query("SELECT h.* FROM helyszinek h WHERE true ORDER BY trim(h.cim)");
         while ($placeData = sql_fetch_array($res)) {
