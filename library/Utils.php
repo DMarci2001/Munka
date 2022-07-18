@@ -419,7 +419,7 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
         $_SESSION["LAST_ACTIVITY"] = time();
     }
 
-    public function sendSMS($num,$szoveg) {
+    public function sendSMS($num, $szoveg, $raw = false) {
         $num = str_replace(" ","",$num);
         $num = str_replace("-","",$num);
         $num = str_replace("/","",$num);
@@ -427,37 +427,16 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
         $num = str_replace(")","",$num);
         $num = str_replace("+","",$num);
 
-        if (substr($num,0,2)=="06") {
-            $num="36".substr($num,2);
+        if (!$raw) {
+            if (substr($num, 0, 2) == "06") {
+                $num = "36" . substr($num, 2);
+            }
+            if (substr($num, 0, 2) != "36") {
+                $num = "36" . $num;
+            }
         }
-        if (substr($num, 0, 2) != "36") {
-            $num = "36".$num;
-        }
 
-        $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
-
-        try {
-            $SeeMe->sendSMS($num, $szoveg);
-        } catch (SeeMeGatewayException $e) {
-            //print_r($SeeMe->getResult());
-            //die();
-        }
-        $result = $SeeMe->getResult();
-        //print_r($result);
-
-        @sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?",array($num,$szoveg,print_r($SeeMe->getResult(),true)));
-
-        return $result["result"]=="OK";
-    }
-
-    public function sendSMSRaw($num,$szoveg) {
-        $num = str_replace(" ","",$num);
-        $num = str_replace("-","",$num);
-        $num = str_replace("/","",$num);
-        $num = str_replace("(","",$num);
-        $num = str_replace(")","",$num);
-
-        $SeeMe = new SeeMeGateway("1uivd276x0rvuo9v97k6z4x7axmaukoi5828");
+        $SeeMe = new SeeMeGateway(Booking_Constants::SEEME_API_KEY);
 
         try {
             $SeeMe->sendSMS($num, $szoveg);

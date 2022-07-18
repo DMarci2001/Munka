@@ -58,4 +58,6 @@ class Booking_Constants {
     const DEFAULT_COMPANY_ID       = 11;
 
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com";
+
+    const SEEME_API_KEY             = "1uivd276x0rvuo9v97k6z4x7axmaukoi5828";
 }

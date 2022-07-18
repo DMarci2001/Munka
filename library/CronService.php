@@ -7,6 +7,9 @@ class CronService {
     private $utils;
     private $bookingService;
 
+    private $smsWarningEmails = ["jnsmobil@gmail.com", "jns@jns.hu"];
+    private $smsWarningLimit  = 20000;
+
     public function __construct()
     {
         if (isset($_GET["interval"])) {
@@ -70,6 +73,7 @@ class CronService {
 
             $this->checkSzabadsagCollisions();
             $this->checkCollisions();
+            $this->seemeBalanceCheck();
         }
 
         if ($this->interval == "teszt") {
@@ -96,6 +100,27 @@ class CronService {
 
         echo "teszt\n";
         die();
+    }
+
+    private function seemeBalanceCheck() {
+        if (Booking_Constants::SQL_DB == "hungariamed" && date("G") >= 8 && date("G") <= 16) {
+            $result = json_decode(file_get_contents("https://seeme.hu/gateway?key=" . Booking_Constants::SEEME_API_KEY . "&method=balance&format=json"), JSON_OBJECT_AS_ARRAY);
+
+            if (isset($result["balance"])) {
+                $balance = round($result["balance"]);
+                if ($balance < $this->smsWarningLimit) {
+                    echo $balance . " " . $result["currency"];
+
+                    $mail = NotificationService::getDefaultMailer();
+                    foreach ($this->smsWarningEmails as $email) {
+                        $mail->addAddress("jnsmobil@gmail.com");
+                    }
+                    $mail->Subject = "Seeme egyenleg: {$balance} {$result["currency"]}";
+                    $mail->Body = "Ez egy rendszerüzenet<br/>Töltsd fel a seeme egyeleget!";
+                    $mail->send();
+                }
+            }
+        }
     }
 
     private function dokirexUserIdFill() {
