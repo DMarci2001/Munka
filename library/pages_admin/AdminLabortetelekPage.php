@@ -403,9 +403,9 @@ class AdminLabortetelekPage extends AdminCorePage
         while ($resq = sql_fetch_array($rq)) {
             echo "<tr>";
 
-            if (!empty($packageInstall)) {
+            //if (!empty($packageInstall)) {
                 echo "<td valign=\"top\"><div class=\"tcella\"><input type=\"checkbox\" name=\"item[]\" {$setSelectedItemJScall} " . (in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\"></div></td>";
-            }
+            //}
 
             //Link a szerkesztéshez:
             echo "<td valign=\"top\"><div class=\"tcella\"><p style=\"color:#a00;margin:0;padding:0\">{$resq["name"]}</p></div></td>";

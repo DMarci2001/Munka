@@ -14,10 +14,7 @@ class AdminCompaniesPage extends AdminCorePage
         "irsz"      => "Irányítószám",
         "varos"     => "Város",
         "utca"      => "Utca",
-        "email"     => "Email",
-        "telefon"   => "Telefon",
         "munkakor"  => "Munkakör",
-        "torzsszam" => "Törzsszám",
         "doksi"     => "Dokumentum feltöltés"
     ];
 
@@ -510,10 +507,16 @@ class AdminCompaniesPage extends AdminCorePage
                 $content = $html = "";
                 $row = 0;
                 $tdCSS = "style='padding: 8px 8px 8px 0px;border-bottom:1px solid gray'";
-                $columns = array("#.", "Teljesnév", "Szül. dátum", "Munkakör", "TAJ", "E-mail","Utolsó vizsgálat", "<span id='checkBoxSwitcher' onClick='switchCheckBoxes(\"referral-checker\",\"disable\")' style='color:red;cursor:pointer'>Egyikse</span>");
+                $columns = array("#.", "Teljesnév", "Szül. dátum", "Munkakör", "TAJ", "E-mail","Érvényesség", "<span id='checkBoxSwitcher' onClick='switchCheckBoxes(\"referral-checker\",\"disable\")' style='color:red;cursor:pointer'>Egyikse</span>");
                 $columnTitle = implode("</td><td {$tdCSS}>", $columns);
 
-                $erintettek = sql_query("SELECT * FROM felhasznalok WHERE szid IN(" . implode(",", $szervinfo) . ") ORDER BY nev ASC");
+                if($listainfo["tipus"]=="by_organizational_units"){
+                    $erintettek = sql_query("SELECT * FROM felhasznalok WHERE szid IN(" . implode(",", $szervinfo) . ") AND statusz=1 ORDER BY nev ASC");
+                }
+                if($listainfo["tipus"]=="by_fitness_expire"){
+                    $erintettek = sql_query("SELECT felh.id,felh.nev,felh.szuldatum,felh.munkakor,felh.taj,felh.email,vizsgalat.vizsgalatdatuma FROM felhasznalok felh LEFT JOIN bfkh_osszesites vizsgalat on vizsgalat.taj=felh.taj WHERE felh.cegid in(131,136) AND felh.statusz=1 AND vizsgalat.ervenyesseg like '".date("Y-m")."%' ORDER BY nev ASC");
+                }
+                
 
                 $selectedStaff = json_decode($listainfo["dolgozoi_lista"]);
 
@@ -535,6 +538,10 @@ class AdminCompaniesPage extends AdminCorePage
                             $checkStatus = "";
                         }
                     }
+
+                    /*if(!$inActualWorkerList=sql_fetch_array(sql_query("SELECT * FROM bfkh_allomany_2022 WHERE taj=?",array($staff["taj"])))){
+                        continue;
+                    }*/
 
                     if(!$lastVisit=sql_fetch_array(sql_query("SELECT MAX(ervenyesseg) as ervenyesseg FROM alkalmassagi_meta_adatok WHERE paciensid=?",array($staff["id"])))){
                         $lastVisit["ervenyesseg"] = null;
@@ -575,33 +582,34 @@ class AdminCompaniesPage extends AdminCorePage
         }
 
         if (isset($_POST["Inicialize_Custom_Notification_List"]) && $_POST["Inicialize_Custom_Notification_List"] == true) {
-            if ($listainfo = sql_fetch_array(sql_query("SELECT * FROM egyeni_ertesitesi_listak WHERE dolgozoi_lista IS NOT NULL AND elesitve IS NULL AND id=?", array($_POST["list"])))) {
+			if ($listainfo = sql_fetch_array(sql_query("SELECT * FROM egyeni_ertesitesi_listak WHERE dolgozoi_lista IS NOT NULL AND elesitve IS NULL AND id=?", array($_POST["list"])))) {
                 $stafflist = json_decode($listainfo["dolgozoi_lista"], true);
                 foreach ($stafflist as $worker) {
                     $uzenet = $listainfo["uzenet"];
                     $workerinfo = sql_fetch_array(sql_query("SELECT felh.*,h.cim AS cim FROM felhasznalok felh LEFT JOIN helyszinek h ON h.id=felh.kijelolt_helyszin WHERE felh.id=?", array($worker)));
                     $ceginfo = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?", array($workerinfo["cegid"])));
-
+					$ertesitesinfo = sql_fetch_array(sql_query("SELECT MAX(datum) AS utolso_ertesites FROM ertesites_log WHERE email = ?",array($workerinfo["email"])));
                     //Sablon szöveg testreszabása az aktuális dolgozóra:
-                    $search = array("#nev#", "#domain#", "#cim#");
-                    $replace = array($workerinfo["nev"], $ceginfo["domain"], $workerinfo["cim"]);
+                    $search = array("#nev#", "#domain#", "#cim#", "#utolso_ertesites#");
+                    $replace = array($workerinfo["nev"], $ceginfo["domain"], $workerinfo["cim"],date("Y-m-d",strtotime($ertesitesinfo["utolso_ertesites"])));
 
                     $uzenet = str_replace($search, $replace, $uzenet);
 
                     //Email kiküldése:
                     $mail = NotificationService::getDefaultMailer();
                     $mail->AddAddress($workerinfo["email"]);
-                    $mail->AddAddress("tesztemail@hungariamed.hu");
+					$mail->AddBCC("tesztemail@hungariamed.hu");
+					//$mail->AddAddress("tesztemail@hungariamed.hu");
+                    
                     if (!empty(Booking_Constants::USER_BCC_MAIL)) {
                         $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
                     }
 
                     $t = $listainfo["targy"];
-
+						
                     $mail->Subject = $t;
                     $mail->Body = $uzenet;
                     $mail->Send();
-
                     sql_query("INSERT INTO ertesites_log SET uid=?,email=?,targy=?,szoveg=?,datum=NOW()", array($workerinfo["id"], $workerinfo["email"], $listainfo["targy"], $uzenet));
                 }
 
@@ -694,7 +702,7 @@ class AdminCompaniesPage extends AdminCorePage
                 echo $this->_fieldOptionsRow($field);
             }
 
-            echo "<tr><td colspan='2'><div class='tdsepdiv'>Cég egységek</div></td></tr>";
+            /*echo "<tr><td colspan='2'><div class='tdsepdiv'>Cég egységek</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addcegvar' value='+ Egység hozzáadása'></td></tr>";
 
             $resb = sql_query("select * from cegvars where cegid=? order by varos,megnev", array($_GET["szerk"]));
@@ -708,7 +716,7 @@ class AdminCompaniesPage extends AdminCorePage
                 echo "</div>";
                 echo "</td></tr>";
                 $sor++;
-            }
+            }*/
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Beosztások</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addcegbeosztas' value='+ Beosztás hozzáadása'></td></tr>";
