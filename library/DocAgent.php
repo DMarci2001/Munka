@@ -8,6 +8,7 @@ class DocAgent {
     const ASSET_COVIDEGS_IMAGE              = "covidegsimage";
     const ASSET_WEB_HERO                    = "webhero";
     const ASSET_WEB_GALLERY                 = "webgallery";
+    const ASSET_LABOR_CSOMAG_IMAGE          = "laborcsomagimage";
 
     const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";

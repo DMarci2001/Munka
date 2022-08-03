@@ -256,6 +256,10 @@ class AdminLabortetelekPage extends AdminCorePage
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Ár: </p></td><td><input type=\"textbox\" name=\"price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["price"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Státusz: </p></td><td><select name=\"aktiv\"><option " . ($packageData["aktiv"] == 1 ? "selected=\"true\"" : "") . " value=\"1\">Aktív</option><option " . ($packageData["aktiv"] == 0 ? "selected=\"true\"" : "") . " value=\"0\">Inaktív</option></select></td></tr>";
+
+            $docAgent = new DocAgent();
+            echo "<tr><td style='font-weight:bold;font-size:14px'><div>Kép:</div></td><td><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"])."</div></td></tr>";
+
             echo "</table>";
 
             echo $this->showItems($this->cFilter, $packageData["appform"], $packageData["items"]);
