@@ -94,6 +94,10 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "wszl" || $companyId == self::WABERERS_ID;
     }
 
+    public static function isFesztivalEgyeb($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "szigetegyeb";
+    }
+
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos
 
@@ -114,21 +118,21 @@ V: 1.0 1.0 .    KV: Cs IV
 ";
 
     public static $fesztivalOnkentesQuestions = [
-        1 => ["type" => "igennem", "required" => true, "question" => "Allergiája van?"],
-        2 => ["type" => "igennem", "required" => true, "question" => "Gyógyszerérzékenysége van?"],
-        3 => ["type" => "igennem", "required" => true, "question" => "Szed rendszeresen gyógyszert?"],
-        4 => ["type" => "igennem", "required" => true, "question" => "Kezelik valamilyen betegséggel?"],
+        1 => ["type" => "igennem", "required" => true, "question" => "Allergiája van?", "question_hu" => "Allergiája van?", "question_en" => "Do you have allergies?", "question_de" => "Allergiája van?"],
+        2 => ["type" => "igennem", "required" => true, "question" => "Gyógyszerérzékenysége van?", "question_hu" => "Gyógyszerérzékenysége van?", "question_en" => "Do you have a drug sensitivity?", "question_de" => "Gyógyszerérzékenysége van?"],
+        3 => ["type" => "igennem", "required" => true, "question" => "Szed rendszeresen gyógyszert?", "question_hu" => "Szed rendszeresen gyógyszert?", "question_en" => "Do you take medicine regularly?", "question_de" => "Szed rendszeresen gyógyszert?"],
+        4 => ["type" => "igennem", "required" => true, "question" => "Kezelik valamilyen betegséggel?", "question_hu" => "Kezelik valamilyen betegséggel?", "question_en" => "Are you being treated for any disease?", "question_de" => "Kezelik valamilyen betegséggel?"],
     ];
 
     public static function fesztivalCompanyIds() {
-        return [138, 275, 261];
+        return [138, 275, 261, 318, 322];
     }
 
     public static function isFesztivalCompany($companyId = 0):bool {
         if ($companyId != 0) {
             return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
         }
-        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg";
+        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew";
     }
 
 }

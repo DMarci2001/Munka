@@ -62,7 +62,7 @@ class AdminAlkalmassagiPage extends AdminCorePage
             echo "<tr>";
 
             echo "<td nowrap valign='middle'><div class='{$tc}'>".date("Y.m.d. H:i", strtotime($reservation["datum"]))."</div></td>";
-            echo "<td nowrap valign='middle'><div class='{$tc}'>{$reservation["nev"]}</div></td>";
+            echo "<td nowrap valign='middle'><div class='{$tc}'>{$reservation["nev"]}".(empty($reservation["adoszam"])?"":" ({$reservation["adoszam"]})")."</div></td>";
             echo "<td nowrap valign='middle'><div class='{$tc}'>{$alkalmassagText}</div></td>";
             echo "<td nowrap valign='middle'><div class='{$tc}'>{$alkalmassagPrintURL}</div></td>";
             echo "<td nowrap valign='middle'><div class='{$tc}'>{$reservation["cegnev"]}</div></td>";
