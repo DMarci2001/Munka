@@ -566,7 +566,8 @@ class AdminBookingPage extends AdminCorePage
 
         if ($this->adminUser->statAccess() && strtotime($nap) < strtotime(date("Y-m-d"))) {
             $htmlout .= "<div style='margin-top:20px;padding-top:20px;border-top:1px solid #888;'>";
-            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$nap\", \"$nap\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika {$nap}</div>";
+            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$nap\", \"$nap\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika {$nap}</div>&nbsp;&nbsp;";
+            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadElojegyzesTable(\"$nap\", \"$nap\")' title='Előjegyzés tábla export'><i class='fas fa-file-download'></i> előjegyzés tábla export {$nap}</div>";
             $htmlout .= "</div>";
         }
 

@@ -43,6 +43,21 @@ class DailyStatService {
             $excelService->outputSpreadSheet();
         }
 
+        if (isset($_REQUEST["downloadelojegyzestable"])) {
+            $from = $_REQUEST["downloadelojegyzestable"];
+            $to = $_REQUEST["dayTo"];
+
+            $fileName = Booking_Constants::COMPANY_NAME_SHORT." előjegyzés táblázat " . date("Y-m-d", strtotime($from)) . ".xlsx";
+            if ($from != $to) {
+                $fileName = Booking_Constants::COMPANY_NAME_SHORT." előjegyzés táblázat " . date("Y-m-d", strtotime($from)) . " - " . date("Y-m-d", strtotime($to)) . ".xlsx";
+            }
+
+            $excelService = new ExcelService();
+            $excelService->elojegyzesTable($from, $to);
+            $excelService->setFileName($fileName);
+            $excelService->outputSpreadSheet();
+        }
+
         if (isset($_REQUEST["getdailystateditor"])) {
             $day = $_POST["day"];
             $result["error"] = "";
