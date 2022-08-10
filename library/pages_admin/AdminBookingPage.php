@@ -195,7 +195,7 @@ class AdminBookingPage extends AdminCorePage
                     left join szurestipusok sz on sz.id=f.szurestipusid
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
-                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid
+                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid ".($this->adminUser->onlyDoctorReservations()?" and f.orvosassigned=".intval($this->adminUser->user["orvosid"]):"")."
                 order by f.datum desc
                 
                 limit 100",
@@ -281,7 +281,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout.= "</div>";
 
         //searchbox
-        $htmlout .= "<div class='elojegyzessearchbox'>";
+        $htmlout.= "<div class='elojegyzessearchbox'>";
         $htmlout.= "<form name='keresform' method='post' onsubmit='elojegyzesSearchStart();return false;'>";
         $htmlout.= "<input type='text' value='{$_SESSION["esearchkey"]}' name='kereskulcs' id='eljegyzessearchkey' placeholder='keresés névre, taj számra, email címre, szül. dátumra..' style='width:300px;'/> <input style='padding:3px 10px;' type='submit' value='Keresés' name='keresgo' />";
         $htmlout.= "</form>";
