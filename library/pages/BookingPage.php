@@ -285,6 +285,16 @@ class BookingPage extends CorePage
                 $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
+            if (isset($_POST["adoszam"])) {
+                if (empty($_POST["adoszam"])) {
+                    $this->errors[] = "Az adószám megadása kötelező!";
+                } else {
+                    if (!preg_match("/^[0-9]{8}-[0-9]-[0-9]{2}$/", $_POST["adoszam"])) {
+                        $this->errors[] = "Az adószám formátuma nem megfelelő! (xxxxxxxx-x-xx)";
+                    }
+                }
+            }
+
             //Helszín korlátozás VodaFone esetén
             if (isset($_POST["telephely"]) && in_array($_SESSION["helyszindata"]["id"] ,[46, 221])) {
                 if ($_POST["telephely"] != "VSSB Zrt." && $_POST["helyszin"] == 320) {
@@ -296,7 +306,7 @@ class BookingPage extends CorePage
                 $_POST["questions"] = "";
                 foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
                     if ($question["required"] && !isset($_POST["question{$key}"])) {
-                        $this->errors[] = "Kérjük válaszoljon az egészségügyi kérdésekre!";
+                        $this->errors[] = $webText["euquestionerror"];
                         break;
                     }
                     $_POST["questions"] .= "{$question["question"]}: ". ($_POST["question{$key}"] == 1 ? "IGEN" : "NEM"). "\n";
@@ -601,14 +611,15 @@ class BookingPage extends CorePage
         echo $this->utils->dataField("varos");
         echo $this->utils->dataField("utca");
         echo $this->utils->dataField("munkakor");
+        echo $this->utils->dataField("adoszam");
         echo $this->utils->dataField("torzsszam");
 
         if (CompanyService::isFesztivalCompany()) {
             foreach (CompanyService::$fesztivalOnkentesQuestions as $key => $question) {
-                echo "<tr><td>{$question["question"]}".($question["required"]?" *":"")."</td>";
+                echo "<tr><td>{$question["question_".$this->lang->selectedLang]}".($question["required"]?" *":"")."</td>";
                 echo "<td>";
-                echo "<input type='radio' value='1' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 1 ? "checked" : "") . " name='question{$key}'>&nbsp;Igen</div>";
-                echo "<input type='radio' value='0' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 0 ? "checked" : "") . " name='question{$key}'>&nbsp;Nem";
+                echo "<input type='radio' value='1' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 1 ? "checked" : "") . " name='question{$key}'>&nbsp;".$webText["igen"];
+                echo "<input type='radio' value='0' " . (isset($_POST["question{$key}"]) && $_POST["question{$key}"] == 0 ? "checked" : "") . " name='question{$key}'>&nbsp;".$webText["nem"];
                 echo "</td></tr>";
             }
         }
@@ -759,7 +770,7 @@ class BookingPage extends CorePage
         }
 
         if (CompanyService::isFesztivalCompany()) {
-            $webText["aszfelf"].= " <br/>Ezen kívül kijelentem, hogy eltitkolt betegségem nincs.";
+            $webText["aszfelf"].= " <br/>".$webText["eltitkoltaszf"];
         }
 
         if (!isset($_SESSION["user"])) {

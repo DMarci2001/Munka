@@ -41,7 +41,13 @@ class AdminBookingEditor {
                 }
             }
 
-            //if (!isset($_POST["eljott"])) $_POST["eljott"]=0;
+
+            $eljottIdopont = "0000-00-00 00:00:00";
+            if (isset($_POST["eljottidopont"])) {
+                $reservationData = sql_query("select datum from foglalasok where id=?", [$fid])->fetch(PDO::FETCH_ASSOC);
+                $eljottIdopont = date("Y-m-d", strtotime($reservationData["datum"]))." ".$_POST["eljottidopont"].":00";
+            }
+
             if (!isset($_POST["alkalmassaguserid"])) $_POST["alkalmassaguserid"]=0;
             if (!isset($_POST["voltnalunk"])) $_POST["voltnalunk"]=0;
             if (!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]=0;
@@ -49,6 +55,8 @@ class AdminBookingEditor {
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
             if (!isset($_POST["vernyomas"])) $_POST["vernyomas"] = "";
             if (!isset($_POST["orvosszoveg"])) $_POST["orvosszoveg"] = "";
+            if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
+            if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -66,6 +74,7 @@ class AdminBookingEditor {
                 torzsszam=?,
                 nev=?,
                 munkakor=?,
+                adoszam=?,
                 email=?,
                 telefon=?,
                 szuldatum=?,
@@ -83,9 +92,10 @@ class AdminBookingEditor {
                 tudoszuro=?,
                 vernyomas=?,
                 orvosszoveg=?,
-                alkalmassaguserid=?
-            where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], $_POST["alkalmassaguserid"], $fid]);
+                alkalmassaguserid=?,
+                eljottidopont=?
+            where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], $_POST["alkalmassaguserid"], $eljottIdopont, $fid]);
 
 
             if (!empty($_POST["paciensid"])) {
@@ -376,10 +386,9 @@ class AdminBookingEditor {
             $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
             $html .= "</div>";
 
-            if (!empty($this->user->user["pecsetszam"])) {
-                $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
-            }
-
+            //if (!empty($this->user->user["pecsetszam"])) {
+            //    $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
+            //}
 
             $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
             $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
@@ -389,10 +398,6 @@ class AdminBookingEditor {
             }
             $html .= "</select>";
             $html .= "</div>";
-
-            if (!empty($this->user->user["pecsetszam"])) {
-                $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
-            }
 
             $html .= "</div>";
             $html .= "</div>";
@@ -544,11 +549,16 @@ class AdminBookingEditor {
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td>";
-            $html .= "<td width='60'>Törzsszám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></td>";
+
+            if (!empty($row["adoszam"])) {
+                $html .= "<td width='60'>Adószám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='adoszam' value='{$row["adoszam"]}'></td>";
+            } else {
+                $html .= "<td width='60'>Törzsszám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></td>";
+            }
             //$html .= "<td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$couponCode}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> eljött <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td>";
+            $html .= "<td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már </td>";
             $html .= "<td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td>";
             $html .= "</tr>";
 
@@ -598,7 +608,7 @@ class AdminBookingEditor {
                 $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex Keltexmed' style='background:#5ed5e3'>&nbsp;&nbsp;";
                 $html .= "<input onClick='insertPaciensIntoDokirexHMM({$row["id"]})' type='button' value='Dokirex HMM' style='background:#9d0202'>&nbsp;&nbsp;";
             } else {
-                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex' style='background:#008080'>&nbsp;&nbsp;";
+                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
             }
 
             $html.= "</div>";
@@ -632,7 +642,12 @@ class AdminBookingEditor {
             $icon = "<i class='fas fa-check-square'></i>";
         }
 
-        return "<a data-id='{$reservationData["id"]}' href='#' onclick='eljottButtonProtocol(this, 0);return false;' style='font-size: 16px;'>{$icon}</a>";
+        $html = "<a data-id='{$reservationData["id"]}' href='#' onclick='eljottButtonProtocol(this, 0);return false;' style='font-size: 16px;'>{$icon}</a> eljött";
+        if ($reservationData["eljott"] == 1) {
+            $html.= " <input style='width:35px;' name='eljottidopont' type='text' title='eljött időpont' value='".date("H:i", strtotime($reservationData["eljottidopont"]))."' />";
+        }
+
+        return $html;
     }
 
 }
