@@ -112,7 +112,7 @@ class AdminReferralPage extends AdminCorePage {
 					//Email(ek) készítése:
 					$mail = NotificationService::getDefaultMailer();
 					if ( isset( $_POST['saveTest'] )) {
-						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
+						$mail->AddAddress( "tesztemail@hungariamed.hu" ); 
 					} else {
 						$mail->AddAddress( $result["email"] ); 
 					}
@@ -120,22 +120,18 @@ class AdminReferralPage extends AdminCorePage {
 						$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 					}
 
-					$t = "RE: Hamarosan lejár az alkalmassági igazolása!";
+					$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+					$mail->IsHTML(true);
+					$mail->isSMTP();
+					$mail->Host = "mail.hungariamed.hu";
+					$mail->SMTPAuth = true;
+					$mail->Username = "web@hungariamed.hu";
+					$mail->Password = "The9vae1";
+					$mail->SMTPSecure = "tls";
+					$mail->Port = 366;
 
-					//$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
-					//$mbody.= "<p style='font-family:calibri;font-size:16px;font-weight:bold;'>A tegnapi nap folyamán egy rendszer hiba miatt téves fejléccel ellátott alkalmassági beutaló dokumentumot küldtünk ki az ön részére! Kérem az előző levelet tekintse tárgytalannak. Az érvényes beutaló dokumentumot ennek a levélnek a csatolmányából tudja letölteni!</p>";
-					//$mbody.= "<p style='font-family:calibri;font-size:14px'>Az Ön allalmassági vizsgálata <strong>".date("Y.m.d",strtotime($result["expiration"]))."-ig érvényes</strong>, kérjük hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be  az éves vizsgálat elvégzésére.</p>";
-					/*$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Kiss Renáta Réka részére elküldeni</strong> a <a href=\"mailto:kiss.renata.reka@tigaz.hu\" style=\"color:#a90000\">kiss.renata.reka@tigaz.hu</a> e-mail címre.</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Bármely felmerülő kérdéssel kapcsolatban ügyfélkapcsolati munkatársunk áll szolgálatára.</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>Telefonos ügyfélszolgálat:</b><br>";
-					$mbody.= "<i>Munkanapokon 08:00 –tol 16:00-ig.</i><br>";
-					$mbody.= " +36 1 / 800 9333<br>";
-					$mbody.= "+36 30 / 633 0961<br>";
-					$mbody.= "</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>E-mail:</b><br>ugyfelkapcsolat@hungariamed.hu</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Üdvözlettel</p>";
-					$mbody.= "<a href='https://www.hungariamed.hu' target='_blank'><img src='https://hungariamed.hu/images/logo.png'/></a>";*/
+					$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Hamarosan lejár az alkalmassági igazolása!");
+
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Kiss Renáta Réka részére elküldeni</strong> a <a href=\"mailto:kiss.renata.reka@tigaz.hu\" style=\"color:#a90000\">kiss.renata.reka@tigaz.hu</a> e-mail címre.</p>";
@@ -183,18 +179,30 @@ class AdminReferralPage extends AdminCorePage {
 				
 				
 				//Email(ek) készítése:
-				$mail = NotificationService::getDefaultMailer();
-				if ( isset( $_POST['saveTest'] )) {
-                    $mail->AddAddress("email.teszt0807@hungariamed.hu");
-                } else {
-					$mail->AddAddress("kiss.renata.reka@tigaz.hu");
+				$mail = new PHPMailer\PHPMailer\PHPMailer();
+				$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+				$mail->FromName = Booking_Constants::COMPANY_NAME;
+				if (isset($_POST['saveTest'])) {
+					$mail->AddAddress("tesztemail@hungariamed.hu");
+				} else {
+					$mail->AddAddress("kiss.renata.reka@opustigaz.hu");
 				}
-				
+			
 				if (!empty(Booking_Constants::USER_BCC_MAIL)) {
 					$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 				}
-
-				$t = "Összesítő lista az értesítésekről - ".date("Y.m.d");
+				$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+				$mail->IsHTML(true);
+				$mail->isSMTP();
+				$mail->Host = "mail.hungariamed.hu";
+				$mail->SMTPAuth = true;
+				$mail->Username = "web@hungariamed.hu";
+				$mail->Password = "The9vae1";
+				$mail->SMTPSecure = "tls";
+				$mail->Port = 366;
+				
+			
+				$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Összesítő lista az értesítésekről - " . date("Y.m.d"));
 
 				$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
 				$mbody.= "<p style='font-family:calibri;font-size:14px'>A csatolmány tartalmazza a kiértesített dolgozókat a ".date("Y.m.d")." dátumon elvégzett csoportos értesítésen.</p>";
@@ -261,7 +269,7 @@ class AdminReferralPage extends AdminCorePage {
 					//Email(ek) készítése:
 					$mail = NotificationService::getDefaultMailer();
 					if ( isset( $_POST['saveTest'] )) {
-						$mail->AddAddress( "email.teszt0807@hungariamed.hu" ); 
+						$mail->AddAddress( "tesztemail@hungariamed.hu" ); 
 					} else {
 						$mail->AddAddress( $name ); 
 					}
@@ -269,7 +277,17 @@ class AdminReferralPage extends AdminCorePage {
 						$mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
 					}
 
-					$t = "Aktuális alkalmassági lejáratok - ".date("Y.m.d");
+					$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+					$mail->IsHTML(true);
+					$mail->isSMTP();
+					$mail->Host = "mail.hungariamed.hu";
+					$mail->SMTPAuth = true;
+					$mail->Username = "web@hungariamed.hu";
+					$mail->Password = "The9vae1";
+					$mail->SMTPSecure = "tls";
+					$mail->Port = 366;
+
+					$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Aktuális alkalmassági lejáratok - " . date("Y.m.d"));
 
 					
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
@@ -291,7 +309,7 @@ class AdminReferralPage extends AdminCorePage {
 					foreach($files as $file) unlink($file);
 					unlink($zipPath);
 				}
-				
+
 			}
 			
 			die();
