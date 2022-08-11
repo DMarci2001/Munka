@@ -263,7 +263,7 @@ class AdminOltasIgenyekPage extends AdminCorePage
 
             if (true || $this->prefix == "oltasform") {
                 if (substr($igenyles["telefon"], 0, 1) == "+" || substr($igenyles["telefon"], 0, 2) == "00") {
-                    $this->utils->sendSMSRaw($igenyles["telefon"], $szovegSMS);
+                    $this->utils->sendSMS($igenyles["telefon"], $szovegSMS, true);
                 } else {
                     $this->utils->sendSMS($igenyles["telefon"], $szovegSMS);
                 }

@@ -58,7 +58,7 @@ class AdminLoginPage extends AdminCorePage {
                 die();
             }
 
-            if ($code == 1289 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
+            if ($code == 4053 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
                 $_SESSION["2facomplete"] = $code;
                 sql_query("update users set authorizeduntil = date_add(now(), interval 1 day) where id=?", array($this->adminUser->user["id"]));
                 header("location:index.php");

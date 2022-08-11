@@ -1381,6 +1381,7 @@ class BookingService
         if (!isset($data["utca"])) $data["utca"] = "";
         if (!isset($data["megj"])) $data["megj"] = "";
         if (!isset($data["munkakor"])) $data["munkakor"] = "";
+        if (!isset($data["adoszam"])) $data["adoszam"] = "";
         if (!isset($data["betegallomanynyilatkozat"])) $data["betegallomanynyilatkozat"] = 0;
         if (!isset($data["parentid"])) $data["parentid"] = 0;
         if (!isset($data["externalid"])) $data["externalid"] = "";
@@ -1420,6 +1421,7 @@ class BookingService
             utca=?,
             megj=?,
             munkakor=?,
+            adoszam=?,
             tudoszuro=?,
             rlang=?,
             orvosassigned=?,
@@ -1457,6 +1459,7 @@ class BookingService
                 $data["utca"],
                 $data["megj"],
                 $data["munkakor"],
+                $data["adoszam"],
                 $data["tudoszuro"],
                 $data["lang"],
                 $data["orvosid"],
@@ -1536,8 +1539,8 @@ class BookingService
             $fid = sql_insert_id();
 
             if (!empty($this->copyReservationData)) {
-                sql_query("update foglalasok set regdatum=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
-                    [$this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
+                sql_query("update foglalasok set regdatum=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, adoszam=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
+                    [$this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], $this->copyReservationData["adoszam"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
                 logActivity("foglalas", $fid,"{$this->copyReservationData["nev"]} foglalás másolása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
             } else {
                 logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));

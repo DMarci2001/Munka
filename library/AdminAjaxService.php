@@ -522,6 +522,7 @@ class AdminAjaxService {
 
                 if ($data["confirm"] == "" || $_POST["force"] == 1) {
                     sql_query("update foglalasok set eljott=if(eljott=0, 1, 0) where id=? limit 1", [$id]);
+                    sql_query("update foglalasok set eljottidopont=now() where id=? AND eljott=1 AND eljottidopont='0000-00-00 00:00:00' limit 1", [$id]);
                 }
 
                 $data["html"] = AdminBookingEditor::eljottCheckbox(sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC));

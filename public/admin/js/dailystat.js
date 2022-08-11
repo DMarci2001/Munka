@@ -38,6 +38,10 @@ function downloadDailyStat(dayFrom, dayTo) {
     });
 }
 
+function downloadElojegyzesTable(dayFrom, dayTo) {
+    window.location.href='index.php?page=dailystat&downloadelojegyzestable='+encodeURIComponent(dayFrom)+"&dayTo="+encodeURIComponent(dayTo);
+}
+
 function editDailyStat(day) {
     let dayBox = $("#daybox"+day);
 

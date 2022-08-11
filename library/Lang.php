@@ -4,6 +4,7 @@ class Lang {
     public $webText;
 
     public $validLanguages = ["hu","en","de"];
+    public string $selectedLang;
 
     public function __construct()
     {
@@ -11,12 +12,14 @@ class Lang {
             self::setLang("hu");
         }
 
+        $this->selectedLang = $_COOKIE["lang"];
+
         $this->webText = $this->getWebTexts($_COOKIE["lang"]);
     }
 
     public function getWebTexts($lang) {
         $webText = [];
-        $resL=sql_query("select * from langtext where langid=?",array($lang));
+        $resL=sql_query_common("select * from langtext where langid=?",array($lang));
         while ($rowL=sql_fetch_array($resL)) {
             if ($rowL["tipus"]==0) {
                 $webText[$rowL["kulcs"]]=$rowL["szoveg"];

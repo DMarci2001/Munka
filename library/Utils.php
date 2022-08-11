@@ -761,6 +761,12 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                     $webText[$translateKey] = "NTID";
                 }
                 break;
+            case "adoszam":
+                //adószám csak 1 cégnek
+                if (!CompanyService::isFesztivalEgyeb()) {
+                    $hidden = true;
+                }
+                break;
         }
 
         if($_SESSION["helyszindata"]["id"]==200 && $fieldName=="email"){

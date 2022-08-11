@@ -343,39 +343,43 @@ class ExcelService {
         }
     }
 
-    private function _bejelentkezoFoglalasokLista($sheetId, $rawInput, $from, $to) {
+    private function _bejelentkezoFoglalasokLista($sheetId, $from, $to, $onlyArrived = true) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
         }
         $this->sheet = $this->spreadSheet->getActiveSheet();
-        $this->sheet->setTitle("Foglalások lista");
+        $this->sheet->setTitle("Előjegyzések");
         $this->titleRow("A1", "Foglalások - {$from} - {$to} (forrás: bejelentkező)");
-        $this->sheet->SetCellValue("A2", "* csak eljöttek");
+        $wArrived = "";
+        if ($onlyArrived) {
+            $this->sheet->SetCellValue("A2", "* csak eljöttek");
+            $wArrived = "AND f.eljott=1";
+        }
 
         $sor = 4;
 
         $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
             LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' and f.eljott=1 GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' {$wArrived} GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($tipusok as $tipus) {
             $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
             $sor+=2;
 
-            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum","Megjegyzés"]);
+            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum", "Eljött", "Eljött időpont", "Megjegyzés"]);
             $sor++;
 
             $reservations = sql_query("SELECT t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
                 LEFT JOIN orvosok o ON o.id=f.orvosassigned
                 LEFT JOIN cegek c ON c.id=f.cegid
                 LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? and f.eljott=1 order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? {$wArrived} order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
 
             foreach ($reservations as $reservation) {
-                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["megj"]]);
+                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["eljott"] == 1 ? "eljött":"nem jött el", $reservation["eljottidopont"] != "0000-00-00 00:00:00" ? $reservation["eljottidopont"]:"", $reservation["megj"]]);
                 $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
                 $sor++;
             }
@@ -631,11 +635,8 @@ class ExcelService {
     public function napiStat($rawInput, $from, $to) {
         $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-        //error_reporting(E_ALL);
-        //ini_set('display_errors', 1);
-
         //$this->_vizsgalatKimutatas(0, $rawInput, $from, $to);
-        $this->_bejelentkezoFoglalasokLista(0, $rawInput, $from, $to);
+        $this->_bejelentkezoFoglalasokLista(0, $from, $to);
         $this->_kiegeszitoFoglalasokLista(1, $rawInput, $from, $to);
         $this->_dokirexVizsgalatokLista(2, $rawInput, $from, $to);
         $this->_beosztasLista(3, $rawInput, $from, $to);
@@ -646,20 +647,10 @@ class ExcelService {
         $this->spreadSheet->setActiveSheetIndex(0);
     }
 
+    public function elojegyzesTable($from, $to) {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $this->_bejelentkezoFoglalasokLista(0, $from, $to, false);
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
 }
-
-/*
-
-SELECT a.telephely, COUNT(*) AS db FROM (
-
-SELECT datum, telephely, nev, orvos, paciensid, munkakor, MAX(ervenyesseg) AS ervenyes FROM dokirex_vizsgalatok v WHERE v.szakrendeles='Foglalkozás-egészségügy' AND v.paciensid<>''
-AND v.`telephely`<>''
-GROUP BY v.paciensid
-HAVING ervenyes<NOW() AND ervenyes>'2021-01-01'
-
-ORDER BY v.`telephely`
-) a
-
-GROUP BY a.telephely
-;
- */

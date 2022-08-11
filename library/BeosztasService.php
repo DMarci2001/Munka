@@ -1,13 +1,12 @@
 <?php
 
 class BeosztasService {
-    private $utils;
-    private $adminUser;
-    public $userCompanyPermission = [];
-    public $beosztasCompanyFilter = "";
+    private AdminUser $adminUser;
+    public array $userCompanyPermission = [];
+    public string $beosztasCompanyFilter = "";
+    public string $beosztasDoctorFilter = "";
 
     public function __construct() {
-        //$this->utils = new Utils();
         if (isset($GLOBALS["admin"])) {
             if (empty($this->adminUser)) {
                 $this->adminUser = new AdminUser();
@@ -15,6 +14,10 @@ class BeosztasService {
                 if (!$this->adminUser->allCegJog()) {
                     $this->userCompanyPermission = $this->adminUser->getCegListArray();
                     $this->beosztasCompanyFilter = $this->beosztasCegFilterSQL($this->userCompanyPermission);
+                }
+
+                if ($this->adminUser->onlyDoctorReservations()) {
+                    $this->beosztasDoctorFilter = " and b.orvosid=".intval($this->adminUser->user["orvosid"]);
                 }
             }
         }
@@ -33,7 +36,7 @@ class BeosztasService {
     }
 
     public function getTipusByHelyszin($helyszinId) {
-        return sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE b.helyszinid=? {$this->beosztasCompanyFilter} and b.tol<>0 and b.ig<>0", [$helyszinId]);
+        return sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE b.helyszinid=? {$this->beosztasCompanyFilter} {$this->beosztasDoctorFilter} and b.tol<>0 and b.ig<>0", [$helyszinId]);
     }
 
     public function getBeosztasDataForDoctor($orvosId, $day, $helyszinId, $szuresTipusId) {
@@ -42,8 +45,8 @@ class BeosztasService {
     }
 
     public function getReservationPlaces($cegId, $szuresTipusId = 0) {
-        $this->utils = new Utils();
-        $helyszinek = sql_query("SELECT h.*,".$this->utils->cimLangQuery()." FROM helyszinek h 
+        $utils = new Utils();
+        $helyszinek = sql_query("SELECT h.*,".$utils->cimLangQuery()." FROM helyszinek h 
             LEFT JOIN orvos_beosztas_new b ON b.`helyszinid`=h.id 
             LEFT JOIN orvosok o on b.orvosid=o.id
             WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND (b.nap<>10 or b.beonap>=DATE(NOW())) AND b.`helyszinid` IS NOT NULL and (instr(b.beocegek, ?) or b.beocegek='') and (instr(b.tipusok, ?) or ? = 0) 

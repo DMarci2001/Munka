@@ -109,6 +109,13 @@ class AdminUser {
 
         if (isset($_SESSION["pid"])) {
             $this->user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
+
+            if (!empty($this->user["pecsetszam"])) {
+                if ($orvosData = sql_query("select id, nev from orvosok where pecsetszam=?", [$this->user["pecsetszam"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $this->user["orvosid"] = $orvosData["id"];
+                }
+            }
+
             $_SESSION["adminuser"] = $GLOBALS["adminuser"] = $this->user;
         }
 
@@ -187,6 +194,10 @@ class AdminUser {
 
         if (empty($result)) {
             $result = "<span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>recepció</span>";
+        }
+
+        if ($this->userIsOrvos()) {
+            $result = "<span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>orvos</span>";
         }
 
         if (!$box) {
@@ -393,6 +404,12 @@ class AdminUser {
         return $this->user["jog_beutalo_hozzadas"] == 1;
     }
 
-    
+    public function onlyDoctorReservations():bool {
+        return $this->user["jog_onlydoctorreservations"] == 1 && $this->userIsOrvos();
+    }
+
+    public function userIsOrvos():bool {
+        return !empty($this->user["pecsetszam"]) && !empty($this->user["orvosid"]);
+    }
 
 }
