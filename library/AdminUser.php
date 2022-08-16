@@ -99,6 +99,9 @@ class AdminUser {
         "jog_bp_seged_tabla" => [
             "name" => "BP segéd tábla kezelése"
         ],
+        "jog_labortetelek" => [
+            "name" => "Labor tételek kezelése"
+        ]
     ];
 
     public function __construct()
@@ -394,6 +397,10 @@ class AdminUser {
 
     public function beallitasWebAdatokAccess():bool {
         return $this->user["jog_webadatok"] == 1;
+    }
+
+    public function labortetelAccess():bool{
+        return $this->user["jog_labortetelek"] == 1;
     }
 
     public function beallitasBPsegedtablaAccess():bool {

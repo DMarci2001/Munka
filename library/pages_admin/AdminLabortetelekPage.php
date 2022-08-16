@@ -225,6 +225,11 @@ class AdminLabortetelekPage extends AdminCorePage
     public function showPage()
     {
 
+        if (!$this->adminUser->labortetelAccess()) {
+            echo "nincs jogosultságod!";
+            return;
+        }
+
         if (!isset($_GET["szerk"])) {
             echo "<form id=\"labortetelek-form\" method=\"POST\">";
             //Csomagok:
