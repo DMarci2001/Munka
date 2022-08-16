@@ -222,7 +222,7 @@ class BookingPage extends CorePage
             }
             if (!$this->utils->getFieldHidden("torzsszam") && $this->utils->getFieldRequired("torzsszam")) {
                 if (empty($_POST["torzsszam"])) {
-                    $this->errors[] = "A törzsszám megadása kötelező!";
+                    $this->errors[] = "{$webText["torzsszamkotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
