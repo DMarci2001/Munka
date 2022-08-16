@@ -155,13 +155,10 @@ class AdminPage {
     private function _statusRow() {
         $html = "";
 
-        $html.="<div id='adminwarnwindow'></div>";
-
+        $html.= "<div id='adminwarnwindow'></div>";
         $html.= "<div class='szamlalo' style='display:table;float: right'>";
+        $html.= "<div style='display: table-cell;padding-right: 10px;' id='chatbuttoncontainer'></div>";
         $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
-        if ($this->adminUser->beosztasPageAccess()) {
-            $html.= "<div style='display: table-cell;'><a target='_blank' href='index.php?page=workschedule'>Beosztás</a>&nbsp;&nbsp;</div>";
-        }
         $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($this->adminUser->user, true)."&nbsp;&nbsp;</div>";
         $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>".$this->adminUser->user["nev"]."</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
         $html.= "</div>";

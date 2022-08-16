@@ -83,7 +83,6 @@ class AdminUser {
         "jog_oltasigenyek" => [
             "name" => "céges oltások kezelése"
         ],
-
         "jog_munkaszunetinapok" => [
             "name" => "Munkaszünetinapok kezelése"
         ],
@@ -98,6 +97,9 @@ class AdminUser {
         ],
         "jog_bp_seged_tabla" => [
             "name" => "BP segéd tábla kezelése"
+        ],
+        "jog_chat" => [
+            "name" => "Chat"
         ],
         "jog_labortetelek" => [
             "name" => "Labor tételek kezelése"
@@ -408,6 +410,10 @@ class AdminUser {
 
     public function beallitasBPsegedtablaAccess():bool {
         return $this->user["jog_bp_seged_tabla"] == 1;
+    }
+
+    public function chatAccess():bool {
+        return $this->user["jog_chat"] == 1;
     }
 
     public function beutaloHozzadasAccess():bool {

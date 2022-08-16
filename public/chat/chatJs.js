@@ -67,6 +67,8 @@ function hideChat(hide) {
             $('#chat_form').css('display', 'none');
             $('.chat_login').css('display', 'none');
             $('.chat_fullscreen_loader').css('display', 'block');
+
+            $('#chat_converse').scrollTop($('#chat_converse')[0].scrollHeight);
             break;
         case 2:
             $('#chat_converse').css('display', 'none');
@@ -93,3 +95,56 @@ function hideChat(hide) {
     }
 }
 
+function scrollToChatBottom() {
+    $('#chat_converse').scrollTop($('#chat_converse')[0].scrollHeight);
+}
+
+$("#fab_send").click(function(e) {
+    sendChatMessage();
+});
+
+$("#chatSend").on('keyup', function (e) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+        sendChatMessage();
+    }
+});
+
+function sendChatMessage() {
+    let message = $("#chatSend").val();
+    $("#chatSend").val("");
+
+    if (message.trim() == "") {
+        return;
+    }
+
+    $.ajax({
+        url: "/chat/chatTemplate.php",
+        method: "POST",
+        data: { sendmessage:1, message:message },
+        success: function (response) {
+            $("#chat_converse").html(response);
+            scrollToChatBottom();
+        }
+    });
+}
+
+
+function reloadChat() {
+    $.ajax({
+        url: "/chat/chatTemplate.php",
+        method: "POST",
+        data: { reloadChat:1 },
+        success: function (response) {
+            let previousContent = $("#chat_converse").html();
+            if (previousContent != response) {
+                $("#chat_converse").html(response);
+                scrollToChatBottom();
+            }
+        }
+    });
+}
+
+
+$(document).ready(function () {
+    self.setInterval("reloadChat()",5000);
+});
