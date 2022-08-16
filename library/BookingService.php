@@ -1271,7 +1271,7 @@ class BookingService
         $this->newReservationId=$fid;
 
         //Ha BP-s dolgozóról van szó, lerakok neki egy beutalót mindenképp mint hozott fájl
-        if($data["cegid"]==276){
+        if($data["cegid"]==74){
             
             $referalType="bp-normal";
             //El kell döntenem, hogy a dolgozó milyen beutalót kell kapjon, ehhez lesz egy segéd tábla
@@ -1281,7 +1281,7 @@ class BookingService
                                    WHERE fogl.id=?",array($fid));
             if($referalData=sql_fetch_array($refQuery)){
                 //Ha éjszakairól van szó átállítom éjszakaira a típust
-                if($referalData["type"]=="night"){
+                if($referalData["type"]=="délutáni"){
                     $referalType="bp-nightshift";
                 }
                 //Ha üres az ntid, azaz, nemtaláltam a listában egyezést, akkor automatikusan újbelépő
