@@ -101,6 +101,9 @@ class AdminUser {
         ],
         "jog_labortetelek" => [
             "name" => "Labor tételek kezelése"
+        ],
+        "jog_beutalo_hozzadas" => [
+            "name" => "Beutaló hozzáadása a foglaláshoz (BP)"
         ]
     ];
 
