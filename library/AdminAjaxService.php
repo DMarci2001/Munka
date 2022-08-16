@@ -650,6 +650,24 @@ class AdminAjaxService {
             echo $service->createReferalDoc($p,$_POST["bid"]);
             die();
         }
+
+        if (isset($_POST["checkChat"])) {
+            $number = 0;
+            $button = "";
+            if (!empty($adminUser->user)) {
+                if ($adminUser->chatAccess()) {
+                    $data = sql_query("SELECT COUNT(*) AS number FROM chat WHERE datum>DATE_SUB(NOW(), INTERVAL 8 HOUR) AND readdate='0000-00-00 00:00:00' and userid=0")->fetch(PDO::FETCH_ASSOC);
+                    $number = $data["number"];
+                    if ($number > 0) {
+                        $button = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";'><i class='fa-solid fa-comment'></i> {$number} új üzenet!</span>";
+                    } else {
+                        $button = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";'><i class='fa-solid fa-comment'></i></span>";
+                    }
+                }
+            }
+            $this->jsonOut(["number" => $number, "button" => $button]);
+        }
+
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {

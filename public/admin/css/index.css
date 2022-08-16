@@ -1527,3 +1527,31 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	display:table-cell;
 	padding: 2px 5px 2px 0px;
 }
+
+.chatsessionlistitem {
+	display:inline-block;
+	cursor:pointer;
+	background:#eee;
+	padding:10px;
+	border-bottom:1px solid #ccc;
+	width:300px;
+	overflow: hidden;
+}
+
+.chatsessionlistitemaktiv {
+	background:#ccffcc;
+}
+
+
+.chatusermessage {
+	color:red;
+}
+
+.chatadminmessage {
+	color:blue;
+}
+
+.chatstatus {
+	color:#999;
+	font-size: 11px;
+}

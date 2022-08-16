@@ -12,14 +12,14 @@ $(document).ready(function () {
     }));
 
     self.setInterval("searchTimer()",1000);
+    self.setInterval("checkChat()",10000);
 
     initUploadRoutine();
     initIrszAutoFill();
     initGeneralSearch();
     initDateFilterPicker();
     initQueryDatePicker();
-
-
+    checkChat();
 });
 
 
@@ -3262,6 +3262,24 @@ function elojegyzesSearchStart() {
         success: function (response) {
             $("#elojegyzessearchloading").hide();
             $("#elojegyzessearchresult").html(response);
+        }
+    });
+
+}
+
+function checkChat() {
+    $.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { checkChat:1 },
+        success: function (response) {
+            $("#chatbuttoncontainer").html(response.button);
+            if (response.number != 0) {
+                $.toast({
+                    text: response.number + " olvasatlan chat üzenet!<br/><a href='index.php?page=chat'>Elolvas</a>",
+                    icon: "success"
+                });
+            }
         }
     });
 

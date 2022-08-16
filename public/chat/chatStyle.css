@@ -102,9 +102,6 @@ ul li{
     opacity: 0;
     box-shadow: 1px 1px 100px 2px rgba(0, 0, 0, 0.22);
     border-radius: 10px;
-    -webkit-transition: all .2s ease-out;
-    -webkit-transition: all .2s ease-in-out;
-    transition: all .2s ease-in-out;
 }
 
 .chat_fullscreen {
@@ -161,7 +158,7 @@ ul li{
     position: relative;
     height: 100%;
     width: 100%;
-    text-align: left;
+    text-align: relative;
     margin-right: 10px;
     letter-spacing: 0.5px;
     font-weight: 400
@@ -391,8 +388,8 @@ ul li{
     display: block;
     word-wrap: break-word;
     border-radius: 3px;
-    -webkit-animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
-    animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
+    /*-webkit-animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
+    animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);*/
     clear: both;
     z-index: 999;
 }

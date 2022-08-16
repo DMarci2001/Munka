@@ -1,4 +1,19 @@
-<head>
+<?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
+session_start();
+
+require __DIR__."/ChatEngine.php";
+
+
+$chatEngine = new ChatEngine();
+$chatEngine->processAjaxRequests();
+
+
+?><head>
     <meta charset="UTF-8">
     <title>Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -6,7 +21,7 @@
 </head>
 
 <body>
-<h2>Kattints a sarokban a chatre...</h2>
+<p>Kattints a sarokban a chatre...</p>
 
 <div class="fabs">
     <div class="chat">
@@ -15,29 +30,13 @@
                 <div class="header_img">
                     <img src="https://st4.depositphotos.com/7877830/25337/v/380/depositphotos_253374286-stock-illustration-vector-illustration-male-doctor-avatar.jpg?forcejpeg=true"/>
                 </div>
-                <span id="chat_head">Bitang Elemér</span> <br> <span class="agent">Üszi</span> <span class="online">(Online)</span>
+                <span id="chat_head"><?php echo $chatEngine->supportName; ?></span> <br> <span class="agent"><?php echo $chatEngine->supportTitle; ?></span> <span class="online">(Online)</span>
                 <span id="chat_fullscreen_loader" class="chat_fullscreen_loader"><i class="fullscreen zmdi zmdi-window-maximize"></i></span>
 
             </div>
 
         </div>
-        <div id="chat_converse" class="chat_conversion chat_converse">
-            <a id="chat_second_screen" class="fab" style="display:none;"><i class="zmdi zmdi-arrow-right"></i></a>
-            <span class="chat_msg_item chat_msg_item_admin">
-            <div class="chat_avatar">
-               <img src="https://st4.depositphotos.com/7877830/25337/v/380/depositphotos_253374286-stock-illustration-vector-illustration-male-doctor-avatar.jpg?forcejpeg=true"/>
-            </div>Jó napot, segíthetek valamiben?</span>
-            <span class="chat_msg_item chat_msg_item_user">
-            Hello!</span>
-            <span class="status">20 perce</span>
-            <span class="chat_msg_item chat_msg_item_admin">
-            <div class="chat_avatar">
-               <img src="https://st4.depositphotos.com/7877830/25337/v/380/depositphotos_253374286-stock-illustration-vector-illustration-male-doctor-avatar.jpg?forcejpeg=true"/>
-            </div>Mizu, foglalni szeretne, vagy csak rabolni az időmet?</span>
-            <span class="chat_msg_item chat_msg_item_user">
-            Lorem Ipsum nem működik az egész oldal, nem tudok foglalni, nincs egy szabad időpont sem.</span>
-            <span class="status2">Épp most, még nem látták</span>
-        </div>
+        <div id="chat_converse" class="chat_conversion chat_converse"><?php echo $chatEngine->generateChatContentHTML(); ?></div>
         <div id="chat_form" class="chat_converse chat_form">
             <a id="chat_fourth_screen" class="fab"><i class="zmdi zmdi-arrow-right"></i></a>
             <span class="chat_msg_item chat_msg_item_admin">
@@ -110,8 +109,8 @@
       </span>
         </div>
         <div class="fab_field">
-            <a id="fab_send" class="fab"><i class="zmdi zmdi-mail-send"></i></a>
-            <textarea id="chatSend" name="chat_message" placeholder="Send a message" class="chat_field chat_message"></textarea>
+            <a id="fab_send" class="fab"><i title='Üzenet küldése' class="zmdi zmdi-mail-send"></i></a>
+            <textarea id="chatSend" name="chat_message" placeholder="Írja be az üzenetét..." class="chat_field chat_message"></textarea>
         </div>
     </div>
     <a id="prime" class="fab"><i class="prime zmdi zmdi-comment-outline"></i></a>
