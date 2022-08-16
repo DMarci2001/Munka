@@ -28,7 +28,8 @@ class AdminLabortetelekPage extends AdminCorePage
 
     public function __construct()
     {
-
+        parent::__construct();
+        
         //Ha van csomagazonosító, akkor állítcsa be sessionbe az értéket:
         if (isset($_GET["szerk"])) {
             if (!empty($_GET["szerk"]) && $_GET["szerk"] != "*") {
@@ -226,7 +227,7 @@ class AdminLabortetelekPage extends AdminCorePage
     {
 
         if (!$this->adminUser->labortetelAccess()) {
-            echo "nincs jogosultságod!";
+            echo $this->noPermissionMessage();
             return;
         }
 
