@@ -81,6 +81,12 @@ class AdminChatPage extends AdminCorePage {
             header("location:index.php?page=chat");
             die;
         }
+
+        if (isset($_GET["chatstatus"])) {
+            $this->adminUtils->settings->setChatStatus($_GET["chatstatus"]);
+            header("location:index.php?page=chat");
+            die;
+        }
     }
 
     public function showPage()
@@ -88,6 +94,12 @@ class AdminChatPage extends AdminCorePage {
         if (!$this->adminUser->cegModAccess()) {
             echo $this->noPermissionMessage();
             return;
+        }
+
+        if ($this->adminUtils->settings->chatStatus == 1) {
+            echo "<div style='margin-bottom:10px;color:green;'>A chat jelenleg <strong>online</strong> <a href='index.php?page=chat&chatstatus=0'>kikapcsolás</a></div>";
+        } else {
+            echo "<div style='color:red;margin-bottom:10px;'>A chat jelenleg <strong>offline</strong> <a href='index.php?page=chat&chatstatus=1'>bekapcsolás</a></div>";
         }
 
         echo "<div style='display:table-cell;vertical-align: top;'>";

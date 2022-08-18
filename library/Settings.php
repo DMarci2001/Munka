@@ -13,10 +13,14 @@ class Booking_Settings
             "IN" => "ideiglenesen nem alkalmas",
             "K" => "korlátozottan alkalmas");
 
+    public $chatStatus = 0;
 
     public function __construct()
     {
         $rows = sql_fetch_array(sql_query("select * from settings"));
+
+        $this->chatStatus = $rows["chat"];
+
         $munkaszunetiNapok = explode(",",$rows["szunnapok"]);
         foreach ($munkaszunetiNapok as $nap) {
             if (isset($_SESSION["helyszindata"]) && $_SESSION["helyszindata"]["id"] == 114) {
@@ -33,5 +37,9 @@ class Booking_Settings
 
     public function getMunkaszunetiNapok() {
         return $this->munkaszunetiNapok;
+    }
+
+    public function setChatStatus($status) {
+        sql_query("update settings set chat=?", [intval($status)]);
     }
 }

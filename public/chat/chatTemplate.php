@@ -13,17 +13,7 @@ $chatEngine = new ChatEngine();
 $chatEngine->processAjaxRequests();
 
 
-?><head>
-    <meta charset="UTF-8">
-    <title>Chat</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel='stylesheet' type='text/css' href='chatStyle.css?v=11' />
-</head>
-
-<body>
-<p>Kattints a sarokban a chatre...</p>
-
-<div class="fabs">
+?><div class="fabs">
     <div class="chat">
         <div class="chat_header">
             <div class="chat_option">
@@ -38,7 +28,7 @@ $chatEngine->processAjaxRequests();
         </div>
         <div id="chat_converse" class="chat_conversion chat_converse"><?php echo $chatEngine->generateChatContentHTML(); ?></div>
         <div id="chat_form" class="chat_converse chat_form">
-            <a id="chat_fourth_screen" class="fab"><i class="zmdi zmdi-arrow-right"></i></a>
+            <a id="chat_fourth_screen" class="fab chatlink"><i class="zmdi zmdi-arrow-right"></i></a>
             <span class="chat_msg_item chat_msg_item_admin">
             <div class="chat_avatar">
                <img src="http://res.cloudinary.com/dqvwa7vpe/image/upload/v1496415051/avatar_ma6vug.jpg"/>
@@ -54,7 +44,7 @@ $chatEngine->processAjaxRequests();
               <br>
               <form class="get-notified">
                   <label for="chat_log_email">Get notified by email</label>
-                  <input id="chat_log_email" placeholder="Enter your email"/>
+                  <input class='chat_input' id="chat_log_email" placeholder="Enter your email"/>
                   <i class="zmdi zmdi-chevron-right"></i>
               </form>
             </div></span>
@@ -65,8 +55,8 @@ $chatEngine->processAjaxRequests();
             </div>Send message to agent.
             <div>
               <form class="message_form">
-                  <input placeholder="Your email"/>
-                  <input placeholder="Technical issue"/>
+                  <input class='chat_input' placeholder="Your email"/>
+                  <input class='chat_input' placeholder="Technical issue"/>
                   <textarea rows="4" placeholder="Your message"></textarea>
                   <button>Send</button>
               </form>
@@ -109,14 +99,9 @@ $chatEngine->processAjaxRequests();
       </span>
         </div>
         <div class="fab_field">
-            <a id="fab_send" class="fab"><i title='Üzenet küldése' class="zmdi zmdi-mail-send"></i></a>
+            <a id="fab_send" class="fab chatlink"><i title='Üzenet küldése' class="zmdi zmdi-mail-send"></i></a>
             <textarea id="chatSend" name="chat_message" placeholder="Írja be az üzenetét..." class="chat_field chat_message"></textarea>
         </div>
     </div>
     <a id="prime" class="fab"><i class="prime zmdi zmdi-comment-outline"></i></a>
 </div>
-<script src='/js/jquery/jquery.js'></script>
-
-<script src="chatJs.js"></script>
-
-</body>

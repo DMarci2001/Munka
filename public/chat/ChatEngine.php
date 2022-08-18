@@ -2,7 +2,7 @@
 
 class ChatEngine {
     private PDO $db;
-    public string $welcomeText   = "Jó napot! Ez a Hungariamed ügyfélszolgálata, miben segíthetek?";
+    public string $welcomeText   = "Jó napot! Ön az ügyfélszolgálatunkkal beszél, miben segíthetek?";
     public string $supportName   = "Hungariamed-M";
     public string $supportTitle  = "Ügyfélszolgálat";
     public string $supportAvatar = "https://bejelentkezes.hungariamed.hu/chat/chatAvatar.jpg";
@@ -12,6 +12,21 @@ class ChatEngine {
     }
 
     public function processAjaxRequests() {
+        if (isset($_POST["initChat"])) {
+            if (!empty($_POST["welcomeText"])) {
+                $this->welcomeText = $_POST["welcomeText"];
+            }
+            if (!empty($_POST["supportName"])) {
+                $this->supportName = $_POST["supportName"];
+            }
+            if (!empty($_POST["supportTitle"])) {
+                $this->supportTitle = $_POST["supportTitle"];
+            }
+            if (!empty($_POST["supportAvatar"])) {
+                $this->supportAvatar = $_POST["supportAvatar"];
+            }
+        }
+
         if (isset($_POST["sendmessage"])) {
             $chatSession = $this->getChatSession();
             $message = strip_tags($_POST["message"]);

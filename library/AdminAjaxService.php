@@ -656,12 +656,21 @@ class AdminAjaxService {
             $button = "";
             if (!empty($adminUser->user)) {
                 if ($adminUser->chatAccess()) {
+                    $color = "#33cc33";
+                    $title = "chat online";
+
+                    $settings = new Booking_Settings();
+                    if ($settings->chatStatus == 0) {
+                        $color = "red";
+                        $title = "chat offline";
+                    }
+
                     $data = sql_query("SELECT COUNT(*) AS number FROM chat WHERE datum>DATE_SUB(NOW(), INTERVAL 8 HOUR) AND readdate='0000-00-00 00:00:00' and userid=0")->fetch(PDO::FETCH_ASSOC);
                     $number = $data["number"];
                     if ($number > 0) {
-                        $button = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";'><i class='fa-solid fa-comment'></i> {$number} új üzenet!</span>";
+                        $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i> {$number} új üzenet!</span>";
                     } else {
-                        $button = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";'><i class='fa-solid fa-comment'></i></span>";
+                        $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i></span>";
                     }
                 }
             }

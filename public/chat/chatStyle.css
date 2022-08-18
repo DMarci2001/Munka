@@ -208,7 +208,7 @@ ul li{
 #chat_body{
     height: 450px;
 }
-.chat_login p,.chat_body li, p, a{
+.chat_login p,.chat_body li, p, .chatlink {
     -webkit-animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
     animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
 }
@@ -458,7 +458,7 @@ ul li{
     font-size: 11px;
 }
 
-input {
+.chat_input {
     position: relative;
     width: 90%;
     font-family: 'Roboto';
@@ -475,6 +475,7 @@ input {
     padding: 5px;
     border-radius: 3px;
 }
+
 .chat_form .get-notified input {
     margin: 2px 0 0 0;
     border: 1px solid #83c76d;

@@ -1,6 +1,5 @@
 $(document).ready(function () {
     self.setInterval("chatWindowRefresh()",3000);
-    self.setInterval("chatSessionListRefresh()",10000);
     loadChatWindow(0, true);
 
     $("#chatmessagetext").on('keyup', function (e) {
@@ -20,7 +19,6 @@ function loadChatWindow(sessionId, scroll) {
             $("#chatsessionitems").html(response.html);
             if (scroll) {
                 scrollToChatBottom();
-                chatSessionListRefresh();
             }
         }
     });
@@ -29,17 +27,6 @@ function loadChatWindow(sessionId, scroll) {
 
 function chatWindowRefresh() {
     loadChatWindow(0, false);
-}
-
-function chatSessionListRefresh() {
-    $.ajax({
-        url: "index.php?page=chat",
-        method: "POST",
-        data: { chatSessionList:1 },
-        success: function (response) {
-            $("#chatsessionlist").html(response.html);
-        }
-    });
 }
 
 
@@ -63,8 +50,4 @@ function sendChatMessage() {
             loadChatWindow(0, true);
         }
     });
-}
-
-function chatFastText(text) {
-    $("#chatmessagetext").val(text);
 }

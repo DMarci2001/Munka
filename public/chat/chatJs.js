@@ -1,9 +1,71 @@
-hideChat(0);
-hideChat(1);
+function initChat(el) {
+    let welcomeText   = el.data("welcometext");
+    let supportName   = el.data("supportname");
+    let supportTitle  = el.data("supporttitle");
+    let supportAvatar = el.data("supportavatar");
 
-$('#prime').click(function() {
-    toggleFab(3);
-});
+    $.ajax({
+        url: "/chat/chatTemplate.php",
+        method: "POST",
+        data: { initChat:1, welcomeText:welcomeText, supportName:supportName, supportTitle:supportTitle, supportAvatar:supportAvatar },
+        success: function (response) {
+            el.html(response);
+
+            hideChat(0);
+            hideChat(1);
+
+            $('#prime').click(function() {
+                toggleFab(3);
+            });
+
+            $('#chat_first_screen').click(function(e) {
+                hideChat(1);
+            });
+
+            $('#chat_second_screen').click(function(e) {
+                hideChat(2);
+            });
+
+            $('#chat_third_screen').click(function(e) {
+                hideChat(3);
+            });
+
+            $('#chat_fourth_screen').click(function(e) {
+                hideChat(4);
+            });
+
+            $('#chat_fullscreen_loader').click(function(e) {
+                $('.fullscreen').toggleClass('zmdi-window-maximize');
+                $('.fullscreen').toggleClass('zmdi-window-restore');
+                $('.chat').toggleClass('chat_fullscreen');
+                $('.fab').toggleClass('is-hide');
+                $('.header_img').toggleClass('change_img');
+                $('.img_container').toggleClass('change_img');
+                $('.chat_header').toggleClass('chat_header2');
+                $('.fab_field').toggleClass('fab_field2');
+                $('.chat_converse').toggleClass('chat_converse2');
+                //$('#chat_converse').css('display', 'none');
+                // $('#chat_body').css('display', 'none');
+                // $('#chat_form').css('display', 'none');
+                // $('.chat_login').css('display', 'none');
+                // $('#chat_fullscreen').css('display', 'block');
+            });
+
+            $("#fab_send").click(function(e) {
+                sendChatMessage();
+            });
+
+            $("#chatSend").on('keyup', function (e) {
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    sendChatMessage();
+                }
+            });
+
+            self.setInterval("reloadChat()",5000);
+        }
+    });
+}
+
 
 
 //Toggle chat and links
@@ -18,38 +80,6 @@ function toggleFab() {
 
 }
 
-$('#chat_first_screen').click(function(e) {
-    hideChat(1);
-});
-
-$('#chat_second_screen').click(function(e) {
-    hideChat(2);
-});
-
-$('#chat_third_screen').click(function(e) {
-    hideChat(3);
-});
-
-$('#chat_fourth_screen').click(function(e) {
-    hideChat(4);
-});
-
-$('#chat_fullscreen_loader').click(function(e) {
-    $('.fullscreen').toggleClass('zmdi-window-maximize');
-    $('.fullscreen').toggleClass('zmdi-window-restore');
-    $('.chat').toggleClass('chat_fullscreen');
-    $('.fab').toggleClass('is-hide');
-    $('.header_img').toggleClass('change_img');
-    $('.img_container').toggleClass('change_img');
-    $('.chat_header').toggleClass('chat_header2');
-    $('.fab_field').toggleClass('fab_field2');
-    $('.chat_converse').toggleClass('chat_converse2');
-    //$('#chat_converse').css('display', 'none');
-    // $('#chat_body').css('display', 'none');
-    // $('#chat_form').css('display', 'none');
-    // $('.chat_login').css('display', 'none');
-    // $('#chat_fullscreen').css('display', 'block');
-});
 
 function hideChat(hide) {
     switch (hide) {
@@ -68,7 +98,7 @@ function hideChat(hide) {
             $('.chat_login').css('display', 'none');
             $('.chat_fullscreen_loader').css('display', 'block');
 
-            $('#chat_converse').scrollTop($('#chat_converse')[0].scrollHeight);
+            scrollToChatBottom();
             break;
         case 2:
             $('#chat_converse').css('display', 'none');
@@ -99,15 +129,6 @@ function scrollToChatBottom() {
     $('#chat_converse').scrollTop($('#chat_converse')[0].scrollHeight);
 }
 
-$("#fab_send").click(function(e) {
-    sendChatMessage();
-});
-
-$("#chatSend").on('keyup', function (e) {
-    if (e.key === 'Enter' || e.keyCode === 13) {
-        sendChatMessage();
-    }
-});
 
 function sendChatMessage() {
     let message = $("#chatSend").val();
@@ -145,6 +166,3 @@ function reloadChat() {
 }
 
 
-$(document).ready(function () {
-    self.setInterval("reloadChat()",5000);
-});

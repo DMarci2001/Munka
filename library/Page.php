@@ -79,6 +79,23 @@ class Page
         echo "</div>";
         echo "</div>";
 
+        //if (session_id() == "eegns1sefhdcnp0egctqp9658i") {
+            $settings = new Booking_Settings();
+
+            $chatAvailable = $settings->chatStatus == 1;
+
+            if ($chatAvailable == 0) {
+                //ha session aktív, akkor mégis legyen online
+                if (sql_query("select id from chatsession where session=?", [session_id()])->fetch(PDO::FETCH_ASSOC)) {
+                    //$chatAvailable = true;
+                }
+            }
+
+            if ($chatAvailable) {
+                echo "<div id='hmmchat' data-supportname='Hungariamed-M' data-supporttitle='Ügyfélszolgálat'></div>";
+            }
+        //}
+
         echo "</body>";
     }
 

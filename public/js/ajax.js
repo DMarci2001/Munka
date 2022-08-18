@@ -9,7 +9,7 @@ $(document).ready(function () {
 
 
     initDateFilterPicker();
-
+    initHMMChat();
 });
 
 
@@ -961,5 +961,12 @@ function uniqaEmailCheck(email){
               }
             }
         });    
+    }
+}
+
+
+function initHMMChat() {
+    if ($('#hmmchat').length) {
+        initChat($("#hmmchat"));
     }
 }
