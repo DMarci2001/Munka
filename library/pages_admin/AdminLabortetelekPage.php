@@ -29,7 +29,7 @@ class AdminLabortetelekPage extends AdminCorePage
     public function __construct()
     {
         parent::__construct();
-        
+
         //Ha van csomagazonosító, akkor állítcsa be sessionbe az értéket:
         if (isset($_GET["szerk"])) {
             if (!empty($_GET["szerk"]) && $_GET["szerk"] != "*") {
@@ -216,9 +216,11 @@ class AdminLabortetelekPage extends AdminCorePage
 
         //Csomag mentése:
         if (isset($_POST["savePackage"])) {
+
+
             sql_query(
-                "UPDATE synlab_labor_csomagok SET name=?, price=?, items=?, aktiv=? WHERE id=?",
-                array($_POST["name"], $_POST["price"], $this->packageItems, $_POST["aktiv"], $this->packageId)
+                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_trough_price=?, items=?, gender=?,categories=?, aktiv=? WHERE id=?",
+                array($_POST["name"], $_POST["price"], $_POST["line-trough-price"], $this->packageItems, $_POST["gender"], $this->setCategories(), $_POST["aktiv"], $this->packageId)
             );
         }
     }
@@ -237,7 +239,7 @@ class AdminLabortetelekPage extends AdminCorePage
             echo $this->showPackages();
 
             //Tételek:
-            echo $this->showItems($this->cFilter, $this->formFilter);
+            echo $this->showItems($this->cFilter, $this->formFilter,null, true);
 
             echo "</form>";
         } else {
@@ -260,17 +262,57 @@ class AdminLabortetelekPage extends AdminCorePage
             echo "<tr><td colspan=\"2\"><input type=\"submit\" name=\"savePackage\" onClick='if(!confirm(\"Biztosan elakarod menteni a módosításokat?\")){return false;}' value=\"Mentés\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése: </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Áthúzott ár: </p></td><td><input type=\"textbox\" name=\"line-trough-price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["line_trough_price"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Ár: </p></td><td><input type=\"textbox\" name=\"price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["price"]}\"></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Nemi beállítás: </p></td><td><input type=\"radio\" " . ($packageData["gender"] == "female" ? "checked" : "") . " name=\"gender\" value=\"female\">Női&nbsp;<input type=\"radio\" " . ($packageData["gender"] == "male" ? "checked" : "") . " name=\"gender\" value=\"male\">Férfi&nbsp;<input type=\"radio\" " . ($packageData["gender"] == "both" ? "checked" : "") . " name=\"gender\" value=\"both\">Mind2</td></tr>";
+
+            echo "<tr><td style=\"vertical-align:top\"><p style=\"font-weight:bold;font-size:14px\">Csomag kategóriák: </p></td><td>" . $this->package_category_list($packageData) . "</td></tr>";
+
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Státusz: </p></td><td><select name=\"aktiv\"><option " . ($packageData["aktiv"] == 1 ? "selected=\"true\"" : "") . " value=\"1\">Aktív</option><option " . ($packageData["aktiv"] == 0 ? "selected=\"true\"" : "") . " value=\"0\">Inaktív</option></select></td></tr>";
 
             $docAgent = new DocAgent();
-            echo "<tr><td style='font-weight:bold;font-size:14px'><div>Kép:</div></td><td><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"])."</div></td></tr>";
+            echo "<tr><td style='font-weight:bold;font-size:14px'><div>Kép:</div></td><td><div id='asseteditor'>" . $docAgent->showAssetEditor(DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"]) . "</div></td></tr>";
 
             echo "</table>";
 
-            echo $this->showItems($this->cFilter, $packageData["appform"], $packageData["items"]);
+            echo $this->showItems($this->cFilter, $packageData["appform"], $packageData["items"],null);
             echo "</form>";
         }
+    }
+
+    private function package_category_list($packageData)
+    {
+
+        $html = "";
+
+        $categories = json_decode($packageData["categories"]);
+
+        $qCategories = sql_query("SELECT * FROM synlab_labor_csomag_kategoriak");
+
+        while ($category = sql_fetch_array($qCategories)) {
+
+            if (!empty($categories) && in_array($category["id"], $categories)) {
+                $checked = "checked=\"checked\"";
+            } else {
+                $checked = "";
+            }
+
+            $html .= "<input type=\"checkbox\" {$checked} name=\"package-category-{$category["id"]}\">&nbsp;{$category["name"]}<br>";
+        }
+
+        return $html;
+    }
+
+    private function setCategories()
+    {
+        $qCategories = sql_query("SELECT * FROM synlab_labor_csomag_kategoriak");
+        $array = array();
+        while ($category = sql_fetch_array($qCategories)) {
+            if (isset($_POST["package-category-{$category["id"]}"])) {
+                $array[] = $category["id"];
+            }
+        }
+        return json_encode($array);
     }
 
     private function showPackages()
@@ -343,7 +385,7 @@ class AdminLabortetelekPage extends AdminCorePage
         return;
     }
 
-    private function showItems($filterId = null, $appform = null, $packageInstall = null)
+    private function showItems($filterId = null, $appform = null, $packageInstall = null, $listView = null)
     {
         //Ha az appform-ot nem választották ki v. nullára állították akkor resetelje a kategória filtert is.
         if ($appform == null) $filterId = null;
@@ -413,9 +455,9 @@ class AdminLabortetelekPage extends AdminCorePage
         while ($resq = sql_fetch_array($rq)) {
             echo "<tr>";
 
-            //if (!empty($packageInstall)) {
-                echo "<td valign=\"top\"><div class=\"tcella\"><input type=\"checkbox\" name=\"item[]\" {$setSelectedItemJScall} " . (in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\"></div></td>";
-            //}
+            if (!$listView) {
+            echo "<td valign=\"top\"><div class=\"tcella\"><input type=\"checkbox\" name=\"item[]\" {$setSelectedItemJScall} " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\"></div></td>";
+            }
 
             //Link a szerkesztéshez:
             echo "<td valign=\"top\"><div class=\"tcella\"><p style=\"color:#a00;margin:0;padding:0\">{$resq["name"]}</p></div></td>";
@@ -460,6 +502,6 @@ class AdminLabortetelekPage extends AdminCorePage
         echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Státusz: </p></td><td><select name=\"aktiv\"><option value=\"1\">Aktív</option><option value=\"0\">Inaktív</option></select></td></tr>";
         echo "</table>";
 
-        echo $this->showItems(null, $packageData["appform"], $packageData["items"]);
+        echo $this->showItems(null, $packageData["appform"], $packageData["items"],null);
     }
 }
