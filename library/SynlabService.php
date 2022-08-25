@@ -383,6 +383,82 @@ class SynlabService
         return $htmlout;
     }
 
+    public function create_labshop_laborkero($id)
+    {
+        $labshopCart = sql_fetch_array(sql_query("SELECT * FROM labshop_vasarlasok WHERE id=?", array($id)));
+        $packageIds = json_decode($labshopCart["package_ids"]);
+        $customIds = json_decode($labshopCart["custom_ids"]);
+        $ReservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($labshopCart["reservationid"])));
+        $filename = "Laborkérő(" . rand(200, 1200000) . ") - Egyéni.pdf";
+        $custom = false;
+        if(!empty($labshopCart["custom_ids"]) && $labshopCart["custom_ids"] != "[]"){
+            $custom = true;
+        }
+
+        $input = [
+            //Páciens adatok:
+            "nev" => $ReservationData["nev"],
+            "szulnev" => (isset($ReservationData["szulnev"])) ? $ReservationData["szulnev"] : "",
+            "taj" => $ReservationData["taj"],
+            "szuldatum" => (isset($ReservationData["szuldatum"])) ? str_replace("-", ".", $ReservationData["szuldatum"])  : "",
+            "varos" => (isset($ReservationData["varos"])) ? $ReservationData["varos"] : "",
+            "cim" => (isset($ReservationData["cim"])) ? $ReservationData["cim"] : "",
+            "bno" => "",
+            "terhessegihet" => "",
+            "telefon" => $ReservationData["telefon"],
+            "ferfi" => ($ReservationData["neme"] == 1) ? "Yes" : "",
+            "no" => ($ReservationData["neme"] == 2) ? "Yes" : "",
+
+            //Beküldő adatok:
+            "bekuldonev" => "Hungáriamed-M Kft",
+            "bekuldocim" => "1135 Budapest, Jász u. 33-35",
+            "bekuldokod" => "000 000 787",
+            "orvosnev" => "",
+            "pecsetszam" => "",
+            "atutalaselore" => "Yes",
+            "befazon" => "",
+            "szamlazasinev" => "Hungáriamed-M Kft.",
+            "szamlazasicim" => "1132 Budapest, Csanády u. 6/b",
+            "kuldesiemail" => "synlab@hungariamed.hu",
+            "kitoltesdatum" => date("Y.m.d"),
+            "mintavetdatum" => ""
+        ];
+
+        //Csomag tételek bepipálása
+        foreach ($packageIds as $tid) {
+            $input["sltc-{$tid}"] = "Yes";
+        }
+
+        //Egyéni tételek bepipálása
+        foreach ($customIds as $tid) {
+            $input["sltc-{$tid}"] = "Yes";
+        }
+        
+        //Ha csomag lett választva csak vagy vegyesen csomag és egyéni tétel akkor generáljon más fájl nevet
+        if (isset($labshopCart["package_id"]) && $labshopCart["package_id"] != "") {
+
+            $package = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?", array($labshopCart["package_id"])));
+
+            $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$package["name"]} csomag.pdf";
+            if ($custom == true) {
+                $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$package["name"]} csomag + Egyéni.pdf";
+            }
+        }
+
+        //Létrehozom a laborkérő pdf-et
+        $pdf = new Pdf("../../public/admin/templates/klinikai_kemia.pdf");
+        $result = $pdf->fillForm($input)
+            ->flatten()
+            ->saveAs("../../public/admin/templates/" . $filename);
+
+        if ($result === false) {
+            $error = $pdf->getError();
+
+            var_dump($error);
+        }
+        return "../../public/admin/templates/" . $filename;
+    }
+
     public function createPDF($data)
     {
 

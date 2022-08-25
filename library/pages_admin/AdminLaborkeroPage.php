@@ -10,6 +10,7 @@ class AdminLaborkeroPage extends AdminCorePage
 
     public function __construct()
     {
+
         if (isset($_POST["saveNewPackege"])) {
             if (!empty($_POST["newPackegeName"])) {
                 if (!empty($_POST["newPrice"])) {
@@ -117,7 +118,7 @@ class AdminLaborkeroPage extends AdminCorePage
             //$size = filesize($path . $filename);
             //$extension =  pathinfo($path . $filename, PATHINFO_EXTENSION);
 
-            $result = $docAgent->saveLocalDoc($path.$filename, ["fid" => $_GET["fid"]]);
+            $result = $docAgent->saveLocalDoc($path . $filename, ["fid" => $_GET["fid"]]);
             if ($result == "0") {
                 $this->success .= "<p style=\"color:#278d2f;font-weight:bold;font-size:16px;margin:2px;\"> - Fájl mentése sikerült!!</p>";
             } else {
