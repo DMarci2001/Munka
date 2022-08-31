@@ -196,6 +196,7 @@ class SynlabService
         }
 
         $repayment = "<option value=\"ures\"></option>";
+        $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "szerzodeses" ? "selected" : "") . " value=\"szerzodeses\">Szerződéses</option>";
         $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "helybenfizeto" ? "selected" : "") . " value=\"helybenfizeto\">Helyben fizető</option>";
         $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "csekkelelore" ? "selected" : "") . " value=\"csekkelelore\">Csekkel előre</option>";
         $repayment .= "<option " . (isset($template["terites"]) && $template["terites"] == "atutalaselore" ? "selected" : "") . " value=\"atutalaselore\">Átutalás előre</option>";
