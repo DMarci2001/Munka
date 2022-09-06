@@ -681,11 +681,11 @@ class AdminBookingPage extends AdminCorePage
             if ($this->adminUser->paciensMegjegyzesAccess()) {
                 $htmlout .= "<td valign='top' nowrap>{$reservationData["megj"]}</td>";
             }
-
-            $this->lastIdopont = $idopontShow;
         } else {
             $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";
         }
+        $this->lastIdopont = $idopontShow;
+
         $htmlout .= "</tr>";
 
         return $htmlout;
