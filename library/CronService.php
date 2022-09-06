@@ -7,7 +7,7 @@ class CronService {
     private $utils;
     private $bookingService;
 
-    private $smsWarningEmails = ["jnsmobil@gmail.com", "jns@jns.hu"];
+    private $smsWarningEmails = ["jnsmobil@gmail.com", "lazar.gabriella@hungariamed.hu", "marton.gergely@hungariamed.hu"];
     private $smsWarningLimit  = 20000;
 
     public function __construct()
@@ -347,7 +347,7 @@ class CronService {
             $res = sql_query("SELECT f.*,h.cim FROM foglalasok f 
             LEFT JOIN helyszinek h ON h.id=f.helyszinid
 		    LEFT JOIN cegek c ON c.`id`=f.`cegid`
-		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 AND f.externalid=''");
+		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND f.externalid=''");
             while ($row = sql_fetch_array($res)) {
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
 

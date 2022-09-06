@@ -116,12 +116,22 @@ class AdminUser {
         }
 
         if (isset($_SESSION["pid"])) {
-            $this->user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
+            $user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
 
-            if (!empty($this->user["pecsetszam"])) {
-                if ($orvosData = sql_query("select id, nev from orvosok where pecsetszam=?", [$this->user["pecsetszam"]])->fetch(PDO::FETCH_ASSOC)) {
-                    $this->user["orvosid"] = $orvosData["id"];
+            if (!empty($user["pecsetszam"])) {
+                if ($orvosData = sql_query("select id, nev from orvosok where pecsetszam=?", [$user["pecsetszam"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $user["orvosid"] = $orvosData["id"];
                 }
+            }
+
+            $this->user = $user;
+            //ha inaktiv, vagy nem volt 2fa, akkor nem töltjük fel a felhasználó adatokat
+            if (($user["auth2fac"]==1 && !isset($_SESSION["2facomplete"])) || $user["status"] == 0) {
+                //$this->user = null;
+                $this->user["id"]       = $user["id"];
+                $this->user["status"]   = $user["status"];
+                $this->user["auth2fac"] = $user["auth2fac"];
+                $this->user["tel"]      = $user["tel"];
             }
 
             $_SESSION["adminuser"] = $GLOBALS["adminuser"] = $this->user;

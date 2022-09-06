@@ -122,13 +122,16 @@ class AdminArrivalsPage extends AdminCorePage
 
     }
 
-    public function showPage()
-    {
-        ob_start();
+    public function showPage() {
+        //ob_start();
 
-        $datumtol=$_SESSION["blistanap"]." 00:00:00";
-        $datumig=$_SESSION["blistanap"]." 23:59:59";
+        //$datumtol=$_SESSION["blistanap"]." 00:00:00";
+        //$datumig=$_SESSION["blistanap"]." 23:59:59";
 
+        echo "<div>Az érkeztetés menüpont megszűnt. Funkcióit átvette az előjegyzés táblázat menüpont.</div>";
+
+
+        /*
         echo "<div style='display:inline-block;vertical-align:middle;'>";
         echo "<div style='display:table-cell;vertical-align:middle;background:#eee;padding:10px;'>";
         echo "<input type='text' value='{$_SESSION["blistanap"]}' name='blistanap' id='blistanap' style='width:85px;font-size:16px;' /> <input onclick='window.location.href=\"{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&blistanap=\"+$(\"#blistanap\").val();' type='button' value='OK'/> <input onclick='window.location.href=\"{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&today\"' type='button' value='Ma'/>";
@@ -149,8 +152,9 @@ class AdminArrivalsPage extends AdminCorePage
 
 
         echo "</div>";
+        */
 
-        if (session_id() == "6jiq4etuv291688obcmt98k76d" || true) {
+        if (Booking_Constants::SQL_DB == "hungariamed") {
             echo "<div style='margin-top:10px;'>[<a href='#' onclick='$(\"#covidformlist\").toggle();return false;'>Covid form</a>] [<a href='index.php?page=onlinefogleu'>Online Fogl eü paciensek</a>] [<a href='index.php?page=elsosegelyvizsga'>Elsősegély vizsgázók</a>] [<a href='index.php?page=covidlist'>Covid lista</a>] [<a href='index.php?page=alkalmassagi'>Alkalmasságik</a>]</div>";
 
             echo "<div id='covidformlist' style='margin-top:10px;display: none;'>";
@@ -247,6 +251,7 @@ class AdminArrivalsPage extends AdminCorePage
 
         }
 
+        /*
         $w=$bw="";
         if (!$this->adminUser->allCegJog()) {
             $w = "and f.cegid in (".$this->adminUser->getCegList().") and f.cegid<>0";
@@ -467,7 +472,9 @@ class AdminArrivalsPage extends AdminCorePage
         }
 
 
+
         echo $out;
+        */
 
     }
 

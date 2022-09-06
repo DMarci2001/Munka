@@ -342,7 +342,12 @@ class BookingService
 
                 $napHTML = "";
                 $napHTML.= "<div style='display:table-cell;text-align:center;vertical-align: top;".($oKey>1 ? "padding-left:3px;" : "")."'>";
-                $napHTML.= "<div style='width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
+
+                if ($_SESSION["helyszindata"]["no_doctor_select"] == 0) {
+                    $napHTML .= "<div style='width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;'>{$orvosData["nev"]}</div>";
+                } else {
+                    $napHTML .= "<div style='width:70px;'></div>";
+                }
 
                 while (!$timeLoopEnd) {
                     $ora         = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));

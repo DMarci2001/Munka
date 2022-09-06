@@ -151,7 +151,7 @@ class AdminChatPage extends AdminCorePage {
         $html = "";
 
         $chatSessions = sql_query("select s.* from chatsession s
-           order by s.created desc limit 100")->fetchAll(PDO::FETCH_ASSOC);
+           order by s.created desc limit 1000")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($chatSessions as $chatSession) {
             $lastItem = sql_query("select * from chat where chatsessionid=? and userid>-1 order by datum desc limit 1", [$chatSession["id"]])->fetch(PDO::FETCH_ASSOC);

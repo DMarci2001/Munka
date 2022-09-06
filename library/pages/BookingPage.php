@@ -864,19 +864,25 @@ class BookingPage extends CorePage
         }
 
         $firstFreeDay = 0;
-        $testDay = 0;
-        while ($testDay < 28) {
-            $this->bookingService->setHelyszin($_POST["helyszin"]);
-            $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
-            $this->bookingService->setHonnan($testDay);
-            $json = $this->bookingService->showIdoPontValasztoV2($testDay);
+        $testDay      = 0;
+        $helyszin     = intval($_POST["helyszin"]);
+        $szurestipus  = intval($_POST["szurestipus"]);
 
-            if (substr_count($json, "foglalhatobtn")) {
-                $firstFreeDay = $testDay;
-                break;
+        if (isset($_SESSION["firstfreeday{$szurestipus}_{$helyszin}"])) {
+            $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"];
+        } else {
+            while ($testDay < 44) {
+                $this->bookingService->setHelyszin($_POST["helyszin"]);
+                $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
+                $this->bookingService->setHonnan($testDay);
+                $json = $this->bookingService->showIdoPontValasztoV2($testDay);
+
+                if (substr_count($json, "foglalhatobtn")) {
+                    $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"] = $testDay;
+                    break;
+                }
+                $testDay += 7;
             }
-
-            $testDay += 7;
         }
 
         $html = "";
