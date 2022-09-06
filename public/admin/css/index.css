@@ -1555,3 +1555,18 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	color:#999;
 	font-size: 11px;
 }
+
+.uploadbutton {
+	font-size: 14px;
+	box-sizing: border-box;
+	background:#a9a9a9;
+	color:#fff;
+	padding:8px 10px;
+	border-radius: 3px;
+	text-decoration: none;
+}
+
+.uploadbutton:hover {
+	text-decoration: none;
+}
+

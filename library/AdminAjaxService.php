@@ -87,6 +87,11 @@ class AdminAjaxService {
             if ($_GET["page"] == "webpagedata") {
                 sql_query("insert into webpagedata set domain='aaaaaa.hu'");
             }
+            if ($_GET["page"] == "klinikak" && $adminUser->statAccess()) {
+                $_SESSION["tipusfilter"] = [];
+                $_SESSION["klinikavarosfilter"] = 0;
+                sql_query("insert into klinikak.klinikak set created=now(), megnev=''");
+            }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
