@@ -31,6 +31,7 @@ if (isset($_GET["ack"])) {
         if ($result->status == "FINISHED") {
             $bookingService = new BookingService();
             $bookingService->notificationService->sendUserReservationNotification($foglalasData["id"]);
+            $bookingService->setLabShopStatus($foglalasData["id"], $result->status);
             //$bookingService->sendToCegAndOrvos($foglalasData["id"]);
         }
 

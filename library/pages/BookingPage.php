@@ -3,8 +3,11 @@
 class BookingPage extends CorePage
 {
 
-    private $bookingService;
-    public $beutaloData = null;
+    private BookingService $bookingService;
+    public array $paymentMethods = [
+        "utanvet" => "Utánvét",
+        "simplepay" => "SimplePay"
+    ];
 
     public function __construct()
     {
@@ -12,6 +15,14 @@ class BookingPage extends CorePage
 
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
+
+        if (isset($_GET["labcode"])) {
+            //labshopból érkezés, labor foglaláshoz irányítás
+            //https://bejelentkezes.hungariamed.hu/index.php?page=booking&labcode=ccb124b499f1a0d372e49adfe3fc18c3161913b92a32805ba8751ab0b345e354
+            $_SESSION["labcode"] = $_GET["labcode"];
+            header("location:index.php?page=booking&szurestipus=48&helyszin=1");
+            die;
+        }
 
         if (isset($_GET["showpaciensfiles"])) {
             echo $this->utils->showPaciensFiles();
@@ -512,12 +523,39 @@ class BookingPage extends CorePage
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
 
-        if ($this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
+        if ($this->bookingService->isOnlineTipus($_POST["szurestipus"]) && !isset($_SESSION["labcode"])) {
             echo "<div style='margin-bottom:20px;'>Tudnivalók a telemedicina szolgáltatásunkkal kapcsolatban:
             Köszönjük, hogy <strong>\"{$tipusData["megnev"]}\"</strong> szolgáltatásunkat választotta.  
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br/><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>";
         }
 
+        if (isset($_SESSION["labcode"])) {
+            if ($labData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=?", [$_SESSION["labcode"]]))) {
+                if (strtoupper($labData["status"]) == "FINISHED" || ($labData["status"] == "done" && $labData["payment_method"] == "utanvet")) {
+                    echo "<div style='margin-bottom:20px;'>Már bejejezte a foglalást ehhez a vásárláshoz!<br/><br/>Amennyiben szeretne egy másik csomagot is választani, kérem <a href='https://labshop.hungariamed.hu'>kattintson ide</a>";
+                    unset($_SESSION["labcode"]);
+                    return;
+                } else {
+                    $packages = json_decode($labData["package_ids"], JSON_OBJECT_AS_ARRAY);
+
+                    $packData = sql_fetch_array(sql_query("select name from synlab_labor_csomagok where id=?", [$labData["package_id"]]));
+                    $items = [];
+                    foreach ($packages as $package) {
+                        $itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
+                        $items[] = $itemData["name"];
+                    }
+
+                    $labItemsHTML = "<li style='list-style:outside;'>{$packData["name"]}<div style='font-size: 12px;'>" . implode(", ", $items) . "</div></li>";
+
+
+                    echo "<div style='margin-bottom:20px;'>Ön a labshop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/>
+                <br>
+                <span style='font-family: robotobold;'>Választott tételek:</span><br/>
+                <ul>{$labItemsHTML}</ul>
+                </div>";
+                }
+            }
+        }
 
 
         echo "<table cellpadding='3' cellspacing='0'>";
@@ -784,7 +822,7 @@ class BookingPage extends CorePage
         if ($this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
             $priceData = $this->bookingService->getPriceData($_POST["szurestipus"]);
             $submitButtonText.= " és fizetés ({$priceData["price"]} Ft)";
-            echo "<tr><td></td><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' ".(isset($_POST["simplepay"])?"checked":"")."/> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
+            echo "<tr><td></td><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' ".(isset($_POST["simplepay"])?"checked":"")."/> Elfogadom a <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>SimplePay feltételeit.</a></div></td></tr>";
         }
 
         echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
@@ -870,16 +908,16 @@ class BookingPage extends CorePage
             $tipusnevek[$rowt["id"]] = $rowt["megnev"];
         }
 
-        $addJava = "";
-        if ($_SESSION["helyszindata"]["id"] == 11) {
-            $addJava = "if (this.value==1) { $(\"#fogleuwarn\").show(); } else { $(\"#fogleuwarn\").hide(); }";
+        $disabled = "";
+        if (isset($_SESSION["labcode"])) {
+            $disabled = "disabled";
         }
-        $megjBox = "if(this.value==14 || this.value==65){ $(\"#borgyogystuff\").css(\"visibility\",\"visible\") } else{ $(\"#borgyogystuff\").css(\"visibility\",\"hidden\") }";
+
         $htmlout = "";
         $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='selectedTipus(this.value, {$_POST["helyszin"]});'>";
-        $htmlout .= "<option value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
+        $htmlout .= "<option {$disabled} value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now())))", ["|{$_SESSION["helyszindata"]["id"]}|"]);
+        $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now()))) and b.noreservation=0", ["|{$_SESSION["helyszindata"]["id"]}|"]);
         while ($row = sql_fetch_array($res)) {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {
@@ -902,7 +940,13 @@ class BookingPage extends CorePage
                     if (count($tipusdisplay) == 1) {
                         $selected = $_REQUEST["szurestipus"] = $_POST["szurestipus"] = $key;
                     }
-                    $htmlout .= "<option value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
+
+                    $disabled = "";
+                    if ($selected != $key && isset($_SESSION["labcode"])) {
+                        $disabled = "disabled";
+                    }
+
+                    $htmlout .= "<option {$disabled} value='{$key}'" . ($selected == $key ? " selected" : "") . ">{$value}</option>";
                 }
             }
         }
@@ -948,6 +992,10 @@ class BookingPage extends CorePage
     {
         if (isset($_GET["enabletest"])) {
             $_SESSION["enabletest"] = 1;
+        }
+
+        if (isset($_SESSION["labcode"])) {
+            unset($_SESSION["labcode"]);
         }
 
         $html = "";

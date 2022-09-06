@@ -55,6 +55,7 @@ class CronService {
             $this->_sendFoglaljOrvostHeartBeat();
 			$this->sendReservationReminders();
 			$this->sendMissingDataEmails();
+            $this->sendLabShopMails();
             $this->checkOneWebPage();
 
 			$dicomService = new DicomService();
@@ -513,6 +514,18 @@ class CronService {
             }
 
             sql_query("update webpagedata set checkresult=?, checkdate=now() where id=?", [$status, $data["id"]]);
+        }
+    }
+
+    private function sendLabShopMails() {
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $notificationService = new NotificationService();
+
+            $labShopDatas = sql_query("select * from labshop_vasarlasok where date>date_sub(now(), interval 1 month) and visszaigazolva=0")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($labShopDatas as $labShopData) {
+                $notificationService->sendLabShopMail($labShopData);
+                sql_query("update labshop_vasarlasok set visszaigazolva=1 where id=?", [$labShopData["id"]]);
+            }
         }
     }
 

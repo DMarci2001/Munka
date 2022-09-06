@@ -1270,6 +1270,18 @@ class BookingService
 
         $this->newReservationId=$fid;
 
+        //labshop esetén visszatároljuk a foglalás id-t és leteszünk egy laborkérő doksit
+        if (isset($_SESSION["labcode"])) {
+            if ($labData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=?", [$_SESSION["labcode"]]))) {
+                sql_query("update labshop_vasarlasok set status='done', reservationid=? where hash=? limit 1", [$this->newReservationId, $_SESSION["labcode"]]);
+
+                $synlabService = new SynlabService();
+                $docAgent = new DocAgent();
+                $path = $synlabService->create_labshop_laborkero($labData["id"]);
+                $docAgent->saveLocalDoc($path, ["fid" => $this->newReservationId]);
+            }
+        }
+
         //Ha BP-s dolgozóról van szó, lerakok neki egy beutalót mindenképp mint hozott fájl
         if($data["cegid"]==74){
             
@@ -1718,6 +1730,11 @@ class BookingService
     }
 
     public function isOnlineTipus($tipusId):bool {
+        if (isset($_SESSION["labcode"])) {
+            if ($labshopData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=? and status in ('pending', 'done') and payment_method='simplepay'", [$_SESSION["labcode"]]))) {
+                return true;
+            }
+        }
         if ($tipusData = sql_fetch_array(sql_query("select webdoktor, simplepayaktiv, onlysimplepay from szurestipusok where id=?", [$tipusId]))) {
             if ($tipusData["webdoktor"] == 1 && $tipusData["simplepayaktiv"] == 1 && $this->getPriceData($tipusId)) {
                 return true;
@@ -1727,6 +1744,11 @@ class BookingService
     }
 
     public function getPriceData($tipusId) {
+        if (isset($_SESSION["labcode"])) {
+            if ($labshopData = sql_fetch_array(sql_query("select fullprice as price, 'huf' as currency from labshop_vasarlasok where hash=? and status in ('pending', 'done')", [$_SESSION["labcode"]]))) {
+                return $labshopData;
+            }
+        }
         return sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$tipusId]));
     }
 
@@ -1912,4 +1934,7 @@ class BookingService
         return 1;
     }
 
+    public function setLabShopStatus($id, $status) {
+        sql_query("update labshop_vasarlasok set status=? where reservationid=? limit 1", [$status, $id]);
+    }
 }

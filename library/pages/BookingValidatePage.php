@@ -84,8 +84,12 @@ class BookingValidatePage extends CorePage {
 					$bookingService->notificationService->sendToCegAndOrvos($this->id);
                     echo "<h2>Sikeres megrendelés és fizetés</h2>";
                     echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>";
-                    echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk figyelmét, hogy abban az esetben  ha panaszait nem tudjuk kezelni Web-Doktor szolgáltatásunkon keresztül, úgy a teljes összeg visszautalásra kerül.<br/><br/>";
+                    echo "<br/>A fizetési folyamat sikerült, megrendeléséről egy visszaigazoló emailt küldtünk.<br/>Felhívjuk figyelmét, hogy abban az esetben ha panaszait nem tudjuk kezelni szolgáltatásunkon keresztül, úgy a teljes összeg visszautalásra kerül.<br/><br/>";
                     echo "<hr>Sikeres tranzakció.<br/>SimplePay tranzakció azonosító: {$transactionData["transid"]}<hr>";
+
+                    if (isset($_SESSION["labcode"])) {
+                        unset($_SESSION["labcode"]);
+                    }
                 }
 
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";

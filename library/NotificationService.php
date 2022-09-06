@@ -995,6 +995,37 @@ END:VCALENDAR";
         }
     }
 
+    public function sendLabShopMail($labShopData) {
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($labShopData["email"]);
+        //$mail->AddAddress("jnsmobil@gmail.com");
 
+        $subject = "Foglaljon időpontot laborvizsgálatra most!";
+
+        $mbody = "<strong>Kedves ügyfelünk!</strong><br><br/>";
+        $mbody .= "Köszönjük, hogy a Hungária Med-M Kft labor szolgáltatását vette igénybe. Ha nem tudott időpontot foglalni még, nem kell újra kiválasztania a labor csomagját, az alábbi linken keresztül folytatni tudja az időpontválasztást!<br/>
+        <br/>
+        <br/>
+        <a style='font-family:calibri;font-size:16px;font-weight:bold;color:white;border-radius:25px;text-transform:uppercase;padding:15px 20px;box-sizing:border-box;background:#474747;text-decoration:none' href='{$labShopData["url"]}' target='_blank'>Időpontfoglalás folytatása</a>
+        <br/>
+        <br/>
+        <br/>
+        Ha szeretné kipróbálni más csomagunkat is, vagy szeretné meglepni egy rokonát, ismerősét ne habozzon, tekintse meg egyéb szolgáltatásainkat!
+        <br/>
+        Nincs szebb ajándék a hosszú és egészséges életnél!<br/>
+        <br/>
+        <ul>
+        <li><a style='color:#a90000;' href='https://labshop.hungariamed.hu' target='_blank'>Labor csomagot szeretnék választani!</a></li>
+        <li><a style='color:#a90000;' href='https://hungariamed.hu/' target='_blank'>Megszeretném tekinteni a teljes szolgáltatási palettájukat!</a></li>
+        </ul>
+        <br/>";
+        $mbody .= "<br/>
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME." Csapata!<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
 
 }
