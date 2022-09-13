@@ -85,6 +85,10 @@ class HmmApi {
             $result = $this->locations();
         }
 
+        if ($this->apiMethod == "doctormappings") {
+            $result = $this->doctorMappings();
+        }
+
         if ($this->apiMethod == "slots") {
             $result = $this->slots();
         }
@@ -110,6 +114,26 @@ class HmmApi {
         }
 
         $this->utils->jsonOut($result);
+    }
+
+    private function doctorMappings():array {
+        $mappingsArray = [];
+        $locations = sql_query("select * from helyszinek where id=? order by megnev", [self::LOCATION_ID])->fetchAll();
+        foreach ($locations as $location) {
+            $doctors = sql_query("SELECT b.helyszinid, b.`orvosid`, REPLACE(REPLACE(REPLACE(GROUP_CONCAT(DISTINCT b.`tipusok`), '|,|', ','), '||', ','), '|', '') AS tipusok FROM orvos_beosztas_new b 
+                LEFT JOIN orvosok o ON o.id=b.orvosid
+                WHERE b.helyszinid=1 AND o.foid<>0 and b.aktiv=1
+                GROUP BY b.`helyszinid`, b.`orvosid`")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($doctors as $doctor) {
+                $mappingsArray[] = [
+                    "locationId" => $doctor["helyszinid"],
+                    "doctorId" => $doctor["orvosid"],
+                    "specializationIds" => array_unique(explode(",", $doctor["tipusok"])),
+                ];
+            }
+        }
+
+        return $mappingsArray;
     }
 
     private function doctors():array {
@@ -241,6 +265,10 @@ class HmmApi {
         //    echo "aaa".$this->postBody;die;
 
         //}
+
+        if (isset($this->postParams["userName"])) {
+            $this->postParams["username"] = $this->postParams["userName"];
+        }
 
         if (!isset($this->postParams["grant_type"])) {
             $this->postParams["grant_type"] = "password";
@@ -531,9 +559,9 @@ class HmmApi {
             $specializationFilter = "AND INSTR(tipusok, '|".intval($specializationId)."|')";
         }
 
-        $beoDatas = sql_query("SELECT b.*, o.id as orvosId, o.nev FROM orvos_beosztas b
+        $beoDatas = sql_query("SELECT b.*, o.id as orvosId, o.nev FROM orvos_beosztas_new b
             LEFT JOIN orvosok o ON o.id=b.orvosid
-            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND o.foid<>0", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate))])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND o.foid<>0 and b.helyszinid=? and b.aktiv=1 and b.noreservation=0 and instr(b.beocegek, ?)", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate)), $locationId, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"])->fetchAll(PDO::FETCH_ASSOC);
 
         $szabadsagData = [];
         $szabadsagok = sql_query("select * from szabadsag where datumtol>=? {$doctorFilterSzabadsag}", [date("Y-m-d", strtotime($startDate))])->fetchAll(PDO::FETCH_ASSOC);
@@ -556,6 +584,11 @@ class HmmApi {
                 $dayFound    = false;
                 $oneDayCheck = false;
                 $nap         = date("Y-m-d", strtotime(date("Y-m-d", strtotime($startDate))." + {$napOffset} day"));
+
+                if (strtotime($nap) > strtotime($endDate)) {
+                    continue;
+                }
+
                 $weekDay     = date("N", strtotime($nap));
                 $weekNumber  = date("W", strtotime($nap));
 
