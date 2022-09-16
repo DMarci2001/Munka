@@ -314,9 +314,11 @@ class AdminBookingEditor {
                 $this->utils->jsonOut(["error" => "error"]);
             }
 
-            $TAJ = $_REQUEST['AFForm'];
-            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ?", [$TAJ]))) {
-                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ?", [$TAJ]))) {
+            $taj = $_REQUEST["AFForm"];
+            $fid = $_REQUEST["fid"] ?? 0;
+            $pid = $_REQUEST["pid"] ?? 0;
+            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>?", [$taj, $pid]))) {
+                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>?", [$taj, $fid]))) {
                     $data["id"] = 0;
                 } else {
                     $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
@@ -429,7 +431,7 @@ class AdminBookingEditor {
             }
 
             $html .= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
-            $html .= "<input type='hidden' name='paciensid' value='{$row["paciensid"]}'/>";
+            $html .= "<input type='hidden' name='paciensid' id='paciensId' value='{$row["paciensid"]}'/>";
             $html .= "<input type='hidden' id='idopontmarker' value='" . substr($row["datum"], 0, 16) . "'/>";
             $html .= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
             $html .= "<table style='font-size:12px;'>";

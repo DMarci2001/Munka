@@ -639,6 +639,7 @@ function showIdopontEditor(page, p, id) {
 
 var lastTaj = "";
 function initTajEditor() {
+    /*
     $(".editortaj2").keydown(function () {
        lastTaj = $(this).val();
     });
@@ -648,7 +649,7 @@ function initTajEditor() {
             autoFill(true);
         }
     });
-
+    */
 }
 
 function startFoglalasMove(id, p) {
@@ -691,6 +692,8 @@ function duplicateReservation(id, p) {
 
 function autoFill(silent) {
     let taj = $("#editortaj").val().trim();
+    let fid = $("#reservationId").val();
+    let pid = $("#paciensId").val();
 
     if (taj == "" && !silent) {
         alert("Add meg a TAJ számot!");
@@ -705,7 +708,7 @@ function autoFill(silent) {
     $.ajax({
         url: 'index.php',
         type: 'POST',
-        data: { AFForm: taj },
+        data: { AFForm: taj, fid:fid, pid:pid },
         success: function (data) {
             if (data.error != "") {
                 if (!silent) {
