@@ -65,18 +65,34 @@ class AdminUtils
         return $h;
     }
 
-    public function showPaciensFiles($id)
-    {
+    public function showPaciensFiles($id):string {
+        $adminUser = new AdminUser();
+
         $htmlout = "";
-        $resf = sql_query("select * from dokumentumok where foglalasid=?", array($id));
-        if (sql_num_rows($resf) > 0) {
-            $htmlout .= "<div style='display:inline-block;'>";
-            $htmlout .= "<div style='background:#888;color:#fff;padding:5px;'>Paciens által feltöltött file(ok)</div>";
-            while ($rowf = sql_fetch_array($resf)) {
-                $htmlout .= "<div style='padding:1px 4px;'><a href='" . DocAgent::getDocURL($rowf) . "'>{$rowf["filename"]}</a></div>";
+        $files = sql_query("select * from dokumentumok where foglalasid=? order by datum desc", array($id))->fetchAll(PDO::FETCH_ASSOC);
+        $htmlout .= "<div style='display:inline-block;'>";
+        $htmlout .= "<div style=''>";
+        $htmlout .= "<strong>Feltöltött fájlok</strong>";
+        if ($adminUser->beutaloAccess()) {
+            if ($adminUser->beutaloHozzadasAccess() && Booking_Constants::SQL_DB == "hungariamed") {
+                $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='beutaloHozzadasa({$id});return false'><i class='fa-solid fa-circle-plus'></i> Beutaló</a>";
             }
+            if ($adminUser->beutaloHozzadasAccess()) {
+                $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='$(\"#beutalofile\").click();return false'><i class='fa-solid fa-circle-plus'></i> File</a>";
+                $htmlout .= "<input type='file' multiple onchange='beutaloFileUpload(this, {$id});' name='beutalofile' id='beutalofile' style='display:none;' />";
+            }
+
+            $htmlout .= "<div><img id='ajaxloaderbeutalo' style='display:none;height:16px;margin-top:5px;' src='/admin/images/loading.svg' /></div>";
             $htmlout .= "</div>";
+            foreach ($files as $file) {
+                $deleteLink = $adminUser->beutaloHozzadasAccess() ? "<a href='#' onclick='deleteUploadedFile({$file["id"]}, \"{$file["kod"]}\", {$file["foglalasid"]});return false;'><i class='fa-solid fa-trash'></i></a> ":"";
+                $htmlout .= "<div style='padding:1px 0px;'>{$deleteLink}<a target='_blank' href='" . DocAgent::getDocURL($file) . "'>{$file["filename"]}</a></div>";
+            }
+        } else {
+            $htmlout .= "<div>Nincs jogosultságod a fájlok megtekintéséhez</div>";
         }
+        $htmlout .= "</div>";
+
         return $htmlout;
     }
 

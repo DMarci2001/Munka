@@ -23,6 +23,30 @@ class AdminBookingEditor {
             die();
         }
 
+        if (isset($_POST["deleteuploadedfile"])) {
+            $docAgent = new DocAgent();
+            $docAgent->deleteDoc($_POST["id"], $_POST["k"]);
+
+            $reservationData = sql_query("select pass from foglalasok where id=?", [$_POST["fid"]])->fetch(PDO::FETCH_ASSOC);
+            Utils::jsonOut(["status" => "", "html" => $this->_showBookingEditor($_POST["fid"], $reservationData["pass"])]);
+        }
+
+        if (isset($_POST["uploadbeutalofile"])) {
+            $docAgent= new DocAgent();
+            $reservationId = intval($_POST["uploadbeutalofile"]);
+            $status = "";
+
+            foreach ($_FILES as $file) {
+                $result = $docAgent->saveDoc($file, ["fid" => $reservationId, "beutaloid" => 0]);
+                if ($result != "0") {
+                    $status = $result;
+                }
+            }
+
+            $reservationData = sql_query("select pass from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
+            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($reservationId, $reservationData["pass"])]);
+        }
+
         if (isset($_POST["foglalasmentesnaptar2"]) || isset($_POST["foglalasmentesnaptaresertesites2"]) && $this->user->authenticated()) {
             $fid=intval($_POST["fid"]);
             if (!isset($_POST["szuldatum"])) {
@@ -325,61 +349,8 @@ class AdminBookingEditor {
 
             $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
 
-            $files = $this->adminUtils->showPaciensFiles($row["id"]);
-            if ((!empty($files) && $row["noreservation"] != 1) || $this->user->beutaloHozzadasAccess()==1) {
-                $html .= "<div id='uploadfilesfolder' style='position:absolute;margin-top:70px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
-                $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='feltöltött fájlok' onclick='toggleUploadFiles();' src='images/Files-PNG-File.png' style='width:30px;cursor:pointer;' /></div></div>";
-                $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;width:200px;background:#ddd;overflow:hidden;'><div style='width:1000px;'>{$files}</div>";
-                if($this->user->beutaloHozzadasAccess()==1){
-                    $html.="<div style=\"padding:1px 4px;\"><a href=\"#\" onclick='beutaloHozzadasa({$id});return false'>+Beutaló hozzáadása+</a></div>";
-                }
-                
-                $html .= "</div></div></div>";
-            }
+            $html .= $this->_alkalmassagFolder($row);
 
-            $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
-            $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
-            $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
-
-            if (CompanyService::isFesztivalCompany($row["cegid"])) {
-                $text = nl2br($row["questions"]);
-                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
-                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
-                $html.= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
-                if (empty($row["orvosszoveg"])) {
-                    $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
-                }
-            }
-
-            $html.= "<div class='mainalkform'>";
-            foreach ($this->adminUtils->settings->alkalmassagvariaciok as $key => $value) {
-                $oc = "";
-                $sb = "";
-                if ($key != "I") {
-                    $oc = "onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
-                    $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
-                }
-                $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
-                if ($key == "I") $html .= "<div style='padding:0px 0px 0px 25px;'>
-                    <input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó 
-                    <input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó 
-                    <input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év 
-                    <input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év 
-                    <input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év
-                    </div>";
-                if ($key == "IN") {
-                    $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
-                }
-                if ($key == "K") {
-                    $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
-                }
-                $html .= "</div>";
-            }
-
-            $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
-
-
-            $html .= "</div>"; //mainalkform end
             $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
 
             $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
@@ -540,7 +511,7 @@ class AdminBookingEditor {
             $html .= "<td><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder' style='width:40px;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:150px;' type='text' name='varos' id='varos' value='{$row["varos"]}'></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td>";
+            $html .= "<td width='70'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td>";
             $html .= "<td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
@@ -563,7 +534,9 @@ class AdminBookingEditor {
             $html .= "</tr>";
 
             if ($this->user->paciensMegjegyzesAccess()) {
-                $html .= "<tr><td width='60'>Megjegyzés:</td><td colspan='3'><textarea data-taborder='14' class='ui-taborder' placeholder='\"Ebédidő\", \"ne foglalj\", stb is ide írd.' style='width:98%;height:60px;' name='megj'>{$row["megj"]}</textarea></td></tr>";
+                $html .= "<tr><td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' name='megj'>{$row["megj"]}</textarea></td>";
+                $html .= "<td colspan='2' valign='top'>".$this->_filesFolderNew($row)."</td>";
+                $html .= "</tr>";
             }
 
             $html .= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
@@ -649,5 +622,61 @@ class AdminBookingEditor {
 
         return $html;
     }
+
+    private function _filesFolderNew($row):string {
+        $html = "";
+        $files = $this->adminUtils->showPaciensFiles($row["id"]);
+        $html .= "<div style='padding:0px;width:275px;height:70px;overflow-y:auto;overflow-x: hidden;'><div style='width:1000px;'>{$files}</div>";
+        $html .= "</div></div>";
+        return $html;
+    }
+
+    private function _alkalmassagFolder($row):string {
+        $html = "";
+        $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
+        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
+        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
+
+        if (CompanyService::isFesztivalCompany($row["cegid"])) {
+            $text = nl2br($row["questions"]);
+            $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
+            $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
+            $html.= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+            if (empty($row["orvosszoveg"])) {
+                $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
+            }
+        }
+
+        $html.= "<div class='mainalkform'>";
+        foreach ($this->adminUtils->settings->alkalmassagvariaciok as $key => $value) {
+            $oc = "";
+            $sb = "";
+            if ($key != "I") {
+                $oc = "onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
+                $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
+            }
+            $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
+            if ($key == "I") $html .= "<div style='padding:0px 0px 0px 25px;'>
+                    <input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó 
+                    <input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó 
+                    <input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év 
+                    <input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év 
+                    <input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év
+                    </div>";
+            if ($key == "IN") {
+                $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
+            }
+            if ($key == "K") {
+                $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
+            }
+            $html .= "</div>";
+        }
+
+        $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
+
+        $html .= "</div>";
+        return $html;
+    }
+
 
 }

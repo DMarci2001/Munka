@@ -76,9 +76,17 @@ class DocAgent {
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
             if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
+                if (empty($fileData["fid"])) {
+                    $fileData["fid"] = 0;
+                }
+                if (empty($fileData["userid"])) {
+                    $reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]));
+                    $fileData["userid"] = $reservationData["paciensid"];
+                }
+
                 sql_query("insert into dokumentumok set 
-                    beutaloid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    array($fileData["beutaloid"], $fileData["userid"], $fileData["megnev"], $fileName, $fileSize, $extension));
+                    foglalasid=?, beutaloid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
+                    array($fileData["fid"], $fileData["beutaloid"], $fileData["userid"], $fileData["megnev"], $fileName, $fileSize, $extension));
                 $id = sql_insert_id();
 
                 if (isset($fileData["sess"])) {

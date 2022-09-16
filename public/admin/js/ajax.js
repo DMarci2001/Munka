@@ -3249,6 +3249,59 @@ function beutalohozzadasafinish(bid,fid,tname){
     });
 }
 
+function deleteUploadedFile(id, k, fid) {
+    if (!confirm("Biztos törlöd ezt a fájlt?")) {
+        return false;
+    }
+
+    $.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { deleteuploadedfile:true,id:id, k:k, fid:fid},
+        success: function (response) {
+            if (response.status != "") {
+                alert(response.status);
+            }
+            $("#idoponteditor").html(response.html);
+        }
+    });
+
+}
+
+function beutaloFileUpload(el, fid) {
+    files = el.files;
+
+    $("#ajaxloaderbeutalo").show();
+
+    //el.event.stopPropagation();
+    //el.event.preventDefault();
+
+    var data = new FormData();
+    data.append("page", "booking")
+    data.append("uploadbeutalofile", fid)
+    $.each(files, function (key, value) {
+        data.append(key, value);
+    });
+
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: data,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response, textStatus, jqXHR) {
+            $("#ajaxloaderbeutalo").hide();
+            $("#idoponteditor").html(response.html);
+            if (response.status != "") {
+                alert(response.status);
+            }
+        }, error: function (jqXHR, textStatus, errorThrown) {
+            $("#ajaxloaderbeutalo").hide();
+            console.log('ERRORS: ' + textStatus);
+        }
+    });
+}
 
 function elojegyzesSearchStart() {
     let key = $("#eljegyzessearchkey").val();

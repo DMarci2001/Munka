@@ -65,9 +65,6 @@ class AdminUser {
         "jog_tranzakciokezeles" => [
             "name" => "tranzakciók kezelése"
         ],
-        "jog_beutalokezeles" => [
-            "name" => "beutalók kezelése"
-        ],
         "jog_dokirexlekerdezesek" => [
             "name" => "Dokirex alapú lekérdezések"
         ],
@@ -104,8 +101,11 @@ class AdminUser {
         "jog_labortetelek" => [
             "name" => "Labor tételek kezelése"
         ],
+        "jog_beutalokezeles" => [
+            "name" => "beutalók kezelése"
+        ],
         "jog_beutalo_hozzadas" => [
-            "name" => "Beutaló hozzáadása a foglaláshoz (BP)"
+            "name" => "Beutalók feltöltése"
         ]
     ];
 
@@ -424,6 +424,10 @@ class AdminUser {
 
     public function chatAccess():bool {
         return $this->user["jog_chat"] == 1;
+    }
+
+    public function beallitasAccess():bool {
+        return $this->user["jog_beallitasok"] == 1;
     }
 
     public function beutaloHozzadasAccess():bool {
