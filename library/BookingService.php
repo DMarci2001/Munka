@@ -569,6 +569,21 @@ class BookingService
                 //36 - dr Bodonyi Melinda
                 $distFullDay = "2 day";
             }
+
+            //Magyar Állam kincstár 120 órás (5napos) időkorlát
+            if($cegId == 373 || $cegId == 374 || $cegId == 375 || $cegId == 376){
+                $dist = "5 day";
+
+                if (date("N") == 3) {
+                    $dist = "5 day";
+                }
+                if (date("N") == 4) {
+                    $dist = "6 day";
+                }
+                if (date("N") == 5) {
+                    $dist = "7 day";
+                }
+            }
         }
 
         //echo "|{$dist}|";

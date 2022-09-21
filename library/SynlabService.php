@@ -5,9 +5,11 @@ use mikehaertl\pdftk\Pdf;
 class SynlabService
 {
     private $patient = array();
+    private $filenames = [];
 
     public function __construct()
     {
+        
     }
 
     public function createLabItem()
@@ -392,7 +394,7 @@ class SynlabService
         $ReservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?", array($labshopCart["reservationid"])));
         $filename = "Laborkérő(" . rand(200, 1200000) . ") - Egyéni.pdf";
         $custom = false;
-        if(!empty($labshopCart["custom_ids"]) && $labshopCart["custom_ids"] != "[]"){
+        if (!empty($labshopCart["custom_ids"]) && $labshopCart["custom_ids"] != "[]") {
             $custom = true;
         }
 
@@ -434,7 +436,7 @@ class SynlabService
         foreach ($customIds as $tid) {
             $input["sltc-{$tid}"] = "Yes";
         }
-        
+
         //Ha csomag lett választva csak vagy vegyesen csomag és egyéni tétel akkor generáljon más fájl nevet
         if (isset($labshopCart["package_id"]) && $labshopCart["package_id"] != "") {
 
@@ -497,7 +499,7 @@ class SynlabService
         if (isset($_POST["neme"])) $input[$_POST["neme"]] = "Yes";
 
         //Laborkérő fájl név meg határozása:
-        if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+        if (isset($_POST["PackId"]) && !in_array($_POST["PackId"],array("",0))) {
             $pack = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?", array($_POST["PackId"])));
             $items = json_decode($pack["items"], true);
         }
@@ -508,7 +510,7 @@ class SynlabService
             if (strpos($index, "sltc") !== false) {
                 $input[$index] = "Yes";
 
-                if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+                if (isset($_POST["PackId"]) &&!in_array($_POST["PackId"],array("",0))) {
                     //Ellenőrzés, van-e csomagon felüli tétel:
                     if (!in_array($value, $items)) {
                         $custom = true;
@@ -549,14 +551,16 @@ class SynlabService
             }
         }
 
-        if (isset($_POST["PackId"]) && $_POST["PackId"] != "") {
+        if (isset($_POST["PackId"]) && !in_array($_POST["PackId"],array("",0))) {
             $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$pack["name"]} csomag.pdf";
             if ($custom == true) {
                 $filename = "Laborkérő(" . rand(200, 1200000) . ") - {$pack["name"]} csomag + Egyéni.pdf";
             }
         }
+       //Fájlok kiolvasása adatbázisból
+       $file = sql_fetch_array(sql_query("SELECT * FROM synlab_labor_kerolapok WHERE id=?",array($_POST["AppId"])));
 
-        $pdf = new Pdf("../../public/admin/templates/klinikai_kemia.pdf");
+        $pdf = new Pdf($file["path"] . $file["filename"]);
         $result = $pdf->fillForm($input)
             ->flatten()
             ->saveAs("../../public/admin/templates/" . $filename);
