@@ -325,6 +325,10 @@ class AdminReferralPage extends AdminCorePage {
 		} else {
 			echo "The file $filename does not exist";
 		}*/
+
+		if(!$this->adminUser->beutalomenupontAccess()) header("Location:index.php");
+
+		
 		
 		//BACK-END
 		$html=$columnTitle=$content="";

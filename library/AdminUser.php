@@ -106,7 +106,17 @@ class AdminUser {
         ],
         "jog_beutalo_hozzadas" => [
             "name" => "Beutalók feltöltése"
+        ],
+        "jog_beutalomenupont" => [
+            "name" => "Beutaló menüpont kezelése"
+        ],
+        "jog_elofoglalasmenupont" => [
+            "name" => "Előfoglalás menüpont kezelése"
+        ],
+        "jog_erkeztetes" =>[
+            "name" => "Érkeztetés menüpont kezelése"
         ]
+
     ];
 
     public function __construct()
@@ -432,6 +442,18 @@ class AdminUser {
 
     public function beutaloHozzadasAccess():bool {
         return $this->user["jog_beutalo_hozzadas"] == 1;
+    }
+
+    public function beutalomenupontAccess():bool{
+        return $this->user["jog_beutalomenupont"] == 1;
+    }
+
+    public function elofoglalasmenupontAccess():bool{
+        return $this->user["jog_elofoglalasmenupont"] == 1;
+    }
+   
+    public function erkeztetesmenupontAccess():bool{
+        return $this->user["jog_erkeztetes"] == 1;
     }
 
     public function onlyDoctorReservations():bool {
