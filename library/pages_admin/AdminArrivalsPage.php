@@ -123,6 +123,8 @@ class AdminArrivalsPage extends AdminCorePage
     }
 
     public function showPage() {
+
+        if(!$this->adminUser->erkeztetesmenupontAccess()) header("Location:index.php");
         //ob_start();
 
         //$datumtol=$_SESSION["blistanap"]." 00:00:00";
