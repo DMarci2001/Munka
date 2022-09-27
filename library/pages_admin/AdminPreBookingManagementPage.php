@@ -57,6 +57,9 @@ class AdminPrebookingmanagementPage extends AdminCorePage
 
     public function showPage()
     {
+
+        if(!$this->adminUser->elofoglalasmenupontAccess()) header("Location:index.php");
+
         //Azokat a foglalasokat ahol nincsen a prebookingstatus meghatározva és előfoglalás, átállítom "new"-ra az értéket.
         sql_query("UPDATE foglalasok SET prebookingstatus = 'new' WHERE datum = '1900-01-01 00:00:01' AND prebookingstatus IS NULL");
         /*
