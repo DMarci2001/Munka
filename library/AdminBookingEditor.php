@@ -317,6 +317,7 @@ class AdminBookingEditor {
             $taj = $_REQUEST["AFForm"];
             $fid = $_REQUEST["fid"] ?? 0;
             $pid = $_REQUEST["pid"] ?? 0;
+            
             if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>?", [$taj, $pid]))) {
                 if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>?", [$taj, $fid]))) {
                     $data["id"] = 0;

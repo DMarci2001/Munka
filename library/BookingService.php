@@ -572,9 +572,9 @@ class BookingService
 
             //Magyar Állam kincstár 120 órás (5napos) időkorlát
             if($cegId == 373 || $cegId == 374 || $cegId == 375 || $cegId == 376){
-                $dist = "5 day";
+                $dist = "14 day";
 
-                if (date("N") == 3) {
+                /*if (date("N") == 3) {
                     $dist = "5 day";
                 }
                 if (date("N") == 4) {
@@ -582,7 +582,7 @@ class BookingService
                 }
                 if (date("N") == 5) {
                     $dist = "7 day";
-                }
+                }*/
             }
         }
 
