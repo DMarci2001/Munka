@@ -128,7 +128,6 @@ class NotificationService {
                 return;
             }
 
-
             $cegId = $rowf["cegid"];
             if ($rowo = sql_fetch_array(sql_query("select * from orvosok where id=?", [$rowf["orvosassigned"]]))) {
                 $resp = sql_query("select * from smsphones where orvosid=? and smsfoglalas=1 and smsgroupfoglalas=0 and instr(cegek, ?)", [$rowo["id"], "|{$cegId}|"]);
@@ -151,11 +150,13 @@ class NotificationService {
                     }
 
                     $mail = $this->getDefaultMailer();
-                    $mail->FromName = Booking_Constants::COMPANY_NAME;
                     if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
-                        $mail->AddAddress($rowo["email"]);
+                        $addresses = explode(",", $rowo["email"]);
+                        foreach ($addresses as $address) {
+                            $mail->AddAddress(trim($address));
+                        }
                     }
 
                     if ($rowf["fgroupid"] != 0) {
@@ -200,13 +201,17 @@ class NotificationService {
                     if ($test == 1) {
                         $mail->AddAddress("jns@jns.hu");
                     } else {
-                        $mail->AddAddress($row["cegemail"]);
-                        if (!empty(trim($row["hmedemail"]))) {
-                            $row["hmedemail"] = str_replace(" ", "", $row["hmedemail"]);
-                            $addresses = explode(",", $row["hmedemail"]);
-
+                        if (!empty(trim($row["cegemail"]))) {
+                            $addresses = explode(",", $row["cegemail"]);
                             foreach ($addresses as $address) {
-                                $mail->AddAddress($address);
+                                $mail->AddAddress(trim($address));
+                            }
+                        }
+
+                        if (!empty(trim($row["hmedemail"]))) {
+                            $addresses = explode(",", $row["hmedemail"]);
+                            foreach ($addresses as $address) {
+                                $mail->AddAddress(trim($address));
                             }
                         }
                     }
