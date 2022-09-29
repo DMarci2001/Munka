@@ -190,12 +190,17 @@ class AdminBookingPage extends AdminCorePage
         if (isset($_POST["searchkey"])) {
             $key = $_SESSION["esearchkey"] = $_POST["searchkey"];
 
+            $cegFilter = "";
+            if (!$this->adminUser->allCegJog()) {
+                $cegFilter = "and f.cegid in (" . $this->adminUser->getCegList() . ")";
+            }
+
             $results = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f
                     left join cegek c on c.id=f.cegid
                     left join szurestipusok sz on sz.id=f.szurestipusid
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
-                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid ".($this->adminUser->onlyDoctorReservations()?" and f.orvosassigned=".intval($this->adminUser->user["orvosid"]):"")."
+                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid {$cegFilter} ".($this->adminUser->onlyDoctorReservations()?" and f.orvosassigned=".intval($this->adminUser->user["orvosid"]):"")."
                 order by f.datum desc
                 
                 limit 100",
@@ -301,7 +306,7 @@ class AdminBookingPage extends AdminCorePage
         if (empty($tipusok)) {
             $tipusok[] = 0;
         }
-        $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'menedzser'), megnev");
+        $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'Foglalkozás Egészségügyi'), !instr(megnev,'menedzser'), megnev");
         
 
         while ($szuresTipus = sql_fetch_array($szuresTipusok)) {
@@ -428,7 +433,7 @@ class AdminBookingPage extends AdminCorePage
                     }
 
                     $beoComment = trim($beosztas["bmegj"]);
-                    if (!empty($beoComment)) {
+                    if (!empty($beoComment) && $this->adminUser->allCegJog()) {
                         $beoComment.= " ({$minTol} - {$maxIg})";
                         $htmlout.= "<div style='margin:5px 0px;padding:2px 5px;background: red;color:#fff;display: inline-block;'>{$beoComment}</div>";
                     }

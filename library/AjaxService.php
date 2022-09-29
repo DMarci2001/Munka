@@ -52,7 +52,7 @@ class AjaxService {
                     die();
                 }
 
-                if ($bookingService->numberOfReservationRequired() <= 1) { //cib kivétel
+                if ($bookingService->numberOfReservationRequired() <= 1 && !in_array($_SESSION["helyszindata"]["id"], [375])) { //cib kivétel
                     echo "Erre a rendelésre az online bejelentkezés jelenleg nem üzemel kérjük jelentkezzen be ezen a telefon számon: " . $odata["tel"];
                     die();
                 }

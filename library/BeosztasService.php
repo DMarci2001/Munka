@@ -95,7 +95,12 @@ class BeosztasService {
         }
         $companyIds = array_unique($companyIds);
 
-        return sql_query("select id, megnev from cegek where id in (".implode(",", $companyIds).") order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        $cegFilter = "";
+        if (!$this->adminUser->allCegJog()) {
+            $cegFilter = "and id in (" . $this->adminUser->getCegList() . ")";
+        }
+
+        return sql_query("select id, megnev from cegek where id in (".implode(",", $companyIds).") {$cegFilter }order by megnev")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function beosztasCegFilterSQL($companyIds):string {

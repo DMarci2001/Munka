@@ -160,7 +160,7 @@ class AdminPage {
         $html.= "<div style='display: table-cell;padding-right: 10px;' id='chatbuttoncontainer'></div>";
         $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
         $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($this->adminUser->user, true)."&nbsp;&nbsp;</div>";
-        $html.= "<div style='display: table-cell;'>Felhasználó: <span style='color:#44f;'>".$this->adminUser->user["nev"]."</span> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
+        $html.= "<div style='display: table-cell;'>Felhasználó: <a style='color:#44f;' href='index.php?page=users&szerk=self'>".$this->adminUser->user["nev"]."</a> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
         $html.= "</div>";
         return $html;
     }
@@ -188,15 +188,22 @@ class AdminPage {
                 $url = "#";
                 $onClick = "toggleSubMenu({$menu["id"]});return false;";
             }
-            $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
 
+            $subMenuHtml = "";
             if (!empty($menu["submenu"])) {
-                $html .= "<div id='submenu{$menu["id"]}' style='margin:5px 0px;".(isset($_SESSION["opensubmenu"][$menu["id"]])?"":"display:none;")."'>";
+                $subMenuHtml .= "<div id='submenu{$menu["id"]}' style='margin:5px 0px;".(isset($_SESSION["opensubmenu"][$menu["id"]])?"":"display:none;")."'>";
                 foreach ($menu["submenu"] as $submenuItem) {
-                    $html .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $submenuItem["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$submenuItem["pageid"]}'>{$submenuItem["megnev"]}</a></div>";
+                    $subMenuHtml .= "<div><a class='mainmenuitem_sub" . ($_GET["page"] == $submenuItem["pageid"] ? "_aktiv" : "") . "' href='index.php?page={$submenuItem["pageid"]}'>{$submenuItem["megnev"]}</a></div>";
                 }
-                $html .= "</div>";
+                $subMenuHtml .= "</div>";
             }
+
+            if ($url != "#" || !empty($subMenuHtml)) {
+                $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
+            }
+
+            $html.= $subMenuHtml;
+
         }
 
         return $html;

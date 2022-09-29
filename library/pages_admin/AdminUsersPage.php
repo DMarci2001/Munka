@@ -10,9 +10,22 @@ class AdminUsersPage extends AdminCorePage {
     {
         parent::__construct();
 
+        if (isset($_GET["szerk"]) && $_GET["szerk"] == "self") {
+            $_GET["szerk"] = $this->adminUser->user["id"];
+        }
+
         $this->companyFilter = "u.cegid in (".$this->adminUser->getCegList().") and u.cegid<>0";
         if ($this->adminUser->jogosultsagAccess()) {
             $this->companyFilter = "true";
+        }
+
+        if (isset($_POST["usersavecancel"])) {
+            if ($this->adminUser->jogosultsagAccess()) {
+                header("location:index.php?page={$_GET["page"]}");
+            } else {
+                header("location:index.php");
+            }
+            die;
         }
 
         if (isset($_POST["usermentes"]) || isset($_POST["userform"])) {
@@ -33,16 +46,15 @@ class AdminUsersPage extends AdminCorePage {
                     $_POST["status"] = 0;
                 }
 
-                $fields = "auth2fac=?, localeaccess=?, localeip=?, jogosultsag=?, status=?";
-                $params = [$_POST["auth2fac"], $_POST["localeaccess"], $_POST["localeip"], $_POST["jogosultsag"], $_POST["status"]];
-
-                foreach (AdminUser::$jogosultsagLista as $jogKey => $jogosultsagData) {
-                    if (!isset($_POST[$jogKey])) {
-                        $_POST[$jogKey] = 0;
+                $permissions = [];
+                foreach ($_POST as $key => $value) {
+                    if (substr_count($key, "jog_")) {
+                        $permissions["permissions"][$key] = $value;
                     }
-                    $fields.= ", {$jogKey}=?";
-                    $params[] = $_POST[$jogKey];
                 }
+
+                $fields = "auth2fac=?, localeaccess=?, localeip=?, jogosultsag=?, status=?, permissions=?";
+                $params = [$_POST["auth2fac"], $_POST["localeaccess"], $_POST["localeip"], $_POST["jogosultsag"], $_POST["status"], json_encode($permissions, JSON_PRETTY_PRINT)];
 
                 $params[] = $id;
 
@@ -67,12 +79,19 @@ class AdminUsersPage extends AdminCorePage {
 
     public function showPage() {
         if (!$this->adminUser->jogosultsagAccess()) {
-            echo $this->noPermissionMessage();
-            return;
+            $GLOBALS["nopageaccess"] = true;
+            if (isset($_GET["szerk"]) && $_GET["szerk"] == $this->adminUser->user["id"]) {
+                $this->companyFilter = "true";
+                //saját magához mindenkinek van jogosultsága
+            } else {
+                echo $this->noPermissionMessage();
+                return;
+            }
         }
 
         if (isset($_GET["szerk"])) {
             $row = sql_fetch_array(sql_query("select u.*,c.megnev as cegnev from users u left join cegek c on c.id=u.cegid where u.id=? and {$this->companyFilter}", array($_GET["szerk"])));
+            $row = $this->adminUser->buildPermissions($row);
             $_POST = $row;
 
             echo "<div style='background-color:#fff;padding:0px;'>";
@@ -117,9 +136,29 @@ class AdminUsersPage extends AdminCorePage {
                 echo "</div>";
                 echo "</td></tr>";
 
-                foreach (AdminUser::$jogosultsagLista as $jogKey => $jogosultsagData) {
-                    echo "<tr><td></td><td><input type='checkbox' name='{$jogKey}' ".($_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;".ucfirst($jogosultsagData["name"])."</td></tr>";
+                echo "<tr><td></td><td>";
+
+                echo "<div style='display:table-cell;vertical-align: top;'>";
+                echo "<div style='font-weight: bold;margin-bottom: 5px;'>Oldalak elérése</div>";
+                $existingKeys = [];
+                $pages = sql_query("select group_concat(megnev separator ', ') as megnev, jogosultsag from adminmenu where aktiv=1 and jogosultsag<>'' group by jogosultsag order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($pages as $page) {
+                    $jogKey = $page["jogosultsag"];
+                    $existingKeys[] = $jogKey;
+                    echo "<div><input type='checkbox' name='{$jogKey}' ".($_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;".ucfirst($page["megnev"])."</div>";
                 }
+                echo "</div>";
+
+                echo "<div style='display:table-cell;vertical-align: top;'>";
+                echo "<div style='font-weight: bold;margin-bottom: 5px;'>Egyéb jogosultságok</div>";
+                foreach (AdminUser::$jogosultsagLista as $jogKey => $jogosultsagData) {
+                    if (!in_Array($jogKey, $existingKeys)) {
+                        echo "<div><input type='checkbox' name='{$jogKey}' " . ($_POST[$jogKey] == 1 ? "checked" : "") . " value='1' />&nbsp;" . ucfirst($jogosultsagData["name"]) . "</div>";
+                    }
+                }
+                echo "</div>";
+
+                echo "</td></tr>";
 
                 echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";
                 echo "<tr><td colspan='2' style='padding:5px 0px;border-top: 1px solid #888;'></td></tr>";
@@ -133,7 +172,7 @@ class AdminUsersPage extends AdminCorePage {
             echo "<div id='errorlistdiv' style='padding:10px;background:#f00;color:#fff;font-weight:bold;display:none;'></div>";
 
             echo "<br/><input type='submit' name='usermentes' value='Mentés'> ";
-            echo "<input type='submit' name='scancel' value='Vissza'> ";
+            echo "<input type='submit' name='usersavecancel' value='Vissza'> ";
 
             echo "</form>";
             echo "</div>";
@@ -159,7 +198,6 @@ class AdminUsersPage extends AdminCorePage {
             if (trim($row["nev"])=="") $row["nev"]="nincs neve";
             echo "<tr>";
             echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["nev"]}</a> ({$row["username"]})</div></td>";
-            //echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
 
 
             echo "<td valign='top'><div class='{$tc}'>";
@@ -169,7 +207,6 @@ class AdminUsersPage extends AdminCorePage {
                 for ($i=0;$i<count($j);$i++) {
                     if (isset($cegek[$j[$i]])) {
                         $cegList[]=$cegek[$j[$i]];
-                        //echo "<span style='padding:2px 5px;white-space:nowrap;background:#888;color:#fff;'>".$cegek[$j[$i]]."</span> ";
                     }
                 }
             }

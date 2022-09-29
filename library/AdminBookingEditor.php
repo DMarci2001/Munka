@@ -314,12 +314,18 @@ class AdminBookingEditor {
                 $this->utils->jsonOut(["error" => "error"]);
             }
 
+            $w = "";
+            if (!$this->user->allCegJog()) {
+                $w = "and cegid in (" . $this->adminUser->getCegList() . ")";
+            }
+
+
             $taj = $_REQUEST["AFForm"];
             $fid = $_REQUEST["fid"] ?? 0;
             $pid = $_REQUEST["pid"] ?? 0;
             
-            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>?", [$taj, $pid]))) {
-                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>?", [$taj, $fid]))) {
+            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w}", [$taj, $pid]))) {
+                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? {$w}", [$taj, $fid]))) {
                     $data["id"] = 0;
                 } else {
                     $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
@@ -431,17 +437,27 @@ class AdminBookingEditor {
                 $html .= "</div>";
             }
 
+            $allowNewCompany = $this->user->allCegJog() ? 1:0;
+            $mustChooseCompany  = $this->user->allCegJog() ? 0:1;
+
             $html .= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
             $html .= "<input type='hidden' name='paciensid' id='paciensId' value='{$row["paciensid"]}'/>";
             $html .= "<input type='hidden' id='idopontmarker' value='" . substr($row["datum"], 0, 16) . "'/>";
             $html .= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
+            $html .= "<input type='hidden' name='mustChooseCompany' id='mustChooseCompany' value='{$mustChooseCompany}'/>";
+            $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
             $html .= "<table style='font-size:12px;'>";
 
             $html .= "<tr><td width='60'>Cég:</td><td width='226'>";
             $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
             $html .= "<option value='0'>Nincs céghez kötve</option>";
 
-            foreach (sql_query("select * from cegek where true order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
+            $cegFilter = "";
+            if (!$this->user->allCegJog()) {
+                $cegFilter = "and id in (" . $this->user->getCegList() . ")";
+            }
+
+            foreach (sql_query("select id, megnev from cegek where true {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
                 $html .= "<option value='{$company["id"]}'" . ($row["cegid"] == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
             }
             $html .= "</select></td>";
@@ -569,9 +585,6 @@ class AdminBookingEditor {
             if (isset($_POST["page"])) {
                 $_GET["page"] = $_POST["page"];
             }
-
-            //$allowNewCompany = Booking_Constants::SQL_DB == "hungariamed" ? 1:0;
-            $allowNewCompany = 1;
 
             $html .= "<br><input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});' value='Mentés'/>&nbsp;&nbsp;";
             //$html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";

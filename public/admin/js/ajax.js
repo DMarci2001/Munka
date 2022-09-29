@@ -724,7 +724,8 @@ function autoFill(silent) {
                 $('input[name="irsz"]').val(data.irsz);
                 $('input[name="varos"]').val(data.varos);
                 $('input[name="utca"]').val(data.utca);
-                $('select[name="cegid"]').val(data.cegid);
+                $('#cegid').val(data.cegid);
+                $('#cegid').trigger('change');
                 $('input[name="szulhely"]').val(data.szulhely);
                 $('input[name="anyjaneve"]').val(data.anyjaneve);
                 $('input[name="torzsszam"]').val(data.torzsszam);
@@ -757,6 +758,8 @@ function foglalasMentes(page, allowNewCompany) {
     $("#naptarloading").show();
 
     let cegId = $("#cegid").val();
+    let allowNewCompany2 = $("#allowNewCompany").val();
+    let mustChooseCompany = $("#mustChooseCompany").val();
     if (isNaN(cegId)) {
         if (allowNewCompany == 0) {
             alert("Új cég bevitele nem engedélyezett, válassz a listából!");
@@ -766,6 +769,11 @@ function foglalasMentes(page, allowNewCompany) {
         if (!confirm("Új céget készülsz létrehozni ("+cegId+"), biztos vagy benne?")) {
             return;
         }
+    }
+
+    if (mustChooseCompany == 1 && cegId == 0) {
+        alert("Céget választani kötelező!");
+        return;
     }
 
     $.ajax({

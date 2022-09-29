@@ -4,7 +4,7 @@ class AdminUser {
 
     public $user;
 
-    public static $jogosultsagLista = [
+    public static array $jogosultsagLista = [
         "jog_jogset" => [
             "name" => "jogkörök kiosztása"
         ],
@@ -107,16 +107,18 @@ class AdminUser {
         "jog_beutalo_hozzadas" => [
             "name" => "Beutalók feltöltése"
         ],
-        "jog_beutalomenupont" => [
-            "name" => "Beutaló menüpont kezelése"
-        ],
         "jog_elofoglalasmenupont" => [
             "name" => "Előfoglalás menüpont kezelése"
         ],
         "jog_erkeztetes" =>[
             "name" => "Érkeztetés menüpont kezelése"
+        ],
+        "jog_onlydoctorreservations" => [
+            "name" => "Felhasználó saját foglalásait láthassa"
+        ],
+        "jog_megjegyzes" => [
+            "name" => "Paciens megjegyzéseket láthatja"
         ]
-
     ];
 
     public function __construct()
@@ -127,6 +129,8 @@ class AdminUser {
 
         if (isset($_SESSION["pid"])) {
             $user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
+
+            $user = $this->buildPermissions($user);
 
             if (!empty($user["pecsetszam"])) {
                 if ($orvosData = sql_query("select id, nev from orvosok where pecsetszam=?", [$user["pecsetszam"]])->fetch(PDO::FETCH_ASSOC)) {
@@ -248,7 +252,7 @@ class AdminUser {
     }
 
     public function getCegListArray():array {
-        $cl = [0];
+        $cl = [-1];
 
         if (!empty($this->user)) {
             if ($this->user["jogosultsag"] == 0) {
@@ -311,6 +315,20 @@ class AdminUser {
         return true;
     }
 
+    public function buildPermissions($user) {
+        $permissionData = json_decode($user["permissions"], JSON_OBJECT_AS_ARRAY);
+
+        foreach ($permissionData["permissions"] as $key => $value) {
+            $user[$key] = $value;
+        }
+
+        return $user;
+    }
+
+    private function checkPermission($key):bool {
+        return ($this->authenticated() && isset($this->user[$key]) && $this->user[$key] == 1);
+    }
+
     public function readOnlySelectedCegAccess():bool {
         return $this->authenticated() && $this->user["jogosultsag"] == 0;
     }
@@ -328,136 +346,131 @@ class AdminUser {
     }
 
     public function jogosultsagAccess():bool {
-        return $this->authenticated() && $this->user["jog_jogset"] == 1;
+        return $this->checkPermission("jog_jogset");
     }
 
     public function salaryAccess():bool {
-        return $this->user["jog_salary"] == 1;
+        return $this->checkPermission("jog_salary");
     }
 
     public function beosztasPageAccess():bool {
-        return $this->user["jog_schedule"] == 1;
+        return $this->checkPermission("jog_schedule");
     }
 
     public function dicomAccess():bool {
-        return $this->user["jog_dicom"] == 1;
+        return $this->checkPermission("jog_dicom");
     }
 
     public function placesAccess():bool {
-        return $this->user["jog_helyszinset"] == 1;
+        return $this->checkPermission("jog_helyszinset");
     }
 
     public function statAccess():bool {
-        return $this->user["jog_statisztika"] == 1;
+        return $this->checkPermission("jog_statisztika");
     }
 
     public function doctorsAccess():bool {
-        return $this->user["jog_orvosset"] == 1;
+        return $this->checkPermission("jog_orvosset");
     }
 
     public function doctorsCalendarAccess():bool {
-        return $this->user["jog_beosztasset"] == 1;
+        return $this->checkPermission("jog_beosztasset");
     }
 
     public function szabiAccess():bool {
-        return $this->user["jog_szabi"] == 1;
+        return $this->checkPermission("jog_szabi");
     }
 
     public function szurestipusAccess():bool {
-        return $this->user["jog_szurestipusset"] == 1;
+        return $this->checkPermission("jog_szurestipusset");
     }
 
     public function tranzakcioAccess():bool {
-        return $this->user["jog_tranzakciolatas"] == 1;
+        return $this->checkPermission("jog_tranzakciolatas");
     }
 
     public function tranzakcioModAccess():bool {
-        return $this->user["jog_tranzakciokezeles"] == 1;
+        return $this->checkPermission("jog_tranzakciokezeles");
     }
 
     public function beutaloAccess():bool {
-        return $this->user["jog_beutalokezeles"] == 1;
+        return $this->checkPermission("jog_beutalokezeles");
     }
 
     public function dokirexQueryAccess():bool {
-        return $this->user["jog_dokirexlekerdezesek"] == 1;
+        return $this->checkPermission("jog_dokirexlekerdezesek");
     }
 
     public function cegModAccess():bool {
-        return $this->user["jog_cegset"] == 1;
+        return $this->checkPermission("jog_cegset");
     }
 
     public function leletAccess():bool {
-        return $this->leletModAccess() || $this->user["jog_leletlatas"] == 1;
+        return $this->leletModAccess() || $this->checkPermission("jog_leletlatas");
     }
 
     public function leletModAccess():bool {
-        return $this->user["jog_leletszerk"] == 1;
+        return $this->checkPermission("jog_leletszerk");
     }
 
     public function oltasAccess():bool {
-        return $this->authenticated() && $this->user["jog_oltasigenyek"] == 1;
+        return $this->checkPermission("jog_oltasigenyek");
     }
 
     public function vizsgStatAccess():bool {
-        return $this->authenticated() && $this->user["jog_vizsg_stat"] == 1;
+        return $this->checkPermission("jog_vizsg_stat");
     }
 
     public function paciensMegjegyzesAccess():bool {
-        return $this->user["jog_megjegyzes"] == 1;
+        return $this->checkPermission("jog_megjegyzes");
     }
 
-
     public function beallitasMunkaszunetinapokAccess():bool {
-        return $this->user["jog_munkaszunetinapok"] == 1;
+        return $this->checkPermission("jog_munkaszunetinapok");
     }
 
     public function beallitasTevekenysegnaploAccess():bool {
-        return $this->user["jog_tevekenysegnaplo"] == 1;
+        return $this->checkPermission("jog_tevekenysegnaplo");
     }
 
     public function beallitasLangAccess():bool {
-        return $this->user["jog_lang"] == 1;
+        return $this->checkPermission("jog_lang");
     }
 
     public function beallitasWebAdatokAccess():bool {
-        return $this->user["jog_webadatok"] == 1;
+        return $this->checkPermission("jog_webadatok");
     }
 
     public function labortetelAccess():bool{
-        return $this->user["jog_labortetelek"] == 1;
+        return $this->checkPermission("jog_labortetelek");
     }
 
     public function beallitasBPsegedtablaAccess():bool {
-        return $this->user["jog_bp_seged_tabla"] == 1;
+        return $this->checkPermission("jog_bp_seged_tabla");
     }
 
     public function chatAccess():bool {
-        return $this->user["jog_chat"] == 1;
-    }
-
-    public function beallitasAccess():bool {
-        return $this->user["jog_beallitasok"] == 1;
+        return $this->checkPermission("jog_chat");
     }
 
     public function beutaloHozzadasAccess():bool {
-        return $this->user["jog_beutalo_hozzadas"] == 1;
+        return $this->checkPermission("jog_beutalo_hozzadas");
     }
 
     public function beutalomenupontAccess():bool{
-        return $this->user["jog_beutalomenupont"] == 1;
+        return $this->checkPermission("jog_beutalomenupont");
     }
 
     public function elofoglalasmenupontAccess():bool{
-        return $this->user["jog_elofoglalasmenupont"] == 1;
+        return $this->checkPermission("jog_elofoglalasmenupont");
     }
-   
+
     public function erkeztetesmenupontAccess():bool{
-        return $this->user["jog_erkeztetes"] == 1;
+        return $this->checkPermission("jog_erkeztetes");
     }
 
     public function onlyDoctorReservations():bool {
-        return $this->user["jog_onlydoctorreservations"] == 1 && $this->userIsOrvos();
+        return $this->checkPermission("jog_onlydoctorreservations") && $this->userIsOrvos();
     }
 
     public function userIsOrvos():bool {
