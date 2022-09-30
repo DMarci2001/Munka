@@ -571,7 +571,7 @@ class BookingService
             }
 
             //Magyar Állam kincstár sok órás (13 napos) időkorlát
-            if(in_array($cegId, [373,374,375,376])){
+            if(in_array($cegId, [375])){
                 $dist = "13 day";
 
                 /*if (date("N") == 3) {
@@ -583,6 +583,10 @@ class BookingService
                 if (date("N") == 5) {
                     $dist = "7 day";
                 }*/
+            }
+
+            if(in_array($cegId, [373,374,376])){
+                $dist = "6 day";
             }
 
             //0 óra foglalási idő ha a Magyar Államkincstár orvosra akar foglalni :P
