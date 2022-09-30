@@ -590,7 +590,7 @@ class BookingService
             }
 
             //0 óra foglalási idő ha a Magyar Államkincstár orvosra akar foglalni :P
-            if(in_array($orvosId,[1089])){
+            if(in_array($orvosId,[1089,841])){
                 $dist = "0 hour";
             }
         }
