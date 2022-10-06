@@ -112,6 +112,8 @@ class BookingPage extends CorePage
 
 
         if (isset($_POST["idopontfoglalas"])) {
+            $companyService = new CompanyService();
+
             //nem kötelező mezők létrehozása ha nincsenek
             if (!isset($_POST["taj"]))       $_POST["taj"] = "";
             if (!isset($_POST["szulhely"]))  $_POST["szulhely"] = "";
@@ -127,6 +129,10 @@ class BookingPage extends CorePage
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
 
             $laborszoveg = $this->bookingService->getLaborSzoveg();
+            $_POST = $companyService->fillMAKPaciensData($_POST);
+            if (!empty($_POST["error"])) {
+                $this->errors[] = $_POST["error"];
+            }
 
             if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -459,7 +465,7 @@ class BookingPage extends CorePage
 
         $tipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$_POST["szurestipus"]]));
 
-        if (!isset($_POST["email"])) {
+        if (!isset($_POST["email"]) && !isset($_POST["nev"])) {
             $_POST["datum"] = $_POST["datumText"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
             $_POST["rinterval"] = 0;
             if (isset($_SESSION["user"])) {
@@ -977,13 +983,15 @@ class BookingPage extends CorePage
 
         $html .= "<select name='helyszin' id='helyszin' onchange='selectedTipus({$_REQUEST["szurestipus"]}, this.value);'>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
-        foreach ($helyszinek as $rowt) {
-            if ($_SESSION["helyszindata"]["nocim"] == 1) {
-                $rowt["cim"] = $rowt["megnev"];
-            }
-            $html .= "<option value='{$rowt["id"]}'" . ($_POST["helyszin"] == $rowt["id"] || $numOfH == 1 ? " selected" : "") . ">{$rowt["cim"]}</option>";
-            if ($numOfH == 1) {
-                $_POST["helyszin"] = $rowt["id"];
+        if (!empty($szuresTipus)) {
+            foreach ($helyszinek as $rowt) {
+                if ($_SESSION["helyszindata"]["nocim"] == 1) {
+                    $rowt["cim"] = $rowt["megnev"];
+                }
+                $html .= "<option value='{$rowt["id"]}'" . ($_POST["helyszin"] == $rowt["id"] || $numOfH == 1 ? " selected" : "") . ">{$rowt["cim"]}</option>";
+                if ($numOfH == 1) {
+                    $_POST["helyszin"] = $rowt["id"];
+                }
             }
         }
         $html .= "</select>";

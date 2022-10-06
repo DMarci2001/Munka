@@ -70,11 +70,12 @@ class AdminUtils
 
         $htmlout = "";
         $files = sql_query("select * from dokumentumok where foglalasid=? order by datum desc", array($id))->fetchAll(PDO::FETCH_ASSOC);
+        $reservationData = sql_query("select cegid from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
         $htmlout .= "<div style='display:inline-block;'>";
         $htmlout .= "<div style=''>";
         $htmlout .= "<strong>Feltöltött fájlok</strong>";
         if ($adminUser->beutaloAccess()) {
-            if ($adminUser->beutaloHozzadasAccess() && Booking_Constants::SQL_DB == "hungariamed") {
+            if ($adminUser->beutaloHozzadasAccess() && Booking_Constants::SQL_DB == "hungariamed" && $reservationData["cegid"] == CompanyService::BP_ID) {
                 $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='beutaloHozzadasa({$id});return false'><i class='fa-solid fa-circle-plus'></i> Beutaló</a>";
             }
             if ($adminUser->beutaloHozzadasAccess()) {

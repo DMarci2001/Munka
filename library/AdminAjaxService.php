@@ -92,6 +92,10 @@ class AdminAjaxService {
                 $_SESSION["klinikavarosfilter"] = 0;
                 sql_query("insert into klinikak.klinikak set created=now(), megnev=''");
             }
+            if ($_GET["page"] == "klinikak" && $adminUser->statAccess()) {
+                $_SESSION["tipusfilter"] = [];
+                sql_query("insert into klinikak.klinikak set created=now(), megnev=''");
+            }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();

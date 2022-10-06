@@ -80,7 +80,7 @@ class DokirexService {
                 sql_query("update foglalasok set dokirex_userid=? where id=? limit 1", [$dokirexUserId, $params["fid"]]);
             }
 
-            return "Sikeres adatküldés!";
+            return "Sikeres adatküldés! {$dokirexUserId}";
         } else {
             return $response;
         }
@@ -176,7 +176,7 @@ class DokirexService {
 
 
     public function listFelhasznaloSzakrendeles():string {
-        $action = "/api/public/listFelhasznaloSzakrendeles?Tipus=2";
+        $action = "/api/public/listFelhasznaloSzakrendeles?Tipus=0";
 
         $params["token"] = $this->token;
 

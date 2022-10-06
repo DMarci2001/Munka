@@ -244,7 +244,7 @@ class AdminDoctorsPage extends AdminCorePage {
             $tol = date("Y-m-d 00:00:00", strtotime($_POST["start"]));
             $ig  = date("Y-m-d 23:59:59", strtotime($_POST["end"]." +1 day"));
 
-            $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN ? AND ? limit 20", array($_POST['orvosid'], $tol, $ig));
+            $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN ? AND ? AND nev<>'nincs név' limit 20", array($_POST['orvosid'], $tol, $ig));
             $data = "";
             while($result = sql_fetch_array($query)) {
                 $data.=$result['nev'].",".$result['datum']."|";

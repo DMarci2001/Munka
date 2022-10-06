@@ -84,16 +84,19 @@ class AdminUser {
             "name" => "Munkaszünetinapok kezelése"
         ],
         "jog_tevekenysegnaplo" => [
-            "name" => "Tevékenység napló kezelése"
+            "name" => "Tevékenység napló kezelése",
+            "description" => "Felhasználók tevékenységének megtekintése"
         ],
         "jog_lang" => [
             "name" => "Több nyelvű szövegek kezelése"
         ],
         "jog_webadatok" => [
-            "name" => "Web adatok kezelése"
+            "name" => "Web adatok kezelése",
+            "decription" => "Egyéb hmm weboldalak kezelése"
         ],
         "jog_bp_seged_tabla" => [
-            "name" => "BP segéd tábla kezelése"
+            "name" => "BP segéd tábla kezelése",
+            "description" => "Ezt nem tudom mi :)"
         ],
         "jog_chat" => [
             "name" => "Chat"
@@ -117,7 +120,8 @@ class AdminUser {
             "name" => "Felhasználó saját foglalásait láthassa"
         ],
         "jog_megjegyzes" => [
-            "name" => "Paciens megjegyzéseket láthatja"
+            "name" => "Paciens megjegyzéseket láthatja",
+            "description" => "A foglalás adatainál láthatja a paciens/foglalás megjegyzéseket"
         ]
     ];
 
@@ -427,6 +431,10 @@ class AdminUser {
 
     public function beallitasMunkaszunetinapokAccess():bool {
         return $this->checkPermission("jog_munkaszunetinapok");
+    }
+
+    public function beallitasAccess():bool {
+        return $this->checkPermission("jog_beallitasok");
     }
 
     public function beallitasTevekenysegnaploAccess():bool {

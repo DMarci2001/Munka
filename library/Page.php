@@ -96,6 +96,10 @@ class Page
             }
         //}
 
+        if (session_id() == "hfbqek335ru0n0hpc9qgbmvos5") {
+            echo "<div id='hmmchat' data-supportname='Hungariamed-M' data-supporttitle='Ügyfélszolgálat'></div>";
+        }
+
         echo "</body>";
     }
 

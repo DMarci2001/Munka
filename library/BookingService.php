@@ -572,7 +572,7 @@ class BookingService
 
             //Magyar Állam kincstár sok órás (13 napos) időkorlát
             if(in_array($cegId, [375])){
-                $dist = "13 day";
+                $dist = "0 hour";
 
                 /*if (date("N") == 3) {
                     $dist = "5 day";

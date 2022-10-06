@@ -6,6 +6,9 @@ class CompanyService {
     const UNIQA_ID          = 200;
     const HUNGAROCONTROL_ID = 201;
     const WABERERS_ID       = 129;
+    const BP_ID             = 382;
+
+    public static array $makIds = [373, 374, 375, 376];
 
     public function __construct()
     {
@@ -98,6 +101,9 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "szigetegyeb";
     }
 
+    public static function isMagyarAllamkincstar($companyId = 0):bool {
+        return in_array($companyId, self::$makIds) || substr_count($_SESSION["helyszindata"]["domain"], "mak-");
+    }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos
 
@@ -133,6 +139,32 @@ V: 1.0 1.0 .    KV: Cs IV
             return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
         }
         return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew";
+    }
+
+    public function fillMAKPaciensData($data) {
+        $data["error"] = "";
+        if (self::isMagyarAllamkincstar() && !empty(trim($data["taj"]))) {
+
+            if ($paciensData = sql_query("select * from felhasznalok where taj=? and cegid in (".implode(",", self::$makIds).")", [$data["taj"]])->fetch(PDO::FETCH_ASSOC)) {
+                //$paciensData["email"] = "jnsmobil@gmail.com";
+                $data["paciensid"] = $paciensData["id"];
+                $data["nev"] = $paciensData["nev"];
+                $data["email"] = $paciensData["email"];
+                $data["telefon"] = $paciensData["telefon"];
+                $data["szuldatum"] = $paciensData["szuldatum"];
+                $data["szulhely"] = $paciensData["szulhely"];
+                $data["anyjaneve"] = $paciensData["anyjaneve"];
+                $data["neme"] = $paciensData["neme"];
+                $data["irsz"] = $paciensData["irsz"];
+                $data["varos"] = $paciensData["varos"];
+                $data["utca"] = $paciensData["utca"];
+                $data["munkakor"] = $paciensData["munkakor"];
+            } else {
+                $data["error"] = "TAJ szám alapján nem található MAK ügyfél!";
+            }
+
+        }
+        return $data;
     }
 
 }

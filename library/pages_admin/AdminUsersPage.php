@@ -225,6 +225,50 @@ class AdminUsersPage extends AdminCorePage {
         }
         echo "</table>";
 
+
+        if (isset($_GET["addglobaljog"])) {
+            $users = sql_query("select * from users_copy where jog_megjegyzes=1")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($users as $u) {
+                $user = sql_query("select * from users where id=?", [$u["id"]])->fetch(PDO::FETCH_ASSOC);
+                $jogok = json_decode($user["permissions"], JSON_OBJECT_AS_ARRAY);
+
+                if (!isset($jogok["permissions"]["jog_megjegyzes"])) {
+                    $jogok["permissions"]["jog_megjegyzes"] = 1;
+                    echo "<pre>{$user["username"]}".print_r($jogok, true)."</pre>";
+                }
+
+                sql_query("update users set permissions=? where id=?", [json_encode($jogok, JSON_PRETTY_PRINT), $user["id"]]);
+            }
+        }
+
+
+        if (isset($_GET["convert"])) {
+            $users = sql_query("select * from users")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($users as $user) {
+                $jogosultsagok = [];
+                $jogok = [];
+
+                $pages = sql_query("select * from adminmenu where aktiv=1 and jogosultsag<>''")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($pages as $page) {
+                    $key = $page["jogosultsag"];
+                    if (isset($user[$key]) && $user[$key] == 1) {
+                        $jogok[$key] = $user[$key];
+                    }
+                }
+
+                foreach (AdminUser::$jogosultsagLista as $key => $jogosultsagData) {
+                    if (isset($user[$key]) && $user[$key] == 1) {
+                        $jogok[$key] = $user[$key];
+                    }
+                }
+
+                $jogosultsagok["permissions"] = $jogok;
+
+                sql_query("update users set permissions=? where id=?", [json_encode($jogosultsagok, JSON_PRETTY_PRINT), $user["id"]]);
+            }
+
+        }
+
     }
 }
 

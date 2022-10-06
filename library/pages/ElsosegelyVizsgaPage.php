@@ -92,6 +92,11 @@ class ElsosegelyVizsgaPage extends CorePage {
                             break;
                         }
 
+                        if (strtotime("now") < strtotime($user["validfrom"])) {
+                            $this->errors[] = "A belépési jogosultság ehhez a fiókhoz még nincs aktiválva!";
+                            break;
+                        }
+
                         $_SESSION["elsosegelyuser"] = $key;
                         header("location:index.php");
                         die;
@@ -110,17 +115,26 @@ class ElsosegelyVizsgaPage extends CorePage {
         [
             "username" => "null",
             "password" => "null12345",
+            "validfrom" => "2021-08-30 00:00:00",
             "validuntil" => "2025-12-31 00:00:00"
         ],
         [
             "username" => "teszt",
             "password" => "teszt2",
-            "validuntil" => "2021-12-31 00:00:00"
+            "validfrom" => "2021-08-30 00:00:00",
+            "validuntil" => "2022-08-30 00:00:00"
         ],
         [
             "username" => "teszt2",
             "password" => "teszt3",
-            "validuntil" => "2021-12-31 00:00:00"
+            "validfrom" => "2021-08-30 00:00:00",
+            "validuntil" => "2021-08-30 00:00:00"
+        ],
+        [
+            "username" => "teszt4",
+            "password" => "teszt5",
+            "validfrom" => "2022-10-01 08:00:00",
+            "validuntil" => "2022-10-10 00:00:00"
         ],
     ];
 

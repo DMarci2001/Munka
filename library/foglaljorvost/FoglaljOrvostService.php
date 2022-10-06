@@ -366,6 +366,26 @@ class FoglaljOrvostService extends FoGeneral {
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
+    public function deleteOneSpecificConsultation() {
+        $this->currentAction = "CONSULTATION_DEL";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="#ifcname#"
+                    MESSAGETYPE="CONSULTATION"
+                    ACTION="DEL"
+                    ROTATE_HASH="#rotatehash#" />
+                <DOCTOR
+                    OWN_ID="67"
+                    OUTERSYS_ID="8232" />
+                <CONSULTATION
+                    OWN_ID="30558"
+                    OUTERSYS_ID="203341"
+                    WEEK="1"
+                    STARTDATE="2022-03-29" />
+            </MESSAGE>';
+        return $this->sendMessageToFoglaljOrvost($xml);
+    }
 
     private function sendMessageToFoglaljOrvost($xml, $logId = 0) {
         if (!Booking_Constants::FO_CONNECTION_ENABLED) {

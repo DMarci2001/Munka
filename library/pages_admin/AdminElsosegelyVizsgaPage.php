@@ -55,6 +55,7 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
             //echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Oktatási azonosító</div></td>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Iskolai végzettség</div></td>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Szül. dátum</td>";
+            echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Szül. hely</td>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Email</td>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Irsz</td>";
             echo "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Város</td>";
@@ -80,6 +81,7 @@ class AdminElsosegelyVizsgaPage extends AdminCorePage
                 //echo "<td nowrap valign='top'><div class='{$tc}'>{$data["oktatasiazonosito"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["iskolavegzettseg"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$szuldatum}</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>{$data["szulhely"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["email"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["irsz"]}</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>{$data["varos"]}</div></td>";
