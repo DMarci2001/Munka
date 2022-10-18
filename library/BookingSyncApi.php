@@ -5,6 +5,11 @@ class BookingSyncApi {
 
     private $utils;
 
+    private array $placeSyncMap = [
+        "hungariamed" => [100, 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
+        "keltexmed"   => [292, 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
+    ];
+
     public function __construct() {
         $this->utils = new Utils();
     }
@@ -241,69 +246,61 @@ class BookingSyncApi {
         }
     }
 
-
     public function newReservation($reservationId) {
-        if ($reservation = $this->_getReservation($reservationId)) {
-            if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$reservation["pecsetszam"]]))) {
-                $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+        $clinic           = Booking_Constants::SQL_DB;
+        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $destinationPlace = $this->placeSyncMap[$clinic][1];
+        $apiURL           = $this->placeSyncMap[$clinic][2];
+        $reservation      = $this->_getReservation($reservationId);
 
-                if (isset($syncParameters["onlyhelyszin"]) && $reservation["helyszinid"] != $syncParameters["onlyhelyszin"]) {
-                    return;
-                }
+        if (!empty(trim($reservation["pecsetszam"])) && $reservation["helyszinid"] == $sourcePlace) {
+            $data = [
+                "source" => $clinic,
+                "action" => "storenewreservation",
+                "pecsetszam" => $reservation["pecsetszam"],
+                "defaulthelyszin" => $destinationPlace,
+                "reservation" => $reservation
+            ];
 
-                $data = [
-                    "source"          => Booking_Constants::SQL_DB,
-                    "action"          => "storenewreservation",
-                    "pecsetszam"      => $reservation["pecsetszam"],
-                    "defaulthelyszin" => $syncParameters["defaulthelyszin"],
-                    "reservation"     => $reservation
-                ];
-
-                $this->_send($data, $syncParameters["apiurl"]);
-            }
+            $this->_send($data, $apiURL);
         }
     }
 
     public function modifyReservation($reservationId) {
-        if ($reservation = $this->_getReservation($reservationId)) {
-            if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$reservation["pecsetszam"]]))) {
-                $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+        $clinic           = Booking_Constants::SQL_DB;
+        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $destinationPlace = $this->placeSyncMap[$clinic][1];
+        $apiURL           = $this->placeSyncMap[$clinic][2];
+        $reservation      = $this->_getReservation($reservationId);
 
-                if (isset($syncParameters["onlyhelyszin"]) && $reservation["helyszinid"] != $syncParameters["onlyhelyszin"]) {
-                    return;
-                }
+        if (!empty(trim($reservation["pecsetszam"])) && $reservation["helyszinid"] == $sourcePlace) {
+            $data = [
+                "source" => $clinic,
+                "action" => "modifyremotereservation",
+                "pecsetszam" => $reservation["pecsetszam"],
+                "defaulthelyszin" => $destinationPlace,
+                "reservation" => $reservation
+            ];
 
-                $data = [
-                    "source"          => Booking_Constants::SQL_DB,
-                    "action"          => "modifyremotereservation",
-                    "pecsetszam"      => $reservation["pecsetszam"],
-                    "defaulthelyszin" => $syncParameters["defaulthelyszin"],
-                    "reservation"     => $reservation
-                ];
-
-                $this->_send($data, $syncParameters["apiurl"]);
-            }
+            $this->_send($data, $apiURL);
         }
     }
 
     public function deleteReservation($reservationData) {
-        if ($orvosData = sql_query("SELECT * FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC)) {
-            if ($syncData = sql_fetch_array(sql_query("select * from remoteids r where r.tipus='orvos' and remoteid=?", [$orvosData["pecsetszam"]]))) {
-                $syncParameters = json_decode($syncData["megnev"], JSON_OBJECT_AS_ARRAY);
+        $clinic           = Booking_Constants::SQL_DB;
+        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $apiURL           = $this->placeSyncMap[$clinic][2];
+        $orvosData        = sql_query("SELECT id, pecsetszam FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC);
 
-                if (isset($syncParameters["onlyhelyszin"]) && $reservationData["helyszinid"] != $syncParameters["onlyhelyszin"]) {
-                    return;
-                }
+        if (!empty(trim($orvosData["pecsetszam"])) && $reservationData["helyszinid"] == $sourcePlace) {
+            $data = [
+                "source"          => Booking_Constants::SQL_DB,
+                "action"          => "deleteremotereservation",
+                "pecsetszam"      => $orvosData["pecsetszam"],
+                "reservationpass" => $reservationData["pass"]
+            ];
 
-                $data = [
-                    "source"          => Booking_Constants::SQL_DB,
-                    "action"          => "deleteremotereservation",
-                    "pecsetszam"      => $orvosData["pecsetszam"],
-                    "reservationpass" => $reservationData["pass"]
-                ];
-
-                $this->_send($data, $syncParameters["apiurl"]);
-            }
+            $this->_send($data, $apiURL);
         }
     }
 
