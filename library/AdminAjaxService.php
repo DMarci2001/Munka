@@ -663,6 +663,7 @@ class AdminAjaxService {
         if (isset($_POST["checkChat"])) {
             $number = 0;
             $button = "";
+            $users  = "";
             if (!empty($adminUser->user)) {
                 if ($adminUser->chatAccess()) {
                     $color = "#33cc33";
@@ -682,10 +683,31 @@ class AdminAjaxService {
                         $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i></span>";
                     }
                 }
+                $users = $this->getActiveUsers($adminUser);
             }
-            $this->jsonOut(["number" => $number, "button" => $button]);
+            $this->jsonOut(["number" => $number, "button" => $button, "users" => $users]);
         }
 
+    }
+
+    private function getActiveUsers(AdminUser $adminUser):string {
+        $html = "";
+
+        if (!empty($adminUser->user)) {
+            sql_query("update users set lastlogin=now() where id=?", [$adminUser->user["id"]]);
+            if ($adminUser->beallitasTevekenysegnaploAccess()) {
+                $users = sql_query("select nev, username from users where lastlogin>date_sub(now(), interval 1 minute) order by username")->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($users as $user) {
+                    $html .= "<div>{$user["username"]}</div>";
+                }
+            }
+            if (!empty($html)) {
+                $html = "<div style='font-weight: bold;margin-bottom: 5px;'>Bejelentkezve:</div></b>{$html}";
+            }
+        }
+
+        return $html;
     }
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {

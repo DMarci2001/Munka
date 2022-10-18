@@ -110,6 +110,9 @@ class AdminUser {
         "jog_beutalo_hozzadas" => [
             "name" => "Beutalók feltöltése"
         ],
+        "jog_file_hozzadas" => [
+            "name" => "File feltöltése"
+        ],
         "jog_elofoglalasmenupont" => [
             "name" => "Előfoglalás menüpont kezelése"
         ],
@@ -133,6 +136,8 @@ class AdminUser {
 
         if (isset($_SESSION["pid"])) {
             $user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
+
+            $user["auth2fac"] = 0;
 
             $user = $this->buildPermissions($user);
 

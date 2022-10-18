@@ -284,6 +284,12 @@ class BookingService
                 continue;
             }
 
+            if ($_SESSION["helyszindata"]["id"] == 46 && strtotime("{$nap}") > strtotime("2022-10-31") && Booking_Constants::SQL_DB == "hungariamed") {
+                //vodafone okt 31-ig foglalhat
+                $html.= "</td>";
+                continue;
+            }
+
             $html.="<div style='display:table;width:100%;'>";
 
             //<-- MARCI KÓDJA, HA VALAMI NEM STIMMELNE :) -->
@@ -570,9 +576,8 @@ class BookingService
                 $distFullDay = "2 day";
             }
 
-            //Magyar Állam kincstár sok órás (13 napos) időkorlát
             if(in_array($cegId, [375])){
-                $dist = "0 hour";
+                $dist = "13 day";
 
                 /*if (date("N") == 3) {
                     $dist = "5 day";
@@ -586,7 +591,11 @@ class BookingService
             }
 
             if(in_array($cegId, [373,374,376])){
-                $dist = "6 day";
+                $dist = "0 hour";
+            }
+
+            if(in_array($cegId, [342])){
+                $dist = "0 hour";
             }
 
             //0 óra foglalási idő ha a Magyar Államkincstár orvosra akar foglalni :P

@@ -152,8 +152,8 @@ class AdminDoctorsPage extends AdminCorePage {
         if (isset($_POST["syncbeosztas"])) {
             if ($this->adminUser->doctorsCalendarAccess()) {
                 if (isset($_SESSION["orvosbeosztascegfilter"])) {
-                    $syncApi = new BookingSyncApi();
-                    $syncApi->sendBeosztas($_POST["pecsetszam"], $_SESSION["orvosbeosztascegfilter"]);
+                    //$syncApi = new BookingSyncApi();
+                    //$syncApi->sendBeosztas($_POST["pecsetszam"], $_SESSION["orvosbeosztascegfilter"]);
                 }
             }
             $_POST["orvosmentes"]=1;

@@ -117,6 +117,7 @@ class AdminPage {
         if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
             echo "<td valign='top' width='150' class='menuoszlop'>";
             echo $this->_menuColumn();
+            echo "<div id='loggedusers' style='border-top:1px solid #888;color:#888;padding:10px;width:160px;overflow:hidden;font-size: 11px;'></div>";
             echo "</td>";
         }
 
@@ -174,7 +175,7 @@ class AdminPage {
             $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         }
 
-        $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;color:#9cf3c3;'>";
+        $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;'>";
 
         foreach ($this->adminMenu as $menu) {
             if ($menu["sorrend"] == 0) {

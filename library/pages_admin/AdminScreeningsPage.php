@@ -197,8 +197,7 @@ class AdminScreeningsPage extends AdminCorePage
 			echo "<input type='checkbox' value='1' name='webdoktor'" . ($_POST["webdoktor"] == 1 ? " checked" : "") . "> Web-doktor vizsgálat&nbsp;&nbsp;";
 			echo "<input type='checkbox' value='1' name='hideorvosvalaszto'" . ($_POST["hideorvosvalaszto"] == 1 ? " checked" : "") . "> Orvos választó elrejtése&nbsp;&nbsp;";
 			echo "<input type='checkbox' value='1' name='disablefileupload'" . ($_POST["disablefileupload"] == 1 ? " checked" : "") . "> Fájl feltöltés kikapcsolása&nbsp;&nbsp;"; 
-			echo "<input type='checkbox' value='1' name='custompatientemail_option'" . ($_POST["custompatientemail_option"] == 1 ? " checked" : "") . "> Egyéni e-mail szöveg&nbsp;&nbsp;"; 
-			//echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.kerdezfeleleksor').show() } else { $('.egyeniadatsor').hide() }\" name='askandansweraktiv'" . ($_POST["askandansweraktiv"] == 1 ? " checked" : "") . "> Kérdez / Felelek&nbsp;&nbsp;"; 
+			//echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.kerdezfeleleksor').show() } else { $('.egyeniadatsor').hide() }\" name='askandansweraktiv'" . ($_POST["askandansweraktiv"] == 1 ? " checked" : "") . "> Kérdez / Felelek&nbsp;&nbsp;";
 			echo "<input type='checkbox' value='1' onchange=\"if (this.checked) { $('.egyeniadatsor').show() } else { $('.egyeniadatsor').hide() }\" ".($_POST["customform"] == 1 ? " checked" : "")." name='customform'" . ($_POST["customform"] == 1 ? " checked" : "") . "> Egyéni adatmezők&nbsp;&nbsp;";
             echo "<input type='checkbox' value='1' name='ispack' onchange=\"if (this.checked) { $('.csomagsor').show() } else { $('.csomagsor').hide() }\" ".($_POST["ispack"] == 1 ? " checked" : "")."> Ez egy szűréscsomag";
             
@@ -276,7 +275,7 @@ class AdminScreeningsPage extends AdminCorePage
             }
 			
 			echo "<tr><td colspan='2'><div class='tdsepdiv'>Egyéni e-mail szöveg a páciensnek</div></td></tr>";
-            echo "<tr><td colspan='2'><textarea name='custompatientemail_text' style='height:80px;width:500px;'>{$row["custompatientemail_text"]}</textarea></td></tr>";
+            echo "<tr><td colspan='2'><input type='checkbox' value='1' name='custompatientemail_option'" . ($_POST["custompatientemail_option"] == 1 ? " checked" : "") . "> Egyéni e-mail szöveg&nbsp;&nbsp;<br/><textarea name='custompatientemail_text' style='height:80px;width:500px;'>{$row["custompatientemail_text"]}</textarea></td></tr>";
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Árak</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='submit' name='addprice' value='+ ár hozzáadása'></td></tr>";

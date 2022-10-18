@@ -3337,6 +3337,7 @@ function checkChat() {
         method: "POST",
         data: { checkChat:1 },
         success: function (response) {
+            $("#loggedusers").html(response.users);
             $("#chatbuttoncontainer").html(response.button);
             if (response.number != 0) {
                 $.toast({

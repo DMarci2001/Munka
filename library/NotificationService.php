@@ -49,7 +49,7 @@ class NotificationService {
     public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
-        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon 
+        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, sz.custompatientemail_option, sz.custompatientemail_text, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon 
         FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
@@ -490,18 +490,17 @@ class NotificationService {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
         $packText = $this->_getPackText($row);
-
-        $extraMsg = "";
+        $extraMsg = ($row["custompatientemail_option"] == 1 && !empty($row["custompatientemail_text"]))? "<br/>".nl2br($row["custompatientemail_text"])."<br/>" : "<br/>";
 
         if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
             if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
                 $c = explode(",", $row["domain"]);
-                $extraMsg = "A kiállított leleteit és dokumentumait a " . Booking_Constants::SITE_PROTOCOL . "://{$c[0]}." . Booking_Constants::SITE_DOMAIN . " oldalon a taj számával megtekintheti online.<br/>";
+                $extraMsg = "<br/>A kiállított leleteit és dokumentumait a " . Booking_Constants::SITE_PROTOCOL . "://{$c[0]}." . Booking_Constants::SITE_DOMAIN . " oldalon a taj számával megtekintheti online.<br/>";
             }
         }
 
         $mbody = "";
-        $mbody .= "<h1>{$row["datum"]} - {$row["helyszin"]}</h1>";
+        $mbody .= "<h1>".date("Y.m.d. H:i", strtotime($row["datum"]))." - {$row["helyszin"]}</h1>";
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
         if (!$this->isVarolista($row)) {

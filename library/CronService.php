@@ -98,7 +98,7 @@ class CronService {
         //$this->sendSzabadsag2FoglaljOrvostBatch();
         //$this->checkSzabadsagCollisions();
         //$this->checkCollisions();
-        //$this->dokirexUserIdFill();
+        $this->dokirexUserIdFill();
 
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
@@ -129,10 +129,10 @@ class CronService {
 
     private function dokirexUserIdFill() {
         $dokirexService = new DokirexService();
-        $result = $dokirexService->listFelhasznaloSzakrendeles();
-        echo json_encode(json_decode($result, JSON_OBJECT_AS_ARRAY), JSON_PRETTY_PRINT);echo "\n";die;
+        //$result = $dokirexService->listFelhasznaloSzakrendeles();
+        //echo json_encode(json_decode($result, JSON_OBJECT_AS_ARRAY), JSON_PRETTY_PRINT);echo "\n";die;
 
-        $reservations = sql_query("SELECT * FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 2 WEEK) AND nev<>'nincs név' AND szuldatum<>'' AND taj<>'' AND helyszinid=1 AND (dokirex_userid=0 or dokirex_userid<0) limit 1000")->fetchAll(PDO::FETCH_ASSOC);
+        $reservations = sql_query("SELECT * FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 2 WEEK) AND nev<>'nincs név' AND szuldatum<>'' AND taj<>'' AND helyszinid=1 AND (dokirex_userid=0 or dokirex_userid<0) limit 100000")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
             echo "user: {$reservation["szuldatum"]} {$reservation["taj"]} {$reservation["nev"]}\n";

@@ -80,8 +80,11 @@ class DocAgent {
                     $fileData["fid"] = 0;
                 }
                 if (empty($fileData["userid"])) {
-                    $reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]));
-                    $fileData["userid"] = $reservationData["paciensid"];
+                    if ($reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]))) {
+                        $fileData["userid"] = $reservationData["paciensid"];
+                    } else {
+                        $fileData["userid"] = 0;
+                    }
                 }
 
                 sql_query("insert into dokumentumok set 

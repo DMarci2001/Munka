@@ -516,10 +516,11 @@ class AdminBookingEditor {
             $html .= "</td></tr>";
 
             $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
+            $userNotificationMark = sql_query("select id from notifications where tipus='usernotification' and objectid=? and destination=?", [$id, $row["email"]])->fetch(PDO::FETCH_ASSOC) ? " <i style='color:#08a;' title='Visszaigazoló email kiment erre a címre' class='fa-solid fa-circle-check'></i>" : "";
 
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'>Taj szám:</td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
-            $html .= "<td width='60'>E-mail:</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
+            $html .= "<td width='60'>E-mail:{$userNotificationMark}</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'>Név:</td><td><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder' placeholder='Ide csak nevet írj' style='width:200px;' type='text' name='nev' value='{$row["nev"]}'></td>";
