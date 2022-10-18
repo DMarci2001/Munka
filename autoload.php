@@ -110,6 +110,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminDailyStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminMonthlyStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminUsersPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminPermissionsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminSalaryPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminInvoicesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminErrorPage.php");

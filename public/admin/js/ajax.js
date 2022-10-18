@@ -3348,3 +3348,41 @@ function checkChat() {
     });
 
 }
+
+
+function openPermissionEditor(key) {
+    let div = $("#permissioneditor_" + key);
+    if (div.is(":hidden")) {
+        $.ajax({
+            url: "index.php?page=permissions",
+            method: "POST",
+            data: {userlist: 1, key: key},
+            success: function (response) {
+                div.html(response.html);
+                div.show();
+            }
+        });
+    } else {
+        div.html("");
+        div.hide();
+    }
+}
+
+function savePermissionEditor(key) {
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=permissions",
+        data: "savepermissions=1&key=" + key + "&" + $("#userlist_"+key).serialize(),
+        success: function (data) {
+            let div = $("#permissioneditor_" + key);
+            div.html("");
+            div.hide();
+        }
+    });
+
+}
+
+
+function checkAllPermissionEditor(key, checked) {
+    $("#permissioneditor_"+key).find("input:checkbox").prop("checked", checked);
+}
