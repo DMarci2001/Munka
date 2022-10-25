@@ -246,9 +246,9 @@ class AdminPage {
                     continue;
                 }
 
-                if ($menuData["jogosultsag"] != "" && $this->adminUser->user[$menuData["jogosultsag"]] != 1) {
+                if ($menuData["jogosultsag"] != "" && isset($this->adminUser->user[$menuData["jogosultsag"]]) && $this->adminUser->user[$menuData["jogosultsag"]] != 1) {
                     continue;
-                }
+                } 
 
                 $subMenu = $this->getAdminMenu($menuData["id"]);
                 $menuData["submenu"] = $subMenu;

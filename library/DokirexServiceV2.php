@@ -118,44 +118,144 @@ class DokirexService {
     }
 
 
-    public function listPaciens():string {
+    public function listPaciens($skip=0,$take=10):string {
         $action = "/api/public/listPaciens";
 
         $params["token"] = $this->token;
-        $params["skip"] = 0;
-        $params["take"] = 10;
+        $params["skip"] = $skip;
+        $params["take"] = $take;
         //$params["PaciensID"] = 9;
         $params["columns"] = [
             "PaciensID" => true,
             "Nev" => true,
-            "Azonosito" => false,
-            "AzonositoTipusID" => false,
-            "SzuletesiDatum" => false,
-            "SzuletesiHely" => false,
-            "AnyjaNeve" => false,
-            "NemID" => false,
-            "SzuletesiNev" => false,
-            "AllampolgarsagID" => false,
-            "Telefon" => false,
-            "Mobiltelefon" => false,
-            "Iranyitoszam" => false,
-            "Telepules" => false,
-            "Cim" => false,
-            "Email" => false,
-            "SzigSzam" => false,
-            "KozgyogyTol" => false,
-            "KozgyogyIg" => false,
-            "KozgyogySzam" => false,
-            "FelvetelDatuma" => false,
-            "UtolsoModositasDatuma" => false,
-            "CegTelephelyID" => false,
-            "Megjegyzes" => false,
-            "PenztarID" => false,
-            "TagKod" => false,
-            "Biztosito" => false,
-            "Orszag" => false,
-            "StatusData" => false
+            "Azonosito" => true,
+            "AzonositoTipusID" => true,
+            "SzuletesiDatum" => true,
+            "SzuletesiHely" => true,
+            "AnyjaNeve" => true,
+            "NemID" => true,
+            "SzuletesiNev" => true,
+            "AllampolgarsagID" => true,
+            "Telefon" => true,
+            "Mobiltelefon" => true,
+            "Iranyitoszam" => true,
+            "Telepules" => true,
+            "Cim" => true,
+            "Email" => true,
+            "SzigSzam" => true,
+            "KozgyogyTol" => true,
+            "KozgyogyIg" => true,
+            "KozgyogySzam" => true,
+            "FelvetelDatuma" => true,
+            "UtolsoModositasDatuma" => true,
+            "CegTelephelyID" => true,
+            "Megjegyzes" => true,
+            "PenztarID" => true,
+            "TagKod" => true,
+            "Biztosito" => true,
+            "Orszag" => true,
+            "StatusData" => true
         ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+        $response = curl_exec($ch);
+        $this->log($action, json_encode($params), $response);
+
+        curl_close($ch);
+
+        return $response;
+    }
+
+    public function dokirexListPaciensInsert($startpoint=0,$quantity=1,$stepping=1){
+        $x=$startpoint;
+        $queryResult = array();
+        for($i=$startpoint;$i<($quantity+$startpoint);$i=$i+$stepping){
+            $listPaciens = json_decode($this->listPaciens($i,($stepping)),true);
+
+            echo "<br><br><strong>Lekérdezett adat mennyiség: ".count($listPaciens["data"])."db</strong><br><br>";
+            //Lefuttatom a dokirexből lekért állományi szegmenst
+            foreach($listPaciens["data"] as $key=>$array){
+                $data = $columns = array();
+                //Tömbökbe szedem az oszlop neveket és a hozzá tartozó értéket
+                foreach($array as $column=>$value){
+                    $data[] = $value;
+                    $columns[] = $column;
+                }
+                //Testreszabom az oszlop neveket, hogy illeszkedjen egy query hívásba stringesen.
+                $queryFields = implode("=?,",$columns);
+
+                
+
+                //Insertelem az adatok az adatbázisba.
+                sql_query("INSERT INTO dokirex_allomany SET {$queryFields}=?",$data);
+                $x++;
+                //echo "Adatok rögzítve! (#{$x}. - {$data[1]} - TAJ:{$data[2]})<br>";
+            }
+            $queryResult = array_merge($queryResult,$listPaciens["data"]);
+        }
+        return $queryResult;
+    }
+
+    public function dokirexListPaciensInsertLoop( $startpoint = 0, $quantity = 1000,$step = 100){
+       $eventpoint = $size = 0;
+       
+        do{
+            //Létrehozok egy eseménypontot, amit növelek a loop folyamán.
+            if($eventpoint==0) $eventpoint = $startpoint;
+            //Növelem a size értékét a lekérdezett adatokkal
+            $size = $size + count($this->dokirexListPaciensInsert($eventpoint,$quantity,$step));
+            //Lehívást követően növelem a eventpoint változót, hogy loopban tartsam a do-while-t,
+            $eventpoint=($eventpoint+$quantity);
+            //A eventpoint léptetését követően az $array és a változó mérete meg kell hogy egyezzen, ha végig tudott futni.
+            if(($startpoint+$size)<$eventpoint){
+                //Ha az $array értéke kisebb lesz, mint az új $startpoint akkor már hiányos volt az adatlekérdezés, szakítsa meg a loopot.
+                echo "Sikeres megszakítás! (#{$size}.)<br>";
+                break;
+            }
+        }while(($startpoint+$size)==$eventpoint);
+    }
+
+    public function listMunkakor():string {
+        $action = "/api/public/listMunkakor";
+
+        $params["token"] = $this->token;
+
+        $params["Aktiv"] = true;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+        $response = curl_exec($ch);
+        $this->log($action, json_encode($params), $response);
+
+        curl_close($ch);
+
+        return $response;
+    }
+
+    public function listCegTelephelyByCegID($CegID):string {
+
+        //if(empty($CegID)) return "";
+
+        $action = "/api/public/listCegTelephelyByCegID";
+
+        $params["token"] = $this->token;
+
+        $params["CegID"] = $CegID;
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->apiURL.$action);

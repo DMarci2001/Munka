@@ -222,7 +222,7 @@ class AdminVaroteremPage extends AdminCorePage
 
     private function calcTimeData($paciensId):array {
         $data = [];
-        if ($paciensId != 0) {
+        if ($paciensId != 0 && isset($this->vizsgalatiLapLog[$paciensId])) {
             foreach ($this->vizsgalatiLapLog[$paciensId] as $log) {
                 //print_r($log);die;
                 if ($log["Muvelet"] == "insert") {
