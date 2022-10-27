@@ -1359,9 +1359,14 @@ class BookingService
         }
 
         //altipusok tárolása
+        $rinterval = $data["rinterval"];
         $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]));
         while ($row = sql_fetch_array($res)) {
             if (isset($data["altipus{$row["id"]}"])) {
+                if ($row["plusminute"] > $rinterval) {
+                    $rinterval = $row["plusminute"];
+                    sql_query("update foglalasok set rinterval=? where id=? limit 1", [$rinterval, $fid]);
+                }
                 sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
             }
         }

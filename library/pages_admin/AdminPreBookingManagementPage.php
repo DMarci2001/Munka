@@ -23,6 +23,8 @@ class AdminPrebookingmanagementPage extends AdminCorePage
 
     public function __construct()
     {
+        parent::__construct();
+
         if (isset($_POST["setPreBookingStatus"])) {
             if ($booking = sql_query("SELECT * FROM foglalasok WHERE id=?", array($_POST["setPreBookingStatus"]))) {
                 $key = array_search($_POST["indicator"], array_column($this->availableStatus, "value"));

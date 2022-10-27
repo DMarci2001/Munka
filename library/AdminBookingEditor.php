@@ -518,8 +518,17 @@ class AdminBookingEditor {
             $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
             $userNotificationMark = sql_query("select id from notifications where tipus='usernotification' and objectid=? and destination=?", [$id, $row["email"]])->fetch(PDO::FETCH_ASSOC) ? " <i style='color:#08a;' title='Visszaigazoló email kiment erre a címre' class='fa-solid fa-circle-check'></i>" : "";
 
+            $tajCheck = "";
+            if (!empty($row["taj"])) {
+                if (Utils::tajCheck($row["taj"])) {
+                    $tajCheck = " <i style='color:#08a;' title='TAJ szám helyes' class='fa-solid fa-circle-check'></i>";
+                } else {
+                    $tajCheck = " <i style='color:#f00;' title='Helytelen TAJ szám' class='fa-solid fa-circle-xmark'></i>";
+                }
+            }
+
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Taj szám:</td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
+            $html .= "<td width='60'><span title='{$tajCheckResult}'>Taj szám:{$tajCheck}</span></td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
             $html .= "<td width='60'>E-mail:{$userNotificationMark}</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
@@ -553,11 +562,12 @@ class AdminBookingEditor {
             $html .= "<td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td>";
             $html .= "</tr>";
 
+            $html .= "<tr>";
             if ($this->user->paciensMegjegyzesAccess()) {
-                $html .= "<tr><td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' name='megj'>{$row["megj"]}</textarea></td>";
-                $html .= "<td colspan='2' valign='top'>".$this->_filesFolderNew($row)."</td>";
-                $html .= "</tr>";
+                $html .= "<td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' name='megj'>{$row["megj"]}</textarea></td>";
             }
+            $html .= "<td colspan='2' valign='top'>".$this->_filesFolderNew($row)."</td>";
+            $html .= "</tr>";
 
             $html .= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
 

@@ -909,4 +909,23 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
         return $randomString;
     }
 
+    public static function tajCheck($taj):bool {
+        $taj = trim($taj);
+        if (!empty($taj)) {
+            if (strlen($taj) != 9) {
+                return false;
+            } else {
+                $checkNum = 0;
+                for ($i = 0; $i < 8; $i++) {
+                    $number = intval(substr($taj, $i, 1));
+                    $checkNum += $i % 2 == 1 ? $number*7 : $number*3;
+                }
+                if ($checkNum % 10 != substr($taj, -1)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 }

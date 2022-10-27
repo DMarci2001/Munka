@@ -246,7 +246,11 @@ class AdminPage {
                     continue;
                 }
 
-                if ($menuData["jogosultsag"] != "" && isset($this->adminUser->user[$menuData["jogosultsag"]]) && $this->adminUser->user[$menuData["jogosultsag"]] != 1) {
+                if ($menuData["jogosultsag"] != "" && !isset($this->adminUser->user[$menuData["jogosultsag"]])) {
+                    $this->adminUser->user[$menuData["jogosultsag"]] = 0;
+                }
+
+                if ($menuData["jogosultsag"] != "" && $this->adminUser->user[$menuData["jogosultsag"]] != 1) {
                     continue;
                 } 
 

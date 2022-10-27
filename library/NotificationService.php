@@ -124,6 +124,10 @@ class NotificationService {
 		WHERE f.id in (" . implode(",", $fids) . ")");
 
         while ($rowf = sql_fetch_array($resf)) {
+            if ($rowf["datum"] == "1900-01-01 00:00:01") {
+                return;
+            }
+
             if (self::hasNotification("doctornotification", $rowf["id"]) && $force == 0) {
                 return;
             }

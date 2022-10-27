@@ -3387,3 +3387,18 @@ function savePermissionEditor(key) {
 function checkAllPermissionEditor(key, checked) {
     $("#permissioneditor_"+key).find("input:checkbox").prop("checked", checked);
 }
+
+
+function beoSave(oid, beoId) {
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=doctors&szerk="+oid,
+        data: "savebeorow=1&"+$("#beorow"+beoId).serialize(),
+        success: function (data) {
+            $.toast({
+                text: "Beosztás mentve",
+                icon: 'success'
+            });
+        }
+    });
+}

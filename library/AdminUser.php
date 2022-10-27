@@ -137,7 +137,7 @@ class AdminUser {
         if (isset($_SESSION["pid"])) {
             $user = sql_fetch_array(sql_query("select * from users where id=?" ,array($_SESSION["pid"])));
 
-            $user["auth2fac"] = 0;
+            //$user["auth2fac"] = 0;
 
             $user = $this->buildPermissions($user);
 
