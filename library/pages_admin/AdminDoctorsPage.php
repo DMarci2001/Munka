@@ -600,7 +600,12 @@ class AdminDoctorsPage extends AdminCorePage {
                 echo "<div style='margin-bottom:10px;background:#f88;padding:10px;display:inline-block;'>{$hibak}</div>";
             }
 
+            echo "<div id='beoeditor'>";
+            echo $this->beoEditor->show($oid);
+            echo "</div>";
+
             echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='orvosform' value='1'/><input type='hidden' id='orvosid' name='orvosid' value='{$_POST["id"]}'/>";
+
             echo "<table style='font-size:12px;width: 100%;'>";
 
             echo "<tr><td width='100'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
@@ -618,10 +623,6 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<input type='radio' name='gender' value='2' ".($_POST["gender"]==2 ? "checked":"")."/> Nő <input type='radio' name='gender' value='1' ".($_POST["gender"]==1 ? "checked":"")."/> Férfi";
             echo "</td></tr>";
             echo "</table>";
-
-            echo "<div id='beoeditor'>";
-            echo $this->beoEditor->show($oid);
-            echo "</div>";
 
             echo "<table style='font-size:12px;width: 100%;'>";
             echo "<tr><td colspan='2'><div class='tdsepdiv' style='margin-top:10px;'>Szabadság</div></td></tr>";
