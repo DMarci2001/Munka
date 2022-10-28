@@ -205,7 +205,7 @@ class AdminBookingEditor {
 
                 if ($reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ? and szurestipusid=1 and tudoszuro=1", [$fid]))) {
                     //tüdőszűréshez másolás
-                    $replicationStatus = $this->bookingService->replicateReservationToAnotherService($reservationData, 102);
+                    $replicationStatus = $this->bookingService->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
                     $status.= $replicationStatus;
                 }
             }
