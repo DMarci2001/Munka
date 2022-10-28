@@ -371,7 +371,13 @@ class CronService {
 		    LEFT JOIN cegek c ON c.`id`=f.`cegid`
 		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND f.externalid=''");
             while ($row = sql_fetch_array($res)) {
+                $tel = $row["telefon"];
+                //ha aznap kapott már sms-t, ne menjen ki több
+                $skip = sql_query("select id from foglalasok where telefon=? and datum>? and datum<? and smssent=1 limit 1",  [$tel, date("Y-m-d 00:00:00", strtotime($row["datum"])), date("Y-m-d 23:59:59", strtotime($row["datum"]))])->fetch(PDO::FETCH_ASSOC);
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
+                if ($skip) {
+                    continue;
+                }
 
                 $szoveg = Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása van: ".substr($row["datum"],11,5)." {$row["cim"]}";
                 if ($row["rlang"] == "en") {
@@ -381,7 +387,6 @@ class CronService {
                     $szoveg = Booking_Constants::COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
                 }
 
-                $tel = $row["telefon"];
                 if (in_array(substr($tel,0,2),array("06","36"))) {
                     $this->utils->sendSMS($tel,$szoveg);
                     echo "sms sent to: {$tel}\n";
