@@ -11,10 +11,6 @@ class AdminKlinikakPage extends AdminCorePage
             $_SESSION["tipusfilter"] = [];
         }
 
-        if (!isset($_SESSION["klinikavarosfilter"])) {
-            $_SESSION["klinikavarosfilter"] = 0;
-        }
-
         if (isset($_REQUEST["showklinikaeditor"])) {
             echo $this->klinikaEditor($_REQUEST["showklinikaeditor"]);
             die;
@@ -48,15 +44,15 @@ class AdminKlinikakPage extends AdminCorePage
             unset($_SESSION["tipusfilter"]);
             $tipusok = sql_query("select * from klinikak.tipusok order by megnev")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($tipusok as $tipus) {
+
                 if (isset($_POST["tipusfilter{$tipus["id"]}"])) {
                     $_SESSION["tipusfilter"][] = $tipus["id"];
                 }
             }
 
-            $_SESSION["klinikavarosfilter"] = $_POST["klinikavarosfilter"];
-
             Utils::jsonOut(["message" => "Sikeres filter", "html" => $this->klinkaLista()]);
         }
+
 
         $GLOBALS["javascript"][] = "klinikak.js?v=".date("YmdHi");
     }
@@ -89,19 +85,6 @@ class AdminKlinikakPage extends AdminCorePage
         $html.= "<div style='margin-bottom:10px;font-weight: bold;'>Szűrés</div>";
         $html.= "<form name='tipusfilterform' id='tipusfilterform'>";
 
-        $html.= "<div style='margin-bottom:5px;'>";
-        $html.= "<select onchange='tipusFilterApply();' name='klinikavarosfilter' id='klinikavarosfilter'>";
-        $html.= "<option value='0'>Szűrés városra vagy régióra</option>";
-        $varosok = sql_query("select * from klinikak.klinikak group by regio order by regio")->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($varosok as $varos) {
-            $checked = $varos["regio"] === $_SESSION["klinikavarosfilter"];
-            $html.= "<div style='display:inline-block;'>";
-            $html.= "<option ".($checked ? "selected" : "")." value='{$varos["regio"]}'>{$varos["regio"]}</option>";
-            $html.= "</div>";
-        }
-        $html.= "</select>";
-        $html.= "</div>";
-
         $tipusok = sql_query("select * from klinikak.tipusok order by megnev")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($tipusok as $tipus) {
             $checked = in_array($tipus["id"], $_SESSION["tipusfilter"]);
@@ -118,8 +101,7 @@ class AdminKlinikakPage extends AdminCorePage
     private function klinkaLista() {
         $html = "";
 
-
-        $clinics = sql_query("SELECT k.*, IF (kt.id IS NULL, 0, COUNT(*)) AS db, GROUP_CONCAT(t.megnev SEPARATOR ', ') AS tipusok, GROUP_CONCAT(t.id SEPARATOR '|') AS tipusfilterids, SUM(IF(kt.price=0,1,0)) as arnelkul FROM klinikak.klinikak k 
+        $clinics = sql_query("SELECT k.*, IF (kt.id IS NULL, 0, COUNT(*)) AS db, GROUP_CONCAT(t.megnev SEPARATOR ', ') AS tipusok, GROUP_CONCAT(t.id SEPARATOR '|') AS tipusfilterids FROM klinikak.klinikak k 
             LEFT JOIN klinikak.`klinikatipusok` kt ON kt.`klinikaid`=k.id 
             LEFT JOIN klinikak.tipusok t ON t.id=kt.`tipusid` 
             GROUP BY k.id
@@ -130,24 +112,15 @@ class AdminKlinikakPage extends AdminCorePage
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Megnevezés</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>URL</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:30px;text-align: center;'>Szolgáltatások</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:30px;'></div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;text-align: center;'>Szolgáltatások</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Régió</div></td>";
-        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:20px;'>Százalék</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Százalék</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>Telefon</td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Megjegyzés</td>";
         $html.= "</tr>";
 
-
-        $klinikaDb = 0;
-
         foreach ($clinics as $row) {
             $notFound = false;
-
-            if (!empty($_SESSION["klinikavarosfilter"])) {
-                $notFound = $_SESSION["klinikavarosfilter"] != $row["regio"];
-            }
-
-
             if (!empty($_SESSION["tipusfilter"])) {
                 $tipusok = "|{$row["tipusfilterids"]}|";
                 //$html.= $tipusok;
@@ -162,8 +135,6 @@ class AdminKlinikakPage extends AdminCorePage
             if ($notFound) {
                 continue;
             }
-
-            $klinikaDb++;
 
             $tc = "tcella";
             if (!isset($first)) {
@@ -182,44 +153,17 @@ class AdminKlinikakPage extends AdminCorePage
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["megnev"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'><a target='_blank' href='{$row["url"]}'>{$row["url"]}</a></div></td>";
             $html.= "<td nowrap valign='top' style='text-align: center;'><div title='{$row["tipusok"]}' class='{$tc}' style='cursor: pointer;'>&nbsp;{$row["db"]}&nbsp;</div></td>";
-            if ($row["arnelkul"] > 0) {
-                $html .= "<td nowrap valign='top' style='text-align: center;'><div title='{$row["arnelkul"]} ár nélküli szolgáltatás' class='{$tc}' style='cursor: pointer;color:red;'>&nbsp;{$row["arnelkul"]}&nbsp;</div></td>";
-            } else {
-                $html .= "<td style='color:darkgreen;text-align: center;'><i class='fa-solid fa-check'></i></td>";
-            }
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["regio"]}</div></td>";
-            $html.= "<td nowrap valign='top' style='text-align: center;'><div class='{$tc}'>{$row["percent"]}%</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["percent"]}%</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["telefon"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["megj"]}</div></td>";
 
             $html.= "</tr>";
             $html.= "<tr><td colspan='10' ><div id='datarow{$row["id"]}' style='padding:10px 0px 10px 0px;display:none;'></div></td></tr>";
-
-            if (!empty($_SESSION["tipusfilter"])) {
-                $prices = sql_query("select kt.*,t.megnev from klinikak.klinikatipusok kt
-                left join klinikak.tipusok t on t.id=kt.tipusid
-                where klinikaid=? order by t.megnev", [$row["id"]])->fetchAll(PDO::FETCH_ASSOC);
-
-                $html.= "<tr><td colspan='10' ><div id='filterrow{$row["id"]}' style='background:#eee;padding:10px;display:inline-block;margin-bottom:10px;'>";
-                foreach ($prices as $price) {
-                    if (!in_array($price["tipusid"], $_SESSION["tipusfilter"])) {
-                        continue;
-                    }
-
-                    $html.= "<div style='display: table-row;'>";
-                    $html.= "<div style='display: table-cell;'>{$price["megnev"]}</div>";
-                    $html.= "<div style='display: table-cell;text-align: right;'>&nbsp;&nbsp;&nbsp;{$price["price"]} HUF</div>";
-                    $html.= "</div>";
-                }
-                $html.= "</div></td></tr>";
-            }
-
             $html.= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         $html.= "</table>";
 
-        if ($klinikaDb == 0) {
-            $html.= "<div style='padding-top: 10px;'>A szűrési feltételeknek egyik szolgáltató sem felel meg!</div>";
-        }
         return $html;
     }
 

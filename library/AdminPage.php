@@ -224,11 +224,14 @@ class AdminPage {
 
         $html.= "<div class='pagehead'>";
         $html.= "<div style='display:table-cell;vertical-align:middle;'>{$title}</div>";
-        if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
-            $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
-        }
-        if (isset($_GET["szerk"])) {
-            $html.= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
+
+        if (!isset($GLOBALS["nopageaccess"])) {
+            if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
+                $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
+            }
+            if (isset($_GET["szerk"])) {
+                $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
+            }
         }
         $html.= "</div>";
 

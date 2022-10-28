@@ -449,17 +449,17 @@ class SynlabService
         }
 
         //Létrehozom a laborkérő pdf-et
-        $pdf = new Pdf("../../public/admin/templates/klinikai_kemia.pdf");
+        $pdf = new Pdf("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/klinikai_kemia.pdf");
         $result = $pdf->fillForm($input)
             ->flatten()
-            ->saveAs("../../public/admin/templates/" . $filename);
+            ->saveAs("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
 
         if ($result === false) {
             $error = $pdf->getError();
 
             var_dump($error);
         }
-        return "../../public/admin/templates/" . $filename;
+        return "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename;
     }
 
     public function createPDF($data)
