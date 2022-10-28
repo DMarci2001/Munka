@@ -3402,3 +3402,28 @@ function beoSave(oid, beoId) {
         }
     });
 }
+
+function showEljottLog(fid) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: "showeljottlog=1&fid="+fid,
+        success: function (data) {
+            $.confirm({
+                title: 'Eljött checkbox napló',
+                content: data,
+                useBootstrap: false,
+                boxWidth: '300px',
+                buttons: {
+                    nemButton: {
+                        text: 'Ok',
+                        btnClass: 'btn-blue',
+                        action: function(){
+
+                        }
+                    }
+                }
+            });
+        }
+    });
+}

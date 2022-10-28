@@ -525,13 +525,13 @@ class AdminAjaxService {
                     }
                 }
 
-                //if ($adminUser->user["username"] == "jns") {
-                //    $data["confirm"] = "Már régi foglalás, biztos eljöttre állítod?";
-                //}
-
                 if ($data["confirm"] == "" || $_POST["force"] == 1) {
                     sql_query("update foglalasok set eljott=if(eljott=0, 1, 0) where id=? limit 1", [$id]);
                     sql_query("update foglalasok set eljottidopont=now() where id=? AND eljott=1 AND eljottidopont='0000-00-00 00:00:00' limit 1", [$id]);
+
+                    $eljottData = sql_query("select eljott, eljottidopont from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+
+                    logActivity("eljott", $id, $eljottData["eljott"] == 1 ? "eljöttre állítva" : "nem eljöttre állítva");
                 }
 
                 $data["html"] = AdminBookingEditor::eljottCheckbox(sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC));
@@ -688,6 +688,21 @@ class AdminAjaxService {
             $this->jsonOut(["number" => $number, "button" => $button, "users" => $users]);
         }
 
+        if (isset($_POST["showeljottlog"])) {
+            if (empty($adminUser->user)) {
+                die;
+            }
+
+            $logItems = sql_query("select l.*, u.username from activitylog l left join users u on u.id=l.userid where l.mid=? and l.tipus='eljott' order by datum", [$_POST["fid"]])->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($logItems)) {
+                echo "Még senki nem jelölte eljöttre.";
+            }
+
+            foreach ($logItems as $logItem) {
+                echo "<div>{$logItem["datum"]} {$logItem["username"]} {$logItem["megnev"]}</div>";
+            }
+            die;
+        }
     }
 
     private function getActiveUsers(AdminUser $adminUser):string {
