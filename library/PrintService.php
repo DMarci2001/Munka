@@ -13,14 +13,20 @@ class PrintService
         "karton"             => "karton.html",
         "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
         "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf",
-        "matrica"            => "matrica.html"
+        "matrica"            => "matrica.html",
+        "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf"
     );
 
     private $inputs = array(
         "covidkerdoiv" => array(
-            "nev", "lakcim", "telefon", "anyjaneve", "szulhely", "taj","email","szuldatum","datum"
+            "nev", "lakcim", "telefon", "anyjaneve", "szulhely", "taj", "email", "szuldatum", "datum"
         ),
-        "menedzsersetalolap" => array("nev","szulhely","szuldatum","cegnev","taj","vizsgnevdatum")
+        "menedzsersetalolap" => array(
+            "nev", "szulhely", "szuldatum", "cegnev", "taj", "vizsgnevdatum"
+        ),
+        "nkfihsetalolap" => array(
+            "nev", "szulhely", "szuldatum", "cegnev", "taj", "vizsgnevdatum","megj"
+        )
     );
 
     private $templateFileName = "";
@@ -85,20 +91,19 @@ class PrintService
             $data = $this->reservationData;
 
             //Végig megyek a dokumentumhoz tartozó adatmezőkön:
-            foreach($this->inputs[$this->templateId] as $field){
-                if(isset($data[$field])){
+            foreach ($this->inputs[$this->templateId] as $field) {
+                if (isset($data[$field])) {
                     $fields[$field] = $data[$field];
-                }elseif($field=="lakcim"){
-                    $fields[$field]=$data["irsz"]." ".$data["varos"].", ".$data["utca"];
+                } elseif ($field == "lakcim") {
+                    $fields[$field] = $data["irsz"] . " " . $data["varos"] . ", " . $data["utca"];
                 }
-               
             }
 
             //Dátum mező javítása:
-            if(isset($fields["datum"])){
-                $fields["datum"] = date("Y.m.d",strtotime($fields["datum"]));
+            if (isset($fields["datum"])) {
+                $fields["datum"] = date("Y.m.d", strtotime($fields["datum"]));
             }
-            
+
 
             $pdf = new FPDM("templates/{$this->templateFileName}");
             $pdf->Load($fields, true); // false-ra ha  ISO-8859-1, true-ra ha UTF-8 a beviteli szöveg
@@ -108,14 +113,15 @@ class PrintService
         }
     }
 
-    private function printAlkalmassagi() {
+    private function printAlkalmassagi()
+    {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
         $alkalmasMark = $nemalkalmasMark = $ideiglenesennemalkalmasMark = $ervenyes = "";
         if ($this->reservationData["alkalmassag"] == "I" || $this->reservationData["alkalmassag"] == "K") {
             $alkalmasMark = "_____________________";
-            $ervenyes = date("Y. m. d.", strtotime($this->reservationData["fsfsfs"]. " +{$this->reservationData["alkalmassagido"]} month"));
+            $ervenyes = date("Y. m. d.", strtotime($this->reservationData["fsfsfs"] . " +{$this->reservationData["alkalmassagido"]} month"));
         }
         if ($this->reservationData["alkalmassag"] == "N") {
             $nemalkalmasMark = "________________________";
@@ -134,13 +140,13 @@ class PrintService
             "alkalmas" => $alkalmasMark,
             "nem_alkalmas" => $nemalkalmasMark,
             "ideiglenesen_nem_alkalmas" => $ideiglenesennemalkalmasMark,
-            "kelte" => "Budapest, ".date("Y. m. d.", strtotime($this->reservationData["datum"])),
+            "kelte" => "Budapest, " . date("Y. m. d.", strtotime($this->reservationData["datum"])),
             "ervenyes" => $ervenyes,
             "korlatozas" => $this->pdfChars($this->reservationData["alkalmassagkorl"]),
             "ida_het" => $this->reservationData["alkalmassagikhet"]
         ];
 
-        $fileName = "alkalmassagi_".date("Y_m_d", strtotime($this->reservationData["datum"]))."_{$this->reservationData["nev"]}.pdf";
+        $fileName = "alkalmassagi_" . date("Y_m_d", strtotime($this->reservationData["datum"])) . "_{$this->reservationData["nev"]}.pdf";
 
         if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
             $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
@@ -162,7 +168,7 @@ class PrintService
             header("Cache-Control: must-revalidate");
             header('Content-transfer-encoding: binary');
             header("Content-Type: application/octet-stream");
-            header('Content-Disposition: attachment; filename="'.$fileName.'"');
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
             //header("Content-Type: application/pdf");
             echo $raw;
         }
@@ -262,7 +268,8 @@ class PrintService
         return iconv("UTF-8", "ISO-8859-2", $s);
     }
 
-    private function pdfChars($text) {
+    private function pdfChars($text)
+    {
         $text = str_replace("ő", "ö", $text);
         $text = str_replace("ű", "ü", $text);
         $text = str_replace("í", "i", $text);
