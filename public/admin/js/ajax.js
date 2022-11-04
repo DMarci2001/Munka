@@ -3387,3 +3387,43 @@ function savePermissionEditor(key) {
 function checkAllPermissionEditor(key, checked) {
     $("#permissioneditor_"+key).find("input:checkbox").prop("checked", checked);
 }
+
+
+function beoSave(oid, beoId) {
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=doctors&szerk="+oid,
+        data: "savebeorow=1&"+$("#beorow"+beoId).serialize(),
+        success: function (data) {
+            $.toast({
+                text: "Beosztás mentve",
+                icon: 'success'
+            });
+        }
+    });
+}
+
+function showEljottLog(fid) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: "showeljottlog=1&fid="+fid,
+        success: function (data) {
+            $.confirm({
+                title: 'Eljött checkbox napló',
+                content: data,
+                useBootstrap: false,
+                boxWidth: '300px',
+                buttons: {
+                    nemButton: {
+                        text: 'Ok',
+                        btnClass: 'btn-blue',
+                        action: function(){
+
+                        }
+                    }
+                }
+            });
+        }
+    });
+}

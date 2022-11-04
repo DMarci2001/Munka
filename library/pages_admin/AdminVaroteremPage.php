@@ -9,8 +9,9 @@ class AdminVaroteremPage extends AdminCorePage
 
     private array $colorSigns = [
         0 => ["Dokirexben nem található paciens", "#cfcfc4"],
-        1 => ["Van dokirex azonsító, de nincs vizsgálat", "#fdfd96"],
+        1 => ["Van dokirex azonosító, de nincs vizsgálat", "#fdfd96"],
         2 => ["Minden adat rendelkezésre áll", "#94fa92"],
+        3 => ["A TAJ szám nincs kitöltve", "#ffaaaa"],
     ];
 
     private array $szuresTipusok = [];
@@ -19,6 +20,9 @@ class AdminVaroteremPage extends AdminCorePage
     public function __construct()
     {
         parent::__construct();
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
 
         if (!isset($_SESSION["setday"])) {
             $_SESSION["setday"] = date("Y-m-d");
@@ -161,6 +165,10 @@ class AdminVaroteremPage extends AdminCorePage
                 }
                 if (!empty($timeData["diff"])) {
                     $colorSignCode = 2;
+                }
+
+                if (empty(trim($reservation["taj"])) || !Utils::tajCheck($reservation["taj"])) {
+                    $colorSignCode = 3;
                 }
 
                 $detailURL = "showIdopontEditor(\"{$_GET["page"]}\",\"{$reservation["pass"]}\",{$reservation["id"]});";

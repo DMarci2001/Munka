@@ -1359,9 +1359,14 @@ class BookingService
         }
 
         //altipusok tárolása
+        $rinterval = $data["rinterval"];
         $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]));
         while ($row = sql_fetch_array($res)) {
             if (isset($data["altipus{$row["id"]}"])) {
+                if ($row["plusminute"] > $rinterval) {
+                    $rinterval = $row["plusminute"];
+                    sql_query("update foglalasok set rinterval=? where id=? limit 1", [$rinterval, $fid]);
+                }
                 sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
             }
         }
@@ -1644,6 +1649,14 @@ class BookingService
                 die("errorFoglaljOrvost.hu foglalás nem helyezhető át másik orvoshoz!");
             }
 
+            //tüdőszűrés áthelyezése
+            if (Booking_Constants::SQL_DB == "keltexmed" && $this->copyReservationData["szurestipusid"] == 1) {
+                sql_query("delete from foglalasok where taj=? and taj<>'' and date(datum)=? and szurestipusid=? limit 1", [$this->copyReservationData["taj"], date("Y-m-d", strtotime($this->copyReservationData["datum"])), Booking_Constants::TUDOSZURES_ID]);
+                if ($reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ? and szurestipusid=1 and tudoszuro=1", [$fid]))) {
+                    $this->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
+                }
+            }
+
             $api = new BookingSyncApi();
             sql_query("update foglalasok set orvosassigned=? where id=?", array($orvosId, $newfid));
             if ($orvosId == $this->copyReservationData["orvosassigned"]) {
@@ -1667,6 +1680,11 @@ class BookingService
     public function removeIdopont($id, $code)
     {
         if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", array($id, $code)))) {
+            //tüdőszűrés törlése
+            if (Booking_Constants::SQL_DB == "keltexmed" && $rowf["szurestipusid"] == 1) {
+                sql_query("delete from foglalasok where taj=? and taj<>'' and date(datum)=? and szurestipusid=? limit 1", [$rowf["taj"], date("Y-m-d", strtotime($rowf["datum"])), Booking_Constants::TUDOSZURES_ID]);
+            }
+
             logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", json_encode($rowf, JSON_PRETTY_PRINT));
             $this->deleteReservation($id, $code);
         }
@@ -1792,7 +1810,12 @@ class BookingService
 
     public function replicateReservationToAnotherService($reservationData, $tipusId):string {
         $status = "";
-        if (sql_fetch_array(sql_query("select * from foglalasok where nev=? and taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["nev"], $reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
+
+        if (empty(trim($reservationData["taj"]))) {
+            return $status;
+        }
+
+        if (sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
             return $status;
         }
 

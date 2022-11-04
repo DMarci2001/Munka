@@ -124,6 +124,10 @@ class NotificationService {
 		WHERE f.id in (" . implode(",", $fids) . ")");
 
         while ($rowf = sql_fetch_array($resf)) {
+            if ($rowf["datum"] == "1900-01-01 00:00:01") {
+                return;
+            }
+
             if (self::hasNotification("doctornotification", $rowf["id"]) && $force == 0) {
                 return;
             }
@@ -387,6 +391,14 @@ class NotificationService {
         $template["subject"] = "{$rowf["cegnev"]} - időpont regisztráció {$rowo["nev"]} részére";
         $template["body"] = $mbody;
         $template["from"] = $from;
+
+        $docAgent = new DocAgent();
+        $res = sql_query("select * from dokumentumok where foglalasid=?", [$rowf["id"]]);
+        while ($docData = sql_fetch_array($res)) {
+            $docData["raw"] = $docAgent->getDoc($docData["id"]);
+            $template["docs"][] = $docData;
+        }
+
         return $template;
     }
 
