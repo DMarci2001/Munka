@@ -658,7 +658,7 @@ class AdminBookingPage extends AdminCorePage
             }
 
             if ($this->szuresTipusActual["id"] == $reservationData["szurestipusid"]) {
-                if(!empty($reservationData["dokirex_userid"])){
+                if(!empty($reservationData["dokirex_userid"]) && !in_array($reservationData["dokirex_userid"],array(-1,-2,-3))){
                     $htmlout .= "<img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;";
                 }
                 $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
