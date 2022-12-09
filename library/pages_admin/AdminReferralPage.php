@@ -264,7 +264,7 @@ class AdminReferralPage extends AdminCorePage {
 					$objWriter = IOFactory::createWriter($objPHPExcel, 'Xlsx');
 					$objWriter->save($folder.$filename.".xlsx");
 					$files[]=$folder.$filename.".xlsx";
-					$this->utils->create_zip($files, $zipPath,  8);
+					$this->utils->create_zip($files, $zipPath,  null);
 					
 					//Email(ek) készítése:
 					$mail = NotificationService::getDefaultMailer();
