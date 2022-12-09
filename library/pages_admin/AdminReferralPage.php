@@ -130,7 +130,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->SMTPSecure = "tls";
 					$mail->Port = 366;
 
-					$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Hamarosan lejár az alkalmassági igazolása!");
+					$t = "Hamarosan lejár az alkalmassági igazolása!";
 
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
@@ -202,7 +202,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->Port = 366;
 				
 			
-				$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Összesítő lista az értesítésekről - " . date("Y.m.d"));
+				$t = "Összesítő lista az értesítésekről - " . date("Y.m.d");
 
 				$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
 				$mbody.= "<p style='font-family:calibri;font-size:14px'>A csatolmány tartalmazza a kiértesített dolgozókat a ".date("Y.m.d")." dátumon elvégzett csoportos értesítésen.</p>";
@@ -287,7 +287,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->SMTPSecure = "tls";
 					$mail->Port = 366;
 
-					$t = iconv("UTF-8", "ISO-8859-2//IGNORE", "Aktuális alkalmassági lejáratok - " . date("Y.m.d"));
+					$t = "Aktuális alkalmassági lejáratok - " . date("Y.m.d");
 
 					
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Címzett!</h1>";
