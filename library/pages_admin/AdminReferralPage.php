@@ -129,6 +129,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->Password = "The9vae1";
 					$mail->SMTPSecure = "tls";
 					$mail->Port = 366;
+					$mail->charset="utf-8";
 
 					$t = "Hamarosan lejár az alkalmassági igazolása!";
 
@@ -180,6 +181,7 @@ class AdminReferralPage extends AdminCorePage {
 				
 				//Email(ek) készítése:
 				$mail = new PHPMailer\PHPMailer\PHPMailer();
+				$mail = NotificationService::getDefaultMailer();
 				$mail->From = Booking_Constants::NO_REPLY_ADDRESS;
 				$mail->FromName = Booking_Constants::COMPANY_NAME;
 				if (isset($_POST['saveTest'])) {
@@ -200,7 +202,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->Password = "The9vae1";
 				$mail->SMTPSecure = "tls";
 				$mail->Port = 366;
-				
+				$mail->charset="utf-8";
 			
 				$t = "Összesítő lista az értesítésekről - " . date("Y.m.d");
 
@@ -209,10 +211,11 @@ class AdminReferralPage extends AdminCorePage {
 				$mbody.= "<p style='font-family:calibri;font-size:14px'>Ez a levél automatikusan lett generálva.</p>";
 				$mbody.= "<p style='font-family:calibri;;font-size:14px'>Üdvözlettel</p>";
 				$mbody.= "<img src='https://hungariamed.hu/images/logo.png'>";
+				
 				$mail->Subject = $t;
 				$mail->Body = $mbody;
 				$mail->AddAttachment($folder.$overallExcel.".xlsx");
-				//$mail->Send();
+				$mail->Send();
 				
 				
 	
