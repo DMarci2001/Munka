@@ -212,7 +212,7 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->Subject = $t;
 				$mail->Body = $mbody;
 				$mail->AddAttachment($folder.$overallExcel.".xlsx");
-				$mail->Send();
+				//$mail->Send();
 				
 				
 	
