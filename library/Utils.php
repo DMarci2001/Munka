@@ -876,7 +876,9 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                 if($removeContainers != NULL)
                 {
                     $onlyFile = explode( "/", $file );
-                    $zip->addFile( $file, $onlyFile[$removeContainers] );
+                    $zip->addFile( $file,$onlyFile[array_key_last($onlyFile)]);
+                    //
+                    //$zip->addFile( $file, $onlyFile[$removeContainers] );
                 }
                 else
                 {
