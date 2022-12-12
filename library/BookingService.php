@@ -1140,8 +1140,9 @@ class BookingService
                 $h .= "<div style='margin:10px 0px;'>";
                 $h .= "<div style='font-weight:bold;'>Ha kér, válasszon kiegészítő szolgáltatást:</div>";
                 while ($row = sql_fetch_array($res)) {
+                    $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}</div>";
+                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
                 }
                 $h .= "</div>";
             }
@@ -1190,6 +1191,15 @@ class BookingService
                 $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
             }
 
+            //utolsó időpont check
+            if (empty($result["error"])) {
+                if ($doctorBeo = $this->beosztasService->getBeosztasDataForDoctor($data["orvosselected"], $nap, $data["helyszin"], $data["szurestipus"])) {
+                    $end = date("H:i", strtotime("{$data["datum"]} + {$allInterval} minute"));
+                    if (strtotime($end) > strtotime($doctorBeo["ig"])) {
+                        $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
+                    }
+                }
+            }
         }
         return $result;
     }

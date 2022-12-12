@@ -1015,6 +1015,9 @@ class BookingPage extends CorePage
         $html = "";
 
         $introText = $this->lang->getText("miert.bennunket.description.2", "");
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $introText = $this->lang->getText("miert.bennunket.keltexmed", "");
+        }
 
         $html .= "<div style='padding:0px 0px 30px 0px;'>";
         if (!empty($introText)) {

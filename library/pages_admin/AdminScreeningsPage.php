@@ -86,6 +86,7 @@ class AdminScreeningsPage extends AdminCorePage
 
         if (isset($_POST["szurestipusmentes"])) {
             if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
+            if (!isset($_POST["webkiemelt"])) $_POST["webkiemelt"]=0;
             if (!isset($_POST["infopage"])) $_POST["infopage"]=0;
             if (!isset($_POST["ispack"])) $_POST["ispack"]=0;
 			if (!isset($_POST["noreservation"])) $_POST['noreservation']=0;
@@ -150,8 +151,8 @@ class AdminScreeningsPage extends AdminCorePage
                     }
                 }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?, facode=?, infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=? where id=?",
-                    array($_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"], $_POST["facode"], $_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'],$_GET["szerk"]));
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?, facode=?, infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=?, webalias=?, webkiemelt=?, webdescription=? where id=?",
+                    [$_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"], $_POST["facode"], $_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'], $_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_GET["szerk"]]);
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -310,12 +311,21 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2'>&nbsp;</td></tr>";
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Leírás az info oldalra</div></td></tr>";
             echo "<tr><td colspan='2'><textarea name='infopagetext' style='height:80px;width:500px;'>{$row["infopagetext"]}</textarea></td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Weboldal szöveg <a onclick='$(\"#desceditor\").slideToggle();return false;' title='szerkesztés' target='_blank' href='#'><i class='fas fa-edit'></i></a></div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><div id='desceditor' style='".(empty(trim($_POST["webdescription"])) ? "display:none;":"")."'>";
+            echo "<textarea class='mce' name='webdescription' style='width:900px;height:600px;'>{$_POST["webdescription"]}</textarea><br/>";
+            echo "Alias: <input class='inputbox' style='width:200px;' type='text' name='webalias' value='{$_POST["webalias"]}' placeholder='ez lesz az url' />&nbsp;&nbsp;<input type='checkbox' value='1' name='webkiemelt'" . ($_POST["webkiemelt"] == 1 ? " checked" : "") . "> Kiemelve a weboldalon<br/>";
+            echo "</div></td></tr>";
+
+
             echo "</table>";
 
             echo "<br><input type='submit' name='szurestipusmentes' value='Mentés'> ";
             echo "<input type='submit' name='scancel' value='Vissza'> ";
             echo "</form>";
 
+            /*
             $res = sql_query("SELECT b.*,o.nev FROM orvos_beosztas_new b
             LEFT JOIN orvosok o ON o.id=b.`orvosid`
             WHERE INSTR(tipusok, ?) and o.pecsetszam<>'temp' GROUP BY b.orvosid", ["|{$row["id"]}|"]);
@@ -348,6 +358,7 @@ class AdminScreeningsPage extends AdminCorePage
                 }
                 echo "</table>";
             }
+            */
             echo "</div>";
             return;
         }

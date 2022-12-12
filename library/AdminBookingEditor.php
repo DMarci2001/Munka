@@ -154,6 +154,7 @@ class AdminBookingEditor {
                 sql_query("UPDATE felhasznalok SET alklejarat = '{$alkalmassagi}' WHERE id = {$result['id']} ");
             }
 
+            /*
             if( $_POST['kuponkod'] != "" ) {
                 $foglalas = sql_fetch_array(sql_query("SELECT fogl.datum, kl.foglalasid, fogl.szurestipusid FROM foglalasok fogl LEFT JOIN kupon_lista kl ON kl.foglalasid = fogl.id WHERE fogl.id = ? ", array( $fid )));
                 $check = kuponCheck($_POST['kuponkod'],3,date("Y-m-d",strtotime($foglalas['datum'])),$foglalas['szurestipusid']);
@@ -172,6 +173,7 @@ class AdminBookingEditor {
                     sql_query("DELETE FROM kupon_lista WHERE kuponkod = '{$result['kuponkod']}' AND foglalasid = {$fid} ");
                 }
             }
+            */
 
             if ($_POST["orvosassigned"] != $_POST["regiorvos"]) {
                 sql_query("update foglalasok set ertesitve=0 where id=?",array($fid));
@@ -323,9 +325,9 @@ class AdminBookingEditor {
             $taj = $_REQUEST["AFForm"];
             $fid = $_REQUEST["fid"] ?? 0;
             $pid = $_REQUEST["pid"] ?? 0;
-            
-            if (!$data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w}", [$taj, $pid]))) {
-                if ($data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? {$w}", [$taj, $fid]))) {
+
+            if (!$data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? {$w} order by datum desc limit 1", [$taj, $fid]))) {
+                if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w} order by id desc", [$taj, $pid]))) {
                     $data["id"] = 0;
                 } else {
                     $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
@@ -529,7 +531,7 @@ class AdminBookingEditor {
             }
 
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'><span title='{$tajCheckResult}'>Taj szám:{$tajCheck}</span></td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
+            $html .= "<td width='60'><span>Taj szám:{$tajCheck}</span></td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
             $html .= "<td width='60'>E-mail:{$userNotificationMark}</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";

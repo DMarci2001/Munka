@@ -63,6 +63,9 @@ require_once(__DIR__ . "/library/PatientService.php");
 require_once(__DIR__ . "/library/AdminUser.php");
 require_once(__DIR__ . "/library/SynlabService.php");
 require_once(__DIR__ . "/library/WebPageData.php");
+require_once(__DIR__ . "/library/Log.php");
+require_once(__DIR__ . "/library/Maps.php");
+require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
@@ -80,7 +83,6 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/AdminProtocolService.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
     require_once(__DIR__ . "/library/salary/SalaryCalculator.php");
-    require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
     require_once(__DIR__ . "/library/pages_admin/DailyStat/MonthlyStatService.php");
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
@@ -120,6 +122,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminLaborkeroPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLabortetelekPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminWebPageDataPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminContentsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminVaroteremPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");

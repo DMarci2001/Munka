@@ -57,6 +57,22 @@ class HmmApi {
             $result = $this->webPageData();
         }
 
+        if ($this->apiMethod == "doctordata") {
+            $result = $this->doctorData();
+        }
+
+        if ($this->apiMethod == "servicedata") {
+            $result = $this->serviceData();
+        }
+
+        if ($this->apiMethod == "locationsdata") {
+            $result = $this->locationsData();
+        }
+
+        if ($this->apiMethod == "contentdata") {
+            $result = $this->contentData();
+        }
+
         if ($this->apiMethod == "getReservationPatients") {
             $result = $this->getReservationPatients();
         }
@@ -184,6 +200,182 @@ class HmmApi {
         }
 
         return $locationArray;
+    }
+
+    private function doctorData():array {
+        $docAgent = new DocAgent();
+        $this->authNeeded = false;
+
+        $doctors = sql_query("SELECT o.id as orvosid, o.nev, o.webdescription, group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
+                LEFT JOIN orvosok o ON o.id=b.orvosid                                                                     
+                WHERE (nap<10 OR (nap=10 AND beonap>date(now()))) and tol<>0 and ig<>0 and b.aktiv=1 and o.aktiv=1 and o.pecsetszam<>'temp'
+                GROUP BY b.orvosid ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        $doctorData = [];
+        $serviceData = [];
+        $priceData = [];
+
+        foreach ($doctors as $doctor) {
+            $photos = $docAgent->getAssetsByType(DocAgent::ASSET_DOCTOR_PHOTO, $doctor["orvosid"]);
+            if (!empty($photos)) {
+                $tipusids = str_replace("|", "", str_replace("||", ",", $doctor["tipusok"]));
+
+                $services = [];
+                if (!empty($tipusids)) {
+                    $services = sql_query("select id, webalias, megnev from szurestipusok where id in ({$tipusids})")->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                $doctorData["doctors"][] = [
+                    "nev"      => $doctor["nev"],
+                    "id"       => $doctor["orvosid"],
+                    "photos"   => $photos,
+                    "tipusids" => $tipusids,
+                    "tipusok"  => $services,
+                    "webdescription" => $doctor["webdescription"],
+                ];
+            }
+        }
+
+        $services = sql_query("select t.id, t.megnev, t.webkiemelt, t.webalias, t.webdescription from szurestipusok t 
+                 left join dokumentumok d on d.assetid=? and d.dataid=t.id 
+                 where d.id is not null group by t.id order by t.megnev", [DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($services as $service) {
+            $photos = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $service["id"]);
+            if (!empty($photos)) {
+                $serviceData["services"][] = [
+                    "id"                => $service["id"],
+                    "nev"               => $service["megnev"],
+                    "webkiemelt"        => $service["webkiemelt"],
+                    "webalias"          => $service["webalias"],
+                    "webdescription"    => $service["webdescription"],
+                    "photos"            => $photos,
+                ];
+            }
+        }
+
+
+        $prices = sql_query("SELECT t.id AS tipusid, t.megnev as tipus, a.price, a.megnev FROM arak a 
+                LEFT JOIN szurestipusok t ON t.id=a.tipusid
+                WHERE INSTR(cegid, '|243|') ORDER BY t.megnev, a.megnev")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($prices as $price) {
+            $priceData[$price["tipus"]][] = [
+                "tipusid" => $price["tipusid"],
+                "price"   => $price["price"],
+                "megnev"  => $price["megnev"],
+            ];
+        }
+
+        return [
+            "doctorData" => $doctorData,
+            "serviceData" => $serviceData,
+            "priceData" => $priceData
+        ];
+    }
+
+
+    private function serviceData():array {
+        $docAgent = new DocAgent();
+        $this->authNeeded = false;
+
+        $doctors = sql_query("SELECT group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
+                LEFT JOIN orvosok o ON o.id=b.orvosid                                                                     
+                WHERE b.helyszinid=? and (nap<10 OR (nap=10 AND beonap>date(now()))) and tol<>0 and ig<>0 and b.aktiv=1 and o.aktiv=1 and o.pecsetszam<>'temp'
+                GROUP BY b.orvosid", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        $serviceData = [];
+        $tipusids = "";
+
+        foreach ($doctors as $doctor) {
+            $tipusids.= $doctor["tipusok"];
+        }
+
+        $tipusids = str_replace("|", "", str_replace("||", ",", $tipusids));
+
+        if (!empty($tipusids)) {
+            $services = sql_query("select id, megnev from szurestipusok where id in ({$tipusids}) order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($services as $service) {
+
+                $photos = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $service["id"]);
+                if (!empty($photos)) {
+                    $serviceData["services"][] = [
+                        "id"     => $service["id"],
+                        "nev"    => $service["megnev"],
+                        "photos" => $photos,
+                    ];
+                }
+            }
+        }
+
+        return [
+            "serviceData" => $serviceData
+        ];
+    }
+
+    private function locationsData():array {
+        $maps = new Maps();
+        $this->authNeeded = false;
+
+        $locationsData = [];
+        $locations = sql_query("SELECT id, geocodejson from helyszinek where aktiv=1 and halozat=1")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($locations as $location) {
+            $addressInfo = $maps->getAddressInfo(json_decode($location["geocodejson"], JSON_OBJECT_AS_ARRAY));
+            if ($addressInfo["lat"] != 0) {
+                $locationsData["locations"][] = $addressInfo;
+            }
+        }
+
+        return [
+            "locationsData" => $locationsData
+        ];
+    }
+
+    private function contentData():array {
+        $docAgent = new DocAgent();
+        $this->authNeeded = false;
+
+        $limit = $_GET["limit"] ?? 1;
+        $catId = $_GET["catid"] ?? 84;
+        $id = $_GET["id"] ?? 0;
+
+        $contents = [];
+
+        if ($id == 0) {
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') " . ($id == 0 ? "" : "AND c.id='{$id}'") . " order by created desc limit {$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.id=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00')", [$id])->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        foreach ($items as $contentData) {
+            $images = json_decode($contentData["images"], JSON_OBJECT_AS_ARRAY);
+            $introImage = "";
+            if (isset($images["image_intro"]) && !empty($images["image_intro"])) {
+                $introImage = "https://www.hungariamed.hu/{$images["image_intro"]}";
+            }
+
+            if (!empty($contentImages[$contentData["id"]]["contenttitleimage"])) {
+                $introImage = $contentImages[$contentData["id"]]["contenttitleimage"][0]["url"];
+            }
+
+            $images = $docAgent->getAssetsByType(DocAgent::ASSET_CONTENT_TITLE_IMAGE, $contentData["id"]);
+            if (!empty($images)) {
+                $introImage = "https://bejelentkezes.hungariamed.hu".$images[0]["url"];
+            }
+
+            $contents[] = [
+                "id"          => $contentData["id"],
+                "title"       => $contentData["title"],
+                "introImage"  => $introImage,
+                "created"     => $contentData["created"],
+                "alias"       => $contentData["alias"],
+                "fulltext"    => $contentData["fulltext"],
+            ];
+        }
+
+        return [
+            "contentData" => $contents
+        ];
     }
 
     private function webPageData():array {

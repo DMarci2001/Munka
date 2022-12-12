@@ -30,9 +30,9 @@ class CompanyService {
             $d = "bejelentkezes";
         }
 
-        if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array($d,$d)))) {
+        if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
 
-            if ($_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?",array("bejelentkezes","bejelentkezes")))) {
+            if ($_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array("bejelentkezes","bejelentkezes")))) {
                 if ($d == "erkezes") {
                     $_GET["page"] = "covidform";
                     return;

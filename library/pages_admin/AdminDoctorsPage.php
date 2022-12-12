@@ -342,8 +342,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     visszaigazol=?,
                     visszaigazolemail=?,
                     gender=?,
+                    webdescription=?,
                     aktiv=?
-                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["aktiv"], $oid));
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["webdescription"], $_POST["aktiv"], $oid));
 
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
@@ -645,6 +646,9 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Fotó</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_DOCTOR_PHOTO, $oid)."</div>";
             echo "</td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Weboldal bemutatkozás <a onclick='$(\"#desceditor\").slideToggle();return false;' title='szerkesztés' target='_blank' href='#'><i class='fas fa-edit'></i></a></div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><div id='desceditor' style='".(empty(trim($_POST["webdescription"])) ? "display:none;":"")."'><textarea class='mce' name='webdescription' style='width:800px;height:500px;'>{$_POST["webdescription"]}</textarea></div></td></tr>";
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Orvosi kérdések szűrésípusokhoz</div></td></tr>";
 			//Itt akkor az összes vizsgálatot ami bevan állítva az emberhez meg kell hogy jeleníteni O.o....

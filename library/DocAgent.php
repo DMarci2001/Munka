@@ -9,6 +9,7 @@ class DocAgent {
     const ASSET_WEB_HERO                    = "webhero";
     const ASSET_WEB_GALLERY                 = "webgallery";
     const ASSET_LABOR_CSOMAG_IMAGE          = "laborcsomagimage";
+    const ASSET_CONTENT_TITLE_IMAGE         = "contenttitleimage";
 
     const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";
@@ -232,6 +233,9 @@ class DocAgent {
                 $scale = [512, 512];
                 if (in_array($tipus, [self::ASSET_COVIDPASS_IMAGE, self::ASSET_COVIDEGS_IMAGE, self::ASSET_WEB_HERO, self::ASSET_WEB_GALLERY])) {
                     $scale = [1600, 1600];
+                }
+                if (in_array($tipus, [self::ASSET_CONTENT_TITLE_IMAGE])) {
+                    //$scale = [1024, 1024];
                 }
 
                 if ($ysize > $scale[1]) {

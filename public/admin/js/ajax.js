@@ -11,6 +11,12 @@ $(document).ready(function () {
         $(this).slideToggle();
     }));
 
+    tinymce.init({
+        selector: '.mce',
+        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+        toolbar: 'bold italic underline strikethrough | link image | align | numlist bullist indent outdent',
+    });
+
     self.setInterval("searchTimer()",1000);
     self.setInterval("checkChat()",10000);
 

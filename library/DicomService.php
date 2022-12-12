@@ -292,5 +292,16 @@ class DicomService {
         }
     }
 
+    public static function getInstitutesQuery():string {
+        $institutionNames = "''";
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $institutionNames = "'KeltexMed'";
+        }
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $institutionNames = "'Hungáriamed-M', 'Hungariamed-M'";
+        }
+        return $institutionNames;
+    }
+
 }
 
