@@ -9,12 +9,16 @@ class BookingPage extends CorePage
         "simplepay" => "SimplePay"
     ];
 
+    private array $telephelyek = [];
+
     public function __construct()
     {
         parent::__construct();
 
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
+
+        $this->telephelyek = sql_query("select * from cegvars where cegid=? and placeids<>'' order by megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET["labcode"])) {
             //labshopból érkezés, labor foglaláshoz irányítás
@@ -302,6 +306,10 @@ class BookingPage extends CorePage
                 $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
+            if (isset($_POST["tudoszuroanswerneeded"]) && !isset($_POST["tudoszuro"])) {
+                $this->errors[] = "Kérjük válasszon, hogy van-e érvényes tüdőszűrője!";
+            }
+
             if (isset($_POST["adoszam"])) {
                 if (empty($_POST["adoszam"])) {
                     $this->errors[] = "Az adószám megadása kötelező!";
@@ -444,6 +452,10 @@ class BookingPage extends CorePage
                 header("location:{$forwardURL}");
                 die();
             }
+
+            if ($_POST["silentmode"] == 1) {
+                $this->errors = [];
+            }
         }
     }
 
@@ -461,6 +473,10 @@ class BookingPage extends CorePage
 
         if (isset($_GET["helyszin"])) {
             $_POST["helyszin"] = $_GET["helyszin"];
+        }
+
+        if (isset($_GET["selectedtelephely"])) {
+            $_POST["selectedtelephely"] = $_GET["selectedtelephely"];
         }
 
         $tipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$_POST["szurestipus"]]));
@@ -542,30 +558,51 @@ class BookingPage extends CorePage
                     unset($_SESSION["labcode"]);
                     return;
                 } else {
-                    $packages = json_decode($labData["package_ids"], JSON_OBJECT_AS_ARRAY);
+                    $labItemsHTML = $labPacksHTML = "";
 
-                    $packData = sql_fetch_array(sql_query("select name from synlab_labor_csomagok where id=?", [$labData["package_id"]]));
-                    $items = [];
+                    $cartContent = json_decode($labData["cart_content"], JSON_OBJECT_AS_ARRAY);
+                    $packages = $cartContent["packages"];
+                    $items = $cartContent["items"];
+
+
+                    //$addItems = [];
                     foreach ($packages as $package) {
-                        $itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
-                        $items[] = $itemData["name"];
+                        if ($packData = sql_query("select name from synlab_labor_csomagok where id=?", [$package["id"]])->fetch(PDO::FETCH_ASSOC)) {
+
+
+                            //$itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
+                            //$addItems[] = $itemData["name"];
+
+                            $labPacksHTML .= "<li style='list-style:outside;'>{$packData["name"]} - {$package["unit"]} db - ".number_format($package["price"])." Ft</li>";
+                        }
                     }
 
-                    $labItemsHTML = "<li style='list-style:outside;'>{$packData["name"]}<div style='font-size: 12px;'>" . implode(", ", $items) . "</div></li>";
+                    foreach ($items as $item) {
+                        if ($itemData = sql_query("select name from synlab_labor_tetelek where id=?", [$item["id"]])->fetch(PDO::FETCH_ASSOC)) {
 
 
-                    echo "<div style='margin-bottom:20px;'>Ön a labshop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/>
-                <br>
-                <span style='font-family: robotobold;'>Választott tételek:</span><br/>
-                <ul>{$labItemsHTML}</ul>
-                </div>";
+                            //$itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
+                            //$addItems[] = $itemData["name"];
+                            $labItemsHTML .= "<li style='list-style:outside;'>{$itemData["name"]} - {$item["unit"]} db - ".number_format($item["price"])." Ft</li>";
+                        }
+                    }
+
+
+                    echo "<div style='margin-bottom:20px;border-bottom:1px solid #ccc;'>Ön a LabShop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/><br>";
+
+                    if (!empty($labPacksHTML)) {
+                        echo "<span style='font-family: robotobold;'>Választott csomagok:</span><br/><ul>{$labPacksHTML}</ul>";
+                    }
+                    if (!empty($labItemsHTML)) {
+                        echo "<span style='font-family: robotobold;'>Választott tételek:</span><br/><ul>{$labItemsHTML}</ul>";
+                    }
+                    echo "</div>";
                 }
             }
         }
 
 
         echo "<table cellpadding='3' cellspacing='0'>";
-
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
@@ -594,10 +631,15 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
+            $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
             //beutaló nélkül szabad választás
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td height='30'><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
-            echo "<tr><td></td><td><div id=\"infopagetext\">".$this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST)."</div></td></tr>";
-            
+            if (!empty($this->telephelyek)) {
+                echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
+            }
+            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
+            if (!empty($infoPageText)) {
+                echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
+            }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
@@ -840,6 +882,7 @@ class BookingPage extends CorePage
         if (isset($_SESSION["user"])) echo "<input type='hidden' name='aszf' value='1'/>";
         echo "<input type='hidden' name='idopontfoglalas' value='1'/>";
         echo "<input type='hidden' name='version2' value='1'/>";
+        echo "<input type='hidden' name='silentmode' id='silentmode' value='0'/>";
         //echo "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_SESSION["orvosselected"]}'/>";
 
         echo "</form>";
@@ -925,9 +968,6 @@ class BookingPage extends CorePage
             $disabled = "disabled";
         }
 
-        $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='selectedTipus(this.value, {$_POST["helyszin"]});'>";
-        $htmlout .= "<option {$disabled} value='0'>" . $this->lang->webText["valasszon"] . "!</option>";
 
         $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now()))) and b.noreservation=0", ["|{$_SESSION["helyszindata"]["id"]}|"]);
         while ($row = sql_fetch_array($res)) {
@@ -939,6 +979,22 @@ class BookingPage extends CorePage
             }
         }
 
+        if (!empty($this->telephelyek) && !empty($_POST["selectedtelephely"])) {
+            if ($telephelyData = sql_query("select * from cegvars where id=? and szurestipusids<>''", [$_POST["selectedtelephely"]])->fetch(PDO::FETCH_ASSOC)) {
+                $validTipusok = json_decode($telephelyData["szurestipusids"], JSON_OBJECT_AS_ARRAY);
+            }
+        }
+
+        $valasszon = $this->lang->webText["valasszon"];
+        if (!empty($this->telephelyek) && empty($_POST["selectedtelephely"])) {
+            $tipusok = [];
+            $valasszon = "Válassza ki előbb a telephelyet";
+        }
+
+        $htmlout = "";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();'>";
+        $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
+
         if (isset($tipusok)) {
             for ($i = 0; $i < count($tipusok); $i++) {
                 @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
@@ -949,6 +1005,13 @@ class BookingPage extends CorePage
                     //if (count($tipusdisplay)==1) $selected=$key;
                     if ($onlyselected == 1 && $key != $selected) continue;
                     if (trim($value) == "") continue;
+
+                    if (isset($validTipusok)) {
+                        if (!in_array($key, $validTipusok)) {
+                            continue;
+                        }
+                    }
+
                     if (count($tipusdisplay) == 1) {
                         $selected = $_REQUEST["szurestipus"] = $_POST["szurestipus"] = $key;
                     }
@@ -964,9 +1027,9 @@ class BookingPage extends CorePage
         }
 
         $htmlout .= "</select>";
-        if ($_SESSION["helyszindata"]["id"] != 82) {
-            $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
-        }
+        //if ($_SESSION["helyszindata"]["id"] != 82) {
+        //    $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
+        //}
 
         return $htmlout;
     }
@@ -981,10 +1044,27 @@ class BookingPage extends CorePage
 
         $_SESSION["orvosselected"] = 0;
 
-        $html .= "<select name='helyszin' id='helyszin' onchange='selectedTipus({$_REQUEST["szurestipus"]}, this.value);'>";
+        if (!empty($this->telephelyek) && empty($_POST["selectedtelephely"])) {
+            $helyszinek = [];
+            $webText["valasszhelyszint"] = "Válassza ki előbb a telephelyet!";
+        }
+
+        if (!empty($this->telephelyek) && !empty($_POST["selectedtelephely"])) {
+            if ($telephelyData = sql_query("select * from cegvars where id=? and placeids<>''", [$_POST["selectedtelephely"]])->fetch(PDO::FETCH_ASSOC)) {
+                $validPlaces = json_decode($telephelyData["placeids"], JSON_OBJECT_AS_ARRAY);
+            }
+        }
+
+        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();'>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {
+                if (isset($validPlaces)) {
+                    if (!in_array($rowt["id"], $validPlaces)) {
+                        continue;
+                    }
+                }
+
                 if ($_SESSION["helyszindata"]["nocim"] == 1) {
                     $rowt["cim"] = $rowt["megnev"];
                 }
@@ -1001,6 +1081,22 @@ class BookingPage extends CorePage
         return $html;
     }
 
+    private function _telephelySelector():string {
+        $html = "";
+        $num = count($this->telephelyek);
+
+        $html .= "<select name='selectedtelephely' id='selectedtelephely' onchange='silentBookingPost();'>";
+        $html .= "<option value='0'>Válasszon telephelyet!</option>";
+        foreach ($this->telephelyek as $rowt) {
+            $html .= "<option value='{$rowt["id"]}'" . ($_POST["selectedtelephely"] == $rowt["id"] || $num == 1 ? " selected" : "") . ">{$rowt["megnev"]}</option>";
+            if ($num == 1) {
+                $_POST["selectedtelephely"] = $rowt["id"];
+            }
+        }
+        $html .= "</select>";
+
+        return $html;
+    }
 
     private function _preSelectForm()
     {
