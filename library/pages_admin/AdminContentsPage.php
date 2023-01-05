@@ -8,12 +8,21 @@ class AdminContentsPage extends AdminCorePage
         85 => "Statikus oldal",
     ];
 
+    public array $services;
+
     public function __construct()
     {
         parent::__construct();
 
+        $services = sql_query("select t.id, t.megnev from szurestipusok t 
+                 left join dokumentumok d on d.assetid=? and d.dataid=t.id 
+                 where d.id is not null group by t.id order by t.megnev", [DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($services as $service) {
+            $this->services[$service["id"]] = $service;
+        }
+
         if (isset($_REQUEST["generalsearch"])) {
-            $contents = sql_query("select * from hmmweb.q9a8m_content where instr(title, ?) order by created desc", [$_REQUEST["term"]])->fetchAll(PDO::FETCH_ASSOC);
+            $contents = sql_query("select id, title, alias, state, created, publish_up, publish_down, catid, tipusid, tags from hmmweb.q9a8m_content where instr(title, ?) order by created desc", [$_REQUEST["term"]])->fetchAll(PDO::FETCH_ASSOC);
             echo $this->listContents($contents);
             die;
         }
@@ -24,8 +33,15 @@ class AdminContentsPage extends AdminCorePage
                 $state = 1;
             }
 
-            sql_query("update hmmweb.q9a8m_content c set catid=?, title=?, alias=?, created=?, publish_up=?, publish_down=?, state=?, c.fulltext=? where id=?",
-                [$_POST["catid"], $_POST["title"], $_POST["alias"], $_POST["created"], $_POST["publish_up"], $_POST["publish_down"], $state, $_POST["fulltext"], $_GET["szerk"]]);
+            $linkedServices = [];
+            foreach ($this->services as $service) {
+                if (isset($_POST["linkedservice{$service["id"]}"])) {
+                    $linkedServices[] = $service["id"];
+                }
+            }
+
+            sql_query("update hmmweb.q9a8m_content c set catid=?, title=?, alias=?, created=?, publish_up=?, publish_down=?, state=?, c.fulltext=?, tipusid=?, tags=? where id=?",
+                [$_POST["catid"], $_POST["title"], $_POST["alias"], $_POST["created"], $_POST["publish_up"], $_POST["publish_down"], $state, $_POST["fulltext"], json_encode($linkedServices), $_POST["tags"], $_GET["szerk"]]);
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die;
@@ -42,7 +58,6 @@ class AdminContentsPage extends AdminCorePage
 
         $GLOBALS["subtitle"] = "Tartalmak";
 
-
         if (isset($_GET["szerk"])) {
             $content = sql_query("select * from hmmweb.q9a8m_content where id=?", [$_GET["szerk"]])->fetch(PDO::FETCH_ASSOC);
             echo $this->contentEditor($content);
@@ -52,7 +67,7 @@ class AdminContentsPage extends AdminCorePage
             echo "</div>";
 
             echo "<div id='tartalomlist'>";
-            $contents = sql_query("select id, title, alias, state, created, publish_up, publish_down, catid from hmmweb.q9a8m_content order by created desc")->fetchAll(PDO::FETCH_ASSOC);
+            $contents = sql_query("select id, title, alias, state, created, publish_up, publish_down, catid, tipusid, tags from hmmweb.q9a8m_content order by created desc")->fetchAll(PDO::FETCH_ASSOC);
             echo $this->listContents($contents);
             echo "</div>";
         }
@@ -86,6 +101,18 @@ class AdminContentsPage extends AdminCorePage
 
         echo "</td></tr>";
 
+        $linkedServices = json_decode($content["tipusid"], JSON_OBJECT_AS_ARRAY);
+
+        echo "<tr><td colspan='2'><div class='tdsepdiv'>Kapcsolodó szolgáltatás</div></td></tr>";
+        echo "<tr><td colspan='2' valign='top'>";
+        foreach ($this->services as $service) {
+            echo "<div><input type='checkbox' name='linkedservice{$service["id"]}' value='1' ".(in_array($service["id"], $linkedServices)?"checked":"")."/> {$service["megnev"]}</div>";
+        }
+        echo "</div>";
+        echo "</td></tr>";
+        echo "<tr><td width='100'>Cimkék:</td><td><input class='inputbox' style='width:500px;' type='text' name='tags' value='{$content["tags"]}'></td></tr>";
+
+
         $docAgent = new DocAgent();
         echo "<tr><td colspan='2'><div class='tdsepdiv'>Title image</div></td></tr>";
         echo "<tr><td colspan='2' valign='top'><div id='asseteditor'>".$docAgent->showAssetEditor(DocAgent::ASSET_CONTENT_TITLE_IMAGE, $id)."</div>";
@@ -115,7 +142,9 @@ class AdminContentsPage extends AdminCorePage
         $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'>&nbsp;Dátum</div></td>";
         $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:50px;'>Kategória</div></td>";
         $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'>Aktív</td>";
-        $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Cím</div></td>";
+        $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:300px;'>Cím</div></td>";
+        $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Kapcsolódó szolgáltatás</div></td>";
+        $html .= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;'>Cimkék</div></td>";
         $html .= "</tr>";
 
         foreach ($contents as $row) {
@@ -142,12 +171,22 @@ class AdminContentsPage extends AdminCorePage
                 $active = "Inaktív";
             }
 
+            $services = [];
+            $linkedServices = json_decode($row["tipusid"], JSON_OBJECT_AS_ARRAY);
+            foreach ($this->services as $service) {
+                if (in_array($service["id"], $linkedServices)) {
+                    $services[] = $service["megnev"];
+                }
+            }
+
             $html .= "<tr>";
 
             $html .= "<td nowrap valign='top'><div class='{$tc}'>&nbsp;" . date("Y-m-d H:i", strtotime($row["created"])) . "</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>{$category}</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>{$active}</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'><a href='index.php?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["title"]}</a></div></td>";
+            $html .= "<td nowrap valign='top'><div class='{$tc}'>".implode(", ", $services)."</div></td>";
+            $html .= "<td nowrap valign='top'><div class='{$tc}'>{$row["tags"]}</div></td>";
 
             $html .= "</tr>";
             $html .= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";

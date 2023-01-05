@@ -57,6 +57,10 @@ class HmmApi {
             $result = $this->webPageData();
         }
 
+        if ($this->apiMethod == "webrootdata") {
+            $result = $this->webRootData();
+        }
+
         if ($this->apiMethod == "doctordata") {
             $result = $this->doctorData();
         }
@@ -202,11 +206,11 @@ class HmmApi {
         return $locationArray;
     }
 
-    private function doctorData():array {
+    private function webRootData():array {
         $docAgent = new DocAgent();
         $this->authNeeded = false;
 
-        $doctors = sql_query("SELECT o.id as orvosid, o.nev, o.webdescription, group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
+        $doctors = sql_query("SELECT o.id as orvosid, o.nev, o.webdescription, o.szurestipusok, group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
                 LEFT JOIN orvosok o ON o.id=b.orvosid                                                                     
                 WHERE (nap<10 OR (nap=10 AND beonap>date(now()))) and tol<>0 and ig<>0 and b.aktiv=1 and o.aktiv=1 and o.pecsetszam<>'temp'
                 GROUP BY b.orvosid ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
@@ -220,6 +224,13 @@ class HmmApi {
             if (!empty($photos)) {
                 $tipusids = str_replace("|", "", str_replace("||", ",", $doctor["tipusok"]));
 
+                $markedServices = json_decode($doctor["szurestipusok"], JSON_OBJECT_AS_ARRAY);
+                if (json_last_error() == JSON_ERROR_NONE) {
+                    foreach ($markedServices as $markedServiceId) {
+                        $tipusids.= ",{$markedServiceId}";
+                    }
+                }
+
                 $services = [];
                 if (!empty($tipusids)) {
                     $services = sql_query("select id, webalias, megnev from szurestipusok where id in ({$tipusids})")->fetchAll(PDO::FETCH_ASSOC);
@@ -231,7 +242,6 @@ class HmmApi {
                     "photos"   => $photos,
                     "tipusids" => $tipusids,
                     "tipusok"  => $services,
-                    "webdescription" => $doctor["webdescription"],
                 ];
             }
         }
@@ -247,7 +257,6 @@ class HmmApi {
                     "nev"               => $service["megnev"],
                     "webkiemelt"        => $service["webkiemelt"],
                     "webalias"          => $service["webalias"],
-                    "webdescription"    => $service["webdescription"],
                     "photos"            => $photos,
                 ];
             }
@@ -273,37 +282,75 @@ class HmmApi {
         ];
     }
 
+    private function doctorData():array {
+        $docAgent = new DocAgent();
+        $this->authNeeded = false;
+
+        $alias = $_GET["alias"];
+        $doctorData = [];
+
+        $doctors = sql_query("SELECT o.id as orvosid, o.nev, o.webdescription, group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
+                LEFT JOIN orvosok o ON o.id=b.orvosid                                                                     
+                WHERE (nap<10 OR (nap=10 AND beonap>date(now()))) and tol<>0 and ig<>0 and b.aktiv=1 and o.aktiv=1 and o.pecsetszam<>'temp'
+                GROUP BY b.orvosid ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($doctors as $doctor) {
+            if ($this->string2URL($doctor["nev"]) != $alias) {
+                continue;
+            }
+
+            $photos = $docAgent->getAssetsByType(DocAgent::ASSET_DOCTOR_PHOTO, $doctor["orvosid"]);
+            if (!empty($photos)) {
+                $tipusids = str_replace("|", "", str_replace("||", ",", $doctor["tipusok"]));
+
+                $services = [];
+                if (!empty($tipusids)) {
+                    $services = sql_query("select id, webalias, megnev from szurestipusok where id in ({$tipusids})")->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                $doctorData["doctors"][] = [
+                    "nev"      => $doctor["nev"],
+                    "id"       => $doctor["orvosid"],
+                    "photos"   => $photos,
+                    "tipusids" => $tipusids,
+                    "tipusok"  => $services,
+                    "webdescription" => $doctor["webdescription"],
+                ];
+            }
+        }
+
+
+        return [
+            "doctorData" => $doctorData
+        ];
+    }
+
+    private function string2URL($string):string {
+        return strtolower(str_replace([".", " "], ["", "_"], $string));
+    }
 
     private function serviceData():array {
         $docAgent = new DocAgent();
         $this->authNeeded = false;
 
-        $doctors = sql_query("SELECT group_concat(distinct b.tipusok) as tipusok FROM orvos_beosztas_new b
-                LEFT JOIN orvosok o ON o.id=b.orvosid                                                                     
-                WHERE b.helyszinid=? and (nap<10 OR (nap=10 AND beonap>date(now()))) and tol<>0 and ig<>0 and b.aktiv=1 and o.aktiv=1 and o.pecsetszam<>'temp'
-                GROUP BY b.orvosid", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
-
+        $alias = $_GET["alias"];
         $serviceData = [];
-        $tipusids = "";
 
-        foreach ($doctors as $doctor) {
-            $tipusids.= $doctor["tipusok"];
-        }
-
-        $tipusids = str_replace("|", "", str_replace("||", ",", $tipusids));
-
-        if (!empty($tipusids)) {
-            $services = sql_query("select id, megnev from szurestipusok where id in ({$tipusids}) order by megnev")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($services as $service) {
-
-                $photos = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $service["id"]);
-                if (!empty($photos)) {
-                    $serviceData["services"][] = [
-                        "id"     => $service["id"],
-                        "nev"    => $service["megnev"],
-                        "photos" => $photos,
-                    ];
-                }
+        $services = sql_query("select t.id, t.megnev, t.webkiemelt, t.webalias, t.webdescription from szurestipusok t 
+                 left join dokumentumok d on d.assetid=? and d.dataid=t.id 
+                 where t.webalias=? group by t.id order by t.megnev", [DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $alias])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($services as $service) {
+            $photos = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $service["id"]);
+            if (!empty($photos)) {
+                $serviceData["services"][] = [
+                    "id"                => $service["id"],
+                    "nev"               => $service["megnev"],
+                    "webkiemelt"        => $service["webkiemelt"],
+                    "webalias"          => $service["webalias"],
+                    "photos"            => $photos,
+                    "webdescription"    => $service["webdescription"],
+                    "prices"            => sql_query("select id, price, megnev, penznem from arak where tipusid=? and instr(cegid, '|243|')", [$service["id"]])->fetchAll(PDO::FETCH_ASSOC)
+                ];
             }
         }
 
@@ -338,11 +385,20 @@ class HmmApi {
         $limit = $_GET["limit"] ?? 1;
         $catId = $_GET["catid"] ?? 84;
         $id = $_GET["id"] ?? 0;
+        $serviceId = $_GET["serviceid"] ?? 0;
 
         $contents = [];
 
+        $serviceWhere = "";
+        if ($serviceId != 0) {
+            $serviceWhere = " AND instr(c.tipusid, '\"{$serviceId}\"')";
+            if ($tipusData = sql_query("select webalias from szurestipusok where id=?", [$serviceId])->fetch(PDO::FETCH_ASSOC)) {
+                $serviceWhere = " AND (instr(c.tipusid, '\"{$serviceId}\"') OR instr(c.tags, '{$tipusData["webalias"]}'))";
+            }
+        }
+
         if ($id == 0) {
-            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') " . ($id == 0 ? "" : "AND c.id='{$id}'") . " order by created desc limit {$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere} order by created desc limit {$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
         } else {
             $items = sql_query("select * from hmmweb.q9a8m_content c where c.id=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00')", [$id])->fetchAll(PDO::FETCH_ASSOC);
         }

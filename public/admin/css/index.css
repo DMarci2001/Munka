@@ -1570,3 +1570,30 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	text-decoration: none;
 }
 
+.eloj_dialog {
+	display: none;
+	position: absolute;
+	min-width:100px;
+	background:#eee;
+	box-shadow: 5px 5px 10px rgba(10,10,10, .3);
+}
+
+.eloj_dialogcontent {
+	padding:10px;
+}
+
+.eloj_dialogtop {
+	background-color: #a00;
+	padding:5px 5px 5px 8px;
+	color:#fff;
+	background-image: url(/admin/images/close-button.png);
+	background-repeat: no-repeat;
+	background-size:12px;
+	background-position: right 8px center;
+	cursor: pointer;
+}
+
+form {
+	padding:0px;
+	margin:0px;
+}

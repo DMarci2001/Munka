@@ -417,7 +417,7 @@ class ExcelService {
         $sor++;
 
         $reservations = sql_query("SELECT DATE(datum) AS datum, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
-            WHERE datum>'{$from}' AND datum<'{$to}' AND f.`helyszinid`=? AND f.taj<>''
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
             GROUP BY DATE(f.datum) ORDER BY DATE(f.datum)", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -434,7 +434,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN cegek c ON c.id=f.cegid
-            WHERE datum>'{$from}' AND datum<'{$to}' AND f.`helyszinid`=? AND f.taj<>''
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
             GROUP BY c.id ORDER BY c.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -452,7 +452,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT t.megnev AS szolgaltatas, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN szurestipusok t ON t.id=f.`szurestipusid`
-            WHERE datum>'{$from}' AND datum<'{$to}' AND f.`helyszinid`=? AND f.taj<>''
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
             GROUP BY t.id ORDER BY t.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -470,7 +470,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
-            WHERE datum>'{$from}' AND datum<'{$to}' AND f.`helyszinid`=? AND f.taj<>''
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
             GROUP BY o.id ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -587,15 +587,41 @@ class ExcelService {
             $sor++;
         }
 
-        $this->sheet->getColumnDimension('A')->setWidth(30);
-        $this->sheet->getColumnDimension('A')->setWidth(30);
-        $this->sheet->getColumnDimension('B')->setWidth(40);
-        $this->sheet->getColumnDimension('C')->setWidth(20);
-        $this->sheet->getColumnDimension('D')->setWidth(40);
-        $this->sheet->getColumnDimension('E')->setWidth(20);
 
         $sor = 3;
-        $this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);
+        $this->dataRow("A", $sor, ["BEJELENTKEZŐ Összes paciens: {$total}, összes kép: {$totalImage}"]);
+
+
+        //dokirex lista
+        $dokirexVizsgalatok = sql_query("select * from dokirex_vizsgalatok where datum>=? and datum<=? and instr(szakrendeles, '(RTG)') order by datum", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+
+        $sor = 5;
+        $this->headingRow("H", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "Cég"]);
+
+        $sor++;
+        $total = $totalImage = 0;
+        foreach ($dokirexVizsgalatok as $rowData) {
+            $this->dataRow("H", $sor, [$rowData["datum"], $rowData["nev"], $rowData["szuldatum"], $rowData["paciensid"], $rowData["telephely"]]);
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("left");
+            $total ++;
+            $sor++;
+        }
+
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('B')->setWidth(30);
+        $this->sheet->getColumnDimension('C')->setWidth(15);
+        $this->sheet->getColumnDimension('D')->setWidth(15);
+        $this->sheet->getColumnDimension('E')->setWidth(20);
+
+        $this->sheet->getColumnDimension('H')->setWidth(20);
+        $this->sheet->getColumnDimension('I')->setWidth(30);
+        $this->sheet->getColumnDimension('J')->setWidth(15);
+        $this->sheet->getColumnDimension('K')->setWidth(15);
+        $this->sheet->getColumnDimension('L')->setWidth(20);
+
+        $sor = 3;
+        $this->dataRow("H", $sor, ["DOKIREX Összes paciens: {$total}"]);
+
     }
 
     public function _cegEsOrvosStat($sheetId, $from, $to) {

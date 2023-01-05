@@ -4,12 +4,17 @@ class AdminDoctorsPage extends AdminCorePage {
 
     private $bookingService;
     private $beoEditor;
+    private array $services;
 
     public function __construct()
     {
         parent::__construct();
 
         $this->beoEditor = new AdminBeoEditor();
+
+        $this->services = sql_query("select t.id, t.megnev from szurestipusok t 
+                 left join dokumentumok d on d.assetid=? and d.dataid=t.id 
+                 where d.id is not null group by t.id order by t.megnev", [DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE])->fetchAll(PDO::FETCH_ASSOC);
 
         if (!isset($_SESSION["orvosbeosztascegfilter"])) $_SESSION["orvosbeosztascegfilter"] = 0;
         if (!isset($_SESSION["cegfilter"])) $_SESSION["cegfilter"] = 0;
@@ -300,6 +305,13 @@ class AdminDoctorsPage extends AdminCorePage {
                     $sor++;
                 }
 
+                $linkedServices = [];
+                foreach ($this->services as $service) {
+                    if (isset($_POST["linkedservice{$service["id"]}"])) {
+                        $linkedServices[] = $service["id"];
+                    }
+                }
+
                 if (!isset($_POST["aktiv"])) $_POST["aktiv"]=0;
                 if (!isset($_POST["visszaigazol"])) $_POST["visszaigazol"]=0;
                 if (!isset($_POST["onlytel"])) $_POST["onlytel"]=0;
@@ -343,8 +355,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     visszaigazolemail=?,
                     gender=?,
                     webdescription=?,
+                    szurestipusok=?,
                     aktiv=?
-                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["webdescription"], $_POST["aktiv"], $oid));
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["webdescription"], json_encode($linkedServices), $_POST["aktiv"], $oid));
 
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
@@ -660,22 +673,15 @@ class AdminDoctorsPage extends AdminCorePage {
 				echo "<tr><td colspan='2'><div><a href='#' title='Szűrésípushoz tartozó kérdések szerkesztése.' onClick='setQndA({$_GET['szerk']},{$tipus});return false;'>{$szurestipus['megnev']}</a></div></td></tr>";
 			}
 
-            $type = explode( ",", $_POST['szurestipusok'] );
-            echo "<tr><td colspan = '2'><div class='tdsepdiv' style='margin:10px 0px 0px 0px'>Vizsgálat típusok kiválasztása</div></td></tr>";
-            echo "<tr><td><table>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(1, $type)?"checked":"")." name = 'szak_belgyogy' value = '1' /></td><td>Belgyógyász</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(2, $type)?"checked":"")." name = 'szak_rtg' value = '2' /></td><td>Röntgen</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(3, $type)?"checked":"")." name = 'szak_uh' value = '3' /></td><td>Ultrahang</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(4, $type)?"checked":"")." name = 'szak_borgyogy' value = '4' /></td><td>Bőrgyógyász</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(5, $type)?"checked":"")." name = 'szak_szemesz' value = '5' /></td><td>Szemész</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(6, $type)?"checked":"")." name = 'szak_kardio' value = '6' /></td><td>Kardiológia</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(7, $type)?"checked":"")." name = 'szak_torna' value = '7' /></td><td>Gyógytornász</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(8, $type)?"checked":"")." name = 'szak_labor' value = '8' /></td><td>Labor</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(9, $type)?"checked":"")." name = 'szak_urologia' value = '9' /></td><td>Urológia</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(10, $type)?"checked":"")." name = 'szak_nogyogy' value = '10' /></td><td>Nőgyógyászat</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(11, $type)?"checked":"")." name = 'szak_tudogyogy' value = '11' /></td><td>Tüdőgyógyászat</td></tr>";
-            echo "<tr><td><input type = 'checkbox' ".(in_array(12, $type)?"checked":"")." name = 'szak_ortopedia' value = '12' /></td><td>Ortopédia</td></tr>";
-            echo "</table></td></tr>";
+            $linkedServices = json_decode($_POST["szurestipusok"], JSON_OBJECT_AS_ARRAY);
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Kapcsolodó szolgáltatás</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'>";
+            foreach ($this->services as $service) {
+                echo "<div><input type='checkbox' name='linkedservice{$service["id"]}' value='1' ".(in_array($service["id"], $linkedServices)?"checked":"")."/> {$service["megnev"]}</div>";
+            }
+            echo "</div>";
+            echo "</td></tr>";
 
             echo "</table>";
 

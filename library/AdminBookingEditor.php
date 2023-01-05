@@ -567,7 +567,11 @@ class AdminBookingEditor {
 
             $html .= "<tr>";
             if ($this->user->paciensMegjegyzesAccess()) {
-                $html .= "<td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' name='megj'>{$row["megj"]}</textarea></td>";
+                $html .= "<td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
+                if (Booking_Constants::SQL_DB == "keltexmed") {
+                    $html .= "<div><a href='#' onclick=\"$('#reservationinfo').val('(előzetes) '+$('#reservationinfo').val())\">előzetes</a> | <a href='#' onclick=\"$('#reservationinfo').val('(időszakos) '+$('#reservationinfo').val())\">időszakos</a></div>";
+                }
+                $html .= "</td>";
             }
             $html .= "<td colspan='2' valign='top'>".$this->_filesFolderNew($row)."</td>";
             $html .= "</tr>";
@@ -604,7 +608,7 @@ class AdminBookingEditor {
             //$html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
             $html .= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
 
-            $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\");' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
+            $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\", 0);' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
             //$html .= "<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
 
             if (Booking_Constants::COMPANY_NAME_SHORT == "Keltexmed") {

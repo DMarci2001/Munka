@@ -70,6 +70,7 @@ require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
 require_once(__DIR__ . "/library/other/SimplePayService.php");
+require_once(__DIR__ . "/library/other/KeltexMedWebSQL.php");
 
 //admin...
 

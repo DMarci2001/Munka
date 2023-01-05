@@ -239,11 +239,29 @@ class AdminBookingPage extends AdminCorePage
 
             die;
         }
+
+        if (isset($_GET["addidoponttipusdialog"])) {
+            $tipusok = explode(",", $_GET["tipusok"]);
+            $tipusAdd = [0];
+            foreach ($tipusok as $tipusId) {
+                $tipusAdd[] = $tipusId;
+            }
+
+            $tipusok = sql_query("select id, megnev from szurestipusok where id in (".implode(",", $tipusAdd).")")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($tipusok as $tipus) {
+                $addIdopontJavaScript = "addIdopont(\"{$_GET["idopont"]}\", \"{$tipus["id"]}\", this);return false;";
+                echo "<div> &gt; <a href='#' onclick='{$addIdopontJavaScript}'>{$tipus["megnev"]}</a></div>";
+            }
+
+            die;
+        }
+
     }
 
-    public function showPage()
-    {
+    public function showPage() {
         echo "<div id='elojegyzestable'>".$this->showElojegyzesTable($this->setDay)."</div>";
+        echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
+        echo "<div id='elojloader' style='position:absolute;display:none'><img src='/admin/images/loading.svg' style='width: 20px;'/></div>";
         echo "<div id='idoponteditor'></div>";
     }
 
@@ -252,7 +270,367 @@ class AdminBookingPage extends AdminCorePage
     }
 
 
+    private function _beoHash($beosztas):string {
+        return md5($beosztas["orvosid"]."_".$beosztas["tol"]."_".$beosztas["ig"]."_".$beosztas["nap"]."_".$beosztas["beonap"]."_".$beosztas["binterval"]);
+    }
+
+    private function _extractTipusok($raw):array {
+        $raw = str_replace("||", ",", $raw);
+        $raw = str_replace("|", "", $raw);
+        return array_unique(explode(",", $raw));
+    }
+
+    public function showElojegyzesTableNew($setDay) {
+        $settings      = new Booking_Settings();
+        $htmlout       = "";
+        $cimFilterHTML = $this->cimFilter();
+        $cegFilterHTML = $this->cegFilter();
+        $tipusLinks[0] = ["url" => "javascript:scrollTo(\"filterbox\");", "nev" => "Oldal teteje"];
+        $rendelesek    = 0;
+        $helyszin      = intval($_SESSION["helyszin"]);
+        $nap           = date("Y-m-d", strtotime($setDay));
+        $wd            = date("N", strtotime($setDay));
+        $tipusok       = $this->bookingService->tipusExtract($this->bookingService->beosztasService->getTipusByHelyszin($helyszin));
+        $foglalasok    = $this->bookingService->getAllReservationForDay($nap, $helyszin);
+        $isHoliday     = in_array($nap, $settings->getMunkaszunetiNapok());
+        $maxOrvosId    = sql_query("select max(id)+1 from orvosok")->fetchColumn();
+        $orvosList     = sql_query("select id, nev from orvosok where aktiv=1 order by nev")->fetchAll(PDO::FETCH_ASSOC);
+        $existingOrvosTimes = [];
+        $emptySection  = false;
+        $ExtraButtons  = [];
+        $orvosListed   = [];
+
+        $htmlout.="<div id='filterbox' style='margin-top:10px;'>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'>".$this->napFilter2($setDay)."</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'><a onclick='setListDay(\"".date("Y-m-d",strtotime("{$setDay} -1 day"))."\");return false;' href='#'><img height='20' src='images/prev.png' title='Előző nap'/></a>&nbsp;&nbsp;&nbsp;&nbsp;</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'><input type='button' onclick='setListDay(\"".date("Y-m-d")."\");' value='MA' title='Ugrás a mai napra' />&nbsp;&nbsp;&nbsp;&nbsp;</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;'><a onclick='setListDay(\"".date("Y-m-d",strtotime("{$setDay} +1 day"))."\");return false;' href='#'><img height='20' src='images/next.png' title='Következő nap'/></a></div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cimFilterHTML}</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cegFilterHTML}</div>";
+
+        if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+            $htmlout.="<div style='margin-top:10px;padding:5px 10px;background: #f00;color:#fff;font-size:18px;display:inline-block;'>Munkaszüneti nap!</div>";
+        }
+
+        $htmlout.= "</div>";
+
+        //searchbox
+        $htmlout.= "<div class='elojegyzessearchbox'>";
+        $htmlout.= "<form name='keresform' method='post' onsubmit='elojegyzesSearchStart();return false;'>";
+        $htmlout.= "<input type='text' value='{$_SESSION["esearchkey"]}' name='kereskulcs' id='eljegyzessearchkey' placeholder='keresés névre, taj számra, email címre, szül. dátumra..' style='width:300px;'/> <input style='padding:3px 10px;' type='submit' value='Keresés' name='keresgo' />";
+        $htmlout.= "</form>";
+        $htmlout.= "<div id='elojegyzessearchloading' style='display:none;'><img src='/images/loading.svg' alt='' style='width:30px;opacity: .5;padding:10px 0px;' /></div>";
+        $htmlout.= "<div id='elojegyzessearchresult'></div>";
+        $htmlout.= "</div>";
+
+        $htmlout .= "<div class='stickytablefilter' id='stickytablefilter'>";
+        $htmlout .= "<div class='tdm' style='padding:2px 10px 0px 0px;font-size: 16px;white-space: nowrap;'>".$nap."<br/>".$this->adminUtils->settings->hetnap[$wd]."</div>";
+        $htmlout .= "<div class='tdm'>#tipuslinksplace#</div>";
+        $htmlout .= "</div>";
+
+        $htmlout.= "<table width='100%' cellpadding='0' cellspacing='0' border='0'>";
+
+        sql_query("SET SESSION group_concat_max_len = 10000");
+
+        if (empty($tipusok)) {
+            $tipusok[] = 0;
+        }
+
+        $tipusNevek = [];
+        $szuresTipusok = sql_query("select * from szurestipusok where id in (".implode(",",$tipusok).") order by !instr(megnev,'üzemorvosi'), !instr(megnev,'Foglalkozás Egészségügyi'), !instr(megnev,'menedzser'), megnev")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($szuresTipusok as $szuresTipus) {
+            $tipusNevek[$szuresTipus["id"]] = $szuresTipus["megnev"];
+        }
+
+
+        foreach ($szuresTipusok as $szuresTipus) {
+            $this->szuresTipusActual = $szuresTipus;
+            $lastOrvosId = 0;
+
+            $beosztasok = $this->bookingService->beosztasService->getBookingPageBeosztasok($nap, $_SESSION["helyszin"], $szuresTipus["id"]);
+            foreach ($beosztasok as $beosztas) {
+                if (in_array($this->_beoHash($beosztas), $orvosListed)) {
+                    continue;
+                }
+
+                $rendelesek++;
+                $minTol             = "24:00";
+                $maxIg              = "00:00";
+                $maxPotIg           = "00:00";
+                $orvosId            = $beosztas["orvosid"];
+                $orvosListed[]      = $this->_beoHash($beosztas);
+                $binterval          = $beosztas["binterval"];
+                $this->orvosTipusok = $this->_extractTipusok($beosztas["alltipus"]);
+                $orvosTipusNevek    = [];
+                $rendeloOrvosLink   = "<a target='_blank' href='{$_SERVER['PHP_SELF']}?page=doctors&szerk={$orvosId}'>{$beosztas["orvosnev"]}</a>";
+                $addDoctorLink      = "<a class='orvosbutton' onclick=\"$('#adddoctordiv{$orvosId}').slideDown();return false;\" href='#'>+ orvos</a>";
+                $szabi              = sql_fetch_array(sql_query("select * from szabadsag where datumtol<=? and datumig>=? and oid=?", [$nap, $nap, $beosztas["orvosid"]]));
+                $szabiURL           = $szabi ? "szabadságon" : "<a onclick='return confirm(\"Biztos beállítod szabadságra erre a napra?\");' href='{$_SERVER['PHP_SELF']}?page={$_GET["page"]}&szabira={$nap}&orvosid={$orvosId}'>szabadságra</a>";
+                $helyettesites      = sql_fetch_array(sql_query("select h.*, o.nev as helyettesitoorvos from helyettesites h left join orvosok o on o.id = h.helyettesitoorvosid where h.nap=? and h.oid=? and h.tipusid=?", [$nap, $beosztas["orvosid"], $szuresTipus["id"]]));
+                $helyettesitesLink  = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}').slideDown();return false;\" href='#'>helyettesítés</a>";
+
+                foreach ($this->orvosTipusok as $tipusId) {
+                    $orvosTipusNevek[]  = $tipusNevek[$tipusId];
+                }
+
+                if($beosztas["extrabuttonrequired"]==1){
+                    $ExtraButtons[] = array("id"=>$orvosId,"nev"=>$beosztas["orvosnev"],"free"=>1);
+                }
+
+                if (isset($helyettesites["id"])) {
+                    $helyettesitesLink = "";
+                }
+
+                if ($beosztas["pecsetszam"] == "temp") {
+                    $rendeloOrvosLink = "<a target='_blank' href='#' title='Orvos eltávolítása' onclick=\"$('#editdoctordiv{$orvosId}').slideDown();return false;\">- {$beosztas["orvosnev"]}</a>";
+                    //$rendeloOrvosLink = "<a target='_blank' href='#' title='Orvos eltávolítása' onclick='removeTempDoctor(\"{$nap}\", {$orvosId});return false;'>- {$beosztas["orvosnev"]}</a>";
+                    $addDoctorLink = "";
+                }
+
+                if (strtotime($minTol) > strtotime($beosztas["mintol"])) {
+                    $minTol = $beosztas["mintol"];
+                }
+                if (strtotime($maxIg) < strtotime($beosztas["maxig"])) {
+                    $maxIg = $beosztas["maxig"];
+                }
+                if (strtotime($maxPotIg) < strtotime($beosztas["maxpotig"])) {
+                    $maxPotIg = $beosztas["maxpotig"];
+                }
+
+                if ($maxPotIg == "00:00") {
+                    $maxPotIg = $maxIg;
+                }
+
+                $htmlout .= "<tr>";
+                $htmlout .= "<td>";
+                if ($lastOrvosId != $orvosId) {
+                    $lastOrvosId = $orvosId;
+                    $existingOrvosTimes = [];
+
+                    $htmlout .= "<div class='etabletipushead' id='tpid{$szuresTipus["id"]}'>";
+
+                    $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$szuresTipus["id"]});\"><i id='tablenyito{$orvosId}_{$szuresTipus["id"]}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
+                    $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
+                    $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;".implode(", ", $orvosTipusNevek)."&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink}</div>";
+                    $htmlout .= "<div>#foglalt{$orvosId}_{$szuresTipus["id"]}# #szabad{$orvosId}_{$szuresTipus["id"]}#</div>";
+                    $htmlout .= "<div>{$beosztas["description"]}</div>";
+
+                    if (Booking_Constants::SQL_DB == "keltexmed" && in_array($orvosId, [399, 416, 417]) && in_array($nap, ["2022-07-18", "2022-07-19", "2022-07-20", "2022-07-21", "2022-07-22"])) {
+                        $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>DR. KIZMAN EZEN A NAPON NEM ELÉRHETŐ, EZÉRT TÜDŐSZŰRÉSRE NEM LEHET FOGLALNI!</span></div>";
+                    }
+
+                    if ($szabi) {
+                        $szabiData = sql_fetch_array(sql_query("select min(datumtol) as datumtol, max(datumig) as datumig from szabadsag where groupid=?", [$szabi["groupid"]]));
+                        $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Szabadságon {$szabiData["datumtol"]} - {$szabiData["datumig"]}</span></div>";
+                    }
+
+                    if ($beosztas["onlytel"] == 1) {
+                        $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Ez az orvos csak a telefonjára fogad foglalást!</span></div>";
+                    }
+
+                    $orvosOptions = "Válassz helyettesítő orvost!";
+                    foreach ($orvosList as $orvos) {
+                        $orvosOptions .= "<option value='{$orvos["id"]}'>{$orvos["nev"]}</option>";
+                    }
+
+                    $htmlout .= "<div id='helyettesitesdiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Helyettesítő orvos:</div><div class='tdm' style='padding:2px 0px;'><select id='helyettesitoorvosid{$orvosId}'>{$orvosOptions}</select></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosmegj{$orvosId}' style='width:300px;'/></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick=\"addReplaceDoctor('{$nap}', {$helyszin}, {$szuresTipus["id"]}, {$orvosId});\" type='button' value='Helyettesítés megadása' /> <input onclick=\"$('#helyettesitesdiv{$orvosId}').slideUp()\" type='button' value='mégsem' /></div></div>";
+                    $htmlout .= "</div>";
+
+                    if (isset($helyettesites["id"])) {
+                        $htmlout .= "<div style='padding:4px 0px;font-size: 14px;'><span style='color:#000;background:#ff8;padding:2px 0px;'>Helyettesítő: {$helyettesites["helyettesitoorvos"]} <span style='color:#888;'>{$helyettesites["megj"]}</span> <a title='helyettesítés törlése' href='#' onclick=\"removeReplaceDoctor('{$nap}', {$orvosId});return false;\"><i class='fas fa-times-circle'></i></a></span></div>";
+                    }
+
+                    $htmlout .= "<div id='adddoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Adj nevet az orvosnak:</div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosnev{$orvosId}' value='TempOrvos{$maxOrvosId}'/></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosmegj{$orvosId}' style='width:300px;'/></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Rendelési idő: </div><div class='tdm' style='padding:2px 0px;'>" . $this->rendIdoSelect("orvostol{$orvosId}", $minTol) . " - " . $this->rendIdoSelect("orvosig{$orvosId}", $maxIg) . "&nbsp;&nbsp;időtartam: " . $this->rendIntervalSelect("orvosinterval{$orvosId}", $binterval) . "</div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick=\"addTempDoctor('{$nap}', {$helyszin}, {$szuresTipus["id"]}, {$orvosId});\" type='button' value='Orvos hozzáadása' /> <input onclick=\"$('#adddoctordiv{$orvosId}').slideUp()\" type='button' value='mégsem' /></div></div>";
+                    $htmlout .= "</div>";
+
+                    $htmlout .= "<div id='editdoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Név:</div><div class='tdm' style='padding:2px 0px;'><input type='text' id='editorvosnev{$orvosId}' value='{$beosztas["orvosnev"]}'/></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='editorvosmegj{$orvosId}' style='width:300px;' value='{$beosztas["orvosdescription"]}' /></div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'>Rendelési idő: </div><div class='tdm' style='padding:2px 0px;'>" . $this->rendIdoSelect("editorvostol{$orvosId}", $beosztas["tol"]) . " - " . $this->rendIdoSelect("editorvosig{$orvosId}", $beosztas["ig"]) . "</div></div>";
+                    $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick='saveTempDoctor({$orvosId});' type='button' value='Mentés' /> <input onclick=\"removeTempDoctor('{$nap}', {$orvosId});\" type='button' value='Orvos törlése' /> <input onclick=\"$('#editdoctordiv{$orvosId}').slideUp()\" type='button' value='mégsem' /></div></div>";
+                    $htmlout .= "</div>";
+
+                    //if (isset($cegek[0]) && !empty($cegek[0])) {
+                    //    $htmlout .= "<div style=''><a onclick='$(\"#beocegek{$rendelesek}\").slideToggle();return false;' href='#'>" . count($cegek) . " cég</a></div>";
+                    //    $htmlout .= "<div id='beocegek{$rendelesek}' style='" . (count($cegek) > 0 ? "display:none;" : "") . "font-size:10px;color:#888;'>" . implode(", ", $cegek) . "</div>";
+                    //}
+                    $htmlout .= "</div>";
+                    $htmlout .= "</div>";
+                }
+
+
+                $freeCounter = $timeCounter = 0;
+
+                if ($minTol != "24:00") {
+                    $htmlout .= "<div class='beotable{$orvosId}_{$szuresTipus["id"]}' style='".($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"])?"display:none;":"")."'>";
+
+                    if (!empty($existingOrvosTimes) && !$emptySection) {
+                        $emptySection = true;
+                        $htmlout.="<div style='border-top:1px solid #ccc;marign-top:3px;padding-top:3px;width:100%;'></div>";
+                    }
+
+                    $beoComment = trim($beosztas["bmegj"]);
+                    if (!empty($beoComment) && $this->adminUser->allCegJog()) {
+                        $beoComment.= " ({$minTol} - {$maxIg})";
+                        $htmlout.= "<div style='margin:5px 0px;padding:2px 5px;background: red;color:#fff;display: inline-block;'>{$beoComment}</div>";
+                    }
+
+                    $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                    for ($o = 0; $o < 3600; $o += $binterval) {
+                        $ora = date("H:i", strtotime("{$minTol}:00 +{$o} minute"));
+                        if (strtotime($maxPotIg) <= strtotime($ora)) {
+                            break;
+                        }
+
+                        if (in_array($ora, $existingOrvosTimes)) {
+                            continue;
+                        }
+                        $existingOrvosTimes[] = $ora;
+                        $emptySection = false;
+
+                        $this->potIdopont = strtotime($ora) >= strtotime($maxIg);
+
+                        $timeFrom = "{$nap} {$ora}:00";
+                        $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + {$binterval} minute"));
+
+                        $this->addIdopontJavaScript = "setSelectedOrvos({$beosztas["orvosid"]});setSelectedInterval({$binterval});addIdopont(\"{$nap} {$ora}\", \"".implode(",", $this->orvosTipusok)."\", this);return false;";
+                        if ($isHoliday) {
+                            $this->addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$this->addIdopontJavaScript} } return false;";
+                        }
+
+                        $reservations = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f 
+                        left join cegek c on c.id=f.cegid
+                        left join szurestipusok sz on sz.id=f.szurestipusid
+                        left join orvosok o on o.id=f.orvosassigned
+                        left join dokumentumok d on d.foglalasid=f.id
+                        where f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) ".(in_array($szuresTipus["id"], [6, 34, 35])?" and f.szurestipusid='{$szuresTipus["id"]}'":"")." and f.orvosassigned in (0, ?) 
+                        group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId])->fetchAll(PDO::FETCH_ASSOC);
+
+                        $this->lastIdopont = "";
+                        $this->foglalasButtonVolt = 0;
+                        foreach ($reservations as $reservation) {
+                            if (in_array($reservation["id"], $this->displayedReservations) && $beosztas["pecsetszam"] == "temp") {
+                                continue;
+                            }
+                            if (isset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]])) {
+                                unset($foglalasok[$reservation["szurestipusid"]][$reservation["id"]]);
+                            }
+                            $htmlout .= $this->elojegyzesTableRow($reservation, $ora, $binterval);
+                            $this->displayedReservations[] = $reservation["id"];
+                        }
+
+                        if ($this->lastIdopont == "") {
+                            //nem volt foglalás, üres időpont kirakás
+                            $htmlout .= "<tr style=''>";
+                            $htmlout .= "<td valign='top' nowrap style='".$this->datePastStyle($nap, $ora)."'>{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</td>";
+                            $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
+                            if ($szabi) {
+                                $htmlout.= "<td valign='top'>Szabadság miatt nem foglalható</td>";
+                            }
+                            $htmlout .= "</tr>";
+                            if (!$szabi) {
+                                $freeCounter++;
+                            }
+                        } else {
+                            $timeCounter++;
+                        }
+                    }
+                    $htmlout .= "</table>";
+                    $htmlout .= "</div>";
+
+                    $htmlout = str_replace("#szabad{$orvosId}_{$szuresTipus["id"]}#", "{$freeCounter} szabad", $htmlout);
+                    $htmlout = str_replace("#foglalt{$orvosId}_{$szuresTipus["id"]}#", "{$timeCounter} foglalt, ", $htmlout);
+                }
+
+                $tipusLinks[$szuresTipus["id"]]["url"] = "javascript:scrollTo(\"tpid{$szuresTipus["id"]}\");";
+                $tipusLinks[$szuresTipus["id"]]["nev"] = $szuresTipus["megnev"];
+                if (!isset($tipusLinks[$szuresTipus["id"]]["free"])) {
+                    $tipusLinks[$szuresTipus["id"]]["free"] = 0;
+                }
+                $tipusLinks[$szuresTipus["id"]]["free"] += $freeCounter;
+
+                $htmlout .= "</td>";
+                $htmlout .= "</tr>";
+
+            }
+
+            //beosztás variálás miatt esetleg nem megjelenő foglalások
+            if (isset($foglalasok[$szuresTipus["id"]]) && !empty($foglalasok[$szuresTipus["id"]])) {
+                //orvosok megállapítása
+                $doctors = [];
+                foreach ($foglalasok[$szuresTipus["id"]] as $foglalas) {
+                    $doctors[] = $foglalas["orvosnev"];
+                }
+                $doctors = array_unique($doctors);
+
+                foreach ($doctors as $doctor) {
+                    $htmlout .= "<tr>";
+                    $htmlout .= "<td>";
+                    $htmlout .= "<div style='padding:4px 0px;'>Beosztáson kívüli foglalások - {$doctor}:</div>";
+                    $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                    foreach ($foglalasok[$szuresTipus["id"]] as $foglalas) {
+                        if ($foglalas["orvosnev"] != $doctor) {
+                            continue;
+                        }
+                        $htmlout .= $this->elojegyzesTableRow($foglalas, date("H:i", strtotime($foglalas["datum"])), 0, true);
+                    }
+                    $htmlout .= "</table>";
+                    $htmlout .= "</td>";
+                    $htmlout .= "</tr>";
+                }
+            }
+
+            if (isset($foglalasok[$szuresTipus["id"]]) && empty($foglalasok[$szuresTipus["id"]])) {
+                unset($foglalasok[$szuresTipus["id"]]);
+            }
+        }
+        $htmlout.="</table>";
+
+        if ($rendelesek==0) {
+            $htmlout.="<div style='margin-top:30px;'>Ezen a napon nincs rendelés a kiválasztott helyszínen.</div>";
+        }
+
+        if (count($tipusLinks) > 1) {
+            $links = [];
+            foreach ($tipusLinks as $link) {
+
+                $tlink = "<a class='tipuslink' href='{$link["url"]}'>{$link["nev"]} <span style='".(isset($link["free"]) && $link["free"] == 0?"font-weight:bold;border-radius:20px;background:#888;color:#fff;opacity:.3;":"font-weight:bold;border-radius:20px;background:#0a0;color:#fff;")."'>".(isset($link["free"])?"&nbsp;{$link["free"]}&nbsp;":"")."</span></a>";
+                $links[] = $tlink;
+            }
+
+            //Extra gyors gombok beillesztése:
+            $links = $this->addExtraShortCutLinks($links,$ExtraButtons);
+
+            $htmlout = str_replace("#tipuslinksplace#", "<div class='tipuslinksbox'>". implode(" ", $links) . "</div>", $htmlout);
+        } else {
+            $htmlout = str_replace("#tipuslinksplace#", "", $htmlout);
+        }
+
+        if ($this->adminUser->statAccess() && strtotime($nap) < strtotime(date("Y-m-d"))) {
+            $htmlout .= "<div style='margin-top:20px;padding-top:20px;border-top:1px solid #888;'>";
+            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadDailyStat(\"$nap\", \"$nap\")' title='Napi statisztika letöltése'><i class='fas fa-file-download'></i> napi statisztika {$nap}</div>&nbsp;&nbsp;";
+            $htmlout .= "<div class='dailysmallbutton' data-day='dayvalid' onclick='downloadElojegyzesTable(\"$nap\", \"$nap\")' title='Előjegyzés tábla export'><i class='fas fa-file-download'></i> előjegyzés tábla export {$nap}</div>";
+            $htmlout .= "</div>";
+        }
+
+
+        return $htmlout;
+    }
+
+
+
     public function showElojegyzesTable($setDay) {
+        if (session_id() == "usramhl4vqu6925pn3pja4s4ld") {
+            return $this->showElojegyzesTableNew($setDay);
+        }
+
         $settings      = new Booking_Settings();
         $htmlout       = "";
         $cimFilterHTML = $this->cimFilter();
@@ -456,7 +834,7 @@ class AdminBookingPage extends AdminCorePage
                         $timeFrom = "{$nap} {$ora}:00";
                         $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + {$binterval} minute"));
 
-                        $this->addIdopontJavaScript = "setSelectedOrvos({$beosztas["orvosid"]});setSelectedInterval({$binterval});addIdopont(\"{$nap} {$ora}\", {$szuresTipus["id"]});return false;";
+                        $this->addIdopontJavaScript = "setSelectedOrvos({$beosztas["orvosid"]});setSelectedInterval({$binterval});addIdopont(\"{$nap} {$ora}\", \"{$szuresTipus["id"]}\", this);return false;";
                         if ($isHoliday) {
                             $this->addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$this->addIdopontJavaScript} } return false;";
                         }
@@ -602,6 +980,7 @@ class AdminBookingPage extends AdminCorePage
     private $potIdopont;
     private $displayedReservations = [];
     private $szuresTipusActual;
+    private $orvosTipusok = [];
 
     private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false) {
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
@@ -641,7 +1020,7 @@ class AdminBookingPage extends AdminCorePage
         }
         $htmlout .= "</td>";
         if ($jogosult) {
-            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$reservationData["id"]},\"{$reservationData["pass"]}\",\"booking\");return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
+            $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$reservationData["id"]},\"{$reservationData["pass"]}\",\"booking\", this);return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
             if ($reservationData["rinterval"] != $binterval) {
@@ -657,13 +1036,28 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<span title='{$title}' style='color:{$acolor};'><i class='fas fa-circle'></i></span>&nbsp;&nbsp;";
             }
 
-            if ($this->szuresTipusActual["id"] == $reservationData["szurestipusid"]) {
-                if(!empty($reservationData["dokirex_userid"]) && !in_array($reservationData["dokirex_userid"],array(-1,-2,-3))){
+            if (count($this->orvosTipusok) == 0) {
+                //régi ág, törölhető
+                if ($this->szuresTipusActual["id"] == $reservationData["szurestipusid"]) {
+                    if (!empty($reservationData["dokirex_userid"]) && !in_array($reservationData["dokirex_userid"], array(-1, -2, -3))) {
+                        $htmlout .= "<img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\" title='dokirex-el szinkronizálva'>&nbsp;";
+                    }
+                    $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
+                } else {
+                    $htmlout .= "Foglalva ({$reservationData["szurestipusnev"]})&nbsp;&nbsp;";
+                }
+            } else {
+                if (!empty($reservationData["dokirex_userid"]) && !in_array($reservationData["dokirex_userid"], array(-1, -2, -3))) {
                     $htmlout .= "<img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\" title='dokirex-el szinkronizálva'>&nbsp;";
                 }
+
+                if (count($this->orvosTipusok) > 1) {
+                    $htmlout .= "{$reservationData["szurestipusnev"]}&nbsp;&nbsp;";
+                    $htmlout .= "</td><td valign='top' nowrap>";
+                }
+
                 $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
-            } else {
-                $htmlout .= "Foglalva ({$reservationData["szurestipusnev"]})&nbsp;&nbsp;";
+
             }
 
             if (!empty($reservationData["externalid"])) {

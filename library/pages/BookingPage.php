@@ -28,6 +28,12 @@ class BookingPage extends CorePage
             die;
         }
 
+        if (isset($_GET["keltexmedhuorder"])) {
+            $keltexmedWebService = new KeltexMedWebSQL();
+            $keltexmedWebService->loadWebShopOrder();
+        }
+
+
         if (isset($_GET["showpaciensfiles"])) {
             echo $this->utils->showPaciensFiles();
             die();
@@ -484,6 +490,12 @@ class BookingPage extends CorePage
         if (!isset($_POST["email"]) && !isset($_POST["nev"])) {
             $_POST["datum"] = $_POST["datumText"] = $_POST["email"] = $_POST["nev"] = $_POST["telefon"] = $_POST["szuldatum"] = $_POST["taj"] = $_POST["irsz"] = $_POST["varos"] = $_POST["utca"] = $_POST["munkaltato"] = $_POST["munkakor"] = $_POST["nev"] = $_POST["nev"] = $_POST["megj"] = $_POST["captcha"] = $_POST["szulhely"] = $_POST["anyjaneve"] = $_POST["telephely"] = "";
             $_POST["rinterval"] = 0;
+
+            if (isset($_SESSION["keltexmedhuorderdata"])) {
+                $keltexmedWebService = new KeltexMedWebSQL();
+                $keltexmedWebService->fillBookingDatas();
+            }
+
             if (isset($_SESSION["user"])) {
                 $_POST["taj"]       = $_SESSION["user"]["taj"];
                 $_POST["email"]     = $_SESSION["user"]["email"];
