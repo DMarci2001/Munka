@@ -1027,6 +1027,13 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "({$reservationData["rinterval"]} perc) ";
             }
 
+            $kidSign = "";
+            $extraInfo = "";
+            if (!empty($reservationData["szuldatum"]) && strtotime("now") - strtotime($reservationData["szuldatum"]) < 567648000 && strtolower($reservationData["nev"]) != "szünet") {
+                $kidSign = " <i class='fas fa-child' title='Fiatalkorú (18 év alatti)'></i>";
+                $extraInfo = "(18 év alatti!) ";
+            }
+
             if (!empty($reservationData["alkalmassag"])) {
                 $title = $this->settings->alkalmassagvariaciok[$reservationData["alkalmassag"]];
                 $acolor = "#0a0";
@@ -1042,7 +1049,7 @@ class AdminBookingPage extends AdminCorePage
                     if (!empty($reservationData["dokirex_userid"]) && !in_array($reservationData["dokirex_userid"], array(-1, -2, -3))) {
                         $htmlout .= "<img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\" title='dokirex-el szinkronizálva'>&nbsp;";
                     }
-                    $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
+                    $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>{$kidSign}" . ($reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "") . "&nbsp;" . ($reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "") . "&nbsp;&nbsp;";
                 } else {
                     $htmlout .= "Foglalva ({$reservationData["szurestipusnev"]})&nbsp;&nbsp;";
                 }
@@ -1081,7 +1088,7 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "</td>";
 
             if ($this->adminUser->paciensMegjegyzesAccess()) {
-                $htmlout .= "<td valign='top' nowrap>{$reservationData["megj"]}</td>";
+                $htmlout .= "<td valign='top' nowrap>{$extraInfo} {$reservationData["megj"]}</td>";
             }
         } else {
             $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";

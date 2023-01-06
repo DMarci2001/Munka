@@ -41,18 +41,6 @@ class AdminAjaxService {
             die;
         }
 
-        if (isset($_POST["showrefund"]) && $adminUser->authenticated()) {
-            $simpleService = new SimplePayService();
-            echo $simpleService->showRefundWindow($_POST["showrefund"]);
-            die;
-        }
-
-        if (isset($_POST["startsimplerefund"]) && $adminUser->authenticated()) {
-            $simpleService = new SimplePayService();
-            echo $simpleService->startRefund($_POST["startsimplerefund"], $_POST["osszeg"]);
-            die;
-        }
-
         if (isset($_POST["scancel"])) {
             header("location:index.php?page={$_GET["page"]}");
             die();

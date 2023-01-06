@@ -569,7 +569,12 @@ class AdminBookingEditor {
             if ($this->user->paciensMegjegyzesAccess()) {
                 $html .= "<td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
                 if (Booking_Constants::SQL_DB == "keltexmed") {
-                    $html .= "<div><a href='#' onclick=\"$('#reservationinfo').val('(előzetes) '+$('#reservationinfo').val())\">előzetes</a> | <a href='#' onclick=\"$('#reservationinfo').val('(időszakos) '+$('#reservationinfo').val())\">időszakos</a></div>";
+                    $html .= "<div>";
+                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(előzetes) '+$('#reservationinfo').val())\">előzetes</a> | ";
+                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(időszakos) '+$('#reservationinfo').val())\">időszakos</a> | ";
+                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(soron kívüli) '+$('#reservationinfo').val())\">soron kívüli</a> | ";
+                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(záró) '+$('#reservationinfo').val())\">záró</a> | ";
+                    $html .= "<div>";
                 }
                 $html .= "</td>";
             }

@@ -1900,11 +1900,11 @@ function saveQndA(szurestipus, orvosid) {
 }
 
 
-function retranserOperation(id) {
+function showRefundWindow(source, id) {
     $.ajax({
         type: 'post',
-        url: 'index.php',
-        data: { showrefund: id },
+        url: 'index.php?page=banktransactions',
+        data: { source: source, showrefund: id },
         success: function (data) {
             if (data.status == "ok") {
                 showGeneralPopup(data.html);
@@ -1915,13 +1915,12 @@ function retranserOperation(id) {
     });
 }
 
-function startSimpleRefund(id) {
-    let osszeg = $("#refundprice").val();
+function startSimpleRefund(id, osszeg, source) {
     $("#refunbuttonsor").hide();
     $.ajax({
         type: 'post',
-        url: 'index.php',
-        data: { startsimplerefund: id, osszeg: osszeg },
+        url: 'index.php?page=banktransactions',
+        data: { startsimplerefund: id, osszeg: osszeg, source:source },
         success: function (data) {
             $("#refunbuttonsor").show();
             $("#simplerefundbutton").hide();
