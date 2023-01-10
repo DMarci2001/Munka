@@ -174,53 +174,50 @@ class DokirexService {
         return $response;
     }
 
-    public function dokirexListPaciensInsert($startpoint=0,$quantity=1,$stepping=1){
-        $x=$startpoint;
-        $queryResult = array();
-        for($i=$startpoint;$i<($quantity+$startpoint);$i=$i+$stepping){
-            $listPaciens = json_decode($this->listPaciens($i,($stepping)),true);
+    public function dokirexListPaciensInsert($startpoint=0,$quantity=1) {
+        $count = 0;
 
-            echo "<br><br><strong>Lekérdezett adat mennyiség: ".count($listPaciens["data"])."db</strong><br><br>";
-            //Lefuttatom a dokirexből lekért állományi szegmenst
-            foreach($listPaciens["data"] as $key=>$array){
-                $data = $columns = array();
-                //Tömbökbe szedem az oszlop neveket és a hozzá tartozó értéket
-                foreach($array as $column=>$value){
-                    $data[] = $value;
-                    $columns[] = $column;
-                }
-                //Testreszabom az oszlop neveket, hogy illeszkedjen egy query hívásba stringesen.
-                $queryFields = implode("=?,",$columns);
-
-                
-
-                //Insertelem az adatok az adatbázisba.
-                sql_query("INSERT INTO dokirex_allomany SET {$queryFields}=?",$data);
-                $x++;
-                //echo "Adatok rögzítve! (#{$x}. - {$data[1]} - TAJ:{$data[2]})<br>";
-            }
-            $queryResult = array_merge($queryResult,$listPaciens["data"]);
-        }
-        return $queryResult;
-    }
-
-    public function dokirexListPaciensInsertLoop( $startpoint = 0, $quantity = 1000,$step = 100){
-       $eventpoint = $size = 0;
-       
-        do{
-            //Létrehozok egy eseménypontot, amit növelek a loop folyamán.
-            if($eventpoint==0) $eventpoint = $startpoint;
-            //Növelem a size értékét a lekérdezett adatokkal
-            $size = $size + count($this->dokirexListPaciensInsert($eventpoint,$quantity,$step));
-            //Lehívást követően növelem a eventpoint változót, hogy loopban tartsam a do-while-t,
-            $eventpoint=($eventpoint+$quantity);
-            //A eventpoint léptetését követően az $array és a változó mérete meg kell hogy egyezzen, ha végig tudott futni.
-            if(($startpoint+$size)<$eventpoint){
-                //Ha az $array értéke kisebb lesz, mint az új $startpoint akkor már hiányos volt az adatlekérdezés, szakítsa meg a loopot.
-                echo "Sikeres megszakítás! (#{$size}.)<br>";
+        $retry = 0;
+        while (true) {
+            $listPaciens = json_decode($this->listPaciens($startpoint, $quantity), true);
+            print_r($listPaciens);die;
+            if (isset($listPaciens["data"])) {
                 break;
             }
-        }while(($startpoint+$size)==$eventpoint);
+            if ($retry++ > 10) {
+                break;
+            }
+            sleep(1);
+        }
+
+        echo "\n<strong>Lekérdezett adat mennyiség: ".count($listPaciens["data"])."db</strong>\n\n";
+        //Lefuttatom a dokirexből lekért állományi szegmenst
+        foreach($listPaciens["data"] as $key=>$array){
+            $data = $columns = array();
+            //Tömbökbe szedem az oszlop neveket és a hozzá tartozó értéket
+            foreach($array as $column=>$value){
+                $data[] = $value;
+                $columns[] = $column;
+            }
+            //Testreszabom az oszlop neveket, hogy illeszkedjen egy query hívásba stringesen.
+            $queryFields = implode("=?,",$columns);
+
+            //Insertelem az adatok az adatbázisba.
+            sql_query("INSERT INTO dokirex_allomany SET {$queryFields}=?",$data);
+            $count++;
+            echo "Adatok rögzítve! (#".($startpoint+$count).". - {$data[1]} - TAJ:{$data[2]})\n";
+        }
+
+        return $count;
+    }
+
+    public function dokirexListPaciensInsertLoop($startpoint = 0, $quantity = 100) {
+        sql_query("truncate table dokirex_allomany");
+        while ($this->dokirexListPaciensInsert($startpoint, $quantity) == $quantity) {
+           $startpoint+= $quantity;
+        }
+        //felesleges log törlése
+        sql_query("DELETE FROM webservicelog WHERE action='/api/public/listPaciens'");
     }
 
     public function listMunkakor():string {

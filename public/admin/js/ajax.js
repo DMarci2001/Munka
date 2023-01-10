@@ -11,6 +11,12 @@ $(document).ready(function () {
         $(this).slideToggle();
     }));
 
+    tinymce.init({
+        selector: '.mce',
+        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code',
+        toolbar: 'bold italic underline strikethrough | link image | align | numlist bullist indent outdent',
+    });
+
     self.setInterval("searchTimer()",1000);
     self.setInterval("checkChat()",10000);
 
@@ -388,7 +394,36 @@ function setSelectedOrvos(oId) {
     selectedOrvos = oId;
 }
 
-function addIdopont(idopont, szt) {
+function addIdopont(idopont, szt, el) {
+    $(".eloj_dialog").hide();
+
+    if (szt.indexOf(',') > -1) {
+        $.ajax({
+            url: 'index.php',
+            type: 'GET',
+            data: { page: 'booking', addidoponttipusdialog: 1, tipusok: szt, idopont: idopont },
+            success: function (data) {
+                let position = $(el).offset();
+                let left = position.left + 15;
+
+                $(".eloj_dialogcontent").html(data);
+                $(".eloj_dialogtop").html(idopont.substring(11) + " - válassz szolgáltatást");
+                $(".eloj_dialog").show();
+
+                let width = $(".eloj_dialog").width();
+                let winWidth = $(window).width();
+                if (left + width > winWidth) {
+                    left = winWidth - width;
+                }
+
+                $(".eloj_dialog").css("top", position.top);
+                $(".eloj_dialog").css("left", left+5);
+            }
+        });
+
+        return;
+    }
+
     if (foglalasSelected != 0) {
         let msg = "Biztos áthelyezed ide a kijelölt foglalást?";
         if (cpy == 1) {
@@ -416,11 +451,17 @@ function addIdopont(idopont, szt) {
         return;
     }
 
+    let pos = $(el).offset();
+    $("#elojloader").show();
+    $("#elojloader").css("top", pos.top-2);
+    $("#elojloader").css("left", 182);
+
     $.ajax({
         url: 'index.php',
         type: 'GET',
         data: { page: 'booking', szt: szt, addidopont: idopont, rinterval: selectedInterval, orvosid: selectedOrvos },
         success: function (data) {
+            $("#elojloader").hide();
             if (data.substring(0, 5) == 'error') {
                 alert(data.substring(5));
             } else {
@@ -487,9 +528,16 @@ function addIdopontNaptar(idopont, szt) {
 
 
 
-function removeIdopont(id, p, page) {
+function removeIdopont(id, p, page, el) {
     if (!confirm("Biztos törlöd ezt az időpontot?")) {
         return;
+    }
+
+    if (el != 0) {
+        let pos = $(el).offset();
+        $("#elojloader").show();
+        $("#elojloader").css("top", pos.top - 2);
+        $("#elojloader").css("left", 182);
     }
 
     $.ajax({
@@ -497,6 +545,7 @@ function removeIdopont(id, p, page) {
         type: 'GET',
         data: { page: page, removeidopont: id, p: p },
         success: function (data) {
+            $("#elojloader").hide();
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             if (page == "booking") {
@@ -1851,11 +1900,11 @@ function saveQndA(szurestipus, orvosid) {
 }
 
 
-function retranserOperation(id) {
+function showRefundWindow(source, id) {
     $.ajax({
         type: 'post',
-        url: 'index.php',
-        data: { showrefund: id },
+        url: 'index.php?page=banktransactions',
+        data: { source: source, showrefund: id },
         success: function (data) {
             if (data.status == "ok") {
                 showGeneralPopup(data.html);
@@ -1866,13 +1915,12 @@ function retranserOperation(id) {
     });
 }
 
-function startSimpleRefund(id) {
-    let osszeg = $("#refundprice").val();
+function startSimpleRefund(id, osszeg, source) {
     $("#refunbuttonsor").hide();
     $.ajax({
         type: 'post',
-        url: 'index.php',
-        data: { startsimplerefund: id, osszeg: osszeg },
+        url: 'index.php?page=banktransactions',
+        data: { startsimplerefund: id, osszeg: osszeg, source:source },
         success: function (data) {
             $("#refunbuttonsor").show();
             $("#simplerefundbutton").hide();

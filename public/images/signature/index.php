@@ -6,12 +6,12 @@ $expireTime = (10 * 365 * 24 * 60 * 60);
 if (!isset($_COOKIE["signature_name"])) {
     setcookie( "signature_name", "Teszt Elek", time()+$expireTime);
     setcookie( "signature_status", "php fejlesztő", time()+$expireTime);
-    setcookie( "signature_phone", "+36 (20) 1234567", time()+$expireTime);
-    setcookie( "signature_email", "mymail@hungariamed.hu", time()+$expireTime);
-    setcookie( "signature_web", "https://www.hungariamed.hu", time()+$expireTime);
-    setcookie( "signature_address", "1135 Budapest, Jász u. 33-35.", time()+$expireTime);
-    setcookie( "signature_facebook", "https://www.facebook.com/hungariamed/", time()+$expireTime);
-    setcookie( "signature_instagram", "https://www.instagram.com/explore/locations/107111122708734/hungaria-med-m-kft", time()+$expireTime);
+    setcookie( "signature_phone", "+36(1)2030091", time()+$expireTime);
+    setcookie( "signature_email", "keltexmed@keltexmed.hu", time()+$expireTime);
+    setcookie( "signature_web", "https://www.keltexmed.hu", time()+$expireTime);
+    setcookie( "signature_address", "1117 Budapest, Fehérvári út 44.", time()+$expireTime);
+    setcookie( "signature_facebook", "https://www.facebook.com/keltexmed/", time()+$expireTime);
+    setcookie( "signature_instagram", "", time()+$expireTime);
     setcookie( "signature_linkedin", "", time()+$expireTime);
     header("location:index.php?saved");
     die();

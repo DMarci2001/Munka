@@ -19,6 +19,18 @@ class AdminPlacesPage extends AdminCorePage {
             $_POST["helyszinmentes"]=1;
         }
 
+        if (isset($_GET["scanh"])) {
+            $maps = new Maps();
+            $cimek = sql_query("SELECT h.* FROM helyszinek h where true")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($cimek as $cim) {
+                echo $cim["cim"];
+                $json = $maps->geoCoding($cim["cim"]);
+                sql_query("update helyszinek set geocodejson=? where id=?", [$json, $cim["id"]]);
+            }
+            die;
+        }
+
+
         if (isset($_POST["helyszinmentes"]) || isset($_POST["helyszinform"])) {
             $_SESSION["helyszinbeosztascegfilter"] = $_POST["helyszinbeosztascegfilter"];
 
@@ -41,6 +53,12 @@ class AdminPlacesPage extends AdminCorePage {
             if (!isset($_POST["aktiv"])) {
                 $_POST["aktiv"] = 0;
             }
+            if (!isset($_POST["halozat"])) {
+                $_POST["halozat"] = 0;
+            }
+
+            $maps = new Maps();
+            $json = $maps->geoCoding($_POST["cim"]);
 
             sql_query("update helyszinek set 
                 cegid=?,
@@ -48,8 +66,10 @@ class AdminPlacesPage extends AdminCorePage {
                 cim_en=?,
                 cim_de=?,
                 ceglink=?,
+                geocodejson=?,
+                halozat=?,
                 aktiv=?
-            where id=?",array($_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $_POST["aktiv"], $_GET["szerk"]));
+            where id=?",array($_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $json, $_POST["halozat"], $_POST["aktiv"], $_GET["szerk"]));
 
             logActivity("helyszin",$_GET["szerk"],"{$_POST["cim"]} adatlap",print_r($_POST,true));
 
@@ -67,9 +87,14 @@ class AdminPlacesPage extends AdminCorePage {
         }
 
         if (isset($_GET["szerk"])) {
+
+
             $helyszinId = intval($_GET["szerk"]);
             $row = sql_fetch_array(sql_query("select * from helyszinek where id=?",array($helyszinId)));
             $_POST = $row;
+
+            $maps = new Maps();
+            $addressInfo = $maps->getAddressInfo(json_decode($row["geocodejson"], JSON_OBJECT_AS_ARRAY));
 
             echo "<div style='background-color:#fff;padding:0px;'>";
             echo "<form name='iform' method='post' enctype='multipart/form-data'>";
@@ -78,6 +103,14 @@ class AdminPlacesPage extends AdminCorePage {
             echo "<tr><td width='100'>Cím:</td><td><input class='inputbox' style='width:400px;' type='text' name='cim' value='{$_POST["cim"]}'></td></tr>";
             echo "<tr><td>Cím (en):</td><td><input class='inputbox' style='width:400px;' type='text' name='cim_en' value='{$_POST["cim_en"]}'></td></tr>";
             echo "<tr><td>Cím (de):</td><td><input class='inputbox' style='width:400px;' type='text' name='cim_de' value='{$_POST["cim_de"]}'></td></tr>";
+
+            $geoResult = print_r($addressInfo, true);
+            if (empty($addressInfo["lat"])) {
+                $geoResult = "Nem azonosítható cím";
+            }
+
+            echo "<tr><td>Geocode result:</td><td><pre style='background:#eee;padding:10px;'>{$geoResult}</pre></td></tr>";
+
 
             echo "<tr><td colspan='2' valign='top'><hr></td></tr>";
             echo "<tr><td width='100'>Kiknek látszik:</td><td>";
@@ -96,6 +129,7 @@ class AdminPlacesPage extends AdminCorePage {
 
             echo "<tr><td colspan='2' valign='top'><hr></td></tr>";
             echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='aktiv'".($_POST["aktiv"]==1?" checked":"")."> Aktív</td></tr>";
+            echo "<tr><td colspan='2' valign='top'><input type='checkbox' value='1' name='halozat'".($_POST["halozat"]==1?" checked":"")."> Orvos hálózat része (kerüljön rá a weboldalon a térképre)</td></tr>";
             echo "<tr><td colspan='2' valign='top'><hr></td></tr>";
             //echo "<tr><td colspan='2' valign='top'>".beosztasEditorByAddress($helyszinId)."</td></tr>";
 
@@ -103,8 +137,12 @@ class AdminPlacesPage extends AdminCorePage {
 
             echo "<br><input type='submit' name='helyszinmentes' value='Mentés'> <input type='submit' name='scancel' value='Vissza'> ";
 
+
             echo "</form>";
+
             echo "</div>";
+
+
         }
 
         if (!isset($_GET["szerk"])) {
@@ -137,7 +175,8 @@ class AdminPlacesPage extends AdminCorePage {
                 if (sql_fetch_array(sql_query("select * from orvos_beosztas_new where helyszinid=? limit 1", array($row["id"])))) $vanbeo = 1;
 
                 echo "<tr>";
-                echo "<td nowrap valign=top><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["cim"]}</a>" . ($row["cim_en"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>EN</span>" : "") . ($row["cim_de"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>DE</span>" : "") . "</div></td>";
+                echo "<td nowrap valign='top'><div class={$tc}>".($row["halozat"] == 1?" <i class='fa-solid fa-map' title='térképen'></i>":"")."</div></td>";
+                echo "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["cim"]}</a>". ($row["cim_en"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>EN</span>" : "") . ($row["cim_de"] != "" ? "&nbsp;<span style='padding:2px;border:1px solid #f00;color:#f00;'>DE</span>" : "") . "</div></td>";
 
                 echo "<td valign=top><div class={$tc}>";
                 $cegids = explode("|", $row["ceglink"]);

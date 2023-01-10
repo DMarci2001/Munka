@@ -879,6 +879,13 @@ function covidFormCheckboxCheck(el) {
 
 }
 
+function silentBookingPost() {
+    var formid = $("#iform");
+    $("#silentmode").val(1);
+    $(formid).submit();
+}
+
+
 function selectedTipus(tipusId, helyszin) {
     window.location.href='index.php?page=booking&szurestipus='+tipusId+"&helyszin="+helyszin;
 }

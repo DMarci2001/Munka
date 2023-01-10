@@ -26,7 +26,7 @@ class BeosztasService {
     public function getBookingPageBeosztasok($day, $helyszinId, $szuresTipusId) {
         $wd = date("N", strtotime($day));
 
-        $beoRes = sql_query("SELECT b.*, min(tol) as mintol, max(ig) as maxig, MAX(potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired FROM orvos_beosztas_new b 
+        $beoRes = sql_query("SELECT b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired FROM orvos_beosztas_new b 
             left join orvosok o on o.id=b.orvosid 
             WHERE b.helyszinid=? and INSTR(tipusok, ?) AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
             AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$this->beosztasCompanyFilter}

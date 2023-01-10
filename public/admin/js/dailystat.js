@@ -1,3 +1,5 @@
+let runningDailyStatButtonText = "";
+
 $(document).ready(function () {
     reloadEvents();
 });
@@ -8,17 +10,18 @@ function reloadEvents() {
     $(".dailystatfile").on("change", prepareDailyStatUpload);
 }
 
-function downloadDailyStat(dayFrom, dayTo) {
-    $("#dailystatloader"+dayFrom).show();
-    $("#datablock"+dayFrom).hide();
+
+function downloadDailyStat(el, dayFrom, dayTo) {
+    runningDailyStatButtonText = $(el).html();
+    $(el).html("<img style='height:15px;' src='/images/loading_transparent_white.svg' />");
 
     $.ajax({
         type: "POST",
         url: "index.php?page=dailystat&downloaddailystat=1",
         data: "dayFrom=" + encodeURIComponent(dayFrom)+"&dayTo=" + encodeURIComponent(dayTo),
         success: function (response) {
-            $("#dailystatloader"+dayFrom).hide();
-            $("#datablock"+dayFrom).show();
+            $(el).html(runningDailyStatButtonText);
+            runningDailyStatButtonText = "";
 
             if (response.debughtml != "") {
                 $("#debugarea").html(response.debughtml);
@@ -33,6 +36,16 @@ function downloadDailyStat(dayFrom, dayTo) {
             }
 
             window.location.href='index.php?page=dailystat&downloaddailystatfile='+encodeURIComponent(dayFrom)+"&dayTo="+encodeURIComponent(dayTo);
+            return;
+        },
+        error: function (response) {
+            $(el).html(runningDailyStatButtonText);
+            runningDailyStatButtonText = "";
+            $.toast({
+                heading: "Hiba",
+                text: "A file létrehozása közben hiba történt!",
+                icon: 'error'
+            });
             return;
         }
     });

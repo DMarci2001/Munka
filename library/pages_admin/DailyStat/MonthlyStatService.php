@@ -142,8 +142,9 @@ class MonthlyStatService {
         $startDate = date("Y-m-d 00:00:00", strtotime("{$year}-{$month}-01"));
         $endDate   = date("Y-m-t 23:59:59", strtotime("{$year}-{$month}-01"));
 
+        $institutionNames = DicomService::getInstitutesQuery();
         $result["raw"]["interval"] = [$startDate, $endDate];
-        $result["raw"]["list"] = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName=? GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$startDate, $endDate, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
+        $result["raw"]["list"] = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName in ({$institutionNames}) GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$startDate, $endDate])->fetchAll(PDO::FETCH_ASSOC);
 
         $this->excelService->rtgList($result["raw"]);
         $this->excelService->setFileName("RTG_lista_" . date("Y-m", strtotime("{$year}-{$month}-01")) . ".xlsx");

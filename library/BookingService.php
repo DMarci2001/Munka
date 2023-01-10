@@ -341,6 +341,8 @@ class BookingService
                 $dist        = $preResData["hour"]; //ennyi órán belül kell foglalni
                 $distFullDay = $preResData["day"]; //ennyi napon belül kell foglalni
                 $binterval   = $napiBeos[0]["binterval"];
+                $sorszam     = 1;
+                $jarat       = 0;
 
                 if ($orvosData["pecsetszam"] == "temp") {
                     continue;
@@ -454,6 +456,19 @@ class BookingService
                             $dayError = "<div style='font-size:11px;width:100px;margin: 10px auto;'>{$availableData[$nap]["error"]}</div>";
                         }
                     }
+
+                    //sorszám override aldi esetében
+                    if (Booking_Constants::SQL_DB == "hungariamed" && $_SESSION["helyszindata"]["id"] == 90 && $this->szuresTipus == 58) {
+                        $jaratok = ["08:30", "10:30", "10:30", "10:30", "10:30", "10:30", "10:30"];
+                        if ($sorszam % 6 == 1) {
+                            $napHTML.= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
+                            $jarat++;
+                        }
+                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
+                        $sorszam++;
+                    }
+
+
                     /*
                     if (!empty($this->packContentTypes)) {
                         $btn = "";
@@ -1140,14 +1155,18 @@ class BookingService
                 $h .= "<div style='margin:10px 0px;'>";
                 $h .= "<div style='font-weight:bold;'>Ha kér, válasszon kiegészítő szolgáltatást:</div>";
                 while ($row = sql_fetch_array($res)) {
+                    $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}</div>";
+                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
                 }
                 $h .= "</div>";
             }
         }
         if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $tid == 1 && in_array($helyszinId, [1, 100])) {
-            $h .= "<div><input type='checkbox' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"])?"checked":"")."/>Tüdőszűrővel nem rendelkezik</div>";
+            $h .= "<div><input type='hidden' name = 'tudoszuroanswerneeded' value = '1' /><span style='font-weight: bold;'>Rendelkezik 1 éven belüli érvényes tüdőszűrő lelettel?</span><br/>";
+            $h .= "<input type='radio' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1?"checked":"")."/>Nem rendelkezem, kérek tüdőszűrő vizsgálatot, azonnali lelet kiadással<br/>";
+            $h .= "<input type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
+            $h .= "</div>";
         }
         return $h;
     }
@@ -1190,6 +1209,15 @@ class BookingService
                 $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
             }
 
+            //utolsó időpont check
+            if (empty($result["error"])) {
+                if ($doctorBeo = $this->beosztasService->getBeosztasDataForDoctor($data["orvosselected"], $nap, $data["helyszin"], $data["szurestipus"])) {
+                    $end = date("H:i", strtotime("{$data["datum"]} + {$allInterval} minute"));
+                    if (strtotime($end) > strtotime($doctorBeo["ig"])) {
+                        $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
+                    }
+                }
+            }
         }
         return $result;
     }

@@ -78,6 +78,11 @@ class CronService {
             $this->seemeBalanceCheck();
         }
 
+        if ($this->interval == "napi") {
+            //napi cronok
+            $this->dokirexPaciensDump();
+        }
+
         if ($this->interval == "teszt") {
             $this->_tesztStuff();
         }
@@ -98,8 +103,10 @@ class CronService {
         //$this->sendSzabadsag2FoglaljOrvostBatch();
         //$this->checkSzabadsagCollisions();
         //$this->checkCollisions();
-        $this->dokirexUserIdFill();
+        //$this->dokirexUserIdFill();
+        //$this->dokirexPaciensDump();
 
+        $this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
@@ -108,8 +115,96 @@ class CronService {
         die();
     }
 
+    private function readEmailReports() {
+        //error_reporting(E_ALL);
+        //ini_set('display_errors', 1);
+
+        $validSenders["keltexmed"] = ["ugyfelkapcsolat@keltexmed.hu"];
+        $validSenders["hungariamed"] = ["ugyfelkapcsolat@hungariamed.hu", "jnsmobil@gmail.com"];
+
+        $connection = imap_open('{mail.hungariamed.hu/notls}', "reports@hungariamed.hu", "ZohR9jee");
+
+        $count = imap_num_msg($connection);
+
+        echo "count:" . $count . "\n";
+
+        for ($i = 0; $i <= 10; $i++) {
+            $msgNum = $count - $i;
+            if ($msgNum <= 0) {
+                break;
+            }
+
+            $header = imap_headerinfo($connection, $msgNum);
+            $raw_body = imap_body($connection, $msgNum);
+            $subject = $this->rawDecode($header->subject);
+            $from = $header->from[0]->mailbox."@".$header->from[0]->host;
+            $structure = imap_fetchstructure($connection, $msgNum);
+
+            $a = 0;
+            foreach ($structure->parts as $part) {
+                if ($part->ifdparameters) {
+                    foreach ($part->dparameters as $object) {
+                        echo "attr:{$from} ".strtolower($object->attribute)."\n";
+                        if (substr_count(strtolower($object->attribute), "filename")) {
+                            //attachment
+                            $extension = "";
+                            $fileName  =  $object->value;
+                            $encoding  =  strtolower($part->encoding);
+                            $subtype   =  strtolower($part->subtype);
+
+                            if ($subtype == "csv" || $subtype == "plain") {
+                                $extension = "xlsx";
+                            }
+
+                            if (empty($extension)) {
+                                continue;
+                            }
+
+                            $tempFile = Booking_Constants::DOCUMENT_PATH.md5(rand(1,100000)).".{$extension}";
+
+                            $attachment = imap_fetchbody($connection, $msgNum, $a+1);
+                            if ($encoding == 3) {
+                                $attachment = base64_decode($attachment);
+                            }
+                            if ($encoding == 4) {
+                                $attachment = quoted_printable_decode($attachment);
+                            }
+
+                            if (in_array($from, $validSenders[Booking_Constants::SQL_DB])) {
+                                //ez egy dokirex által küldött file, megpróbáljuk feldolgozni...
+                                file_put_contents($tempFile, $attachment);
+
+                                $requestText = "Dokirex excel file feldolgozás\nFeladó: {$from}\nTárgy: {$subject}\nCsatolt file: ".$this->rawDecode($fileName)."\n";
+
+                                $logId = Log::store(Log::REPORTPROCESS_ID, "processfile", $requestText, "");
+
+                                echo $tempFile." ".$this->rawDecode($fileName)."\n";
+
+                                $dailyStatService = new DailyStatService();
+                                $result = $dailyStatService->processFileCsv($tempFile);
+
+
+                                echo $result;
+
+                                //unlink($tempFile);
+                            }
+
+
+                        }
+                    }
+                }
+                $a++;
+            }
+
+
+
+            print_r($header->from[0]->host);die;
+        }
+    }
+
+
     private function seemeBalanceCheck() {
-        if (Booking_Constants::SQL_DB == "hungariamed" && date("G") >= 8 && date("G") <= 16) {
+        if (Booking_Constants::SQL_DB == "hungariamed" && in_array(date("G"), [8, 14])) {
             $result = json_decode(file_get_contents("https://seeme.hu/gateway?key=" . Booking_Constants::SEEME_API_KEY . "&method=balance&format=json"), JSON_OBJECT_AS_ARRAY);
 
             if (isset($result["balance"])) {
@@ -125,6 +220,11 @@ class CronService {
                 }
             }
         }
+    }
+
+    private function dokirexPaciensDump() {
+        $dokirexService = new DokirexService();
+        $dokirexService->dokirexListPaciensInsertLoop();
     }
 
     private function dokirexUserIdFill() {
@@ -554,6 +654,25 @@ class CronService {
                 sql_query("update labshop_vasarlasok set visszaigazolva=1 where id=?", [$labShopData["id"]]);
             }
         }
+    }
+
+    private function rawDecode($str) {
+        $arrStr = explode('?', $str);
+
+        if (isset($arrStr[1]) && in_array($arrStr[1], mb_list_encodings())) {
+            switch ($arrStr[2]) {
+                case 'B': //base64 encoded
+                    $str = base64_decode($arrStr[3]);
+                    break;
+                case 'Q': //quoted printable encoded
+                    $str = quoted_printable_decode($arrStr[3]);
+                    break;
+            }
+
+            $str = iconv($arrStr[1], 'UTF-8', $str);
+        }
+
+        return $str;
     }
 
 }

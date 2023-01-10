@@ -15,6 +15,7 @@ class Booking_Constants {
     const PASSWORD_LENGTH_MAX       = 20;
 
     const DOCUMENT_PATH             = "/var/doc_keltexmed/";
+    const APP_PATH                  = "/var/www/onlinebejelentkezes_keltexmed/";
 
     const ADATVEDELMI_URL           = "https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf";
 
@@ -81,4 +82,6 @@ class Booking_Constants {
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com, marton.gergely@hungariamed.hu";
 
     const TUDOSZURES_ID             = 102;
+
+    const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
 }

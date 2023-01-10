@@ -18,7 +18,7 @@ class MunkakorVizsgalatok {
             $munkakor = trim(strtolower($munkakor));
 
             if (isset($vizsgalatok[$munkakor])) {
-                $result = $vizsgalatok[$munkakor];
+                //$result = $vizsgalatok[$munkakor];
             }
         }
 

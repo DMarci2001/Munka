@@ -29,6 +29,15 @@ class ExcelService {
         die;
     }
 
+    public function outputSpreadSheetFile($fileName) {
+        try {
+            $writer = IOFactory::createWriter($this->spreadSheet, 'Xlsx');
+            $writer->save($fileName);
+        } catch (\PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
+            return false;
+        }
+    }
+
     public function getSpreadSheet() {
         return $this->spreadSheet;
     }
@@ -390,7 +399,91 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
-    private function _kiegeszitoFoglalasokLista($sheetId, $rawInput, $from, $to) {
+    private function _bejelentkezoEljottStat($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Nem eljöttek");
+        $this->titleRow("A1", "Nem eljöttek statisztikája - {$from} - {$to} (forrás: bejelentkező)");
+        $this->sheet->SetCellValue("A2", "* csak a kitöltött taj számos foglalások szerepelnek a statisztikában!");
+
+        $sor = 4;
+        $this->titleRow("A{$sor}", "Dátum szerint");
+        $sor+=2;
+
+        $this->headingRow("A", $sor, ["Nap", "Összes időpont", "Nem jött el", "Százalék"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT DATE(datum) AS datum, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
+            GROUP BY DATE(f.datum) ORDER BY DATE(f.datum)", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["datum"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
+            $sor++;
+        }
+
+        $sor = 4;
+        $this->titleRow("F{$sor}", "Cégek szerint");
+        $sor+=2;
+
+        $this->headingRow("F", $sor, ["Cég", "Összes időpont", "Nem jött el", "Százalék"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
+            LEFT JOIN cegek c ON c.id=f.cegid
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
+            GROUP BY c.id ORDER BY c.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            $ceg = empty($reservation["ceg"]) ? "Nem kitöltött cég" : $reservation["ceg"];
+            $this->dataRow("F", $sor, [$ceg, $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
+            $sor++;
+        }
+
+        $sor = 4;
+        $this->titleRow("K{$sor}", "Szolgáltatások szerint");
+        $sor+=2;
+
+        $this->headingRow("K", $sor, ["Szolgáltatás", "Összes időpont", "Nem jött el", "Százalék"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT t.megnev AS szolgaltatas, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
+            LEFT JOIN szurestipusok t ON t.id=f.`szurestipusid`
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
+            GROUP BY t.id ORDER BY t.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("K", $sor, [$reservation["szolgaltatas"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
+            $sor++;
+        }
+
+
+        $sor = 4;
+        $this->titleRow("P{$sor}", "Orvosok szerint");
+        $sor+=2;
+
+        $this->headingRow("P", $sor, ["Orvos", "Összes időpont", "Nem jött el", "Százalék"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
+            LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
+            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
+            GROUP BY o.id ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("P", $sor, [$reservation["orvos"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
+            $sor++;
+        }
+
+
+        $this->setAutoWidth(range('B','T'));
+        $this->sheet->getColumnDimension('A')->setWidth(15);
+    }
+
+    private function _kiegeszitoFoglalasokLista($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
@@ -434,7 +527,7 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
-    private function _dokirexVizsgalatokLista($sheetId, $rawInput, $from, $to) {
+    private function _dokirexVizsgalatokLista($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
@@ -443,7 +536,7 @@ class ExcelService {
         $this->sheet->setTitle("Dokirex vizsgálat lista");
         $this->titleRow("A1", "Vizsgálatok - {$from} - {$to} (forrás: dokirex)");
 
-        $data = json_decode($rawInput["dokirexvizsgalatokresult"], JSON_OBJECT_AS_ARRAY);
+        $data = DailyStatService::getDokirexVizsgalatok($from, $to);
 
         $sor = 3;
         $this->headingRow("A", $sor, ["Dátum", "Név", "Szakrendelés", "Orvos", "PaciensId", "Születési dátum", "Telephely", "Munkakör", "Korlázozás", "Alkalmasság", "Számla"]);
@@ -464,7 +557,7 @@ class ExcelService {
     }
 
 
-    public function _rtgLista($sheetId, $rawInput, $from, $to) {
+    public function _rtgLista($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
@@ -475,7 +568,8 @@ class ExcelService {
         $from.= " 00:00:00";
         $to.= " 23:59:59";
 
-        $data = sql_query_common("select d.*, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName=? GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$from, $to, Booking_Constants::FOOTER_COPYRIGHT])->fetchAll(PDO::FETCH_ASSOC);
+        $institutionNames = DicomService::getInstitutesQuery();
+        $data = sql_query_common("select d.contentDate, d.patientName, d.patientBirthDate, d.patientOtherIDs, d.studyDescription, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName in ({$institutionNames}) GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
         $this->titleRow("A1", " RTG lista {$from} - {$to}");
 
@@ -493,18 +587,44 @@ class ExcelService {
             $sor++;
         }
 
-        $this->sheet->getColumnDimension('A')->setWidth(30);
-        $this->sheet->getColumnDimension('A')->setWidth(30);
-        $this->sheet->getColumnDimension('B')->setWidth(40);
-        $this->sheet->getColumnDimension('C')->setWidth(20);
-        $this->sheet->getColumnDimension('D')->setWidth(40);
-        $this->sheet->getColumnDimension('E')->setWidth(20);
 
         $sor = 3;
-        $this->dataRow("A", $sor, ["Összes paciens: {$total}, összes kép: {$totalImage}"]);
+        $this->dataRow("A", $sor, ["BEJELENTKEZŐ Összes paciens: {$total}, összes kép: {$totalImage}"]);
+
+
+        //dokirex lista
+        $dokirexVizsgalatok = sql_query("select * from dokirex_vizsgalatok where datum>=? and datum<=? and instr(szakrendeles, '(RTG)') order by datum", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+
+        $sor = 5;
+        $this->headingRow("H", $sor, ["Dátum", "Paciens", "Szül. dátum", "TAJ", "Cég"]);
+
+        $sor++;
+        $total = $totalImage = 0;
+        foreach ($dokirexVizsgalatok as $rowData) {
+            $this->dataRow("H", $sor, [$rowData["datum"], $rowData["nev"], $rowData["szuldatum"], $rowData["paciensid"], $rowData["telephely"]]);
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("left");
+            $total ++;
+            $sor++;
+        }
+
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('B')->setWidth(30);
+        $this->sheet->getColumnDimension('C')->setWidth(15);
+        $this->sheet->getColumnDimension('D')->setWidth(15);
+        $this->sheet->getColumnDimension('E')->setWidth(20);
+
+        $this->sheet->getColumnDimension('H')->setWidth(20);
+        $this->sheet->getColumnDimension('I')->setWidth(30);
+        $this->sheet->getColumnDimension('J')->setWidth(15);
+        $this->sheet->getColumnDimension('K')->setWidth(15);
+        $this->sheet->getColumnDimension('L')->setWidth(20);
+
+        $sor = 3;
+        $this->dataRow("H", $sor, ["DOKIREX Összes paciens: {$total}"]);
+
     }
 
-    public function _cegEsOrvosStat($sheetId, $rawInput, $from, $to) {
+    public function _cegEsOrvosStat($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
@@ -569,7 +689,7 @@ class ExcelService {
         $this->sheet->getColumnDimension('E')->setWidth(40);
     }
 
-    private function _beosztasLista($sheetId, $rawInput, $from, $to) {
+    private function _beosztasLista($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
             $this->spreadSheet->setActiveSheetIndex($sheetId);
@@ -585,7 +705,7 @@ class ExcelService {
 
         $this->titleRow("A1", "Beosztások - {$from}");
 
-        $data = json_decode($rawInput["beosztasresult"], JSON_OBJECT_AS_ARRAY);
+        $data = WorkScheduleService::getDailySchedule($from);
 
         $sor = 3;
         $this->headingRow("A", $sor, ["Dolgozó", "Helyszín", "Tipus", "Időtartam", "Megjegyzés"]);
@@ -632,17 +752,28 @@ class ExcelService {
     }
 
 
-    public function napiStat($rawInput, $from, $to) {
+    public function napiStat($from, $to) {
         $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-        //$this->_vizsgalatKimutatas(0, $rawInput, $from, $to);
-        $this->_bejelentkezoFoglalasokLista(0, $from, $to);
-        $this->_kiegeszitoFoglalasokLista(1, $rawInput, $from, $to);
-        $this->_dokirexVizsgalatokLista(2, $rawInput, $from, $to);
-        $this->_beosztasLista(3, $rawInput, $from, $to);
-        $this->_rtgLista(4, $rawInput, $from, $to);
-        $this->_cegEsOrvosStat(5, $rawInput, $from, $to);
-        //$this->_fizetesLista(4, $rawInput, $from, $to);
+        //$result = $this->generateDailyStat($_POST["dayFrom"], $_POST["dayTo"]);
+        //$_SESSION["lastgeneratedstat"]["finalresult"] = json_encode($result["result"]);
+        //$_SESSION["lastgeneratedstat"]["dokirexvizsgalatokresult"] = json_encode($this->getDokirexVizsgalatok($_POST["dayFrom"], $_POST["dayTo"]));
+        //$_SESSION["lastgeneratedstat"]["beosztasresult"] = json_encode(WorkScheduleService::getDailySchedule($_POST["dayFrom"]));
+
+        $sheetId = 0;
+        try {
+            //$this->_vizsgalatKimutatas($sheetId++, $rawInput, $from, $to);
+            $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
+            $this->_kiegeszitoFoglalasokLista($sheetId++, $from, $to);
+            $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
+            $this->_beosztasLista($sheetId++, $from, $to);
+            $this->_rtgLista($sheetId++, $from, $to);
+            $this->_cegEsOrvosStat($sheetId++, $from, $to);
+            $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
+            //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
+        } catch (\Exception $e) {
+            //valami hibakezelés...
+        }
 
         $this->spreadSheet->setActiveSheetIndex(0);
     }
