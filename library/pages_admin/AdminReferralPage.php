@@ -313,7 +313,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->Subject = $t;
 					$mail->Body = $mbody;
 					$mail->AddAttachment($zipPath);
-					//$mail->Send();
+					$mail->Send();
 					foreach($files as $file) unlink($file);
 					unlink($zipPath);
 				}
