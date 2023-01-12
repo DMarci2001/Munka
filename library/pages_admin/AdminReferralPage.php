@@ -59,7 +59,7 @@ class AdminReferralPage extends AdminCorePage {
 			if (isset($_POST['selected-data']) && is_array($_POST['selected-data']) && count($_POST['selected-data'])>0) {
 				
 				
-				$folder=dirname(__DIR__)."/other/tmp/";
+				$folder=__DIR__."/other/tmp/";
 				
 				$overallExcel = date("Y.m.d")." fogleu lista(Teljes)";
 				$objPHPExcel = new Spreadsheet();
@@ -267,7 +267,9 @@ class AdminReferralPage extends AdminCorePage {
 					$objWriter = IOFactory::createWriter($objPHPExcel, 'Xlsx');
 					$objWriter->save($folder.$filename.".xlsx");
 					$files[]=$folder.$filename.".xlsx";
-					$this->utils->create_zip($files, $zipPath,  null);
+
+					exec("zip -j {$zipPath} ".implode(" ",$files));
+					//$this->utils->create_zip($files, $zipPath,  null);
 					
 					//Email(ek) készítése:
 					$mail = NotificationService::getDefaultMailer();
