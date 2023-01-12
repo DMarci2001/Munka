@@ -9,8 +9,11 @@ class AdminReferralPage extends AdminCorePage {
     public function __construct()
     {
         parent::__construct();
-		
-		if(!$this->adminUser->beutaloAccess()) header("Location:index.php");
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        if(!$this->adminUser->beutaloAccess()) header("Location:index.php");
 		
 		if (isset($_POST['deleteSelectedReferrals']) && $_GET['page']=="referral") {
 			
@@ -59,9 +62,9 @@ class AdminReferralPage extends AdminCorePage {
 			if (isset($_POST['selected-data']) && is_array($_POST['selected-data']) && count($_POST['selected-data'])>0) {
 				
 				
-				$folder=__DIR__."/other/tmp/";
-				
-				$overallExcel = date("Y.m.d")." fogleu lista(Teljes)";
+				$folder = "/var/www/onlinebejelentkezes_keltexmed/library/other/tmp/";
+
+				$overallExcel = date("Y.m.d")."-fogleu-lista(Teljes)";
 				$objPHPExcel = new Spreadsheet();
 				$objPHPExcel->setActiveSheetIndex(0);
 				$objPHPExcel->getActiveSheet()->setTitle('Állomány');
@@ -226,7 +229,7 @@ class AdminReferralPage extends AdminCorePage {
 					//Ki kell találnom valami normális lista megnevezést xd....
 					//és hozzá kell adnom a pdf-eket + tömörítenem is kell őket...
 					$files = array();
-					$filename = date("Y.m.d")." fogleü. lista";
+					$filename = date("Y.m.d")."-fogleü.-lista";
 					$objPHPExcel = new Spreadsheet();
 					$objPHPExcel->setActiveSheetIndex(0);
 					$objPHPExcel->getActiveSheet()->setTitle('Állomány');
@@ -259,7 +262,7 @@ class AdminReferralPage extends AdminCorePage {
 						$files[]=$each["attachment"];
 					}
 					
-					$zipPath=$folder."Csatolmany_".date("Ymd")."({$name}).zip";
+					$zipPath=$folder."Csatolmany_".date("Ymd")."-{$name}.zip";
 					
 					
 					
@@ -331,7 +334,7 @@ class AdminReferralPage extends AdminCorePage {
 			echo "The file $filename does not exist";
 		}*/
 
-		if(!$this->adminUser->beutalomenupontAccess()) header("Location:index.php");
+		//if(!$this->adminUser->beutalomenupontAccess()) header("Location:index.php");
 
 		
 		
