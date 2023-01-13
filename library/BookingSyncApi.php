@@ -38,7 +38,7 @@ class BookingSyncApi {
         }
 
         if ($action == "deleteremotereservation") {
-            $this->deleteRemotereServationAction($input);
+            $this->deleteRemoteReservationAction($input);
         }
 
         if ($action == "storebeosztas") {
@@ -80,7 +80,7 @@ class BookingSyncApi {
     }
 
     private function storeNewReservationAction($data) {
-        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=?", [$data["pecsetszam"]]))) {
+        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=? and pecsetszam<>''", [$data["pecsetszam"]]))) {
             //echo "orvos";die;
             $externalReservation = $data["reservation"];
 
@@ -99,30 +99,40 @@ class BookingSyncApi {
                 $foService->newReservation($newReservationId);
                 //die;
             }
-
         }
+        $this->checkTudoSzures($data);
     }
 
     private function modifyRemoteReservationAction($data) {
-        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=?", [$data["pecsetszam"]]))) {
+        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=? and pecsetszam<>''", [$data["pecsetszam"]]))) {
             //echo "orvos";die;
             $externalReservation = $data["reservation"];
-            if ($reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
-                $externalReservation["orvosid"] = $orvosData["id"];
-                $externalReservation = $this->_fixReservation($externalReservation, $data);
-                $this->_updateReservation($externalReservation);
-            } else {
+            $externalReservation["orvosid"] = $orvosData["id"];
+            if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
                 sql_query("insert into foglalasok set pass=?, orvosassigned=?, externalid=?", [$externalReservation["pass"], $orvosData["id"], $data["source"].$externalReservation["id"]]);
-                $externalReservation["orvosid"] = $orvosData["id"];
-                $externalReservation = $this->_fixReservation($externalReservation, $data);
-                $this->_updateReservation($externalReservation);
             }
+            $externalReservation = $this->_fixReservation($externalReservation, $data);
+            $this->_updateReservation($externalReservation);
+        }
+        $this->checkTudoSzures($data);
+    }
+
+    private function deleteRemoteReservationAction($data) {
+        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=? and pecsetszam<>''", [$data["pecsetszam"]]))) {
+            sql_query("delete from foglalasok where pass=? and orvosassigned=?", [$data["reservationpass"], $orvosData["id"]]);
         }
     }
 
-    private function deleteRemotereServationAction($data) {
-        if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where pecsetszam=?", [$data["pecsetszam"]]))) {
-            sql_query("delete from foglalasok where pass=? and orvosassigned=?", [$data["reservationpass"], $orvosData["id"]]);
+    private function checkTudoSzures($data) {
+        $reservationData = $data["reservation"];
+        if (Booking_Constants::SQL_DB == "keltexmed" && $reservationData["tudoszuro"] == 1 && $reservationData["taj"] != "") {
+            $reservationData = $this->_fixReservation($reservationData, $data);
+            $reservationData["megj"] = "hungariamedről másolva, cég: {$reservationData["cegnev"]}";
+            $reservationData["helyszinid"] = $reservationData["helyszin"];
+
+            $bookingService = new BookingService();
+            //tüdőszűréshez másolás
+            $bookingService->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
         }
     }
 
@@ -253,11 +263,11 @@ class BookingSyncApi {
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if (!empty(trim($reservation["pecsetszam"])) && $reservation["helyszinid"] == $sourcePlace) {
+        if ($reservation["helyszinid"] == $sourcePlace) {
             $data = [
                 "source" => $clinic,
                 "action" => "storenewreservation",
-                "pecsetszam" => $reservation["pecsetszam"],
+                "pecsetszam" => trim($reservation["pecsetszam"]),
                 "defaulthelyszin" => $destinationPlace,
                 "reservation" => $reservation
             ];
@@ -273,11 +283,11 @@ class BookingSyncApi {
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if (!empty(trim($reservation["pecsetszam"])) && $reservation["helyszinid"] == $sourcePlace) {
+        if ($reservation["helyszinid"] == $sourcePlace) {
             $data = [
                 "source" => $clinic,
                 "action" => "modifyremotereservation",
-                "pecsetszam" => $reservation["pecsetszam"],
+                "pecsetszam" => trim($reservation["pecsetszam"]),
                 "defaulthelyszin" => $destinationPlace,
                 "reservation" => $reservation
             ];
@@ -292,11 +302,11 @@ class BookingSyncApi {
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $orvosData        = sql_query("SELECT id, pecsetszam FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC);
 
-        if (!empty(trim($orvosData["pecsetszam"])) && $reservationData["helyszinid"] == $sourcePlace) {
+        if ($reservationData["helyszinid"] == $sourcePlace) {
             $data = [
                 "source"          => Booking_Constants::SQL_DB,
                 "action"          => "deleteremotereservation",
-                "pecsetszam"      => $orvosData["pecsetszam"],
+                "pecsetszam"      => trim($orvosData["pecsetszam"]),
                 "reservationpass" => $reservationData["pass"]
             ];
 

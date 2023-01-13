@@ -123,6 +123,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminLaborkeroPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminLabortetelekPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminWebPageDataPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminWebServicesPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminMenusPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminContentsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminVaroteremPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");

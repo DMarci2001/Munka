@@ -9,6 +9,9 @@ class AdminBanktransactionsPage extends AdminCorePage {
         parent::__construct();
         if (!isset($_SESSION["paymentsource"])) {
             $_SESSION["paymentsource"] = "bejelentkezo";
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $_SESSION["paymentsource"] = "keltexmedwebshop";
+            }
         }
         if (isset($_GET["paymentsource"])) {
             $_SESSION["paymentsource"] = $_GET["paymentsource"];

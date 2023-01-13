@@ -14,7 +14,7 @@ $(document).ready(function () {
     tinymce.init({
         selector: '.mce',
         plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code',
-        toolbar: 'bold italic underline strikethrough | link image | align | numlist bullist indent outdent',
+        toolbar: 'bold italic underline strikethrough | blocks | link image | align | numlist bullist indent outdent',
     });
 
     self.setInterval("searchTimer()",1000);

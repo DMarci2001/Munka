@@ -333,6 +333,16 @@ class AdminBookingEditor {
                     $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
                 }
             }
+
+            //ha nincs találat, akkor keltexmed esetén benézünk a hmm-re is
+            if (isset($data["error"]) && Booking_Constants::SQL_DB == "keltexmed" && $this->user->allCegJog()) {
+                //keresés hmm-ben
+                $data["error"] = "";
+                if (!$data = sql_fetch_array(sql_query_common("SELECT * FROM foglalasok WHERE taj = ? order by datum desc limit 1", [$taj]))) {
+                    $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+                }
+            }
+
             if (!isset($data["error"])) {
                 $data["error"] = "";
             }
