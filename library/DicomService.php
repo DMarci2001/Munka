@@ -12,42 +12,47 @@ class DicomService {
     }
 
     public function teszt() {
-        $this->processEntries();
-        //$this->rescanDicomEntries();
+        //$this->processEntries();
+        $this->rescanDicomEntries();
         //print_r($dicomEntries);
     }
 
 
     public function rescanDicomEntries() {
-        $entries = sql_query("select * from dicom")->fetchAll(PDO::FETCH_ASSOC);
+        header('Content-Type: text/html; charset=utf-8');
+
+        $entries = sql_query("select * from dicom order by contentDate desc limit 2000")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($entries as $entry) {
+            if (is_file($entry["fileName"])) {
+                $output = `dcm2xml +Ca latin-1 {$entry["fileName"]}`;
+                $xml = simplexml_load_string($output);
 
-            $manufacturer = $manufacturerModelName = $institutionName = "";
+                $studyDescription = "";
+                $seriesDescription = "";
 
-            $xml = simplexml_load_string($entry["xml"]);
+                //$xml = simplexml_load_string($entry["xml"]);
 
-            //echo $xml;
-            //die;
-            foreach ($xml->children() as $child){
-                if ($child->getName() == "data-set") {
-                    foreach ($child->children() as $subchild) {
-                        foreach ($subchild->attributes() as $attr) {
-                            if ($attr == "Manufacturer") {
-                                $manufacturer = $subchild;
-                            }
-                            if ($attr == "ManufacturerModelName") {
-                                $manufacturerModelName = $subchild;
-                            }
-                            if ($attr == "InstitutionName") {
-                                $institutionName = $subchild;
+                //echo $xml;
+                //die;
+                foreach ($xml->children() as $child) {
+                    if ($child->getName() == "data-set") {
+                        foreach ($child->children() as $subchild) {
+                            foreach ($subchild->attributes() as $attr) {
+                                if ($attr == "StudyDescription") {
+                                    $studyDescription = $subchild;
+                                }
+                                if ($attr == "SeriesDescription") {
+                                    $seriesDescription = $subchild;
+                                }
                             }
                         }
                     }
                 }
+
+                echo $entry["fileName"] . " " . $studyDescription . "|" . $seriesDescription . "\n";
+
+                sql_query("update dicom set seriesDescription=? where id=?", [$seriesDescription, $entry["id"]]);
             }
-
-
-            sql_query("update dicom set manufacturer=?, manufacturerModelName=?, institutionName=? where id=?", [$manufacturer, $manufacturerModelName, $institutionName, $entry["id"]]);
         }
     }
 
@@ -66,17 +71,18 @@ class DicomService {
             $output = `dcm2xml +Ca latin-1 {$dicomEntry}`;
             $xml = simplexml_load_string($output);
 
-            $patientName      = "";
-            $patientID        = "";
-            $patientBirthDate = "0000-00-00";
-            $patientSex       = "";
-            $patientOtherIDs  = "";
-            $studyDescription = "";
-            $contentTime      = "";
-            $contentDate      = "";
-            $manufacturer     = "";
+            $patientName           = "";
+            $patientID             = "";
+            $patientBirthDate      = "0000-00-00";
+            $patientSex            = "";
+            $patientOtherIDs       = "";
+            $studyDescription      = "";
+            $seriesDescription     = "";
+            $contentTime           = "";
+            $contentDate           = "";
+            $manufacturer          = "";
             $manufacturerModelName = "";
-            $institutionName  = "";
+            $institutionName       = "";
 
             foreach ($xml->children() as $child){
                 if ($child->getName() == "data-set") {
@@ -109,6 +115,9 @@ class DicomService {
                             if ($attr == "StudyDescription") {
                                 $studyDescription = $subchild;
                             }
+                            if ($attr == "SeriesDescription") {
+                                $seriesDescription = $subchild;
+                            }
                             if ($attr == "Manufacturer") {
                                 $manufacturer = $subchild;
                             }
@@ -137,8 +146,8 @@ class DicomService {
 
             echo "storing {$patientName}\n";
 
-            sql_query("insert into dicom set contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, manufacturer=?, manufacturerModelName=?, institutionName=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
-                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientUniqueId, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $manufacturer, $manufacturerModelName, $institutionName]);
+            sql_query("insert into dicom set contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, seriesDescription=?, manufacturer=?, manufacturerModelName=?, institutionName=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
+                [$contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientUniqueId, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $seriesDescription, $manufacturer, $manufacturerModelName, $institutionName]);
 
         }
 

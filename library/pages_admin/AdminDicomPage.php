@@ -120,6 +120,14 @@ class AdminDicomPage extends AdminCorePage
             $patientData = $this->patinentService->getPatinentByTaj($row["patientOtherIDs"]);
             $machineName = "{$row["manufacturer"]} {$row["manufacturerModelName"]}";
 
+            $studyDescription = $row["studyDescription"];
+            if (!empty($row["seriesDescription"])) {
+                if (!empty($studyDescription)) {
+                    $studyDescription.= " &gt; ";
+                }
+                $studyDescription.= "{$row["seriesDescription"]}";
+            }
+
             $tc = "tcella";
             if (!isset($first)) {
                 $html.= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
@@ -149,7 +157,7 @@ class AdminDicomPage extends AdminCorePage
 
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientBirthDate"]}</div></td>";
             $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientOtherIDs"]}</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["studyDescription"]}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$studyDescription}</div></td>";
 
             $html.= "</tr>";
             $html.= "<tr><td colspan='10' ><div id='imagerow{$row["uid"]}' style='padding:10px 0px 10px 0px;display:none;'>";
@@ -163,6 +171,14 @@ class AdminDicomPage extends AdminCorePage
 
     private function displayImageEditor($id):string {
         $dicomData = $this->dicomService->getDicomEntry($id);
+
+        $studyDescription = $dicomData["studyDescription"];
+        if (!empty($dicomData["seriesDescription"])) {
+            if (!empty($studyDescription)) {
+                $studyDescription.= " &gt; ";
+            }
+            $studyDescription.= "{$dicomData["seriesDescription"]}";
+        }
 
         $html = "<!DOCTYPE html>";
         $html.= "<head>";
@@ -204,8 +220,8 @@ class AdminDicomPage extends AdminCorePage
         if (!empty($dicomData["manufacturer"])) {
             $html .= "<div style='margin-top:15px;'>Gép:<br/>{$dicomData["manufacturer"]} {$dicomData["manufacturerModelName"]}</div>";
         }
-        if (!empty($dicomData["studyDescription"])) {
-            $html .= "<div style='margin-top:15px;'>{$dicomData["studyDescription"]}</div>";
+        if (!empty($studyDescription)) {
+            $html .= "<div style='margin-top:15px;'>{$studyDescription}</div>";
         }
 
         $html.= "</div>";
