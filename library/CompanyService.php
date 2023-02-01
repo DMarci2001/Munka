@@ -6,7 +6,7 @@ class CompanyService {
     const UNIQA_ID          = 200;
     const HUNGAROCONTROL_ID = 201;
     const WABERERS_ID       = 129;
-    const BP_ID             = 382;
+    const BP_ID             = 74;
 
     public static array $makIds = [373, 374, 375, 376];
 
