@@ -552,6 +552,7 @@ class BookingPage extends CorePage
 
         if ($this->isExtendedForm()) {
             echo $this->_preSelectForm();
+            echo "</div>";
             return;
         }
 
@@ -1127,21 +1128,20 @@ class BookingPage extends CorePage
             $introText = $this->lang->getText("miert.bennunket.keltexmed", "");
         }
 
-        $html .= "<div style='padding:0px 0px 30px 0px;'>";
-        if (!empty($introText)) {
-            $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
-            $html .= $introText;
-        }
 
-        $html .= "<div>";
 
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
-            $html .= "<div style='text-align:center;margin-top:30px;".(empty($introText)?"":"border-top:1px solid #888;")."'>";
+            $html .= "<div style='text-align:center;margin-top:10px;'>";
 
-            $html .= "<h2>Időpontfoglalás</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
+            $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px;'>Időpontfoglalás</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
             foreach ($services as $tipusData) {
+                if ($tipusData["megnev"] == "Szemészet" && Booking_Constants::SQL_DB == "hungariamed") {
+                    //szemészet most nincs
+                    continue;
+                }
+
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
                 if (empty($tipusData["facode"])) {
@@ -1165,7 +1165,14 @@ class BookingPage extends CorePage
 
             $html .= "</div>";
         }
-        $html .= "</div>";
+
+        if (!empty($introText)) {
+            $html .= "<div style='margin:40px 0px 0px 0px;padding:0px 20px 40px 20px;border-top:1px solid #888;'>";
+            $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
+            $html .= $introText;
+            $html .= "<div>";
+        }
+
 
         return $html;
     }

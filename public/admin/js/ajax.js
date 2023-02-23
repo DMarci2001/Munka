@@ -706,7 +706,7 @@ function startFoglalasMove(id, p) {
     cpy = 0;
     foglalasSelected = id;
     foglalasSelectedPass = p;
-    $("#autofill").slideUp();
+    $("#timeedit").slideUp();
     $("#copyinfo").slideUp();
     $("#moveinfo").slideDown();
 }
@@ -715,18 +715,18 @@ function startFoglalasCopy(id, p) {
     cpy = 1;
     foglalasSelected = id;
     foglalasSelectedPass = p;
-    $("#autofill").slideUp();
+    $("#timeedit").slideUp();
     $("#moveinfo").slideUp();
     $("#copyinfo").slideDown();
 }
 
-function startAutoFill(id, p) {
+function startTimeEditor(id, p) {
     //cpy=1;
     foglalasSelected = id;
     foglalasSelectedPass = p;
     $("#copyinfo").slideUp();
     $("#moveinfo").slideUp();
-    $("#autofill").slideDown();
+    $("#timeedit").slideDown();
 }
 
 function duplicateReservation(id, p) {
@@ -789,7 +789,7 @@ function cancelFoglalasMove() {
     foglalasSelected = 0;
     $("#moveinfo").slideUp();
     $("#copyinfo").slideUp();
-    $("#autofill").slideUp();
+    $("#timeedit").slideUp();
 }
 
 function foReservationInfo(id, p) {
@@ -802,6 +802,32 @@ function foReservationInfo(id, p) {
         }
     });
 }
+
+function saveTimeEdit() {
+    let page = $("#currentPage").val();
+    let id = $("#reservationId").val();
+    let p = $("#reservationToken").val();
+    let modTime = $("#modtime").val();
+    let modInterval = $("#modinterval").val();
+
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: { savetimemod: 1, page: page, fid: id, p: p, modTime:modTime, modInterval:modInterval },
+        success: function (response) {
+            if (response.status != "") {
+                alert(response.status);
+            }
+            //$("#idoponteditor").html(response.html);
+            //$("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
+            //    function(responseText){
+            //        afterElojegyzesTableInit();
+            //    }
+            //);
+        }
+    });
+}
+
 
 function foglalasMentes(page, allowNewCompany) {
     var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
@@ -3442,6 +3468,23 @@ function elojegyzesSearchStart() {
         url: "index.php?page=booking",
         method: "POST",
         data: { searchkey:key },
+        success: function (response) {
+            $("#elojegyzessearchloading").hide();
+            $("#elojegyzessearchresult").html(response);
+        }
+    });
+
+}
+
+function elojegyzesCegSearchStart() {
+    let key = $(".companyselector2").val();
+    $("#elojegyzessearchloading").show();
+    $("#elojegyzessearchresult").html("");
+
+    $.ajax({
+        url: "index.php?page=booking",
+        method: "POST",
+        data: { searchkey:key, searchkeytype:"company" },
         success: function (response) {
             $("#elojegyzessearchloading").hide();
             $("#elojegyzessearchresult").html(response);

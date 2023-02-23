@@ -24,6 +24,7 @@ class Booking_Constants {
     const FOOTER_COPYRIGHT          = "Hungariamed";
     const COMPANY_NAME              = "Hungáriamed-M Kft.";
     const COMPANY_NAME_SHORT        = "Hungária Med-M"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
+    const COMPANY_ADDRESS           = "1135 Budapest, Jász u. 33-35.";
 
     const MAIN_URL                  = "https://bejelentkezes.hungariamed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
@@ -72,7 +73,9 @@ class Booking_Constants {
 
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com, marton.gergely@hungariamed.hu";
 
-    const TUDOSZURES_ID             = 102;
+    const TUDOSZURES_ID             = 58;
+    const LABOR_ID                  = 0;
+    const HALLASVIZSGALAT_ID        = 0;
 
     const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
 }

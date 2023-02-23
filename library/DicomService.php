@@ -1,9 +1,10 @@
 <?php
 
 class DicomService {
+    const STORAGE_DIR = "/var/rtg";
+    const WORKLIST_DIR = "/var/worklist/ICWS";
 
-    private $dir = "/var/rtg";
-    private $adminUser;
+    private AdminUser $adminUser;
 
     public function __construct()
     {
@@ -155,11 +156,11 @@ class DicomService {
 
     private function readDir() {
         $entries = [];
-        $d = dir($this->dir);
+        $d = dir(self::STORAGE_DIR);
 
         while (false !== ($entry = $d->read())) {
             if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX") {
-                $entries[] = $this->dir."/".$entry;
+                $entries[] = self::STORAGE_DIR."/".$entry;
             }
         }
         return $entries;
@@ -238,7 +239,7 @@ class DicomService {
                 $content["imageData"] = $this->notAvailableImage($param);
             } else {
                 if (isset($_GET["thumb"])) {
-                    $thumbLocation = "{$this->dir}/thumbnails/{$id}.jpg";
+                    $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
                     if (!is_file($thumbLocation)) {
                         `dcmj2pnm --write-png {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
                     }
@@ -260,7 +261,8 @@ class DicomService {
 
     private function notAvailableImage($param) {
         $num = rand(1,12);
-        return imagecreatefromstring(`convert {$this->dir}/skeleton{$num}.png {$param} png:-`);
+        $dir = self::STORAGE_DIR;
+        return imagecreatefromstring(`convert {$dir}/skeleton{$num}.png {$param} png:-`);
     }
 
     public function getCompanies() {
@@ -311,6 +313,47 @@ class DicomService {
         }
         return $institutionNames;
     }
+
+    public function workListFileFormat($data):string {
+        $companyId      = Booking_Constants::SQL_DB;
+        $companyName    = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_NAME);
+        $companyAddress = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_ADDRESS);
+        $name = iconv("UTF-8", "ISO-8859-2", $data["nev"]);
+        $company = iconv("UTF-8", "ISO-8859-2", $data["cegnev"]);
+        $birthDate = date("Ymd", strtotime($data["szuldatum"]));
+        $idopont = date("Ymd", strtotime($data["datum"]));
+        $patientSex = $data["neme"] == 2 ? "F":"M";
+        $accessionNumber = $data["id"];
+
+        return "# Dicom-Data-Set
+# Used TransferSyntax: Little Endian Explicit
+(0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+(0008,0008) CS [ORIGINAL\PRIMARY]                       #  16, 2 ImageType
+(0008,0020) DA [{$idopont}]                             #   8, 1 StudyDate
+(0008,0022) DA [{$idopont}]                             #   8, 1 AcquisitionDate
+(0008,0023) DA [{$idopont}]                             #   8, 1 ContentDate
+(0008,0050) SH [{$accessionNumber}]                     #   4, 1 AccessionNumber
+(0008,0060) CS [CR]                                     #   2, 1 Modality
+(0008,0070) LO [Pictron Kft]                            #  12, 1 Manufacturer
+(0008,0080) LO [{$companyName}]                         #  16, 1 InstitutionName
+(0008,0081) ST [{$companyAddress}]                      #  16, 1 InstitutionAddress
+(0008,1010) SH [localhost]                              #  10, 1 StationName
+(0008,1030) LO [{$company}]                             #   0, 0 StudyDescription
+(0008,1070) PN [RTG]                                    #   4, 1 OperatorsName
+(0008,1090) LO [ICWS]                                   #   4, 1 ManufacturerModelName
+(0010,0010) PN [{$name}]                                #  12, 1 PatientName
+(0010,0020) LO [{$data["taj"]}]                         #   8, 1 PatientID
+(0010,0030) DA [{$birthDate}]                           #   8, 1 PatientBirthDate
+(0010,0040) CS [{$patientSex}]                          #   2, 1 PatientSex
+(0010,1000) LO [{$data["taj"]}]                         #   8, 1 OtherPatientIDs
+(0018,1020) LO [ICWS V2.2 - 2012.10.16]                 #  22, 1 SoftwareVersions
+(0032,1032) PN [{$companyId}]                           # RequestingPhysician
+(0032,1033) LO [ez a szolgaltatas neve]                 # RequestingService
+(0032,1060) LO [{$company}]                             # RequestedProcedureDescription
+(0038,0050) LO [ez az amire szukseg van]                # SpecialNeeds
+";
+    }
+
 
 }
 

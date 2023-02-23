@@ -3,6 +3,8 @@
 class FoGeneral {
 
     protected function description($reservationData) {
+        return "";
+        /*
         $description = "";
 
         if (trim($reservationData["nev"]) != "") {
@@ -23,6 +25,7 @@ class FoGeneral {
         $description = str_replace("<", "", $description);
         $description = str_replace(">", "", $description);
         return trim($description);
+        */
     }
 
     protected function getApiURL() {

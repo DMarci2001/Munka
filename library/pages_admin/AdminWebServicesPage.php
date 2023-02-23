@@ -29,8 +29,8 @@ class AdminWebServicesPage extends AdminCorePage
                     $sor++;
                 }
 
-                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=? where id=?",
-                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_GET["szerk"]]);
+                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seokeywords=?, seodescription=? where id=?",
+                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seokeywords"], $_POST["seodescription"], $_GET["szerk"]]);
 
                 logActivity("wwwservice",$_GET["szerk"],"{$_POST["megnev"]} adatlap", print_r($_POST,true));
             }
@@ -104,10 +104,11 @@ class AdminWebServicesPage extends AdminCorePage
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Weboldal szöveg</div></td></tr>";
             echo "<tr><td colspan='2' valign='top'><div id='desceditor' style=''>";
-            echo "<textarea class='mce' name='webdescription' style='width:900px;height:600px;'>{$service["webdescription"]}</textarea><br/>";
-            echo "Alias: <input class='inputbox' style='width:200px;' type='text' name='webalias' value='{$service["webalias"]}' placeholder='ez lesz az url' />&nbsp;&nbsp;<input type='checkbox' value='1' name='webkiemelt'" . ($service["webkiemelt"] == 1 ? " checked" : "") . "> Kiemelve a weboldalon<br/>";
+            echo "<textarea class='mce' name='webdescription' style='width:900px;height:600px;'>{$service["webdescription"]}</textarea>";
             echo "</div></td></tr>";
-
+            echo "<tr><td>Alias:</td><td><input class='inputbox' style='width:200px;' type='text' name='webalias' value='{$service["webalias"]}' placeholder='ez lesz az url' />&nbsp;&nbsp;<input type='checkbox' value='1' name='webkiemelt'" . ($service["webkiemelt"] == 1 ? " checked" : "") . "> Kiemelve a weboldalon</td></tr>";
+            echo "<tr><td>SEO keywords:</td><td><input class='inputbox' style='width:800px;' type='text' name='seokeywords' value='{$service["seokeywords"]}'  /></td></tr>";
+            echo "<tr><td>SEO description:</td><td><input class='inputbox' style='width:800px;' type='text' name='seodescription' value='{$service["seodescription"]}'  /></td></tr>";
 
             echo "</table>";
 
@@ -152,9 +153,9 @@ class AdminWebServicesPage extends AdminCorePage
                 $image = $assets[0]["url"];
             }
 
-            $html.= "<div style='display:inline-block;vertical-align:top;width:250px;height:125px;border:1px solid #ddd;margin:20px 20px 0px 0px;padding:10px;background:#f8f8f8;'>";
+            $html.= "<div style='display:inline-block;vertical-align:top;width:250px;height:125px;border:0px solid #ddd;margin:0px 20px 20px 0px;padding:10px;background:#f0f0f0;'>";
             $html.= "<div style='height:110px;overflow: hidden;'>";
-            $html.= "<div style='float:left;padding:0px 10px 10px 0px;'><a style='color:#00a;font-size:14px;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$service["id"]}'><img style='width:80px;height:80px;object-fit:cover;' src='{$image}' /></a></div>";
+            $html.= "<div style='float:left;padding:0px 10px 10px 0px;'><a style='color:#00a;font-size:14px;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$service["id"]}'><img style='width:100px;height:100px;object-fit:cover;box-shadow:2px 2px 2px rgba(100,100,100, .2);' src='{$image}' /></a></div>";
             $html.= "<div><a style='color:#00a;font-size:14px;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$service["id"]}'>{$service["megnev"]}</a></div>";
             if (!empty($arak)) {
                 $html.= "<div style='margin-top:5px;line-height:18px;'>{$arak}</div>";
@@ -166,7 +167,7 @@ class AdminWebServicesPage extends AdminCorePage
             $html.= "<div style='display:table;width:100%;'>";
             $html.= "<div style='display:table-cell;vertical-align: middle;'>";
             if ($service["webalias"] != "") {
-                $html.= "<span class='pack_badge'><a target='_blank' style='color:white;' href='https://uj.hungariamed.hu/szurovizsgalatok/{$service["webalias"]}'>WEBOLDAL</a></span>&nbsp;&nbsp;";
+                $html.= "<span class='pack_badge'><a target='_blank' style='color:white;' href='https://uj.hungariamed.hu/szurovizsgalatok/{$service["webalias"]}'>WEBOLDAL <i class='fa-solid fa-arrow-right'></i></a></span>&nbsp;&nbsp;";
             }
 
             $html.= "</div>";
@@ -187,7 +188,7 @@ class AdminWebServicesPage extends AdminCorePage
 
         echo "<h2>A weboldalon megjelenő szolgáltatások</h2>";
         echo $kiemeltServicesHTML;
-        echo "<hr style='margin:20px 0px;'>";
+        echo "<hr style='margin:0px 0px 20px 0px;'>";
         echo "<h2>Egyéb, a weboldalon nem használt szolgáltatások</h2>";
         echo $otherServicesHTML;
 

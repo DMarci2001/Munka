@@ -24,6 +24,7 @@ class Booking_Constants {
     const FOOTER_COPYRIGHT          = "KeltexMed";
     const COMPANY_NAME              = "Keltexmed Kft.";
     const COMPANY_NAME_SHORT        = "Keltexmed"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
+    const COMPANY_ADDRESS           = "Budapest, 1117 Fehérvári út 44.";
 
     const MAIN_URL                  = "https://bejelentkezes.keltexmed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
@@ -82,6 +83,8 @@ class Booking_Constants {
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com, marton.gergely@hungariamed.hu";
 
     const TUDOSZURES_ID             = 102;
+    const LABOR_ID                  = 103;
+    const HALLASVIZSGALAT_ID        = 85;
 
     const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
 }

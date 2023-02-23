@@ -1583,6 +1583,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .eloj_dialogtop {
+	min-width: 200px;
 	background-color: #a00;
 	padding:5px 5px 5px 8px;
 	color:#fff;
