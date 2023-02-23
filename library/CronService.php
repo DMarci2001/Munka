@@ -57,6 +57,7 @@ class CronService {
 			$this->sendMissingDataEmails();
             $this->sendLabShopMails();
             $this->checkOneWebPage();
+            $this->refreshWorklist();
             //$this->dokirexUserIdFill();
 
 			$dicomService = new DicomService();
@@ -106,10 +107,12 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        $this->readEmailReports();
+        //$this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
+
+        $this->refreshWorklist();
 
         echo "teszt\n";
         die();
@@ -469,7 +472,7 @@ class CronService {
             $res = sql_query("SELECT f.*,h.cim FROM foglalasok f 
             LEFT JOIN helyszinek h ON h.id=f.helyszinid
 		    LEFT JOIN cegek c ON c.`id`=f.`cegid`
-		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND f.externalid=''");
+		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND c.smshour<>0 AND f.externalid=''");
             while ($row = sql_fetch_array($res)) {
                 $tel = $row["telefon"];
                 //ha aznap kapott már sms-t, ne menjen ki több
@@ -673,6 +676,42 @@ class CronService {
         }
 
         return $str;
+    }
+
+
+    private function refreshWorklist() {
+        $dicomService = new DicomService();
+        $tempWorkListFileName = DicomService::WORKLIST_DIR."/".Booking_Constants::SQL_DB."_worklist.tmp";
+        $dicomFiles = [];
+
+        $reservations = sql_query("SELECT f.id, f.datum, f.nev, f.taj, f.szuldatum, f.neme, c.megnev AS cegnev FROM foglalasok f 
+            LEFT JOIN cegek c ON c.id = f.cegid
+            WHERE f.`szurestipusid`=? AND datum>DATE_SUB(NOW(), INTERVAL 1 DAY) AND DATE(datum)<=DATE(NOW()) AND f.taj<>'' AND DATE(f.szuldatum)>DATE(DATE_SUB(NOW(), INTERVAL 100 YEAR)) AND DATE(f.szuldatum)<=DATE(NOW())", [Booking_Constants::TUDOSZURES_ID]);
+
+        foreach ($reservations as $reservation) {
+            $dicomFileName = DicomService::WORKLIST_DIR."/".Booking_Constants::SQL_DB."_".$reservation["id"].".wl";
+            $dicomFiles[] = $dicomFileName;
+            echo "{$reservation["nev"]}\n";
+            $worklist = $dicomService->workListFileFormat($reservation);
+            file_put_contents($tempWorkListFileName, $worklist);
+
+            $output = `dump2dcm {$tempWorkListFileName} {$dicomFileName}`;
+        }
+        unlink($tempWorkListFileName);
+
+        //régi fájlok törlése
+        $d = dir(DicomService::WORKLIST_DIR);
+        while (false !== ($entry = $d->read())) {
+            if (substr_count($entry, Booking_Constants::SQL_DB)) {
+                echo $entry . "\n";
+                $dicomFileName = DicomService::WORKLIST_DIR."/".$entry;
+
+                if (!in_array($dicomFileName, $dicomFiles)) {
+                    unlink($dicomFileName);
+                }
+            }
+        }
+
     }
 
 }
