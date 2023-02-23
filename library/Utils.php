@@ -380,7 +380,7 @@ class Utils {
                 $htmlout.="<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
             }
         }
-		$htmlout.='<link rel="stylesheet" href="/css/fontawesome6.1.2/css/all.css" />';
+		$htmlout.='<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
         $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
         $htmlout.='<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";

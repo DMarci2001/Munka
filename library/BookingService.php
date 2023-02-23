@@ -773,6 +773,7 @@ class BookingService
         foreach ($checkForTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
+                    if($beoData["nopack"]) continue;
                     $orvosId     = $beoData["orvosid"];
                     $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];

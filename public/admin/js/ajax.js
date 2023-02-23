@@ -682,6 +682,7 @@ function showIdopontEditor(page, p, id) {
             initTabOrder();
             initTajEditor();
             initDateInput();
+            initDateFilterPicker();
         }
     });
 }
@@ -804,6 +805,8 @@ function foReservationInfo(id, p) {
 
 function foglalasMentes(page, allowNewCompany) {
     var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
+
+    console.log(data);
     $("#naptarloading").show();
 
     let cegId = $("#cegid").val();
@@ -1703,7 +1706,55 @@ function initDateFilterPicker() {
     $('.addressselector2').select2({
         placeholder: "Válassz helyszínt!"
     });
+
+    $('.munkakorlist').select2({
+        placeholder: "Válassz munkakört!",
+        minimumInputLength: 3,
+        ajax: {
+            url: 'index.php?getmunkakorlist',
+            dataType: 'json'
+            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+          }
+    });
+
+    $('.ceglist').select2({
+        placeholder: "Válassz céget!",
+        minimumInputLength: 3,
+        ajax: {
+            url: 'index.php?getceglist',
+            dataType: 'json'
+            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+          }
+    });
+
 }
+
+function refreshMunkakorlista(event){
+    $(event).children("i").addClass("fa-spin");
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?page=booking',
+        data: { refreshmunkakorlist:true },
+        success: function (data) {
+            $(event).children("i").removeClass("fa-spin");
+        }
+    })
+}
+
+function refreshCeglista(event){
+    $(event).children("i").addClass("fa-spin");
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?page=booking',
+        data: { refreshceglist:true },
+        success: function (data) {
+            $(event).children("i").removeClass("fa-spin");
+            console.log("itt vagyok!");
+        }
+    })
+}
+
+
 
 function initQueryDatePicker() {
     $('#start-query-date, #end-query-date').datepicker({
@@ -2366,6 +2417,26 @@ function initIrszAutoFill() {
 
     $(".bookingeditorselector2").select2({
         placeholder: "Nincs orvoshoz kötve!"
+    });
+
+    $('.munkakorlist').select2({
+        placeholder: "Válassz munkakört!",
+        minimumInputLength: 3,
+        ajax: {
+            url: 'index.php?getmunkakorlist',
+            dataType: 'json'
+            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+          }
+    });
+
+    $('.ceglist').select2({
+        placeholder: "Válassz céget!",
+        minimumInputLength: 3,
+        ajax: {
+            url: 'index.php?getceglist',
+            dataType: 'json'
+            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+          }
     });
 }
 

@@ -117,9 +117,12 @@ class AdminBookingEditor {
                 vernyomas=?,
                 orvosszoveg=?,
                 alkalmassaguserid=?,
-                eljottidopont=?
+                eljottidopont=?,
+                dokirexmunkakorid=?,
+                dokirexcegid=?
             where id=?", [intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], $_POST["alkalmassaguserid"], $eljottIdopont, $fid]);
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], 
+                $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
 
             if (!empty($_POST["paciensid"])) {
@@ -461,7 +464,9 @@ class AdminBookingEditor {
             $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
             $html .= "<table style='font-size:12px;'>";
 
-            $html .= "<tr><td width='60'>Cég:</td><td width='226'>";
+            $html .= "<tr><td width='60' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Cég:</td>";
+            $html.= "<td width='226'>{$this->adminUtils->ceglista()}</td>";
+            $html .= "<td width='60'>Cég:</td><td width='226'>";
             $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
             $html .= "<option value='0'>Nincs céghez kötve</option>";
 
@@ -473,12 +478,14 @@ class AdminBookingEditor {
             foreach (sql_query("select id, megnev from cegek where true {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
                 $html .= "<option value='{$company["id"]}'" . ($row["cegid"] == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
             }
-            $html .= "</select></td>";
+            $html .= "</select></td></tr>";
 
             $nap = substr($row["datum"], 0, 10);
             $ora = substr($row["datum"], 11, 5);
             $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
 
+            $html .= "<tr><td width='64' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Munkakör:</td>";
+            $html .= "<td>{$this->adminUtils->munkakorlista()}</td>";
             $html .= "<td width='64'>Orvos:</td><td>";
             $html .= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
             $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
