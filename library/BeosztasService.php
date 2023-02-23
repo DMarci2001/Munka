@@ -23,14 +23,15 @@ class BeosztasService {
         }
     }
 
-    public function getBookingPageBeosztasok($day, $helyszinId, $szuresTipusId) {
+    public function getBookingPageBeosztasok($day, $helyszinId) {
         $wd = date("N", strtotime($day));
 
-        $beoRes = sql_query("SELECT b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired FROM orvos_beosztas_new b 
+        $beoRes = sql_query("SELECT b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired 
+            FROM orvos_beosztas_new b 
             left join orvosok o on o.id=b.orvosid 
-            WHERE b.helyszinid=? and INSTR(tipusok, ?) AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
+            WHERE b.helyszinid=? AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
             AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$this->beosztasCompanyFilter}
-            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by o.sorrend, o.nev,nap,tol", [$helyszinId, "|{$szuresTipusId}|", $wd, $day, $day, $day]);
+            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by !instr(b.tipusok,'|1|'), !instr(b.tipusok,'|34|'), o.sorrend, o.nev,tol,nap", [$helyszinId, $wd, $day, $day, $day]);
 
         return $beoRes->fetchAll(PDO::FETCH_ASSOC);
     }

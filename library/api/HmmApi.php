@@ -1,7 +1,6 @@
 <?php
 
 class HmmApi {
-    const LOCATION_ID = 1;
     const PROVIDER_NAME = "hmmapi";
     const LOG_ID = 100;
 
@@ -138,7 +137,7 @@ class HmmApi {
 
     private function doctorMappings():array {
         $mappingsArray = [];
-        $locations = sql_query("select * from helyszinek where id=? order by megnev", [self::LOCATION_ID])->fetchAll();
+        $locations = sql_query("select * from helyszinek where id=? order by megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll();
         foreach ($locations as $location) {
             $doctors = sql_query("SELECT b.helyszinid, b.`orvosid`, REPLACE(REPLACE(REPLACE(GROUP_CONCAT(DISTINCT b.`tipusok`), '|,|', ','), '||', ','), '|', '') AS tipusok FROM orvos_beosztas_new b 
                 LEFT JOIN orvosok o ON o.id=b.orvosid
@@ -187,7 +186,7 @@ class HmmApi {
 
     private function locations():array {
         $locationArray = [];
-        $locations = sql_query("select * from helyszinek where id=? order by megnev", [self::LOCATION_ID])->fetchAll();
+        $locations = sql_query("select * from helyszinek where id=? order by megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll();
         foreach ($locations as $location) {
             $phones = ["+36 1 800 9333", "+36 30 633 0961"];
             $locationArray[] = [
@@ -587,7 +586,7 @@ class HmmApi {
 
         $startDate        = date("Y-m-d 00:00:00", strtotime($this->postParams["startDate"]));
         $endDate          = date("Y-m-d 23:59:59", strtotime($this->postParams["endDate"]));
-        $locationId       = $this->postParams["locationId"] ?? self::LOCATION_ID;
+        $locationId       = $this->postParams["locationId"] ?? Booking_Constants::DEFAULT_PLACE_IDS[0];
         $specializationId = $this->postParams["specializationId"] ?? 0;
         $doctorId         = $this->postParams["doctorId"] ?? 0;
 
@@ -616,7 +615,7 @@ class HmmApi {
             $this->apiError(400, "E2001", "Invalid locationId.");
         }
         if (!sql_fetch_array(sql_query("select id from szurestipusok where id=?", [$body["specializationId"]]))) {
-            $this->apiError(400, "E2002", "Invalid specializationId.");
+            $this->apiError(400, "E2002", "Invalid specializationId: {$body["specializationId"]}");
         }
         if (!sql_fetch_array(sql_query("select id from orvosok where id=?", [$body["doctorId"]]))) {
             $this->apiError(400, "E2003", "Invalid doctorId.");
@@ -712,6 +711,13 @@ class HmmApi {
         $patientMothersName = $body["patientMothersName"];
         $patientComment     = $body["patientComment"];
 
+        if (empty($body["patientDateOfBirth"])) {
+            $patientDateOfBirth = "0000-00-00";
+        }
+        if (empty($authorizationCode)) {
+            $authorizationCode = md5($patientName.$patientEmail.date("YmdHis"));
+        }
+
         //print_r($this->calculateSlots($nap, $nap, $locationId, $specializationId, $doctorId));die;
         foreach ($this->calculateSlots($nap, $nap, $locationId, $specializationId, $doctorId) as $slot) {
             if (date("Y-m-d H:i", strtotime($slot["date"])) == $reservationDate) {
@@ -785,7 +791,7 @@ class HmmApi {
 
         $startDate        = $this->postParams["startDate"];
         $endDate          = $this->postParams["endDate"] ?? date("Y-m-d", strtotime($this->postParams["startDate"] . " + 1 month"));
-        $locationId       = $this->postParams["locationId"] ?? self::LOCATION_ID;
+        $locationId       = $this->postParams["locationId"] ?? Booking_Constants::DEFAULT_PLACE_IDS[0];
         $specializationId = $this->postParams["specializationId"] ?? 0;
         $doctorId         = $this->postParams["doctorId"] ?? 0;
 
@@ -809,7 +815,7 @@ class HmmApi {
 
         $beoDatas = sql_query("SELECT b.*, o.id as orvosId, o.nev FROM orvos_beosztas_new b
             LEFT JOIN orvosok o ON o.id=b.orvosid
-            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND o.foid<>0 and b.helyszinid=? and b.aktiv=1 and b.noreservation=0 and instr(b.beocegek, ?)", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate)), $locationId, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND b.helyszinid=? and b.aktiv=1 and b.noreservation=0 and instr(b.beocegek, ?)", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate)), $locationId, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"])->fetchAll(PDO::FETCH_ASSOC);
 
         $szabadsagData = [];
         $szabadsagok = sql_query("select * from szabadsag where datumtol>=? {$doctorFilterSzabadsag}", [date("Y-m-d", strtotime($startDate))])->fetchAll(PDO::FETCH_ASSOC);

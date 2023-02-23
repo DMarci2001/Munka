@@ -337,7 +337,7 @@ class AdminBookingEditor {
             $fid = $_REQUEST["fid"] ?? 0;
             $pid = $_REQUEST["pid"] ?? 0;
 
-            if (!$data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? {$w} order by modifiedtime desc, id desc limit 1", [$taj, $fid]))) {
+            if (!$data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? and parentid=0 {$w} order by modifiedtime desc, id desc limit 1", [$taj, $fid]))) {
                 if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w} order by id desc", [$taj, $pid]))) {
                     $data["id"] = 0;
                 } else {

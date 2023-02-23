@@ -773,6 +773,9 @@ class BookingService
         foreach ($checkForTypes as $packTypeId) {
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId)) {
                 foreach ($beos as &$beoData) {
+                    if ($beoData["nopack"] != 0) {
+                        continue;
+                    }
                     $orvosId     = $beoData["orvosid"];
                     $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];
@@ -1109,7 +1112,7 @@ class BookingService
         return $tipusok;
     }
 
-    public function getAllReservationForDay($day, $helyszinId=0) {
+    public function getAllReservationForDayByDoctor($day, $helyszinId=0):array {
         $tol        = "{$day} 00:00:00";
         $ig         = "{$day} 23:59:59";
         $return     = [];
@@ -1122,7 +1125,7 @@ class BookingService
                         left join dokumentumok d on d.foglalasid=f.id
                         where f.datum>=? and f.datum<=? and (f.helyszinid=? or sz.webdoktor=1) {$wCeg}", [$tol, $ig, $helyszinId]);
         while ($reservationData = sql_fetch_array($resf)) {
-            $return[$reservationData["szurestipusid"]][$reservationData["id"]] = $reservationData;
+            $return[$reservationData["orvosassigned"]][$reservationData["id"]] = $reservationData;
         }
         return $return;
     }
@@ -1595,7 +1598,7 @@ class BookingService
                 }
             }
 
-            $errorMsg = "Orvos nem elérhető!";
+            $errorMsg = "Az orvos nem elérhető!";
 
             if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=? and aktiv=1", [$orvosId]))) {
                 if ($orvosData["onlytel"] == 1) {
@@ -1606,10 +1609,10 @@ class BookingService
                 }
             }
 
-            if ($orvosId == 117) {
+            //if ($orvosId == 117) {
                 //managerszűrés korlátlan
-                $selectedOrvosId = $orvosId;
-            }
+            //    $selectedOrvosId = $orvosId;
+            //}
             if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId, $_GET["rinterval"])) {
                 $selectedOrvosId = $orvosId;
             }

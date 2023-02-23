@@ -3405,6 +3405,23 @@ function elojegyzesSearchStart() {
 
 }
 
+function elojegyzesCegSearchStart() {
+    let key = $(".companyselector2").val();
+    $("#elojegyzessearchloading").show();
+    $("#elojegyzessearchresult").html("");
+
+    $.ajax({
+        url: "index.php?page=booking",
+        method: "POST",
+        data: { searchkey:key, searchkeytype:"company" },
+        success: function (response) {
+            $("#elojegyzessearchloading").hide();
+            $("#elojegyzessearchresult").html(response);
+        }
+    });
+
+}
+
 function checkChat() {
     $.ajax({
         url: "index.php",
