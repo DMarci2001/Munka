@@ -490,7 +490,7 @@ class AdminBookingEditor {
             $html .= "<table style='font-size:12px;'>";
 
             $html .= "<tr><td width='60' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Cég:</td>";
-            $html.= "<td width='226'>{$this->adminUtils->ceglista($row["dokirexcegid"])}</td>";
+            $html.= "<td width='226'>".($this->user->allCegJog()?$this->adminUtils->ceglista($row["dokirexcegid"]):"")."</td>";
             $html .= "<td width='60'>Cég:</td><td width='226'>";
             $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
             $html .= "<option value='0'>Nincs céghez kötve</option>";
