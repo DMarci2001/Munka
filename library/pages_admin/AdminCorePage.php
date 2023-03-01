@@ -8,6 +8,7 @@ class AdminCorePage {
     public $adminUtils;
     public $adminUser;
     public $lang;
+    public $settings;
     public $formError = "";
     public $errors = [];
     public $success = [];
@@ -22,6 +23,7 @@ class AdminCorePage {
         $this->patinentService = new PatientService();
         $this->adminUser = new AdminUser();
         $this->lang = new Lang();
+        $this->settings = new Booking_Settings();
         $this->pageData = sql_query("select * from adminmenu where pageid=?", [$_GET["page"]])->fetch(PDO::FETCH_ASSOC);
 
         $adminAjaxService = new AdminAjaxService();

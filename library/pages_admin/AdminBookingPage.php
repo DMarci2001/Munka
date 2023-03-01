@@ -46,7 +46,7 @@ class AdminBookingPage extends AdminCorePage
 
         if (isset($_GET["showelojegyzestable"])) {
             if (isset($_GET["day"])) $_SESSION["setday"] = $_GET["day"];
-            echo $this->showElojegyzesTable($_SESSION["setday"]);
+            echo $this->showElojegyzesTableNew($_SESSION["setday"]);
             die();
         }
 
@@ -54,14 +54,14 @@ class AdminBookingPage extends AdminCorePage
             $this->bookingService->addIdoPont();
 
             if (isset($_SESSION["setday"])) {
-                echo $this->showElojegyzesTable($_SESSION["setday"]);
+                echo $this->showElojegyzesTableNew($_SESSION["setday"]);
             }
             die();
         }
 
         if (isset($_GET["removeidopont"])) {
             $this->bookingService->removeIdopont($_GET["removeidopont"], $_GET["p"]);
-            echo $this->showElojegyzesTable($_SESSION["setday"]);
+            echo $this->showElojegyzesTableNew($_SESSION["setday"]);
             die();
         }
 
@@ -69,7 +69,7 @@ class AdminBookingPage extends AdminCorePage
             $this->bookingService->moveIdopont();
 
             if (isset($_SESSION["setday"])) {
-                echo $this->showElojegyzesTable($_SESSION["setday"]);
+                echo $this->showElojegyzesTableNew($_SESSION["setday"]);
             }
             die();
         }
@@ -85,7 +85,7 @@ class AdminBookingPage extends AdminCorePage
 
             sql_query("insert into helyettesites set nap=?, oid=?, helyettesitoorvosid=?, helyszinid=?, tipusid=?, megj=?", [$nap, $oid, $helyettesitoOrvosId, $helyszinId, $szuresTipusId, $orvosMegj]);
 
-            $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
+            $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
         }
 
@@ -96,7 +96,7 @@ class AdminBookingPage extends AdminCorePage
 
             sql_query("delete from helyettesites where oid=? and nap=?", [$orvosId, $nap]);
 
-            $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
+            $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
         }
 
@@ -122,7 +122,7 @@ class AdminBookingPage extends AdminCorePage
                 $return["error"] = "Az orvos hozzáadása közben hiba történt!";
             }
 
-            $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
+            $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
         }
 
@@ -137,7 +137,7 @@ class AdminBookingPage extends AdminCorePage
             sql_query("update orvosok set nev=?, description=? where id=?", [$orvosNev, $orvosMegj, $oid]);
             sql_query("update orvos_beosztas_new set tol=?, ig=? where orvosid=? limit 1", [$orvosTol, $orvosIg, $oid]);
 
-            $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
+            $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
         }
 
@@ -155,7 +155,7 @@ class AdminBookingPage extends AdminCorePage
                 $return["error"] = "Az ideiglenes orvoshoz kapcsolódik foglalás, nem törölhető!";
             }
 
-            $return["html"] = $this->showElojegyzesTable($_SESSION["setday"]);
+            $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
         }
 
@@ -291,21 +291,6 @@ class AdminBookingPage extends AdminCorePage
             
         }
 
-        if(isset($_REQUEST["updatemunkakorteszt"])){
-            $apiv2 = new DokirexService();
-
-            $params = array(
-                "FormElementID"=>16,
-                "PaciensID"=>39791,
-                "PaciensEgyediUrlapID"=> -1,
-                "Value"=>"12538"
-            );
-
-            echo json_encode($params,JSON_PRETTY_PRINT);
-
-            die($apiv2->insertUpdateFormElementValue($params));
-        }
-
         if(isset($_REQUEST["searchPatientDataIndokirex"])){
             $apiv2 = new DokirexService();
 
@@ -330,19 +315,7 @@ class AdminBookingPage extends AdminCorePage
     public function showPage()
     {
 
-        $apiv2 = new DokirexService();
-
-        /*echo "<pre>";
-        print_r(json_decode($apiv2->listMunkakor(),true));
-        echo "</pre>";*/
-
-        //$apiv2->updateListMunkakor();
-
-        echo $this->adminUtils->munkakorlista();
-        //echo $this->adminUtils->ceglista();
-
-
-        echo "<div id='elojegyzestable'>" . $this->showElojegyzesTable($this->setDay) . "</div>";
+        echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
         echo "<div id='elojloader' style='position:absolute;display:none'><img src='/admin/images/loading.svg' style='width: 20px;'/></div>";
         echo "<div id='idoponteditor'></div>";
@@ -459,9 +432,14 @@ class AdminBookingPage extends AdminCorePage
                 $helyettesitesLink  = "";
                 $addDoctorLink      = "";
 
-                foreach ($this->orvosTipusok as $tipusId) {
-                    $orvosTipusNevek[]  = $tipusNevek[$tipusId];
+                if(!empty($this->orvosTipusok)){
+                    foreach ($this->orvosTipusok as $tipusId) {
+                        if(isset($tipusNevek[$tipusId])){
+                            $orvosTipusNevek[]  = $tipusNevek[$tipusId];
+                        }            
+                    }
                 }
+                
 
                 $szuresTipus["id"]  = $beosztas["id"];
                 $szuresTipus["megnev"] = implode(", ", $orvosTipusNevek);
@@ -645,7 +623,11 @@ class AdminBookingPage extends AdminCorePage
                 foreach ($this->orvosTipusok as $tipusId) {
                     if (!isset($tipusLinks[$tipusId])) {
                         $tipusLinks[$tipusId]["url"] = "javascript:scrollTo(\"{$sectionName}\");";
-                        $tipusLinks[$tipusId]["nev"] = $tipusNevek[$tipusId];
+                        if(isset($tipusNevek[$tipusId])){
+                            $tipusLinks[$tipusId]["nev"] = $tipusNevek[$tipusId];
+                        }else{
+                            $tipusLinks[$tipusId]["nev"] = "";
+                        }
                         if (!isset($tipusLinks[$tipusId]["free"])) {
                             $tipusLinks[$tipusId]["free"] = 0;
                         }
@@ -657,7 +639,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "</tr>";
 
                 //beosztás variálás miatt esetleg nem megjelenő foglalások
-                if ($beosztasok[($beoKey+1)]["orvosid"] != $orvosId) {
+                if (isset($beosztasok[($beoKey+1)]["orvosid"]) && $beosztasok[($beoKey+1)]["orvosid"] != $orvosId) {
                     if (isset($foglalasok[$orvosId]) && !empty($foglalasok[$orvosId])) {
                             $htmlout .= "<tr>";
                             $htmlout .= "<td>";

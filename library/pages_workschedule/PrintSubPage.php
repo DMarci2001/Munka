@@ -4,7 +4,6 @@
 class PrintSubPage extends AdminCorePage
 {
     private $workScheduleService;
-    private $settings;
 
     private $startHour = 7;
     private $endHour   = 19;

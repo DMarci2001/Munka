@@ -23,7 +23,8 @@ class BeosztasService {
         }
     }
 
-    public function getBookingPageBeosztasok($day, $helyszinId) {
+    public function getBookingPageBeosztasok($day, $helyszinId
+) {
         $wd = date("N", strtotime($day));
 
         $beoRes = sql_query("SELECT b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired 

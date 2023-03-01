@@ -62,6 +62,7 @@ class AdminBookingEditor {
 
 
         if (isset($_POST["foglalasmentesnaptar2"]) || isset($_POST["foglalasmentesnaptaresertesites2"]) && $this->user->authenticated()) {
+
             $fid=intval($_POST["fid"]);
             if (!isset($_POST["szuldatum"])) {
                 if (isset($_POST["szuldatumev"])) {
@@ -97,6 +98,7 @@ class AdminBookingEditor {
             if (!isset($_POST["orvosszoveg"])) $_POST["orvosszoveg"] = "";
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
             if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
+            if (!isset($_POST["neme"])) $_POST["neme"]=0;
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -122,6 +124,7 @@ class AdminBookingEditor {
                 szuldatum=?,
                 szulhely=?,
                 anyjaneve=?,
+                neme=?,
                 irsz=?,
                 varos=?,
                 utca=?,
@@ -140,8 +143,8 @@ class AdminBookingEditor {
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
-            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["vernyomas"], $_POST["orvosszoveg"], 
+            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
                 $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
 
@@ -207,7 +210,7 @@ class AdminBookingEditor {
 
             if ($_POST["orvosassigned"]==0 && $_POST["cegid"]!=0) {
                 $oid = $this->bookingService->selectFreeOrvosForIdopont($fid);
-                //$rowo=sql_fetch_array(selectOrvosForFoglalas($fid));
+                //$rowo=sql_fetch_array(selectOrvosForFoglalas($fid));érfi 
                 sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0",array($oid, $fid));
             }
 
@@ -226,6 +229,7 @@ class AdminBookingEditor {
 
             //kiegészítő vizsgálatok másolása
             $status .= $this->bookingService->replicateKiegeszitoVizsgalatok($fid);
+
 
             Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"])]);
             //echo $this->_showBookingEditor($fid, $_POST["p"]);
@@ -486,7 +490,7 @@ class AdminBookingEditor {
             $html .= "<table style='font-size:12px;'>";
 
             $html .= "<tr><td width='60' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Cég:</td>";
-            $html.= "<td width='226'>{$this->adminUtils->ceglista()}</td>";
+            $html.= "<td width='226'>{$this->adminUtils->ceglista($row["dokirexcegid"])}</td>";
             $html .= "<td width='60'>Cég:</td><td width='226'>";
             $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
             $html .= "<option value='0'>Nincs céghez kötve</option>";
@@ -506,7 +510,7 @@ class AdminBookingEditor {
             $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
 
             $html .= "<tr><td width='64' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Munkakör:</td>";
-            $html .= "<td>{$this->adminUtils->munkakorlista()}</td>";
+            $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"])}</td>";
             $html .= "<td width='64'>Orvos:</td><td>";
             $html .= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
             $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
@@ -600,7 +604,7 @@ class AdminBookingEditor {
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már | <a onclick='showEljottLog({$id});return false;' href=''>log</a></td>";
-            $html .= "<td><span id='coupondesc' ></span><br/><span id='coupondiscount'></span></td>";
+            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" ".($row["neme"]==1?"checked=\"true\"":"")." value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" ".($row["neme"]==2?"checked=\"true\"":"")." value=\"2\">&nbsp;Nő</td>";
             $html .= "</tr>";
 
             $html .= "<tr>";

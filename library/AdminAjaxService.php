@@ -186,6 +186,32 @@ class AdminAjaxService {
                 }
             }
 
+            $p = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($_POST["pid"])));
+
+            if($p["dokirex_userid"]!=0){
+                //Munkakör rögzítése:
+                if($p["dokirexmunkakorid"]){
+                    $params = array(
+                        "FormElementID"=>16,
+                        "PaciensID"=>$p["dokirex_userid"],
+                        "PaciensEgyediUrlapID"=> -1,
+                        "Value"=> strval($p["dokirexmunkakorid"])
+                    );
+                    $dokirexService->insertUpdateFormElementValue($params);
+                }
+
+                //Cég rögzítése:
+                if($p["dokirexcegid"]){
+                    $params = array(
+                        "FormElementID"=>15,
+                        "PaciensID"=>$p["dokirex_userid"],
+                        "PaciensEgyediUrlapID"=> -1,
+                        "Value"=> strval($p["dokirexcegid"])
+                    );
+                    $dokirexService->insertUpdateFormElementValue($params);
+                }
+            }
+            
             $html .= "<div style='color:#444;text-align:center;'>";
             $html .= "<div id='loginbox' class='loginbox'>";
             $html .= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
@@ -690,6 +716,16 @@ class AdminAjaxService {
                 echo "<div>{$logItem["datum"]} {$logItem["username"]} {$logItem["megnev"]}</div>";
             }
             die;
+        }
+
+        if (isset($_REQUEST["getmunkakorlist"])) {
+            $apiv2 = new DokirexService();
+            die(json_encode($apiv2->sqlListMunkakor($_REQUEST["q"]),JSON_PRETTY_PRINT));
+        }
+
+        if (isset($_REQUEST["getceglist"])) {
+            $apiv2 = new DokirexService();
+            die(json_encode($apiv2->sqlListTelephely($_REQUEST["q"]),JSON_PRETTY_PRINT));
         }
     }
 

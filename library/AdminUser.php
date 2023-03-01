@@ -221,7 +221,7 @@ class AdminUser {
     public function getAdminLevel($user, $box = false):string {
         $result = "";
 
-        if ($user["jog_jogset"] == 1) {
+        if (isset($user["jog_jogset"]) && $user["jog_jogset"] == 1) {
             $result = "<span style='color:#fff;background:#0a0;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>adm1n</span>";
         }
 

@@ -4,7 +4,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
     private $bookingService;
     private $workScheduleService;
-    private $settings;
     private $workersSubPage;
     private $workplacesSubPage;
     private $notifySubPage;

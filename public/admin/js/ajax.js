@@ -832,7 +832,6 @@ function saveTimeEdit() {
 function foglalasMentes(page, allowNewCompany) {
     var data = $("#iform").serialize() + "&page=" + page + "&foglalasmentesnaptar2=1";
 
-    console.log(data);
     $("#naptarloading").show();
 
     let cegId = $("#cegid").val();
@@ -853,18 +852,20 @@ function foglalasMentes(page, allowNewCompany) {
         alert("Céget választani kötelező!");
         return;
     }
-
+    
     $.ajax({
         type: "POST",
         url: "index.php",
         data: data,
         success: function (response) {
+
             if (response.status != "") {
                 alert(response.status);
             }
             $("#idoponteditor").html(response.html);
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
+                    
                     afterElojegyzesTableInit();
                 }
             );
