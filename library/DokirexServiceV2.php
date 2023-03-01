@@ -388,7 +388,7 @@ class DokirexService
 
         if ($onlySearch && empty($search)) return $array;
 
-        $q = sql_query("SELECT * FROM dokirex_telephelyek WHERE " . ((!empty($search)) ? "(TelephelyNev LIKE '%{$search}%' OR CegNev LIKE '%{$search}%') " : "TRUE"), array($search));
+        $q = sql_query("SELECT * FROM dokirex_telephelyek WHERE " . ((!empty($search)) ? "(TelephelyNev LIKE '%".htmlspecialchars($search)."%' OR CegNev LIKE '%".htmlspecialchars($search)."%') " : "TRUE"), array($search));
         while ($result = sql_fetch_array($q)) {
             if(strpos($result["TelephelyNev"],$result["CegNev"])!==false){
             //if($result["TelephelyNev"] == $result["CegNev"]){
