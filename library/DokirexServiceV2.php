@@ -373,7 +373,7 @@ class DokirexService
         $q = sql_query("SELECT * FROM dokirex_munkakorok_new 
                         WHERE " . ((!empty($search)) ? "Nev LIKE '%{$search}%' " : "TRUE")." 
                         GROUP BY Nev
-                        " . ((!empty($search)) ? "ORDER BY LEFT(Nev, ".strlen($search).")=\"{$search}\" DESC, Nev" : "ORDER BY Nev"), 
+                        " . ((!empty($search)) ? "ORDER BY LEFT(Nev, ".mb_strlen($search).")=\"{$search}\" DESC, Nev" : "ORDER BY Nev"), 
                         array($search));
         while ($result = sql_fetch_array($q)) {
             array_push($array["results"], array("id" => $result["MunkakorID"], "text" => $result["Nev"]));
