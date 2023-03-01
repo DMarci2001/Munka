@@ -371,7 +371,7 @@ class DokirexService
         if ($onlySearch && empty($search)) return $array;
 
         $q = sql_query("SELECT * FROM dokirex_munkakorok_new 
-                        WHERE " . ((!empty($search)) ? "Nev LIKE '%{$search}%' " : "TRUE")." 
+                        WHERE " . ((!empty($search)) ? "Nev LIKE '%".htmlspecialchars($search)."%' " : "TRUE")." 
                         GROUP BY Nev
                         " . ((!empty($search)) ? "ORDER BY LEFT(Nev, ".mb_strlen($search).")=\"{$search}\" DESC, Nev" : "ORDER BY Nev"), 
                         array($search));
