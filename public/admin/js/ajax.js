@@ -682,7 +682,6 @@ function showIdopontEditor(page, p, id) {
             initTabOrder();
             initTajEditor();
             initDateInput();
-            initDateFilterPicker();
         }
     });
 }
