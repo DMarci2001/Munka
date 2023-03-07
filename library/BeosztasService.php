@@ -27,15 +27,40 @@ class BeosztasService {
 ) {
         $wd = date("N", strtotime($day));
 
-        $beoRes = sql_query("SELECT b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired 
+        $beoRes = sql_query("SELECT ROUND(SUBSTRING(tipusok, 2)) AS primarytype, t.megnev AS tipusnev, b.*, group_concat(b.tipusok separator '') as alltipus, min(b.tol) as mintol, max(b.ig) as maxig, MAX(b.potig) as maxpotig, o.nev as orvosnev, o.description as orvosdescription, o.pecsetszam, o.description, o.onlytel,o.extrabuttonrequired 
             FROM orvos_beosztas_new b 
             left join orvosok o on o.id=b.orvosid 
-            WHERE b.helyszinid=? AND (nap=? OR (nap=10 AND beonap=?)) and tol<>0 and ig<>0 
-            AND (b.hetek=0 OR (WEEK(?,3)%2=0 AND b.hetek=2) OR (WEEK(?,3)%2=1 AND b.hetek=1)) and b.aktiv=1 {$this->beosztasCompanyFilter}
-            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by !instr(b.tipusok,'|1|'), !instr(b.tipusok,'|34|'), o.sorrend, o.nev,tol,nap", [$helyszinId, $wd, $day, $day, $day]);
+            LEFT JOIN szurestipusok t ON t.id = ROUND(SUBSTRING(tipusok, 2))
+            WHERE b.helyszinid=:helyszinid AND (nap=:weekday OR (nap=10 AND beonap=:day)) and tol<>0 and ig<>0 
+            AND (b.validfrom='0000-00-00' OR b.validfrom<=:day) AND (b.validto='0000-00-00' OR b.validto>=:day)
+            AND (b.hetek=0 OR (WEEK(:day,3)%2=0 AND b.hetek=2) OR (WEEK(:day,3)%2=1 AND b.hetek=1)) and b.aktiv=1 AND t.megnev IS NOT NULL {$this->beosztasCompanyFilter}
+            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by !instr(b.tipusok,'|1|'), !instr(b.tipusok,'|34|'), t.megnev, o.sorrend, o.id, tol, nap", ["helyszinid" => $helyszinId, "weekday" => $wd, "day" => $day]);
 
         return $beoRes->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getBookingPageBeosztasokForTime($time, $helyszinId, $tipusId) {
+        $day = date("Y-m-d", strtotime($time));
+        $ora = date("H:i", strtotime($time));
+
+        $wora = "";
+        if ($ora != "00:00") {
+            $wora = "AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig='', ig, potig))>TIME('{$ora}')";
+        }
+
+        $beoRes = sql_query("SELECT 
+        IF(potig<>'' and TIME(:time)>=TIME(ig),1,0) as ispotig, 
+        b.*, o.nev as orvosnev, o.onlytel 
+        FROM orvos_beosztas_new b 
+		LEFT JOIN orvosok o ON o.id = b.orvosid
+		WHERE b.`helyszinid`=:helyszinid {$this->beosztasCompanyFilter} AND (nap=WEEKDAY(:day)+1 or beonap=:day) {$wora} AND INSTR(b.tipusok,:tipusid)
+        AND (b.validfrom='0000-00-00' OR b.validfrom<=:day) AND (b.validto='0000-00-00' OR b. >=:day)
+		AND (b.hetek=0 OR (WEEK(:day,3)%2=0 AND b.hetek=2) OR (WEEK(:day,3)%2=1 AND b.hetek=1)) and b.aktiv=1 and o.aktiv=1
+        ORDER BY o.nev, o.onlytel", ["time" => $time, "day" => $day, "helyszinid" => $helyszinId, "tipusid" => "|{$tipusId}|"]);
+
+        return $beoRes->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 
     public function getTipusByHelyszin($helyszinId) {
         return sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE b.helyszinid=? {$this->beosztasCompanyFilter} {$this->beosztasDoctorFilter} and b.tol<>0 and b.ig<>0", [$helyszinId]);

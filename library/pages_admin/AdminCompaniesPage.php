@@ -122,49 +122,6 @@ class AdminCompaniesPage extends AdminCorePage
             die();
         }
 
-
-        //TODO: nem működő hívás
-        if (isset($_POST["adddoctortocompany"])) {
-            $ids = explode("_", $_POST["adddoctortocompany"]);
-
-            $orvosId = intval($ids[0]);
-            $tipusId = intval($ids[1]);
-            $cegId = intval($_POST["companyid"]);
-
-            $beos = sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND INSTR(tipusok, ?) AND aktiv=1 GROUP BY CONCAT(nap, '_', beonap, '_', hetek, '_', tol, ig)", [$orvosId, "|{$tipusId}|"]);
-            foreach ($beos as $beo) {
-                sql_query(
-                    "insert into orvos_beosztas_new set orvosid=?, helyszinid=?, nap=?, beonap=?, tol=?, ig=?, potig=?, hetek=?, binterval=?, cegid=?, beocegek=?, csaksorban=?, tipusok=?, aktiv=1",
-                    [$orvosId, $beo["helyszinid"], $beo["nap"], $beo["beonap"], $beo["tol"], $beo["ig"], $beo["potig"], $beo["hetek"], $beo["binterval"], $cegId, "|".$cegId."|", $beo["csaksorban"], "|{$tipusId}|"]
-                );
-            }
-
-            echo $this->_orvosAndServiceList($cegId);
-            die;
-        }
-
-        //TODO: nem működő hívás
-        if (isset($_POST["removedoctorfromcompany"])) {
-            $ids = explode("_", $_POST["removedoctorfromcompany"]);
-
-            $orvosId = intval($ids[0]);
-            $tipusId = intval($ids[1]);
-            $cegId = intval($_POST["companyid"]);
-
-            $beos = sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND INSTR(tipusok, ?) AND cegid=?", [$orvosId, "|{$tipusId}|", $cegId]);
-            foreach ($beos as $beo) {
-                if ($beo["tipusok"] == "|{$tipusId}|") {
-                    sql_query("delete from orvos_beosztas_new where id=? limit 1", [$beo["id"]]);
-                } else {
-                    $tipusok = str_replace("|{$tipusId}|", "", $beo["tipusok"]);
-                    sql_query("update orvos_beosztas_new set tipusok=? where id=? limit 1", [$tipusok, $beo["id"]]);
-                }
-            }
-
-            echo $this->_orvosAndServiceList($cegId);
-            die;
-        }
-
         if (isset($_POST['readExcel']) && $_POST['readExcel'] == true) {
 
             //Variables:
@@ -1030,81 +987,6 @@ class AdminCompaniesPage extends AdminCorePage
         return $html;
     }
 
-    //TODO: nem működő funkció, át kell nézni
-    private function _orvosAndServiceList($cegId): string
-    {
-        $html = "";
-
-        $res = sql_query("SELECT b.*,o.`nev`,GROUP_CONCAT(DISTINCT b.`tipusok` SEPARATOR '') AS tipusokok FROM orvos_beosztas_new b
-	        LEFT JOIN orvosok o ON o.id=b.`orvosid`
-	        LEFT JOIN cegek c ON c.id=b.`cegid`
-	        WHERE b.cegid=? and b.aktiv=1 and (nap<10 OR (nap=10 AND beonap>=DATE(NOW()))) and o.parentoid=0 GROUP BY orvosid ORDER BY o.nev", [$cegId]);
-
-        $rest = sql_query("select * from szurestipusok");
-        while ($rowt = sql_fetch_array($rest)) {
-            $tipusnevek[$rowt["id"]] = $rowt["megnev"];
-        }
-
-        $existingOrvos = [];
-        if (sql_num_rows($res) > 0) {
-            $html .= "<table cellpadding='0' cellspacing='0' border='0'>";
-            while ($row = sql_fetch_array($res)) {
-                if (trim($row["nev"]) == "") continue;
-
-                $ta = explode("|", $row["tipusokok"]);
-                $tipusok = [];
-                for ($i = 0; $i < count($ta); $i++) {
-                    if (isset($tipusnevek[$ta[$i]])) {
-                        $tipusok[] = ["nev" => $tipusnevek[$ta[$i]], "id" => $ta[$i]];
-                        $existingOrvos[$row["orvosid"]][$ta[$i]] = 1;
-                    }
-                }
-
-                $tc = "tcella";
-
-                @$tipusok = array_unique($tipusok);
-
-                $html .= "<tr>";
-                $html .= "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=doctors&szerk={$row["orvosid"]}'>{$row["nev"]}</a></div></td>";
-                //echo "<td valign='top'><div class='{$tc}'>{$row["tipusokok"]}</div></td>";
-                $html .= "<td valign='top'><div class='{$tc}'>";
-                foreach ($tipusok as $tipus) {
-                    $html .= $tipus["nev"] . "&nbsp;&nbsp;&nbsp;<a onclick='removeDoctorFromCompany(\"{$row["orvosid"]}_{$tipus["id"]}\");return false;' title='szolgáltatás eltávolítása' href='#'><i class='fas fa-trash-alt'></i></a>";
-                }
-                $html .= "</div></td>";
-                $html .= "</tr>";
-                $html .= "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
-            }
-            $html .= "</table>";
-        } else {
-            $html .= "<div style='margin-top: 10px;'>Nincs a céghez orvos kapcsolva</div>";
-        }
-
-        $html .= "<div style='margin-top: 10px;'>";
-        $html .= "<select id='doctoridtocompany'>";
-        $html .= "<option value='0'>Válassz orvost és szolgáltatást</option>";
-
-        $doctors = sql_query("SELECT o.nev, GROUP_CONCAT(tipusok SEPARATOR '') AS alltipus, b.* FROM orvos_beosztas_new b
-                LEFT JOIN orvosok o ON o.id = b.`orvosid`
-                WHERE b.aktiv=1 and nap<10 OR (nap=10 AND beonap>=DATE(NOW())) and o.parentoid=0
-                GROUP BY orvosid")->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($doctors as $doctor) {
-            $tipusok = explode("|", $doctor["alltipus"]);
-            $tipusok = array_unique($tipusok);
-            foreach ($tipusok as $tipus) {
-                if (isset($tipusnevek[$tipus]) && !isset($existingOrvos[$doctor["orvosid"]][$tipus])) {
-                    $html .= "<option value='{$doctor["orvosid"]}_{$tipus}'>{$doctor["nev"]} - {$tipusnevek[$tipus]}</option>";
-                }
-            }
-        }
-
-        $html .= "</select>&nbsp;";
-        $html .= "<a onclick='addDoctorToCompany();return false;' href='#' class='ujbutton'>Hozzáadás</a>";
-        $html .= "</div>";
-
-        return $html;
-    }
 
     public function show_allomanyi_lista($cegid, $scroll = null, $keyword = null, $filter = null)
     {

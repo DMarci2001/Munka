@@ -377,10 +377,11 @@ class ExcelService {
             $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
             $sor+=2;
 
-            $this->headingRow("A", $sor, ["Dátum", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum", "Eljött", "Eljött időpont", "Megjegyzés"]);
+            $this->headingRow("A", $sor, ["Dátum", "Helyszín", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum", "Eljött", "Eljött időpont", "Megjegyzés"]);
             $sor++;
 
-            $reservations = sql_query("SELECT t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
+            $reservations = sql_query("SELECT h.cim as helyszincim, t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
+                LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
                 LEFT JOIN orvosok o ON o.id=f.orvosassigned
                 LEFT JOIN cegek c ON c.id=f.cegid
                 LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
@@ -388,14 +389,56 @@ class ExcelService {
 
 
             foreach ($reservations as $reservation) {
-                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["eljott"] == 1 ? "eljött":"nem jött el", $reservation["eljottidopont"] != "0000-00-00 00:00:00" ? $reservation["eljottidopont"]:"", $reservation["megj"]]);
+                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["helyszincim"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["eljott"] == 1 ? "eljött":"nem jött el", $reservation["eljottidopont"] != "0000-00-00 00:00:00" ? $reservation["eljottidopont"]:"", $reservation["megj"]]);
                 $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
                 $sor++;
             }
             $sor++;
         }
 
-        $this->setAutoWidth(range('B','K'));
+        $this->setAutoWidth(range('B','L'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
+
+    private function _bejelentkezoNemEljottLista($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Nem eljöttek listája");
+        $this->titleRow("A1", "El nem jöttek listája - {$from} - {$to} (forrás: bejelentkező)");
+
+        $sor = 4;
+
+        $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
+            LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' and f.eljott=0 AND f.taj<>'' GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($tipusok as $tipus) {
+            $this->titleRow("A{$sor}", "{$tipus["megnev"]}");
+            $sor+=2;
+
+            $this->headingRow("A", $sor, ["Dátum", "Helyszín", "Orvos", "Cég", "Paciens", "TAJ", "Születési dátum", "Eljött", "Eljött időpont", "Megjegyzés"]);
+            $sor++;
+
+            $reservations = sql_query("SELECT h.cim as helyszincim, t.megnev AS tipusnev, c.megnev AS cegnev, o.nev AS orvosnev, f.* FROM foglalasok f
+                LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+                LEFT JOIN orvosok o ON o.id=f.orvosassigned
+                LEFT JOIN cegek c ON c.id=f.cegid
+                LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? AND f.eljott=0 AND f.taj<>'' order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($reservations as $reservation) {
+                $this->dataRow("A", $sor, [$reservation["datum"], $reservation["helyszincim"], $reservation["orvosnev"], $reservation["cegnev"], $reservation["nev"], $reservation["taj"], $reservation["szuldatum"], $reservation["eljott"] == 1 ? "eljött":"nem jött el", $reservation["eljottidopont"] != "0000-00-00 00:00:00" ? $reservation["eljottidopont"]:"", $reservation["megj"]]);
+                $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+                $sor++;
+            }
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','L'));
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
@@ -416,9 +459,11 @@ class ExcelService {
         $this->headingRow("A", $sor, ["Nap", "Összes időpont", "Nem jött el", "Százalék"]);
         $sor++;
 
+        $queryFilter = "datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.taj<>''";
+
         $reservations = sql_query("SELECT DATE(datum) AS datum, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
-            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
-            GROUP BY DATE(f.datum) ORDER BY DATE(f.datum)", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$queryFilter}
+            GROUP BY DATE(f.datum) ORDER BY DATE(f.datum)", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
             $this->dataRow("A", $sor, [$reservation["datum"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
@@ -434,8 +479,8 @@ class ExcelService {
 
         $reservations = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN cegek c ON c.id=f.cegid
-            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
-            GROUP BY c.id ORDER BY c.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$queryFilter}
+            GROUP BY c.id ORDER BY c.megnev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
             $ceg = empty($reservation["ceg"]) ? "Nem kitöltött cég" : $reservation["ceg"];
@@ -452,8 +497,8 @@ class ExcelService {
 
         $reservations = sql_query("SELECT t.megnev AS szolgaltatas, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN szurestipusok t ON t.id=f.`szurestipusid`
-            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
-            GROUP BY t.id ORDER BY t.megnev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$queryFilter}
+            GROUP BY t.id ORDER BY t.megnev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
             $this->dataRow("K", $sor, [$reservation["szolgaltatas"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
@@ -470,16 +515,33 @@ class ExcelService {
 
         $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
-            WHERE datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.`helyszinid`=? AND f.taj<>''
-            GROUP BY o.id ORDER BY o.nev", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$queryFilter}
+            GROUP BY o.id ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
             $this->dataRow("P", $sor, [$reservation["orvos"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
             $sor++;
         }
 
+        $sor = 4;
+        $this->titleRow("U{$sor}", "Helyszínek szerint");
+        $sor+=2;
 
-        $this->setAutoWidth(range('B','T'));
+        $this->headingRow("U", $sor, ["Helyszín", "Összes időpont", "Nem jött el", "Százalék"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT h.cim AS helyszincim, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
+            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+            WHERE {$queryFilter}
+            GROUP BY h.id ORDER BY h.cim", [])->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("U", $sor, [$reservation["helyszincim"], $reservation["total"], $reservation["nem_jott_el"], $reservation["percent"]]);
+            $sor++;
+        }
+
+
+        $this->setAutoWidth(range('B','Z'));
         $this->sheet->getColumnDimension('A')->setWidth(15);
     }
 
@@ -764,12 +826,13 @@ class ExcelService {
         try {
             //$this->_vizsgalatKimutatas($sheetId++, $rawInput, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            $this->_kiegeszitoFoglalasokLista($sheetId++, $from, $to);
+            //$this->_kiegeszitoFoglalasokLista($sheetId++, $from, $to);
             $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
-            $this->_beosztasLista($sheetId++, $from, $to);
+            //$this->_beosztasLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
+            $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
         } catch (\Exception $e) {
             //valami hibakezelés...

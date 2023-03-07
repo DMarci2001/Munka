@@ -2541,41 +2541,6 @@ function toggleSubMenu(id) {
 
 }
 
-function addDoctorToCompany() {
-    let id = $("#doctoridtocompany").val();
-    let cid = $("#companyid").val();
-
-    if (id == "0") {
-        alert("Válassz orvost!");
-        return;
-    }
-
-    $.ajax({
-        method: "POST",
-        url: "index.php",
-        data: { page: "companies", adddoctortocompany: id, companyid: cid }
-    }).done(function (msg) {
-        $("#doctorlist").html(msg);
-    });
-}
-
-function removeDoctorFromCompany(id) {
-    if (!confirm("Biztos eltávolítod az orvost a cégtől?")) {
-        return;
-    }
-
-    let cid = $("#companyid").val();
-
-    $.ajax({
-        method: "POST",
-        url: "index.php",
-        data: { page: "companies", removedoctorfromcompany: id, companyid: cid }
-    }).done(function (msg) {
-        $("#doctorlist").html(msg);
-    });
-
-}
-
 function toggleElojegyzesTableNaptar(oid, tid) {
     $("#tablenyito"+oid+"_"+tid).css({'transform' : 'rotate(180deg)'});
     if ($(".beotable"+oid+"_"+tid).is(":hidden")) {

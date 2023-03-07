@@ -99,6 +99,8 @@ class AdminBookingEditor {
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
             if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
             if (!isset($_POST["neme"])) $_POST["neme"]=0;
+            if (!isset($_POST["dokirexmunkakorid"])) $_POST["dokirexmunkakorid"]=0;
+            if (!isset($_POST["dokirexcegid"])) $_POST["dokirexcegid"]=0;
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -371,8 +373,51 @@ class AdminBookingEditor {
 		
     }
 
+    private function companySelector($selectedCompanyId):string {
+        $html = "";
+        $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
+        $html .= "<option value='0'>Nincs céghez kötve</option>";
 
-    private function _showBookingEditor($id, $p) {
+        $cegFilter = "";
+        if (!$this->user->allCegJog()) {
+            $cegFilter = "and id in (" . $this->user->getCegList() . ")";
+        }
+
+        foreach (sql_query("select id, megnev from cegek where true {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
+            $html .= "<option value='{$company["id"]}'" . ($selectedCompanyId == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
+        }
+        $html .= "</select>";
+        return $html;
+    }
+
+    private function doctorSelector($reservationData):string {
+        $html = "";
+        $nap = substr($reservationData["datum"], 0, 10);
+        $ora = substr($reservationData["datum"], 11, 5);
+        $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
+
+        $html .= "<input type='hidden' name='regiorvos' value='{$reservationData["orvosassigned"]}' />";
+        $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
+        $html .= "<option value='0'>Nincs orvoshoz kötve</option>";
+        $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
+                  FROM orvos_beosztas_new b 
+                  LEFT JOIN orvosok o ON o.`id`=b.`orvosid` 
+                  WHERE b.helyszinid=? and instr(tipusok, '|{$reservationData["szurestipusid"]}|')  
+                  GROUP BY b.orvosid order by beovan desc, o.nev", [$_SESSION["helyszin"]]);
+        while ($rowh = sql_fetch_array($resh)) {
+            $s = "";
+            if ($rowh["beovan"] == 0) {
+                $s = " style='color:#aaa;'";
+                $rowh["nev"] .= " / nincs beosztása erre az időpontra";
+            }
+            $html .= "<option value='{$rowh["id"]}'" . ($reservationData["orvosassigned"] == $rowh["id"] ? " selected" : "") . " {$s}>{$rowh["nev"]}</option>";
+        }
+        $html .= "</select>";
+
+        return $html;
+    }
+
+    private function _showBookingEditor($id, $p):string {
         if (!$this->user->authenticated()) {
             return "Error 500 - Not authenticated!";
         }
@@ -489,47 +534,18 @@ class AdminBookingEditor {
             $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
             $html .= "<table style='font-size:12px;'>";
 
-            $html .= "<tr><td width='60' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Cég:</td>";
-            $html.= "<td width='226'>".($this->user->allCegJog()?$this->adminUtils->ceglista($row["dokirexcegid"]):"")."</td>";
-            $html .= "<td width='60'>Cég:</td><td width='226'>";
-            $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
-            $html .= "<option value='0'>Nincs céghez kötve</option>";
 
-            $cegFilter = "";
-            if (!$this->user->allCegJog()) {
-                $cegFilter = "and id in (" . $this->user->getCegList() . ")";
-            }
-
-            foreach (sql_query("select id, megnev from cegek where true {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC) as $company) {
-                $html .= "<option value='{$company["id"]}'" . ($row["cegid"] == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
-            }
-            $html .= "</select></td></tr>";
-
-            $nap = substr($row["datum"], 0, 10);
-            $ora = substr($row["datum"], 11, 5);
-            $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
-
-            $html .= "<tr><td width='64' style=\"white-space: nowrap;\"><img height=\"13px\" src=\"https://dokirex.hu/favicon.ico\">&nbsp;Munkakör:</td>";
+            $html .= "<tr>";
+            $html .= "<td width='60' style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</td>";
+            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"]) : "") . "</td>";
+            $html .= "<td  style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</td>";
             $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"])}</td>";
-            $html .= "<td width='64'>Orvos:</td><td>";
-            $html .= "<input type='hidden' name='regiorvos' value='{$row["orvosassigned"]}' />";
-            $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
-            $html .= "<option value='0'>Nincs orvoshoz kötve</option>";
-            $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
-                  FROM orvos_beosztas_new b 
-                  LEFT JOIN orvosok o ON o.`id`=b.`orvosid` 
-                  WHERE b.helyszinid=? and instr(tipusok, '|{$row["szurestipusid"]}|')  
-                  GROUP BY b.orvosid order by beovan desc, o.nev", [$_SESSION["helyszin"]]);
-            while ($rowh = sql_fetch_array($resh)) {
-                $s = "";
-                if ($rowh["beovan"] == 0) {
-                    $s = " style='color:#aaa;'";
-                    $rowh["nev"] .= " / nincs beosztása erre az időpontra";
-                }
-                $html .= "<option value='{$rowh["id"]}'" . ($row["orvosassigned"] == $rowh["id"] ? " selected" : "") . " {$s}>{$rowh["nev"]}</option>";
-            }
-            $html .= "</select>&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
-            $html .= "</td></tr>";
+            $html .= "</tr>";
+
+            $html .= "<tr>";
+            $html .= "<td width='64'>Cég:</td><td width='226'>".$this->companySelector($row["cegid"])."</td>";
+            $html .= "<td width='64'>Orvos:</td><td>".$this->doctorSelector($row)."&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
+            $html .= "</tr>";
 
             if ($row["nev"] == "nincs név") {
                 $row["nev"] = "";

@@ -218,8 +218,34 @@ class BookingService
 
     }
 
+    private function holterReserved($day):bool {
+        $numberOfHolters = 1;
+        $result = false;
+        $holterTypeId = 0;
+        $yesterday = date("Y-m-d", strtotime("{$day} -1 day"));
+        if (date("N", strtotime($day)) == 1) {
+            $yesterday = date("Y-m-d", strtotime("{$day} -3 day"));
+        }
+
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $holterTypeId = 136;
+        }
+
+        if ($holterTypeId == $this->szuresTipus) {
+            $yesterdayReserved = sql_query("select count(*) as hany from foglalasok where datum>? and datum<? and szurestipusid=?", ["{$yesterday} 00:00:00", "{$yesterday} 23:59:59", $holterTypeId])->fetch(PDO::FETCH_ASSOC);
+            $todayReserved = sql_query("select count(*) as hany from foglalasok where datum>? and datum<? and szurestipusid=?", ["{$day} 00:00:00", "{$day} 23:59:59", $holterTypeId])->fetch(PDO::FETCH_ASSOC);
+            if ($yesterdayReserved["hany"] >= $numberOfHolters) {
+                $result = true;
+            }
+            if ($todayReserved["hany"] >= $numberOfHolters && !$result) {
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
     public function showIdoPontValasztoV2() {
-        
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -280,6 +306,12 @@ class BookingService
 
             if (in_array($nap, $this->getSzunnapok())) {
                 $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Munkaszüneti<br/>nap</div>";
+                $html .= "</td>";
+                continue;
+            }
+
+            if ($this->holterReserved($nap)) {
+                $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Eszköz nem<br/>elérhető</div>";
                 $html .= "</td>";
                 continue;
             }
@@ -809,11 +841,18 @@ class BookingService
             }
 
             if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
-                $text = "nincs időpont:<br/>";
-                if (substr_count($error, $text) == 0) {
-                    $error .= $text;
+                if (User::debugUser()) {
+                    $text = "nincs időpont:<br/>";
+                    if (substr_count($error, $text) == 0) {
+                        $error .= $text;
+                    }
+                    $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+                } else {
+                    $text = "nincs időpont<br/>";
+                    if (substr_count($error, $text) == 0) {
+                        $error .= $text;
+                    }
                 }
-                $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
             }
         }
 
@@ -890,23 +929,7 @@ class BookingService
 
 
     private function getOrvosListForIdopontValaszto($day) {
-        $orvosRestrict = "";
-        $helyszin = $this->helyszin;
         $wd  = date("N", strtotime($day));
-
-        /*if($_SESSION["helyszindata"]["id"]==74){
-            //Ha a fantom helyszínt választják ki:
-
-            //Ha a jász utcát:
-            if ($helyszin == 1) {
-                $orvosRestrict = " AND b.orvosid NOT IN(282,285)";
-            }
-
-            if($helyszin==98989898989898){
-                $orvosRestrict = " AND b.orvosid IN(282,285)";
-                $helyszin = 1;
-            }
-        }*/
 
         $orvosAvailable = [];
         $res = sql_query("select b.* from orvos_beosztas_new b 
@@ -914,10 +937,11 @@ class BookingService
                                 where b.helyszinid=? 
                                 and instr(b.tipusok,?) 
                                 and	(instr(b.beocegek, ?) or b.beocegek='') 
-                                and (b.nap=? or (b.nap=10 and b.beonap=?)) 
+                                and (b.nap=? or (b.nap=10 and b.beonap=?))
+                                AND (b.validfrom='0000-00-00' OR b.validfrom<=?) AND (b.validto='0000-00-00' OR b.validto>=?)
                                 and b.noreservation=0
                                 and b.aktiv=1 
-                                and o.aktiv=1 {$orvosRestrict}", [$helyszin, "|{$this->szuresTipus}|", "|{$_SESSION['helyszindata']['id']}|", $wd, $day]);
+                                and o.aktiv=1", [$this->helyszin, "|{$this->szuresTipus}|", "|{$_SESSION['helyszindata']['id']}|", $wd, $day, $day, $day]);
 
         while ($beoData = sql_fetch_array($res)) {
             if (Booking_Constants::SQL_DB == "keltexmed" && $beoData["orvosid"] == 403) {
@@ -1035,8 +1059,7 @@ class BookingService
     }
 
 
-    public function getBeosztasok($idoPont, $helyszin, $szuresTipus, $orvos = 0)
-    {
+    public function getBeosztasok($idoPont, $helyszin, $szuresTipus, $orvos = 0) {
         $nap         = substr($idoPont, 0, 10);
         $ora         = substr($idoPont, 11, 5);
         $helyszin    = intval($helyszin);
@@ -1046,7 +1069,7 @@ class BookingService
             $cegId = $_SESSION["helyszinceg"];
         }
 
-        $wora = $wceg = $orvosRestrict = "";
+        $wora = $wceg = "";
         if (!empty($ora)) {
             $wora = "AND TIME(tol)<=TIME('{$ora}') AND TIME(IF(potig='', ig, potig))>TIME('{$ora}')";
         }
@@ -1059,38 +1082,24 @@ class BookingService
         } else {
             $wceg = "and (instr(b.beocegek, '|{$cegId}|') or b.beocegek='')";
         }
+
+        //$this->beosztasService->beosztasCompanyFilter = $wceg;
+
         
-        //Ha a BP cég az aktuális cég:
-        /*if($_SESSION["helyszindata"]["id"]==74){
-            //Ha a fantom helyszínt választják ki:
-            
-            //Ha a jász utcát:
-            if($helyszin==1){
-                $orvosRestrict=" AND orvosid NOT IN(282,285)";
-            }
-
-            if($helyszin==98989898989898){
-                $orvosRestrict=" AND orvosid IN(282,285)";
-                $helyszin=1;
-            }
-        }*/
-
         //időpontra beosztott orvosok kiolvasása
-        $resb = sql_query("SELECT 
+        $beosztasok = sql_query("SELECT 
         IF(potig<>'' and TIME('{$ora}')>=TIME(ig),1,0) as ispotig, 
-        b.*,o.id as orvosid,o.nev as orvosnev,o.onlytel,c.megnev as cegnev 
+        b.*,o.id as orvosid,o.nev as orvosnev,o.onlytel 
         FROM orvos_beosztas_new b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
-		LEFT JOIN cegek c ON c.id=b.cegid
-		WHERE b.`helyszinid`='{$helyszin}' {$wceg} AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') {$wora} AND INSTR(b.tipusok,'|{$szuresTipus}|') 
-		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 and o.aktiv=1 {$orvosRestrict}
-        ORDER BY o.nev, o.onlytel");
+		WHERE b.`helyszinid`='{$helyszin}' {$wceg} AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}') {$wora} AND INSTR(b.tipusok,'|{$szuresTipus}|')
+        AND (b.validfrom='0000-00-00' OR b.validfrom<='{$nap}') AND (b.validto='0000-00-00' OR b.validto >='{$nap}')
+		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 and o.aktiv=1
+        ORDER BY o.nev, o.onlytel")->fetchAll(PDO::FETCH_ASSOC);
 
-        while ($rowb = sql_fetch_array($resb)) {
-            if (isset($GLOBALS["admin"]) || !sql_fetch_array(sql_query("select nap from foglaltnapok where helyszinid=? and helyszinceg=? and nap=? AND nap>=DATE(NOW()) and (szurestipusid=? or instr(szurestipusid,'|{$szuresTipus}|'))", array($helyszin, $cegId, $nap, $szuresTipus)))) {
-                if ($rowb["orvosid"] == $orvos || $orvos == 0) {
-                    $beos[] = $rowb;
-                }
+        foreach ($beosztasok as $beosztas) {
+            if ($beosztas["orvosid"] == $orvos || $orvos == 0) {
+                $beos[] = $beosztas;
             }
         }
         if (!isset($beos)) {

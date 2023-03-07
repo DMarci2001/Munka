@@ -18,11 +18,19 @@ class User {
             die();
         }
 
+        if (isset($_GET["debuguser"]) && $_GET["debuguser"] == 1555) {
+            $_SESSION["debuguser"] = 1;
+        }
+
     }
 
     private function _logOut() {
         unset($_SESSION["loggeduser"]);
         unset($_SESSION["user"]);
+    }
+
+    public static function debugUser() {
+        return isset($_SESSION["debuguser"]);
     }
 
 }
