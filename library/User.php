@@ -32,5 +32,4 @@ class User {
     public static function debugUser() {
         return isset($_SESSION["debuguser"]);
     }
-
 }

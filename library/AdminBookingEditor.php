@@ -226,14 +226,26 @@ class AdminBookingEditor {
             $api = new BookingSyncApi();
             $api->modifyReservation($fid);
 
+            //Itt azt akarom elérni, hogy ha nem 0 a dokirexcegid, akkor ellenőrizze csak :/
+            if($_POST["dokirexcegid"]!=0){
+                if($this->adminUtils->checkBejelentkezoCegForDokirexCegid($_POST["dokirexcegid"],$_POST["cegid"])!==false){
+                    $updatedokirexjson = false;
+                }else{
+                    $updatedokirexjson = true;
+                }
+            }else{
+                $updatedokirexjson = false;
+            }
+            
 
             $status = "";
 
             //kiegészítő vizsgálatok másolása
             $status .= $this->bookingService->replicateKiegeszitoVizsgalatok($fid);
 
+            //echo json_encode(array("status"=>"","updatedokirexjson"=>$updatedokirexjson));
 
-            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"])]);
+            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"]), "updatedokirexjson"=>$updatedokirexjson]);
             //echo $this->_showBookingEditor($fid, $_POST["p"]);
             die;
         }
@@ -370,12 +382,17 @@ class AdminBookingEditor {
             $this->utils->jsonOut($data);
             die();
         }
+
+        if(isset($_POST["setMunkakorText"])){
+            $q=sql_fetch_array(sql_query("SELECT * FROM dokirex_munkakorok_new WHERE MunkakorID=?",array($_POST["setMunkakorText"])));
+            die($q["Nev"]);
+        }
 		
     }
 
     private function companySelector($selectedCompanyId):string {
         $html = "";
-        $html .= "<select class='bookingeditorcegselector2' name='cegid' id='cegid' style='width:200px;'>";
+        $html .= "<select class='bookingeditorcegselector2' onChange='setDefaultDokirexCegId($(this).val())' name='cegid' id='cegid' style='width:200px;'>";
         $html .= "<option value='0'>Nincs céghez kötve</option>";
 
         $cegFilter = "";
@@ -424,6 +441,7 @@ class AdminBookingEditor {
 
         $html = "";
         $id = intval($id);
+        if(!isset($_GET["page"])) $_GET["page"] = "booking";
 
         if ($row = sql_fetch_array(sql_query("select f.*,t.megnev as sztipus,c.megnev as cegnev,o.nev as orvosnev from foglalasok f
                 left join szurestipusok t on t.id=f.szurestipusid
@@ -537,9 +555,9 @@ class AdminBookingEditor {
 
             $html .= "<tr>";
             $html .= "<td width='60' style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</td>";
-            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"]) : "") . "</td>";
+            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"],$row["cegid"]) : "") . "</td>";
             $html .= "<td  style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</td>";
-            $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"])}</td>";
+            $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</td>";
             $html .= "</tr>";
 
             $html .= "<tr>";

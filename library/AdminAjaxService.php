@@ -244,6 +244,7 @@ class AdminAjaxService {
             die($html);
         }
 
+        
         if (isset($_POST['manualNotificationSend']) && $_POST['manualNotificationSend'] == true) {
             header('Content-Type: application/json');
 
@@ -726,6 +727,9 @@ class AdminAjaxService {
         if (isset($_REQUEST["getceglist"])) {
             $apiv2 = new DokirexService();
             die(json_encode($apiv2->sqlListTelephely($_REQUEST["q"]),JSON_PRETTY_PRINT));
+        }
+        if(isset($_REQUEST["initCeglistSelect2"])){
+            die($adminUtils->ceglista(null,$_POST["cegid"]));
         }
     }
 

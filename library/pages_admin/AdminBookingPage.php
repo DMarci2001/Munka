@@ -314,7 +314,8 @@ class AdminBookingPage extends AdminCorePage
 
     public function showPage()
     {
-
+        //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
+        //die();
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
         echo "<div id='elojloader' style='position:absolute;display:none'><img src='/admin/images/loading.svg' style='width: 20px;'/></div>";
@@ -636,7 +637,7 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "</tr>";
 
             //beosztás variálás miatt esetleg nem megjelenő foglalások
-            if ($beosztasok[($beoKey+1)]["orvosid"] != $orvosId) {
+            if (isset($beosztasok[($beoKey+1)]["orvosid"]) && $beosztasok[($beoKey+1)]["orvosid"] != $orvosId) {
                 if (isset($foglalasok[$orvosId]) && !empty($foglalasok[$orvosId])) {
                     $htmlout .= "<tr>";
                     $htmlout .= "<td>";
@@ -689,8 +690,8 @@ class AdminBookingPage extends AdminCorePage
         return $htmlout;
     }
 
-    private function addExtraShortCutLinks($links = array(),$ExtraButtons){
-        $ExtraButtons = array_unique($ExtraButtons);
+    private function addExtraShortCutLinks($links = array(),$ExtraButtons = array()){
+        $ExtraButtons = array_unique($ExtraButtons,SORT_REGULAR);
         foreach($ExtraButtons as $link){
             $url = "javascript:scrollTo(\"orvosdiv{$link["id"]}\");";
             $extraLink = "<a class='tipuslink' href='{$url}'>{$link["nev"]} <span style='font-weight:bold;border-radius:20px;background:#0a0;color:#fff;'></span></a>";

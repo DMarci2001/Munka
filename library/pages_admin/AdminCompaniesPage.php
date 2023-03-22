@@ -601,12 +601,28 @@ class AdminCompaniesPage extends AdminCorePage
             }
             die();
         }
+
+        if(isset($_POST["dxidtocid"])){
+            $this->adminUtils->add_DokirexCegid_to_BejelentkezoCeg($_POST["dokirexcegid"],$_POST["cid"]);
+            if($_POST["res"]){
+                echo $this->cegBubbles($_POST["cid"]);
+            }
+            die();
+        }
+
+        if(isset($_POST["setDefaultDokirexCegId"]) && $_POST["setDefaultDokirexCegId"]==true){
+            die($this->adminUtils->setDefaultDokirexCegId($_POST["cegid"]));
+        }
+
     }
 
 
 
     public function showPage()
     {
+
+        //echo $this->adminUtils->add_DokirexCegid_to_BejelentkezoCeg(17,1);
+        //die();
         if (!$this->adminUser->cegModAccess()) {
             echo $this->noPermissionMessage();
             return;
@@ -633,7 +649,14 @@ class AdminCompaniesPage extends AdminCorePage
             echo "<tr><td>Figyelmeztető szöveg (német):</td><td><input class=\"inputawwwbox\" style=\"width:600px;\" type=\"text\" name=\"beutaloszoveg_de\" value=\"{$_POST["beutaloszoveg_de"]}\"></td></tr>";
             echo "<tr><td>Figyelmeztető szöveg (angol):</td><td><input class=\"inputbox\" style=\"width:600px;\" type=\"text\" name=\"beutaloszoveg_en\" value=\"{$_POST["beutaloszoveg_en"]}\"></td></tr>";
             echo "<tr><td>Protokoll:</td><td><textarea class=\"inputbox\" style=\"width:600px;height:80px;\" type=\"text\" name=\"protokoll\">{$_POST["protokoll"]}</textarea></td></tr>";
-
+            
+            echo "<tr><td>Dokirex azonosítók:</td><td>";
+            echo $this->adminUtils->ceglista(null,null,"onChange='setCegBubble({$_GET["szerk"]},$(this).val(),true)'");
+            echo "<div style=\"margin-top:5px\" class=\"cegbubble-container\">";
+            echo $this->cegBubbles($_GET["szerk"]);
+            echo "</div>";
+            echo "</td></tr>";
+            
             echo "<tr><td colspan=\"2\"><div style=\"margin-top:10px;padding-top:10px;border-top:1px solid #ccc;\"></div></td></tr>";
 
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"aktiv\"" . ($_POST["aktiv"] == 1 ? " checked" : "") . "> Aktív</td></tr>";
@@ -1103,4 +1126,23 @@ class AdminCompaniesPage extends AdminCorePage
             return;
         }
     }
+    public function cegBubbles($cid){
+        $html = "";
+        $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
+
+        if(!empty($q["dokirexcegid_json"])){
+            $dokirexServices = new DokirexService();
+            $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
+        }else{
+            return;
+        }
+
+        foreach($data as $key=>$bubble){
+            $html.="<a class=\"serviceselected\" onClick='setCegBubble({$cid},{$bubble["id"]},true)' href=\"#\">{$bubble["nev"]}</a>&nbsp;";
+        }
+
+        return $html;
+    }
+
+    
 }

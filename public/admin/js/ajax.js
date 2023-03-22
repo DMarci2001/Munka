@@ -861,11 +861,22 @@ function foglalasMentes(page, allowNewCompany) {
             if (response.status != "") {
                 alert(response.status);
             }
+
+            console.log(response);
+            if(response.updatedokirexjson){
+                
+                if(confirm("Szeretnéd menteni a Bejelentkező cég-dokirex cég kapcsolatot?")){
+                    setCegBubble(cegId,$("select[name='dokirexcegid']").val(),false);
+                }
+            }
+            
             $("#idoponteditor").html(response.html);
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
                     
                     afterElojegyzesTableInit();
+
+
                 }
             );
         }
@@ -1736,23 +1747,13 @@ function initDateFilterPicker() {
     $('.munkakorlist').select2({
         placeholder: "Válassz munkakört!",
         minimumInputLength: 3,
+        allowClear: true,
         ajax: {
             url: 'index.php?getmunkakorlist',
             dataType: 'json'
             // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
           }
     });
-
-    $('.ceglist').select2({
-        placeholder: "Válassz céget!",
-        minimumInputLength: 3,
-        ajax: {
-            url: 'index.php?getceglist',
-            dataType: 'json'
-            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
-          }
-    });
-
 }
 
 function refreshMunkakorlista(event){
@@ -2448,6 +2449,7 @@ function initIrszAutoFill() {
     $('.munkakorlist').select2({
         placeholder: "Válassz munkakört!",
         minimumInputLength: 3,
+        allowClear: true,
         ajax: {
             url: 'index.php?getmunkakorlist',
             dataType: 'json'
@@ -2455,15 +2457,7 @@ function initIrszAutoFill() {
           }
     });
 
-    $('.ceglist').select2({
-        placeholder: "Válassz céget!",
-        minimumInputLength: 3,
-        ajax: {
-            url: 'index.php?getceglist',
-            dataType: 'json'
-            // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
-          }
-    });
+    initCeglistSelect2();
 }
 
 function initTabOrder() {
@@ -3553,4 +3547,78 @@ function showEljottLog(fid) {
             });
         }
     });
+}
+
+function setCegBubble(cid,dokirexcegid,res){
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=companies",
+        data: {dxidtocid:true,cid:cid,dokirexcegid:dokirexcegid,res:res},
+        success: function (response) {
+            if(res==true){
+                $(".cegbubble-container").html(response);
+            }
+           
+        }
+    });
+}
+
+function setDefaultDokirexCegId(cegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=companies",
+        data: {setDefaultDokirexCegId:true,cegid:cegid},
+        success: function (response) {
+            initCeglistSelect2(cegid);
+        }
+    });
+}
+
+function initCeglistSelect2(cegid){
+    
+    if(cegid){
+        $.ajax({
+            type: "POST",
+            url: "index.php",
+            data: {initCeglistSelect2:true,cegid:cegid},
+            success: function (response) {
+               $(".ceglist").html(response);
+               $('.ceglist').select2({
+                placeholder: "Válassz céget!",
+                minimumInputLength: 3,
+                allowClear: true,
+                debug:true,
+                ajax: {
+                    url: 'index.php?getceglist',
+                    dataType: 'json'
+                    // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+                  }
+            });
+            }
+        }); 
+    }else{
+        $('.ceglist').select2({
+            placeholder: "Válassz céget!",
+            minimumInputLength: 3,
+            allowClear: true,
+            ajax: {
+                url: 'index.php?getceglist',
+                dataType: 'json'
+                // Additional AJAX parameters go here; see the end of this chapter for the full code of this example
+              }
+        });
+    }
+   
+}
+
+function setMunkakorText(munkakorid){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        data: {setMunkakorText:munkakorid},
+        success: function(response){
+            $("#bookingeditormunkakor").val(response);
+        }
+
+    })
 }

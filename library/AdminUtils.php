@@ -111,7 +111,7 @@ class AdminUtils
         return trim($date);
     }
 
-    public function munkakorlista($dokirexmunkakorid=null)
+    public function munkakorlista($dokirexmunkakorid=null,$event=null)
     {
         $button = "";
         $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"munkakorlista_update_started\",\"munkakorlista_update_finished\") ORDER BY datum DESC LIMIT 1");
@@ -129,8 +129,7 @@ class AdminUtils
         $html = "";
         $html .= "<div>";
         $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        "<select class=\"s2 munkakorlist\" name=\"dokirexmunkakorid\" style=\"width:180px;\">";
-        $html .=            "<option value=\"0\">Válaszd ki a munkakört!</option>";
+        $html .=        "<select class=\"s2 munkakorlist\" name=\"dokirexmunkakorid\" {$event} style=\"width:180px;\">";
 
         if(isset($dokirexMunkakor)){
             $html .=         "<option selected=\"true\" value=\"{$dokirexmunkakorid}\">{$dokirexMunkakor["Nev"]}</option>";
@@ -146,7 +145,7 @@ class AdminUtils
         return $html;
     }
 
-    public function ceglista($dokirexcegid=null)
+    public function ceglista($dokirexcegid=null,$cid=null,$event="")
     {
         $button = "";
         $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"ceglista_update_started\",\"ceglista_update_finished\") ORDER BY datum DESC LIMIT 1");
@@ -156,25 +155,31 @@ class AdminUtils
         }else{
             $button = "<button onclick=\"refreshCeglista(this)\" type=\"button\" title=\"Ceg lista manuális frissítése\" style=\"background-color:#3ac63d;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fas fa-sync\"></i></button>";
         }
-
-        if($dokirexcegid){
+        
+        if($cid && !$dokirexcegid){
+            $dokirexcegid =$this->setDefaultDokirexCegId($cid);
             $dokirexCeg = sql_fetch_array(sql_query("SELECT TelephelyNev,CegNev FROM dokirex_telephelyek WHERE TelephelyID=?", array($dokirexcegid)));
         }
 
+        if($dokirexcegid){
+            $dokirexCeg = sql_fetch_array(sql_query("SELECT TelephelyNev,CegNev FROM dokirex_telephelyek WHERE TelephelyID=?", array($dokirexcegid)));
+            
+        }
+    
         $html = "";
         $html .= "<div>";
+        $html.=
         $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        "<select class=\"s2 ceglist\" name=\"dokirexcegid\" style=\"width:180px;\">";
-        $html .=            "<option value=\"0\">Válaszd ki a céget!</option>";
-        if(isset($dokirexCeg)){
+        $html .=        "<select class=\"s2 ceglist\" name=\"dokirexcegid\" {$event} style=\"width:180px;\">";
+        if(isset($dokirexCeg) && $dokirexCeg!=""){
             if(strpos($dokirexCeg["TelephelyNev"],$dokirexCeg["CegNev"])!==false){
-                //if($result["TelephelyNev"] == $result["CegNev"]){
                     $megnev = $dokirexCeg["TelephelyNev"];
                 }else{
                     $megnev = $dokirexCeg["CegNev"]." - ".$dokirexCeg["TelephelyNev"];
                 }
             $html .=         "<option selected=\"true\" value=\"{$dokirexcegid}\">{$megnev}</option>";
         }
+        
         $html .=        "</select>";
         $html .=    "</div>";
 
@@ -183,5 +188,46 @@ class AdminUtils
         $html .=    "</div>";
         $html .= "</div>";
         return $html;
+    }
+
+    public function checkBejelentkezoCegForDokirexCegid($dokirexcegid,$cid){
+        
+        $key=false;
+        $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
+        if($q["dokirexcegid_json"]!=""){
+            $data = json_decode($q["dokirexcegid_json"]);
+            if(is_array($data)){
+                $key = array_search($dokirexcegid,$data);
+            }
+        }
+        return $key;
+    }
+
+    public function add_DokirexCegid_to_BejelentkezoCeg($dokirexcegid,$cid){
+        $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
+        $data = json_decode($q["dokirexcegid_json"]);
+
+        if(empty($dokirexcegid)) return;
+
+        $key = $this->checkBejelentkezoCegForDokirexCegid($dokirexcegid,$cid);
+        if($key!==false){
+            unset($data[$key]);
+            $data = array_values($data);
+        }else{
+            $data[] = $dokirexcegid;  
+        }
+
+        sql_query("UPDATE cegek SET dokirexcegid_json=? WHERE id=?",array(json_encode($data,true),$cid));
+        return;
+    }
+
+    public function setDefaultDokirexCegId($cid){
+        $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
+        if(!empty($q["dokirexcegid_json"])){
+            $dokirexServices = new DokirexService();
+            $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
+            if(isset($data[0]["id"])) return $data[0]["id"];
+        }
+        return;
     }
 }
