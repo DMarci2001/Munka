@@ -23,6 +23,8 @@ class AdminBeoEditor {
             $noreservation = isset($_POST["noreservation"])?1:0;
             $nopack = isset($_POST["nopack"])?1:0;
             $potig = $_POST["potig"];
+            $nyitasmindencegnek = isset($_POST["open_beo_for_all_company"])?1:0;
+            $nyitaslejaratennyivel = $_POST["release_beo_before_expire_time"];
 
             if (!preg_match("/(2[0-3]|[01][0-9]):([0-5][0-9])/", $potig)) {
                 $potig = "";
@@ -34,8 +36,8 @@ class AdminBeoEditor {
                 $_POST["validto"] = "0000-00-00";
             }
 
-            $params = [$nap, $_POST["beonap"], $_POST["hetek"], $_POST["helyszinid"], $sorban, $aktiv, $_POST["tol"], $_POST["ig"], $potig, $noreservation, $_POST["validfrom"], $_POST["validto"], $_POST["bmegj"], $nopack, $_POST["beosztasid"]];
-            sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=? where id=?", $params);
+            $params = [$nap, $_POST["beonap"], $_POST["hetek"], $_POST["helyszinid"], $sorban, $aktiv, $_POST["tol"], $_POST["ig"], $potig, $noreservation, $_POST["validfrom"], $_POST["validto"], $_POST["bmegj"], $nopack, $nyitasmindencegnek, $nyitaslejaratennyivel, $_POST["beosztasid"]];
+            sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=?, open_beo_for_all_company=?, release_beo_before_expire_time=? where id=?", $params);
 
             die("ok");
         }
@@ -230,7 +232,8 @@ class AdminBeoEditor {
             $html.= "<div id='extradata{$beo["id"]}' style='padding:2px 0px 2px 25px;".($this->isExtraData($beo)?"":"display:none;")."'>";
             $html.= "Érvényesség: <input onchange='beoSave({$doctorId},{$beoId});' id='validfrom' name='validfrom' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input onchange='beoSave({$doctorId},{$beoId});' id='validto' name='validto' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
             $html.= "Megjegyzés: <input onchange='beoSave({$doctorId},{$beoId});' id='bmegj' name='bmegj' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
-            $html.= "<input onchange='beoSave({$doctorId},{$beoId});' value='1' type='checkbox' id='nopack' name='nopack'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
+            $html.= "<input onchange='beoSave({$doctorId},{$beoId});'  value='1' type='checkbox' id='nopack' name='nopack'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
+            $html.= "<br>Nyitás minden cégnek: <input type=\"checkbox\" onchange='beoSave({$doctorId},{$beoId});' name=\"open_beo_for_all_company\" " . ($beo["open_beo_for_all_company"] == 1 ? " checked" : "") . " value=\"1\"> lejárat előtt ennyivel:&nbsp;<input type=\"text\" style=\"width:80px\" onchange='beoSave({$doctorId},{$beoId});' name=\"release_beo_before_expire_time\" value=\"".$beo["release_beo_before_expire_time"]."\">";
             $html.= "</div>";
 
             $html.= "<div id='tipusvalaszto{$beo["id"]}'></div>";
