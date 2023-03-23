@@ -778,16 +778,17 @@ class BookingService
     }
 
     private function getMinMaxPack($szuresTipus, $orvosId, $nap) {
+        $companyId = $_SESSION["helyszindata"]["id"] ?? Booking_Constants::DEFAULT_COMPANY_ID;
+
         return sql_fetch_array(sql_query("SELECT MIN(tol) as minrendeles,MAX(ig) as maxrendeles 
         FROM orvos_beosztas_new b
         WHERE helyszinid=? and (instr(b.beocegek, ?) or b.beocegek='') and orvosid=? and instr(b.tipusok, ?) and aktiv=1
         AND (nap=WEEKDAY('{$nap}')+1 or beonap='{$nap}')  
 		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2)) 
-        HAVING MAX(tol) IS NOT NULL", array($this->helyszin, "|{$_SESSION["helyszindata"]["id"]}|", $orvosId, "|{$szuresTipus}|")));
+        HAVING MAX(tol) IS NOT NULL", array($this->helyszin, "|{$companyId}|", $orvosId, "|{$szuresTipus}|")));
     }
 
-    public function getPackageAvailabilityForDay($day)
-    {
+    public function getPackageAvailabilityForDay($day, $limitTimes = true):array {
         $vanFixError = false;
         $error = "";
         $timeTableForPackage = [];
@@ -828,8 +829,13 @@ class BookingService
                         $step++;
 
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
-                            $timeTableForPackage[$packTypeId] = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
-                            break 2;
+                            $timeData = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
+                            if ($limitTimes) {
+                                $timeTableForPackage[$packTypeId] = $timeData;
+                                break 2;
+                            } else {
+                                $timeTableForPackage[$packTypeId][] = $timeData;
+                            }
                         }
                     }
                 }
@@ -959,9 +965,9 @@ class BookingService
     {
         $types = [];
         if (isset($this->szuresTipusData["ispack"]) && $this->szuresTipusData["ispack"] == 1) {
-            $res = sql_query("select * from szurescsomagok_kapcs where csomagid=? and noreservation=0", array($szuresTipusId));
+            $res = sql_query("select k.* from szurescsomagok_kapcs k LEFT JOIN szurestipusok t ON t.id=k.szurestipusid where k.csomagid=? and k.noreservation=0 order by t.megnev", array($szuresTipusId));
             while ($row = sql_fetch_array($res)) {
-                if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme) {
+                if ($row["nemerequired"] == 0 || $row["nemerequired"] == $this->neme || $this->neme == 0) {
                     $types[] = $row["szurestipusid"];
                 }
             }
@@ -1064,7 +1070,7 @@ class BookingService
         $ora         = substr($idoPont, 11, 5);
         $helyszin    = intval($helyszin);
         $szuresTipus = intval($szuresTipus);
-        $cegId       = $_SESSION["helyszindata"]["id"];
+        $cegId       = $_SESSION["helyszindata"]["id"] ?? Booking_Constants::DEFAULT_COMPANY_ID;
         if (isset($_SESSION["helyszinceg"]) && isset($GLOBALS["admin"])) {
             $cegId = $_SESSION["helyszinceg"];
         }
@@ -1634,8 +1640,8 @@ class BookingService
             $fid = sql_insert_id();
 
             if (!empty($this->copyReservationData)) {
-                sql_query("update foglalasok set regdatum=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, adoszam=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
-                    [$this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], $this->copyReservationData["adoszam"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
+                sql_query("update foglalasok set regdatum=now(), foglalta=?, modifiedby=?, modifiedtime=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, adoszam=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
+                    [$this->copyReservationData["foglalta"], $this->adminUser->user["username"], $this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], $this->copyReservationData["adoszam"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
                 logActivity("foglalas", $fid,"{$this->copyReservationData["nev"]} foglalás másolása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
             } else {
                 logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));

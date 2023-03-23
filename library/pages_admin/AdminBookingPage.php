@@ -211,10 +211,10 @@ class AdminBookingPage extends AdminCorePage
                     left join szurestipusok sz on sz.id=f.szurestipusid
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
-                where (instr(f.nev,:key) or instr(f.taj,:key) or instr(f.torzsszam,:key) or instr(f.szuldatum,:key)) and f.helyszinid=:helyszinid {$cegFilter} ".($this->adminUser->onlyDoctorReservations()?" and f.orvosassigned=".intval($this->adminUser->user["orvosid"]):"")."
+                where {$sqlFilter} and f.nev<>'nincs név' and f.helyszinid=:helyszinid {$cegFilter} ".($this->adminUser->onlyDoctorReservations()?" and f.orvosassigned=".intval($this->adminUser->user["orvosid"]):"")."
                 order by f.datum desc
                 
-                limit 100",
+                limit 1000",
                 ["key" => $key, "helyszinid" => $_SESSION["helyszin"]])->fetchAll(PDO::FETCH_ASSOC);
 
             echo "<div style='padding:10px 0px;'>";
@@ -368,7 +368,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout.="<div style='display:table-cell;vertical-align:middle;'><input type='button' onclick='setListDay(\"".date("Y-m-d")."\");' value='MA' title='Ugrás a mai napra' />&nbsp;&nbsp;&nbsp;&nbsp;</div>";
         $htmlout.="<div style='display:table-cell;vertical-align:middle;'><a onclick='setListDay(\"".date("Y-m-d",strtotime("{$setDay} +1 day"))."\");return false;' href='#'><img height='20' src='images/next.png' title='Következő nap'/></a></div>";
         $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cimFilterHTML}</div>";
-        $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cegFilterHTML}</div>";
+        $htmlout.="<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cegFilterHTML} {$cegSearchLink}</div>";
 
         if (in_array($nap, $settings->getMunkaszunetiNapok())) {
             $htmlout .= "<div style='margin-top:10px;padding:5px 10px;background: #f00;color:#fff;font-size:18px;display:inline-block;'>Munkaszüneti nap!</div>";

@@ -3549,6 +3549,19 @@ function showEljottLog(fid) {
     });
 }
 
+function showManagerStat(num) {
+    $("#loadingspinner").show();
+    $.ajax({
+        type: "POST",
+        url: "index.php?page=managerstatus",
+        data: "showmanagerstat=1&num="+num,
+        success: function (data) {
+            $("#managerlista").html(data);
+            $("#loadingspinner").hide();
+        }
+    });
+}
+
 function setCegBubble(cid,dokirexcegid,res){
     $.ajax({
         type: "POST",

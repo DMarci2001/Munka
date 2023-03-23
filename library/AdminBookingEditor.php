@@ -486,6 +486,10 @@ class AdminBookingEditor {
             if ($row["foglalta"] != "") {
                 $html .= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
             }
+            if ($row["modifiedby"] != "") {
+                $html .= "<div class='tdm'>Módosította: <span title='{$row["modifiedtime"]}'>{$row["modifiedby"]}</span>&nbsp;&nbsp;</div>";
+            }
+            /*
             if (Booking_Constants::FO_CONNECTION_ENABLED) {
                 $foColor = "lightgreen";
                 if ($row["fofid"] == 0) {
@@ -493,6 +497,7 @@ class AdminBookingEditor {
                 }
                 $html .= "<div class='tdm' style='padding:2px 0px;'><a onclick='foReservationInfo({$row["id"]},\"{$row["pass"]}\");return false;' href='#' style='color:{$foColor};'>Foglaljorvost info</a></div>";
             }
+            */
             $html .= "</div>";
 
             $html .= "<div style='margin-top:4px;'>";
