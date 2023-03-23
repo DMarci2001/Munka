@@ -602,6 +602,12 @@ class AdminCompaniesPage extends AdminCorePage
             die();
         }
 
+        if (isset($_REQUEST["generalsearch"])) {
+            $companies = sql_query("select * from cegek where instr(megnev, ?) ORDER BY megnev<>'Új cég', megnev", [$_REQUEST["term"]])->fetchAll(PDO::FETCH_ASSOC);
+            echo $this->list($companies);
+            die;
+        }
+
         if(isset($_POST["dxidtocid"])){
             $this->adminUtils->add_DokirexCegid_to_BejelentkezoCeg($_POST["dokirexcegid"],$_POST["cid"]);
             if($_POST["res"]){
@@ -950,13 +956,20 @@ class AdminCompaniesPage extends AdminCorePage
         }
 
 
-        $res = sql_query("SELECT * from cegek ORDER BY megnev<>'Új cég',megnev");
+        echo "<div style='margin-bottom:20px;'>";
+        echo "<input data-page='companies' data-resultdiv='tartalomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
+        echo "</div>";
 
-        echo "<table cellpadding='0' cellspacing='0' border='0'>";
-        while ($row = sql_fetch_array($res)) {
+        echo "<div id='tartalomlist'>".$this->list(sql_query("SELECT * from cegek ORDER BY megnev<>'Új cég', megnev")->fetchAll(PDO::FETCH_ASSOC))."</div>";
+    }
+
+    private function list($companies):string {
+        $html = "";
+        $html.= "<table cellpadding='0' cellspacing='0' border='0'>";
+        foreach ($companies as $row) {
             $tc = "tcella";
             if (!isset($first)) {
-                echo "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                $html.= "<tr><td colspan=7 style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first = 1;
             }
             if (trim($row["megnev"]) == "") {
@@ -969,20 +982,22 @@ class AdminCompaniesPage extends AdminCorePage
             if ($row["no_doctor_select"] == 1) $options .= "<div>Nincs orvos választás a foglalásnál</div>";
             if ($row["fieldoptions"] != "") $options .= "<div>" . $this->displayFieldOptions($row["fieldoptions"]) . "</div>";
 
-            echo "<tr>";
-            echo "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a></div></td>";
+            $html.= "<tr>";
+            $html.= "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a></div></td>";
 
             $url = Booking_Constants::SITE_PROTOCOL . "://{$row["domain"]}." . Booking_Constants::SITE_DOMAIN;
 
-            echo "<td nowrap valign='top'><div class='{$tc}'>" . ($row["domain"] == "" ? "" : "{$url} (<a target='_blank' href='{$url}'>open</a>)") . "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;padding-right: 10px;'>{$options}</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
-            echo "</tr>";
-            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>" . ($row["domain"] == "" ? "" : "{$url} (<a target='_blank' href='{$url}'>open</a>)") . "</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;padding-right: 10px;'>{$options}</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}' style='min-width:50px;'>" . ($row["aktiv"] == 1 ? "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#0a0;'>aktív</a>" : "<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&oaktivtoggle={$row["id"]}' style='color:#f00;'>inaktív</a>") . "</div></td>";
+            $html.= "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='alert(\"Nem törölhető!\");return false;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            $html.= "</tr>";
+            $html.= "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
-        echo "</table>";
+        $html.= "</table>";
+        return $html;
     }
+
 
     private function displayFieldOptions($options)
     {
@@ -1124,6 +1139,12 @@ class AdminCompaniesPage extends AdminCorePage
                 return $html;
             }
             return;
+        }
+
+        if (isset($_REQUEST["generalsearch"])) {
+            $companies = sql_query("select * from cegek where instr(megnev, ?) ORDER BY megnev<>'Új cég', megnev", [$_REQUEST["term"]])->fetchAll(PDO::FETCH_ASSOC);
+            echo $this->list($companies);
+            die;
         }
     }
     public function cegBubbles($cid){

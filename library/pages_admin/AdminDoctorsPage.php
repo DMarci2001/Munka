@@ -558,8 +558,6 @@ class AdminDoctorsPage extends AdminCorePage {
 		}
 		
 		if(isset($_POST['saveQndA']) && isset($_POST['orvosid']) && isset($_POST['szurestipus'])){
-			
-			
 			foreach($_POST['inputs'] as $input) $_POST[$input['name']]=$input['value'];
 			unset($_POST['inputs']);
 			$questionArr = array();
@@ -581,6 +579,10 @@ class AdminDoctorsPage extends AdminCorePage {
 			die("ok");
 		}
 
+        if (isset($_REQUEST["generalsearch"])) {
+            echo $this->list($this->doctorListQuery($_REQUEST["term"]));
+            die;
+        }
     }
 
     public function showPage() {
@@ -709,35 +711,29 @@ class AdminDoctorsPage extends AdminCorePage {
             return;
         }
 
-        $orvosok = sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek FROM orvosok o
-        LEFT JOIN orvos_beosztas_new b ON b.`orvosid`=o.`id`
-        LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
-        where o.pecsetszam<>'temp'
-        GROUP BY o.id
-        ORDER BY nev<>'Új orvos', nev")->fetchAll(PDO::FETCH_ASSOC);
+        echo "<div style='margin-bottom:20px;'>";
+        echo "<input data-page='doctors' data-resultdiv='tartalomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
+        echo "</div>";
 
-        $kiemeltOrvosok = sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek FROM orvosok o
-        LEFT JOIN orvos_beosztas_new b ON b.`orvosid`=o.`id`
-        LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
-        LEFT JOIN dokumentumok d on d.dataid=o.id and d.assetid='orvosphoto'
-        where o.pecsetszam<>'temp' and (d.id is not null or o.foid<>0)
-        GROUP BY o.id
-        ORDER BY nev")->fetchAll(PDO::FETCH_ASSOC);
-
-        if (!empty($kiemeltOrvosok)) {
-            echo "<h2>Kiemelt orvosok</h2>";
-            echo $this->_orvosLista($kiemeltOrvosok);
-        }
-
-        if (!empty($orvosok)) {
-            echo "<h2>Összes orvos</h2>";
-            echo $this->_orvosLista($orvosok);
-        }
-
+        echo "<div id='tartalomlist'>".$this->list($this->doctorListQuery())."</div>";
     }
 
+    private function doctorListQuery($term = ""):array {
+        $w = "";
+        $params = [];
+        if ($term != "") {
+            $w = "AND instr(o.nev, :term)";
+            $params["term"] = $term;
+        }
+        return sql_query("SELECT GROUP_CONCAT(DISTINCT b.tipusok SEPARATOR '') AS tipusok,o.*,GROUP_CONCAT(DISTINCT h.cim separator '<br/>') AS cimek FROM orvosok o
+        LEFT JOIN orvos_beosztas_new b ON b.`orvosid`=o.`id`
+        LEFT JOIN helyszinek h ON h.`id`=b.`helyszinid`
+        where o.pecsetszam<>'temp' {$w}
+        GROUP BY o.id
+        ORDER BY nev<>'Új orvos', nev", $params)->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-    private function _orvosLista($orvosok) {
+    private function list($orvosok):string {
         $html = "";
 
         $docAgent = new DocAgent();
