@@ -1044,4 +1044,22 @@ END:VCALENDAR";
         $mail->Send();
     }
 
+
+    public function sendManagerStatusMail() {
+        $page = new AdminManagerStatusPage();
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress("jnsmobil@gmail.com");
+        $mail->AddAddress("kuzdyg@hungariamed.hu");
+        $mail->AddAddress("marton.gergely@hungariamed.hu");
+
+        $subject = "Manager csomag status ".date("Y-m-d");
+
+        $mbody = $page->managerStatList(14);
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
+
 }

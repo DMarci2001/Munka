@@ -77,6 +77,7 @@ class CronService {
             $this->checkSzabadsagCollisions();
             $this->checkCollisions();
             $this->seemeBalanceCheck();
+            $this->sendManagerStatusEmail();
         }
 
         if ($this->interval == "napi") {
@@ -713,5 +714,13 @@ class CronService {
         }
 
     }
+
+    private function sendManagerStatusEmail() {
+        if (Booking_Constants::SQL_DB == "hungariamed" && in_array(date("G"), [8])) {
+            $notificationService = new NotificationService();
+            $notificationService->sendManagerStatusMail();
+        }
+    }
+
 
 }

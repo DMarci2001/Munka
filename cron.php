@@ -4,6 +4,8 @@ if (!empty($argv[1])) {
     parse_str($argv[1], $_GET);
 }
 
+$GLOBALS["admin"] = true;
+
 require_once "autoload.php";
 require_once "library/CronService.php";
 
