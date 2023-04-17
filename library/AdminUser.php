@@ -482,6 +482,10 @@ class AdminUser {
         return $this->checkPermission("jog_erkeztetes");
     }
 
+    public function faliujsagAccess():bool {
+        return $this->checkPermission("jog_faliujsag");
+    }
+
     public function onlyDoctorReservations():bool {
         return $this->checkPermission("jog_onlydoctorreservations") && $this->userIsOrvos();
     }

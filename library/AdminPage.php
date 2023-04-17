@@ -200,7 +200,16 @@ class AdminPage {
             }
 
             if ($url != "#" || !empty($subMenuHtml)) {
-                $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
+                if ($menu["pageid"] == "hirek") {
+                    $news = sql_query("select id from news where datum>date_sub(now(), interval 1 month) and !instr(readby, ?) limit 1", ["|{$this->adminUser->user["id"]}|"])->fetchAll(PDO::FETCH_ASSOC);
+                    $newSign = "";
+                    if (count($news) > 0) {
+                        $newSign = "<i style='color:#a00;' title='" . count($news) . " új bejegyzés' class='fas fa-exclamation-circle'></i>";
+                    }
+                    $html .= "<div><a class='mainmenuitem".($_GET["page"]=="hirek"?"_aktiv":"")."' href='index.php?page=hirek'><i class='fas fa-rss'></i> Faliújság {$newSign}</a></div>";
+                } else {
+                    $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
+                }
             }
 
             $html.= $subMenuHtml;

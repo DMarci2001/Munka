@@ -3635,3 +3635,134 @@ function setMunkakorText(munkakorid){
 
     })
 }
+
+function addNewTopic(el) {
+    let text = $("#topictext").val();
+    let categoryId = $("#topiccategoryid").val();
+
+    if (categoryId == '0') {
+        alert("Válassz kategóriát!");
+        return;
+    }
+
+    $(el).hide();
+
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { addtopic:true, categoryid:categoryId, text:text },
+        success: function (response) {
+            $("#newstable").html(response.html);
+            initTopicSearch();
+        }
+    });
+}
+
+function addNewComment(el) {
+    let id = $(el).data("id");
+    let text = $("#commenttext"+id).val();
+
+    $(el).hide();
+
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { addcomment:true, id:id, text:text },
+        success: function (response) {
+            $("#newsitem"+id).html(response.html);
+        }
+    });
+}
+
+
+function iReadTheNews(el) {
+    let id = $(el).data("id");
+    $(el).hide();
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { ireadthenews:true, id:id },
+        success: function (response) {
+            $("#newsitem"+id).html(response.html);
+        }
+    });
+}
+
+function deleteComment(el) {
+    if (!confirm("Biztos törlöd a hozzászólást?")) {
+        return;
+    }
+
+    let id = $(el).data("id");
+    let commentId = $(el).data("commentid");
+
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { deletecomment:true, id:id, commentid:commentId },
+        success: function (response) {
+            $("#newsitem"+id).html(response.html);
+        }
+    });
+}
+
+function deleteTopic(el) {
+    if (!confirm("Biztos törlöd a témát?")) {
+        return;
+    }
+
+    let id = $(el).data("id");
+
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { deletetopic:true, id:id },
+        success: function (response) {
+            $("#newstable").html(response.html);
+            initTopicSearch();
+        }
+    });
+}
+
+function setNewsFilter(key) {
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { setnewsfilter:key },
+        success: function (response) {
+            $("#newstable").html(response.html);
+            initTopicSearch();
+        }
+    });
+}
+
+function initTopicSearch() {
+    $("#topicsearch").on('keyup', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            $("#newstable").html("keresés...");
+            $.ajax({
+                url: "index.php?page=hirek",
+                method: "POST",
+                data: { settopicfilter:$(this).val() },
+                success: function (response) {
+                    $("#newstable").html(response.html);
+                    initTopicSearch();
+                }
+            });
+        }
+    });
+}
+
+function clearTopicFilter() {
+    $("#newstable").html("keresés törlése...");
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { settopicfilter:'' },
+        success: function (response) {
+            $("#newstable").html(response.html);
+            initTopicSearch();
+        }
+    });
+}
+
