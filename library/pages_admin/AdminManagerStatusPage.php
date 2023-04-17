@@ -50,6 +50,9 @@ class AdminManagerStatusPage extends AdminCorePage
             $availableData = [];
             for ($i = 0; $i < $numOfDays; $i++) {
                 $day = date("Y-m-d", strtotime("now + {$i} day"));
+                if (in_array(date("N", strtotime($day)), [6, 7])) {
+                    continue;
+                }
                 $availableData[$day] = $bookingService->getPackageAvailabilityForDay($day);
             }
 
@@ -61,6 +64,9 @@ class AdminManagerStatusPage extends AdminCorePage
             $html.= "<div style='display: table-row;'>";
             $html.= "<div style='display:table-cell;'>&nbsp;</div>";
             foreach ($availableData as $day => $available) {
+                if (in_array(date("N", strtotime($day)), [6, 7])) {
+                    continue;
+                }
                 $genderFree[$day][1] = true;
                 $genderFree[$day][2] = true;
                 $weekDay = date("l", strtotime($day));
@@ -74,6 +80,9 @@ class AdminManagerStatusPage extends AdminCorePage
                 $html.= "<div style='display: table-row;'>";
                 $html.= "<div style='display:table-cell;font-weight: bold;'>{$packType["megnev"]}</div>";
                 foreach ($availableData as $day => $available) {
+                    if (in_array(date("N", strtotime($day)), [6, 7])) {
+                        continue;
+                    }
                     $status = "<span style='color:red;'>nincs hely</span>";
                     if (isset($available["timeTableForPackage"][$packTypeId])) {
                         $status = "<span style='color:green;'>van hely</span>";

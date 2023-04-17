@@ -108,12 +108,13 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        //$this->readEmailReports();
+        $this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
 
-        $this->refreshWorklist();
+        //$this->refreshWorklist();
+        $this->sendManagerStatusEmail();
 
         echo "teszt\n";
         die();
@@ -716,7 +717,7 @@ class CronService {
     }
 
     private function sendManagerStatusEmail() {
-        if (Booking_Constants::SQL_DB == "hungariamed" && in_array(date("G"), [8])) {
+        if (Booking_Constants::SQL_DB == "hungariamed" && in_array(date("G"), [8]) && !in_array(date("N"), [6,7])) {
             $notificationService = new NotificationService();
             $notificationService->sendManagerStatusMail();
         }
