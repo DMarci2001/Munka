@@ -222,6 +222,10 @@ class AdminUtils
     }
 
     public function setDefaultDokirexCegId($cid){
+        if ($cid ==  Booking_Constants::DEFAULT_COMPANY_ID) {
+            return;
+        }
+
         $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
         if(!empty($q["dokirexcegid_json"])){
             $dokirexServices = new DokirexService();

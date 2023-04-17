@@ -1145,3 +1145,7 @@ and (max-width: 1200px) {
     font-size:18px;
     cursor:pointer;
 }
+
+strong {
+    font-family: robotobold;
+}

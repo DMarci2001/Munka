@@ -161,6 +161,9 @@ class BookingSyncApi {
                 munkakor=?,
                 tudoszuro=?,
                 aktiv=?,
+                foglalta=?,
+                modifiedby=?,
+                modifiedtime=?,
                 tappenzcheck=?,
                 simplepay=?,
                 noreservation=?,
@@ -194,6 +197,9 @@ class BookingSyncApi {
                 $data["munkakor"],
                 $data["tudoszuro"],
                 $data["aktiv"],
+                $data["foglalta"],
+                $data["modifiedby"],
+                $data["modifiedtime"],
                 $data["betegallomanynyilatkozat"],
                 $data["simplepay"],
                 $data["noreservation"],
@@ -208,17 +214,23 @@ class BookingSyncApi {
 
     private function _fixReservation($externalReservation, $syncData) {
         $externalReservation["paciensid"] = 0;
-        $externalReservation["cegid"] = 0;
         $externalReservation["szurestipus"] = 0;
         $externalReservation["helyszin"] = 0;
         $externalReservation["lang"] = $externalReservation["rlang"];
 
         if ($cegData = sql_fetch_array(sql_query("select id from cegek where megnev=?", [$externalReservation["cegnev"]]))) {
             $externalReservation["cegid"] = $cegData["id"];
+        } else {
+            if (!empty($externalReservation["cegnev"])) {
+                sql_query("insert into cegek set megnev=?, aktiv=1", [$externalReservation["cegnev"]]);
+                $externalReservation["cegid"] = sql_insert_id();
+            }
         }
+
         if ($tipusData = sql_fetch_array(sql_query("select id from szurestipusok where megnev=?", [$externalReservation["tipusnev"]]))) {
             $externalReservation["szurestipus"] = $tipusData["id"];
         }
+
         if ($helyszinData = sql_fetch_array(sql_query("select id from helyszinek where cim=?", [$externalReservation["helyszincim"]]))) {
             $externalReservation["helyszin"] = $helyszinData["id"];
         } else {

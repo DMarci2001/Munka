@@ -902,7 +902,7 @@ class HmmApi {
                             }
 
                             $timeFrom = "{$nap} {$ora}:00";
-                            $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + {$binterval} minute"));
+                            $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + ".($binterval-1)." minute"));
 
                             if (isset($reservationTable[$orvosId][$timeFrom]) || isset($reservationTable[$orvosId][$timeTo])) {
                                 continue;

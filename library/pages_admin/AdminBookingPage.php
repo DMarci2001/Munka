@@ -310,6 +310,17 @@ class AdminBookingPage extends AdminCorePage
             $apiv2->updateListMunkakor();
             die();
         }
+
+        if (isset($_POST["syncreservation"])) {
+            $fid = intval($_POST["syncreservation"]);
+
+            $foService = new FoglaljOrvostService();
+            $foService->modifyReservation($fid);
+
+            $api = new BookingSyncApi();
+            $api->modifyReservation($fid);
+            die("syncok");
+        }
     }
 
     public function showPage()

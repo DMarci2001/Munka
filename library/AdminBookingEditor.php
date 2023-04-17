@@ -16,7 +16,7 @@ class AdminBookingEditor {
         $this->bookingService = new BookingService();
         $this->beosztasService = new BeosztasService();
         $this->user = new AdminUser();
-        $this->notifyService = new NotificationService();
+        $this->notificationService = new NotificationService();
 
         if (isset($_GET["showidoponteditor"])) {
             echo $this->_showBookingEditor($_GET["showidoponteditor"], $_GET["p"]);
@@ -107,7 +107,7 @@ class AdminBookingEditor {
             if (!is_numeric($_POST["cegid"])) {
                 sql_query("insert into cegek set megnev=?, aktiv=1", [$_POST["cegid"]]);
                 $_POST["cegid"] = sql_insert_id();
-                $this->notifyService->newCompanyNotification($_POST["cegid"]);
+                $this->notificationService->newCompanyNotification($_POST["cegid"]);
             }
 
             sql_query("update foglalasok set
@@ -182,27 +182,6 @@ class AdminBookingEditor {
                 sql_query("UPDATE felhasznalok SET alklejarat = '{$alkalmassagi}' WHERE id = {$result['id']} ");
             }
 
-            /*
-            if( $_POST['kuponkod'] != "" ) {
-                $foglalas = sql_fetch_array(sql_query("SELECT fogl.datum, kl.foglalasid, fogl.szurestipusid FROM foglalasok fogl LEFT JOIN kupon_lista kl ON kl.foglalasid = fogl.id WHERE fogl.id = ? ", array( $fid )));
-                $check = kuponCheck($_POST['kuponkod'],3,date("Y-m-d",strtotime($foglalas['datum'])),$foglalas['szurestipusid']);
-                if( $check == "usable") {
-                    $kupon = sql_fetch_array(sql_query("SELECT * FROM kuponkodok WHERE kod = ?", array($_POST['kuponkod'])));
-                    sql_query("INSERT INTO kupon_lista SET kuponid = ?, kuponkod = ?, foglalasid = ?, jovahagyta = ?",
-                        array( $kupon['id'], $kupon['kod'], $fid, $this->user->user["username"] ));
-                }
-            }
-
-            if( $_POST['kuponkod'] == "" ) {
-                $kupon = sql_query("SELECT * FROM kupon_lista WHERE foglalasid = {$fid}");
-                if( $kupon->rowCount() > 0 ) {
-                    $result = sql_fetch_array($kupon);
-                    //unlink using:
-                    sql_query("DELETE FROM kupon_lista WHERE kuponkod = '{$result['kuponkod']}' AND foglalasid = {$fid} ");
-                }
-            }
-            */
-
             if ($_POST["orvosassigned"] != $_POST["regiorvos"]) {
                 sql_query("update foglalasok set ertesitve=0 where id=?",array($fid));
             }
@@ -220,12 +199,6 @@ class AdminBookingEditor {
                 $this->bookingService->notificationService->sendToCegAndOrvos($fid,1);
             }
 
-            $foService = new FoglaljOrvostService();
-            $foService->modifyReservation($fid);
-
-            $api = new BookingSyncApi();
-            $api->modifyReservation($fid);
-
             //Itt azt akarom elérni, hogy ha nem 0 a dokirexcegid, akkor ellenőrizze csak :/
             if($_POST["dokirexcegid"]!=0){
                 if($this->adminUtils->checkBejelentkezoCegForDokirexCegid($_POST["dokirexcegid"],$_POST["cegid"])!==false){
@@ -236,17 +209,13 @@ class AdminBookingEditor {
             }else{
                 $updatedokirexjson = false;
             }
-            
 
             $status = "";
 
             //kiegészítő vizsgálatok másolása
             $status .= $this->bookingService->replicateKiegeszitoVizsgalatok($fid);
 
-            //echo json_encode(array("status"=>"","updatedokirexjson"=>$updatedokirexjson));
-
-            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"]), "updatedokirexjson"=>$updatedokirexjson]);
-            //echo $this->_showBookingEditor($fid, $_POST["p"]);
+            Utils::jsonOut(["status" => $status, "html" => $this->_showBookingEditor($fid, $_POST["p"]), "updatedokirexjson"=>$updatedokirexjson, "sync" => $fid]);
             die;
         }
 

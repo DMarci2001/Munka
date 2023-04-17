@@ -980,7 +980,7 @@ class AdminCompaniesPage extends AdminCorePage
             if ($row["onlyreg"] == 1) $options .= "<div>Csak regisztráltaknak</div>";
             if ($row["onlybeutalo"] == 1) $options .= "<div>Csak beutalóval lehet foglalni</div>";
             if ($row["no_doctor_select"] == 1) $options .= "<div>Nincs orvos választás a foglalásnál</div>";
-            if ($row["fieldoptions"] != "") $options .= "<div>" . $this->displayFieldOptions($row["fieldoptions"]) . "</div>";
+            //if ($row["fieldoptions"] != "") $options .= "<div>" . $this->displayFieldOptions($row["fieldoptions"]) . "</div>";
 
             $html.= "<tr>";
             $html.= "<td nowrap valign='top'><div class={$tc}><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["megnev"]}</a></div></td>";

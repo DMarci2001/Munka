@@ -1137,7 +1137,7 @@ class BookingPage extends CorePage
 
             $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px;'>Időpontfoglalás</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
             foreach ($services as $tipusData) {
-                if ($tipusData["megnev"] == "Szemészet" && Booking_Constants::SQL_DB == "hungariamed") {
+                if (($tipusData["megnev"] == "Szemészet" || $tipusData["megnev"] == "Menedzserszűrés") && Booking_Constants::SQL_DB == "hungariamed") {
                     //szemészet most nincs
                     continue;
                 }

@@ -857,14 +857,11 @@ function foglalasMentes(page, allowNewCompany) {
         url: "index.php",
         data: data,
         success: function (response) {
-
             if (response.status != "") {
                 alert(response.status);
             }
 
-            console.log(response);
             if(response.updatedokirexjson){
-                
                 if(confirm("Szeretnéd menteni a Bejelentkező cég-dokirex cég kapcsolatot?")){
                     setCegBubble(cegId,$("select[name='dokirexcegid']").val(),false);
                 }
@@ -873,9 +870,15 @@ function foglalasMentes(page, allowNewCompany) {
             $("#idoponteditor").html(response.html);
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
-                    
                     afterElojegyzesTableInit();
 
+                    if (response.sync != 0) {
+                        $.ajax({
+                            type: "POST",
+                            url: "index.php?page=booking",
+                            data: "syncreservation="+response.sync
+                        });
+                    }
 
                 }
             );
