@@ -813,6 +813,67 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
+    public function _orvosWorkHours($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Munkaórák");
+
+        $this->titleRow("A1", "Orvosok munkaórái {$from} - {$to}");
+
+        $from.= " 00:00:00";
+        $to.= " 23:59:59";
+
+        $workHoursArray = sql_query("SELECT orvosassigned as orvosid, o.nev AS orvosnev, f.`helyszinid`, h.cim AS helyszin, DATE(datum) AS datum, MIN(datum) AS begindate, DATE_ADD(MAX(datum), INTERVAL rinterval MINUTE) AS enddate,
+            SUM(IF(f.taj='', 0, 1)) AS paciensek, COUNT(*) AS total
+            FROM foglalasok f 
+            LEFT JOIN orvosok o ON o.id=f.orvosassigned
+            LEFT JOIN helyszinek h ON h.id = f.helyszinid
+            WHERE datum>=? AND datum<=? and orvosassigned<>0 GROUP BY f.orvosassigned, DATE(f.datum), f.helyszinid", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+
+        $sor = 3;
+        $this->headingRow("A", $sor, ["Orvos", "Nap", "Helyszín", "Munkaóra", "Paciensek", "Paciens/óra"]);
+
+        $sor++;
+        $totalHours = $totalPatients = 0;
+        $lastDoctor = 0;
+        foreach ($workHoursArray as $rowData) {
+            if ($rowData["orvosid"] != $lastDoctor) {
+                $lastDoctor = $rowData["orvosid"];
+                if ($totalHours != 0) {
+                    $this->totalRow("A", $sor, ["Összesen:", "", "", $totalHours, $totalPatients, round($totalPatients/$totalHours, 1)]);
+                    $totalHours = $totalPatients = 0;
+                    $sor+=2;
+                }
+            }
+
+            $hours = round((strtotime($rowData["enddate"]) - strtotime($rowData["begindate"]))/3600, 1);
+            $this->dataRow("A", $sor, [$rowData["orvosnev"], $rowData["datum"], $rowData["helyszin"], $hours, $rowData["paciensek"], round($rowData["paciensek"]/$hours, 1)]);
+            //$total += $rowData["foglalasok"];
+            $totalPatients += $rowData["paciensek"];
+            $totalHours += $hours;
+            $sor++;
+        }
+
+        if ($totalHours != 0) {
+            $this->totalRow("A", $sor, ["Összesen:", "", "", $totalHours, $totalPatients, round($totalPatients/$totalHours, 1)]);
+        }
+
+
+
+        //$this->totalRow("A", $sor, ["Összesen:", $totalHours, $totalPatients]);
+        //$this->sheet->getColumnDimension('A')->setWidth(40);
+
+        //$this->totalRow("E", $sor, ["Összesen:", $total, $totaleljott]);
+        //$this->sheet->getStyle("E{$sor}:G{$sor}")->getFont()->setBold(true);
+
+        $this->setAutoWidth(range('A','K'));
+
+        //$this->sheet->getColumnDimension('E')->setWidth(40);
+    }
 
     public function napiStat($from, $to) {
         $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -833,6 +894,7 @@ class ExcelService {
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
             $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
+            $this->_orvosWorkHours($sheetId++, $from, $to);
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
         } catch (\Exception $e) {
             //valami hibakezelés...
