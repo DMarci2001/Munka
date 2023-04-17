@@ -84,20 +84,27 @@ function toggleDicomImageRow(id) {
     }).done(function (msg) {
         $("#imagerow"+id).html(msg);
     });
-
-
 }
 
-function toggleDicomImageRow(id) {
-    $("#imagerow"+id).toggle();
-
+function setLeletStatus(pid, id, num) {
     $.ajax({
-        method: "POST",
+        type: "POST",
         url: "index.php",
-        data: {page:"dicom", showimagelist:id}
-    }).done(function (msg) {
-        $("#imagerow"+id).html(msg);
+        data: {page:"dicom", setleletstatus:1, pid:pid, id:id, num:num},
+        success: function (response) {
+            $("#imagerow"+pid).html(response.imagerow);
+            $("#lstatus"+pid).html(response.leletstatus);
+        }
     });
+}
 
-
+function toggleLeletKiallitva(id, pid, date) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {page:"dicom", toggleLeletKiallitva:1, id:id, pid:pid, date:date},
+        success: function (response) {
+            $("#lstatus"+pid).html(response.leletstatus);
+        }
+    });
 }

@@ -180,6 +180,11 @@ class DicomService {
             $queryParams[] = $params["byuid"];
         }
 
+        if (isset($params["byid"]) && !empty($params["byid"])) {
+            $w .= " and d.patientID=?";
+            $queryParams[] = $params["byid"];
+        }
+
         if (!empty($this->getSelectedCompany())) {
             $w .= " and d.institutionName=?";
             $queryParams[] = $this->getSelectedCompany();
@@ -270,7 +275,7 @@ class DicomService {
     }
 
     public function getModels() {
-        return sql_query_common("select concat(manufacturerModelName,\" \",manufacturer) as name, manufacturer from dicom group by manufacturer")->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query_common("select concat(manufacturerModelName,' ',manufacturer) as name, manufacturer from dicom group by manufacturer")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getSelectedCompany():string {
@@ -287,6 +292,10 @@ class DicomService {
         return "";
     }
 
+    public function setLeletStatus($id, $num, $user) {
+        sql_query_common("update dicom set leletstatus=?, leletcreatedby=? where uid=? limit 1", [$num, $user, $id]);
+    }
+
     public static function setSelectedCompany($company) {
         $exp = time() + 60 * 60 * 24 * 365;
         if ($company == "" || sql_query_common("select id from dicom where institutionName=? limit 1", [$company])->fetchAll(PDO::FETCH_ASSOC)) {
@@ -301,6 +310,14 @@ class DicomService {
             setcookie("deszkozfilter", $model, $exp, "/");
             $_COOKIE["deszkozfilter"] = $model;
         }
+    }
+
+    public function getLeletStatus($id, $date) {
+        return sql_query_common("select id, leletstatus, leletcreatedby, leletkiallitva, leletkiallitvaby from dicom where patientID=? and contentDate=? limit 1", [$id, $date])->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function toggleLeletKiallitva($id, $user) {
+        sql_query_common("update dicom set leletkiallitva=if(leletkiallitva=0, 1, 0), leletkiallitvaby=? where id=? limit 1", [$user, $id]);
     }
 
     public static function getInstitutesQuery():string {

@@ -12,8 +12,7 @@ class AdminDicomPage extends AdminCorePage
         $this->dicomService = new DicomService();
 
         if (isset($_REQUEST["generalsearch"])) {
-            $patients = $this->dicomService->getPatients(["search" => $_REQUEST["term"]]);
-            echo $this->listDicomEntries($patients);
+            echo $this->listDicomEntries();
             die;
         }
 
@@ -28,8 +27,6 @@ class AdminDicomPage extends AdminCorePage
             header("location:index.php?page={$_GET["page"]}");
             die;
         }
-
-
 
         if (isset($_GET["getimage"])) {
             $content = $this->dicomService->getRawImage($_GET["getimage"]);
@@ -52,7 +49,7 @@ class AdminDicomPage extends AdminCorePage
         }
 
         if (isset($_POST["showimagelist"])) {
-            $patients = $this->dicomService->getPatients(["byuid" => $_POST["showimagelist"]]);
+            $patients = $this->dicomService->getPatients(["byid" => $_POST["showimagelist"]]);
             echo $this->showImageList($patients[0]["patientID"]);
             die;
         }
@@ -74,6 +71,18 @@ class AdminDicomPage extends AdminCorePage
             die();
         }
 
+        if (isset($_POST["setleletstatus"])) {
+            $this->dicomService->setLeletStatus($_POST["id"], $_POST["num"], $this->adminUser->user["nev"]);
+
+            $patients = $this->dicomService->getPatients(["byuid" => $_POST["id"]]);
+            Utils::jsonOut(["imagerow" => $this->showImageList($patients[0]["patientID"]), "leletstatus" => $this->showDicomStatus($patients[0]["patientID"], $patients[0]["datum"])]);
+        }
+
+        if (isset($_POST["toggleLeletKiallitva"])) {
+            $this->dicomService->toggleLeletKiallitva($_POST["id"], $this->adminUser->user["nev"]);
+            Utils::jsonOut(["leletstatus" => $this->showDicomStatus($_POST["pid"], $_POST["date"])]);
+        }
+
         $GLOBALS["javascript"][] = "dicom.js?v=".date("YmdHi");
     }
 
@@ -87,20 +96,27 @@ class AdminDicomPage extends AdminCorePage
         $GLOBALS["subtitle"] = "DICOM";
 
         echo "<div style='margin-bottom:20px;'>";
-        echo $this->cegFilter();
+        echo $this->cegFilter()."&nbsp;&nbsp;";
         echo $this->eszkozFilter();
         echo "&nbsp;&nbsp;<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
         echo "</div>";
 
 
         echo "<div id='dicomlist'>";
-        $patients = $this->dicomService->getPatients();
-        echo $this->listDicomEntries($patients);
+        echo $this->listDicomEntries();
         echo "</div>";
     }
 
 
-    private function listDicomEntries($images) {
+    private function listDicomEntries() {
+        if (isset($_REQUEST["generalsearch"]) && isset($_REQUEST["term"])) {
+            $images = $this->dicomService->getPatients(["search" => $_REQUEST["term"]]);
+        }
+
+        if (!isset($images)) {
+            $images = $this->dicomService->getPatients();
+        }
+
         $html = "";
 
         $html.= "<table cellpadding='0' cellspacing='0' border='0' width='100%;'>";
@@ -138,35 +154,56 @@ class AdminDicomPage extends AdminCorePage
             }
             $html.= "<tr>";
 
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>";
-            $html.= "<a style='' onclick='toggleDicomImageRow(\"{$row["uid"]}\");return false;' href='#'>{$row["imageNum"]} kép</a> ";
+            $html.= "<td nowrap><div class='{$tc}'>";
+            $html.= "<a style='' onclick='toggleDicomImageRow(\"{$row["patientID"]}\");return false;' href='#'>{$row["imageNum"]} kép</a> ";
+            $html.= "&nbsp;<span style='font-size: 14px;' id='lstatus{$row["patientID"]}'>".$this->showDicomStatus($row["patientID"], $row["datum"])."</span>";
             //$html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'>kép megtekintése</a>] ";
             //$html.= "[<a style='color:#00f;' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'>DICOM file letöltése</a>]";
             $html.= "</td>";
 
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["datum"]))."</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["institutionName"]}</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$machineName}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["datum"]))."</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>{$row["institutionName"]}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>{$machineName}</div></td>";
             if (!empty($patientData)) {
-                $html .= "<td nowrap valign='top'><div class='{$tc}'><i title='pacienssel összekapcsolva' class='fas fa-link'></i></div></td>";
-                $html .= "<td nowrap valign='top'><div class='{$tc}'><a target='_blank' href='index.php?page=patients&szerk={$patientData["id"]}'>{$row["patientName"]}</a></div></td>";
+                $html .= "<td nowrap><div class='{$tc}'><i title='pacienssel összekapcsolva' class='fas fa-link'></i></div></td>";
+                $html .= "<td nowrap><div class='{$tc}'><a target='_blank' href='index.php?page=patients&szerk={$patientData["id"]}'>{$row["patientName"]}</a></div></td>";
             } else {
-                $html .= "<td nowrap valign='top'></td>";
-                $html .= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientName"]}</div></td>";
+                $html .= "<td nowrap></td>";
+                $html .= "<td nowrap><div class='{$tc}'>{$row["patientName"]}</div></td>";
             }
 
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientBirthDate"]}</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$row["patientOtherIDs"]}</div></td>";
-            $html.= "<td nowrap valign='top'><div class='{$tc}'>{$studyDescription}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>{$row["patientBirthDate"]}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>{$row["patientOtherIDs"]}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>{$studyDescription}</div></td>";
 
             $html.= "</tr>";
-            $html.= "<tr><td colspan='10' ><div id='imagerow{$row["uid"]}' style='padding:10px 0px 10px 0px;display:none;'>";
-            $html.= "</div></td></tr>";
+            $html.= "<tr><td colspan='10' ><div id='imagerow{$row["patientID"]}' style='padding:10px 0px 10px 0px;display:none;'></div></td></tr>";
             $html.= "<tr><td colspan='10' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         $html.= "</table>";
 
         return $html;
+    }
+
+    private function showDicomStatus($id, $date):string {
+        $leletStatus = $this->dicomService->getLeletStatus($id, $date);
+
+        $status = "<i class='fa-solid fa-circle-question' title='nincs leletezve'></i>";
+        if ($leletStatus["leletstatus"] == 2) {
+            $status = "<i class='fa-solid fa-square-plus' style='color:red;' title='pozitív lelet - {$leletStatus["leletcreatedby"]}'></i>";
+        }
+        if ($leletStatus["leletstatus"] == 1) {
+            $status = "<i class='fa-solid fa-square-minus' style='color:green;' title='negatív lelet - {$leletStatus["leletcreatedby"]}'></i>";
+        }
+
+        $status .= "&nbsp;";
+        if ($leletStatus["leletkiallitva"] == 1) {
+            $status .= "<i onclick='toggleLeletKiallitva(\"{$leletStatus["id"]}\", \"{$id}\", \"{$date}\");' class='fa-solid fa-square-check' style='cursor:pointer;' title='lelet kiállítva - {$leletStatus["leletkiallitvaby"]}'></i>";
+        } else {
+            $status .= "<i onclick='toggleLeletKiallitva(\"{$leletStatus["id"]}\", \"{$id}\", \"{$date}\");' class='fa-regular fa-square' style='cursor:pointer;' title='lelet nincs kiállítva'></i>";
+        }
+
+        return $status;
     }
 
     private function displayImageEditor($id):string {
@@ -250,7 +287,14 @@ class AdminDicomPage extends AdminCorePage
 
         foreach ($images as $row) {
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
-            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:100px;height:100px;object-fit: cover;' alt='' /></a>";
+            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
+
+            $html.= "<div style='margin:5px 0px 0px 0px;text-align: center'>";
+            $html.= "<div style='display:table-cell;'><a title='Lelet pozitív' onclick='setLeletStatus(\"{$row["patientID"]}\", \"{$row["uid"]}\", 2);return false;' href='#' class='dicompozitivbutton".($row["leletstatus"] == 2 ?"_aktiv":"")."'>Pozítív</a>&nbsp;</div>";
+            $html.= "<div style='display:table-cell;'><a title='Lelet negatív' onclick='setLeletStatus(\"{$row["patientID"]}\", \"{$row["uid"]}\", 1);return false;' href='#' class='dicomnegativbutton".($row["leletstatus"] == 1 ?"_aktiv":"")."'>Negatív</a>&nbsp;</div>";
+            $html.= "<div style='display:table-cell;'><a title='Nincs lelet' onclick='setLeletStatus(\"{$row["patientID"]}\", \"{$row["uid"]}\", 0);return false;' href='#' class='dicomsemlegesbutton'>Egyik sem</a></div>";
+            $html.= "</div>";
+
             $html.= "<div style='text-align: center;padding-top: 5px;'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div>";
             $html.= "<div style='text-align: center;padding-top: 5px;font-size: 16px;'>";
             //$html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><i class='fas fa-eye'></i></a>&nbsp;";
