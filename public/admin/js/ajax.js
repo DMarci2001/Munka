@@ -30,6 +30,7 @@ $(document).ready(function () {
 
 
 
+
 function setHelyszin(h) {
     window.location.href = 'index.php?page=calendar&sethelyszin=' + h;
 }
@@ -366,8 +367,9 @@ function setListDay(day) {
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
-            afterElojegyzesTableInit();
-            $("#napfilter").css("background-image","url('/images/empty-128.png')");
+            //afterElojegyzesTableInit();
+            //$("#napfilter").css("background-image","url('/images/empty-128.png')");
+            reloadWaitList();
         }
     );
 }
@@ -3363,6 +3365,7 @@ function beutalohozzadasafinish(bid,fid,tname){
         data: { beutalohozzadasafinish:true,bid:bid,fid:fid,tname:tname},
         success: function (result) {
             console.log(result);
+            location.reload();
         }
     });
 }
@@ -3768,4 +3771,146 @@ function clearTopicFilter() {
         }
     });
 }
+function reloadWaitList(){
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {reloadWaitList:true},
+        success: function(response){
+            console.log(response);
+            $("#waiting-room").html(response);
+        }
+
+    })
+}
+
+function reloadWaitListTable(){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {reloadWaitListTable:true},
+        success: function(response){
+            $("#waitlist-table").html(response);
+        }
+
+    })
+}
+
+/*$(document).ready(function () {
+    setInterval(function () {
+        reloadWaitListTable();
+    }, 3000);
+});*/
+
+
+
+function callInToVisit(wid){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        dataType:"JSON",
+        data: {callInToVisit:wid},
+        success: function(response){
+            console.table(response);
+            $("#waitlist-table").html(response.html);
+            if(response.status=="ok"){
+                $.toast({
+                    text: "Behívás vizsgálatra",
+                    icon: 'success'
+                });
+            }else{
+                $.toast({
+                    text: response.status,
+                    icon: 'error'
+                });
+            }
+        }
+    })
+}
+
+function addToWaitList(fid){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        dataType:"JSON",
+        data: {addToWaitList:fid},
+        success: function(response){
+            console.table(response);
+            $("#waitlist-table").html(response.html);
+            if(response.status=="ok"){
+                $.toast({
+                    text: "Várólistához adva",
+                    icon: 'success'
+                });
+            }
+            if(response.status=="already exists"){
+                $.toast({
+                    text: "Már hozzá lett adva a váróteremhez!",
+                    icon: 'error'
+                });
+            }
+        }
+    })
+}
+
+function removeFromWaitList(fid){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        dataType:"JSON",
+        data: {removeFromWaitList:fid},
+        success: function(response){
+            console.table(response);
+            $("#waitlist-table").html(response.html);
+            if(response.status=="ok"){
+                $.toast({
+                    text: "Várólistáról törölve",
+                    icon: 'success'
+                });
+            }
+            /*if(response.status=="already exists"){
+                $.toast({
+                    text: "Már hozzá lett adva a váróteremhez!",
+                    icon: 'error'
+                });
+            }*/
+        }
+    })
+}
+
+$(document).on("change",".waitlist-relevant-types",function(){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {changeWaitlistRelevantTypes:$(this).val()},
+        success: function(response){
+            reloadWaitListTable();
+            $.toast({
+                text: "Beállítás mentve",
+                icon: 'success'
+            });
+        }
+
+    })
+});
+
+$(document).on("change",".waitlist-bound-to-doctor-list",function(){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {changeBoundToDoctor:$(this).val()},
+        success: function(response){
+            reloadWaitListTable();
+            $.toast({
+                text: "Beállítás mentve",
+                icon: 'success'
+            });
+        }
+
+    })
+});
+
+
+
 

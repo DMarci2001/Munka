@@ -20,9 +20,17 @@ class BookingService
     public int $newReservationId;
     public MunkakorVizsgalatok $munkakorVizsgalatok;
 
-    public array $availableDocs = array(
-        array("name" => "Éjszakai", "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
-        array("name" => "Nappali", "value" => "bp-normal", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
+    public $availableDocs = array(
+        array("name" => "Éjszakai", "cegid"=>74, "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
+        array("name" => "Nappali", "cegid"=>74, "value" => "bp-normal", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
+
+        array("name" => "Geodéta", "cegid"=>220, "value" => "Geodéta", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_geodeta_beutalo.pdf"),
+        array("name" => "Hírközlési munkatárs", "cegid"=>220, "value" => "Hírközlési munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_hirközlesi_munkatars_beutalo.pdf"),
+        array("name" => "Működés támogatás munkatárs", "cegid"=>220, "value" => "Működés támogatás munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_mukodes_tamogatas_munkatars_beutalo.pdf"),
+        array("name" => "Régiós diszpécser", "cegid"=>220, "value" => "Régiós diszpécser", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_regios_diszpecser_beutalo.pdf"),
+        array("name" => "Számviteli munkatárs", "cegid"=>220, "value" => "Számviteli munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_szamviteli_munkatars_beutalo.pdf"),
+        array("name" => "Technológiai szerelő", "cegid"=>220, "value" => "Technológiai szerelő", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_technologiai_szerelo_beutalo.pdf"),
+
     );
 
     public function __construct()
@@ -1133,6 +1141,14 @@ class BookingService
             }
             
         }
+        if($data["cegid"]==220){
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalattipusa,null as worklocation FROM foglalasok fogl
+            LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+            WHERE fogl.id=?",array($fid));
+            if($referalData=sql_fetch_array($refQuery)){
+                echo $this->createReferalDoc($referalData,$referalData["munkakor"]);
+            }
+        }
 
         if (!isset($data["noreservation"])) {
             $data["noreservation"] = 0;
@@ -1730,7 +1746,9 @@ class BookingService
             "munkakor" => $this->pdfChars($data["munkakor"]),
             "vizsgalat"=> $this->pdfChars($data["vizsgalat"]),
             "telephely"=> $this->pdfChars($data["worklocation"]),
-            "kelte" => date("Y.m.d", strtotime($data["regdatum"]))
+            "kelte" => date("Y.m.d", strtotime($data["regdatum"])),
+            "keltezes" => date("Y.m.d", strtotime($data["regdatum"])),
+            "teljescim" => $this->pdfChars($data["teljescim"])
         ];
 
 

@@ -675,6 +675,8 @@ class AdminBookingEditor {
                 $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
             }
 
+            $html .= "<input onClick='addToWaitList({$row["id"]})' type=\"button\" style=\"background-color:#0a0\" value=\"Érkeztetés\">";
+
             $html.= "</div>";
             $html.= "</div>";
             $html.= "</form>";

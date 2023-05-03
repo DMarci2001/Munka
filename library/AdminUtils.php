@@ -79,6 +79,9 @@ class AdminUtils
             if ($adminUser->beutaloHozzadasAccess() && Booking_Constants::SQL_DB == "hungariamed" && $reservationData["cegid"] == CompanyService::BP_ID) {
                 $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='beutaloHozzadasa({$id});return false'><i class='fa-solid fa-circle-plus'></i> Beutaló</a>";
             }
+            if ($adminUser->beutaloHozzadasAccess() && Booking_Constants::SQL_DB == "hungariamed" && $reservationData["cegid"] == 220) {
+                $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='beutaloHozzadasa({$id});return false'><i class='fa-solid fa-circle-plus'></i> Beutaló</a>";
+            }
             if ($adminUser->beutaloHozzadasAccess()) {
                 $htmlout .= "&nbsp;&nbsp;<a href=\"#\" onclick='$(\"#beutalofile\").click();return false'><i class='fa-solid fa-circle-plus'></i> File</a>";
                 $htmlout .= "<input type='file' multiple onchange='beutaloFileUpload(this, {$id});' name='beutalofile' id='beutalofile' style='display:none;' />";

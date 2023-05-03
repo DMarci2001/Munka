@@ -638,6 +638,7 @@ class AdminAjaxService {
         if(isset($_POST["beutaloHozzadasBox"])){
             $html = "";
 
+            $foglalas = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($_POST["beutaloHozzadasBox"])));
             $service = new BookingService();
 
             $html .= "<div style='color:#444;text-align:center;'>";
@@ -645,17 +646,28 @@ class AdminAjaxService {
             $html .= "<div class='loginhead'>Beutaló hozzáadása</div>";
 
             $html .= "<div style='padding:20px;text-align:center;'>";
-            $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy típust és egy telephelyet a legördülő listákból.</div>";
+            if($foglalas["cegid"]==74){
+                $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy típust és egy telephelyet a legördülő listákból.</div>";
+            }
+            if($foglalas["cegid"]==220){
+                $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy munkakört a legördülő listákból.</div>";
+            }
             $html .= "<div style=\"padding-bottom:3px\"><select id=\"beutaloSelector\">";
             foreach($service->availableDocs as $beutalo){
-                $html .= "<option value=\"{$beutalo["value"]}\">{$beutalo["name"]} munkavégézés</option>";
+                if($foglalas["cegid"]==$beutalo["cegid"]){
+                    $html .= "<option value=\"{$beutalo["value"]}\">{$beutalo["name"]} munkavégézés</option>";
+                }
+                
             }
             $html .= "</select></div>";
 
-            $html .= "<div><select id=\"telephelySelector\">";
-            $html .= "<option value=\"Budapest\">Budapest</option>";
-            $html .= "<option value=\"Szeged\">Szeged</option>";
-            $html .= "</select></div>";
+            if($foglalas["cegid"]==74){
+                $html .= "<div><select id=\"telephelySelector\">";
+                $html .= "<option value=\"Budapest\">Budapest</option>";
+                $html .= "<option value=\"Szeged\">Szeged</option>";
+                $html .= "</select></div>";
+            }
+           
             $html .= "<div style=\"padding-top:10px;\"><input type=\"button\" onclick='beutalohozzadasafinish($(\"#beutaloSelector\").val(),{$_POST["beutaloHozzadasBox"]},$(\"#telephelySelector\").val())' value=\"Kiválaszt\">";
             $html .= "&nbsp;&nbsp;<input onclick='hideGeneralPopup();return false;' type=\"button\" id=\"simplerefundclosebutton\" value=\"Bezárás\"></div>";
 
@@ -667,9 +679,19 @@ class AdminAjaxService {
         }
 
         if(isset($_POST["beutalohozzadasafinish"])){
+            $f=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($_POST["fid"])));
             $service = new BookingService();
-            $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as regdatum,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
-            $p["worklocation"] = $_POST["tname"];
+            if($f["cegid"]==74){
+                $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as regdatum,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
+                $p["worklocation"] = $_POST["tname"];
+            }
+            
+            if($f["cegid"]==220){
+                $p = sql_fetch_array(sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,'{$_POST["bid"]}' as munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
+                LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                WHERE fogl.id=?",array($_POST["fid"])));
+            }
+            
 
             echo $service->createReferalDoc($p,$_POST["bid"]);
             die();
