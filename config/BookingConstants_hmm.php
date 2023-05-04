@@ -76,6 +76,7 @@ class Booking_Constants {
     const TUDOSZURES_ID             = 58;
     const LABOR_ID                  = 0;
     const HALLASVIZSGALAT_ID        = 0;
+    const COVID_ID                  = 0;
 
     const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
 }

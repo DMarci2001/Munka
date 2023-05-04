@@ -367,8 +367,8 @@ function setListDay(day) {
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
-            //afterElojegyzesTableInit();
-            //$("#napfilter").css("background-image","url('/images/empty-128.png')");
+            afterElojegyzesTableInit();
+            $("#napfilter").css("background-image","url('/images/empty-128.png')");
             reloadWaitList();
         }
     );

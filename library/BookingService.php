@@ -675,7 +675,7 @@ class BookingService
                                 left join orvosok o on o.id=b.orvosid 
                                 where b.helyszinid=? 
                                 and instr(b.tipusok,?) 
-                                AND ((INSTR(b.beocegek, ?) OR b.beocegek='') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW())) 
+                                AND ((INSTR(b.beocegek, ?) OR b.beocegek='') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))
                                 and (b.nap=? or (b.nap=10 and b.beonap=?))
                                 AND (b.validfrom='0000-00-00' OR b.validfrom<=?) AND (b.validto='0000-00-00' OR b.validto>=?)
                                 and b.noreservation=0
@@ -1360,6 +1360,10 @@ class BookingService
         //$_GET["szt"]
         //$_GET["addidopont"]
         //$_GET["rinterval"]
+
+        if (empty($this->adminUser->user)) {
+            die("errorA foglalás nem sikerült, nem vagy bejelentkezve!");
+        }
 
         if (isset($_SESSION["helyszin"])) {
             $foService = new FoglaljOrvostService();

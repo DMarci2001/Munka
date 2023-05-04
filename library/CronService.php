@@ -477,6 +477,12 @@ class CronService {
 		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND c.smshour<>0 AND f.externalid=''");
             while ($row = sql_fetch_array($res)) {
                 $tel = $row["telefon"];
+
+                //kiegészítő vizsgálatokról nem kell sms
+                if (in_array($row["szurestipusid"], [Booking_Constants::TUDOSZURES_ID, Booking_Constants::LABOR_ID, Booking_Constants::HALLASVIZSGALAT_ID, Booking_Constants::COVID_ID])) {
+                    continue;
+                }
+
                 //ha aznap kapott már sms-t, ne menjen ki több
                 $skip = sql_query("select id from foglalasok where telefon=? and datum>? and datum<? and smssent=1 limit 1",  [$tel, date("Y-m-d 00:00:00", strtotime($row["datum"])), date("Y-m-d 23:59:59", strtotime($row["datum"]))])->fetch(PDO::FETCH_ASSOC);
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
