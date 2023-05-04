@@ -28,7 +28,7 @@ class ChatEngine {
         }
 
         if (isset($_POST["sendmessage"])) {
-            $chatSession = $this->getChatSession();
+            $chatSession = $this->getChatSession(1);
             $message = strip_tags($_POST["message"]);
 
             $this->sqlQuery("insert into chat set datum=now(), chatsessionid=?, message=?", [$chatSession, $message]);
@@ -50,14 +50,14 @@ class ChatEngine {
     }
 
 
-    private function getChatSession() {
+    private function getChatSession($external = 0) {
         $sessionId = session_id();
         $domain    = $_SERVER["HTTP_HOST"];
 
         if ($sessionData = $this->sqlQuery("select * from chatsession where session=? and domain=?", [$sessionId, $domain])->fetch(PDO::FETCH_ASSOC)) {
             $id = $sessionData["id"];
         } else {
-            $this->sqlQuery("insert into chatsession set created=now(), session=?, domain=?", [$sessionId, $domain]);
+            $this->sqlQuery("insert into chatsession set created=now(), session=?, domain=?, external=?", [$sessionId, $domain, $external]);
             $id = $this->db->lastInsertId();
         }
 

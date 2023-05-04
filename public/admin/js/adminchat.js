@@ -1,3 +1,5 @@
+var enableChatSessionListRefresh = true;
+
 $(document).ready(function () {
     self.setInterval("chatWindowRefresh()",3000);
     self.setInterval("chatSessionListRefresh()",10000);
@@ -32,6 +34,10 @@ function chatWindowRefresh() {
 }
 
 function chatSessionListRefresh() {
+    if (!enableChatSessionListRefresh) {
+        return;
+    }
+
     $.ajax({
         url: "index.php?page=chat",
         method: "POST",
@@ -68,3 +74,59 @@ function sendChatMessage() {
 function chatFastText(text) {
     $("#chatmessagetext").val(text);
 }
+
+function openChatSessionEditor(div, id, pub) {
+    closeChatSessionEditors();
+    enableChatSessionListRefresh = false;
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { opensessioneditor:1, id:id, pub:pub },
+        success: function (response) {
+            $("#"+div).html(response);
+        }
+    });
+}
+
+function closeChatSessionEditors() {
+    enableChatSessionListRefresh = true;
+    $(".sessioneditordiv").html("");
+}
+
+function addNewChatSession() {
+    let id = $("#editedsessionid").val();
+    let pub = $("#editedsessionpublic").val();
+
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { savechatsession:1, id:id, pub:pub, title:$("#editedsessiontitle").val() },
+        success: function (response) {
+            closeChatSessionEditors();
+            chatSessionListRefresh();
+        }
+    });
+}
+
+
+function toggleChatSessionUser(el) {
+    let sessionId = $(el).data("chatsessionid");
+    let userId = $(el).data("userid");
+    let aktiv = $(el).data("aktiv");
+
+    $.ajax({
+        method: "POST",
+        url: "index.php?page=chat",
+        data: { toggleChatUserSession: sessionId, userId: userId, aktiv:aktiv },
+        success: function (response) {
+            $("#sessionusers"+sessionId).html(response);
+        }
+    });
+}
+
+function closeChatSession(id) {
+    if (confirm("Biztos lezárod a chat ablakot?")) {
+        window.location.href = "index.php?page=chat&closechat&id=" + id;
+    }
+}
+
