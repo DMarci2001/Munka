@@ -108,3 +108,37 @@ function toggleLeletKiallitva(id, pid, date) {
         }
     });
 }
+
+
+function showCompanySelect(id, cegid) {
+    if (id == 0) {
+        $.toast({
+            text: "Nincs jogosultságod a cég kezeléshez!",
+            icon: "error"
+        });
+        return;
+    }
+
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"dicom", showcompanyselect:id, cegid:cegid}
+    }).done(function (msg) {
+        $("#cegid"+id).html(msg);
+    });
+}
+
+function saveDicomCompany(id, cegid) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {page:"dicom", setcegid:1, id:id, cegid:cegid},
+        success: function (response) {
+            $("#cegid"+id).html(response);
+            $.toast({
+                text: "cég mentve",
+                icon: "success"
+            });
+        }
+    });
+}

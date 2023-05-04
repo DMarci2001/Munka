@@ -169,18 +169,21 @@ class DicomService {
     public function getPatients($params = []) {
         $queryParams = [];
         $w = "";
+        if (!$this->adminUser->allDicomAccess()) {
+            $w.= $this->adminUser->cegSQLFilter("d.cegid");
+        }
 
-        if (isset($params["search"]) && !empty($params["search"])) {
+        if (!empty($params["search"])) {
             $w .= " and instr(concat(patientName,patientBirthDate,patientOtherIDs), ?)";
             $queryParams[] = $params["search"];
         }
 
-        if (isset($params["byuid"]) && !empty($params["byuid"])) {
+        if (!empty($params["byuid"])) {
             $w .= " and uid=?";
             $queryParams[] = $params["byuid"];
         }
 
-        if (isset($params["byid"]) && !empty($params["byid"])) {
+        if (!empty($params["byid"])) {
             $w .= " and d.patientID=?";
             $queryParams[] = $params["byid"];
         }
@@ -246,14 +249,14 @@ class DicomService {
                 if (isset($_GET["thumb"])) {
                     $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
                     if (!is_file($thumbLocation)) {
-                        `dcmj2pnm --write-png {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
+                        `dcmj2pnm --write-png --min-max-window {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
                     }
                     $content["imageData"] = imagecreatefromstring(file_get_contents($thumbLocation));
                 } else {
                     if (!empty($param)) {
                         $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
                     } else {
-                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]}`);
+                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --min-max-window {$content["fileName"]}`);
                     }
                 }
             }
@@ -294,6 +297,10 @@ class DicomService {
 
     public function setLeletStatus($id, $num, $user) {
         sql_query_common("update dicom set leletstatus=?, leletcreatedby=? where uid=? limit 1", [$num, $user, $id]);
+    }
+
+    public function setCompanyId($id, $companyId) {
+        sql_query_common("update dicom set cegid=? where patientID=? limit 1", [$companyId, $id]);
     }
 
     public static function setSelectedCompany($company) {

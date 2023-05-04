@@ -3,13 +3,20 @@
 class AdminDicomPage extends AdminCorePage
 {
 
-    private $dicomService;
+    private DicomService $dicomService;
+    private bool $teszt = false;
+
     public function __construct()
     {
         parent::__construct();
 
+        $this->teszt = session_id() == "kchtqtfhq8tj3502rs4upbas80";
 
         $this->dicomService = new DicomService();
+
+        if (!isset($_SESSION["lastdicomcompany"])) {
+            $_SESSION["lastdicomcompany"] = 0;
+        }
 
         if (isset($_REQUEST["generalsearch"])) {
             echo $this->listDicomEntries();
@@ -83,6 +90,40 @@ class AdminDicomPage extends AdminCorePage
             Utils::jsonOut(["leletstatus" => $this->showDicomStatus($_POST["pid"], $_POST["date"])]);
         }
 
+        if (isset($_POST["showcompanyselect"])) {
+            if (!$this->adminUser->allCegJog()) {
+                die;
+            }
+            $lastCompanyId = $_SESSION["lastdicomcompany"] ?? 0;
+            $lastCompanies = sql_query_common("select id, trim(megnev) as megnev from cegek where id=?", [$lastCompanyId])->fetchAll(PDO::FETCH_ASSOC);
+            $companies = sql_query_common("select id, trim(megnev) as megnev from cegek where trim(megnev)<>'' order by trim(megnev)")->fetchAll(PDO::FETCH_ASSOC);
+
+            echo "<select onchange='saveDicomCompany(\"{$_POST["showcompanyselect"]}\", this.value)' style='width:120px;font-size:12px;padding:1px 4px;'>";
+            echo "<option value='0'>Válassz céget!</option>";
+            foreach ($lastCompanies as $company) {
+                $selected = $company["id"] == $_POST["cegid"] ? "selected":"";
+                echo "<option value='{$company["id"]}' {$selected}>{$company["megnev"]}</option>";
+            }
+            foreach ($companies as $company) {
+                $selected = $company["id"] == $_POST["cegid"] ? "selected":"";
+                echo "<option value='{$company["id"]}' {$selected}>{$company["megnev"]}</option>";
+            }
+            echo "</select>";
+
+            die;
+        }
+
+        if (isset($_POST["setcegid"])) {
+            if (!$this->adminUser->allCegJog()) {
+                die;
+            }
+            $this->dicomService->setCompanyId($_POST["id"], $_POST["cegid"]);
+            $_SESSION["lastdicomcompany"] = $_POST["cegid"];
+
+            echo $this->showCompanySelector($_POST["id"], ["cegid" => $_POST["cegid"]]);
+            die;
+        }
+
         $GLOBALS["javascript"][] = "dicom.js?v=".date("YmdHi");
     }
 
@@ -108,7 +149,7 @@ class AdminDicomPage extends AdminCorePage
     }
 
 
-    private function listDicomEntries() {
+    private function listDicomEntries():string {
         if (isset($_REQUEST["generalsearch"]) && isset($_REQUEST["term"])) {
             $images = $this->dicomService->getPatients(["search" => $_REQUEST["term"]]);
         }
@@ -125,6 +166,7 @@ class AdminDicomPage extends AdminCorePage
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Időpont</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Klinika</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:120px;'>Gép</div></td>";
+        $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:10px;white-space: nowrap;'>Cég</td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:10px;'></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:240px;'>Paciens neve</div></td>";
         $html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:100px;'>Szül. dátum</td>";
@@ -164,6 +206,13 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<td nowrap><div class='{$tc}'>".date("Y-m-d H:i", strtotime($row["datum"]))."</div></td>";
             $html.= "<td nowrap><div class='{$tc}'>{$row["institutionName"]}</div></td>";
             $html.= "<td nowrap><div class='{$tc}'>{$machineName}</div></td>";
+            $html.= "<td nowrap><div class='{$tc}'>";
+
+            //if ($this->adminUser->) {
+                $html.= "<span style='' id='cegid{$row["patientID"]}'>".$this->showCompanySelector($row["patientID"], $row)."</span>";
+            //}
+
+            $html.= "</div></td>";
             if (!empty($patientData)) {
                 $html .= "<td nowrap><div class='{$tc}'><i title='pacienssel összekapcsolva' class='fas fa-link'></i></div></td>";
                 $html .= "<td nowrap><div class='{$tc}'><a target='_blank' href='index.php?page=patients&szerk={$patientData["id"]}'>{$row["patientName"]}</a></div></td>";
@@ -183,6 +232,18 @@ class AdminDicomPage extends AdminCorePage
         $html.= "</table>";
 
         return $html;
+    }
+
+    private function showCompanySelector($id, $dicomData):string {
+        if (!$companyData = sql_query_common("select megnev from cegek where id=?", [$dicomData["cegid"]])->fetch(PDO::FETCH_ASSOC)) {
+            $companyData["megnev"] = "cég?";
+        }
+
+        if (!$this->adminUser->allCegJog()) {
+            $id = 0;
+        }
+
+        return "<span onclick='showCompanySelect(\"{$id}\", \"{$dicomData["cegid"]}\");' style='border:1px solid #ccc;padding:2px 4px;cursor:pointer;'>{$companyData["megnev"]}</span>";
     }
 
     private function showDicomStatus($id, $date):string {
@@ -307,18 +368,20 @@ class AdminDicomPage extends AdminCorePage
     }
 
 
-    private function cegFilter() {
+    private function cegFilter():string {
         $html = "";
         $html.="<select class='companyselector' name='dcegfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&dcegfilter='+this.value;\">";
         $html.="<option value=''>Szűrés klinikára</option>";
 
         $companies = $this->dicomService->getCompanies();
 
-        foreach ($companies as $company) {
-            if (empty($company["institutionName"])) {
-                continue;
+        if ($this->adminUser->allCegJog()) {
+            foreach ($companies as $company) {
+                if (empty($company["institutionName"])) {
+                    continue;
+                }
+                $html .= "<option value='{$company["institutionName"]}'" . ($this->dicomService->getSelectedCompany() == $company["institutionName"] ? " selected" : "") . ">{$company["institutionName"]}</option>";
             }
-            $html.="<option value='{$company["institutionName"]}'".($this->dicomService->getSelectedCompany()==$company["institutionName"]?" selected":"").">{$company["institutionName"]}</option>";
         }
 
         $html.="</select>";
@@ -326,7 +389,7 @@ class AdminDicomPage extends AdminCorePage
     }
 
 
-    private function eszkozFilter() {
+    private function eszkozFilter():string {
         $html = "";
         $html.="<select class='companyselector' name='deszkozfilter' onchange=\"window.location.href='index.php?page={$_GET["page"]}&deszkozfilter='+this.value;\">";
         $html.="<option value=''>Szűrés Eszközre</option>";

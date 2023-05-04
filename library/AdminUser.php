@@ -125,6 +125,9 @@ class AdminUser {
         "jog_megjegyzes" => [
             "name" => "Paciens megjegyzéseket láthatja",
             "description" => "A foglalás adatainál láthatja a paciens/foglalás megjegyzéseket"
+        ],
+        "jog_alldicom" => [
+            "name" => "Összes DICOM képet láthatja"
         ]
     ];
 
@@ -484,6 +487,10 @@ class AdminUser {
 
     public function faliujsagAccess():bool {
         return $this->checkPermission("jog_faliujsag");
+    }
+
+    public function allDicomAccess():bool {
+        return $this->checkPermission("jog_alldicom");
     }
 
     public function onlyDoctorReservations():bool {
