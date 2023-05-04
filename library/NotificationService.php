@@ -857,12 +857,13 @@ END:VCALENDAR";
         if ($row = sql_fetch_array($res)) {
             $mail = self::getDefaultMailer();
             $mail->AddAddress($row["email"]);
-            //$mail->AddAddress("jns@jns.hu");
+            $mail->AddBCC("jnsmobil@gmail.com");
 
             $subject = "Figyelem! Foglalását töröltük!";
 
             $mbody = "<h2>Foglalását töröltük!</h2>";
             $mbody .= "Előző levelünkben küldött megerősítő hivatkozásra nem kattintott rá, ezért a {$row["datum"]} időpontra szóló foglalását töröltük.<br/>";
+            $mbody .= "Azonosító: {$row["id"]}<br/>";
             $mbody .= "<br/>";
             $mbody .= "Üdvözlettel:<br/>".Booking_Constants::COMPANY_NAME;
 
@@ -981,33 +982,36 @@ END:VCALENDAR";
     }
 
     function deleteMessage($reservationId) {
-        $res = sql_query("SELECT o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        $res = sql_query("SELECT o.email, as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
         LEFT JOIN orvosok o on o.id=f.orvosassigned
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-        WHERE f.id=?", [$reservationId]);
+        WHERE f.id=? and f.aktiv=1", [$reservationId]);
 
         if ($row = sql_fetch_array($res)) {
-            $mail = self::getDefaultMailer();
-            $mail->AddAddress("jns@jns.hu");
-            //$mail->AddAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
+            if (!filter_var($row["orvosemail"], FILTER_VALIDATE_EMAIL)) {
+                $mail = self::getDefaultMailer();
+                $mail->addAddress($row["orvosemail"]);
+                $mail->addAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
+                $mail->addBCC("jns@jns.hu");
 
-            $subject = "Egy foglalás törölve lett! {$row["orvosnev"]} - {$row["helyszin"]}";
+                $subject = "Egy foglalás törölve lett! {$row["orvosnev"]} - {$row["helyszin"]}";
 
-            $mbody = "<h2>Törölt foglalás adatai</h2>";
-            $mbody .= "Orvos: {$row["orvosnev"]}<br/>";
-            $mbody .= "Név: {$row["nev"]}<br/>";
-            $mbody .= "Telefon: {$row["telefon"]}<br/>";
-            $mbody .= "Email: {$row["email"]}<br/>";
-            $mbody .= "<b>Időpont: {$row["datum"]}</b><br/>";
-            $mbody .= "Szűréstípus: {$row["szurestipus"]}<br/>";
-            $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
-            $mbody .= "<br/>";
+                $mbody = "<h2>Törölt foglalás adatai</h2>";
+                $mbody .= "Orvos: {$row["orvosnev"]} - {$row["orvosnev"]}<br/>";
+                $mbody .= "Név: {$row["nev"]}<br/>";
+                $mbody .= "Telefon: {$row["telefon"]}<br/>";
+                $mbody .= "Email: {$row["email"]}<br/>";
+                $mbody .= "<b>Időpont: {$row["datum"]}</b><br/>";
+                $mbody .= "Szűréstípus: {$row["szurestipus"]}<br/>";
+                $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
+                $mbody .= "<br/>";
 
-            $mail->Subject = $subject;
-            $mail->Body = $mbody;
-            $mail->Send();
+                $mail->Subject = $subject;
+                $mail->Body = $mbody;
+                $mail->Send();
+            }
         }
     }
 

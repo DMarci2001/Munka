@@ -1054,10 +1054,8 @@ class BookingService
             $api = new BookingSyncApi();
             $api->deleteReservation($row);
 
-            if (in_array($row["orvosassigned"], [11111111111, 1111111111])) {
-                $notificationService = new NotificationService();
-                $notificationService->deleteMessage($row["id"]);
-            }
+            $notificationService = new NotificationService();
+            $notificationService->deleteMessage($row["id"]);
 
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
@@ -1714,6 +1712,7 @@ class BookingService
             $reservationData["orvosid"] = $orvosId;
             $reservationData["szurestipus"] = $tipusId;
             $reservationData["tudoszuro"] = 0;
+            $reservationData["aktiv"] = 1;
             $reservationData["helyszin"] = $reservationData["helyszinid"];
             $newReservationId = $this->addReservationQuery($reservationData);
 
