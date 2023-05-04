@@ -668,6 +668,26 @@ class AdminBookingPage extends AdminCorePage
 
         }
 
+        if (!empty($foglalasok)) {
+            $this->showInterval = true;
+            $this->showDoctorName = true;
+
+            //beosztásban nem szereplő orvosok esetleges foglalásai
+            $htmlout .= "<tr>";
+            $htmlout .= "<td>";
+            $htmlout .= "<div style='border-top:1px solid #888;margin-top:10px;padding:10px 0px 10px 0px;font-weight: bold;;'>Egyéb foglalások:</div>";
+
+            foreach ($foglalasok as $orvosFoglalasok) {
+                $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                foreach ($orvosFoglalasok as $foglalas) {
+                    $htmlout .= $this->elojegyzesTableRow($foglalas, date("H:i", strtotime($foglalas["datum"])), 0, true);
+                }
+                $htmlout .= "</table>";
+            }
+
+            $htmlout .= "</td>";
+            $htmlout .= "</tr>";
+        }
 
         $htmlout.="</table>";
 
@@ -724,9 +744,10 @@ class AdminBookingPage extends AdminCorePage
     private $potIdopont;
     private array $displayedReservations = [];
     private array $orvosTipusok = [];
+    private bool $showDoctorName = false;
+    private bool $showInterval = false;
 
-    private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false)
-    {
+    private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false):string {
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
         //$ora = date("H:i", strtotime($rowf["datum"]));
 
@@ -767,7 +788,11 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "<td valign='top' nowrap><a onclick='removeIdopont({$reservationData["id"]},\"{$reservationData["pass"]}\",\"booking\", this);return false;' class='iconbutton' title='foglalás törlése' href='#'><i class='fas fa-minus-square'></i></a>&nbsp;&nbsp;</td>";
             $htmlout .= "<td valign='top' nowrap>";
 
-            if ($reservationData["rinterval"] != $binterval) {
+            if ($this->showDoctorName) {
+                $htmlout.= "{$reservationData["orvosnev"]}&nbsp;";
+            }
+
+            if ($reservationData["rinterval"] != $binterval || $this->showInterval) {
                 $htmlout .= "({$reservationData["rinterval"]} perc) ";
             }
 
