@@ -76,7 +76,7 @@ class BeosztasService {
         $helyszinek = sql_query("SELECT h.*,".$utils->cimLangQuery()." FROM helyszinek h 
             LEFT JOIN orvos_beosztas_new b ON b.`helyszinid`=h.id 
             LEFT JOIN orvosok o on b.orvosid=o.id
-            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND (b.nap<>10 or b.beonap>=DATE(NOW())) AND b.`helyszinid` IS NOT NULL and (instr(b.beocegek, ?) or b.beocegek='') and (instr(b.tipusok, ?) or ? = 0) 
+            WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.nap<>0 AND (b.nap<>10 or b.beonap>=DATE(NOW())) AND b.`helyszinid` IS NOT NULL and (instr(b.beocegek, ?) or b.beocegek='') and (instr(b.tipusok, ?) or ? = 0) 
             GROUP BY h.id ORDER BY cim", ["|{$cegId}|", "|{$szuresTipusId}|", $szuresTipusId])->fetchAll();
 
         //if ($cegId == 74) {

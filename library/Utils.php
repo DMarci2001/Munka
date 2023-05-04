@@ -353,8 +353,6 @@ class Utils {
         }
 
         if (isset($GLOBALS["admin"])) {
-            $htmlout .= "<link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3\" crossorigin=\"anonymous\">";
-            $htmlout .= "<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p\" crossorigin=\"anonymous\"></script>";
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 
@@ -382,7 +380,7 @@ class Utils {
                 $htmlout.="<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
             }
         }
-		$htmlout.='<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
+		$htmlout.='<link rel="stylesheet" href="/css/fontawesome6.1.2/css/all.css" />';
         $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
         $htmlout.='<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
