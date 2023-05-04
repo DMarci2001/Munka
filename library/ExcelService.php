@@ -813,6 +813,20 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
+
+    private function _orvosWorkHoursGroup($sor, $monthStat) {
+        $sor+=2;
+        $this->headingRow("J", $sor, ["Hónap", "Rendelési óraszám", "Paciensek", "Paciens / óra"]);
+        $sor++;
+
+        foreach ($monthStat as $honap => $stat) {
+            $paciensPerHour = round($stat["paciensek"] / $stat["hours"], 1);
+            $this->dataRow("J", $sor, [substr($honap, 0, 4)." ".date("F", strtotime("{$honap}-01")), round($stat["hours"],1), $stat["paciensek"], $paciensPerHour]);
+            $sor++;
+        }
+
+    }
+
     public function _orvosWorkHours($sheetId, $from, $to) {
         if ($sheetId != 0) {
             $this->spreadSheet->createSheet();
@@ -827,39 +841,56 @@ class ExcelService {
         $from.= " 00:00:00";
         $to.= " 23:59:59";
 
-        $workHoursArray = sql_query("SELECT orvosassigned as orvosid, o.nev AS orvosnev, f.`helyszinid`, h.cim AS helyszin, DATE(datum) AS datum, MIN(datum) AS begindate, DATE_ADD(MAX(datum), INTERVAL rinterval MINUTE) AS enddate,
-            SUM(IF(f.taj='', 0, 1)) AS paciensek, COUNT(*) AS total
+        $workHoursArray = sql_query("SELECT orvosassigned as orvosid, o.nev AS orvosnev, f.`helyszinid`, h.cim AS helyszin, DATE(datum) AS datum, MIN(datum) AS begindate, AVG(rinterval) as hossz, DATE_ADD(MAX(datum), INTERVAL rinterval MINUTE) AS enddate, f.eljott,
+            SUM(IF(f.taj='', 0, 1)) AS paciensek, SUM(f.eljott) AS eljottek, COUNT(*) AS total
             FROM foglalasok f 
             LEFT JOIN orvosok o ON o.id=f.orvosassigned
             LEFT JOIN helyszinek h ON h.id = f.helyszinid
-            WHERE datum>=? AND datum<=? and orvosassigned<>0 GROUP BY f.orvosassigned, DATE(f.datum), f.helyszinid", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE datum>=? AND datum<=? and orvosassigned<>0 and trim(f.taj)<>'' GROUP BY f.orvosassigned, DATE(f.datum), f.helyszinid", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
         $sor = 3;
-        $this->headingRow("A", $sor, ["Orvos", "Nap", "Helyszín", "Munkaóra", "Paciensek", "Paciens/óra"]);
 
         $sor++;
-        $totalHours = $totalPatients = 0;
+        $totalHours = $totalPatients = $totalEljottek = 0;
         $lastDoctor = 0;
+        $lastRow = 0;
+        $monthStat = [];
         foreach ($workHoursArray as $rowData) {
             if ($rowData["orvosid"] != $lastDoctor) {
                 $lastDoctor = $rowData["orvosid"];
                 if ($totalHours != 0) {
-                    $this->totalRow("A", $sor, ["Összesen:", "", "", $totalHours, $totalPatients, round($totalPatients/$totalHours, 1)]);
-                    $totalHours = $totalPatients = 0;
+                    $this->totalRow("A", $sor, ["Összesen:", "", "", "", "", round($totalHours, 1), $totalPatients, round($totalPatients/$totalHours, 1)]);
+                    $totalHours = $totalPatients = $totalEljottek = 0;
                     $sor+=2;
+
+                    $this->_orvosWorkHoursGroup($lastRow, $monthStat);
                 }
+                $lastRow = $sor;
+                $monthStat = [];
+                $this->titleRow("A{$sor}", "{$rowData["orvosnev"]} napi és havi bontás");
+                $sor+=2;
+                $this->headingRow("A", $sor, ["Nap", "Eleje", "Vége", "Hossz", "Helyszín", "Munkaóra", "Paciensek", "Paciens/óra"]);
+                $sor++;
             }
 
             $hours = round((strtotime($rowData["enddate"]) - strtotime($rowData["begindate"]))/3600, 1);
-            $this->dataRow("A", $sor, [$rowData["orvosnev"], $rowData["datum"], $rowData["helyszin"], $hours, $rowData["paciensek"], round($rowData["paciensek"]/$hours, 1)]);
+            $hoursPontos = (strtotime($rowData["enddate"]) - strtotime($rowData["begindate"]))/3600;
+            $this->dataRow("A", $sor, [$rowData["datum"], date("H:i", strtotime($rowData["begindate"])), date("H:i", strtotime($rowData["enddate"])), round($rowData["hossz"])." perc", $rowData["helyszin"], $hours, $rowData["paciensek"], round($rowData["paciensek"]/$hoursPontos, 1)]);
             //$total += $rowData["foglalasok"];
             $totalPatients += $rowData["paciensek"];
-            $totalHours += $hours;
+            $totalEljottek += $rowData["eljottek"];
+            $totalHours += $hoursPontos;
+
+            $month = date("Y-m", strtotime($rowData["datum"]));
+            $monthStat[$month]["hours"] += $hoursPontos;
+            $monthStat[$month]["paciensek"] += $rowData["paciensek"];
+
             $sor++;
         }
 
         if ($totalHours != 0) {
-            $this->totalRow("A", $sor, ["Összesen:", "", "", $totalHours, $totalPatients, round($totalPatients/$totalHours, 1)]);
+            $this->totalRow("A", $sor, ["Összesen:", "", "", "", "", round($totalHours, 1), $totalPatients, round($totalPatients/$totalHours, 1)]);
+            $this->_orvosWorkHoursGroup($lastRow, $monthStat);
         }
 
 
@@ -870,9 +901,8 @@ class ExcelService {
         //$this->totalRow("E", $sor, ["Összesen:", $total, $totaleljott]);
         //$this->sheet->getStyle("E{$sor}:G{$sor}")->getFont()->setBold(true);
 
-        $this->setAutoWidth(range('A','K'));
-
-        //$this->sheet->getColumnDimension('E')->setWidth(40);
+        $this->setAutoWidth(range('B','T'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
     public function napiStat($from, $to) {
@@ -885,11 +915,9 @@ class ExcelService {
 
         $sheetId = 0;
         try {
-            //$this->_vizsgalatKimutatas($sheetId++, $rawInput, $from, $to);
+            //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            //$this->_kiegeszitoFoglalasokLista($sheetId++, $from, $to);
             $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
-            //$this->_beosztasLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
@@ -908,5 +936,89 @@ class ExcelService {
         $this->_bejelentkezoFoglalasokLista(0, $from, $to, false);
         $this->spreadSheet->setActiveSheetIndex(0);
     }
+
+
+    const TORVENYSZEK_DOCTOR_ID = 354;
+    const TORVENYSZEK_COMPANY_ID = 56;
+
+    public function torvenyszekStat() {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Törvényszék óraszámok");
+
+        $this->titleRow("I1", "Törvényszék óra és paciens statisztika napi bontásban");
+
+        $weekStat = [];
+        $monthStat = [];
+
+        $statDays = sql_query("SELECT DATE(datum) as nap, MIN(TIME(datum)) as mintime, MAX(TIME(DATE_ADD(f.datum, INTERVAL f.rinterval MINUTE))) as maxtime, (UNIX_TIMESTAMP(MAX(DATE_ADD(f.datum, INTERVAL f.rinterval MINUTE))) - UNIX_TIMESTAMP(MIN(datum)))/3600 AS rendelesora, COUNT(*) AS paciensek, SUM(eljott) AS eljottek, GROUP_CONCAT(cegid) AS cegek 
+            FROM foglalasok f
+            WHERE f.orvosassigned=? AND !INSTR(f.nev,'nincs név') AND !INSTR(f.nev,'ebéd') AND !INSTR(f.nev,'ne foglal') AND DATE(f.datum)<DATE(NOW()) and f.datum>'2022-01-01 00:00:00'
+            GROUP BY DATE(datum)
+            ORDER BY datum", [self::TORVENYSZEK_DOCTOR_ID])->fetchAll(PDO::FETCH_ASSOC);
+
+        $sor = 3;
+        $this->headingRow("I", $sor, ["Nap", "Kezdés", "Vége", "Rendelési óraszám", "Paciensek", "Ebből Törvényszékes paciens", "Egyéb cég paciense", "Paciens / óra"]);
+
+        $sor++;
+
+
+
+        foreach ($statDays as $statDay) {
+            $paciensPerHour = round($statDay["paciensek"] / $statDay["rendelesora"], 1);
+            $companyCounts = array_count_values(explode(",", $statDay["cegek"]));
+            $torvenyszekPaciensCount = $companyCounts[self::TORVENYSZEK_COMPANY_ID];
+            if (empty($torvenyszekPaciensCount)) {
+                $torvenyszekPaciensCount = 0;
+            }
+
+            $month = date("Y-m", strtotime($statDay["nap"]));
+            $monthStat[$month]["hours"] += $statDay["rendelesora"];
+            $monthStat[$month]["paciensek"] += $statDay["paciensek"];
+            $monthStat[$month]["torvenyszekpaciensek"] += $torvenyszekPaciensCount;
+
+            $week = date("Y-W", strtotime($statDay["nap"]));
+            $weekStat[$week]["hours"] += $statDay["rendelesora"];
+            $weekStat[$week]["paciensek"] += $statDay["paciensek"];
+            $weekStat[$week]["torvenyszekpaciensek"] += $torvenyszekPaciensCount;
+
+            $this->dataRow("I", $sor, ["{$statDay["nap"]} ".date("l", strtotime($statDay["nap"])), substr($statDay["mintime"], 0, 5), substr($statDay["maxtime"], 0, 5), round($statDay["rendelesora"],1), $statDay["paciensek"], $torvenyszekPaciensCount, ($statDay["paciensek"] - $companyCounts[self::TORVENYSZEK_COMPANY_ID]), $paciensPerHour]);
+            $sor++;
+        }
+
+
+        $this->titleRow("A1", "Törvényszék óra és paciens statisztika havi bontásban");
+        $sor = 3;
+
+        $this->headingRow("A", $sor, ["Hónap", "Rendelési óraszám", "Paciensek", "Ebből Törvényszékes paciens", "Egyéb cég paciense", "Paciens / óra"]);
+        $sor++;
+
+        foreach ($monthStat as $honap => $stat) {
+            $paciensPerHour = round($stat["paciensek"] / $stat["hours"], 1);
+            $this->dataRow("A", $sor, [substr($honap, 0, 4)." ".date("F", strtotime("{$honap}-01")), round($stat["hours"]), $stat["paciensek"], $stat["torvenyszekpaciensek"], ($stat["paciensek"] - $stat["torvenyszekpaciensek"]), $paciensPerHour]);
+            $sor++;
+        }
+
+        $sor++;
+        $this->titleRow("A{$sor}", "Törvényszék óra és paciens statisztika heti bontásban");
+        $sor++;
+        $sor++;
+        $this->headingRow("A", $sor, ["Hét", "Rendelési óraszám", "Paciensek", "Ebből Törvényszékes paciens", "Egyéb cég paciense", "Paciens / óra"]);
+        $sor++;
+
+        foreach ($weekStat as $week => $stat) {
+            $paciensPerHour = round($stat["paciensek"] / $stat["hours"], 1);
+            $this->dataRow("A", $sor, [substr($week, 0, 4)." ".substr($week, 5).". hét", round($stat["hours"]), $stat["paciensek"], $stat["torvenyszekpaciensek"], ($stat["paciensek"] - $stat["torvenyszekpaciensek"]), $paciensPerHour]);
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','F'));
+        $this->sheet->getColumnDimension('A')->setWidth(25);
+
+        $this->setAutoWidth(range('J','P'));
+        $this->sheet->getColumnDimension('I')->setWidth(25);
+    }
+
 
 }

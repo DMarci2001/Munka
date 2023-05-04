@@ -12,6 +12,28 @@ class AdminManagerStatusPage extends AdminCorePage
             die;
         }
 
+        if (isset($_GET["torvenyszekstatdownload"])) {
+            //error_reporting(E_ALL);
+            //ini_set('display_errors', 1);
+
+            $fileName = "Törvényszék statisztika.xlsx";
+
+            @unlink(DailyStatService::getTempFileName());
+            $excelService = new ExcelService();
+            $excelService->torvenyszekStat();
+            $excelService->setFileName($fileName);
+            $excelService->outputSpreadSheetFile(DailyStatService::getTempFileName());
+
+            header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            header("Content-Disposition: attachment;filename=\"{$fileName}\"");
+            header("Cache-Control: max-age=0");
+
+            echo file_get_contents(DailyStatService::getTempFileName());
+
+            //echo "aaa";
+            die;
+        }
+
     }
 
     public function showPage()
@@ -22,6 +44,13 @@ class AdminManagerStatusPage extends AdminCorePage
         }
 
         echo "<div style=''><img id='loadingspinner' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
+
+        if (isset($_GET["torvenyszekstat"])) {
+            echo "<div>";
+            echo $this->torvenyszekStat();
+            echo "</div>";
+            return;
+        }
 
         echo "<div id='managerlista'></div>";
         echo "<div id='debugcontainer'></div>";
@@ -124,6 +153,127 @@ class AdminManagerStatusPage extends AdminCorePage
     }
 
 
+    const TORVENYSZEK_DOCTOR_ID = 354;
+    const TORVENYSZEK_COMPANY_ID = 56;
+
+    public function torvenyszekStat():string {
+        $html = "";
+
+        $weekStat = [];
+        $monthStat = [];
+
+        $statDays = sql_query("SELECT DATE(datum) as nap, MIN(TIME(datum)) as mintime, MAX(TIME(DATE_ADD(f.datum, INTERVAL f.rinterval MINUTE))) as maxtime, (UNIX_TIMESTAMP(MAX(DATE_ADD(f.datum, INTERVAL f.rinterval MINUTE))) - UNIX_TIMESTAMP(MIN(datum)))/3600 AS rendelesora, COUNT(*) AS paciensek, SUM(eljott) AS eljottek, GROUP_CONCAT(cegid) AS cegek 
+            FROM foglalasok f
+            WHERE f.orvosassigned=? AND !INSTR(f.nev,'nincs név') AND !INSTR(f.nev,'ebéd') AND !INSTR(f.nev,'ne foglal') AND DATE(f.datum)<DATE(NOW()) and f.datum>'2022-01-01 00:00:00'
+            GROUP BY DATE(datum)
+            ORDER BY datum", [self::TORVENYSZEK_DOCTOR_ID])->fetchAll(PDO::FETCH_ASSOC);
+
+        $html.= "<table>";
+        $html.= "<tr style='font-weight: bold;background:#eee;'>";
+        $html.= "<td style='padding:2px;'>Nap</td>";
+        $html.= "<td style='padding:2px;'>Kezdés</td>";
+        $html.= "<td style='padding:2px;'>Vége</td>";
+        $html.= "<td style='padding:2px;'>Rendelési óraszám</td>";
+        $html.= "<td style='padding:2px;'>Paciensek száma</td>";
+        $html.= "<td style='padding:2px;'>Ebből Törvényszékes paciens</td>";
+        $html.= "<td style='padding:2px;'>Egyéb cég paciense</td>";
+        $html.= "<td style='padding:2px;'>Paciens / óra</td>";
+        $html.="</tr>";
+
+        foreach ($statDays as $statDay) {
+            $html.="<tr>";
+
+            $paciensPerHout = round($statDay["paciensek"] / $statDay["rendelesora"], 1);
+            $companyCounts = array_count_values(explode(",", $statDay["cegek"]));
+            $torvenyszekPaciensCount = $companyCounts[self::TORVENYSZEK_COMPANY_ID];
+            if (empty($torvenyszekPaciensCount)) {
+                $torvenyszekPaciensCount = 0;
+            }
+
+            $month = date("Y-m", strtotime($statDay["nap"]));
+            $monthStat[$month]["hours"] += $statDay["rendelesora"];
+            $monthStat[$month]["paciensek"] += $statDay["paciensek"];
+            $monthStat[$month]["torvenyszekpaciensek"] += $torvenyszekPaciensCount;
+
+            $week = date("Y-W", strtotime($statDay["nap"]));
+            $weekStat[$week]["hours"] += $statDay["rendelesora"];
+            $weekStat[$week]["paciensek"] += $statDay["paciensek"];
+            $weekStat[$week]["torvenyszekpaciensek"] += $torvenyszekPaciensCount;
+
+            $html.= "<td>{$statDay["nap"]} ".date("l", strtotime($statDay["nap"]))."&nbsp;</td>";
+            $html.= "<td>".substr($statDay["mintime"], 0, 5)."</td>";
+            $html.= "<td>".substr($statDay["maxtime"], 0, 5)."</td>";
+            $html.= "<td style='text-align: right;'>".round($statDay["rendelesora"],1)."</td>";
+            $html.= "<td style='text-align: right;'>{$statDay["paciensek"]}</td>";
+            $html.= "<td style='text-align: right;'>{$torvenyszekPaciensCount}</td>";
+            $html.= "<td style='text-align: right;'>".($statDay["paciensek"] - $companyCounts[self::TORVENYSZEK_COMPANY_ID])."</td>";
+            $html.= "<td style='text-align: right;'>{$paciensPerHout}</td>";
+
+            $html.="</tr>";
+        }
+
+        $html.= "</table>";
+
+        /* -------------- */
+
+        $html.= "<table style='margin-top: 20px;'>";
+        $html.= "<tr style='font-weight: bold;background:#eee;'>";
+        $html.= "<td style='padding:2px;'>Hónap</td>";
+        $html.= "<td style='padding:2px;'>Rendelési óraszám</td>";
+        $html.= "<td style='padding:2px;'>Paciensek száma</td>";
+        $html.= "<td style='padding:2px;'>Ebből Törvényszékes paciens</td>";
+        $html.= "<td style='padding:2px;'>Egyéb cég paciense</td>";
+        $html.= "<td style='padding:2px;'>Paciens / óra</td>";
+        $html.="</tr>";
+
+        foreach ($monthStat as $honap => $stat) {
+            $html.="<tr>";
+
+            $paciensPerHout = round($stat["paciensek"] / $stat["hours"], 1);
+
+            $html.= "<td>".substr($honap, 0, 4)." ".date("F", strtotime("{$honap}-01"))."&nbsp;</td>";
+            $html.= "<td style='text-align: right;'>".round($stat["hours"])."</td>";
+            $html.= "<td style='text-align: right;'>{$stat["paciensek"]}</td>";
+            $html.= "<td style='text-align: right;'>{$stat["torvenyszekpaciensek"]}</td>";
+            $html.= "<td style='text-align: right;'>".($stat["paciensek"] - $stat["torvenyszekpaciensek"])."</td>";
+            $html.= "<td style='text-align: right;'>{$paciensPerHout}</td>";
+
+            $html.="</tr>";
+        }
+
+        $html.= "</table>";
+
+        /* -------------- */
+
+        $html.= "<table style='margin-top: 20px;'>";
+        $html.= "<tr style='font-weight: bold;background:#eee;'>";
+        $html.= "<td style='padding:2px;'>Hét</td>";
+        $html.= "<td style='padding:2px;'>Rendelési óraszám</td>";
+        $html.= "<td style='padding:2px;'>Paciensek száma</td>";
+        $html.= "<td style='padding:2px;'>Ebből Törvényszékes paciens</td>";
+        $html.= "<td style='padding:2px;'>Egyéb cég paciense</td>";
+        $html.= "<td style='padding:2px;'>Paciens / óra</td>";
+        $html.="</tr>";
+
+        foreach ($weekStat as $week => $stat) {
+            $html.="<tr>";
+
+            $paciensPerHout = round($stat["paciensek"] / $stat["hours"], 1);
+
+            $html.= "<td>".substr($week, 0, 4)." ".substr($week, 5).". hét&nbsp;</td>";
+            $html.= "<td style='text-align: right;'>".round($stat["hours"])."</td>";
+            $html.= "<td style='text-align: right;'>{$stat["paciensek"]}</td>";
+            $html.= "<td style='text-align: right;'>{$stat["torvenyszekpaciensek"]}</td>";
+            $html.= "<td style='text-align: right;'>".($stat["paciensek"] - $stat["torvenyszekpaciensek"])."</td>";
+            $html.= "<td style='text-align: right;'>{$paciensPerHout}</td>";
+
+            $html.="</tr>";
+        }
+
+        $html.= "</table>";
+
+        return $html;
+    }
 
 }
 
