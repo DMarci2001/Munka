@@ -14,19 +14,35 @@ class NotificationService {
     public static function getDefaultMailer():PHPMailer {
         $mail = new PHPMailer();
 
-        $mail->isSMTP();
-        $mail->Host = "mail.hungariamed.hu";
-        $mail->SMTPAuth = true;
-        $mail->Username = "web@hungariamed.hu";
-        $mail->Password = "The9vae1";
-        $mail->SMTPSecure = "tls";
-        $mail->Port = 366;
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $mail->isSMTP();
+            $mail->Host = "isp.itcoffee.hu";
+            $mail->SMTPAuth = true;
+            $mail->Username = "ugyfelkapcsolat@keltexmed.hu";
+            $mail->Password = "6qWmXx7gC";
+            $mail->SMTPSecure = "tls";
+            $mail->Port = 25;
 
-        $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
-        $mail->FromName = Booking_Constants::COMPANY_NAME;
-        $mail->CharSet = "UTF-8";
-        $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
-        $mail->IsHTML(true);
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->CharSet = "UTF-8";
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+        } else {
+            $mail->isSMTP();
+            $mail->Host = "mail.hungariamed.hu";
+            $mail->SMTPAuth = true;
+            $mail->Username = "web@hungariamed.hu";
+            $mail->Password = "The9vae1";
+            $mail->SMTPSecure = "tls";
+            $mail->Port = 366;
+
+            $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+            $mail->CharSet = "UTF-8";
+            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            $mail->IsHTML(true);
+        }
 
         return $mail;
     }
@@ -662,6 +678,8 @@ class NotificationService {
         $timeStart = date("His", strtotime("{$foglalasData["datum"]} -0 hour"));
         $dateEnd = date("Ymd", strtotime("{$foglalasData["datum"]} -0 hour + {$interval} minute"));
         $timeEnd = date("His", strtotime("{$foglalasData["datum"]} -0 hour + {$interval} minute"));
+        $companyName = Booking_Constants::COMPANY_NAME;
+        $companyEmail = Booking_Constants::COMPANY_EMAIL;
 
         $ical = "BEGIN:VCALENDAR
 VERSION:2.0
@@ -694,7 +712,7 @@ DTEND;TZID=Europe/Berlin:{$dateEnd}T{$timeEnd}
 SUMMARY:{$webTextLocal["idopontfoglalas"]} - {$foglalasData["nev"]}
 DESCRIPTION:{$foglalasData["szurestipus"]}
 LOCATION:{$foglalasData["helyszin"]}
-ORGANIZER;CN=\"Hungária Med - m Kft . \":mailto:info@hungariamed.hu
+ORGANIZER;CN=\"{$companyName}\":mailto:{$companyEmail}
 END:VEVENT
 END:VCALENDAR";
 

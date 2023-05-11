@@ -25,6 +25,7 @@ class Booking_Constants {
     const COMPANY_NAME              = "Hungáriamed-M Kft.";
     const COMPANY_NAME_SHORT        = "Hungária Med-M"; //lehetőleg rövid egy szavas cégnév (sms-ben is ez megy)
     const COMPANY_ADDRESS           = "1135 Budapest, Jász u. 33-35.";
+    const COMPANY_EMAIL             = "info@hungariamed.hu";
 
     const MAIN_URL                  = "https://bejelentkezes.hungariamed.hu";
     const NO_REPLY_ADDRESS          = "noreply@hungariamed.hu";
