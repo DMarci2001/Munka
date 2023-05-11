@@ -1000,7 +1000,7 @@ END:VCALENDAR";
     }
 
     function deleteMessage($reservationId) {
-        $res = sql_query("SELECT o.email, as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        $res = sql_query("SELECT o.email as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
         LEFT JOIN orvosok o on o.id=f.orvosassigned
@@ -1008,7 +1008,7 @@ END:VCALENDAR";
         WHERE f.id=? and f.aktiv=1", [$reservationId]);
 
         if ($row = sql_fetch_array($res)) {
-            if (!filter_var($row["orvosemail"], FILTER_VALIDATE_EMAIL)) {
+            if (filter_var($row["orvosemail"], FILTER_VALIDATE_EMAIL)) {
                 $mail = self::getDefaultMailer();
                 $mail->addAddress($row["orvosemail"]);
                 $mail->addAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
@@ -1017,7 +1017,7 @@ END:VCALENDAR";
                 $subject = "Egy foglalás törölve lett! {$row["orvosnev"]} - {$row["helyszin"]}";
 
                 $mbody = "<h2>Törölt foglalás adatai</h2>";
-                $mbody .= "Orvos: {$row["orvosnev"]} - {$row["orvosnev"]}<br/>";
+                $mbody .= "Orvos: {$row["orvosnev"]} - {$row["orvosemail"]}<br/>";
                 $mbody .= "Név: {$row["nev"]}<br/>";
                 $mbody .= "Telefon: {$row["telefon"]}<br/>";
                 $mbody .= "Email: {$row["email"]}<br/>";
@@ -1029,6 +1029,8 @@ END:VCALENDAR";
                 $mail->Subject = $subject;
                 $mail->Body = $mbody;
                 $mail->Send();
+
+                $this->createNotificationRecord("deletereservation", $row["id"], $row["orvosemail"], $subject, $mbody);
             }
         }
     }
