@@ -1717,3 +1717,18 @@ form {
 	background: #888;
 	color:#fff;
 }
+
+.dicomuploadbutton {
+	font-size: 14px;
+	box-sizing: border-box;
+	background:#a9a9a9;
+	color:#fff;
+	padding:4px 10px;
+	border-radius: 3px;
+	text-decoration: none;
+}
+
+.dicomuploadbutton:hover {
+	text-decoration: none;
+}
+

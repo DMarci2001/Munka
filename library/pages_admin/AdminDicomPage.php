@@ -124,6 +124,22 @@ class AdminDicomPage extends AdminCorePage
             die;
         }
 
+        if (isset($_REQUEST["addfiles"])) {
+            $return = ["error" => "", "ok" => ""];
+
+            foreach ($_FILES as $file) {
+                $result = $this->dicomService->addFile($file);
+                if (!empty($result)) {
+                    $return["error"] = $result;
+                    break;
+                } else {
+                    $return["ok"] = "<strong>A feltöltés sikerült!</strong><br/>A képnek feldolgozás után, 1 percen belül meg kell jelennie a listában.";
+                }
+            }
+
+            $this->utils->jsonOut($return);
+        }
+
         $GLOBALS["javascript"][] = "dicom.js?v=".date("YmdHi");
     }
 
@@ -137,9 +153,23 @@ class AdminDicomPage extends AdminCorePage
         $GLOBALS["subtitle"] = "DICOM";
 
         echo "<div style='margin-bottom:20px;'>";
+        echo "<div style='display:table-cell;vertical-align: middle;'>";
         echo $this->cegFilter()."&nbsp;&nbsp;";
         echo $this->eszkozFilter();
-        echo "&nbsp;&nbsp;<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
+        echo "&nbsp;&nbsp;<input data-page='dicom' data-resultdiv='dicomlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;&nbsp;&nbsp;&nbsp;";
+        echo "</div>";
+
+        echo "<div style='display:table-cell;vertical-align: middle;border-left:1px solid #ccc;padding-left:10px;'>";
+        echo "<div id='uploadarea'>";
+        echo "<div style='display:table-cell;vertical-align: middle;'>";
+        echo "<div class='upload-btn-wrapper'><a href='#' onclick='return false;' class='dicomuploadbutton'>Kép feltöltése</a><input type='file' id='dicomfile' class='dicomfilebutton' name='dicomfile[]' /></div>";
+        echo "</div>";
+        echo "<div style='display:table-cell;vertical-align: middle;'>";
+        echo "<div><img id='uploadloader' style='display:none;opacity:.5;height:25px;margin-left:10px;' src='/images/loading_transparent.svg' /></div>";
+        echo "</div>";
+        echo "</div>";
+        echo "</div>";
+
         echo "</div>";
 
 

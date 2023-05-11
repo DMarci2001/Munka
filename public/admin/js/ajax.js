@@ -3911,6 +3911,20 @@ $(document).on("change",".waitlist-bound-to-doctor-list",function(){
     })
 });
 
+function webShopOrderAck(id) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {webshoporderack:id},
+        success: function(response){
+            $("#webshoplist").html(response);
+            $.toast({
+                text: "Rendben",
+                icon: 'success'
+            });
+        }
 
+    })
+}
 
 

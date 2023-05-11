@@ -10,16 +10,69 @@ $(window).resize(function() {
 });
 
 $(document).ready(function() {
-    element = document.getElementById('panzoom');
-    panzoom = Panzoom(element, {
-        maxScale: 100
-    });
-    parent = element.parentElement;
-    parent.addEventListener('wheel', panzoom.zoomWithWheel);
+    var element = document.getElementById('panzoom');
+    if (element) {
+        panzoom = Panzoom(element, {
+            maxScale: 100
+        });
+        parent = element.parentElement;
+        parent.addEventListener('wheel', panzoom.zoomWithWheel);
+    }
 
     requestNewImage();
     initImage();
+    reloadDicomFileUploadEvents();
 });
+
+
+function prepareDicomFileUpload(event) {
+    let files = event.target.files;
+
+    $("#uploadloader").show();
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    var data = new FormData();
+    $.each(files, function (key, value) {
+        data.append(key, value);
+    });
+
+    $.ajax({
+        url: 'index.php?page=dicom&addfiles',
+        type: 'POST',
+        data: data,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (response, textStatus, jqXHR) {
+            $("#uploadloader").hide();
+
+            if (response.error != "") {
+                $.toast({
+                    heading: "Hiba",
+                    text: response.error,
+                    icon: 'error',
+                    hideAfter: 5000
+                });
+            } else {
+                $.toast({
+                    text: response.ok,
+                    icon: 'success',
+                    hideAfter: 8000
+                });
+            }
+
+            reloadDicomFileUploadEvents();
+        }
+    });
+}
+
+function reloadDicomFileUploadEvents() {
+    $("#dicomfile").unbind("change");
+    $("#dicomfile").on("change", prepareDicomFileUpload);
+}
+
 
 
 function initImage() {

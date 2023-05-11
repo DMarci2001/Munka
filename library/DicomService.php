@@ -2,6 +2,7 @@
 
 class DicomService {
     const STORAGE_DIR = "/var/rtg";
+    const STORAGE_DIR_TESZT = "/var/rtg/teszt";
     const WORKLIST_DIR = "/var/worklist/ICWS";
 
     private AdminUser $adminUser;
@@ -16,6 +17,23 @@ class DicomService {
         //$this->processEntries();
         $this->rescanDicomEntries();
         //print_r($dicomEntries);
+    }
+
+    public function addFile($uploadedFile):string {
+        if (is_uploaded_file($uploadedFile["tmp_name"])) {
+            $tempFile = self::STORAGE_DIR."/".$uploadedFile["name"];
+            @move_uploaded_file($uploadedFile["tmp_name"], $tempFile);
+
+            $output = `dcm2xml +Ca latin-1 {$tempFile}`;
+            if (!simplexml_load_string($output)) {
+                @unlink($tempFile);
+                return "Hibás fájl formátum!";
+            }
+        } else {
+            return "Nincs feltöltött file!";
+        }
+
+        return "";
     }
 
 
