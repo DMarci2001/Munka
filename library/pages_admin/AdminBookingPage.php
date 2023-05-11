@@ -3,7 +3,8 @@
 class AdminBookingPage extends AdminCorePage
 {
 
-    private $bookingService;
+    private BookingService $bookingService;
+    private WebShopService $webShopService;
 
     private $setDay;
 
@@ -11,6 +12,7 @@ class AdminBookingPage extends AdminCorePage
     {
         parent::__construct();
         $this->bookingService = new BookingService();
+        $this->webShopService = new WebShopService();
 
         $GLOBALS["css"][] = "dailystat.css";
         $GLOBALS["javascript"][] = "dailystat.js";
@@ -323,8 +325,9 @@ class AdminBookingPage extends AdminCorePage
         }
     }
 
-    public function showPage()
-    {
+    public function showPage() {
+        echo "<div id='webshoplist'>".$this->webShopService->showOrdersList()."</div>";
+
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";

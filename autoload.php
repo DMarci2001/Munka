@@ -65,6 +65,7 @@ require_once(__DIR__ . "/library/SynlabService.php");
 require_once(__DIR__ . "/library/WebPageData.php");
 require_once(__DIR__ . "/library/Log.php");
 require_once(__DIR__ . "/library/Maps.php");
+require_once(__DIR__ . "/library/WebShopService.php");
 require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
