@@ -26,10 +26,23 @@ $(document).ready(function () {
     initDateFilterPicker();
     initQueryDatePicker();
     checkChat();
+
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
 });
 
 
-
+function createNotification(title, icon, body, url) {
+    var notification = new Notification(title, {
+        icon: icon,
+        body: body,
+    });
+    notification.onclick = function() {
+        window.open(url);
+    };
+    return notification;
+}
 
 function setHelyszin(h) {
     window.location.href = 'index.php?page=calendar&sethelyszin=' + h;

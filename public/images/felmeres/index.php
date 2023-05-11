@@ -1,7 +1,9 @@
 <?php
 
+die("page closed");
+
 session_start();
-require("../../config.php");
+require("../../../autoload.php");
 
 
 if (isset($_POST["datum"])) {

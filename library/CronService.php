@@ -100,6 +100,11 @@ class CronService {
     }
 
     private function _tesztStuff() {
+        //$dicomService = new DicomService();
+        //$dicomService->processEntries();
+
+        $this->seemeBalanceCheck();
+
         //$this->_sendAlkExcel();
         //$this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
         //$this->sendSzabadsag2FoglaljOrvostBatch();
@@ -108,13 +113,13 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        $this->readEmailReports();
+        //$this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
 
         //$this->refreshWorklist();
-        $this->sendManagerStatusEmail();
+        //$this->sendManagerStatusEmail();
 
         echo "teszt\n";
         die();
