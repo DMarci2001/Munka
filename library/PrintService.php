@@ -225,7 +225,6 @@ class PrintService
         $template = str_replace("#telefon#", $data["telefon"], $template);
         $template = str_replace("#email#", $data["email"], $template);
         $template = str_replace("#szuldatum#", $this->datumki($data["szuldatum"]), $template);
-        $template = str_replace("#megj#", $this->datumki($data["megj"]), $template);
 
         $keretstyle = "border:1px solid #000;display:inline-block;padding:2px 5px;";
         $sorkoz = 10;
