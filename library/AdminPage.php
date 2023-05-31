@@ -100,7 +100,7 @@ class AdminPage {
 
         header("Content-type: text/html; charset=UTF-8");
 
-        echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} orvosi felület");
+        echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} bejelentkező felület");
         echo "<body>";
 
         //login és más keret nélküli oldalak

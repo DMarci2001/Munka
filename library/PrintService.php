@@ -14,6 +14,7 @@ class PrintService
         "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
         "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf",
         "matrica"            => "matrica.html",
+        "matricamegj"        => "matricaMegj.html",
         "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf"
     );
 
@@ -225,7 +226,7 @@ class PrintService
         $template = str_replace("#telefon#", $data["telefon"], $template);
         $template = str_replace("#email#", $data["email"], $template);
         $template = str_replace("#szuldatum#", $this->datumki($data["szuldatum"]), $template);
-        $template = str_replace("#megj#", $this->datumki($data["megj"]), $template);
+        $template = str_replace("#megj#", $data["megj"], $template);
 
         $keretstyle = "border:1px solid #000;display:inline-block;padding:2px 5px;";
         $sorkoz = 10;

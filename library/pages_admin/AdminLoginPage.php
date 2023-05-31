@@ -83,7 +83,7 @@ class AdminLoginPage extends AdminCorePage {
         echo "<form method='post'>";
         echo "<div style='color:#444;text-align:center;'>";
         echo "<div id='loginbox' class='loginbox'>";
-        echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} orvosi felület</div>";
+        echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} bejelentkező felület</div>";
 
         if (!empty($this->adminUser->user)) {
 

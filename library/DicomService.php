@@ -191,6 +191,10 @@ class DicomService {
             $w.= $this->adminUser->cegSQLFilter("d.cegid");
         }
 
+        if ($this->adminUser->user["username"] == "drkizman") {
+            $w.= " and institutionName<>'Veszprém Mobil'";
+        }
+
         if (!empty($params["search"])) {
             $w .= " and instr(concat(patientName,patientBirthDate,patientOtherIDs), ?)";
             $queryParams[] = $params["search"];
@@ -274,7 +278,7 @@ class DicomService {
                     if (!empty($param)) {
                         $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
                     } else {
-                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --min-max-window {$content["fileName"]}`);
+                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
                     }
                 }
             }

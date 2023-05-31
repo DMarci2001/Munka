@@ -607,7 +607,6 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                     $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
                     $extraHTML.= "<td>";
                     $extraHTML.= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' />";
-                    $extraHTML.= "<option value=\"Business Analyst\">Business Analyst</option>";
                     $extraHTML.= "<option value=\"Geodéta\">Geodéta</option>";
                     $extraHTML.= "<option value=\"Hírközlési munkatárs\">Hírközlési munkatárs</option>";
                     $extraHTML.= "<option value=\"Működés támogatás munkatárs\">Működés támogatás munkatárs</option>";
