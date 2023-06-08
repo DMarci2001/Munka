@@ -1764,8 +1764,10 @@ class BookingService
         //Dokumentum kikeresése név alapján
         $key = array_search($docName, array_column($this->availableDocs, "value"));
         $pdf = new Pdf($this->availableDocs[$key]["filename"]);
+        $utils = New Utils();
+        $auth_id = $utils->generateRandomStringv2(32);
 
-        $filename = "{$data["nev"]}-{$data["taj"]}-{$data["szuldatum"]}-{$this->availableDocs[$key]["name"]}-(" . rand(200, 1200000) . ").pdf";
+        $filename = "{$data["nev"]}-{$data["taj"]}-{$data["szuldatum"]}-{$this->availableDocs[$key]["name"]}-(" . $auth_id . ").pdf";
 
         $input = [
             "nev" => $this->pdfChars($data["nev"]),
@@ -1776,7 +1778,8 @@ class BookingService
             "telephely"=> $this->pdfChars($data["worklocation"]),
             "kelte" => date("Y.m.d", strtotime($data["regdatum"])),
             "keltezes" => date("Y.m.d", strtotime($data["regdatum"])),
-            "teljescim" => $this->pdfChars($data["teljescim"])
+            "teljescim" => $this->pdfChars($data["teljescim"]),
+            "auth_id" => $auth_id
         ];
         
         if($this->availableDocs[$key]["type"]=="full-form"){
