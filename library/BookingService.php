@@ -21,15 +21,18 @@ class BookingService
     public MunkakorVizsgalatok $munkakorVizsgalatok;
 
     public $availableDocs = array(
-        array("name" => "Éjszakai", "cegid"=>74, "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
-        array("name" => "Nappali", "cegid"=>74, "value" => "bp-normal", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
+        array("name" => "Éjszakai", "cegid"=>74, "type"=> "simple", "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
+        array("name" => "Nappali", "cegid"=>74, "type"=> "simple", "value" => "bp-normal", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_general.pdf"),
 
-        array("name" => "Geodéta", "cegid"=>220, "value" => "Geodéta", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_geodeta_beutalo.pdf"),
-        array("name" => "Hírközlési munkatárs", "cegid"=>220, "value" => "Hírközlési munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_hirközlesi_munkatars_beutalo.pdf"),
-        array("name" => "Működés támogatás munkatárs", "cegid"=>220, "value" => "Működés támogatás munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_mukodes_tamogatas_munkatars_beutalo.pdf"),
-        array("name" => "Régiós diszpécser", "cegid"=>220, "value" => "Régiós diszpécser", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_regios_diszpecser_beutalo.pdf"),
-        array("name" => "Számviteli munkatárs", "cegid"=>220, "value" => "Számviteli munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_szamviteli_munkatars_beutalo.pdf"),
-        array("name" => "Technológiai szerelő", "cegid"=>220, "value" => "Technológiai szerelő", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_technologiai_szerelo_beutalo.pdf"),
+        //array("name" => "FGSZ", "cegid"=>220, "type"=> "full-form", "value" => "fgsz-beutalo", "filename" => "/var/www/marci/onlinebejelentkezes/public/admin/templates/FGSZ_beutalo.pdf"),
+        array("name" => "FGSZ", "cegid"=>220, "type"=> "full-form", "value" => "fgsz-beutalo", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/FGSZ_beutalo.pdf"),
+        
+        //array("name" => "Geodéta", "cegid"=>220, "value" => "Geodéta", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_geodeta_beutalo.pdf"),
+        //array("name" => "Hírközlési munkatárs", "cegid"=>220, "value" => "Hírközlési munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_hirközlesi_munkatars_beutalo.pdf"),
+        //array("name" => "Működés támogatás munkatárs", "cegid"=>220, "value" => "Működés támogatás munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_mukodes_tamogatas_munkatars_beutalo.pdf"),
+        //array("name" => "Régiós diszpécser", "cegid"=>220, "value" => "Régiós diszpécser", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_regios_diszpecser_beutalo.pdf"),
+        //array("name" => "Számviteli munkatárs", "cegid"=>220, "value" => "Számviteli munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_szamviteli_munkatars_beutalo.pdf"),
+        //array("name" => "Technológiai szerelő", "cegid"=>220, "value" => "Technológiai szerelő", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_technologiai_szerelo_beutalo.pdf"),
 
     );
 
@@ -105,6 +108,7 @@ class BookingService
     }
 
     public function showIdoPontValasztoV2() {
+        
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -149,14 +153,15 @@ class BookingService
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
         $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
         $html .= "<table style='width:100%;' cellpadding='0' cellspacing='0'><tr>";
-
+        
         for ($i = 0; $i <= 6; $i++) {
+            
             $fix       = $i + $this->honnan;
             $nap       = date("Y-m-d", strtotime("this week monday +{$fix} day"));
             $wd        = date("N", strtotime($nap));
             $this->waitListProcess($nap);
             $orvosList = $this->getOrvosListForIdopontValaszto($nap);
-
+            
             if (($wd == 6 || $wd == 7) && empty($orvosList)) {
                 continue;
             }
@@ -185,6 +190,7 @@ class BookingService
             $html.="<div style='display:table;width:100%;'>";
 
             foreach ($orvosList as $oKey => $orvosId) {
+                
                 $orvosData   = sql_query("select * from orvosok where id=?", [$orvosId])->fetch();
                 $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId);
                 $napiBeos    = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvosId);
@@ -359,17 +365,21 @@ class BookingService
 
                     $html .= $sectionHTML;
                 }
+                
+                
 
                 $html.= "</div>";
             }
             $html .= "</div>";
             $html .= "</td>";
+            
         }
-
+        
         $html .= "</tr></table>";
         $html .= "</div>";
-
+        //die($html);
         return json_encode(array("error" => "", "html" => $html));
+
     }
 
 
@@ -657,14 +667,18 @@ class BookingService
 
     private function getOrvosListForIdopontValaszto($day) {
         $beosztasok = $this->getBeosztasok($day, $this->helyszin, $this->szuresTipus);
+       
         $orvosAvailable = [];
-        foreach ($beosztasok as $beosztas) {
-            if (Booking_Constants::SQL_DB == "keltexmed" && $beosztas["orvosid"] == 403) {
-                //skip dr. megyeri márta - keltexmed temp
-                continue;
+        if($beosztasok){
+            foreach ($beosztasok as $beosztas) {
+                if (Booking_Constants::SQL_DB == "keltexmed" && $beosztas["orvosid"] == 403) {
+                    //skip dr. megyeri márta - keltexmed temp
+                    continue;
+                }
+                $orvosAvailable[] = $beosztas["orvosid"];
             }
-            $orvosAvailable[] = $beosztas["orvosid"];
         }
+        
         return array_unique($orvosAvailable);
 
         /*
@@ -1140,11 +1154,11 @@ class BookingService
             
         }
         if($data["cegid"]==220){
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalattipusa,null as worklocation FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
             WHERE fogl.id=?",array($fid));
             if($referalData=sql_fetch_array($refQuery)){
-                echo $this->createReferalDoc($referalData,$referalData["munkakor"]);
+                echo $this->createReferalDoc($referalData,"fgsz-beutalo");
             }
         }
 
@@ -1734,6 +1748,17 @@ class BookingService
         return $status;
     }
 
+    public function set_referal_values($data,$input){
+        $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE munkakor=? AND cegid=?",array($data["munkakor"],$data["cegid"]));
+        while($r=sql_fetch_array($q)){
+            foreach($r as $key=>$value){
+                $input[$key]=$value;
+            }
+        }
+        
+        return $input;
+    }
+
     public function createReferalDoc($data, $docName)
     {
         //Dokumentum kikeresése név alapján
@@ -1753,10 +1778,16 @@ class BookingService
             "keltezes" => date("Y.m.d", strtotime($data["regdatum"])),
             "teljescim" => $this->pdfChars($data["teljescim"])
         ];
+        
+        if($this->availableDocs[$key]["type"]=="full-form"){
+            $input = $this->set_referal_values($data,$input);
+        }
+        
 
 
         $result = $pdf->fillForm($input)
             ->flatten()
+            //->saveAs("/var/www/marci/onlinebejelentkezes/public/admin/templates/" . $filename);
             ->saveAs("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
 
         if ($result === false) {
@@ -1765,6 +1796,7 @@ class BookingService
             var_dump($error);
         } else {
             $docAgent= new DocAgent();
+            //$docAgent->saveLocalDoc("/var/www/marci/onlinebejelentkezes/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
             $docAgent->saveLocalDoc("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
             return $filename;
         }

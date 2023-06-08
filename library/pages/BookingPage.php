@@ -654,10 +654,10 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             }
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
-            echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";
+            echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";   
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
         }
-
+       
         $nofoglalasText = trim($_SESSION["helyszindata"]["nofoglalas_{$_COOKIE["lang"]}"]);
         if (empty($nofoglalasText)) {
             $numberTexts = ["" => $webText["idopont"], 1 => "Első időpont", 2 => "Második időpont", 3 => "Harmadik időpont"];
@@ -675,7 +675,7 @@ class BookingPage extends CorePage
         } else {
             echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
         }
-
+ 
         if (!$this->utils->getFieldHidden("doksi")) {
             echo "<tr class='datarow'><td></td><td>&nbsp;</td></tr>";
             echo "<tr class='datarow'><td></td><td>";
@@ -920,7 +920,7 @@ class BookingPage extends CorePage
         $dateStyle = (!empty($_POST["datum{$index}"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
         $dateVal = substr($_POST["datum{$index}"], 0, 16);
         $dateValText = "";
-
+        
         if (!isset($_POST["orvosselected{$index}"])) {
             $_POST["orvosselected{$index}"] = 0;
         }
@@ -934,6 +934,7 @@ class BookingPage extends CorePage
             $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"];
         } else {
             while ($testDay < 44) {
+                
                 $this->bookingService->setHelyszin($_POST["helyszin"]);
                 $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
                 $this->bookingService->setHonnan($testDay);

@@ -77,7 +77,7 @@ class AjaxService {
         }
 
         if (isset($_GET["showidopontvalasztov2"])) {
-            header('Content-Type: application/json');
+            //header('Content-Type: application/json');
 
             $bookingService = new BookingService();
             echo $bookingService->showIdoPontValasztoV2();

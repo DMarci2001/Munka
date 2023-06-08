@@ -1269,6 +1269,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 
 #generalpopup {
 	position: fixed;
+	z-index:10000;
 }
 
 #idoponteditor {
@@ -1277,7 +1278,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	right:0px;
 	background:#e0e0e0;
 	display:none;
-	z-index:100001;
+	z-index:9999;
 }
 
 .tdm {
@@ -1318,6 +1319,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	top:0px;
 	background: #fff;
 	border-bottom: 1px solid #888;
+	z-index:9998;
 }
 
 .companyselector2 {
@@ -1716,6 +1718,13 @@ form {
 .newsfilterbuttonselected {
 	background: #888;
 	color:#fff;
+}
+
+.waitlist, .nav-link{
+	color:#495057;
+}
+.hmm-red-hover:hover{
+	color:#a00
 }
 
 .dicomuploadbutton {

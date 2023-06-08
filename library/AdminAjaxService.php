@@ -653,11 +653,9 @@ class AdminAjaxService {
                 $html .= "<div style=\"padding-bottom:3px\">Kérem, válasszon egy munkakört a legördülő listákból.</div>";
             }
             $html .= "<div style=\"padding-bottom:3px\"><select id=\"beutaloSelector\">";
-            foreach($service->availableDocs as $beutalo){
-                if($foglalas["cegid"]==$beutalo["cegid"]){
-                    $html .= "<option value=\"{$beutalo["value"]}\">{$beutalo["name"]} munkavégézés</option>";
-                }
-                
+            $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=220 ORDER BY munkakor ASC");
+            while($r=sql_fetch_array($q)){
+                $html .= "<option value=\"{$r["munkakor"]}\">{$r["munkakor"]}</option>";
             }
             $html .= "</select></div>";
 

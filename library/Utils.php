@@ -356,6 +356,9 @@ class Utils {
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 
+            $htmlout .= "<link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3\" crossorigin=\"anonymous\">";
+            $htmlout .= "<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p\" crossorigin=\"anonymous\"></script>";
+
             $htmlout .= '<link href="/admin/js/confirm/jquery-confirm.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/confirm/jquery-confirm.js"></script>';
 
@@ -380,7 +383,7 @@ class Utils {
                 $htmlout.="<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
             }
         }
-		$htmlout.='<link rel="stylesheet" href="/css/fontawesome6.1.2/css/all.css" />';
+		$htmlout.='<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
         $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
         $htmlout.='<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
@@ -603,16 +606,14 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                     }
                 }
                 if($_SESSION["helyszindata"]["domain"]=="fgsz"){
+                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=?",array(220));
                     $extraHTML.= "<tr class='datarow'>";
                     $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
                     $extraHTML.= "<td>";
                     $extraHTML.= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' />";
-                    $extraHTML.= "<option value=\"Geodéta\">Geodéta</option>";
-                    $extraHTML.= "<option value=\"Hírközlési munkatárs\">Hírközlési munkatárs</option>";
-                    $extraHTML.= "<option value=\"Működés támogatás munkatárs\">Működés támogatás munkatárs</option>";
-                    $extraHTML.= "<option value=\"Régiós diszpécser\">Régiós diszpécser</option>";
-                    $extraHTML.= "<option value=\"Számviteli munkatárs\">Számviteli munkatárs</option>";
-                    $extraHTML.= "<option value=\"Technológiai szerelő\">Technológiai szerelő</option>";
+                    while($r=sql_fetch_array($q)){
+                        $extraHTML.= "<option value=\"{$r["munkakor"]}\">{$r["munkakor"]}</option>";
+                    }
                     $extraHTML.= "</select>";
                     $extraHTML.= "</td>";
                     $extraHTML.= "</tr>";

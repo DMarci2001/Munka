@@ -92,10 +92,30 @@ function showIdoPontValasztoV2(honnan, orvosid) {
     $("#loadingspinner"+datumIndex).show();
 
     $.ajax({
+        type:"GET",
+        url:"index.php",
+        dataType:"JSON",
+        data: { showidopontvalasztov2: "1", honnan: honnan, helyszin: $("#helyszin").val(), szurestipus: $("#szurestipus").val(), selectoid: orvosid, neme: neme, taj: $("input[name='taj']").val(), betegallomany: $("#betegallomanynyilatkozat").prop("checked")},
+        success: function(data){
+           
+            if (data.error != "") {
+                myAlert(data.error);
+            } else {
+                $("#idopontvalasztodiv").html(data.html);
+                $("#idopontvalasztodiv").slideDown();
+            }
+            $("#loadingspinner"+datumIndex).hide();
+        }
+
+    });
+
+    /*$.ajax({
         method: "GET",
         url: "index.php",
         data: { showidopontvalasztov2: "1", honnan: honnan, helyszin: $("#helyszin").val(), szurestipus: $("#szurestipus").val(), selectoid: orvosid, neme: neme, taj: $("input[name='taj']").val(), betegallomany: $("#betegallomanynyilatkozat").prop("checked") }
     }).done(function (data) {
+        //console.log(data);
+       
         if (data.error != "") {
             myAlert(data.error);
         } else {
@@ -103,7 +123,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             $("#idopontvalasztodiv").slideDown();
         }
         $("#loadingspinner"+datumIndex).hide();
-    });
+    });*/
 
 }
 
