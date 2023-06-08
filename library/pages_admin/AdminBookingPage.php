@@ -79,13 +79,13 @@ class AdminBookingPage extends AdminCorePage
         if (isset($_POST["addreplacedoctor"])) {
             $nap                 = $_POST["nap"];
             $helyszinId          = intval($_POST["helyszin"]);
-            $szuresTipusId       = intval($_POST["szt"]);
+            $beoId               = intval($_POST["beoid"]);
             $oid                 = intval($_POST["sourceoid"]);
             $helyettesitoOrvosId = $_POST["helyettesitoorvosid"];
             $orvosMegj           = $_POST["orvosMegj"];
             $return              = ["error" => "", "html" => ""];
 
-            sql_query("insert into helyettesites set nap=?, oid=?, helyettesitoorvosid=?, helyszinid=?, tipusid=?, megj=?", [$nap, $oid, $helyettesitoOrvosId, $helyszinId, $szuresTipusId, $orvosMegj]);
+            sql_query("insert into helyettesites set nap=?, oid=?, helyettesitoorvosid=?, helyszinid=?, beoid=?, megj=?", [$nap, $oid, $helyettesitoOrvosId, $helyszinId, $beoId, $orvosMegj]);
 
             $return["html"] = $this->showElojegyzesTableNew($_SESSION["setday"]);
             $this->utils->jsonOut($return);
@@ -432,6 +432,7 @@ class AdminBookingPage extends AdminCorePage
             $minTol             = "24:00";
             $maxIg              = "00:00";
             $maxPotIg           = "00:00";
+            $beoId              = $beosztas["id"];
             $orvosId            = $beosztas["orvosid"];
             $orvosListed[]      = $this->_beoHash($beosztas);
             $binterval          = $beosztas["binterval"];
@@ -442,9 +443,8 @@ class AdminBookingPage extends AdminCorePage
             //$addDoctorLink      = "<a class='orvosbutton' onclick=\"$('#adddoctordiv{$orvosId}').slideDown();return false;\" href='#'>+ orvos</a>";
             $szabi              = sql_fetch_array(sql_query("select * from szabadsag where datumtol<=? and datumig>=? and oid=?", [$nap, $nap, $beosztas["orvosid"]]));
             $szabiURL           = $szabi ? "szabadságon" : "<a onclick='return confirm(\"Biztos beállítod szabadságra erre a napra?\");' href='{$_SERVER['PHP_SELF']}?page={$_GET["page"]}&szabira={$nap}&orvosid={$orvosId}'>szabadságra</a>";
-            //$helyettesites      = sql_fetch_array(sql_query("select h.*, o.nev as helyettesitoorvos from helyettesites h left join orvosok o on o.id = h.helyettesitoorvosid where h.nap=? and h.oid=? and h.tipusid=?", [$nap, $beosztas["orvosid"], $szuresTipus["id"]]));
-            //$helyettesitesLink  = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}').slideDown();return false;\" href='#'>helyettesítés</a>";
-            $helyettesitesLink  = "";
+            $helyettesites = sql_fetch_array(sql_query("select h.*, o.nev as helyettesitoorvos from helyettesites h left join orvosok o on o.id = h.helyettesitoorvosid where h.nap=? and h.oid=? and h.beoid=?", [$nap, $beosztas["orvosid"], $beoId]));
+            $helyettesitesLink  = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}_{$beoId}').slideDown();return false;\" href='#'>helyettesítés</a>";
             $addDoctorLink      = "";
 
             foreach ($this->orvosTipusok as $tipusId) {
@@ -492,7 +492,7 @@ class AdminBookingPage extends AdminCorePage
             if ($lastOrvosId != $orvosId) {
                 $lastOrvosId = $orvosId;
                 $existingOrvosTimes = [];
-                $sectionName = "tpid{$orvosId}_{$beosztas["id"]}";
+                $sectionName = "tpid{$orvosId}_{$beoId}";
 
                 $htmlout .= "<div class='etabletipushead' id='{$sectionName}'>";
 
@@ -520,15 +520,15 @@ class AdminBookingPage extends AdminCorePage
                     $orvosOptions .= "<option value='{$orvos["id"]}'>{$orvos["nev"]}</option>";
                 }
 
-                $htmlout .= "<div id='helyettesitesdiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
+                $htmlout .= "<div id='helyettesitesdiv{$orvosId}_{$beoId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Helyettesítő orvos:</div><div class='tdm' style='padding:2px 0px;'><select id='helyettesitoorvosid{$orvosId}'>{$orvosOptions}</select></div></div>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Megjegyzés: </div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosmegj{$orvosId}' style='width:300px;'/></div></div>";
-                $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick=\"addReplaceDoctor('{$nap}', {$helyszin}, {$szuresTipus["id"]}, {$orvosId});\" type='button' value='Helyettesítés megadása' /> <input onclick=\"$('#helyettesitesdiv{$orvosId}').slideUp()\" type='button' value='mégsem' /></div></div>";
+                $htmlout .= "<div style='display:table-row;'><div class='tdm'></div><div class='tdm' style='padding:2px 0px;'><input onclick=\"addReplaceDoctor('{$nap}', {$helyszin}, {$beoId}, {$orvosId});\" type='button' value='Helyettesítés megadása' /> <input onclick=\"$('#helyettesitesdiv{$orvosId}_{$beoId}').slideUp()\" type='button' value='mégsem' /></div></div>";
                 $htmlout .= "</div>";
 
-                //if (isset($helyettesites["id"])) {
-                //    $htmlout .= "<div style='padding:4px 0px;font-size: 14px;'><span style='color:#000;background:#ff8;padding:2px 0px;'>Helyettesítő: {$helyettesites["helyettesitoorvos"]} <span style='color:#888;'>{$helyettesites["megj"]}</span> <a title='helyettesítés törlése' href='#' onclick=\"removeReplaceDoctor('{$nap}', {$orvosId});return false;\"><i class='fas fa-times-circle'></i></a></span></div>";
-                //}
+                if (isset($helyettesites["id"])) {
+                    $htmlout .= "<div style='padding:4px 0px;font-size: 14px;'><span style='color:#000;background:#ff8;padding:2px 0px;'>Helyettesítő: {$helyettesites["helyettesitoorvos"]} <span style='color:#888;'>{$helyettesites["megj"]}</span> <a title='helyettesítés törlése' href='#' onclick=\"removeReplaceDoctor('{$nap}', {$orvosId});return false;\"><i class='fas fa-times-circle'></i></a></span></div>";
+                }
 
                 $htmlout .= "<div id='adddoctordiv{$orvosId}' style='display:none;margin:10px 0px;padding:10px 0px;border-top:1px solid #888;border-bottom:1px solid #888;'>";
                 $htmlout .= "<div style='display:table-row;'><div class='tdm'>Adj nevet az orvosnak:</div><div class='tdm' style='padding:2px 0px;'><input type='text' id='orvosnev{$orvosId}' value='TempOrvos{$maxOrvosId}'/></div></div>";

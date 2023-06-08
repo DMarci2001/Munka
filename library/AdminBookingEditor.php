@@ -9,6 +9,13 @@ class AdminBookingEditor {
     private $user;
     private $notificationService;
 
+    private array $alkQuestions = [
+        "Allergiája van?",
+        "Gyógyszerérzékenysége van?",
+        "Szed rendszeresen gyógyszert?",
+        "Kezelik valamilyen betegséggel?"
+    ];
+
     public function __construct()
     {
         $this->adminUtils = new AdminUtils();
@@ -356,7 +363,40 @@ class AdminBookingEditor {
             $q=sql_fetch_array(sql_query("SELECT * FROM dokirex_munkakorok_new WHERE MunkakorID=?",array($_POST["setMunkakorText"])));
             die($q["Nev"]);
         }
-		
+
+        if (isset($_POST["setalkanswer"])) {
+            $changeId = intval($_POST["setalkanswer"]);
+            $changeRow = intval($_POST["row"]);
+            $answer = $_POST["answer"];
+
+            $reservationData = sql_query("select id, questions from foglalasok where id=?", [$changeId])->fetch(PDO::FETCH_ASSOC);
+            $questions = $reservationData["questions"];
+
+            if (empty($questions)) {
+                foreach ($this->alkQuestions as $alkQuestion) {
+                    $questions.= "{$alkQuestion} NEM\n";
+                }
+            }
+
+            $text = "";
+            $rows = explode("\n", $questions);
+            foreach ($rows as $id => $row) {
+                if ($id == $changeRow) {
+                    if ($answer == "IGEN") {
+                        $row = str_replace("IGEN", "NEM", $row);
+                    } else {
+                        $row = str_replace("NEM", "IGEN", $row);
+                    }
+                }
+                $text .= "{$row}\n";
+            }
+
+            sql_query("update foglalasok set questions=? where id=?", [$text, $changeId]);
+
+            $data = sql_query("select id, questions from foglalasok where id=?", [$changeId])->fetch(PDO::FETCH_ASSOC);
+            echo $this->showQuestionButtons($data["id"], $data["questions"]);
+            die;
+        }
     }
 
     private function companySelector($selectedCompanyId):string {
@@ -695,7 +735,7 @@ class AdminBookingEditor {
 
         $items = [];
         foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>'2022-02-01 00:00:00' and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
-            $items[] = "'".str_replace("'", "", $munkakor["munkakor"])."'";
+            $items[] = "'".trim(str_replace("'", "", $munkakor["munkakor"]))."'";
         }
 
         $html.= "<script>$(function() { var munkakorok = [".implode(",", $items)."];$('#bookingeditormunkakor').autocomplete({source: function(request, response) { var results = $.ui.autocomplete.filter(munkakorok, request.term);response(results.slice(0, 14)); }}); });</script>";
@@ -731,11 +771,17 @@ class AdminBookingEditor {
         $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
         $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
 
-        if (CompanyService::isFesztivalCompany($row["cegid"])) {
-            $text = nl2br($row["questions"]);
-            $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
-            $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
-            $html.= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+        if (CompanyService::isFesztivalCompany($row["cegid"]) || ($row["helyszinid"] == 536 && Booking_Constants::SQL_DB == "hungariamed")) {
+            if (true || session_id() == "ou0p3m9hvs3iofkdr1cnjoiorh") {
+                $html.= "<div id='alkquestions'>";
+                $html.= $this->showQuestionButtons($row["id"], $row["questions"]);
+                $html.= "</div>";
+            } else {
+                $text = nl2br($row["questions"]);
+                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
+                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
+                $html .= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+            }
             if (empty($row["orvosszoveg"])) {
                 $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
             }
@@ -750,13 +796,15 @@ class AdminBookingEditor {
                 $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
             }
             $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
-            if ($key == "I") $html .= "<div style='padding:0px 0px 0px 25px;'>
-                    <input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó 
-                    <input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó 
-                    <input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év 
-                    <input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év 
-                    <input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év
-                    </div>";
+            if ($key == "I") {
+                $html.= "<div style='padding:0px 0px 0px 25px;'>";
+                $html.= "<input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó ";
+                $html.= "<input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó ";
+                $html.= "<input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év ";
+                $html.= "<input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év ";
+                $html.= "<input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év ";
+                $html.= "</div>";
+            }
             if ($key == "IN") {
                 $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
             }
@@ -772,5 +820,29 @@ class AdminBookingEditor {
         return $html;
     }
 
+    public function showQuestionButtons($fid, $questions):string {
+        $text = "";
+
+        if (empty($questions)) {
+            foreach ($this->alkQuestions as $alkQuestion) {
+                $questions.= "{$alkQuestion} NEM\n";
+            }
+            sql_query("update foglalasok set questions=? where id=?", [$questions, $fid]);
+        }
+
+        $rows = explode("\n", $questions);
+        foreach ($rows as $id => $row) {
+            if (substr_count($row, "IGEN")) {
+                $answer = "IGEN";
+            } else {
+                $answer = "NEM";
+            }
+
+            $row = str_replace($answer, "<a data-id='{$fid}' data-row='{$id}' data-answer='{$answer}' onclick='toggleAlkAnswer(this);return false;' href='#'>{$answer}</a>", $row);
+            $text.= "<div>{$row}</div>";
+        }
+
+        return "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+    }
 
 }

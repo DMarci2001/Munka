@@ -84,6 +84,9 @@ class AdminAjaxService {
                 $_SESSION["tipusfilter"] = [];
                 sql_query("insert into klinikak.klinikak set created=now(), megnev=''");
             }
+            if ($_GET["page"] == "contents" && $adminUser->beallitasWebAdatokAccess()) {
+                sql_query("insert into hmmweb.q9a8m_content set catid=85, title='új tartalom', created=now(), publish_up=now(), state=1");
+            }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();

@@ -47,6 +47,12 @@ class AdminContentsPage extends AdminCorePage
             die;
         }
 
+        if (isset($_GET["addnew"])) {
+            sql_query("insert into hmmweb.q9a8m_content set catid=85, title='új oldal', created=now(), publish_up=now(), state=1");
+            //header("location:index.php?page={$_GET["page"]}");
+            die;
+        }
+
         //$GLOBALS["javascript"][] = "dicom.js?v=" . date("YmdHi");
     }
 
@@ -91,7 +97,7 @@ class AdminContentsPage extends AdminCorePage
         echo "<tr><td width='100'>Kategória:</td><td>";
         echo "<select name='catid'>";
         foreach ($this->contentCategories as $key => $val) {
-            echo "<option value='{$key}'" . ($_POST["catid"] == $key ? " selected" : "") . ">{$val}</option>";
+            echo "<option value='{$key}'" . ($content["catid"] == $key ? " selected" : "") . ">{$val}</option>";
         }
         echo "</select>";
         echo "</td></tr>";

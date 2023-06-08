@@ -1277,7 +1277,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	bottom:0px;
 	right:0px;
 	background:#e0e0e0;
-	/*display:none;*/
+	display:none;
 	z-index:9999;
 }
 

@@ -575,19 +575,20 @@ function removeIdopont(id, p, page, el) {
 
 }
 
-function addReplaceDoctor(nap, helyszin, szt, sourceoid) {
+function addReplaceDoctor(nap, helyszin, beoid, sourceoid) {
     let helyettesitoorvosid = $("#helyettesitoorvosid"+sourceoid).val();
     let orvosMegj = $("#orvosmegj"+sourceoid).val();
 
     $.ajax({
         url:'index.php',
         type:'POST',
-        data:{page:"booking", addreplacedoctor:1, helyszin:helyszin, nap:nap, szt:szt, sourceoid:sourceoid, helyettesitoorvosid:helyettesitoorvosid, orvosMegj:orvosMegj},
+        data:{page:"booking", addreplacedoctor:1, helyszin:helyszin, nap:nap, beoid:beoid, sourceoid:sourceoid, helyettesitoorvosid:helyettesitoorvosid, orvosMegj:orvosMegj},
         success:function(data) {
             if (data.error != "") {
                 alert(data.error);
                 return;
             }
+            successToast("Helyettesítő hozzáadva");
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             $("#elojegyzestable").html(data.html);
@@ -606,6 +607,7 @@ function removeReplaceDoctor(nap, oid) {
                 alert(data.error);
                 return;
             }
+            successToast("Helyettesítő eltávolítva");
             cancelFoglalasMove();
             $("#idoponteditor").slideUp();
             $("#elojegyzestable").html(data.html);
@@ -3941,3 +3943,29 @@ function webShopOrderAck(id) {
 }
 
 
+function successToast(text) {
+    $.toast({
+        text: text,
+        icon: 'success'
+    });
+}
+
+function toggleAlkAnswer(el) {
+    let id = $(el).data("id");
+    let row = $(el).data("row");
+    let answer = $(el).data("answer");
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {setalkanswer:id, row:row, answer:answer},
+        success: function(response){
+            $("#alkquestions").html(response);
+            $.toast({
+                text: "Válasz átállítva",
+                icon: 'success'
+            });
+        }
+
+    })
+}

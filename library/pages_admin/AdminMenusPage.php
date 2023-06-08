@@ -6,9 +6,58 @@ class AdminMenusPage extends AdminCorePage
     {
         parent::__construct();
 
-        if (isset($_POST["menumentes"])) {
+        if (isset($_GET["addnewmenu"])) {
+            sql_query("insert into hmmweb.q9a8m_menu set title='új menüpont', menutype='mainmenu', parent_id=1, published=0, lft=0");
+            header("location:index.php?page={$_GET["page"]}");
+            die();
+        }
 
-            //sql_query("update hmmweb.q9a8m_menu set title=?, parent_id=?, published=? where id=?", [$_POST["title"], $_POST["parent_id"], isset($_POST["published"])?1:0, $_GET["szerk"]]);
+        if (isset($_POST["menumentes"])) {
+            $path        = "";
+            $componentId = 0;
+            $type        = "";
+            $link        = "";
+            $alias       = "";
+
+            $target = $_POST["target_id"];
+            if ($target == 1) {
+                $link = "#";
+                $type = "url";
+            }
+
+            if (substr_count($target, "service")) {
+                $tipusData = sql_query("select webalias from szurestipusok where id=?", [str_replace("service", "", $target)])->fetch(PDO::FETCH_ASSOC);
+                $type = "component";
+                $alias = $tipusData["webalias"];
+                $link = "index.php";
+                $path = "szurovizsgalatok/{$tipusData["webalias"]}";
+            }
+
+            if (substr_count($target, "content")) {
+                $contentData = sql_query("select id, alias from hmmweb.q9a8m_content where id=?", [str_replace("content", "", $target)])->fetch(PDO::FETCH_ASSOC);
+                $type = "content";
+                $alias = $contentData["alias"];
+                $link = "index.php";
+                $path = $contentData["alias"];
+                $componentId = $contentData["id"];
+            }
+
+            /*
+            print_r($_POST);
+
+            echo "<br/>";
+            echo "path:".$path."<br/>";
+            echo "component:".$componentId."<br/>";
+            echo "type:".$type."<br/>";
+            echo "link:".$link."<br/>";
+            die;
+            */
+
+            sql_query("update hmmweb.q9a8m_menu set title=?, parent_id=?, published=?, lft=? where id=?", [$_POST["title"], $_POST["parent_id"], isset($_POST["published"])?1:0, $_POST["lft"], $_GET["szerk"]]);
+
+            if ($type != "") {
+                sql_query("update hmmweb.q9a8m_menu set type=?, alias=?, path=?, link=?, component_id=? where id=?", [$type, $alias, $path, $link, $componentId, $_GET["szerk"]]);
+            }
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
@@ -47,7 +96,7 @@ class AdminMenusPage extends AdminCorePage
             }
             echo "</select></td></tr>";
 
-            echo "<tr><td width='100'>Target:</td><td><select name='parent_id'>";
+            echo "<tr><td width='100'>Target:</td><td><select name='target_id'>";
             echo "<option value='1'>#</option>";
             echo "<option value='-1'".($menu["type"] == "url"?"selected":"").">Fix URL</option>";
             echo "<option value='-2'".($menu["type"] == "category" && $menu["component_id"] == 84?"selected":"").">Egészség blog</option>";
@@ -93,13 +142,14 @@ class AdminMenusPage extends AdminCorePage
             return;
         }
 
+        echo "[<a href='index.php?page=menus&addnewmenu'>+ új menüpont</a>]";
         echo "<div id='menutree'>";
         echo $this->showMenuTree(1, 0);
         echo "</div>";
     }
 
 
-    private function showMenuTree($parentId, $level) {
+    private function showMenuTree($parentId, $level):string {
         $html = "";
         if ($level == 0) {
             $html.= "<h2>Főmenü</h2>";
