@@ -790,4 +790,8 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
         return true;
     }
 
+    public function generateRandomStringv2($length = 10) {
+        return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+    }
+
 }
