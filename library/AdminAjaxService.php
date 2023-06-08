@@ -686,13 +686,17 @@ class AdminAjaxService {
                 $p = sql_fetch_array(sql_query("SELECT fogl.id as fid,fogl.nev,fogl.taj,fogl.szuldatum,fogl.munkakor,now() as regdatum,sz.megnev as vizsgalat FROM foglalasok fogl LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid WHERE fogl.id=?",array($_POST["fid"])));
                 $p["worklocation"] = $_POST["tname"];
             }
-            
+
             if($f["cegid"]==220){
-                $p = sql_fetch_array(sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,'{$_POST["bid"]}' as munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
+                $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
                 LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-                WHERE fogl.id=?",array($_POST["fid"])));
+                WHERE fogl.id=?",array($_POST["fid"]));
+                if($referalData=sql_fetch_array($refQuery)){
+                    $referalData["munkakor"] = $_POST["bid"];
+                    echo $service->createReferalDoc($referalData,"fgsz-beutalo");
+                    die();
+                }
             }
-            
 
             echo $service->createReferalDoc($p,$_POST["bid"]);
             die();
