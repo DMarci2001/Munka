@@ -26,6 +26,9 @@ class AdminLabortetelekPage extends AdminCorePage
         "S" => array("title" => "S (széklet)", "HexColorCode" => "")
     );
 
+    const PRICE_TYPE_PACK = 1;
+    const PRICE_TYPE_ITEM = 2;
+
     public function __construct()
     {
         parent::__construct();
@@ -56,6 +59,10 @@ class AdminLabortetelekPage extends AdminCorePage
         if (!isset($_REQUEST["szerk"])) {
             unset($_SESSION["packageId"]);
             unset($_SESSION["packageItems"]);
+        }
+
+        if (!isset($_SESSION["selectedcsomagcompany"])) {
+            $_SESSION["selectedcsomagcompany"] = 0;
         }
 
         //Csomagok aktiválása/deaktiválása:
@@ -219,9 +226,45 @@ class AdminLabortetelekPage extends AdminCorePage
 
 
             sql_query(
-                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, items=?, gender=?,categories=?, aktiv=? WHERE id=?",
-                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $this->packageItems, $_POST["gender"], $this->setCategories(), $_POST["aktiv"], $this->packageId)
+                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, items=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=? WHERE id=?",
+                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $this->packageItems, $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $this->packageId)
             );
+        }
+
+        if (isset($_POST["changeLaborCsomagPrice"])) {
+            $price = intval($_POST["changeLaborCsomagPrice"]);
+            $cid = intval($_POST["cid"]);
+            $tid = intval($_POST["tid"]);
+
+            if ($cid == 0) {
+                sql_query("update synlab_labor_csomagok set price=? where id=?", [$price, $tid]);
+            } else {
+                sql_query("delete from synlab_labor_arak where tid=? and companyid=?", [$tid, $cid]);
+                sql_query("insert into synlab_labor_arak set tipus=?, tid=?, companyid=?, price=?", [self::PRICE_TYPE_PACK, $tid, $cid, $price]);
+            }
+            die;
+        }
+
+        if (isset($_POST["changeLaborItemPrice"])) {
+            $price = intval($_POST["changeLaborItemPrice"]);
+            $tid = intval($_POST["tid"]);
+
+            sql_query("update synlab_labor_tetelek set price=? where id=?", [$price, $tid]);
+            die;
+        }
+
+        if (isset($_POST["changeLaborElkeszules"])) {
+            $value = intval($_POST["changeLaborElkeszules"]);
+            $tid = intval($_POST["tid"]);
+
+            sql_query("update synlab_labor_tetelek set elkeszules=? where id=?", [$value, $tid]);
+            die;
+        }
+
+        if (isset($_POST["changeLaborCsomagCompany"])) {
+            $_SESSION["selectedcsomagcompany"] = intval($_POST["changeLaborCsomagCompany"]);
+            echo $this->showPackages();
+            die;
         }
     }
 
@@ -234,9 +277,9 @@ class AdminLabortetelekPage extends AdminCorePage
         }
 
         if (!isset($_GET["szerk"])) {
-            echo "<form id=\"labortetelek-form\" method=\"POST\">";
-            //Csomagok:
+            echo "<div id='labortetelek-form'>";
             echo $this->showPackages();
+            echo "</div>";
 
             //Tételek:
             echo $this->showItems($this->cFilter, $this->formFilter,null, true);
@@ -268,10 +311,20 @@ class AdminLabortetelekPage extends AdminCorePage
 
             echo "<tr><td style=\"vertical-align:top\"><p style=\"font-weight:bold;font-size:14px\">Csomag kategóriák: </p></td><td>" . $this->package_category_list($packageData) . "</td></tr>";
 
-            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Státusz: </p></td><td><select name=\"aktiv\"><option " . ($packageData["aktiv"] == 1 ? "selected=\"true\"" : "") . " value=\"1\">Aktív</option><option " . ($packageData["aktiv"] == 0 ? "selected=\"true\"" : "") . " value=\"0\">Inaktív</option></select></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Státusz: </p></td><td>";
+            echo "<select name=\"aktiv\"><option " . ($packageData["aktiv"] == 1 ? "selected=\"true\"" : "") . " value=\"1\">Aktív</option><option " . ($packageData["aktiv"] == 0 ? "selected=\"true\"" : "") . " value=\"0\">Inaktív</option></select>&nbsp;&nbsp;";
+
+            echo "<input type='checkbox' name='kiemelt'" . ($packageData["kiemelt"]  == 1 ? "checked" : "") . " value='1' /> kiemelt";
+
+            echo "</td></tr>";
 
             $docAgent = new DocAgent();
             echo "<tr><td style='font-weight:bold;font-size:14px'><div>Kép:</div></td><td><div id='asseteditor'>" . $docAgent->showAssetEditor(DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"]) . "</div></td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Leírás</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><div id='desceditor' style='margin-bottom:20px;'>";
+            echo "<textarea class='mce' name='description' style='width:1000px;height:600px;'>{$packageData["description"]}</textarea>";
+            echo "</div></td></tr>";
 
             echo "</table>";
 
@@ -315,14 +368,20 @@ class AdminLabortetelekPage extends AdminCorePage
         return json_encode($array);
     }
 
-    private function showPackages()
-    {
+    private function showPackages():string {
+        $html = "";
+        $companyId = $_SESSION["selectedcsomagcompany"];
+
+        $priceMap = [];
+        $prices = sql_query("SELECT * FROM synlab_labor_arak a WHERE a.`companyid`=?", [$companyId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($prices as $price) {
+            $priceMap[$price["tid"]] = $price["price"];
+        }
+
         //Le kell kérdeznem a csomagokat:
         $rq = sql_query("SELECT slc.*,slk.name AS kerolap FROM synlab_labor_csomagok slc
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slc.appform
                          ORDER BY name ASC");
-
-
 
         $qf = sql_query("SELECT id,name FROM synlab_labor_kerolapok ORDER BY name ASC");
 
@@ -333,60 +392,64 @@ class AdminLabortetelekPage extends AdminCorePage
         }
         $formFilter .= "</select>&nbsp;<input type=\"submit\" value=\"Kérőlap szűrés\" name=\"filterbyform\">";
 
-        echo "<table cellpadding='0' cellspacing='0' border='0' style='width:100%'>";
-        echo "<tr><td colspan='3' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Csomagok</td>";
+        $html.= "<table cellpadding='0' cellspacing='0' border='0' style=''>";
+        $html.= "<tr><td colspan='3' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Csomagok</td>";
 
-        $setPackagePricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','setPackagePrices').val('true')).submit()\"";
-        $cancelPackagePricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','setPackagePrices').val('false')).submit()\"";
-        $savePackagePricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','savePackagePrices').val('false'),$('<input>').attr('type','hidden').attr('name','savePackagePrices').val('true')).submit()\"";
-
-        if ($this->setPackagePrices == false) {
-            echo "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:right;padding-right:60px'><i class=\"fas fa-cog\" style=\"cursor:pointer\" {$setPackagePricesButton}></i></td>";
-        } else {
-            echo "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:right;padding-right:80px'><i class=\"fas fa-save\" style=\"cursor:pointer\" {$savePackagePricesButton}></i>&nbsp;&nbsp;<i class=\"fas fa-times\" style=\"cursor:pointer\" {$cancelPackagePricesButton}></i></td>";
+        $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak<br/>";
+        $html.= "<select id='companycsomag' style='width:300px;'>";
+        $html.= "<option value='0'>Publikus ár</option>";
+        $companies = sql_query("select id, megnev from cegek order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($companies as $company) {
+            $html.= "<option ".($_SESSION["selectedcsomagcompany"] == $company["id"] ? "selected":"")." value='{$company["id"]}'>{$company["megnev"]}</option>";
         }
-
-        echo "</tr>";
+        $html.= "</select>";
+        $html.= "</td>";
+        $html.= "</tr>";
 
         while ($resq = sql_fetch_array($rq)) {
-
             $items = json_decode($resq["items"]);
 
-            echo "<tr>";
+            $html.= "<tr>";
 
             //Link a szerkesztéshez:
-            echo "<td valign=\"top\"><div class=\"tcella\">";
-            echo "<a style=\"#00f;\" href=\"index.php?page=labortetelek&szerk={$resq["id"]}\">{$resq["name"]}&nbsp;(" . count($items) . ")</a>";
-            echo "</div></td>";
+            $html.= "<td valign=\"top\"><div class=\"tcella\">";
+            $html.= "<a style=\"#00f;\" href=\"index.php?page=labortetelek&szerk={$resq["id"]}\">{$resq["name"]}&nbsp;(" . count($items) . ")</a>";
+            $html.= "</div></td>";
 
             //Kérőlap megnevezés:
-            echo "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["kerolap"]}</div></td>";
+            $html.= "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["kerolap"]}</div></td>";
 
             //Aktiválás/Deaktiválás:
-            echo "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">";
+            $html.= "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">";
             if ($resq["aktiv"] == 1) {
-                echo "<a href=\"index.php?page=labortetelek&packaktivetoggle={$resq["id"]}\" style=\"color:#0a0;\">aktív</a>";
+                $html.= "<a href=\"index.php?page=labortetelek&packaktivetoggle={$resq["id"]}\" style=\"color:#0a0;\">aktív</a>";
             } else {
-                echo "<a href=\"index.php?page=labortetelek&packaktivetoggle={$resq["id"]}\" style=\"color:#f00;\">inaktív</a>";
+                $html.= "<a href=\"index.php?page=labortetelek&packaktivetoggle={$resq["id"]}\" style=\"color:#f00;\">inaktív</a>";
             }
 
             //Forint alapú ár:
-            echo "<td nowrap valign=\"top\" ><div class=\"tcella\" style=\"min-width:10px;padding-right:30px;text-align:right;font-weight:bold\">" . ($this->setPackagePrices == true ? "<input type=\"textbox\" style=\"width:80px;text-align:center\" name=\"package-{$resq["id"]}-price\" value=\"{$resq["price"]}\">" : number_format($resq["price"])) . " HUF</div></td>";
+            $price = $resq["price"];
+            if ($companyId != 0) {
+                $price = 0;
+                if (isset($priceMap[$resq["id"]])) {
+                    $price = $priceMap[$resq["id"]];
+                }
+            }
 
-            echo "</div></td>";
-            echo "</tr>";
+            $html.= "<td nowrap valign='top' ><div class='tcella' style='min-width:10px;text-align:center;right;font-weight:bold'>";
+            $html.= "<input data-cid='{$companyId}' data-tid='{$resq["id"]}' class='laborcsomagpricetextbox' type='textbox' style='width:80px;text-align:center' value='{$price}' /> HUF";
+            $html.= "</div></td>";
+
+            $html.= "</div></td>";
+            $html.= "</tr>";
         }
 
-
-
-
-
-        echo "</table>";
-        return;
+        $html.= "</table>";
+        return $html;
     }
 
-    private function showItems($filterId = null, $appform = null, $packageInstall = null, $listView = null)
-    {
+    private function showItems($filterId = null, $appform = null, $packageInstall = null, $listView = null):string {
+        $html = "";
         //Ha az appform-ot nem választották ki v. nullára állították akkor resetelje a kategória filtert is.
         if ($appform == null) $filterId = null;
 
@@ -428,63 +491,45 @@ class AdminLabortetelekPage extends AdminCorePage
         }
         $cFilter .= "</select>&nbsp;<input " . (empty($appform) ? "disabled=\"true\"" : "") . " type=\"submit\" value=\"Kategória szűrés\" name=\"filterbycategory\">";
 
-        $setItemPricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','setItemPrices').val('true')).submit()\"";
-        $cancelSetItemPricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','setItemPrices').val('false')).submit()\"";
-        $saveItemPricesButton = "onClick=\"$('#labortetelek-form').append($('<input>').attr('type','hidden').attr('name','saveItemPrices').val('false'),$('<input>').attr('type','hidden').attr('name','saveItemPrices').val('true')).submit()\"";
-
         $searchbyitem = "<input type=\"textbox\" placeholder=\"Keresés...\" onkeyup=\"searchbyitem($(this).val())\" name=\"search-by-item-name\" >";
 
         $setSelectedItemJScall = "onClick='selectItemForPackage($(this).val())'";
 
-        echo "<table cellpadding='0' cellspacing='0' border='0' style='width:100%' id=\"LaborItems\">";
-        echo "<tr><td colspan='" . (!empty($packageInstall) ? "4" : "4") . "' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek&nbsp;&nbsp;{$formFilter}&nbsp;{$cFilter}&nbsp;&nbsp;" . (!empty($packageInstall) ? $searchbyitem : "") . "</td>";
+        $html.= "<table cellpadding='0' cellspacing='0' border='0' style='' id=\"LaborItems\">";
+        $html.= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek&nbsp;&nbsp;{$formFilter}&nbsp;{$cFilter}&nbsp;&nbsp;" . (!empty($packageInstall) ? $searchbyitem : "") . "</td>";
 
-        if (empty($packageInstall)) {
-            if ($this->setItemPrices == false) {
-                echo "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:right;padding-right:60px'><i class=\"fas fa-cog\" style=\"cursor:pointer\" {$setItemPricesButton}></i></td>";
-            } else {
-                echo "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:right;padding-right:80px'><i class=\"fas fa-save\" style=\"cursor:pointer\" {$saveItemPricesButton}></i>&nbsp;&nbsp;<i class=\"fas fa-times\" style=\"cursor:pointer\" {$cancelSetItemPricesButton}></i></td>";
-            }
-        } else {
-            echo "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px'></td>";
-        }
+        $html.= "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (nap)</td>";
+        $html.= "<td colspan=\"1\" style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
 
-        echo "</tr>";
+        $html.= "</tr>";
 
-        echo "<tbody id= \"item-content\">";
+        $html.= "<tbody id= \"item-content\">";
         while ($resq = sql_fetch_array($rq)) {
-            echo "<tr>";
-
+            $html.= "<tr>";
+            $html.= "<td valign='top'><div class='tcella' style=''>";
             if (!$listView) {
-            echo "<td valign=\"top\"><div class=\"tcella\"><input type=\"checkbox\" name=\"item[]\" {$setSelectedItemJScall} " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\"></div></td>";
+                $html.= "<input type='checkbox' name='item[]' {$setSelectedItemJScall} " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\">&nbsp;";
             }
-
-            //Link a szerkesztéshez:
-            echo "<td valign=\"top\"><div class=\"tcella\"><p style=\"color:#a00;margin:0;padding:0\">{$resq["name"]}</p></div></td>";
+            $html.= "{$resq["name"]}";
+            $html.= "</div></td>";
 
             //Kérőlap megnevezés:
-            echo "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["kerolap"]}</div></td>";
+            $html.= "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["kerolap"]}</div></td>";
 
             //Kategória megnevezés:
-            echo "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["category_name"]}</div></td>";
+            $html.= "<td nowrap valign=\"top\"><div class=\"tcella\" style=\"min-width:10px;\">{$resq["category_name"]}</div></td>";
 
             //Minta vételi cső:
-            echo "<td nowrap valign=\"top\" ><div class=\"tcella\" style=\"min-width:10px\">" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
+            $html.= "<td nowrap valign=\"top\" ><div class=\"tcella\" style=\"min-width:10px\">" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
+            $html.= "<td nowrap valign='top' ><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritemelkeszulestextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["elkeszules"]}'></div></td>";
+            $html.= "<td nowrap valign='top' ><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritempricetextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["price"]}'> HUF</div></td>";
 
-            if (empty($packageInstall)) {
-                //Forint alapú ár:
-                echo "<td nowrap valign=\"top\" ><div class=\"tcella\" style=\"min-width:10px;padding-right:30px;text-align:right;font-weight:bold\">" . ($this->setItemPrices == true ? "<input type=\"textbox\" style=\"width:80px;text-align:center\" name=\"item-{$resq["id"]}-price\" value=\"{$resq["price"]}\">" : number_format($resq["price"])) . " HUF</div></td>";
-            }
-
-            echo "</tr>";
+            $html.= "</tr>";
         }
 
-        echo "</tbody>";
-
-
-
-        echo "</table>";
-        return;
+        $html.= "</tbody>";
+        $html.= "</table>";
+        return $html;
     }
 
     private function editPackage($packageId = null)
