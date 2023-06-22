@@ -95,6 +95,22 @@ class BookingValidatePage extends CorePage {
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";
             } else {
                 $successText = $webText["foglalassuccesstext"];
+                
+                if(CompanyService::isBP()){
+                    //Létrehozok egy új sort a pass értékkel a psyhosoc táblában.
+                    if($fogl=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=? AND rkod=?",array($_GET["id"],$_GET["rk"])))){
+                        if(!$exists=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($fogl["pass"])))){
+                            sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fogl["id"],$fogl["cegid"],$fogl["pass"]));
+                        }
+                        
+        
+                        $successText = $webText["foglalassuccesstextbp"];
+                        $link = "https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$fogl["pass"]}";
+                        $successText = str_replace("#psyhosockerdoivlink#",$link,$successText);
+                    }
+                    
+                }
+
                 if ($this->foglalasData["fgroupid"] != 0) {
                     $successText = "A választott időpontjait sikeresen rögzítettük.<br/>
                     Amint kollégánk visszaigazolja az egyik időpontját, arról visszaigazoló email-t fogunk küldeni. Ennek átfutási ideje kb. 1-2 óra.<br/>

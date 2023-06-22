@@ -36,8 +36,10 @@ function checkCovidForm() {
 
     if (covidFormOk) {
         $("#covidsubmitbutton").css("opacity", 1);
+        
     } else {
         $("#covidsubmitbutton").css("opacity", 0.3);
+        
     }
 
     return covidFormOk;

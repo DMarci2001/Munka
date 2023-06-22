@@ -128,6 +128,12 @@ class AdminUser {
         ],
         "jog_alldicom" => [
             "name" => "Összes DICOM képet láthatja"
+        ],
+        "jog_pszihosockerdioiv" => [
+            "name" => "Pszihosoc kérdőívet láthatja"
+        ],
+        "jog_varoteremui" => [
+            "name" => "Váróterem UI-t láthatja"
         ]
     ];
 
@@ -492,6 +498,16 @@ class AdminUser {
     public function allDicomAccess():bool {
         return $this->checkPermission("jog_alldicom");
     }
+
+    public function psyhosockerdoivAccess():bool {
+        return $this->checkPermission("jog_pszihosockerdioiv");
+    }
+
+    public function varoteremuiAccess():bool {
+        return $this->checkPermission("jog_varoteremui");
+    }
+
+    
 
     public function onlyDoctorReservations():bool {
         return $this->checkPermission("jog_onlydoctorreservations") && $this->userIsOrvos();

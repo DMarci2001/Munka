@@ -145,7 +145,7 @@ class AdminUsersPage extends AdminCorePage {
                 foreach ($pages as $page) {
                     $jogKey = $page["jogosultsag"];
                     $existingKeys[] = $jogKey;
-                    echo "<div><input type='checkbox' name='{$jogKey}' ".($_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;".ucfirst($page["megnev"])."</div>";
+                    echo "<div><input type='checkbox' name='{$jogKey}' ".(isset($_POST[$jogKey])&&$_POST[$jogKey]==1?"checked":"")." value='1' />&nbsp;".ucfirst($page["megnev"])."</div>";
                 }
                 echo "</div>";
 
@@ -153,7 +153,7 @@ class AdminUsersPage extends AdminCorePage {
                 echo "<div style='font-weight: bold;margin-bottom: 5px;'>Egyéb jogosultságok</div>";
                 foreach (AdminUser::$jogosultsagLista as $jogKey => $jogosultsagData) {
                     if (!in_Array($jogKey, $existingKeys)) {
-                        echo "<div><input type='checkbox' name='{$jogKey}' " . ($_POST[$jogKey] == 1 ? "checked" : "") . " value='1' />&nbsp;" . ucfirst($jogosultsagData["name"]) . "</div>";
+                        echo "<div><input type='checkbox' name='{$jogKey}' " . (isset($_POST[$jogKey])&&$_POST[$jogKey] == 1 ? "checked" : "") . " value='1' />&nbsp;" . ucfirst($jogosultsagData["name"]) . "</div>";
                     }
                 }
                 echo "</div>";

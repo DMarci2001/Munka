@@ -1136,7 +1136,7 @@ class BookingService
             
             $referalType="bp-normal";
             //El kell döntenem, hogy a dolgozó milyen beutalót kell kapjon, ehhez lesz egy segéd tábla
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev,fogl.pass AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid FROM foglalasok fogl
                                    LEFT JOIN bp_beutalo_seged_tabla helpdesk ON helpdesk.ntid=fogl.torzsszam
                                    LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                                    WHERE fogl.id=?",array($fid));
@@ -1151,7 +1151,10 @@ class BookingService
                 }
                 echo $this->createReferalDoc($referalData,$referalType);
             }
-            
+
+            //Psychosoc sor generálása
+            //$foglalasinfo = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($fid)));
+            //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$data["cegid"],$foglalasinfo["pass"]));
         }
         if($data["cegid"]==220){
             $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
@@ -1615,7 +1618,14 @@ class BookingService
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
         $data = sql_fetch_array(sql_query("SELECT infopagetext FROM szurestipusok WHERE id=?",array($szurestipusid)));
-        $text = $data["infopagetext"];
+       
+        if(!empty($data["infopagetext"])){
+            $text = $data["infopagetext"];
+        }else{
+            $text = "";
+        }
+        
+        
 
         foreach ($checkboxes as $checkbox) {
            if (isset($inputData[$checkbox])) {
@@ -1624,7 +1634,7 @@ class BookingService
         }
 
         $tipusData = sql_query("select * from szurestipusok t where t.id=?", [$szurestipusid])->fetch(PDO::FETCH_ASSOC);
-        if ($tipusData["ispack"] == 1) {
+        if (isset($tipusData["ispack"]) && $tipusData["ispack"] == 1) {
             $pack = sql_query("select t.megnev, t.id  from szurescsomagok_kapcs k 
              left join szurestipusok t on t.id = k.szurestipusid
              where k.csomagid=? order by t.megnev", [$szurestipusid])->fetchAll(PDO::FETCH_ASSOC);
@@ -1715,7 +1725,7 @@ class BookingService
         if (!empty($foundTimes)) {
             $diff = 1000000;
             $optimalTime = "";
-
+            
             foreach ($foundTimes as $foundTime) {
                 $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime));
                 if ($checkDiff < $diff) {

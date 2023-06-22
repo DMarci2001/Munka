@@ -684,7 +684,7 @@ function removeTempDoctor(nap, oid) {
     });
 }
 
-function showIdopontEditor(page, p, id) {
+function showIdopontEditor(page, p, id) { 
     cancelFoglalasMove();
     $("#naptarloading").show();
 
@@ -3814,11 +3814,16 @@ function reloadWaitListTable(){
     })
 }
 
-/*$(document).ready(function () {
+$(document).ready(function () {
     setInterval(function () {
-        reloadWaitListTable();
-    }, 3000);
-});*/
+        if (document.querySelector('.dropdown-toggle.show') !== null) {
+            //console.log("létezik");
+        }else{
+            reloadWaitListTable();
+        }
+        //reloadWaitListTable();
+    }, 5000);
+});
 
 
 
@@ -3846,12 +3851,12 @@ function callInToVisit(wid){
     })
 }
 
-function addToWaitList(fid){
+function addToWaitList(fid,oid){
     $.ajax({
         type:"POST",
         url:"index.php?page=booking",
         dataType:"JSON",
-        data: {addToWaitList:fid},
+        data: {addToWaitList:fid,oid:oid},
         success: function(response){
             console.table(response);
             $("#waitlist-table").html(response.html);
@@ -3865,6 +3870,43 @@ function addToWaitList(fid){
                 $.toast({
                     text: "Már hozzá lett adva a váróteremhez!",
                     icon: 'error'
+                });
+            }
+        }
+    })
+}
+
+function returnToWaitingRoom(fid){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        dataType:"JSON",
+        data: {returnToWaitingRoom:fid},
+        success: function(response){
+            $("#waitlist-table").html(response.html);
+            if(response.status=="ok"){
+                $.toast({
+                    text: "Pácines visszakerült a várólistára.",
+                    icon: 'success'
+                });
+            }
+        }
+    })
+}
+
+function finishExamination(fid){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        dataType:"JSON",
+        data: {finishExamination:fid},
+        success: function(response){
+            $("#waitlist-table").html(response.html1);
+            $("#finished-exams-table").html(response.html2);
+            if(response.status=="ok"){
+                $.toast({
+                    text: "A vizsgálat lezárásra került.",
+                    icon: 'success'
                 });
             }
         }
@@ -3907,6 +3949,17 @@ $(document).on("change",".waitlist-relevant-types",function(){
                 text: "Beállítás mentve",
                 icon: 'success'
             });
+        }
+
+    })
+});
+
+$(document).on("click",".doctor-card",function(){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {update_wl_data:true,type:$(this).attr("data-object-type"),id:$(this).attr("data-menu-id")},
+        success: function(response){
         }
 
     })

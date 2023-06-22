@@ -8,6 +8,7 @@ class AdminBookingEditor {
     private $beosztasService;
     private $user;
     private $notificationService;
+    private $varoteremService;
 
     private array $alkQuestions = [
         "Allergiája van?",
@@ -24,6 +25,7 @@ class AdminBookingEditor {
         $this->beosztasService = new BeosztasService();
         $this->user = new AdminUser();
         $this->notificationService = new NotificationService();
+        $this->varoteremService = new VaroteremService();
 
         if (isset($_GET["showidoponteditor"])) {
             echo $this->_showBookingEditor($_GET["showidoponteditor"], $_GET["p"]);
@@ -544,12 +546,16 @@ class AdminBookingEditor {
                 $html .= "<div style='margin-bottom:5px;'>";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
+                if(Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()){
+                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&pass={$row["pass"]}&status=modify'>Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
+                }
+                
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
                 //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'>Menedzser sétálólap</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
+                //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'>Megjegyzés</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'>Matrica</a>&nbsp;&nbsp;";
                 $html .= "</div>";
@@ -715,8 +721,11 @@ class AdminBookingEditor {
             } else {
                 $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
             }
+            //onClick='addToWaitList({$row["id"]})'
+            $html .= $this->varoteremService->doc_choose_button($row);
 
-            $html .= "<input onClick='addToWaitList({$row["id"]})' type=\"button\" style=\"background-color:#0a0\" value=\"Érkeztetés\">";
+            //$html .= $addtoWaitList; 
+            //$html .= "<input onClick='addToWaitList({$row["id"]})' type=\"button\" style=\"background-color:#0a0\" value=\"Érkeztetés\">";
 
             $html.= "</div>";
             $html.= "</div>";

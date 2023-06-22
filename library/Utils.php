@@ -340,6 +340,10 @@ class Utils {
             $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
         }
 
+        if(isset($_GET["page"]) && $_GET["page"] == "psychosocialform") {
+            $htmlout.="<script type='text/javascript' src='js/psychosocform.js'></script>";
+        }
+
         if (isset($_GET["page"]) && $_GET["page"] == "oltasigenyfelmeres") {
             $htmlout.="<script type='text/javascript' src='js/oltasigenyform.js?v={$v}'></script>";
         }
@@ -643,7 +647,12 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
 
         if (!$hidden) {
             if (empty($extraHTML)) {
-                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$jsCall} style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' /></td></tr>";
+                if(isset($_POST[$field])){
+                    $value = $_POST[$field];
+                }else{
+                    $value = "";
+                }
+                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$jsCall} style='width:{$width}px;' type='text' name='{$field}' value='{$value}' /></td></tr>";
             } else {
                 $html.= $extraHTML;
             }

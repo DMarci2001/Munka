@@ -318,6 +318,7 @@ class AdminDoctorsPage extends AdminCorePage {
                 if (!isset($_POST["smsfoglalas"])) $_POST["smsfoglalas"]=0;
                 if (!isset($_POST["smsgroupfoglalas"])) $_POST["smsgroupfoglalas"]=0;
                 if (!isset($_POST["telpublic"])) $_POST["telpublic"]=0;
+                if (!isset($_POST["colorcode"])) $_POST["colorcode"]="";
 
                 if (!isset($_POST['szak_belgyogy'])) $_POST['szak_belgyogy']=0;
                 if (!isset($_POST['szak_rtg'])) $_POST['szak_rtg']=0;
@@ -356,8 +357,9 @@ class AdminDoctorsPage extends AdminCorePage {
                     gender=?,
                     webdescription=?,
                     szurestipusok=?,
+                    colorcode=?,
                     aktiv=?
-                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["webdescription"], json_encode($linkedServices), $_POST["aktiv"], $oid));
+                where id=?", array($_POST["nev"], $_POST["pecsetszam"], $_POST["email"], $_POST["tel"], $_POST["onlytel"], $_POST["smsfoglalas"], $_POST["smsgroupfoglalas"], $_POST["telpublic"], $_POST["hmedemail"], $_POST["visszaigazol"], $_POST["visszaigazolemail"], $_POST["gender"], $_POST["webdescription"], json_encode($linkedServices), $_POST["colorcode"],$_POST["aktiv"], $oid));
 
                 logActivity("orvos",$oid,$_POST["nev"]." adatlap",print_r($_POST,true));
             }
@@ -628,6 +630,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
             echo "<tr><td></td><td><div id='fodatadiv'></div></td></tr>";
             echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
+            echo "<tr><td>Színkód (Hex kód):</td><td><input class='inputbox' style='width:600px;' type='text' name='colorcode' value='{$_POST["colorcode"]}'></td></tr>";
             echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'> <input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
 
             echo "<tr><td>SMS értesítés:</td><td><div id='smsalertsettings'>".$this->smsAlertSettings($oid)."</div></td></tr>";

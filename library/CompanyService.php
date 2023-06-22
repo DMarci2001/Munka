@@ -30,7 +30,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="fgsz";
+            $d="bp";
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
@@ -98,6 +98,10 @@ class CompanyService {
 
     public static function isWaberers($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "wszl" || $companyId == self::WABERERS_ID;
+    }
+
+    public static function isBP($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "bp";
     }
 
     public static function isFesztivalEgyeb($companyId = 0):bool {
