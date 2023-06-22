@@ -91,28 +91,31 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .mainmenuitem {
 	display:block;
 	border-left:5px solid #eee;
-	width:150px;
+	width:160px;
 	color:#666;
 	text-align:left;
 	text-decoration:none;
 	font-size:14px;
 	font-weight:bold;
+	white-space: nowrap;
 	padding:15px 8px 15px 18px;
 }
 .mainmenuitem_aktiv {
 	display:block;
 	border-left:5px solid #3ba9b8;
-	width:150px;
+	width:160px;
 	color:#000;
 	text-align:left;
 	text-decoration:none;
 	font-size:14px;
 	font-weight:bold;
+	white-space: nowrap;
 	background-color:#fff;
 	padding:15px 8px 15px 18px;
 }
 .mainmenuitem_aktiv:hover {
 	text-decoration:none;
+	white-space: nowrap;
 }
 .mainmenuitem:hover {
 	border-left:5px solid #fff;
