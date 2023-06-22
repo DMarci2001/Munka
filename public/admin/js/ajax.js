@@ -27,8 +27,6 @@ $(document).ready(function () {
     initQueryDatePicker();
     checkChat();
 
-    initLaborEditor();
-
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }
@@ -4025,65 +4023,3 @@ function toggleAlkAnswer(el) {
     })
 }
 
-function initLaborEditor() {
-    $(document).on("change", ".laborcsomagpricetextbox", function(){
-        let price = $(this).val();
-        let cid = $(this).data("cid");
-        let tid = $(this).data("tid");
-        $.ajax({
-            type:"POST",
-            url:"index.php?page=labortetelek",
-            data: {changeLaborCsomagPrice:price, cid:cid, tid:tid},
-            success: function(response){
-                $.toast({
-                    text: "Csomag ár mentve",
-                    icon: 'success'
-                });
-            }
-        })
-    });
-
-    $(document).on("change", ".laboritempricetextbox", function(){
-        let price = $(this).val();
-        let tid = $(this).data("tid");
-        $.ajax({
-            type:"POST",
-            url:"index.php?page=labortetelek",
-            data: {changeLaborItemPrice:price, tid:tid},
-            success: function(response){
-                $.toast({
-                    text: "Tétel ár mentve",
-                    icon: 'success'
-                });
-            }
-        })
-    });
-
-    $(document).on("change", ".laboritemelkeszulestextbox", function(){
-        let value = $(this).val();
-        let tid = $(this).data("tid");
-        $.ajax({
-            type:"POST",
-            url:"index.php?page=labortetelek",
-            data: {changeLaborElkeszules:value, tid:tid},
-            success: function(response){
-                $.toast({
-                    text: "Elkészülés mentve",
-                    icon: 'success'
-                });
-            }
-        })
-    });
-
-    $(document).on("change", "#companycsomag", function(){
-        let cid = $(this).val();
-        $.ajax({
-            type:"POST",
-            url:"index.php?page=labortetelek",
-            data: {changeLaborCsomagCompany:cid},
-            success: function(response){
-                $("#labortetelek-form").html(response);
-            }
-        })
-    });
-}
