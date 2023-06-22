@@ -722,7 +722,9 @@ class AdminBookingEditor {
                 $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
             }
             //onClick='addToWaitList({$row["id"]})'
-            $html .= $this->varoteremService->doc_choose_button($row);
+            if($this->user->varoteremuiAccess()){
+                $html .= $this->varoteremService->doc_choose_button($row);
+            }
 
             //$html .= $addtoWaitList; 
             //$html .= "<input onClick='addToWaitList({$row["id"]})' type=\"button\" style=\"background-color:#0a0\" value=\"Érkeztetés\">";
