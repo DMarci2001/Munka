@@ -50,7 +50,7 @@ class AdminBookingPage extends AdminCorePage
 
         if (isset($_GET["showelojegyzestable"])) {
 
-            $_SESSION["setday"] = date("Y-m-d");
+            //$_SESSION["setday"] = date("Y-m-d");
             if (isset($_GET["setday"])) $_SESSION["setday"] = $_GET["setday"];
             if (isset($_GET["day"])) $_SESSION["setday"] = $_GET["day"];
             echo $this->showElojegyzesTableNew($_SESSION["setday"]);
