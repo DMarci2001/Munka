@@ -91,7 +91,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .mainmenuitem {
 	display:block;
 	border-left:5px solid #eee;
-	min-width:150px;
+	width:180px !important;
 	color:#666;
 	text-align:left;
 	text-decoration:none;
@@ -103,21 +103,21 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .mainmenuitem_aktiv {
 	display:block;
 	border-left:5px solid #3ba9b8;
-	min-width:150px;
+	width:180px !important;
 	color:#000;
 	text-align:left;
 	text-decoration:none;
 	font-size:14px;
 	font-weight:bold;
-	white-space: nowrap;
 	background-color:#fff;
 	padding:15px 8px 15px 18px;
 }
 .mainmenuitem_aktiv:hover {
+	color:#000;
 	text-decoration:none;
-	white-space: nowrap;
 }
 .mainmenuitem:hover {
+	color:#666;
 	border-left:5px solid #fff;
 	background-color:#fff;
 	text-decoration:none;
@@ -126,7 +126,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .mainmenuitem_sub {
 	display:block;
 	border-left:5px solid #eee;
-	width:150px;
+	width:180px !important;
 	color:#666;
 	text-align:left;
 	text-decoration:none;
@@ -135,8 +135,9 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 .mainmenuitem_sub_aktiv {
 	display:block;
+	box-sizing: border-box;
 	border-left:5px solid #3ba9b8;
-	width:150px;
+	width:180px !important;
 	color:#000;
 	text-align:left;
 	text-decoration:none;
@@ -154,10 +155,11 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .menuoszlop {
-	min-width:180px;
+	box-sizing: border-box;
 	min-height:500px;
+	width:180px !important;
+	min-width: 180px;
 	background-color:#eee;
-
 }
 
 .statussor {
