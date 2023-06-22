@@ -154,6 +154,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .menuoszlop {
+	min-width:180px;
 	min-height:500px;
 	background-color:#eee;
 
