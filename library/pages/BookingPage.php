@@ -425,9 +425,7 @@ class BookingPage extends CorePage
             }
 
 
-            if(!empty($laborszoveg)){
-                $_POST["megj"].=" Válaszott labor csomagok: ".$laborszoveg;
-            }
+            
 
             if (empty($this->errors) && isset($multipleTimes)) {
                 //leágazás több időpont esetén
@@ -452,6 +450,9 @@ class BookingPage extends CorePage
             }
 
             if (empty($this->errors)) {
+                if(!empty($_SESSION["labshopMegjegyzes"])){
+                    $_POST["megj"].=" ".$_SESSION["labshopMegjegyzes"];
+                }
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
                 $this->record_covid_vaccination_data($fid,$_POST);
@@ -571,45 +572,36 @@ class BookingPage extends CorePage
                     unset($_SESSION["labcode"]);
                     return;
                 } else {
-                    $labItemsHTML = $labPacksHTML = "";
+                    $_SESSION["labshopMegjegyzes"] = $labItemsHTML = $labPacksHTML = $outputHTML = "";
 
                     $cartContent = json_decode($labData["cart_content"], JSON_OBJECT_AS_ARRAY);
-                    $packages = $cartContent["packages"];
-                    $items = $cartContent["items"];
-
-
-                    //$addItems = [];
-                    foreach ($packages as $package) {
-                        if ($packData = sql_query("select name from synlab_labor_csomagok where id=?", [$package["id"]])->fetch(PDO::FETCH_ASSOC)) {
-
-
-                            //$itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
-                            //$addItems[] = $itemData["name"];
-
-                            $labPacksHTML .= "<li style='list-style:outside;'>{$packData["name"]} - {$package["unit"]} db - ".number_format($package["price"])." Ft</li>";
+                    //$packages = $cartContent["packages"];
+                    //$items = $cartContent["items"];
+                    foreach ($cartContent as $product) {
+                        if(isset($product["type"]) && $product["type"]=="package"){
+                            if ($packData = sql_query("select name from synlab_labor_csomagok where id=?", [$product["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                                $labPacksHTML .= "<li style='list-style:outside;'>{$packData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft</li>";
+                                $_SESSION["labshopMegjegyzes"].= "Csomag: {$packData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
+                            }
+                        }
+                        if(isset($product["type"]) && $product["type"]=="item"){
+                            if ($itemData = sql_query("select name from synlab_labor_tetelek where id=?", [$product["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                                $labItemsHTML .= "<li style='list-style:outside;'>{$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft</li>";
+                                $_SESSION["labshopMegjegyzes"].= "Lab. elem: {$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
+                            }
                         }
                     }
 
-                    foreach ($items as $item) {
-                        if ($itemData = sql_query("select name from synlab_labor_tetelek where id=?", [$item["id"]])->fetch(PDO::FETCH_ASSOC)) {
-
-
-                            //$itemData = sql_fetch_array(sql_query("select name from synlab_labor_tetelek where id=?", [$package]));
-                            //$addItems[] = $itemData["name"];
-                            $labItemsHTML .= "<li style='list-style:outside;'>{$itemData["name"]} - {$item["unit"]} db - ".number_format($item["price"])." Ft</li>";
-                        }
-                    }
-
-
-                    echo "<div style='margin-bottom:20px;border-bottom:1px solid #ccc;'>Ön a LabShop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/><br>";
+                    $outputHTML.= "<div style='margin-bottom:20px;border-bottom:1px solid #ccc;'>Ön a LabShop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/><br>";
 
                     if (!empty($labPacksHTML)) {
-                        echo "<span style='font-family: robotobold;'>Választott csomagok:</span><br/><ul>{$labPacksHTML}</ul>";
+                        $outputHTML.=  "<span style='font-family: robotobold;'>Választott csomagok:</span><br/><ul>{$labPacksHTML}</ul>";
                     }
                     if (!empty($labItemsHTML)) {
-                        echo "<span style='font-family: robotobold;'>Választott tételek:</span><br/><ul>{$labItemsHTML}</ul>";
+                        $outputHTML.=  "<span style='font-family: robotobold;'>Választott tételek:</span><br/><ul>{$labItemsHTML}</ul>";
                     }
-                    echo "</div>";
+                    $outputHTML.=  "</div>";
+                    echo $outputHTML;
                 }
             }
         }

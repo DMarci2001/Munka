@@ -46,6 +46,7 @@ a:hover {
 }
 .abutton:hover {
 	background:#a00;
+	color:#fff;
 	text-decoration:none;
 }
 
