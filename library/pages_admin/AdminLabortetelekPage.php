@@ -11,8 +11,8 @@ class AdminLabortetelekPage extends AdminCorePage
     //Csomag árak módosításának jelölés változója:
     private $setPackagePrices;
     //Csomag azonosító:
-    private $packageId;
-    private $packageItems;
+    private int $packageId;
+    private array $packageItems = [];
     //Csövek:
     private $tubes = array(
         "T" => array("title" => "T (tiszta)", "HexColorCode" => ""),
@@ -34,6 +34,21 @@ class AdminLabortetelekPage extends AdminCorePage
         parent::__construct();
 
         $GLOBALS["javascript"][] = "laborpage.js?v=".date("YmdHi");
+
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
+        if (!isset($_SESSION["selectedcsomagcompany"])) {
+            $_SESSION["selectedcsomagcompany"] = 0;
+        }
+
+        if (isset($_GET["szerk"])) {
+           $this->packageId = $_GET["szerk"];
+           if ($packageData = sql_query("select items from synlab_labor_csomagok where id=?", [$this->packageId])->fetch(PDO::FETCH_ASSOC)) {
+               $this->packageItems = json_decode($packageData["items"]);
+           }
+        }
 
         //Ha van csomagazonosító, akkor állítcsa be sessionbe az értéket:
         /*
@@ -81,6 +96,7 @@ class AdminLabortetelekPage extends AdminCorePage
             }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die;
         }
 
         /*
@@ -212,30 +228,32 @@ class AdminLabortetelekPage extends AdminCorePage
 
         //Tétel kijelölése/kijelölés megszüntetése:
         if (isset($_POST["selectItemForPackage"])) {
+            $csomagId = $_POST["csomagId"];
+            $itemId = $_POST["selectItemForPackage"];
 
-            $items = json_decode($this->packageItems);
-            $key = array_search($_POST["id"], $items);
-
-            if ($key !== false) {
-                unset($items[$key]);
-                $items = array_values($items);
-
-                $this->packageItems = $_SESSION["packageItems"] = json_encode($items, true);
-            } else {
-                array_push($items, $_POST["id"]);
-                $this->packageItems = $_SESSION["packageItems"] = json_encode($items, true);
+            if ($packageData = sql_query("select items from synlab_labor_csomagok where id=?", [$csomagId])->fetch(PDO::FETCH_ASSOC)) {
+                $this->packageItems = json_decode($packageData["items"]);
             }
 
+            $newItems = [];
+            foreach ($this->packageItems as $item) {
+                if ($item != $itemId) {
+                    $newItems[] = $item;
+                }
+            }
+            if ($_POST["checked"] == 1) {
+                $newItems[] = $itemId;
+            }
+
+            sql_query("update synlab_labor_csomagok set items=? where id=?", [json_encode($newItems), $csomagId]);
             die();
         }
 
         //Csomag mentése:
         if (isset($_POST["savePackage"])) {
-
-
             sql_query(
-                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, items=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=? WHERE id=?",
-                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $this->packageItems, $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $this->packageId)
+                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=? WHERE id=?",
+                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $this->packageId)
             );
         }
 
@@ -328,7 +346,7 @@ class AdminLabortetelekPage extends AdminCorePage
 
             //Alap adatok megadása:
             echo "<table>";
-            echo "<tr><td colspan=\"2\"><input type=\"submit\" name=\"savePackage\" onClick='if(!confirm(\"Biztosan elakarod menteni a módosításokat?\")){return false;}' value=\"Mentés\"></td></tr>";
+            echo "<tr><td colspan='2'><input type='submit' name='savePackage' value='Mentés'></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése: </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Áthúzott ár: </p></td><td><input type=\"textbox\" name=\"line-through-price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["line_through_price"]}\"></td></tr>";
@@ -434,6 +452,9 @@ class AdminLabortetelekPage extends AdminCorePage
 
         while ($resq = sql_fetch_array($rq)) {
             $items = json_decode($resq["items"]);
+            if (empty($items)) {
+                $items = [];
+            }
 
             $html.= "<tr>";
 
@@ -577,8 +598,6 @@ class AdminLabortetelekPage extends AdminCorePage
                          WHERE TRUE " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
                          ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
-        $setSelectedItemJScall = "onClick='selectItemForPackage($(this).val())'";
-
         $html.= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
         $html.= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek</td>";
         $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (nap)</td>";
@@ -591,7 +610,7 @@ class AdminLabortetelekPage extends AdminCorePage
             $html.= "<tr>";
             $html.= "<td valign='top'><div class='tcella' style=''>";
             if (!$listView) {
-                $html.= "<input type='checkbox' name='item[]' {$setSelectedItemJScall} " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+                $html.= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
             }
             $html.= "{$resq["name"]}";
             $html.= "</div></td>";

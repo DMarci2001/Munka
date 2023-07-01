@@ -69,6 +69,8 @@ require_once(__DIR__ . "/library/Maps.php");
 require_once(__DIR__ . "/library/WebShopService.php");
 require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 require_once(__DIR__ . "/library/VaroteremService.php");
+require_once(__DIR__ . "/library/CentrumlabService.php");
+require_once(__DIR__ . "/library/LaborKeroService.php");
 
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");

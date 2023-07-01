@@ -338,6 +338,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .ujbutton:hover {
+	color:#fff;
 	background-color:#3ba9b8;
 	text-decoration:none;
 }
@@ -623,7 +624,6 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 
 .printbutton {
 	background-color:#aaa;
-	background-image:url(../images/print-icon.png);
 	background-repeat:no-repeat;
 	background-position:5px center;
 	background-size:14px;
@@ -631,9 +631,10 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	font-weight:normal;
 	font-size:12px;
 	border-radius:2px;
-	padding:4px 5px 4px 25px;
+	padding:4px 5px 4px 5px;
 	display:inline-block;
 	text-decoration:none;
+	white-space: nowrap;
 }
 
 .printbutton:hover {

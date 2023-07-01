@@ -1,5 +1,8 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class AdminAjaxService {
 
     public function start() {
@@ -758,6 +761,8 @@ class AdminAjaxService {
         if(isset($_REQUEST["initCeglistSelect2"])){
             die($adminUtils->ceglista(null,$_POST["cegid"]));
         }
+
+        new LaborKeroService();
     }
 
     private function getActiveUsers(AdminUser $adminUser):string {

@@ -2673,16 +2673,6 @@ function searchbyitem(keyword) {
     })
 }
 
-function selectItemForPackage(item) {
-    $.ajax({
-        url: "?page=labortetelek",
-        method: "POST",
-        data: { selectItemForPackage: true, id: item, szerk: true },
-        success: function (response) {
-            console.log(response);
-        }
-    })
-}
 
 function readExcel() {
 
@@ -4022,4 +4012,97 @@ function toggleAlkAnswer(el) {
 
     })
 }
+
+function showLaborKeroWin(fid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {showlaborkerowindow:fid},
+        success: function(response){
+            showGeneralPopup(response);
+        }
+    })
+}
+
+function addPackToLaborRequest() {
+    let packId = $("#laborkercsomagcombo").val();
+    let fid = $("#laborkeroreservationid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {addPackToLaborRequest:1, packId:packId, fid:fid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $.toast({
+                text: "Csomag hozzáadva a laborkéréshez",
+                icon: 'success'
+            });
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function removePackFromLaborRequest(packId) {
+    if (!confirm("Biztos eltávolítod a csomagot a kérésből?")) {
+        return;
+    }
+
+    let fid = $("#laborkeroreservationid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {removePackFromLaborRequest:1, packId:packId, fid:fid},
+        success: function(response){
+            $.toast({
+                text: "Csomag eltávolítva a laborkérésből",
+                icon: 'success'
+            });
+            showGeneralPopup(response);
+        }
+    })
+}
+
+function saveLaborKero() {
+    let fid=$("#laborkeroreservationid").val();
+
+    $('#labortetelekcheckboxes').find(':checkbox').each(function(){
+
+        if ($(this).is(':checked')) {
+            //alert("checked");
+        }
+
+    });
+}
+
+function laborkeroItemChange(el, itemId) {
+    let rid=$("#laborkerorequestid").val();
+
+    let checked = 0;
+    if ($(el).is(':checked')) {
+        checked = 1;
+    }
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {laborkeroItemChange:1, checked:checked, itemId:itemId, rid:rid},
+        success: function(response){
+            $("#laborkeroteteleknumber").html(response);
+            $.toast({
+                text: "Tételek frissítve",
+                icon: 'success'
+            });
+        }
+    });
+
+
+
+}
+
+
 

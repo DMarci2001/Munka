@@ -545,19 +545,22 @@ class AdminBookingEditor {
             if ($row["nev"] != "" && $row["nev"] != "nincs név") {
                 $html .= "<div style='margin-bottom:5px;'>";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'>alkalmassági</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Alkalmassági</a>&nbsp;&nbsp;";
                 if(Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()){
-                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&pass={$row["pass"]}&status=modify'>Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
                 }
                 
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
                 //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'>Menedzser sétálólap</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Menedzser sétálólap</a>&nbsp;&nbsp;";
                 //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'>Megjegyzés</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'>Matrica</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
+                if (Booking_Constants::SQL_DB == "hungariamed") {
+                    $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő</a>&nbsp;&nbsp;";
+                }
                 $html .= "</div>";
             }
 

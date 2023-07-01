@@ -1046,6 +1046,9 @@ END:VCALENDAR";
         $mail->AddAddress($labShopData["email"]);
         //$mail->AddAddress("jnsmobil@gmail.com");
 
+        $urlResult = parse_url($labShopData["url"]);
+        $domain = $urlResult["host"];
+
         $subject = "Foglaljon időpontot laborvizsgálatra most!";
 
         $mbody = "<strong>Kedves ügyfelünk!</strong><br><br/>";
@@ -1061,7 +1064,7 @@ END:VCALENDAR";
         Nincs szebb ajándék a hosszú és egészséges életnél!<br/>
         <br/>
         <ul>
-        <li><a style='color:#a90000;' href='https://labshop.hungariamed.hu' target='_blank'>Labor csomagot szeretnék választani!</a></li>
+        <li><a style='color:#a90000;' href='https://{$domain}' target='_blank'>Labor csomagot szeretnék választani!</a></li>
         <li><a style='color:#a90000;' href='https://hungariamed.hu/' target='_blank'>Megszeretném tekinteni a teljes szolgáltatási palettájukat!</a></li>
         </ul>
         <br/>";
