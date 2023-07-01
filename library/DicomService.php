@@ -360,7 +360,94 @@ class DicomService {
         return $institutionNames;
     }
 
+
     public function workListFileFormat($data):string {
+        $companyId      = Booking_Constants::SQL_DB;
+        $companyName    = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_NAME);
+        $companyAddress = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_ADDRESS);
+        $name = iconv("UTF-8", "ISO-8859-2", $data["nev"]);
+        $company = iconv("UTF-8", "ISO-8859-2", $data["cegnev"]);
+        $birthDate = date("Ymd", strtotime($data["szuldatum"]));
+        $idopont = date("Ymd", strtotime($data["datum"]));
+        $patientSex = $data["neme"] == 2 ? "F":"M";
+
+        return "# Dicom-File-Format
+
+# Dicom-Meta-Information-Header
+# Used TransferSyntax: Little Endian Explicit
+(0002,0000) UL 210                                      #   4, 1 FileMetaInformationGroupLength
+(0002,0001) OB 00\\01                                    #   2, 1 FileMetaInformationVersion
+(0002,0002) UI =ComputedRadiographyImageStorage         #  26, 1 MediaStorageSOPClassUID
+(0002,0003) UI [2.16.840.1.111111.20210512104557.253313.304901.1168384] #  54, 1 MediaStorageSOPInstanceUID
+(0002,0010) UI =LittleEndianExplicit                    #  20, 1 TransferSyntaxUID
+(0002,0012) UI [1.2.276.0.7230010.3.0.3.6.0]            #  28, 1 ImplementationClassUID
+(0002,0013) SH [OFFIS_DCMTK_360]                        #  16, 1 ImplementationVersionName
+(0002,0016) AE [ICWS]                                   #   4, 1 SourceApplicationEntityTitle
+
+# Dicom-Data-Set
+# Used TransferSyntax: Little Endian Explicit
+(0008,0005) CS [ISO_IR 100]                             #  10, 1 SpecificCharacterSet
+(0008,0008) CS [ORIGINAL\PRIMARY]                       #  16, 2 ImageType
+(0008,0016) UI =ComputedRadiographyImageStorage         #  26, 1 SOPClassUID
+(0008,0018) UI [2.16.840.1.111111.20210512104557.253313.304901.1168384] #  54, 1 SOPInstanceUID
+(0008,0020) DA [{$idopont}]                             #   8, 1 StudyDate
+(0008,0022) DA [{$idopont}]                             #   8, 1 AcquisitionDate
+(0008,0023) DA [{$idopont}]                             #   8, 1 ContentDate
+(0008,0030) TM [104557]                                 #   6, 1 StudyTime
+(0008,0033) TM [104557]                                 #   6, 1 ContentTime
+(0008,0050) SH [3645]                                   #   4, 1 AccessionNumber
+(0008,0060) CS [CR]                                     #   2, 1 Modality
+(0008,0070) LO [Pictron Kft]                            #  12, 1 Manufacturer
+(0008,0080) LO [{$companyName}]                         #  16, 1 InstitutionName
+(0008,0081) ST [{$companyAddress}]                      #  16, 1 InstitutionAddress
+(0008,1010) SH [localhost]                              #  10, 1 StationName
+(0008,1030) LO [{$company}]                             #   0, 0 StudyDescription
+(0008,1070) PN [RTG]                                    #   4, 1 OperatorsName
+(0008,1090) LO [ICWS]                                   #   4, 1 ManufacturerModelName
+(0010,0010) PN [{$name}]                                #  12, 1 PatientName
+(0010,0020) LO [{$data["taj"]}]                         #   8, 1 PatientID
+(0010,0030) DA [{$birthDate}]                           #   8, 1 PatientBirthDate
+(0010,0040) CS [{$patientSex}]                          #   2, 1 PatientSex
+(0010,1000) LO [{$data["taj"]}]                         #   8, 1 OtherPatientIDs
+(0018,1020) LO [ICWS V2.2 - 2012.10.16]                 #  22, 1 SoftwareVersions
+(0018,5101) CS [AP]                                     #   2, 1 ViewPosition
+(0020,000d) UI [2.16.840.1.111111.20210512.3645]        #  32, 1 StudyInstanceUID
+(0020,000e) UI [2.16.840.1.111111.20210512.3645.1]      #  34, 1 SeriesInstanceUID
+(0020,0010) SH [3645]                                   #   4, 1 StudyID
+(0020,0011) IS [1]                                      #   2, 1 SeriesNumber
+(0020,0012) IS [253313]                                 #   6, 1 AcquisitionNumber
+(0020,0013) IS [1]                                      #   2, 1 InstanceNumber
+(0028,0002) US 1                                        #   2, 1 SamplesPerPixel
+(0028,0004) CS [MONOCHROME2]                            #  12, 1 PhotometricInterpretation
+(0028,0006) US 0                                        #   2, 1 PlanarConfiguration
+(0028,0010) US 2048                                     #   2, 1 Rows
+(0028,0011) US 2048                                     #   2, 1 Columns
+(0028,0030) DS [0.102543\\0.102543]                      #  18, 2 PixelSpacing
+(0028,0100) US 16                                       #   2, 1 BitsAllocated
+(0028,0101) US 12                                       #   2, 1 BitsStored
+(0028,0102) US 11                                       #   2, 1 HighBit
+(0028,0103) US 0                                        #   2, 1 PixelRepresentation
+(0028,1050) DS [1962]                                   #   4, 1 WindowCenter
+(0028,1051) DS [3715]                                   #   4, 1 WindowWidth
+(0029,1050) CS [1.07]                                   #   4, 1 Unknown Tag & Data
+(0032,1032) PN [{$companyId}]                           # RequestingPhysician
+(0032,1033) LO [ez a szolgaltatas neve]                 # RequestingService
+(0032,1060) LO [{$company}]                             # RequestedProcedureDescription
+(0038,0050) LO [ez az amire szukseg van]                # SpecialNeeds
+(6000,0010) US 2048                                     #   2, 1 OverlayRows
+(6000,0011) US 2048                                     #   2, 1 OverlayColumns
+(6000,0012) US 1                                        #   2, 1 RETIRED_OverlayPlanes
+(6000,0015) IS [1]                                      #   2, 1 NumberOfFramesInOverlay
+(6000,0040) CS [G]                                      #   2, 1 OverlayType
+(6000,0050) SS 1\\1                                      #   4, 2 OverlayOrigin
+(6000,0100) US 1                                        #   2, 1 OverlayBitsAllocated
+(6000,0102) US 0                                        #   2, 1 OverlayBitPosition
+(6000,3000) OW 0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000\\0000... # 524288, 1 OverlayData
+(7fe0,0010) OW 6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f\\6f6f... # 8388608, 1 PixelData
+";
+    }
+
+    public function workListFileFormatNew($data):string {
         $companyId      = Booking_Constants::SQL_DB;
         $companyName    = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_NAME);
         $companyAddress = iconv("UTF-8", "ISO-8859-2", Booking_Constants::COMPANY_ADDRESS);
