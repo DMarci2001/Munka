@@ -122,7 +122,7 @@ class PrintService
         $alkalmasMark = $nemalkalmasMark = $ideiglenesennemalkalmasMark = $ervenyes = "";
         if ($this->reservationData["alkalmassag"] == "I" || $this->reservationData["alkalmassag"] == "K") {
             $alkalmasMark = "_____________________";
-            $ervenyes = date("Y. m. d.", strtotime($this->reservationData["fsfsfs"] . " +{$this->reservationData["alkalmassagido"]} month"));
+            $ervenyes = date("Y. m. d.", strtotime($this->reservationData["datum"] . " +{$this->reservationData["alkalmassagido"]} month"));
         }
         if ($this->reservationData["alkalmassag"] == "N") {
             $nemalkalmasMark = "________________________";
@@ -251,7 +251,7 @@ class PrintService
 
         if ($data["alkalmassag"] == "I") {
             $ido = intval($data["alkalmassagido"]);
-            $template = str_replace("#alkalmasextra#", "<div style='margin-top:{$sorkoz}px;'>Érv: " . $this->datumki(date("Y-m-d", strtotime("now +{$ido} month"))) . "</div>", $template);
+            $template = str_replace("#alkalmasextra#", "<div style='margin-top:{$sorkoz}px;'>Érv: " . $this->datumki(date("Y-m-d", strtotime("{$data["datum"]} +{$ido} month"))) . "</div>", $template);
         } else {
             $template = str_replace("#alkalmasextra#", "", $template);
         }

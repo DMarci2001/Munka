@@ -115,19 +115,23 @@ class BeosztasService {
             $tipusFilter = "AND instr(b.tipusok, '|".intval($tipusId)."|')";
         }
 
-        $beos = sql_query("select * from orvos_beosztas_new b where b.helyszinid=? {$tipusFilter}", [$placeId])->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($beos as $beo) {
-            $idk = array_filter(explode("|", $beo["beocegek"]));
-            $companyIds = array_merge($companyIds, $idk);
-        }
-        $companyIds = array_unique($companyIds);
-
         $cegFilter = "";
         if (!$this->adminUser->allCegJog()) {
             $cegFilter = "and id in (" . $this->adminUser->getCegList() . ")";
         }
 
-        return sql_query("select id, megnev from cegek where id in (".implode(",", $companyIds).") {$cegFilter }order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        if (in_array($placeId, Booking_Constants::DEFAULT_PLACE_IDS)) {
+            return sql_query("select id, megnev from cegek where true {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $beos = sql_query("select * from orvos_beosztas_new b where b.helyszinid=? {$tipusFilter}", [$placeId])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($beos as $beo) {
+                $idk = array_filter(explode("|", $beo["beocegek"]));
+                $companyIds = array_merge($companyIds, $idk);
+            }
+            $companyIds = array_unique($companyIds);
+
+            return sql_query("select id, megnev from cegek where id in (" . implode(",", $companyIds) . ") {$cegFilter} order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 
     public function beosztasCegFilterSQL($companyIds):string {

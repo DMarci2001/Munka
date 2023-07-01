@@ -11,6 +11,14 @@ class ExcelService {
     private $sheet;
     private $columnNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X", "Y", "Z"];
 
+    private string $esztergomFilter = "f.helyszinid=532 and ";
+    private string $jaszSuzukiFilter = "f.helyszinid=1 AND f.cegid IN (81, 123, 504, 99, 473) and ";
+    private string $extraFilter = "";
+
+    public function __construct() {
+        //$this->extraFilter = $this->jaszSuzukiFilter;
+    }
+
     public function setFileName($fileName) {
         $this->fileName = $fileName;
     }
@@ -370,7 +378,7 @@ class ExcelService {
 
         $tipusok = sql_query("SELECT t.id, t.megnev FROM foglalasok f
             LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-            WHERE f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' {$wArrived} GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$this->extraFilter} f.datum>'{$from} 00:00:00' AND f.datum<'{$to} 23:59:59' {$wArrived} GROUP BY f.`szurestipusid`")->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($tipusok as $tipus) {
@@ -385,7 +393,7 @@ class ExcelService {
                 LEFT JOIN orvosok o ON o.id=f.orvosassigned
                 LEFT JOIN cegek c ON c.id=f.cegid
                 LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
-                WHERE datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? {$wArrived} order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+                WHERE {$this->extraFilter} datum>'{$from} 00:00:00' AND datum<'{$to} 23:59:59' and f.szurestipusid=? {$wArrived} order by datum", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
 
             foreach ($reservations as $reservation) {
@@ -462,7 +470,7 @@ class ExcelService {
         $queryFilter = "datum>'{$from}' AND datum<'{$to} 23:59:59' AND f.taj<>''";
 
         $reservations = sql_query("SELECT DATE(datum) AS datum, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
-            WHERE {$queryFilter}
+            WHERE {$this->extraFilter} {$queryFilter}
             GROUP BY DATE(f.datum) ORDER BY DATE(f.datum)", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -479,7 +487,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN cegek c ON c.id=f.cegid
-            WHERE {$queryFilter}
+            WHERE {$this->extraFilter} {$queryFilter}
             GROUP BY c.id ORDER BY c.megnev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -497,7 +505,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT t.megnev AS szolgaltatas, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN szurestipusok t ON t.id=f.`szurestipusid`
-            WHERE {$queryFilter}
+            WHERE {$this->extraFilter} {$queryFilter}
             GROUP BY t.id ORDER BY t.megnev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -515,7 +523,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
-            WHERE {$queryFilter}
+            WHERE {$this->extraFilter} {$queryFilter}
             GROUP BY o.id ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -532,7 +540,7 @@ class ExcelService {
 
         $reservations = sql_query("SELECT h.cim AS helyszincim, COUNT(*) AS total, SUM(IF(eljott=0, 1, 0)) AS nem_jott_el, ROUND(SUM(IF(eljott=0, 1, 0))/(COUNT(*)/100), 2) AS percent FROM foglalasok f 
             LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
-            WHERE {$queryFilter}
+            WHERE {$this->extraFilter} {$queryFilter}
             GROUP BY h.id ORDER BY h.cim", [])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($reservations as $reservation) {
@@ -695,20 +703,20 @@ class ExcelService {
         $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("Cég és orvos stat");
 
+        $this->titleRow("A1", "Cég és orvos statisztika {$from} - {$to}");
+
         $from.= " 00:00:00";
         $to.= " 23:59:59";
-
-        $this->titleRow("A1", "Cég és orvos statisztika {$from} - {$to}");
 
         $companyStat = sql_query("SELECT c.megnev AS ceg, COUNT(*) AS foglalasok, SUM(IF(f.eljott=1, 1, 0)) AS eljott FROM foglalasok f
             LEFT JOIN cegek c ON c.id=f.cegid
             WHERE f.aktiv=1 AND f.nev NOT IN ('nincs név', 'ne foglalj', 'ebéd', 'ebédszünet')
-            AND datum>? AND datum<=? AND f.`externalid`=''
+            AND {$this->extraFilter} datum>? AND datum<=? AND f.`externalid`=''
             GROUP BY c.id, megnev ORDER BY c.megnev", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
         $doctorStat = sql_query("SELECT o.nev AS orvos, COUNT(*) AS foglalasok, SUM(IF(eljott=1, 1, 0)) AS eljott FROM foglalasok f
             LEFT JOIN orvosok o ON o.id=f.orvosassigned
-            WHERE f.aktiv=1 AND f.nev NOT IN ('nincs név', 'ne foglalj', 'ebéd', 'ebédszünet')
+            WHERE {$this->extraFilter} f.aktiv=1 AND f.nev NOT IN ('nincs név', 'ne foglalj', 'ebéd', 'ebédszünet')
             AND datum>=? AND datum<=? AND f.`externalid`=''
             GROUP BY (IF (o.parentoid<>0, o.parentoid, o.id)) ORDER BY o.nev", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -846,7 +854,7 @@ class ExcelService {
             FROM foglalasok f 
             LEFT JOIN orvosok o ON o.id=f.orvosassigned
             LEFT JOIN helyszinek h ON h.id = f.helyszinid
-            WHERE datum>=? AND datum<=? and orvosassigned<>0 and trim(f.taj)<>'' GROUP BY f.orvosassigned, DATE(f.datum), f.helyszinid", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE {$this->extraFilter} datum>=? AND datum<=? and orvosassigned<>0 and trim(f.taj)<>'' GROUP BY f.orvosassigned, DATE(f.datum), f.helyszinid", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
         $sor = 3;
 

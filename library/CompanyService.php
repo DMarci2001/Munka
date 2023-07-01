@@ -137,15 +137,15 @@ V: 1.0 1.0 .    KV: Cs IV
         4 => ["type" => "igennem", "required" => true, "question" => "Kezelik valamilyen betegséggel?", "question_hu" => "Kezelik valamilyen betegséggel?", "question_en" => "Are you being treated for any disease?", "question_de" => "Kezelik valamilyen betegséggel?"],
     ];
 
-    public static function fesztivalCompanyIds() {
-        return [138, 275, 261, 318, 322];
+    public static function fesztivalCompanyIds():array {
+        return [138, 275, 261, 318, 322, 639, 285, 286, 647, 632, 635];
     }
 
     public static function isFesztivalCompany($companyId = 0):bool {
         if ($companyId != 0) {
             return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
         }
-        return $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew";
+        return $_SESSION["helyszindata"]["domain"] == "annagora-gastro" || $_SESSION["helyszindata"]["domain"] == "aquapark-balatonfured" || $_SESSION["helyszindata"]["domain"] == "aquaticdipo" || $_SESSION["helyszindata"]["domain"] == "crewnmore" || $_SESSION["helyszindata"]["domain"] == "festfree" || $_SESSION["helyszindata"]["domain"] == "monofactura" || $_SESSION["helyszindata"]["domain"] == "etalon" || $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew";
     }
 
     public function fillMAKPaciensData($data) {
