@@ -96,7 +96,7 @@ class BookingValidatePage extends CorePage {
             } else {
                 $successText = $webText["foglalassuccesstext"];
                 
-                if(CompanyService::isBP()){
+                if (CompanyService::isBP() && false) {
                     //Létrehozok egy új sort a pass értékkel a psyhosoc táblában.
                     if($fogl=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=? AND rkod=?",array($_GET["id"],$_GET["rk"])))){
                         if(!$exists=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($fogl["pass"])))){

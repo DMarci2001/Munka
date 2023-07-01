@@ -551,7 +551,7 @@ class NotificationService {
 
         if ($row["rlang"] != "de" && $row["rlang"] != "en") {
 
-            if(CompanyService::isBP()){
+            if (CompanyService::isBP() && false) {
                 $mbody .= "A pszihoszociális kérdőívet az alábbi linken tudja megtekinteni és kitölteni:<br>";
                 $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$row["pass"]}\">Psyhosociális kérdőív link</a><br><br>";
             }
