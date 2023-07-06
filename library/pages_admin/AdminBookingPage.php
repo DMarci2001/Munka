@@ -481,6 +481,15 @@ class AdminBookingPage extends AdminCorePage
         return array_unique(explode(",", $raw));
     }
 
+    private function getAllPaymentData():array {
+        $result = [];
+        $payments      = sql_query("SELECT foglalasid, osszeg FROM banktransactions WHERE merchant=? AND datum>DATE_SUB(NOW(), INTERVAL 1 YEAR) AND result IN ('finished')", [Booking_Constants::SIMPLEPAY_MERCHANT_ID])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($payments as $payment) {
+            $result[$payment["foglalasid"]] = $payment;
+        }
+        return $result;
+    }
+
     public function showElojegyzesTableNew($setDay)
     {
         $settings      = new Booking_Settings();
@@ -503,6 +512,7 @@ class AdminBookingPage extends AdminCorePage
         $orvosListed   = [];
         $sectionName   = "";
         $cegSearchLink = "[<a href='#' onclick='elojegyzesCegSearchStart();return false;'>lista</a>]";
+        $this->paymentData = $this->getAllPaymentData();
 
         $htmlout .= "<div id='filterbox' style='margin-top:10px;'>";
         $htmlout .= "<div style='display:table-cell;vertical-align:middle;'>" . $this->napFilter2($setDay) . "</div>";
@@ -877,6 +887,7 @@ class AdminBookingPage extends AdminCorePage
     private array $orvosTipusok = [];
     private bool $showDoctorName = false;
     private bool $showInterval = false;
+    private array $paymentData;
 
     private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false):string {
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
@@ -934,6 +945,11 @@ class AdminBookingPage extends AdminCorePage
             $docSign = $reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "";
 
             $extraInfo = "";
+
+            if (isset($this->paymentData[$reservationData["id"]])) {
+                $extraInfo = "<span style='color:darkgreen;font-weight: bold;'>FIZETVE! (".$this->paymentData[$reservationData["id"]]["osszeg"]." Ft)</span> ";
+            }
+
             if (!empty($reservationData["szuldatum"]) && strtotime("now") - strtotime($reservationData["szuldatum"]) < 567648000 && strtolower($reservationData["nev"]) != "szünet") {
                 $kidSign = " <i class='fas fa-child' title='Fiatalkorú (18 év alatti)'></i>";
                 $extraInfo = "(18 év alatti!) ";
