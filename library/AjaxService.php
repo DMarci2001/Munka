@@ -40,6 +40,9 @@ class AjaxService {
             $bookingService = new BookingService();
             $bookingService->setHelyszin($_POST["helyszin"]);
             $bookingService->setSzuresTipus($_POST["szurestipusid"]);
+            if (isset($_POST["neme"])) {
+                $bookingService->setNeme(intval($_POST["neme"]));
+            }
 
             if (!$odata = $bookingService->selectOrvosForIdopont($_POST["idopont"], $_POST["orvos"])) {
                 die("Ezt az időpontot időközben lefoglalták!");

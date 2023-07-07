@@ -661,7 +661,7 @@ class AdminBookingEditor {
             //$html .= "<td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$couponCode}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'></td><td>" . ($row["ertesitve"] == 1 ? " (orv. értesítve)" : "") . " <span id='eljottchk'>".$this->eljottCheckbox($row)."</span> <input type='checkbox' name='voltnalunk' value='1' " . ($row["voltnalunk"] == 1 ? "checked" : "") . " /> volt már | <a onclick='showEljottLog({$id});return false;' href=''>log</a></td>";
+            $html .= "<td width='60'><a onclick='showEljottLog({$id});return false;' href=''>log</a></td><td><span id='eljottchk'>".$this->eljottCheckbox($row)."</span></td>";
             $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" ".($row["neme"]==1?"checked=\"true\"":"")." value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" ".($row["neme"]==2?"checked=\"true\"":"")." value=\"2\">&nbsp;Nő</td>";
             $html .= "</tr>";
 
@@ -759,13 +759,22 @@ class AdminBookingEditor {
 
     public static function eljottCheckbox($reservationData):string {
         $icon = "<i class='far fa-square'></i>";
+        $behivvaIcon = "<i class='far fa-square'></i>";
         if ($reservationData["eljott"] == 1) {
             $icon = "<i class='fas fa-check-square'></i>";
+        }
+        if ($reservationData["behivva"] == 1) {
+            $behivvaIcon = "<i class='fas fa-check-square'></i>";
         }
 
         $html = "<a data-id='{$reservationData["id"]}' href='#' onclick='eljottButtonProtocol(this, 0);return false;' style='font-size: 16px;'>{$icon}</a> eljött";
         if ($reservationData["eljott"] == 1) {
             $html.= " <input style='width:35px;' name='eljottidopont' type='text' title='eljött időpont' value='".date("H:i", strtotime($reservationData["eljottidopont"]))."' />";
+
+            $html.= "&nbsp;&nbsp;<a data-id='{$reservationData["id"]}' href='#' onclick='behivvaButtonProtocol(this);return false;' style='font-size: 16px;'>{$behivvaIcon}</a> behívva";
+            if ($reservationData["behivva"] == 1) {
+                $html.= " <input style='width:35px;' name='behivvaidopont' type='text' title='behívás időpontja' value='" . date("H:i", strtotime($reservationData["behivvaidopont"])) . "' />";
+            }
         }
 
         return $html;

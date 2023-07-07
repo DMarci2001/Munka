@@ -560,6 +560,22 @@ class AdminAjaxService {
             $this->jsonOut($data);
         }
 
+        if (isset($_POST["behivvacheckboxprotocol"])) {
+            $id = intval($_POST["id"]);
+
+            $data = ["html" => ""];
+            if ($reservationData = sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+                sql_query("update foglalasok set behivva=if(behivva=0, 1, 0) where id=? limit 1", [$id]);
+                sql_query("update foglalasok set behivvaidopont=now() where id=? AND eljott=1 AND behivvaidopont='0000-00-00 00:00:00' limit 1", [$id]);
+
+                $data = sql_query("select behivva, behivvaidopont from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+
+                logActivity("behivva", $id, $data["behivva"] == 1 ? "behívottra állítva" : "nem behívottra állítva");
+
+                $data["html"] = AdminBookingEditor::eljottCheckbox(sql_query("select * from foglalasok where id=?", [$id])->fetch(PDO::FETCH_ASSOC));
+            }
+            $this->jsonOut($data);
+        }
 
         if (isset($_POST["duplicatereservation"])) {
             //die("funkció kikapcsolva");
@@ -738,7 +754,7 @@ class AdminAjaxService {
                 die;
             }
 
-            $logItems = sql_query("select l.*, u.username from activitylog l left join users u on u.id=l.userid where l.mid=? and l.tipus='eljott' order by datum", [$_POST["fid"]])->fetchAll(PDO::FETCH_ASSOC);
+            $logItems = sql_query("select l.*, u.username from activitylog l left join users u on u.id=l.userid where l.mid=? and l.tipus in ('eljott','behivva') order by datum", [$_POST["fid"]])->fetchAll(PDO::FETCH_ASSOC);
             if (empty($logItems)) {
                 echo "Még senki nem jelölte eljöttre.";
             }

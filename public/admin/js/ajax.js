@@ -3223,6 +3223,20 @@ function eljottButtonProtocol(el, force) {
     })
 }
 
+function behivvaButtonProtocol(el) {
+    let id = $(el).data("id");
+
+    $.ajax({
+        url: "index.php",
+        method: "POST",
+        data: { behivvacheckboxprotocol: 1, id: id },
+        success: function (response) {
+            $("#eljottchk").html(response.html);
+        }
+    })
+}
+
+
 function setCovidListStatus(status, id) {
     if (status == "DENIED") {
         $("#coviddeniedrow"+id).slideToggle();
