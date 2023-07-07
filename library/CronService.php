@@ -10,6 +10,8 @@ class CronService {
     private $smsWarningEmails = ["jnsmobil@gmail.com", "lazar.gabriella@hungariamed.hu", "marton.gergely@hungariamed.hu"];
     private $smsWarningLimit  = 20000;
 
+    const HMM_ESZTERGOM_HELYSZINID = 532;
+
     public function __construct()
     {
         if (isset($_GET["interval"])) {
@@ -474,12 +476,12 @@ class CronService {
     }
 
     public function _smsAlertBeforeReservation() {
-        //sms értesítés a foglalás előtt
+        //sms értesítés a foglalás előtt (kivéve hmm esztergom!)
         if (!in_array(date("G"),array(22,23,0,1,2,3,4,5))) {
             $res = sql_query("SELECT f.*,h.cim FROM foglalasok f 
             LEFT JOIN helyszinek h ON h.id=f.helyszinid
 		    LEFT JOIN cegek c ON c.`id`=f.`cegid`
-		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND c.smshour<>0 AND f.externalid=''");
+		    WHERE datum>NOW() AND datum<DATE_ADD(NOW(),INTERVAL c.smshour hour) AND f.telefon<>'' AND f.aktiv=1 AND smssent=0 and f.parentid=0 AND c.smshour<>0 AND f.externalid='' and f.helyszinid<>?", [self::HMM_ESZTERGOM_HELYSZINID]);
             while ($row = sql_fetch_array($res)) {
                 $tel = $row["telefon"];
 
@@ -510,6 +512,55 @@ class CronService {
                 //mail("jns@jns.hu",$szoveg,"");
             }
         }
+
+        //24 órával előtte értesítés esztergomnak
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $res = sql_query("SELECT datum, helyszinid, szurestipusid, cegid, nev, email, telefon FROM foglalasok WHERE helyszinid=? AND smssent=0 AND telefon<>'' AND datum>DATE_ADD(NOW(), INTERVAL 23 HOUR) AND datum<DATE_ADD(NOW(), INTERVAL 24 HOUR) AND aktiv=1 AND parentid=0 AND f.externalid='' ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
+            while ($row = sql_fetch_array($res)) {
+                $tel = $row["telefon"];
+
+                //kiegészítő vizsgálatokról nem kell sms
+                if (in_array($row["szurestipusid"], [Booking_Constants::TUDOSZURES_ID, Booking_Constants::LABOR_ID, Booking_Constants::HALLASVIZSGALAT_ID, Booking_Constants::COVID_ID])) {
+                    continue;
+                }
+
+                sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
+
+                $szoveg = Booking_Constants::COMPANY_NAME_SHORT . " időpont foglalása van 24 óra múlva: " . substr($row["datum"], 11, 5) . " {$row["cim"]}";
+
+                if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
+                    $this->utils->sendSMS($tel, $szoveg);
+                    echo "sms sent to: {$tel}\n";
+                }
+                mail("jnsmobil@gmail.com","24 óra - ".$szoveg,"");
+            }
+        }
+
+        //7 órakor minden aznapinak sms
+        if (Booking_Constants::SQL_DB == "hungariamed" && date("G") == 7) {
+            $nap = date("Y-m-d");
+            $res = sql_query("SELECT datum, helyszinid, szurestipusid, cegid, nev, email, telefon FROM foglalasok WHERE helyszinid=? AND smssent IN (0, 1) AND telefon<>'' AND datum>'{$nap} 00:00:00' AND datum<'{$nap} 23:59:59' AND aktiv=1 AND parentid=0 ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
+            while ($row = sql_fetch_array($res)) {
+                $tel = $row["telefon"];
+
+                //kiegészítő vizsgálatokról nem kell sms
+                if (in_array($row["szurestipusid"], [Booking_Constants::TUDOSZURES_ID, Booking_Constants::LABOR_ID, Booking_Constants::HALLASVIZSGALAT_ID, Booking_Constants::COVID_ID])) {
+                    continue;
+                }
+
+                sql_query("update foglalasok set smssent=2 where id='{$row["id"]}'");
+
+                $szoveg = Booking_Constants::COMPANY_NAME_SHORT . " a mai napon időpont foglalása van: " . substr($row["datum"], 11, 5) . " {$row["cim"]}";
+
+                if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
+                    $this->utils->sendSMS($tel, $szoveg);
+                    echo "sms sent to: {$tel}\n";
+                    mail("jnsmobil@gmail.com","7 óra - ".$szoveg,"");
+                }
+            }
+        }
+
+
     }
 
     private function _updateNaploszam() {
