@@ -10,19 +10,35 @@ class LaborKeroService
             die;
         }
 
+        if (isset($_POST["savelaborkero"])) {
+            $requestId = intval($_POST["rid"]);
+            $reservationId = intval($_POST["fid"]);
+            $service = new SpektrumlabService();
+
+            sql_query("update labrequests set status='pending', hl7=? where id=?", [$service->generateHL7FileByRequestId($requestId), $requestId]);
+            echo $this->laborKeroWindow($reservationId);
+            die;
+        }
+
         if (isset($_POST["laborkeroItemChange"])) {
             $requestId = intval($_POST["rid"]);
             $itemId = intval($_POST["itemId"]);
             $checked = intval($_POST["checked"]);
-            if ($checked == 1) {
-                sql_query("insert into labrequestitems set itemid=?, requestid=?", [$itemId, $requestId]);
+            $error = "";
+
+            if ($requestData = sql_query("select id, laborpacks, status from labrequests where id=? and status='temp'", [$requestId])->fetch(PDO::FETCH_ASSOC)) {
+                if ($checked == 1) {
+                    sql_query("insert into labrequestitems set itemid=?, requestid=?", [$itemId, $requestId]);
+                } else {
+                    sql_query("delete from  labrequestitems where itemid=? and requestid=?", [$itemId, $requestId]);
+                }
             } else {
-                sql_query("delete from  labrequestitems where itemid=? and requestid=?", [$itemId, $requestId]);
+                $error = "Lezárt laborkérő, már nem változtatható!";
             }
 
-            $data = sql_query("select count(*) as db from labrequestitems where requestid=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
-            echo $data["db"];
-            die;
+            $totalData = $this->calculateLaborKeroPrice($requestId);
+
+            Utils::jsonOut(["error" => $error, "db" => $totalData["text"]]);
         }
 
         if (isset($_POST["addPackToLaborRequest"])) {
@@ -35,24 +51,28 @@ class LaborKeroService
             }
 
             if (empty($error)) {
-                if ($requestData = sql_query("select id, laborpacks from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
-                    $packs = json_decode($requestData["laborpacks"]);
-                    if (in_array($packId, $packs)) {
-                        $error = "Ezt a csomagot már hozzáadtad a laborkéréshez!";
-                    } else {
-                        $packs[] = $packId;
-                        sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
+                if ($requestData = sql_query("select id, laborpacks, status from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+                    if ($requestData["status"] == "temp") {
+                        $packs = json_decode($requestData["laborpacks"]);
+                        if (in_array($packId, $packs)) {
+                            $error = "Ezt a csomagot már hozzáadtad a laborkéréshez!";
+                        } else {
+                            $packs[] = $packId;
+                            sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
 
-                        $items = $this->getLaborRequestItems($requestData["id"]);
-                        if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
-                            $packItems = json_decode($packData["items"]);
-                            foreach ($packItems as $packItem) {
-                                if (!in_array($packItem, $items)) {
-                                    $items[] = $packItem;
+                            $items = $this->getLaborRequestItems($requestData["id"]);
+                            if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
+                                $packItems = json_decode($packData["items"]);
+                                foreach ($packItems as $packItem) {
+                                    if (!in_array($packItem, $items)) {
+                                        $items[] = $packItem;
+                                    }
                                 }
+                                $this->putLaborRequestItems($requestData["id"], $items);
                             }
-                            $this->putLaborRequestItems($requestData["id"], $items);
                         }
+                    } else {
+                        $error = "Lezárt laborkérő, már nem változtatható!";
                     }
                 }
             }
@@ -63,41 +83,45 @@ class LaborKeroService
         if (isset($_POST["removePackFromLaborRequest"])) {
             $reservationId = intval($_POST["fid"]);
             $packId = intval($_POST["packId"]);
+            $error = "";
 
-            if ($requestData = sql_query("select id, laborpacks from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
-                $packs = json_decode($requestData["laborpacks"]);
-                if (($key = array_search($packId, $packs)) !== false) {
-                    unset($packs[$key]);
-                }
-                sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
-
-                $items = $this->getLaborRequestItems($requestData["id"]);
-                if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
-                    $packItems = json_decode($packData["items"]);
-                    foreach ($items as $key => $item) {
-                        if (in_array($item, $packItems)) {
-                            unset($items[$key]);
-                        }
+            if ($requestData = sql_query("select id, laborpacks, status from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+                if ($requestData["status"] == "temp") {
+                    $packs = json_decode($requestData["laborpacks"]);
+                    if (($key = array_search($packId, $packs)) !== false) {
+                        unset($packs[$key]);
                     }
-                }
-                $this->putLaborRequestItems($requestData["id"], $items);
+                    sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
 
-                //visszatesszük az esetleg más csomagokban még szereplő tételeket
-                foreach ($packs as $pack) {
-                    if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$pack])->fetch(PDO::FETCH_ASSOC)) {
+                    $items = $this->getLaborRequestItems($requestData["id"]);
+                    if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
                         $packItems = json_decode($packData["items"]);
-                        foreach ($packItems as $packItem) {
-                            if (!in_array($packItem, $items)) {
-                                $items[] = $packItem;
+                        foreach ($items as $key => $item) {
+                            if (in_array($item, $packItems)) {
+                                unset($items[$key]);
                             }
                         }
                     }
+                    $this->putLaborRequestItems($requestData["id"], $items);
+
+                    //visszatesszük az esetleg más csomagokban még szereplő tételeket
+                    foreach ($packs as $pack) {
+                        if ($packData = sql_query("select items from synlab_labor_csomagok where id=?", [$pack])->fetch(PDO::FETCH_ASSOC)) {
+                            $packItems = json_decode($packData["items"]);
+                            foreach ($packItems as $packItem) {
+                                if (!in_array($packItem, $items)) {
+                                    $items[] = $packItem;
+                                }
+                            }
+                        }
+                    }
+                    $this->putLaborRequestItems($requestData["id"], $items);
+                } else {
+                    $error = "Lezárt laborkérő, már nem változtatható!";
                 }
-                $this->putLaborRequestItems($requestData["id"], $items);
             }
 
-            echo $this->laborKeroWindow($reservationId);
-            die;
+            Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
         }
     }
 
@@ -114,10 +138,44 @@ class LaborKeroService
         return $result;
     }
 
+    private function calculateLaborKeroPrice($requestId):array {
+        $result = ["db" => 0, "price" => "", "text" => ""];
+        $packPrice = 0;
+        $itemPrice = 0;
+
+        $packItems = [];
+        $laborRequestData = sql_query("select id, laborpacks from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+        $selectedItems = $this->getLaborRequestItems($requestId);
+        $requestPacks = json_decode($laborRequestData["laborpacks"], JSON_OBJECT_AS_ARRAY);
+
+        foreach ($requestPacks as $pack) {
+            $packData = sql_query("select items, price from synlab_labor_csomagok where id=?", [$pack])->fetch(PDO::FETCH_ASSOC);
+            $packIds = json_decode($packData["items"], JSON_OBJECT_AS_ARRAY);
+            $packItems = array_merge($packItems, $packIds);
+            $packPrice += $packData["price"];
+        }
+
+        $packItems = array_unique($packItems);
+
+        foreach ($selectedItems as $itemId) {
+            if (!in_array($itemId, $packItems)) {
+                $itemData = sql_query("select price from synlab_labor_tetelek where id=?", [$itemId])->fetch(PDO::FETCH_ASSOC);
+                $itemPrice += $itemData["price"];
+            }
+        }
+
+        $result["db"] = count($selectedItems);
+        $result["price"] = $packPrice + $itemPrice;
+        $result["text"] = "{$result["db"]} tétel, {$result["price"]} Ft";
+
+        return $result;
+    }
+
     public function laborKeroWindow($reservationId): string {
         $laborRequestData = $this->getLaborRequestData($reservationId);
         $requestPacks = json_decode($laborRequestData["laborpacks"]);
         $selectedItems = $this->getLaborRequestItems($laborRequestData["id"]);
+        $totalData = $this->calculateLaborKeroPrice($laborRequestData["id"]);
 
         $html = "";
 
@@ -137,7 +195,7 @@ class LaborKeroService
         $html .= "</div>";
 
         $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 10px;width:10px;'>";
-        $html .= "<a class='printbutton' onclick='addPackToLaborRequest();return false;' href='#' style='background: #00aa00'>csomag hozzáadása</a> ";
+        $html .= "<a class='printbutton' onclick='addPackToLaborRequest();return false;' href='#' style='background: #00aa00'><i class='fa-solid fa-plus'></i> csomag</a> ";
         $html .= "</div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'>";
         if (empty($requestPacks)) {
@@ -150,40 +208,51 @@ class LaborKeroService
         }
         $html .= "</div>";
 
-        $html .= "<div style='display:table-cell;vertical-align: middle;text-align: right;'><span id='laborkeroteteleknumber'>".count($selectedItems)."</span> tétel</div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;text-align: right;'><span id='laborkeroteteleknumber'>{$totalData["text"]}</span></div>";
 
         $html .= "</div>";
 
         $html .= "</div>";
+
+        $showCheckBoxes = $laborRequestData["status"] == "temp";
 
 
         $html .= "<div id='labortetelekcheckboxes' style='height:610px;overflow: auto;'>";
-        $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t 
+
+        if ($showCheckBoxes) {
+            $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t 
             left join synlab_labor_kerolapok k on k.id=t.appform 
             LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t.category
             order by t.appform, t.category, t.name")->fetchAll(PDO::FETCH_ASSOC);
 
-        $lastAppForm = $lastCategory = 0;
-        foreach ($items as $item) {
-            if ($lastAppForm != $item["appform"]) {
-                $lastAppForm = $item["appform"];
-                $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>{$item["kerolap"]}</div>";
+            $lastAppForm = $lastCategory = 0;
+            foreach ($items as $item) {
+                if ($lastAppForm != $item["appform"]) {
+                    $lastAppForm = $item["appform"];
+                    $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>{$item["kerolap"]}</div>";
+                }
+                if ($lastCategory != $item["category"]) {
+                    $lastCategory = $item["category"];
+                    $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
+                }
+                $checked = in_array($item["id"], $selectedItems) ? "checked" : "";
+                $html .= "<div style='display:inline-block;width:190px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' type='checkbox' value='1' {$checked}/> {$item["name"]}</span></div>";
             }
-            if ($lastCategory != $item["category"]) {
-                $lastCategory = $item["category"];
-                $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
-            }
-            $checked = in_array($item["id"], $selectedItems) ? "checked" : "";
-            $html .= "<div style='display:inline-block;width:190px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' type='checkbox' value='1' {$checked}/> {$item["name"]}</span></div>";
+        } else {
+            $html.= nl2br($laborRequestData["hl7"]);
         }
+
         $html .= "<div style='margin-top:10px;'></div>";
         $html .= "</div>";
 
         $html .= "<div style='margin-top:10px;'>";
         $html .= "<input type='hidden' id='laborkeroreservationid' value='{$reservationId}' />";
         $html .= "<input type='hidden' id='laborkerorequestid' value='{$laborRequestData["id"]}' />";
-        $html .= "<a class='printbutton' onclick='saveLaborKero();return false;' href='#' style='background: #00aa00'>Laborkérő mentése</a> ";
+        //if ($laborRequestData["status"] == "temp") {
+            $html .= "<a class='printbutton' onclick='saveLaborKero();return false;' href='#' style='background: #00aa00'>Laborkérő mentése</a> ";
+        //}
         $html .= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
+        $html .= "Status: {$laborRequestData["status"]}";
         $html .= "</div>";
 
         $html .= "</div>";

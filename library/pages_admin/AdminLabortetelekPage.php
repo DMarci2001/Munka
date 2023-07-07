@@ -228,11 +228,20 @@ class AdminLabortetelekPage extends AdminCorePage
 
         //Tétel kijelölése/kijelölés megszüntetése:
         if (isset($_POST["selectItemForPackage"])) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+
             $csomagId = $_POST["csomagId"];
             $itemId = $_POST["selectItemForPackage"];
+            $fieldName = "items";
 
-            if ($packageData = sql_query("select items from synlab_labor_csomagok where id=?", [$csomagId])->fetch(PDO::FETCH_ASSOC)) {
-                $this->packageItems = json_decode($packageData["items"]);
+            $itemData = sql_query("select provider from synlab_labor_tetelek where id=?", [$itemId])->fetch(PDO::FETCH_ASSOC);
+            if ($itemData["provider"] == "spektrumlab") {
+                $fieldName = "spektrumitems";
+            }
+
+            if ($packageData = sql_query("select items, spektrumitems from synlab_labor_csomagok where id=?", [$csomagId])->fetch(PDO::FETCH_ASSOC)) {
+                $this->packageItems = json_decode($packageData["{$fieldName}"]);
             }
 
             $newItems = [];
@@ -245,7 +254,7 @@ class AdminLabortetelekPage extends AdminCorePage
                 $newItems[] = $itemId;
             }
 
-            sql_query("update synlab_labor_csomagok set items=? where id=?", [json_encode($newItems), $csomagId]);
+            sql_query("update synlab_labor_csomagok set {$fieldName}=? where id=?", [json_encode($newItems), $csomagId]);
             die();
         }
 
@@ -280,7 +289,7 @@ class AdminLabortetelekPage extends AdminCorePage
         }
 
         if (isset($_POST["changeLaborElkeszules"])) {
-            $value = intval($_POST["changeLaborElkeszules"]);
+            $value = $_POST["changeLaborElkeszules"];
             $tid = intval($_POST["tid"]);
 
             sql_query("update synlab_labor_tetelek set elkeszules=? where id=?", [$value, $tid]);
@@ -498,87 +507,6 @@ class AdminLabortetelekPage extends AdminCorePage
         return $html;
     }
 
-    private function showItems($filterId = null, $appform = null, $packageInstall = null, $listView = null):string {
-        $html = "";
-        //Ha az appform-ot nem választották ki v. nullára állították akkor resetelje a kategória filtert is.
-        if ($appform == null) $filterId = null;
-
-        //Csomag szerkesztésekor dekódolom a küldött json-t, hogy megvizsgálhassam.                 
-        if (!empty($packageInstall)) {
-            $packageInstall = json_decode($packageInstall);
-            $strPackageItems = "FIELD(slt.id," . implode(",", $packageInstall) . ") DESC,";
-        }
-
-        //Le kell kérdeznem a tételeket:
-        $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap FROM synlab_labor_tetelek slt
-                         LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
-                         LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
-                         WHERE TRUE " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
-                         ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
-
-        $qf = sql_query("SELECT id, name FROM synlab_labor_kerolapok ORDER BY name ASC");
-
-        $formFilter = "<select name=\"formFilter\" " . (!empty($packageInstall) ? "style=\"display:none\"" : "") . ">";
-        $formFilter .= "<option value=\"*\">Összes</option>";
-        while ($resf = sql_fetch_array($qf)) {
-            $formFilter .= "<option " . (!empty($appform) && $appform == $resf["id"] ? "selected" : null) . " value=\"{$resf["id"]}\">{$resf["name"]}</option>";
-        }
-        $formFilter .= "</select>&nbsp;<input type=\"submit\" " . (!empty($packageInstall) ? "style=\"display:none\"" : "") . " value=\"Kérőlap szűrés\" name=\"filterbyform\">";
-
-        $qc = sql_query("SELECT sltk.id,sltk.name FROM synlab_labor_tetelek slt
-                         LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
-                         WHERE TRUE " . (!empty($appform) ? "AND slt.appform={$appform}" : "") . "
-                         GROUP BY  sltk.id
-                         ORDER BY name ASC");
-
-        $cFilter = "<select name=\"cFilter\" " . (empty($appform) ? "disabled=\"true\"" : "") . ">";
-        $cFilter .= "<option value=\"*\">Összes</option>";
-        while ($resc = sql_fetch_array($qc)) {
-            $cFilter .= "<option " . (!empty($filterId) && $filterId == $resc["id"] ? "selected" : null) . " value=\"{$resc["id"]}\">{$resc["name"]}</option>";
-        }
-        $cFilter .= "</select>&nbsp;<input " . (empty($appform) ? "disabled=\"true\"" : "") . " type=\"submit\" value=\"Kategória szűrés\" name=\"filterbycategory\">";
-
-        $searchbyitem = "<input type=\"textbox\" placeholder=\"Keresés...\" onkeyup=\"searchbyitem($(this).val())\" name=\"search-by-item-name\" >";
-
-        $setSelectedItemJScall = "onClick='selectItemForPackage($(this).val())'";
-
-        $html.= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
-        $html.= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek&nbsp;&nbsp;{$formFilter}&nbsp;{$cFilter}&nbsp;&nbsp;" . (!empty($packageInstall) ? $searchbyitem : "") . "</td>";
-
-        $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (nap)</td>";
-        $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
-
-        $html.= "</tr>";
-
-        $html.= "<tbody id='item-content'>";
-        while ($resq = sql_fetch_array($rq)) {
-            $html.= "<tr>";
-            $html.= "<td valign='top'><div class='tcella' style=''>";
-            if (!$listView) {
-                $html.= "<input type='checkbox' name='item[]' {$setSelectedItemJScall} " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked=\"true\"" : "") . " value=\"{$resq["id"]}\">&nbsp;";
-            }
-            $html.= "{$resq["name"]}";
-            $html.= "</div></td>";
-
-            //Kérőlap megnevezés:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
-
-            //Kategória megnevezés:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["category_name"]}</div></td>";
-
-            //Minta vételi cső:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritemelkeszulestextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["elkeszules"]}'></div></td>";
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritempricetextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["price"]}'> HUF</div></td>";
-
-            $html.= "</tr>";
-        }
-
-        $html.= "</tbody>";
-        $html.= "</table>";
-        return $html;
-    }
-
     private function showItemsNew($packageId = 0):string {
         $html = "";
         $listView = $packageId == 0;
@@ -588,48 +516,108 @@ class AdminLabortetelekPage extends AdminCorePage
         //Csomag szerkesztésekor dekódolom a küldött json-t, hogy megvizsgálhassam.
         if (!empty($packageData["items"])) {
             $packageInstall = json_decode($packageData["items"]);
+            $packageInstallSpektrum = json_decode($packageData["spektrumitems"]);
             $strPackageItems = "FIELD(slt.id," . implode(",", $packageInstall) . ") DESC,";
+            $strPackageItemsSpektrum = "FIELD(slt.id," . implode(",", $packageInstallSpektrum) . ") DESC,";
         }
 
         //Le kell kérdeznem a tételeket:
         $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap FROM synlab_labor_tetelek slt
                          LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
-                         WHERE TRUE " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
+                         WHERE slt.provider='synlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
                          ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
-        $html.= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
-        $html.= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek</td>";
-        $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (nap)</td>";
-        $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
+        if ($listView) {
+            $html .= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
+            $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek</td>";
+            $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (munkanap)</td>";
+            $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
 
-        $html.= "</tr>";
+            $html .= "</tr>";
 
-        $html.= "<tbody id='item-content'>";
-        while ($resq = sql_fetch_array($rq)) {
-            $html.= "<tr>";
-            $html.= "<td valign='top'><div class='tcella' style=''>";
-            if (!$listView) {
-                $html.= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+            $html .= "<tbody id='item-content'>";
+            while ($resq = sql_fetch_array($rq)) {
+                $html .= "<tr>";
+                $html .= "<td valign='top'><div class='tcella' style=''>";
+                if (!$listView) {
+                    $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+                }
+                $html .= "{$resq["name"]}";
+                $html .= "</div></td>";
+
+                //Kérőlap megnevezés:
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
+
+                //Kategória megnevezés:
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["category_name"]}</div></td>";
+
+                //Minta vételi cső:
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritemelkeszulestextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["elkeszules"]}'></div></td>";
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritempricetextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["price"]}'> HUF</div></td>";
+                $html .= "</tr>";
             }
-            $html.= "{$resq["name"]}";
-            $html.= "</div></td>";
 
-            //Kérőlap megnevezés:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
+            $html .= "</tbody>";
+            $html .= "</table>";
+        } else {
+            $html .= "<div style='display:table-cell;vertical-align:top;'>";
+            $html .= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
+            $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Synlab tételek</td>";
+            $html .= "</tr>";
 
-            //Kategória megnevezés:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["category_name"]}</div></td>";
+            $html .= "<tbody id='item-content'>";
+            while ($resq = sql_fetch_array($rq)) {
+                $html .= "<tr>";
+                $html .= "<td valign='top'><div class='tcella' style=''>";
+                $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+                $html .= mb_substr($resq["name"], 0, 50);
+                $html .= "</div></td>";
 
-            //Minta vételi cső:
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritemelkeszulestextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["elkeszules"]}'></div></td>";
-            $html.= "<td nowrap valign='top'><div class='tcella' style='min-width:10px;text-align:center;font-weight:bold'><input data-tid='{$resq["id"]}' class='laboritempricetextbox' type='textbox' style='width:80px;text-align:center' value='{$resq["price"]}'> HUF</div></td>";
-            $html.= "</tr>";
+                //Kérőlap megnevezés:
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
+
+                $html .= "</tr>";
+            }
+
+            $html .= "</tbody>";
+            $html .= "</table>";
+            $html .= "</div>";
+
+            $rq = sql_query("SELECT slt.* FROM synlab_labor_tetelek slt 
+                         WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
+                         ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC");
+
+
+            $html .= "<div style='display:table-cell;width:20px;vertical-align:top;'></div>";
+            $html .= "<div style='display:table-cell;width:20px;vertical-align:top;border-left:1px solid #ccc;'></div>";
+
+            $html .= "<div style='display:table-cell;vertical-align:top;'>";
+            $html .= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems2'>";
+            $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>SpektrumLab tételek</td>";
+            $html .= "</tr>";
+
+            $html .= "<tbody id='item-content'>";
+            while ($resq = sql_fetch_array($rq)) {
+                $html .= "<tr>";
+                $html .= "<td valign='top'><div class='tcella' style=''>";
+                $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+                $html .= mb_substr($resq["name"], 0, 50);
+                $html .= "</div></td>";
+
+                //Kérőlap megnevezés:
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kod"]}</div></td>";
+
+                $html .= "</tr>";
+            }
+
+            $html .= "</tbody>";
+            $html .= "</table>";
+            $html .= "</div>";
+
+
         }
-
-        $html.= "</tbody>";
-        $html.= "</table>";
         return $html;
     }
 
