@@ -90,6 +90,22 @@ function initLaborEditor() {
     });
 }
 
+function changeLaborCsomagCompanyShow(id){
+    let tid = $(id).data("tid");
+    let companyid = $(id).data("companyid");
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labortetelek",
+        data: {changeLaborCsomagCompanyShow:true,tid:tid,companyid:companyid},
+        success: function(response){
+            $.toast({
+                text: response,
+                icon: 'success'
+            });
+        }
+    })
+}
+
 function importCsomapPublicPrice(cid, tid) {
     $.ajax({
         type:"POST",
