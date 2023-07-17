@@ -350,9 +350,9 @@ class VaroteremService
                 $colorindicator = "<i class=\"fa-solid fa-circle\"></i>&nbsp;"; 
             }
 
-            $html .= "         <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},{$r["id"]})' href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
+            $html .= "         <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},{$r["id"]});return false' href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
         }
-        $html .= "             <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},0)' href=\"#\"><i class=\"fa-solid fa-user-doctor\"></i>&nbsp;Bármelyik</a></li>";
+        $html .= "             <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},0);return false' href=\"#\"><i class=\"fa-solid fa-user-doctor\"></i>&nbsp;Bármelyik</a></li>";
         
         //$html .= "           <li><a class=\"dropdown-item\" href=\"#\"><i class=\"fa-sharp fa-solid fa-pen-to-square\"></i>&nbsp;Adatok szerkesztése</a></li>";
         //$html .= "           <li><a class=\"dropdown-item\" href=\"#\"><i class=\"fa-solid fa-rotate-left\"></i>&nbsp;Vissza a váróterembe</a></li>";
