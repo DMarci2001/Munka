@@ -107,8 +107,11 @@ class AdminUser {
         "jog_beutalokezeles" => [
             "name" => "beutalók kezelése"
         ],
+        "jog_beutalok_megtekintes" => [
+            "name" => "Fájlok megtekintése"
+        ],
         "jog_beutalo_hozzadas" => [
-            "name" => "Beutalók feltöltése"
+            "name" => "Beutalók generálás"
         ],
         "jog_file_hozzadas" => [
             "name" => "File feltöltése"
@@ -477,6 +480,14 @@ class AdminUser {
 
     public function beutaloHozzadasAccess():bool {
         return $this->checkPermission("jog_beutalo_hozzadas");
+    }
+
+    public function fileMegtekintesAccess():bool {
+        return $this->checkPermission("jog_beutalok_megtekintes");
+    }
+
+    public function fileUploadAccess():bool {
+        return $this->checkPermission("jog_file_hozzadas");
     }
 
     public function beutalomenupontAccess():bool{
