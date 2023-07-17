@@ -94,6 +94,19 @@ class CronService {
             $this->_tesztStuff();
         }
 
+        if ($this->interval == "audimail") {
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+
+            require "AudiMail.php";
+
+            $service = new AudiMail();
+            $service->send();
+
+            echo "audidone\n";
+            die;
+        }
+
         if ($this->interval == "abi_upload") {
             $this->_abiUpload();
         }
@@ -108,7 +121,8 @@ class CronService {
         //$dicomService = new DicomService();
         //$dicomService->processEntries();
 
-        $this->seemeBalanceCheck();
+        $this->_smsAlertBeforeReservation();
+        //$this->seemeBalanceCheck();
 
         //$this->_sendAlkExcel();
         //$this->utils->sendSMS("06209996183","időpont foglalása van: 11:30 Győr Rákóczi Ferenc utca 44. Az üzemorvostól kapott beutaló nyomtatványt hozza magával!");
@@ -518,7 +532,7 @@ class CronService {
 
         //24 órával előtte értesítés esztergomnak
         if (Booking_Constants::SQL_DB == "hungariamed") {
-            $res = sql_query("SELECT datum, helyszinid, szurestipusid, cegid, nev, email, telefon FROM foglalasok WHERE helyszinid=? AND smssent=0 AND telefon<>'' AND datum>DATE_ADD(NOW(), INTERVAL 23 HOUR) AND datum<DATE_ADD(NOW(), INTERVAL 24 HOUR) AND aktiv=1 AND parentid=0 AND f.externalid='' ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
+            $res = sql_query("SELECT f.id, datum, helyszinid, szurestipusid, f.cegid, nev, email, telefon, h.cim FROM foglalasok f LEFT JOIN helyszinek h ON h.id=f.helyszinid WHERE helyszinid=? AND f.smssent=0 AND telefon<>'' AND datum>DATE_ADD(NOW(), INTERVAL 23 HOUR) AND datum<DATE_ADD(NOW(), INTERVAL 24 HOUR) AND f.aktiv=1 AND parentid=0 AND externalid='' ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
             while ($row = sql_fetch_array($res)) {
                 $tel = $row["telefon"];
 
@@ -531,18 +545,18 @@ class CronService {
 
                 $szoveg = Booking_Constants::COMPANY_NAME_SHORT . " időpont foglalása van 24 óra múlva: " . substr($row["datum"], 11, 5) . " {$row["cim"]}";
 
-                if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
+                //if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
                     $this->utils->sendSMS($tel, $szoveg);
                     echo "sms sent to: {$tel}\n";
-                }
-                mail("jnsmobil@gmail.com","24 óra - ".$szoveg,"");
+                //}
+                //mail("jnsmobil@gmail.com","{$tel} 24 óra - ".$szoveg,"");
             }
         }
 
         //7 órakor minden aznapinak sms
         if (Booking_Constants::SQL_DB == "hungariamed" && date("G") == 7) {
             $nap = date("Y-m-d");
-            $res = sql_query("SELECT datum, helyszinid, szurestipusid, cegid, nev, email, telefon FROM foglalasok WHERE helyszinid=? AND smssent IN (0, 1) AND telefon<>'' AND datum>'{$nap} 00:00:00' AND datum<'{$nap} 23:59:59' AND aktiv=1 AND parentid=0 ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
+            $res = sql_query("SELECT f.id, datum, helyszinid, szurestipusid, f.cegid, nev, email, telefon, h.cim FROM foglalasok f LEFT JOIN helyszinek h ON h.id=f.helyszinid WHERE helyszinid=? AND smssent IN (0, 1) AND telefon<>'' AND datum>'{$nap} 00:00:00' AND datum<'{$nap} 23:59:59' AND f.aktiv=1 AND parentid=0 AND externalid='' ORDER BY datum", [self::HMM_ESZTERGOM_HELYSZINID]);
             while ($row = sql_fetch_array($res)) {
                 $tel = $row["telefon"];
 
@@ -555,11 +569,11 @@ class CronService {
 
                 $szoveg = Booking_Constants::COMPANY_NAME_SHORT . " a mai napon időpont foglalása van: " . substr($row["datum"], 11, 5) . " {$row["cim"]}";
 
-                if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
+                //if (in_array(substr($tel, 0, 2), ["00", "06", "36"])) {
                     $this->utils->sendSMS($tel, $szoveg);
                     echo "sms sent to: {$tel}\n";
-                    mail("jnsmobil@gmail.com","7 óra - ".$szoveg,"");
-                }
+                    //mail("jnsmobil@gmail.com","{$tel} 7 óra - ".$szoveg,"");
+                //}
             }
         }
 
