@@ -1018,7 +1018,10 @@ END:VCALENDAR";
                 $mail = self::getDefaultMailer();
                 $mail->addAddress($row["orvosemail"]);
                 $mail->addAddress(Booking_Constants::RESERVATION_TO_ADDRESS);
-                $mail->addBCC("jns@jns.hu");
+                if (filter_var($row["foglalta"], FILTER_VALIDATE_EMAIL)) {
+                    $mail->addAddress($row["foglalta"]);
+                }
+                //$mail->addBCC("jns@jns.hu");
 
                 $subject = "Egy foglalás törölve lett! {$row["orvosnev"]} - {$row["helyszin"]}";
 
@@ -1037,6 +1040,9 @@ END:VCALENDAR";
                 $mail->Send();
 
                 $this->createNotificationRecord("deletereservation", $row["id"], $row["orvosemail"], $subject, $mbody);
+                if (filter_var($row["foglalta"], FILTER_VALIDATE_EMAIL)) {
+                    $this->createNotificationRecord("deletereservation", $row["id"], $row["foglalta"], $subject, $mbody);
+                }
             }
         }
     }

@@ -443,6 +443,10 @@ class BookingService
                 $distFullDay = "2 day";
             }
 
+            if ($cegId == 4) {
+                $dist = "0 hour";
+            }
+
             if(in_array($cegId, [375])){
                 $dist = "13 day";
 
@@ -583,6 +587,7 @@ class BookingService
                     }
                     $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
                 } else {
+                    //die("itt{$error}".$vanFixError);
                     $text = "nincs időpont<br/>";
                     if (substr_count($error, $text) == 0) {
                         $error .= $text;
@@ -608,7 +613,6 @@ class BookingService
         $ora           = substr($idopont, 11, 5);
         $cegid         = $_SESSION["helyszindata"]["id"];
         $helyszin      = $this->helyszin;
-        $orvosRestrict = "";
         if (!$this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)))) {
             return false;
         }
@@ -624,12 +628,25 @@ class BookingService
             }
         }
 
+        /*
+        echo "SELECT * FROM orvos_beosztas_new b
+		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
+		WHERE b.`helyszinid`=?
+        AND ((INSTR(b.beocegek, ?) OR b.beocegek='') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))
+		AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) " . ($orvos == 0 ? "" : "and b.orvosid='{$orvos}'") . " and b.aktiv=1
+        ORDER BY o.onlytel,o.id";
+
+        print_r(array($helyszin, "|{$cegid}|", $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
+        die;
+        */
+
+
         //időpontra beosztott orvosok kiolvasása
         $resb = sql_query("SELECT * FROM orvos_beosztas_new b 
 		LEFT JOIN orvosok o ON o.`id`=b.`orvosid`
 		WHERE b.`helyszinid`=? 
         AND ((INSTR(b.beocegek, ?) OR b.beocegek='') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW())) 
-		AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) " . ($orvos == 0 ? "" : "and b.orvosid='{$orvos}'") . " and b.aktiv=1 {$orvosRestrict}
+		AND (nap=WEEKDAY(?)+1 or beonap=?) AND TIME(tol)<=TIME(?) AND TIME(IF(potig<>'',potig,ig))>TIME(?) AND INSTR(b.tipusok,?) " . ($orvos == 0 ? "" : "and b.orvosid='{$orvos}'") . " and b.aktiv=1
         ORDER BY o.onlytel,o.id", array($helyszin, "|{$cegid}|", $nap, $nap, $ora, $ora, "|{$this->szuresTipus}|"));
 
         while ($rowb = sql_fetch_array($resb)) {

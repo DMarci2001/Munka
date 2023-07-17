@@ -108,6 +108,8 @@ class AdminBookingEditor {
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
             if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
             if (!isset($_POST["neme"])) $_POST["neme"]=0;
+            if (!isset($_POST["nszam"])) $_POST["nszam"]="";
+            if (!isset($_POST["testalkat"])) $_POST["testalkat"]=0;
             if (!isset($_POST["dokirexmunkakorid"])) $_POST["dokirexmunkakorid"]=0;
             if (!isset($_POST["dokirexcegid"])) $_POST["dokirexcegid"]=0;
 
@@ -136,6 +138,7 @@ class AdminBookingEditor {
                 szulhely=?,
                 anyjaneve=?,
                 neme=?,
+                testalkat=?,
                 irsz=?,
                 varos=?,
                 utca=?,
@@ -154,7 +157,7 @@ class AdminBookingEditor {
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
-            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],
+            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
                 $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
                 $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
@@ -559,7 +562,11 @@ class AdminBookingEditor {
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
                 if (Booking_Constants::SQL_DB == "hungariamed") {
-                    $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő</a>&nbsp;&nbsp;";
+                    $resultArrived = false;
+                    if (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                        $resultArrived = true;
+                    }
+                    $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő".($resultArrived ? " <i class='fa-solid fa-circle-check'></i>":"")."</a>&nbsp;&nbsp;";
                 }
                 $html .= "</div>";
             }
@@ -648,21 +655,31 @@ class AdminBookingEditor {
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'>Szül. hely:</td><td><input data-taborder='5'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szulhely' value='{$row["szulhely"]}'></td>";
-            $html .= "<td width='60'>Naplószám:</td><td><input data-taborder='12' class='inputbox ui-taborder' style='width:200px;' type='text' name='nszam' value='{$row["nszam"]}'></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td>";
-
             if (!empty($row["adoszam"])) {
                 $html .= "<td width='60'>Adószám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='adoszam' value='{$row["adoszam"]}'></td>";
             } else {
                 $html .= "<td width='60'>Törzsszám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></td>";
             }
+            $html .= "</tr>";
+            $html .= "<tr class='pdatarow'>";
+            $html .= "<td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td>";
+            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" ".($row["neme"]==1?"checked=\"true\"":"")." value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" ".($row["neme"]==2?"checked=\"true\"":"")." value=\"2\">&nbsp;Nő</td>";
+
             //$html .= "<td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$couponCode}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'><a onclick='showEljottLog({$id});return false;' href=''>log</a></td><td><span id='eljottchk'>".$this->eljottCheckbox($row)."</span></td>";
-            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" ".($row["neme"]==1?"checked=\"true\"":"")." value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" ".($row["neme"]==2?"checked=\"true\"":"")." value=\"2\">&nbsp;Nő</td>";
+
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $html .= "<td colspan='2'>";
+                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==1?"checked='true'":"")." value='1' />&nbsp;Vékony&nbsp;";
+                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==2?"checked='true'":"")." value='2' />&nbsp;Normál&nbsp;";
+                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==3?"checked='true'":"")." value='3' />&nbsp;Túlsúlyos&nbsp;";
+                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==4?"checked='true'":"")." value='4' />&nbsp;Extrém&nbsp;";
+                $html .= "</td>";
+            }
+
+            $html .= "</td>";
             $html .= "</tr>";
 
             $html .= "<tr>";
@@ -748,7 +765,7 @@ class AdminBookingEditor {
         $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
         $items = [];
-        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>'2022-02-01 00:00:00' and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
+        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 YEAR) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>2 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
             $items[] = "'".trim(str_replace("'", "", $munkakor["munkakor"]))."'";
         }
 

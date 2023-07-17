@@ -269,10 +269,16 @@ var varolista = 0;
 
 function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
     if (orvos === undefined) orvos = 0;
+
+    let neme = $('input[name="neme"]:checked', '#iform').val();
+    if (neme == undefined) {
+        neme = 0;
+    }
+
     $.ajax({
         method: "POST",
         url: "index.php",
-        data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), szurestipusid: szurestipusid, orvos: orvos }
+        data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), neme:neme, szurestipusid: szurestipusid, orvos: orvos }
     }).done(function (msg) {
         if (msg == "ok") {
             $("#datumText"+datumIndex).css("background-image", "");

@@ -478,7 +478,7 @@ class BookingPage extends CorePage
             $_POST["szurestipus"] = $_GET["szurestipus"];
         }
 
-        if (isset($_GET["helyszin"])) {
+        if (isset($_GET["helyszin"]) && !isset($_POST["helyszin"])) {
             $_POST["helyszin"] = $_GET["helyszin"];
         }
 
