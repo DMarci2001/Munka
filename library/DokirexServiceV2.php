@@ -39,7 +39,14 @@ class DokirexService
             $this->dbPassword = Booking_Constants::DOKIREX_V2_KELTEXMED_PASSWORD;
         }
 
-        $this->token = $this->getToken();
+        if (!isset($_SESSION["dokirextoken"])) {
+            $this->token = $this->getToken();
+            if (!empty($this->token)) {
+                $_SESSION["dokirextoken"] = $this->token;
+            }
+        } else {
+            $this->token = $_SESSION["dokirextoken"];
+        }
     }
 
     public function insertPaciensIntoDokirex($params)
@@ -68,8 +75,8 @@ class DokirexService
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
         $response = curl_exec($ch);
         $this->log($action, json_encode($params), $response);
@@ -101,8 +108,8 @@ class DokirexService
         curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf-8"]);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
         $response = curl_exec($ch);
         $this->log($action, $params, $response);

@@ -13,10 +13,11 @@ class ExcelService {
 
     private string $esztergomFilter = "f.helyszinid=532 and ";
     private string $jaszSuzukiFilter = "f.helyszinid=1 AND f.cegid IN (81, 123, 504, 99, 473) and ";
+    private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532) AND f.cegid IN (81, 123, 504, 99, 473) and ";
     private string $extraFilter = "";
 
     public function __construct() {
-        //$this->extraFilter = $this->jaszSuzukiFilter;
+        //$this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
     }
 
     public function setFileName($fileName) {

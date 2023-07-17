@@ -432,7 +432,7 @@ class AdminDoctorsPage extends AdminCorePage {
                             sql_query("update orvos_beosztas_new set fobid=0 where id=?", [$beo["id"]]);
                         }
                     }
-                    echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>{$beo["nap"]} {$beo["beonap"]}\n". Utils::converResult($result)."</pre>";
+                    echo "<pre style='padding:5px;white-space: pre-wrap;background:#ddd;'>{$beo["nap"]} {$beo["beonap"]} {$beo["id"]}\n". Utils::converResult($result)."</pre>";
                 }
 
                 echo "<div style='margin:10px 0px;font-weight: bold'>Foglalások</div>";
