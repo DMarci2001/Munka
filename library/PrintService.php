@@ -5,7 +5,7 @@ use mikehaertl\pdftk\Pdf;
 class PrintService
 {
 
-    private $templates = array(
+    private array $templates = array(
         "menedzserkerdoiv"   => "menedzserkerdoiv.html",
         "alkalmassagi"       => "alkalmassagi.html",
         "alkalmassagipdf"    => "alkalmassagi_form2.pdf",
@@ -15,7 +15,8 @@ class PrintService
         "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf",
         "matrica"            => "matrica.html",
         "matricamegj"        => "matricaMegj.html",
-        "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf"
+        "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf",
+        "laborlelet1"        => "laborLelet1.html"
     );
 
     private $inputs = array(
@@ -32,7 +33,8 @@ class PrintService
 
     private $templateFileName = "";
     private $templateId = "";
-    private $reservationData = null;
+    private array $reservationData = [];
+    private array $laborRequestData = [];
 
     public function __construct()
     {
@@ -47,19 +49,42 @@ class PrintService
         $this->templateFileName = $this->templates[$template];
     }
 
-    public function setReservation($fid, $p)
-    {
-        if (!$this->reservationData = sql_fetch_array(sql_query("select f.*,c.megnev as cegnev,concat(sz.megnev,' ',date(f.datum)) as vizsgnevdatum from foglalasok f
+    public function setReservation($fid, $p):void {
+        if (!$data = sql_fetch_array(sql_query("select f.*,c.megnev as cegnev,concat(sz.megnev,' ',date(f.datum)) as vizsgnevdatum from foglalasok f
         left join cegek c on c.id=f.cegid
         left join szurestipusok sz on sz.id=f.szurestipusid
-        where f.id=? and pass=?", array($_GET["fid"], $_GET["p"])))) {
+        where f.id=? and pass=?", [$fid, $p]))) {
             die("error code 1254");
         }
+        $this->reservationData = $data;
+    }
+
+    public function setReservationById($fid):void {
+        if (!$data = sql_fetch_array(sql_query("select f.*,c.megnev as cegnev,concat(sz.megnev,' ',date(f.datum)) as vizsgnevdatum from foglalasok f
+        left join cegek c on c.id=f.cegid
+        left join szurestipusok sz on sz.id=f.szurestipusid
+        where f.id=?", [$fid]))) {
+            die("error code 1253");
+        }
+        $this->reservationData = $data;
+    }
+
+    public function setLaborRequest($rid, $p):void {
+        if (!$data = sql_fetch_array(sql_query("SELECT r.* FROM labrequests r WHERE r.id=? and r.pass=?", [$rid, $p]))) {
+            die("error code 1354");
+        }
+        $this->laborRequestData = $data;
+        $this->setReservationById($this->laborRequestData["foglalasid"]);
     }
 
 
     public function start()
     {
+        if (substr_count($this->templateId, "labor")) {
+            $this->printLaborLelet();
+            return;
+        }
+
         if ($this->templateId == "karton") {
             $this->printKartonPDF();
             return;
@@ -279,5 +304,83 @@ class PrintService
         $text = str_replace("Ű", "Ü", $text);
         $text = str_replace("Í", "I", $text);
         return $text;
+    }
+
+    private function printLaborLelet() {
+        $outFileName = $this->reservationData["nev"]." laborlelet.pdf";
+        header("Content-Type: application/pdf");
+        header('Content-Disposition: attachment; filename="'.$outFileName.'"');
+        echo base64_decode($this->laborRequestData["resultpdf"]);
+        die;
+
+
+        if (isset($_REQUEST["pdf"])) {
+            $id = $this->laborRequestData["id"];
+            $pass = $this->laborRequestData["pass"];
+            $pdfFileName = Booking_Constants::DOCUMENT_PATH."labor".md5($id.rand(1,10000)).".pdf";
+            $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH."laborenc".md5($id.rand(1,10000)).".pdf";
+            $outFileName = $this->reservationData["nev"]." laborlelet.pdf";
+            $output = `chromium --headless --print-to-pdf="{$pdfFileName}" --no-pdf-header-footer --no-sandbox "https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=laborlelet1&rid={$id}&p={$pass}"`;
+            $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw hmm1 user_pw hmm2`;
+
+            header("Content-Type: application/pdf");
+            header('Content-Disposition: attachment; filename="'.$outFileName.'"');
+            //echo file_get_contents($pdfFileName);
+            echo file_get_contents($pdfFileNameEncripted);
+            unlink($pdfFileName);
+            unlink($pdfFileNameEncripted);
+            die;
+        }
+
+        $maxRowsPerPage = 45;
+
+        header("Content-type: text/html; charset=UTF-8");
+
+        $templateContent = file_get_contents("templates/laborLeletHead.html");
+
+        $laborResultRows = [];
+
+        for ($i=1;$i<=60;$i++) {
+            $laborResultRows[] = "eredmény {$i}";
+        }
+
+        $pages = [];
+        $resultRows = "";
+        $pageNum = 0;
+        $allPages = ceil(count($laborResultRows) / $maxRowsPerPage);
+
+        $sor = 0;
+        foreach ($laborResultRows as $laborResultRow) {
+            if ($sor >= $maxRowsPerPage && isset($page)) {
+                $resultRows.= "<div style='margin-top:10px;'>A lelet a következő oldalon folytatódik!</div>";
+                $pageNum++;
+                $page = str_replace("#laboreredmenysorok#", $resultRows, $page);
+                $page = str_replace("#pagenum#", "{$pageNum}/{$allPages}", $page);
+                $resultRows = "";
+                $pages[] = $page;
+                unset($page);
+                $sor = 0;
+            }
+
+            if (!isset($page)) {
+                $page = file_get_contents("templates/{$this->templateFileName}");
+                $resultRows = "";
+            }
+
+            $resultRows.= "<div>{$laborResultRow}</div>";
+            $sor++;
+        }
+
+        if ($resultRows != "") {
+            $pageNum++;
+            $page = str_replace("#laboreredmenysorok#", $resultRows, $page);
+            $page = str_replace("#pagenum#", "{$pageNum}/{$allPages}", $page);
+            $pages[] = $page;
+        }
+
+        $templateContent = str_replace("#laborlelet#", implode("", $pages), $templateContent);
+        $templateContent = $this->setTemplateMacros($templateContent);
+
+        echo $templateContent;
     }
 }

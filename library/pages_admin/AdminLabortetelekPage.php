@@ -522,9 +522,10 @@ class AdminLabortetelekPage extends AdminCorePage
         }
 
         //Le kell kérdeznem a tételeket:
-        $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap FROM synlab_labor_tetelek slt
+        $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap, t2.name AS spname FROM synlab_labor_tetelek slt
                          LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
+                         LEFT JOIN synlab_labor_tetelek t2 ON t2.id=slt.spid
                          WHERE slt.provider='synlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
                          ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
@@ -543,7 +544,7 @@ class AdminLabortetelekPage extends AdminCorePage
                 if (!$listView) {
                     $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
                 }
-                $html .= "{$resq["name"]}";
+                $html .= "{$resq["name"]}".(empty($resq["spname"]) ? "":"<br/><span style='font-size: 12px;color:#888;'>{$resq["spname"]}</span>");
                 $html .= "</div></td>";
 
                 //Kérőlap megnevezés:

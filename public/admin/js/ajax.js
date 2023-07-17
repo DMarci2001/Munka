@@ -19,6 +19,7 @@ $(document).ready(function () {
 
     self.setInterval("searchTimer()",1000);
     self.setInterval("checkChat()",10000);
+    self.setInterval("checkLaborKeroMessages()",5000);
 
     initUploadRoutine();
     initIrszAutoFill();
@@ -4033,7 +4034,11 @@ function showLaborKeroWin(fid) {
         url:"index.php?page=booking",
         data: {showlaborkerowindow:fid},
         success: function(response){
-            showGeneralPopup(response);
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
         }
     })
 }
@@ -4072,26 +4077,82 @@ function removePackFromLaborRequest(packId) {
         url:"index.php?page=booking",
         data: {removePackFromLaborRequest:1, packId:packId, fid:fid},
         success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
             $.toast({
                 text: "Csomag eltávolítva a laborkérésből",
                 icon: 'success'
             });
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function refreshLaborKeroMessages() {
+    let rid = $("#laborkerorequestid").val();
+    let fid = $("#laborkeroreservationid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {refreshlaborkeromessages:1, rid:rid, fid:fid},
+        success: function(response){
             showGeneralPopup(response);
         }
     })
 }
 
-function saveLaborKero() {
-    let fid=$("#laborkeroreservationid").val();
 
-    $('#labortetelekcheckboxes').find(':checkbox').each(function(){
+function sendLaborKero() {
+    let rid = $("#laborkerorequestid").val();
+    let fid = $("#laborkeroreservationid").val();
 
-        if ($(this).is(':checked')) {
-            //alert("checked");
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {sendlaborkero:1, rid:rid, fid:fid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+            } else {
+                $.toast({
+                    text: "Laborkérés mentve",
+                    icon: 'success'
+                });
+            }
+            showGeneralPopup(response.html);
         }
-
-    });
+    })
 }
+
+function cancelLaborKero() {
+    if (!confirm("Biztos visszavonod ezt a laborkérést?")) {
+        return;
+    }
+
+    let rid = $("#laborkerorequestid").val();
+    let fid = $("#laborkeroreservationid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {cancellaborkero:1, rid:rid, fid:fid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+            } else {
+                $.toast({
+                    text: "Laborkérés visszavonva",
+                    icon: 'success'
+                });
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
 
 function laborkeroItemChange(el, itemId) {
     let rid=$("#laborkerorequestid").val();
@@ -4106,17 +4167,35 @@ function laborkeroItemChange(el, itemId) {
         url:"index.php?page=booking",
         data: {laborkeroItemChange:1, checked:checked, itemId:itemId, rid:rid},
         success: function(response){
-            $("#laborkeroteteleknumber").html(response);
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $("#laborkeroteteleknumber").html(response.db);
             $.toast({
                 text: "Tételek frissítve",
                 icon: 'success'
             });
         }
     });
+}
 
-
-
+function checkLaborKeroMessages() {
+    if ($("#laborkerorequestid").length && $("#laborkeroreservationid").length && $("#laborkerohistory").length && $("#generalpopup").is(":visible")) {
+        refreshLaborKeroMessages();
+    }
 }
 
 
+function toggleRequestDetailRow(id) {
+    $("#requestrow"+id).toggle();
+
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"labrequests", showrequestdetails:id}
+    }).done(function (msg) {
+        $("#requestrow"+id).html(msg);
+    });
+}
 

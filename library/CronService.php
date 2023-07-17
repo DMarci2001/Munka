@@ -67,6 +67,9 @@ class CronService {
 
 			$foService = new FoglaljOrvostService();
 			$foService->retryFailedMessages();
+
+            $spekrtumLabService = new SpektrumlabService();
+            $spekrtumLabService->processPdfFromMessages();
         }
 
         if ($this->interval == "1ora") {

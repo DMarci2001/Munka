@@ -134,6 +134,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminContentsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminVaroteremPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminManagerStatusPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLabRequestsPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/AdminWorkSchedulePage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkersSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");

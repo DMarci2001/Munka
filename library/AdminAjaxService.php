@@ -16,6 +16,9 @@ class AdminAjaxService {
             if (isset($_GET["fid"]) && isset($_GET["p"])) {
                 $printService->setReservation($_GET["fid"], $_GET["p"]);
             }
+            if (isset($_GET["rid"]) && isset($_GET["p"])) {
+                $printService->setLaborRequest($_GET["rid"], $_GET["p"]);
+            }
             $printService->start();
             die;
         }

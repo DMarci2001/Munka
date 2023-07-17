@@ -2,7 +2,7 @@
 
 class SpektrumlabService {
     const LOGIN = "hungariamedm";
-    const LABORID = "hmedlabor";
+    const LABORID = "SPEKTRUMLAB";
 
     const IN_DIR = "/var/commcl/in/";
     const OUT_DIR = "/var/commcl/out/";
@@ -13,21 +13,30 @@ class SpektrumlabService {
 
     const EOF = "\r\n";
 
+    public bool $testing = true;
+    public bool $orvosNemFontos = true;
+
     public function __construct() {
 
     }
 
 
-    public function writeNextRequest() {
+    public function writeNextRequest($requestId):string {
         if ($this->requestRunning()) {
-            return;
+            return "Fut az előző laborkérés!";
         }
 
-        if ($requestData = sql_query("select * from labrequests where status='pending' order by created limit 1")->fetch(PDO::FETCH_ASSOC)) {
+        if ($requestData = sql_query("select * from labrequests where status='pending' and id=? order by created limit 1", [$requestId])->fetch(PDO::FETCH_ASSOC)) {
             $data = $this->generateHL7FileByRequestId($requestData["id"]);
             $this->writeRequestFile($data);
             $this->writeSemaforFile();
+            sql_query("update labrequests set status='sent' where id=?", [$requestData["id"]]);
+            sql_query("insert into labrequestmessages set tipus='out', datum=now(), content=?, requestid=?", [$data, $requestData["id"]]);
+        } else {
+            return "Laborkérés nem található!";
         }
+
+        return "";
     }
 
     public function getReceivedAnswer() {
@@ -37,7 +46,7 @@ class SpektrumlabService {
         if (is_file($inSemaforFileName) ) {
             if (is_file($inFileName) ) {
                 $content = file_get_contents($inFileName);
-                sql_query("insert into labrequestanswers set datum=now(), content=?", [$content]);
+                sql_query("insert into labrequestmessages set tipus='in', datum=now(), content=?", [$content]);
             }
             $this->deleteInFiles();
         }
@@ -46,7 +55,7 @@ class SpektrumlabService {
     public function generateHL7FileByRequestId($requestId):string {
         $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
         $reservationData = sql_query("select f.*, o.nev as orvosnev from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$requestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC);
-        $items = sql_query("SELECT ri.*, CONCAT('nincsId', t.id) AS kod,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
         $result = "";
 
         $login = self::LOGIN;
@@ -54,7 +63,7 @@ class SpektrumlabService {
         $kuldesDatum = date("YmdHi");
         $adatBlokkAzonosito = $requestData["id"];
         $paciensId = trim($reservationData["paciensid"]);
-        $paciensNev = trim($reservationData["nev"]);
+        $paciensNev = ucwords(mb_strtolower(trim($reservationData["nev"])));
         $paciensAnyjaNeve = trim($reservationData["anyjaneve"]);
         $paciensSzulDatum = date("Ymd", strtotime($reservationData["szuldatum"]));
         $paciensGender = $reservationData["neme"] == 1 ? "M" : "F";
@@ -64,18 +73,50 @@ class SpektrumlabService {
         $paciensCountry = "HUN";
         $paciensTAJ = trim($reservationData["taj"]);
         $orvosId = "44601";
+        $orvosPecsetSzam = "44601";
         $orvosNev = "Dr. Magyar Judit";
-        $bekuldoKod = "11111";
-        $bekuldoNev = "Hungariamed";
+        $bekuldoKod = "000000370";
+        $bekuldoNev = "Hungária Med-M Kft.";
+        $naploszam = $requestData["id"];
+        $bekuldesDatum = date("Ymd");
+        $felveteliDatum = date("YmdHi", strtotime($reservationData["datum"]));
+        if ($reservationData["neme"] == 0) {
+            $paciensGender = "X";
+        }
 
-        $result .= "MSH|^~\&|{$login}||{$laborId}||{$kuldesDatum}||ORM^O01|{$adatBlokkAzonosito}|P|2.3|||NE|AL|".self::EOF; //MSH - Fejléc
-        $result .= "PID|||{$paciensId}||{$paciensNev}|{$paciensAnyjaNeve}|{$paciensSzulDatum}|{$paciensGender}|||{$paciensAddress}^^{$paciensCity}^^{$paciensIrsz}^{$paciensCountry}||||||||{$paciensTAJ}|||||||{$paciensCountry}||||N".self::EOF; //PID - Betegadatok
-        $result .= "PV1||O|||||{$orvosId}^{$orvosNev}|||||||^{$bekuldoKod}^{$bekuldoNev}^".self::EOF; //PV1 - Kérő adatok
-        $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}|nemhasznalt|nemhasznalt".self::EOF; //ORC - Kérés azonosító
+        if ($this->orvosNemFontos) {
+            $orvosId = "00000";
+            $orvosNev = ".";
+            $orvosPecsetSzam = "00000";
+        }
+
+        if ($this->testing) {
+            $paciensId = 104;
+            $paciensNev = ucwords(mb_strtolower("TESZT Viktória"));
+            $paciensTAJ = "888888888";
+            $paciensGender = "F";
+            $paciensSzulDatum = "19891112";
+            $paciensAnyjaNeve = "Tesztelő Júlia";
+            $paciensAddress = "Tesztelő kőrút 12";
+            $paciensCity = "Budapest";
+            $paciensIrsz = "1133";
+        }
+
+        //MSH - Fejléc
+        $result .= "MSH|^~\&|{$login}||{$laborId}||{$kuldesDatum}||ORM^O01|{$adatBlokkAzonosito}|P|2.3|||NE|AL|".self::EOF;
+        //PID - Betegadatok
+        $result .= "PID|||{$paciensId}|X^HMM{$paciensId}|{$paciensNev}|{$paciensAnyjaNeve}|{$paciensSzulDatum}|{$paciensGender}|||{$paciensAddress}^^{$paciensCity}^^{$paciensIrsz}^{$paciensCountry}||||||||{$paciensTAJ}|||||||{$paciensCountry}||||N".self::EOF;
+        //PV1 - Kérő adatok
+        $result .= "PV1||O|||||{$orvosId}^{$orvosNev}~{$orvosPecsetSzam}|||||||^{$bekuldoKod}^{$bekuldoNev}^||||||4P||||0||||||||||||||||||||{$felveteliDatum}|".self::EOF;
+        //ZPV - További kérő adatok
+        $result .= "ZPV|||||||||||||||||{$naploszam}||{$bekuldesDatum}".self::EOF;
+        //ORC - Kérés azonosító
+        $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}||".self::EOF;
 
         $sor = 1;
         foreach ($items as $item) {
-            $result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["kod"]}^{$item["name"]}^||||||{$login}|O" . self::EOF; //OBR - Tesztek kérése
+            //OBR - Tesztek kérése
+            $result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["commazo"]}^{$item["name"]}^||||||{$login}|O" . self::EOF;
             $sor++;
         }
 
@@ -84,8 +125,25 @@ class SpektrumlabService {
 
     public function cronCheck() {
         //percenként hívva cronnal
-        $this->writeNextRequest();
         $this->getReceivedAnswer();
+        $this->writeNextRequest();
+        $this->fillMissingMessageRequestIds();
+    }
+
+    public function fillMissingMessageRequestIds() {
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) AND requestid=0 AND tipus='in'")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($messages as $message) {
+            $id = 0;
+            $rows = explode("\r", $message["content"]);
+            foreach ($rows as $key => $row) {
+                $fields = explode("|", $row);
+                if ($fields[0] == "MSA" && ($fields[1] == "AA" || $fields[1] == "AR")) {
+                    $id = $fields[2];
+                    break;
+                }
+            }
+            sql_query("update labrequestmessages set requestid=? where id=?", [$id, $message["id"]]);
+        }
     }
 
     public function requestRunning():bool {
@@ -105,7 +163,48 @@ class SpektrumlabService {
         unlink(self::IN_DIR.self::IN_FILE);
     }
 
+    public function processPdfFromMessages():void {
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($messages as $message) {
+            $lastRequestId = 0;
+            $lastResultDate = "0000-00-00 00:00:00";
+            $rows = explode("\r", $message["content"]);
+            foreach ($rows as $key => $row) {
+                $fields = explode("|", $row);
+                if ($fields[0] == "OBR") {
+                    $lastRequestId = intval($fields[2]);
+                    $lastResultDate = date("Y-m-d H:i:s", strtotime($fields[7]));
+                }
+                if ($fields[3] == "LELETPDF") {
+                    sql_query("update labrequests set status='done', resultpdf=?, resultdate=? where id=?", [$fields[5], $lastResultDate, $lastRequestId]);
+                    $lastRequestId = intval($fields[2]);
+                }
+            }
+
+            sql_query("update labrequestmessages set status='processed' where id=?", [$message["id"]]);
+        }
+    }
+
+
+    public function setSpectrumLabKapcs() {
+        $content = file_get_contents(__DIR__."/labortetelkapcs.tsv");
+
+        $rows = explode("\n", $content);
+        foreach ($rows as $row) {
+            $fields = explode("\t", $row);
+            $id = trim($fields[0]);
+            $spectrumLabId = trim($fields[2]);
+
+            if (!empty($id) && !empty($spectrumLabId)) {
+                echo $spectrumLabId." ";
+                sql_query("update synlab_labor_tetelek set spid=? where id=?", [$spectrumLabId, $id]);
+            }
+        }
+    }
+
     public function importTetelek() {
+        return;
+
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
