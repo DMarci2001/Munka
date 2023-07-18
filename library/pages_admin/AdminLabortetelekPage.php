@@ -318,6 +318,27 @@ class AdminLabortetelekPage extends AdminCorePage
             die;
         }
 
+        if(isset($_POST["changeLaborCsomagCompanyShow"])){
+
+            $response = "";
+
+            if($data=sql_query("SELECT * FROM synlab_labor_arak WHERE tid=? AND companyid=?",[$_POST["tid"],$_POST["companyid"]])->fetch(PDO::FETCH_ASSOC)){
+                if($data["aktiv"]==1){
+                    sql_query("UPDATE synlab_labor_arak SET aktiv=0 WHERE id=?",[$data["id"]])->fetch(PDO::FETCH_ASSOC);
+                    $response = "Az árat kikapcsoltuk a cégnél.";
+                }else{
+                    sql_query("UPDATE synlab_labor_arak SET aktiv=1 WHERE id=?",[$data["id"]])->fetch(PDO::FETCH_ASSOC);
+                    $response = "Az árat bekapcsoltuk a cégnél.";
+                }
+                
+            }else{
+                sql_query("INSERT INTO synlab_labor_arak SET tipus=1, aktiv=1, companyid=?, tid=?",[$_POST["companyid"],$_POST["tid"]])->fetch(PDO::FETCH_ASSOC);
+                $response = "Az árat létrehoztuk és bekapcsoltuk a cégnél.";
+            }
+
+            die($response);
+        }
+
 
     }
 
@@ -428,7 +449,7 @@ class AdminLabortetelekPage extends AdminCorePage
         $priceMap = [];
         $prices = sql_query("SELECT * FROM synlab_labor_arak a WHERE a.`companyid`=?", [$companyId])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($prices as $price) {
-            $priceMap[$price["tid"]] = $price["price"];
+            $priceMap[$price["tid"]] = $price;
         }
 
         //Le kell kérdeznem a csomagokat:
@@ -483,19 +504,31 @@ class AdminLabortetelekPage extends AdminCorePage
                 $html.= "<a href=\"index.php?page=labortetelek&packaktivetoggle={$resq["id"]}\" style=\"color:#f00;\">inaktív</a>";
             }
 
+            $html.= "</div></td>";
+
             //Forint alapú ár:
             $price = $resq["price"];
             if ($companyId != 0) {
                 $price = 0;
                 if (isset($priceMap[$resq["id"]])) {
-                    $price = $priceMap[$resq["id"]];
+                    $price = $priceMap[$resq["id"]]["price"];
                 }
             }
 
-            $html.= "<td nowrap valign='top' ><div class='tcella' style='min-width:10px;text-align:center;'>";
+            $html.= "<td nowrap valign='top' vertical-align='middle' ><div class='tcella' style='min-width:10px;text-align:center;'>";
+
+            if($companyId != 0){
+                $checked = "";
+                if (isset($priceMap[$resq["id"]]) && $priceMap[$resq["id"]]["aktiv"]==1) {
+                    $checked = "checked=\"true\"";
+                }
+                $html .= "<input type=\"checkbox\" {$checked} data-tid='{$resq["id"]}' data-companyid='{$companyId}' title=\"Megjelenítés céges webshopban\" class='cegesarcheckbox' onChange='changeLaborCsomagCompanyShow(\"#cegescsomagprice{$resq["id"]}\")' id=\"cegescsomagprice{$resq["id"]}\" value=\"1\">&nbsp;&nbsp;";
+            }
+
             if ($companyId != 0) {
                 $html .= "<a title='Publikus ár beemelése' onclick='importCsomapPublicPrice({$companyId}, {$resq["id"]});return false;' href='#'><i class='fa-solid fa-right-to-bracket'></i></a>&nbsp;&nbsp;";
             }
+
             $html.= "<input id='csomagprice{$resq["id"]}' data-cid='{$companyId}' data-tid='{$resq["id"]}' class='laborcsomagpricetextbox' type='textbox' style='width:80px;text-align:center' value='{$price}' /> HUF";
             $html.= "</div></td>";
 
