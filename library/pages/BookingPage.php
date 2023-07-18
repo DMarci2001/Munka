@@ -137,6 +137,7 @@ class BookingPage extends CorePage
             if (!isset($_POST["telefon"]))   $_POST["telefon"] = "";
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
+            if (!isset($_POST["tudoszuroelf"])) $_POST["tudoszuroelf"] = 0;
 
             $laborszoveg = $this->bookingService->getLaborSzoveg();
             $_POST = $companyService->fillMAKPaciensData($_POST);
@@ -341,6 +342,12 @@ class BookingPage extends CorePage
                         break;
                     }
                     $_POST["questions"] .= "{$question["question"]}: ". ($_POST["question{$key}"] == 1 ? "IGEN" : "NEM"). "\n";
+                }
+            }
+
+            if (CompanyService::isAstostecCompany()) {
+                if ($_POST["tudoszuroelf"]==0) {
+                    $this->errors[] = "{$webText["tudoszurokotelezo"]}";
                 }
             }
 
@@ -867,6 +874,10 @@ class BookingPage extends CorePage
         if (!isset($_SESSION["user"])) {
             echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
             echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+        }
+
+        if (CompanyService::isAstostecCompany()) {
+            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>"; 
         }
 
         //$submitButtonText = $webText["idopontfoglalasa"];

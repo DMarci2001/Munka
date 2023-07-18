@@ -30,7 +30,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="bp";
+            $d="astotec-teszt";
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
@@ -110,6 +110,10 @@ class CompanyService {
 
     public static function isMagyarAllamkincstar($companyId = 0):bool {
         return in_array($companyId, self::$makIds) || substr_count($_SESSION["helyszindata"]["domain"], "mak-");
+    }
+
+    public static function isAstostecCompany($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "astotec-teszt";
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

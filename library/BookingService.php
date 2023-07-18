@@ -929,9 +929,9 @@ class BookingService
         return $return;
     }
 
-    public function getTipusMegj($cegid, $tid, $helyszinId = 1) {
+    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]) {
         $h = "";
-        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0", [$cegid, $tid]))) {
+        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0 and helyszinid=?", [$cegid, $tid,$helyszinId]))) {
             if (!empty(trim($row["megj"]))) {
                 $h .= "<div class='tipusmegj'>" . trim($row["megj"]) . "</div>";
             }
