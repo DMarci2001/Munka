@@ -451,11 +451,6 @@ class AdminBookingPage extends AdminCorePage
             $dokirexService->insertUpdateFormElementValue($params);
             echo "Sikeres telephely rögzítés a dokirexben! ({$r["foglid"]})<br>";*/
         //}
-
-        if($this->adminUser->varoteremuiAccess()){
-            echo "<div id=\"waiting-room\" class=\"container-md mx-0\">{$this->varoteremService->waitingRoom()}</div>";
-
-        }
         
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
@@ -513,6 +508,11 @@ class AdminBookingPage extends AdminCorePage
         $sectionName   = "";
         $cegSearchLink = "[<a href='#' onclick='elojegyzesCegSearchStart();return false;'>lista</a>]";
         $this->paymentData = $this->getAllPaymentData();
+
+        if($this->adminUser->varoteremuiAccess()){
+            $htmlout .= "<div id=\"waiting-room\" class=\"container-md mx-0\">{$this->varoteremService->waitingRoom()}</div>";
+
+        }
 
         $htmlout .= "<div id='filterbox' style='margin-top:10px;'>";
         $htmlout .= "<div style='display:table-cell;vertical-align:middle;'>" . $this->napFilter2($setDay) . "</div>";

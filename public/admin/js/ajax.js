@@ -3817,6 +3817,18 @@ function reloadWaitListTable(){
     })
 }
 
+function reloadSetupTable(){
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {reloadSetupTable:true},
+        success: function(response){
+            $("#waitlist-setup-table").html(response);
+        }
+
+    })
+}
+
 $(document).ready(function () {
     setInterval(function () {
         if (document.querySelector('.dropdown-toggle.show') !== null) {
@@ -3948,6 +3960,7 @@ $(document).on("change",".waitlist-relevant-types",function(){
         data: {changeWaitlistRelevantTypes:$(this).val()},
         success: function(response){
             reloadWaitListTable();
+            reloadSetupTable();
             $.toast({
                 text: "Beállítás mentve",
                 icon: 'success'

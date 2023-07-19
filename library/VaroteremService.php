@@ -26,6 +26,11 @@ class VaroteremService
             sql_query("UPDATE users SET relevant_exam_types=? WHERE id=?", array($relevant_exam_types, $_SESSION["adminuser"]["id"]));
             die();
         }
+
+        if(isset($_POST["reloadSetupTable"])){
+            die($this->setupLathatoVizsgalatok());
+        }
+
         if (isset($_POST["reloadWaitList"])) {
             die($this->waitingRoom());
         }
@@ -130,7 +135,7 @@ class VaroteremService
                 $_SESSION["wl-objects"][$_POST["type"]][$_POST["id"]] = "show";
             }
             die();
-        }
+        }  
     }
 
     public function waitingRoom()
@@ -152,10 +157,12 @@ class VaroteremService
         $html .= "</ul>";
         $html .= "<div class=\"tab-content\" id=\"myTabContent\">";
         $html .= "<div class=\"tab-pane fade show active\" id=\"waitlist-tab-pane\" role=\"tabpanel\" aria-labelledby=\"waitlist-tab\" tabindex=\"0\">";
-        $html .= "  <button style=\"font-size:12px;\" class=\"btn btn-secondary\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#collapseExamSetupPanel\" aria-expanded=\"false\" aria-controls=\"collapseExample\">";
+        $html .= "  <button style=\"font-size:12px;\" class=\"btn btn-secondary\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#waitlist-setup-table\" aria-expanded=\"false\" aria-controls=\"waitlist-setup-table\">";
         $html .= "      <i class=\"fa-solid fa-sliders\"></i>&nbsp;Vizsgálatok testreszabása";
         $html .= "  </button>";
-        $html .=    $this->setupLathatoVizsgalatok();
+        //$html .= "<div  id=\"collapseExamSetupPanel\">";
+        $html .= "  <div class=\"collapse\" id=\"waitlist-setup-table\">{$this->setupLathatoVizsgalatok()}</div>";
+        //$html .=    ;
         $html .= "  <div id=\"waitlist-table\">{$this->waitlistTable()}</div>";
         $html .= "</div>";
         $html .= "<div class=\"tab-pane fade\" id=\"finished-exam-tab-pane\" role=\"tabpanel\" aria-labelledby=\"finished-exam-tab\" tabindex=\"0\">";
@@ -669,22 +676,27 @@ class VaroteremService
 
         $tipusok = array_values(array_unique($tipusok));
 
-        foreach ($relevant_exam_types as $tipus) {
-            if (!in_array($tipus, $tipusok)) {
-                $tipusok[] = $tipus;
+        if(!empty($relevant_exam_types)){
+            foreach ($relevant_exam_types as $tipus) {
+                if (!in_array($tipus, $tipusok)) {
+                    $tipusok[] = $tipus;
+                }
             }
         }
+        
 
         foreach ($tipusok as $tipus) {
             $result = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?", array($tipus)));
             if (!empty($result)) {
                 $tipusDictionary[] = array("id" => $tipus, "name" => $result["megnev"]);
+                if(!empty($relevant_exam_types)){
                 if (in_array($tipus, $relevant_exam_types)) {
-                    $qOrvos = sql_query("SELECT o.id,o.nev,\"{$result["megnev"]}\" as szurestipusnev FROM orvosok o
-                                         LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
-                                         WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$tipus}|%' AND beo.aktiv=1
-                                         GROUP BY o.id");
-                    while ($rOrvos = sql_fetch_array($qOrvos)) $orvosok[] = $rOrvos;
+                        $qOrvos = sql_query("SELECT o.id,o.nev,\"{$result["megnev"]}\" as szurestipusnev FROM orvosok o
+                                            LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
+                                            WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$tipus}|%' AND beo.aktiv=1
+                                            GROUP BY o.id");
+                        while ($rOrvos = sql_fetch_array($qOrvos)) $orvosok[] = $rOrvos;
+                    }
                 }
             }
         }
@@ -695,13 +707,12 @@ class VaroteremService
         $keys = array_column($orvosok, "nev");
         array_multisort($keys, SORT_ASC, $orvosok);
 
-        $html .= "<div class=\"collapse\" id=\"collapseExamSetupPanel\">";
         $html .= "  <div class=\"card card-body\">";
         $html .= "      <div class=\"row\">";
         $html .= "          <div class=\"col\">";
         $html .= "              <ul class=\"list-group\">";
         foreach ($tipusDictionary as $tipus) {
-            if (in_array($tipus["id"], $relevant_exam_types)) {
+            if (!empty($relevant_exam_types) && in_array($tipus["id"], $relevant_exam_types)) {
                 $checked = "checked=\"true\"";
             } else {
                 $checked = "";
@@ -716,20 +727,19 @@ class VaroteremService
         $html .= "          <div class=\"col\">";
         $html .= "              <ul class=\"list-group\">";
         $html .= "                  <select class=\"form-select form-select-lg mb-3 waitlist-bound-to-doctor-list\" aria-label=\".form-select-lg example\">";
-        foreach ($orvosok as $orvos) {
-            if ($_SESSION["adminuser"]["bound_to_doctor"] == $orvos["id"]) {
-                $selected = "selected=\"true\"";
-            } else {
-                $selected = "";
-            }
-            $html .= "              <option {$selected} value=\"{$orvos["id"]}\">{$orvos["nev"]} ({$orvos["szurestipusnev"]})</option>";
-        }
-        $html .= "                  </select>";
+                                        foreach ($orvosok as $orvos) {
+                                            if ($_SESSION["adminuser"]["bound_to_doctor"] == $orvos["id"]) {
+                                                $selected = "selected=\"true\"";
+                                            } else {
+                                                $selected = "";
+                                            }
+                                            $html .= "<option {$selected} value=\"{$orvos["id"]}\">{$orvos["nev"]} ({$orvos["szurestipusnev"]})</option>";
+                                        }
+        $html .= "                  </select>";;
         $html .= "              </ul>";
         $html .= "          </div>";
         $html .= "      </div>";
         $html .= "  </div>";
-        $html .= "</div>";
         return $html;
     }
 }
