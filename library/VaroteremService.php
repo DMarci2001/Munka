@@ -727,14 +727,17 @@ class VaroteremService
         $html .= "          <div class=\"col\">";
         $html .= "              <ul class=\"list-group\">";
         $html .= "                  <select class=\"form-select form-select-lg mb-3 waitlist-bound-to-doctor-list\" aria-label=\".form-select-lg example\">";
-                                        foreach ($orvosok as $orvos) {
-                                            if ($_SESSION["adminuser"]["bound_to_doctor"] == $orvos["id"]) {
-                                                $selected = "selected=\"true\"";
-                                            } else {
-                                                $selected = "";
-                                            }
-                                            $html .= "<option {$selected} value=\"{$orvos["id"]}\">{$orvos["nev"]} ({$orvos["szurestipusnev"]})</option>";
-                                        }
+        if(empty($_SESSION["adminuser"]["bound_to_doctor"]) || !in_array($_SESSION["adminuser"]["bound_to_doctor"],array_column($orvosok,"id"))){
+            $html .= "<option selected=\"true\" value=\"0\">Válassz orvost!</option>";
+        }
+        foreach ($orvosok as $orvos) {
+            if ($_SESSION["adminuser"]["bound_to_doctor"] == $orvos["id"]) {
+                $selected = "selected=\"true\"";
+            } else {
+                $selected = "";
+            }
+            $html .= "<option {$selected} value=\"{$orvos["id"]}\">{$orvos["nev"]} ({$orvos["szurestipusnev"]})</option>";
+        }
         $html .= "                  </select>";;
         $html .= "              </ul>";
         $html .= "          </div>";
