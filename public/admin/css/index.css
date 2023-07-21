@@ -1749,3 +1749,14 @@ form {
 	text-decoration: none;
 }
 
+.table-responsive{
+	max-height: 300px;
+	max-width:1700px !important;
+}
+
+.table-responsive > thead {
+	position: sticky;
+	top: -1px;
+	background-color: white;
+  }
+

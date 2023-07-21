@@ -163,7 +163,7 @@ class VaroteremService
         //$html .= "<div  id=\"collapseExamSetupPanel\">";
         $html .= "  <div class=\"collapse\" id=\"waitlist-setup-table\">{$this->setupLathatoVizsgalatok()}</div>";
         //$html .=    ;
-        $html .= "  <div id=\"waitlist-table\">{$this->waitlistTable()}</div>";
+        $html .= "  <div id=\"waitlist-table\" class=\"ps-3\">{$this->waitlistTable()}</div>";
         $html .= "</div>";
         $html .= "<div class=\"tab-pane fade\" id=\"finished-exam-tab-pane\" role=\"tabpanel\" aria-labelledby=\"finished-exam-tab\" tabindex=\"0\">";
         $html .= "  <div id=\"finished-exams-table\">{$this->finishedExamsTable()}</div>";
@@ -178,9 +178,9 @@ class VaroteremService
 
     public function finishedExamsTable()
     {
-        $html = "";
+        $html = $cegnev = "";
         $numb = 1;
-        $html .= "<h5><a class=\"badge bg-secondary mt-2 ms-2\" data-bs-toggle=\"collapse\" href=\"#collapseWidthExample\" role=\"button\" aria-expanded=\"false\" aria-controls=\"multiCollapseExample1\"><i class=\"fa-solid fa-filter\"></i></a></h5>";
+        /*$html .= "<h5><a class=\"badge bg-secondary mt-2 ms-2\" data-bs-toggle=\"collapse\" href=\"#collapseWidthExample\" role=\"button\" aria-expanded=\"false\" aria-controls=\"multiCollapseExample1\"><i class=\"fa-solid fa-filter\"></i></a></h5>";
         $html .= "<div class=\"collapse collapse-horizontal\" id=\"collapseWidthExample\">";
         $html .= "    <div class=\"container\">";
         $html .= "       <div class=\"row row-cols-auto\" style=\"min-width:800px\">";
@@ -213,8 +213,8 @@ class VaroteremService
         $html .= "           </div>";
         $html .= "        </div>";
         $html .= "    </div>";
-        $html .= "</div>";
-
+        $html .= "</div>";*/
+        $html .= "<div class=\"table-responsive\">";
         $html .= "<table class=\"table table-hover\" style=\"white-space: nowrap;\">";
         $html .= "    <thead>";
         $html .= "        <tr>";
@@ -240,15 +240,18 @@ class VaroteremService
                       LEFT JOIN szurestipusok sz ON sz.id=v.szurestipusid
                       LEFT JOIN orvosok o ON o.id=v.orvosid
                       LEFT JOIN users u ON u.id=v.behivta
-                      WHERE v.vizsgalat_befejezve LIKE \"%".$_SESSION["setday"]."%\" AND v.statusz = \"vizsgalat_kesz\" ORDER BY v.vizsgalat_befejezve DESC");
+                      WHERE v.vizsgalat_befejezve IS NOT NULL AND fogl.datum LIKE \"%".$_SESSION["setday"]."%\" AND v.statusz = \"vizsgalat_kesz\" ORDER BY v.vizsgalat_befejezve DESC");
 
         while($r=sql_fetch_array($q)){
             $varakozasi_ido = number_format(ceil(((strtotime($r["behivas_ideje"])-strtotime($r["erkeztetve"]))/60)));
             $vizsgalat_ido = number_format(ceil(((strtotime($r["vizsgalat_befejezve"])-strtotime($r["behivas_ideje"]))/60)));
+            $cegnev = $r["cegnev"];
+            if(strlen($cegnev)>20) $cegnev = substr($cegnev,0,17)."...";
+    
             $html .= "        <tr>";
             $html .= "            <th scope=\"row\">{$numb}</th>";
             $html .= "            <td>{$r["nev"]}</td>";
-            $html .= "            <td>{$r["cegnev"]}</td>";
+            $html .= "            <td title=\"{$r["cegnev"]}\">{$cegnev}</td>";
             $html .= "            <td>{$r["szurestipusnev"]}</td>";
             $html .= "            <td>{$r["orvosnev"]}</td>";
             $html .= "            <td>{$r["asszisztensnev"]}</td>";
@@ -264,6 +267,7 @@ class VaroteremService
         
         $html .= "    </tbody>";
         $html .= "</table>";
+        $html .= "</div>";
 
         return $html;
     }
@@ -489,7 +493,7 @@ class VaroteremService
             $content .= "</div>";
         }
 
-        $html .= "<div class=\"container\">";
+        $html .= "<div class=\"\">";
         $html .= $content;
         $html .= "</div>";
 

@@ -510,7 +510,7 @@ class AdminBookingPage extends AdminCorePage
         $this->paymentData = $this->getAllPaymentData();
 
         if($this->adminUser->varoteremuiAccess()){
-            $htmlout .= "<div id=\"waiting-room\" class=\"container-md mx-0\">{$this->varoteremService->waitingRoom()}</div>";
+            $htmlout .= "<div id=\"waiting-room\" class=\"\">{$this->varoteremService->waitingRoom()}</div>";
 
         }
 
