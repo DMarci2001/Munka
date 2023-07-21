@@ -351,6 +351,9 @@ class VaroteremService
         $html .= "       <span  class=\"dropdown-toggle\" style=\"{$spanCSS}\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\" style=\"background-color:#0a0\">Érkeztetés</span>";
         $html .= "       <ul class=\"dropdown-menu\">";
         while($r=sql_fetch_array($q)){
+            if(substr_count($r["nev"],"Menedzser")){
+                continue;
+            }
             if(!empty($r["colorcode"])){
                 $colorindicator="<i style=\"color:{$r["colorcode"]}\" class=\"fa-solid fa-circle\"></i>&nbsp;";
             }else{
@@ -385,6 +388,9 @@ class VaroteremService
                             GROUP BY o.id");
 
         while ($orvos = sql_fetch_array($q)) {
+            if(substr_count($orvos["nev"],"Menedzser")){
+                continue;
+            }
             $docCapacity++;
             $visitString = "";
             $qVisit = sql_query("SELECT v.*,fogl.nev,fogl.pass FROM varoterem v
@@ -695,7 +701,12 @@ class VaroteremService
                                             LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
                                             WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$tipus}|%' AND beo.aktiv=1
                                             GROUP BY o.id");
-                        while ($rOrvos = sql_fetch_array($qOrvos)) $orvosok[] = $rOrvos;
+                        while ($rOrvos = sql_fetch_array($qOrvos)){
+                            if(substr_count($rOrvos["nev"],"Menedzser")){
+                                continue;
+                            }
+                            $orvosok[] = $rOrvos;
+                        } 
                     }
                 }
             }
