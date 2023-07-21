@@ -1758,5 +1758,12 @@ form {
 	position: sticky;
 	top: -1px;
 	background-color: white;
-  }
+}
+.sub-menu-doc-list:hover .doc-list-menu{
+	display:block;
+	position: absolute; 
+	inset: 0px auto auto 0px; 
+	margin: 0px; 
+	transform: translate(103px, 0px);
+}
 

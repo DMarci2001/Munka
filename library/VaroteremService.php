@@ -2,8 +2,11 @@
 
 class VaroteremService
 {
+    private $user;
     public function __construct()
     {
+        $this->user = new AdminUser();
+
         if (isset($_POST["changeWaitlistRelevantTypes"])) {
             $relevant_exam_types = json_decode($_SESSION["adminuser"]["relevant_exam_types"]);
             if (!empty($relevant_exam_types)) {
@@ -40,17 +43,23 @@ class VaroteremService
 
         if (isset($_POST["callInToVisit"])) {
             $status = "";
+            $oid = $_SESSION["adminuser"]["bound_to_doctor"];
 
+            //Ha van supervisor joga a felhasználónak akkor a post infot vegye figyelembe
+            if($this->user->varoteremsupervisorAccess()){
+                if(isset($_POST["oid"])) $oid = $_POST["oid"];
+            }
+            
             //Meg kell nézzem, hogy a behívandó pácienst betudom-e hívni egyáltalán a hozzám rendelt orvosra
             //nincs véletlen már egy ellátás alatt álló páciens
             $callin = sql_fetch_array(sql_query("SELECT szurestipusid,statusz FROM varoterem WHERE id=?", array($_POST["callInToVisit"])));
 
             //Ellenőrzöm, hogy a hozzám rendelt orvosnak van-e beosztása az adott szűrésípusra amire beakarom hívni a pácienst
-            if ($checkCapabality = sql_fetch_array(sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND tipusok LIKE \"%|{$callin["szurestipusid"]}|%\"", array($_SESSION["adminuser"]["bound_to_doctor"])))) {
-                if (!$checkCapacity = sql_fetch_array(sql_query("SELECT * FROM varoterem WHERE orvosid=? AND statusz=\"vizsgalaton\" AND erkeztetve BETWEEN \"" . $_SESSION["setday"] . " 00:00:00\" AND \"" . date("Y-m-d") . " 23:59:59\"", array($_SESSION["adminuser"]["bound_to_doctor"])))) {
+            if ($checkCapabality = sql_fetch_array(sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND tipusok LIKE \"%|{$callin["szurestipusid"]}|%\"", array($oid)))) {
+                if (!$checkCapacity = sql_fetch_array(sql_query("SELECT * FROM varoterem WHERE orvosid=? AND statusz=\"vizsgalaton\" AND erkeztetve BETWEEN \"" . $_SESSION["setday"] . " 00:00:00\" AND \"" . date("Y-m-d") . " 23:59:59\"", array($oid)))) {
                     sql_query(
                         "UPDATE varoterem SET behivas_ideje=?, behivta=?,orvosid=?,statusz = 'vizsgalaton' WHERE id=?",
-                        array(date("Y-m-d H:i:s"), $_SESSION["adminuser"]["id"], $_SESSION["adminuser"]["bound_to_doctor"], $_POST["callInToVisit"])
+                        array(date("Y-m-d H:i:s"), $_SESSION["adminuser"]["id"], $oid, $_POST["callInToVisit"])
                     );
                     $status = "ok";
                 } else {
@@ -330,12 +339,12 @@ class VaroteremService
         return $ugyfelszam;
     }
 
-    public function doc_choose_button($data){
+    public function doc_choose_button($data,$supervisor=0){
 
         $stringDay = $_SESSION["setday"];
         $numericDay = date("w", strtotime($_SESSION["setday"]));
         $helyszinid = $_SESSION["helyszin"];
-        $html = "";
+        $html = $docLi = "";
         $spanCSS = "
         border: 0px solid #888;
         padding: 8px 10px;
@@ -351,9 +360,6 @@ class VaroteremService
                             WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$data["szurestipusid"]}|%' AND beo.aktiv=1
                             GROUP BY o.id");
 
-        $html .= "   <div class=\"dropup\" style=\"display:inline\">";
-        $html .= "       <span  class=\"dropdown-toggle\" style=\"{$spanCSS}\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\" style=\"background-color:#0a0\">Érkeztetés</span>";
-        $html .= "       <ul class=\"dropdown-menu\">";
         while($r=sql_fetch_array($q)){
             if(substr_count($r["nev"],"Menedzser")){
                 continue;
@@ -364,8 +370,23 @@ class VaroteremService
                 $colorindicator = "<i class=\"fa-solid fa-circle\"></i>&nbsp;"; 
             }
 
-            $html .= "         <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},{$r["id"]});return false' href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
+            $onclick = "onClick=\"addToWaitList({$data["id"]},{$r["id"]});return false\"";
+
+            if($supervisor){
+                $onclick = "onClick=\"callInToVisit({$data["vid"]},{$r["id"]})\"";
+            }
+
+            $docLi .= "<li><a class=\"dropdown-item\" {$onclick}  href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
         }
+
+        if($supervisor){
+            return $docLi;
+        }
+
+        $html .= "   <div class=\"dropup\" style=\"display:inline\">";
+        $html .= "       <span  class=\"dropdown-toggle\" style=\"{$spanCSS}\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\" style=\"background-color:#0a0\">Érkeztetés</span>";
+        $html .= "       <ul class=\"dropdown-menu\">";
+        $html .=               $docLi;
         $html .= "             <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},0);return false' href=\"#\"><i class=\"fa-solid fa-user-doctor\"></i>&nbsp;Bármelyik</a></li>";
         
         //$html .= "           <li><a class=\"dropdown-item\" href=\"#\"><i class=\"fa-sharp fa-solid fa-pen-to-square\"></i>&nbsp;Adatok szerkesztése</a></li>";
@@ -535,7 +556,7 @@ class VaroteremService
         $ul = "style=\"list-style: none;padding: 0;margin: 0;display: flex;flex-direction: column;flex-wrap: wrap;float:left;height:28px\"";
         $colorcodes = array("#0a0", "#ffd700", "#ff4040");
 
-        $q = sql_query("SELECT v.*,fogl.nev,fogl.pass,o.colorcode FROM varoterem v
+        $q = sql_query("SELECT v.*,fogl.nev,fogl.id as fid,fogl.pass,o.colorcode FROM varoterem v
                         LEFT JOIN foglalasok fogl ON fogl.id=v.fid
                         LEFT JOIN orvosok o ON o.id=v.orvos_pref
                         WHERE v.szurestipusid={$tipus} AND fogl.datum LIKE \"%" . $_SESSION["setday"] . "%\" AND v.statusz=\"varakozik\" ");
@@ -543,7 +564,8 @@ class VaroteremService
 
         while ($r = sql_fetch_array($q)) {
             $mins = round((strtotime("NOW") - strtotime($r["erkeztetve"])) / 60);
-            $name = explode(" ", $r["nev"]);
+            //$name = explode(" ", $r["nev"]);
+            $name = $r["nev"];
             $bookingEditor = "onClick=\"showIdopontEditor('booking','{$r["pass"]}',{$r["fid"]});return false;\"";
             $removeFromList = "onClick=\"removeFromWaitList({$r["id"]})\"";
             $callInToVisit = "onClick=\"callInToVisit({$r["id"]})\"";
@@ -567,10 +589,25 @@ class VaroteremService
             $content .= "<li title=\"{$r["nev"]}\"{$li}>";
             $content .= "   <div class=\"dropdown waiting-costumer\" data-object-type=\"waiting-button\" data-menu-id=\"{$r["id"]}\">";
             $content .= "       <span class=\"dropdown-toggle {$show}\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\">";
-            $content .= "           <i class=\"fa-solid fa-circle\" style=\"color:{$color}\"></i>&nbsp;{$name[0]}-{$r["ugyfelszam"]} ({$mins}p.)";
+            $content .= "           <i class=\"fa-solid fa-circle\" style=\"color:{$color}\"></i>&nbsp;{$name}-{$r["ugyfelszam"]} ({$mins}p.)";
             $content .= "       </span>";
             $content .= "       <ul class=\"dropdown-menu {$show}\">";
-            $content .= "           <li><a class=\"dropdown-item\" href=\"#\" {$callInToVisit}><i class=\"fa-solid fa-square-check\"></i>&nbsp;Behívás</a></li>";
+
+            
+            
+            if($this->user->varoteremsupervisorAccess()){
+                $content .= "        <div class=\"dropend\">";
+                $content .= "            <li class=\"sub-menu-doc-list\">";
+                $content .= "                <a class=\"dropdown-item  dropdown-toggle\" data-bs-toggle=\"dropdown\"><i class=\"fa-solid fa-square-check\"></i>&nbsp;Behívás</a>";
+                $content .= "                <ul class=\"dropdown-menu doc-list-menu\">";
+                $content .=                      $this->doc_choose_button(["id"=>$r["fid"],"szurestipusid"=>$tipus,"vid"=>$r["id"]],1);
+                $content .= "                </ul>";
+                $content .= "            </li>";
+                $content .= "        </div>";
+            }else{
+                $content .= "        <li><a class=\"dropdown-item\" href=\"#\" {$callInToVisit}><i class=\"fa-solid fa-square-check\"></i>&nbsp;Behívás</a></li>";
+            }
+
             $content .= "           <li><hr class=\"dropdown-divider\"></li>";
             $content .= "           <li><a class=\"dropdown-item\" href=\"#\" {$bookingEditor} ><i class=\"fa-sharp fa-solid fa-pen-to-square\"></i>&nbsp;Adatok szerkesztése</a></li>";
             $content .= "           <li><a class=\"dropdown-item\" href=\"#\" {$removeFromList} ><i class=\"fa-solid fa-trash\"></i>&nbsp;Törlés</a></li>";

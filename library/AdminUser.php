@@ -137,7 +137,11 @@ class AdminUser {
         ],
         "jog_varoteremui" => [
             "name" => "Váróterem UI-t láthatja"
+        ],
+        "jog_varoteremsupervisor" => [
+            "name" => "Váróterem supervisor"
         ]
+
     ];
 
     public function __construct()
@@ -518,7 +522,9 @@ class AdminUser {
         return $this->checkPermission("jog_varoteremui");
     }
 
-    
+    public function varoteremsupervisorAccess():bool{
+        return $this->checkPermission("jog_varoteremsupervisor");
+    }
 
     public function onlyDoctorReservations():bool {
         return $this->checkPermission("jog_onlydoctorreservations") && $this->userIsOrvos();

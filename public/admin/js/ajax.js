@@ -3842,12 +3842,12 @@ $(document).ready(function () {
 
 
 
-function callInToVisit(wid){
+function callInToVisit(wid,oid){
     $.ajax({
         type:"POST",
         url:"index.php?page=booking",
         dataType:"JSON",
-        data: {callInToVisit:wid},
+        data: {callInToVisit:wid,oid:oid},
         success: function(response){
             console.table(response);
             $("#waitlist-table").html(response.html);
