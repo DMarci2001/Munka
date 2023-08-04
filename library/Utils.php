@@ -545,10 +545,12 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
         $width        = 250;
         $required     = $this->getFieldRequired($field);
         $hidden       = $this->getFieldHidden($field);
+        $inputMode    = "";
 
         switch ($fieldName) {
             case "taj":
                 $translateKey = "tajszam";
+                $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                 break;
             case "email":
                 if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {
@@ -560,6 +562,26 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
             case "telefon":
                 $translateKey = "mobil";
                 //$extraRow = "<tr><td></td><td>{$webText["mobiltip"]}</td></tr>";
+
+                if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
+                    $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
+                    $value = $_POST[$field];
+                    $korzetszamok = [20, 30, 70];
+                    $extraHTML.= "<tr class='datarow'>";
+                    $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML.= "<td>";
+                    $extraHTML.= "+36 <select class='inputbox' style='width:50px;' type='text' name='korzetszam' />";
+                    foreach ($korzetszamok as $val) {
+                        $extraHTML.= "<option value='{$val}' ".($_POST["korzetszam"] == $val? "selected":"").">{$val}</option>";
+                    }
+                    $extraHTML.= "</select>&nbsp;";
+
+                    $extraHTML.= "<input class='inputbox' {$inputMode} style='width:100px;' type='text' name='{$field}' id='{$field}' value='{$value}' />";
+
+                    $extraHTML.= "</td>";
+                    $extraHTML.= "</tr>";
+                }
+
                 break;
             case "szuldatum":
                 $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
@@ -579,6 +601,7 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                 //}
                 break;
             case "irsz":
+                $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                 $width = 60;
                 //if ($_SESSION['helyszindata']['id'] == 46) {
                 //    $hidden = true;
@@ -622,8 +645,23 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                     $extraHTML.= "</td>";
                     $extraHTML.= "</tr>";
                 }
+
+                if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID){
+                    $extraHTML.= "<tr class='datarow'>";
+                    $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML.= "<td>";
+                    $extraHTML.= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' />";
+                    $extraHTML.= "<option value=''>Válasszon!</option>";
+                    foreach ($this->astotecMunkakorok as $val) {
+                        $extraHTML.= "<option value='{$val}' ".($_POST[$field] == $val? "selected":"").">{$val}</option>";
+                    }
+                    $extraHTML.= "</select>";
+                    $extraHTML.= "</td>";
+                    $extraHTML.= "</tr>";
+                }
                 break;
             case "torzsszam":
+                $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                 if ($_SESSION["helyszindata"]["domain"]=="bp-teszt" || $_SESSION["helyszindata"]["domain"]=="bp"){
                     $webText[$translateKey] = "NTID";
                 }
@@ -652,7 +690,7 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                 }else{
                     $value = "";
                 }
-                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$jsCall} style='width:{$width}px;' type='text' name='{$field}' value='{$value}' /></td></tr>";
+                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$inputMode} {$jsCall} style='width:{$width}px;' type='text' name='{$field}' id='{$field}' value='{$value}' /></td></tr>";
             } else {
                 $html.= $extraHTML;
             }
@@ -802,5 +840,111 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
     public function generateRandomStringv2($length = 10) {
         return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
     }
+
+
+    private array $astotecMunkakorok = [
+        'Általános tréner',
+        'Anyagmozgató',
+        'Anyagtervezési csoportvezető',
+        'Anyagtervező diszponens',
+        'Asszisztens',
+        'Automatizálási mérnök',
+        'Ballisztikai ellenőr',
+        'Bejövő áru ellenőr',
+        'Bérszámfejtő - TB ügyintéző',
+        'Beszállítói & Termék jóváhagyási csopvez',
+        'Beszállítói minőségbiztosítási mérnök',
+        'Beszerzési vezető',
+        'Beszerző',
+        'Elektromos terméktesztelő',
+        'Főkönyvelő',
+        'Gépbeállító',
+        'Göngyöleg tisztító',
+        'Gyártástámogató mérnök',
+        'Gyártástámogató technikus',
+        'Gyártástervező',
+        'Gyártástervező csoportvezető',
+        'Gyártósori dolgozó',
+        'HR adminisztrátor',
+        'HR generalista',
+        'HR vezető',
+        'Hulladékkezelési munkatárs',
+        'IT / Business Analyst vezető',
+        'IT Business Analyst',
+        'IT technikus',
+        'Junior IT Business Analyst',
+        'Junior minőségbiztosítási mérnök',
+        'Kanban koordinátor',
+        'Kanbanfelelős',
+        'Karbantartás fejlesztő mérnök',
+        'Karbantartási csoportvezető',
+        'Karbantartó',
+        'Kézi raktári adminisztrátor',
+        'Kiemelt dolgozó',
+        'Kontroller',
+        'Könyvelési adminisztrátor',
+        'Könyvelési ellenőr',
+        'Könyvelő',
+        'Launch manager',
+        'Lean manager',
+        'Leanmérnök',
+        'Learning and development specialist',
+        'Logisztikai folyamatmérnök',
+        'Logisztikai folyamatmérnökség csoportvez',
+        'Logisztikai vezető',
+        'Méréstechnikus',
+        'Mérnökségi csoportvezető',
+        'Mérnökségvezető',
+        'Mérőlabor vezető',
+        'Mérőlaboratórium adminisztrátor',
+        'Metrológus',
+        'Minőségbiztosítási mérnök',
+        'Minőségbiztosítási mérnökség csopvez',
+        'Minőségbiztosítási vezető',
+        'Minőségellenőrzési csoportvezető',
+        'Minőségügyi adminisztrátor',
+        'Minőségügyi asszisztens',
+        'Minőségügyi ellenőr',
+        'Minőségügyi oktató',
+        'Minőségügyi operátor',
+        'Minőségügyi rendszer csoportvezető',
+        'Minőségügyi rendszer munkatárs',
+        'Mintagyártási adminisztrátor',
+        'Mintagyártási koordinátor',
+        'Operációs ügyvezető',
+        'Operatív Termelési Vezető',
+        'Pénzügyi és Kontrolling vezető',
+        'PPAP Koordinátor',
+        'Product manager',
+        'Profit Center vezető',
+        'Raktári adminisztrátor',
+        'Raktári muszakvezető',
+        'Raktári oktató',
+        'Raktáros',
+        'Raktárvezető',
+        'SCM ügyintéző',
+        'Segédgépbeállító',
+        'Segédmunkás',
+        'Selejttermék kezelő',
+        'Senior beszerző',
+        'Senior könyvelő',
+        'Számviteli ügyintéző',
+        'Szerszám karbantartó',
+        'Szerszámmérnök',
+        'Technikai csoportvezető',
+        'Technikai koordinátor',
+        'Termék mérnök',
+        'Termékauditor',
+        'Termelési adminisztrátor',
+        'Termelési területvezető',
+        'Termelési vezető',
+        'Területi adminisztrátor',
+        'Ügyvezető Central Functions',
+        'Üzemfenntartási technikus',
+        'Válogatási csoportvezető',
+        'Válogató',
+        'Vevőkapcsolattartás csoportvezető',
+        'Vevőkapcsolattartó',
+    ];
 
 }

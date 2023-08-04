@@ -10,6 +10,7 @@ $(document).ready(function () {
 
     initDateFilterPicker();
     initHMMChat();
+    initIrszAutoFill();
 });
 
 
@@ -1003,3 +1004,22 @@ function initHMMChat() {
         initChat($("#hmmchat"));
     }
 }
+
+function initIrszAutoFill() {
+    $("#irsz").keyup(function () {
+        let irsz = $(this).val();
+        if (irsz.length == 4) {
+            $.ajax({
+                method: "POST",
+                url: "/index.php",
+                data: { irszquery: irsz }
+            }).done(function (msg) {
+                if (msg != "") {
+                    $("#varos").val(msg);
+                }
+            });
+        }
+    });
+}
+
+
