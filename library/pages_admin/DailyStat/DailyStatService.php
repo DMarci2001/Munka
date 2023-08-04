@@ -276,6 +276,11 @@ class DailyStatService {
                             $ervenyesseg = "2000-01-01";
                         }
 
+                        $vizsgalatDatum = str_replace(".", "-", $sheet->getCell("M{$rowNr}")->getFormattedValue());
+                        if (empty($vizsgalatDatum)) {
+                            $vizsgalatDatum = "0000-00-00";
+                        }
+
                         $row = [
                             "datum" => date("Y-m-d H:i:s", strtotime($datum)),
                             "nev" => $sheet->getCell("B{$rowNr}")->getValue(),
@@ -287,7 +292,9 @@ class DailyStatService {
                             "munkakor" => $sheet->getCell("H{$rowNr}")->getValue(),
                             "korlatozas" => $sheet->getCell("I{$rowNr}")->getValue(),
                             "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
-                            "ervenyesseg" => $ervenyesseg
+                            "ervenyesseg" => $ervenyesseg,
+                            "vizsgalattipus" => $sheet->getCell("L{$rowNr}")->getValue(),
+                            "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum))
                         ];
 
                         sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
@@ -295,7 +302,7 @@ class DailyStatService {
                                     datum=:datum, moddatum=:datum, nev=:nev,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
                                     paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
-                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg", $row);
+                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum", $row);
 
                         $rowNr++;
                     }

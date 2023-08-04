@@ -3,7 +3,7 @@
 
 class DokirexService
 {
-    private string $apiURL = "http://api-v2.dokirex.hu";
+    private string $apiURL = "https://api-v2.dokirex.hu";
 
     private $token;
     public int $version = 2;

@@ -1011,7 +1011,7 @@ END:VCALENDAR";
         LEFT JOIN cegek c on c.id=f.cegid
         LEFT JOIN orvosok o on o.id=f.orvosassigned
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
-        WHERE f.id=? and f.aktiv=1", [$reservationId]);
+        WHERE f.id=? and f.aktiv=1 and f.nev<>'nincs név'", [$reservationId]);
 
         if ($row = sql_fetch_array($res)) {
             if (filter_var($row["orvosemail"], FILTER_VALIDATE_EMAIL)) {

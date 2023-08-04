@@ -297,7 +297,7 @@ class BookingPage extends CorePage
             }
             if (!$this->utils->getFieldHidden("anyjaneve") && $this->utils->getFieldRequired("anyjaneve")) {
                 if (empty($_POST["anyjaneve"])) {
-                    $this->errors[] = "{$webText["anyjaneve"]}!";
+                    $this->errors[] = "Az anyja neve megadása kötelező!";
                 }
             }
             if (!$this->utils->getFieldHidden("neme") && $this->utils->getFieldRequired("neme")) {
@@ -457,6 +457,10 @@ class BookingPage extends CorePage
             }
 
             if (empty($this->errors)) {
+                if (!empty($_POST["telefon"]) && !empty($_POST["korzetszam"])) {
+                    $_POST["telefon"] = "+36{$_POST["korzetszam"]}{$_POST["telefon"]}";
+                }
+
                 if(!empty($_SESSION["labshopMegjegyzes"])){
                     $_POST["megj"].=" ".$_SESSION["labshopMegjegyzes"];
                 }
@@ -877,7 +881,7 @@ class BookingPage extends CorePage
         }
 
         if (CompanyService::isAstostecCompany()) {
-            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>"; 
+            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='tudoszuroelf' value='1' " . (!empty($_POST["tudoszuroelf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>";
         }
 
         //$submitButtonText = $webText["idopontfoglalasa"];
