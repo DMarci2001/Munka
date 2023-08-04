@@ -20,6 +20,14 @@ class SpektrumlabService {
 
     }
 
+    public function serviceRunning():bool {
+        $output = `ps -aux | grep commcl`;
+        if (substr_count($output, "commcl") >= 3) {
+            return true;
+        }
+
+        return false;
+    }
 
     public function writeNextRequest($requestId):string {
         if ($this->requestRunning()) {
@@ -30,7 +38,6 @@ class SpektrumlabService {
             $data = $this->generateHL7FileByRequestId($requestData["id"]);
             $this->writeRequestFile($data);
             $this->writeSemaforFile();
-            sql_query("update labrequests set status='sent' where id=?", [$requestData["id"]]);
             sql_query("insert into labrequestmessages set tipus='out', datum=now(), content=?, requestid=?", [$data, $requestData["id"]]);
         } else {
             return "Laborkérés nem található!";
@@ -92,14 +99,14 @@ class SpektrumlabService {
 
         if ($this->testing) {
             $paciensId = 104;
-            $paciensNev = ucwords(mb_strtolower("TESZT Viktória"));
+            $paciensNev = ucwords(mb_strtolower("Tesztelő János"));
             $paciensTAJ = "888888888";
             $paciensGender = "F";
             $paciensSzulDatum = "19891112";
             $paciensAnyjaNeve = "Tesztelő Júlia";
-            $paciensAddress = "Tesztelő kőrút 12";
-            $paciensCity = "Budapest";
-            $paciensIrsz = "1133";
+            $paciensAddress = "Tesztelő kőrút 24";
+            $paciensCity = "Székesfehérvár";
+            $paciensIrsz = "8000";
         }
 
         //MSH - Fejléc
@@ -125,9 +132,9 @@ class SpektrumlabService {
 
     public function cronCheck() {
         //percenként hívva cronnal
-        $this->getReceivedAnswer();
-        $this->writeNextRequest();
-        $this->fillMissingMessageRequestIds();
+        //$this->getReceivedAnswer();
+        //$this->writeNextRequest();
+        //$this->fillMissingMessageRequestIds();
     }
 
     public function fillMissingMessageRequestIds() {
@@ -187,7 +194,9 @@ class SpektrumlabService {
 
 
     public function setSpectrumLabKapcs() {
+        /*
         $content = file_get_contents(__DIR__."/labortetelkapcs.tsv");
+        $kapcs = [];
 
         $rows = explode("\n", $content);
         foreach ($rows as $row) {
@@ -198,7 +207,28 @@ class SpektrumlabService {
             if (!empty($id) && !empty($spectrumLabId)) {
                 echo $spectrumLabId." ";
                 sql_query("update synlab_labor_tetelek set spid=? where id=?", [$spectrumLabId, $id]);
+                $kapcs[$id] = $spectrumLabId;
             }
+        }
+        */
+
+        $items = sql_query("select * from synlab_labor_tetelek where spid<>0")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($items as $item) {
+            $kapcs[$item["id"]] = $item["spid"];
+        }
+
+
+        $packs = sql_query("select * from synlab_labor_csomagok")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($packs as $pack) {
+            $spItems = [];
+            $items = json_decode($pack["items"], JSON_OBJECT_AS_ARRAY);
+            foreach ($items as $item) {
+                if (isset($kapcs[$item])) {
+                    $spItems[] = $kapcs[$item];
+                }
+            }
+            echo $pack["name"]." {$pack["items"]}</br>";
+            sql_query("update synlab_labor_csomagok set spektrumitems=? where id=?", [json_encode(array_values($spItems)), $pack["id"]]);
         }
     }
 

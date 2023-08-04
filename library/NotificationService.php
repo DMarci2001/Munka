@@ -1101,4 +1101,47 @@ END:VCALENDAR";
         $mail->Send();
     }
 
+    const OWNER_PASSWORD = "que3ikieP";
+
+    public function sendLaborLeletEmail($id) {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata FROM labrequests r 
+        LEFT JOIN foglalasok f ON f.id=r.foglalasid
+        LEFT JOIN cegek c ON c.id=f.cegid
+        WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
+            $pdfFileName = Booking_Constants::DOCUMENT_PATH."labor".md5($id.rand(1,10000)).".pdf";
+            $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH."laborenc".md5($id.rand(1,10000)).".pdf";
+            $outFileName = $requestData["nev"]." laborlelet.pdf";
+            $userPassword = trim($requestData["taj"]);
+            if (empty($userPassword)) {
+                $userPassword = str_replace(".", "", str_replace("-", "", $requestData["szuldatum"]));
+            }
+            $ownerPassword = self::OWNER_PASSWORD;
+            $patientEmail = $requestData["email"];
+
+            file_put_contents($pdfFileName, base64_decode($requestData["resultpdf"]));
+
+            $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw {$ownerPassword} user_pw {$userPassword}`;
+
+            $mail = self::getDefaultMailer();
+            //$mail->AddAddress($patientEmail);
+            $mail->AddAddress("jnsmobil@gmail.com");
+            $mail->AddAttachment($pdfFileNameEncripted, $outFileName);
+
+            $subject = $requestData["nev"]." labor lelet ".date("Y-m-d");
+            $mbody = "Automatikus labor lelet küldés";
+
+            $mail->Subject = $subject;
+            $mail->Body = $mbody;
+            $mail->Send();
+
+            unlink($pdfFileName);
+            unlink($pdfFileNameEncripted);
+
+            sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=? where id=?", [$requestData["email"], $requestData["id"]]);
+        }
+    }
+
 }

@@ -64,6 +64,10 @@ function setCegFilter(c, p) {
     window.location.href = 'index.php?setcegfilter=' + c + "&p=" + p;
 }
 
+function setLabCegFilter(c) {
+    window.location.href = 'index.php?page=labrequests&setlabcegfilter=' + c;
+}
+
 function sF(i) {
     window.location.href = 'index.php?page=bnaptar&idopont=' + encodeURIComponent(i);
 }
@@ -4208,7 +4212,8 @@ function toggleRequestDetailRow(id) {
         url: "index.php",
         data: {page:"labrequests", showrequestdetails:id}
     }).done(function (msg) {
-        $("#requestrow"+id).html(msg);
+        showGeneralPopup(msg);
+        //$("#requestrow"+id).html(msg);
     });
 }
 

@@ -573,4 +573,219 @@ class SynlabService
 
         return $filename;
     }
+
+
+    public function downloadSynlabEmails() {
+        $emailConfigs["hungariamed"] = [
+            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "cegid" => 11],
+            ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu", "cegid" => 11],
+            ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu", "cegid" => 11],
+        ];
+
+        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u"];
+
+        $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu"];
+        $dir = "/var/pdfwork";
+
+
+        if (!isset($emailConfigs[Booking_Constants::SQL_DB])) {
+            return;
+        }
+
+        $utils = new Utils();
+
+        foreach ($emailConfigs[Booking_Constants::SQL_DB] as $emailConfig) {
+            echo "reading account: ".$emailConfig["email"]. "\n";
+
+
+            $connection = imap_open('{mail.hungariamed.hu/notls}', $emailConfig["email"], $emailConfig["password"]);
+
+            $count = imap_num_msg($connection);
+
+
+            for ($i = 0; $i <= 50; $i++) {
+                $msgNum = $count - $i;
+                if ($msgNum <= 0) {
+                    break;
+                }
+
+                $header = imap_headerinfo($connection, $msgNum);
+                $raw_body = imap_body($connection, $msgNum);
+                $subject = $header->subject;
+                $from = $header->from[0]->mailbox . "@" . $header->from[0]->host;
+                $structure = imap_fetchstructure($connection, $msgNum);
+                $mailDate = date("Y-m-d H:i:s", strtotime($header->date));
+
+                if (!in_array($from, $validSenders)) {
+                    continue;
+                }
+
+                echo "processing mail from: {$from} {$mailDate}\n";
+
+                $a = 0;
+                foreach ($structure->parts as $part) {
+                    if (!empty($part->ifparameters)) {
+                        $part->ifdparameters = 1;
+                        $part->dparameters = $part->parameters;
+                    }
+                    //print_r($part);
+                    if ($part->ifdparameters) {
+                        foreach ($part->dparameters as $object) {
+                            echo "from:{$from} attr:".strtolower($object->attribute)."\n";
+                            if (substr_count(strtolower($object->attribute), "name")) {
+                                //attachment
+                                $extension = "";
+                                $fileName  =  $object->value;
+                                $encoding  =  strtolower($part->encoding);
+                                $subtype   =  strtolower($part->subtype);
+
+                                if (sql_query("select id from labrequests where synlabfilename=? limit 1", [$fileName])->fetch(PDO::FETCH_ASSOC)) {
+                                    continue;
+                                }
+
+                                echo "{$encoding} {$subtype} {$fileName}\n";
+
+                                if (substr_count(strtolower($fileName), ".pdf")) {
+                                    //pdf csatolmány feldolgozása
+
+                                    //$tempFile = Booking_Constants::DOCUMENT_PATH.md5(rand(1,100000)).".{$extension}";
+                                    $tempFile = "{$dir}/lelet.pdf";
+                                    $tempFileDecoded = "{$dir}/leletdecoded.pdf";
+
+                                    $attachment = imap_fetchbody($connection, $msgNum, $a + 1);
+                                    if ($encoding == 3) {
+                                        $attachment = base64_decode($attachment);
+                                    }
+                                    if ($encoding == 4) {
+                                        $attachment = quoted_printable_decode($attachment);
+                                    }
+
+                                    //ez egy dokirex által küldött file, megpróbáljuk feldolgozni...
+                                    file_put_contents($tempFile, $attachment);
+
+                                    unlink($tempFileDecoded);
+
+                                    foreach ($pdfPasswords as $pdfPassword) {
+                                        $output = `qpdf --password={$pdfPassword} --decrypt {$tempFile} '{$tempFileDecoded}'`;
+                                        if (is_file($tempFileDecoded)) {
+                                            break;
+                                        }
+                                    }
+                                    $parser = new \Smalot\PdfParser\Parser();
+                                    $pdf = $parser->parseFile($tempFileDecoded);
+
+                                    $text = $pdf->getText();
+
+
+                                    $errors = [];
+
+                                    $nev = substr($text, strpos($text, "Születési id") + 18, 100);
+                                    $nev = substr($nev, 0, strpos($nev, "\t"));
+                                    $taj = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
+                                    $szulDatum = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
+
+
+                                    if (!ctype_digit($taj)) {
+                                        $taj = "";
+                                        $errors[] = "TAJ szám nem található";
+                                    }
+                                    if (!$utils->validateDate($szulDatum, "Y.m.d")) {
+                                        $szulDatum = "";
+                                        $errors[] = "Születési Dátum nem található";
+                                    }
+
+                                    $patientEmail = "";
+                                    if (!empty($taj) && !empty($szulDatum)) {
+                                        //email kibányászása
+                                        if ($reservationData = sql_query("select email from foglalasok where taj=? and szuldatum=? order by datum desc limit 1", [$taj, str_replace(".", "-", $szulDatum)])->fetch(PDO::FETCH_ASSOC)) {
+                                            $patientEmail = $reservationData["email"];
+                                        }
+
+                                    }
+
+                                    sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
+                                        $mailDate,
+                                        $nev,
+                                        $taj,
+                                        $szulDatum,
+                                        $patientEmail,
+                                        $emailConfig["email"],
+                                        $fileName,
+                                        json_encode(["errors" => implode(", ", $errors)]),
+                                        base64_encode(file_get_contents($tempFileDecoded)),
+                                        md5(date("YmdHis")) . md5($taj . date("Y-m-d His")),
+                                    ]);
+                                }
+
+
+                                if (substr_count(strtolower($fileName), ".zip")) {
+                                    //zip csatolmány feldolgozása
+
+                                    echo "processing zip\n";
+
+                                    $tempFile = "{$dir}/lelet.zip";
+
+                                    $attachment = imap_fetchbody($connection, $msgNum, $a + 1);
+                                    if ($encoding == 3) {
+                                        $attachment = base64_decode($attachment);
+                                    }
+                                    if ($encoding == 4) {
+                                        $attachment = quoted_printable_decode($attachment);
+                                    }
+
+                                    file_put_contents($tempFile, $attachment);
+
+                                    $unpacked = false;
+                                    $unzipDir = "{$dir}/unzip/";
+                                    foreach ($pdfPasswords as $pdfPassword) {
+                                        $output = `unzip -o -P {$pdfPassword} lelet.zip -d {$unzipDir}`;
+                                        if (substr_count("incorrect pass", $output) == 0) {
+                                            $unpacked = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if ($unpacked) {
+                                        $d = dir($unzipDir);
+
+                                        while (false !== ($entry = $d->read())) {
+                                            if (substr_count(strtolower($entry), ".pdf")) {
+
+                                                sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
+                                                    $mailDate,
+                                                    $emailConfig["email"],
+                                                    $fileName,
+                                                    json_encode(["nev" => $entry, "taj" => "", "szuldatum" => "", "email" => "", "errors" => "Zip fájlból kicsomagolt lelet!"]),
+                                                    base64_encode(file_get_contents("{$unzipDir}{$entry}")),
+                                                    md5(date("YmdHis")) . md5($entry . date("Y-m-d His")),
+                                                ]);
+
+                                                echo $entry."\n";
+                                                unlink("{$unzipDir}{$entry}");
+                                            }
+                                        }
+                                    }
+                                }
+
+
+                                //echo "|".$nev."|";
+                                //die;
+
+                            }
+                        }
+                    }
+                    $a++;
+                }
+
+
+
+            }
+
+        }
+
+        echo "yeee";
+        echo "\n";
+
+    }
+
 }

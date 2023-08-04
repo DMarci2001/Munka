@@ -2,6 +2,9 @@
 
 class LaborKeroService
 {
+
+    private string $errorMessage = "";
+
     public function __construct()
     {
         if (isset($_POST["showlaborkerowindow"])) {
@@ -28,9 +31,20 @@ class LaborKeroService
             $reservationId = intval($_POST["fid"]);
             $service = new SpektrumlabService();
 
-            sql_query("update labrequests set status='pending' where id=?", [$requestId]);
+            $error = "";
 
-            $error = $service->writeNextRequest($requestId);
+            $items = sql_query("select id from labrequestitems i where i.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($items)) {
+                $error = "Válassz legalább 1 vizsgálatot";
+            }
+
+            if (empty($error)) {
+                sql_query("update labrequests set status='pending' where id=?", [$requestId]);
+                $error = $service->writeNextRequest($requestId);
+                //if (empty($error)) {
+                    //sql_query("update labrequests set status='pending' where id=?", [$requestId]);
+                //}
+            }
 
             Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
         }
@@ -48,6 +62,9 @@ class LaborKeroService
             $service = new SpektrumlabService();
             $service->getReceivedAnswer();
             $service->fillMissingMessageRequestIds();
+            if (!$service->serviceRunning()) {
+                $this->errorMessage = "Hiba: A SpectrumLab commcl szolgáltatás nem fut a szerveren.";
+            }
             echo $this->laborKeroWindow($reservationId);
             die;
         }
@@ -158,10 +175,17 @@ class LaborKeroService
         }
     }
 
+    public static function updateLaborKeroData($reservationId):void {
+        if ($reservationData = sql_query("select nev, taj, szuldatum, email from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+            sql_query("update labrequests set nev=?, taj=?, szuldatum=?, email=? where foglalasid=?", [$reservationData["nev"], $reservationData["taj"], $reservationData["szuldatum"], $reservationData["email"], $reservationId]);
+        }
+    }
+
     public function getLaborRequestData($reservationId): array {
         if (!sql_query("select id from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
-            sql_query("insert into labrequests set created=now(), createdby=?, provider='spektrumlab', foglalasid=?, laborpacks='[]', laboritems='[]', status='temp', pass=?", [$_SESSION["adminuser"]["username"], $reservationId, md5(date("YmdHis")).md5($reservationId.date("YmdHis"))]);
+            sql_query("insert into labrequests set created=now(), resultdate=now(), createdby=?, provider='spektrumlab', foglalasid=?, laborpacks='[]', laboritems='[]', status='temp', pass=?", [$_SESSION["adminuser"]["username"], $reservationId, md5(date("YmdHis")).md5($reservationId.date("YmdHis"))]);
         }
+        self::updateLaborKeroData($reservationId);
         $result = sql_query("select * from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
         $result["items"] = sql_query("select * from labrequestitems where id=?", [$reservationId])->fetchAll(PDO::FETCH_ASSOC);
         $result["itemarray"] = [];
@@ -209,10 +233,18 @@ class LaborKeroService
         $requestPacks = json_decode($laborRequestData["laborpacks"]);
         $selectedItems = $this->getLaborRequestItems($laborRequestData["id"]);
         $totalData = $this->calculateLaborKeroPrice($laborRequestData["id"]);
+        $reservationData = sql_query("select id, nev, szuldatum, taj from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
 
         $html = "";
 
-        $html .= "<div style='width:1000px;background:#eee;padding:10px;'>";
+        $html .= "<div style='width:1000px;background:#eee;'>";
+
+        $html .= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-flask'></i>&nbsp;&nbsp;{$reservationData["nev"]} - {$reservationData["szuldatum"]} - {$reservationData["taj"]}</div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+        $html .= "</div>";
+
+        $html .= "<div style='padding:10px;'>";
 
         $html .= "<div style='margin-bottom: 10px;'>";
         $html .= "<div style='display:table;width:100%;'>";
@@ -253,26 +285,31 @@ class LaborKeroService
         $html .= "<div id='labortetelekcheckboxes' style='height:610px;overflow: auto;'>";
 
         if ($showCheckBoxes) {
-            $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t 
-            left join synlab_labor_kerolapok k on k.id=t.appform 
-            LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t.category
-            WHERE t.provider='spektrumlab'
-            order by t.appform, t.category, t.name")->fetchAll(PDO::FETCH_ASSOC);
+            $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
+            LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
+            left join synlab_labor_kerolapok k on k.id=t2.appform 
+            LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
+            WHERE t.provider='spektrumlab' and t2.spid<>0
+            group by t.id
+            order by t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
 
-            $lastAppForm = $lastCategory = 0;
+            $lastAppForm = $lastCategory = "";
             foreach ($items as $item) {
-                if ($lastAppForm != $item["appform"]) {
-                    $lastAppForm = $item["appform"];
+                if ($lastAppForm != $item["kerolap"]) {
+                    $lastAppForm = $item["kerolap"];
                     $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>{$item["kerolap"]}</div>";
                 }
-                if ($lastCategory != $item["category"]) {
-                    $lastCategory = $item["category"];
-                    $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
-                }
+                //if ($lastCategory != $item["categoryname"]) {
+                //    $lastCategory = $item["categoryname"];
+                //    $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
+                //}
                 $checked = in_array($item["id"], $selectedItems) ? "checked" : "";
                 $html .= "<div style='display:inline-block;width:190px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' id='litem{$item["id"]}' type='checkbox' value='1' {$checked}/> <label for='litem{$item["id"]}'>{$item["name"]}</label></span></div>";
             }
         } else {
+            if ($this->errorMessage != "") {
+                $html.= "<div style='background:#a00;color:#fff;padding:10px;'>{$this->errorMessage}</div>";
+            }
             $messages = sql_query("select * from labrequestmessages where requestid=? order by datum desc", [$laborRequestData["id"]]);
             $html.= "<div id='laborkerohistory'>";
             //$html.= "<div style='margin-bottom: 10px;'><a class='printbutton' onclick='refreshLaborKeroMessages();return false;' href='#' style='background: #00aa00'>Üzenetek frissítése</a></div>";
@@ -312,6 +349,7 @@ class LaborKeroService
         $html .= "Status: {$laborRequestData["status"]}";
         $html .= "</div>";
 
+        $html .= "</div>";
         $html .= "</div>";
 
         return $html;

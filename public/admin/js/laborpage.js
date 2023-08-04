@@ -88,6 +88,24 @@ function initLaborEditor() {
             }
         })
     });
+
+    $(document).on("change", ".spektrumlabparositas", function(){
+        let id = $(this).data("id");
+        let spid = $(this).val();
+
+        $.ajax({
+            type:"POST",
+            url:"index.php?page=labortetelek",
+            data: {spektrumlabparositas:1, id:id, spid:spid},
+            success: function(response){
+                $.toast({
+                    text: "Párosítás mentve",
+                    icon: 'success'
+                });
+            }
+        })
+    });
+
 }
 
 function changeLaborCsomagCompanyShow(id){
@@ -119,4 +137,75 @@ function importCsomapPublicPrice(cid, tid) {
             });
         }
     })
+}
+
+
+function showLaborPaciensEditor(rid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {showlaborpacienseditor:rid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+
+function saveLaborPaciensData() {
+    let rid = $("#laborrequestid").val();
+    let nev = $("#laborpaciensnev").val();
+    let taj = $("#laborpacienstaj").val();
+    let szuldatum = $("#laborpaciensszuldatum").val();
+    let email = $("#laborpaciensemail").val();
+
+    hideGeneralPopup();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $("#requestrow"+rid).html(response.html);
+            $.toast({
+                text: "Paciens adatok menteve: "+nev,
+                icon: 'success'
+            });
+        }
+    })
+}
+
+function sendLeletEmail(el) {
+    let email = $(el).data("email");
+    let id = $(el).data("id");
+
+    if (confirm("Kiküldöd a leletet erre az email címre? ("+email+")")) {
+        $("#ertesitesform"+id).html("");
+
+        $.ajax({
+            type:"POST",
+            url:"index.php?page=labrequests",
+            data: {sendleletemail:1, id:id},
+            success: function(response){
+                if (response.error != "") {
+                    alert(response.error);
+                    return;
+                }
+                $("#ertesitesform"+id).html(response.html);
+                $.toast({
+                    text: "Lelet kiküldve: "+email,
+                    icon: 'success'
+                });
+            }
+        });
+
+    }
 }

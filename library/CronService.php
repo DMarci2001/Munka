@@ -83,6 +83,9 @@ class CronService {
             $this->checkCollisions();
             $this->seemeBalanceCheck();
             $this->sendManagerStatusEmail();
+
+            $service = new SynlabService();
+            $service->downloadSynlabEmails();
         }
 
         if ($this->interval == "napi") {
@@ -118,10 +121,14 @@ class CronService {
     }
 
     private function _tesztStuff() {
+        $service = new SynlabService();
+        $service->downloadSynlabEmails();
+
+
         //$dicomService = new DicomService();
         //$dicomService->processEntries();
 
-        $this->_smsAlertBeforeReservation();
+        //$this->_smsAlertBeforeReservation();
         //$this->seemeBalanceCheck();
 
         //$this->_sendAlkExcel();

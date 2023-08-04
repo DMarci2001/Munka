@@ -43,6 +43,23 @@ class AdminLabortetelekPage extends AdminCorePage
             $_SESSION["selectedcsomagcompany"] = 0;
         }
 
+
+        if (isset($_GET["used"])) {
+            $allItems = [];
+            $packs = sql_query("select * from synlab_labor_csomagok where aktiv<>0")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($packs as $pack) {
+                $allItems = array_merge($allItems, array_values(json_decode($pack["items"])));
+                //$allItems[] = array_values(json_decode($pack["items"]));
+
+                //echo $pack["name"]." ";
+            }
+
+            echo implode(",", array_unique($allItems));
+            //echo "<pre>".print_r(array_unique($allItems), true)."</pre>";
+            die;
+        }
+
+
         if (isset($_GET["szerk"])) {
            $this->packageId = $_GET["szerk"];
            if ($packageData = sql_query("select items from synlab_labor_csomagok where id=?", [$this->packageId])->fetch(PDO::FETCH_ASSOC)) {
@@ -339,7 +356,60 @@ class AdminLabortetelekPage extends AdminCorePage
             die($response);
         }
 
+        if (isset($_POST["spektrumlabparositas"])) {
+            $id = intval($_POST["id"]);
+            $spid = intval($_POST["spid"]);
 
+            sql_query("update synlab_labor_tetelek set spid=? where id=?", [$spid, $id]);
+            die;
+        }
+
+
+    }
+
+
+    private function parositasWindow():string {
+        $html = "";
+
+        $existingSpids = [];
+
+        $synlabItems = sql_query("select * from synlab_labor_tetelek where provider='synlab' and appform=3 order by name")->fetchAll(PDO::FETCH_ASSOC);
+        $html .= "<div style='display:table-cell;vertical-align: top;padding-right: 20px;'>";
+        $html .= "<div style='display:table;'>";
+        foreach ($synlabItems as $synlabItem) {
+            $existingSpids[] = $synlabItem["spid"];
+            $html .= "<div style='display:table-row;'>";
+            $html .= "<div style='display:table-cell;vertical-align: middle;'>";
+            $html .= "<div>{$synlabItem["name"]}</div>";
+            $html .= "</div>";
+
+
+            $html .= "<div style='display:table-cell;vertical-align: middle;'>";
+            $html .= "<select class='spektrumlabparositas' data-id='{$synlabItem["id"]}' name='item{$synlabItem["id"]}' id='item{$synlabItem["id"]}' ".($synlabItem["spid"]==0?"style='background:yellow;'":"").">";
+            $html .= "<option value='0'>Válassz!</option>";
+            $spectrumLabItems = sql_query("select * from synlab_labor_tetelek where provider='spektrumlab' order by name")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($spectrumLabItems as $spectrumLabItem) {
+                $html .= "<option value='{$spectrumLabItem["id"]}'".($synlabItem["spid"] == $spectrumLabItem["id"] ? "selected":"").">{$spectrumLabItem["name"]}</option>";
+            }
+            $html .= "</select>";
+            $html .= "</div>";
+
+            $html .= "</div>";
+        }
+        $html .= "</div>";
+        $html .= "</div>";
+
+        $html .= "<div style='display:table-cell;vertical-align: top;padding-left:20px;border-left:1px solid #ccc;'>";
+        $spectrumLabItems = sql_query("select * from synlab_labor_tetelek where provider='spektrumlab' order by name")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($spectrumLabItems as $spectrumLabItem) {
+            if (in_array($spectrumLabItem["id"], $existingSpids)) {
+                continue;
+            }
+            $html .= "<div>{$spectrumLabItem["name"]}</div>";
+        }
+        $html .= "</div>";
+
+        return $html;
     }
 
     public function showPage()
@@ -347,6 +417,11 @@ class AdminLabortetelekPage extends AdminCorePage
 
         if (!$this->adminUser->labortetelAccess()) {
             echo $this->noPermissionMessage();
+            return;
+        }
+
+        if (isset($_GET["parositas"])) {
+            echo $this->parositasWindow();
             return;
         }
 
