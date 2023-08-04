@@ -931,7 +931,7 @@ class BookingService
 
     public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]) {
         $h = "";
-        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0 and helyszinid=?", [$cegid, $tid,$helyszinId]))) {
+        if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0 and (helyszinid=? or helyszinid=0)", [$cegid, $tid,$helyszinId]))) {
             if (!empty(trim($row["megj"]))) {
                 $h .= "<div class='tipusmegj'>" . trim($row["megj"]) . "</div>";
             }
@@ -1095,8 +1095,7 @@ class BookingService
         }
     }
 
-    public function addReservation($data)
-    {
+    public function addReservation($data):string {
         $cegId = $_SESSION["helyszindata"]["id"];
 
         if (!isset($data["tudoszuro"])) {
@@ -1133,6 +1132,7 @@ class BookingService
         if (!isset($data['orvosid'])) $data["orvosid"] = 0;
 
         $fid = $this->addReservationQuery($data);
+        $this->replicateKiegeszitoVizsgalatok($fid); //kiegészítő vizsgálatok, pl tüdőszűrő hozzáadása
 
         $this->newReservationId=$fid;
 
@@ -1174,7 +1174,7 @@ class BookingService
             //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$data["cegid"],$foglalasinfo["pass"]));
         }
         if($data["cegid"]==220){
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
             WHERE fogl.id=?",array($fid));
             if($referalData=sql_fetch_array($refQuery)){
@@ -1474,23 +1474,21 @@ class BookingService
 
     public function replicateKiegeszitoVizsgalatok($reservationId):string {
         $status = "";
-        if (Booking_Constants::SQL_DB == "keltexmed") {
-            if ($reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ? and szurestipusid=1", [$reservationId]))) {
-                if ($reservationData["tudoszuro"] == 1) {
-                    $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
-                } else {
-                    $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::TUDOSZURES_ID);
-                }
-                if ($reservationData["kieg_labor"] == 1) {
-                    $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::LABOR_ID);
-                } else {
-                    $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::LABOR_ID);
-                }
-                if ($reservationData["kieg_hallas"] == 1) {
-                    $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
-                } else {
-                    $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
-                }
+        if ($reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ? and szurestipusid=1", [$reservationId]))) {
+            if ($reservationData["tudoszuro"] == 1) {
+                $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
+            } else {
+                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::TUDOSZURES_ID);
+            }
+            if ($reservationData["kieg_labor"] == 1) {
+                $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::LABOR_ID);
+            } else {
+                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::LABOR_ID);
+            }
+            if ($reservationData["kieg_hallas"] == 1) {
+                $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
+            } else {
+                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
             }
         }
         return $status;
@@ -1713,10 +1711,12 @@ class BookingService
 
         $date = date("Y-m-d", strtotime($reservationData["datum"]));
         $foundTimes = [];
+        $bestTime = "";
+        $bestCheck = 1000000;
         $binterval = 0;
         $orvosId = 0;
         $weekDay = date("N", strtotime($reservationData["datum"]));
-        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND b.nap=?", ["|{$tipusId}|", $weekDay]);
+        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND b.nap=? and aktiv=1", ["|{$tipusId}|", $weekDay]);
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
@@ -1728,6 +1728,13 @@ class BookingService
                 $addMinute = $o * $beoData["binterval"];
                 $checkTime = date("Y-m-d H:i:s", strtotime("{$startTime} + {$addMinute} minute"));
 
+                $diff = abs(strtotime($reservationData["datum"]) - strtotime($checkTime));
+                if ($diff < $bestCheck) {
+                    //itt csak letárolom a legjobb időt, ez csak akkor kell, ha elfogyott minden hely
+                    $bestCheck = $diff;
+                    $bestTime = $checkTime;
+                }
+
                 if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=?", [$checkTime, $tipusId]))) {
                     $foundTimes[] = $checkTime;
                 }
@@ -1737,6 +1744,10 @@ class BookingService
                     break;
                 }
             }
+        }
+
+        if (empty($foundTimes) && !empty($bestTime)) {
+            $foundTimes[] = $bestTime;
         }
 
         if (!empty($foundTimes)) {
@@ -1768,8 +1779,7 @@ class BookingService
             //$api = new BookingSyncApi();
             //$api->newReservation($newReservationId);
 
-            $status = "{$tipusData["megnev"]} időpont foglalva: {$checkTime}\n";
-
+            $status = "{$tipusData["megnev"]} időpont foglalva: {$optimalTime}\n";
         }
 
         return $status;
