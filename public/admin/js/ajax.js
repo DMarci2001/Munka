@@ -392,6 +392,11 @@ function setListDay(day) {
     );
 }
 
+function setListDayAndHelyszin(day, helyszin) {
+    window.location = "index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day)+"&sethelyszin2="+encodeURIComponent(helyszin);
+}
+
+
 function setQueryDay(day) {
     //$("#querystatus").html("lekérdezés folyamatban...");
 

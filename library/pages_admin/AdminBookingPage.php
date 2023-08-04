@@ -213,16 +213,17 @@ class AdminBookingPage extends AdminCorePage
             }
 
             $results = sql_query(
-                "select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev from foglalasok f
+                "select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, f.helyszinid, h.cim as helyszin from foglalasok f
                     left join cegek c on c.id=f.cegid
+                    left join helyszinek h on h.id=f.helyszinid
                     left join szurestipusok sz on sz.id=f.szurestipusid
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
-                where {$sqlFilter} and f.nev<>'nincs név' and f.helyszinid=:helyszinid {$cegFilter} " . ($this->adminUser->onlyDoctorReservations() ? " and f.orvosassigned=" . intval($this->adminUser->user["orvosid"]) : "") . "
+                where {$sqlFilter} and f.nev<>'nincs név' {$cegFilter} " . ($this->adminUser->onlyDoctorReservations() ? " and f.orvosassigned=" . intval($this->adminUser->user["orvosid"]) : "") . "
                 order by f.datum desc
                 
                 limit 1000",
-                ["key" => $key, "helyszinid" => $_SESSION["helyszin"]]
+                ["key" => $key]
             )->fetchAll(PDO::FETCH_ASSOC);
 
             echo "<div style='padding:10px 0px;'>";
@@ -239,17 +240,18 @@ class AdminBookingPage extends AdminCorePage
                 echo "<div class='searchrowcell'>orvos</div>";
                 echo "<div class='searchrowcell'>típus</div>";
                 echo "<div class='searchrowcell'>cég</div>";
+                echo "<div class='searchrowcell'>helyszin</div>";
                 echo "</div>";
                 foreach ($results as $result) {
                     echo "<div style='display:table-row;'>";
-                    echo "<div class='searchrowcell'><a href='#' title='ugrás a naphoz' onclick='setListDay(\"" . date("Y-m-d", strtotime($result["datum"])) . "\");return false;'><i class='fas fa-arrow-right'></i> " . date("Y-m-d H:i", strtotime($result["datum"])) . "</a></div>";
+                    echo "<div class='searchrowcell'><a href='#' title='ugrás a naphoz' onclick='setListDayAndHelyszin(\"" . date("Y-m-d", strtotime($result["datum"])) . "\", \"{$result["helyszinid"]}\");return false;'><i class='fas fa-arrow-right'></i> " . date("Y-m-d H:i", strtotime($result["datum"])) . "</a></div>";
                     echo "<div class='searchrowcell'>{$result["taj"]}</div>";
                     echo "<div class='searchrowcell'>{$result["nev"]}</div>";
                     echo "<div class='searchrowcell'>{$result["szuldatum"]}</div>";
                     echo "<div class='searchrowcell'>{$result["orvosnev"]}</div>";
                     echo "<div class='searchrowcell'>{$result["szurestipusnev"]}</div>";
                     echo "<div class='searchrowcell'>{$result["cegnev"]}</div>";
-
+                    echo "<div class='searchrowcell'>{$result["helyszin"]}</div>";
                     echo "</div>";
                 }
                 echo "</div>";
@@ -703,7 +705,7 @@ class AdminBookingPage extends AdminCorePage
 
                 $beoComment = trim($beosztas["bmegj"]);
                 if (!empty($beoComment) && $this->adminUser->allCegJog()) {
-                    $beoComment .= " ({$minTol} - {$maxIg})";
+                    //$beoComment .= " ({$minTol} - {$maxIg})";
                     $htmlout .= "<div style='margin:5px 0px;padding:2px 5px;background: red;color:#fff;display: inline-block;'>{$beoComment}</div>";
                 }
 
