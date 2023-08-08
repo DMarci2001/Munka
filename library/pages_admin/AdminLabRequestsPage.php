@@ -245,7 +245,10 @@ class AdminLabRequestsPage extends AdminCorePage {
         }
 
         $html.= "<div style='{$cellStyle}'>".date("Y-m-d H:i", strtotime($request["resultdate"]))."</div>";
-        $html.= "<div style='{$cellStyle}'><a class='printbutton' title='kérés megtekintése' target='_blank' onclick='toggleRequestDetailRow(\"{$request["id"]}\");return false;' href='#' style='padding:1px 5px;'>{$request["provider"]}</a></div>";
+        $html.= "<div style='{$cellStyle}'>";
+        $html.= "<div><a title='kérés megtekintése' target='_blank' onclick='toggleRequestDetailRow(\"{$request["id"]}\");return false;' href='#'>{$request["provider"]}</a></div>";
+        $html.= "<div>{$request["bekuldokod"]}</div>";
+        $html.= "</div>";
         $html.= "<div style='{$cellStyle}'><a class='printbutton' title='adatok szerkesztése' target='_blank' onclick='showLaborPaciensEditor(\"{$request["id"]}\");return false;' href='#' style='padding:1px 5px;'>szerk</a></div>";
         $html.= "<div style='{$cellStyle}'>{$request["nev"]}".($emailProvider?"<div style='font-size: 11px;' title='Eredeti fájlnév'>{$request["synlabfilename"]}</div>":"")."</div>";
         $html.= "<div style='{$cellStyle}'>{$request["szuldatum"]}<div>{$request["taj"]}</div></div>";
@@ -317,7 +320,7 @@ class AdminLabRequestsPage extends AdminCorePage {
             $queryParams[] = $params["id"];
         }
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata FROM labrequests r 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN cegek c ON c.id=f.cegid
             WHERE r.status<>'temp' {$w} ORDER BY r.resultdate DESC LIMIT 1000", $queryParams)->fetchAll(PDO::FETCH_ASSOC);

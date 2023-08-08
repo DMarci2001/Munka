@@ -566,7 +566,7 @@ src=\"https://www.facebook.com/tr?id=944162703126175&ev=PageView&noscript=1\"
                 if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
                     $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                     $value = $_POST[$field];
-                    $korzetszamok = [20, 30, 70];
+                    $korzetszamok = [20, 30, 31, 70];
                     $extraHTML.= "<tr class='datarow'>";
                     $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
                     $extraHTML.= "<td>";

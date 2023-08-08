@@ -10,6 +10,7 @@ class LaborKeroService
         if (isset($_POST["showlaborkerowindow"])) {
             $reservationId = intval($_POST["showlaborkerowindow"]);
             $error = "";
+            $requestWindow = "";
             $reservation = sql_query("select * from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
             if ($reservation["paciensid"] == 0) {
                 $error = "Hiba: PacinesId = 0";
@@ -23,7 +24,11 @@ class LaborKeroService
                 $error = "A laborkéréshez kötelező mezők: név, taj szám, születési idő, cím, neme!";
             }
 
-            Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
+            if (empty($error)) {
+                $requestWindow = $this->laborKeroWindow($reservationId);
+            }
+
+            Utils::jsonOut(["error" => $error, "html" => $requestWindow]);
         }
 
         if (isset($_POST["sendlaborkero"])) {

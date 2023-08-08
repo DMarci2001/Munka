@@ -51,7 +51,9 @@ class AdminBeoEditor {
 
         $hetBackgrounds = ["", "#ffffbb", "#bbffff"];
 
-        $beosztasok = sql_query("SELECT b.* FROM orvos_beosztas_new b WHERE b.orvosid=? {$this->beosztasService->beosztasCompanyFilter} order by groupid, nap=0, nap, beonap, tol", [$doctorId])->fetchAll(PDO::FETCH_ASSOC);
+        $beosztasok = sql_query("SELECT b.* FROM orvos_beosztas_new b 
+           WHERE b.orvosid=? AND (b.nap<10 or (b.nap=10 and (b.beonap>DATE_SUB(NOW(), interval 300 day) or b.beonap='0000-00-00'))) {$this->beosztasService->beosztasCompanyFilter} 
+           ORDER BY groupid, nap=0, nap, beonap, tol", [$doctorId])->fetchAll(PDO::FETCH_ASSOC);
 
         if (!$this->adminUser->doctorsCalendarAccess()) {
             //$html.= "<tr><td colspan='2' style=''><div class='nojog'>A beosztás módosításához nincs jogosultsága</div></td></tr>";

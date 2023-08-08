@@ -4,8 +4,7 @@ use mikehaertl\pdftk\Pdf;
 
 class SynlabService
 {
-    private $patient = array();
-    private $filenames = [];
+    public array $bekuldoKodok = ["000000719", "HMMSZURES", "HMMMAALLK"];
 
     public function __construct()
     {
@@ -577,12 +576,13 @@ class SynlabService
 
     public function downloadSynlabEmails() {
         $emailConfigs["hungariamed"] = [
-            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "cegid" => 11],
-            ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu", "cegid" => 11],
-            ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu", "cegid" => 11],
+            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223"],
+            ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu"],
+            ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu"],
+            ["email" => "hmmszures@hungariamed.hu", "password" => "4L8PtsbJJB"],
         ];
 
-        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u"];
+        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV"];
 
         $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu"];
         $dir = "/var/pdfwork";
@@ -596,12 +596,8 @@ class SynlabService
 
         foreach ($emailConfigs[Booking_Constants::SQL_DB] as $emailConfig) {
             echo "reading account: ".$emailConfig["email"]. "\n";
-
-
             $connection = imap_open('{mail.hungariamed.hu/notls}', $emailConfig["email"], $emailConfig["password"]);
-
             $count = imap_num_msg($connection);
-
 
             for ($i = 0; $i <= 50; $i++) {
                 $msgNum = $count - $i;
@@ -647,8 +643,6 @@ class SynlabService
 
                                 if (substr_count(strtolower($fileName), ".pdf")) {
                                     //pdf csatolmány feldolgozása
-
-                                    //$tempFile = Booking_Constants::DOCUMENT_PATH.md5(rand(1,100000)).".{$extension}";
                                     $tempFile = "{$dir}/lelet.pdf";
                                     $tempFileDecoded = "{$dir}/leletdecoded.pdf";
 
@@ -660,7 +654,6 @@ class SynlabService
                                         $attachment = quoted_printable_decode($attachment);
                                     }
 
-                                    //ez egy dokirex által küldött file, megpróbáljuk feldolgozni...
                                     file_put_contents($tempFile, $attachment);
 
                                     unlink($tempFileDecoded);
@@ -673,9 +666,7 @@ class SynlabService
                                     }
                                     $parser = new \Smalot\PdfParser\Parser();
                                     $pdf = $parser->parseFile($tempFileDecoded);
-
                                     $text = $pdf->getText();
-
 
                                     $errors = [];
 
@@ -683,7 +674,15 @@ class SynlabService
                                     $nev = substr($nev, 0, strpos($nev, "\t"));
                                     $taj = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
                                     $szulDatum = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
+                                    $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
+                                    $bekuldokod = "";
+                                    foreach ($this->bekuldoKodok as $kod) {
+                                        if (substr_count($text, "({$kod})")) {
+                                            $bekuldokod = $kod;
+                                            break;
+                                        }
+                                    }
 
                                     if (!ctype_digit($taj)) {
                                         $taj = "";
@@ -703,7 +702,7 @@ class SynlabService
 
                                     }
 
-                                    sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
+                                    sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?, folyamatban=?, bekuldokod=?", [
                                         $mailDate,
                                         $nev,
                                         $taj,
@@ -714,6 +713,8 @@ class SynlabService
                                         json_encode(["errors" => implode(", ", $errors)]),
                                         base64_encode(file_get_contents($tempFileDecoded)),
                                         md5(date("YmdHis")) . md5($taj . date("Y-m-d His")),
+                                        $folyamatban,
+                                        $bekuldokod
                                     ]);
                                 }
 

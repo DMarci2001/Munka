@@ -373,7 +373,7 @@ class AdminLabortetelekPage extends AdminCorePage
 
         $existingSpids = [];
 
-        $synlabItems = sql_query("select * from synlab_labor_tetelek where provider='synlab' and appform=3 order by name")->fetchAll(PDO::FETCH_ASSOC);
+        $synlabItems = sql_query("select * from synlab_labor_tetelek where provider='synlab' and appform=1 order by name")->fetchAll(PDO::FETCH_ASSOC);
         $html .= "<div style='display:table-cell;vertical-align: top;padding-right: 20px;'>";
         $html .= "<div style='display:table;'>";
         foreach ($synlabItems as $synlabItem) {

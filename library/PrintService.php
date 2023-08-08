@@ -562,7 +562,7 @@ class PrintService
                     $mail->AddBCC("marton.gergely@hungariamed.hu");
                 } else {
                     $mail->AddAddress("jnsmobil@gmail.com");
-                    //$mail->AddAddress("marton.gergely@hungariamed.hu");
+                    $mail->AddAddress("marton.gergely@hungariamed.hu");
                 }
 
                 $mail->AddAttachment($pdfFileNameEncripted, $outFileNamePdf);
