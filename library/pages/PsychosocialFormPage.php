@@ -2,14 +2,17 @@
 class PsychosocialFormPage extends CorePage {
 
     private $psyhosocData;
+    public $showLangMenu;
+    public $lang;
 
     public function __construct()
     {
         parent::__construct();
 
         $this->showMainMenu = false;
-        $this->showLangMenu = false;
+        $this->showLangMenu = true;
         $this->lockInPage   = true;
+        $this->lang = new Lang();
         
         if(isset($_GET["pass"])){
             if($existspsyhosoc=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($_GET["pass"])))){
@@ -85,9 +88,9 @@ class PsychosocialFormPage extends CorePage {
 
     public function showPage() {
         //Ha nincsen bejegyezve a pass érték által egyetlen foglalás se dobjon vissza a start oldalra
-        if( empty($this->psyhosocData)){
+        /*if( empty($this->psyhosocData)){
             header("location:index.php");
-        }
+        }*/
 
         //Hogyha sikeres volt a mentés, akkor irányítson át a success oldalra
         if(isset($_GET["status"])&& $_GET["status"]=="success"){
@@ -110,6 +113,8 @@ class PsychosocialFormPage extends CorePage {
 
     private function psyhosocForm(){
 
+        $webText = $this->lang->webText;
+
         $submitButton = "<div style='margin-top:30px;text-align: center;'><button id='psychosocsubmitbutton' type=\"button\" name=\"psychosocsubmitbutton\" value=\"0\" class='newbutton' style='opacity: .3;border:none'>Adatok elküldése</button></div>";
 
         if(!empty($this->psyhosocData["datum"])){
@@ -117,138 +122,139 @@ class PsychosocialFormPage extends CorePage {
             $submitButton = "<div style='margin-top:30px;text-align: center;'><button id='psychosocsubmitbutton' type=\"button\" name=\"psychosocsubmitbutton\" value=\"0\" class='newbutton' style='opacity: .3;border:none'>Módosítás</button></div>";
         }
 
-        echo "<h1 style='text-align: center;'>Pszichoszociális Kérdőív</h1>";
-        echo "<div style='text-align: center;'>A következő kérdések arra vonatkoznak, hogy Ön hogyan érezte magát az utóbbi 1 évben.</div>";
+        echo $webText["psyhosoccimsor"];
+        //echo "<h1 style='text-align: center;'>Pszichoszociális Kérdőív</h1>";
+        //echo "<div style='text-align: center;'>A következő kérdések arra vonatkoznak, hogy Ön hogyan érezte magát az utóbbi 1 évben.</div>";
         echo "<div id='covidformdiv' style='max-width:800px;margin:40px auto 40px auto;'>";
         echo "<form id='psychosocform' method=\"POST\">";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran aludt rosszul, nyugtalanul?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>1. {$webText["psyhosoc_bad_sleeping"]}</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["c"])&&$_POST["bad_sleeping"]==1?"checked=true":"")." name='bad_sleeping' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==2?"checked=true":"")." name='bad_sleeping' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==3?"checked=true":"")." name='bad_sleeping' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==4?"checked=true":"")." name='bad_sleeping' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==1?"checked=true":"")." name='bad_sleeping' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==2?"checked=true":"")." name='bad_sleeping' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==3?"checked=true":"")." name='bad_sleeping' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_sleeping"])&&$_POST["bad_sleeping"]==4?"checked=true":"")." name='bad_sleeping' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát kimerültnek?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>2. Milyen gyakran érezte magát kimerültnek?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==1?"checked=true":"")." name='exhaustion' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==2?"checked=true":"")." name='exhaustion' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==3?"checked=true":"")." name='exhaustion' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==4?"checked=true":"")." name='exhaustion' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==1?"checked=true":"")." name='exhaustion' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==2?"checked=true":"")." name='exhaustion' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==3?"checked=true":"")." name='exhaustion' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["exhaustion"])&&$_POST["exhaustion"]==4?"checked=true":"")." name='exhaustion' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran volt nehézsége az elalvással?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>3. Milyen gyakran volt nehézsége az elalvással?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==1?"checked=true":"")." name='difficulty_in_sleeping' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==2?"checked=true":"")." name='difficulty_in_sleeping' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==3?"checked=true":"")." name='difficulty_in_sleeping' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==4?"checked=true":"")." name='difficulty_in_sleeping' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==1?"checked=true":"")." name='difficulty_in_sleeping' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==2?"checked=true":"")." name='difficulty_in_sleeping' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==3?"checked=true":"")." name='difficulty_in_sleeping' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_in_sleeping"])&&$_POST["difficulty_in_sleeping"]==4?"checked=true":"")." name='difficulty_in_sleeping' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát fizikailag kimerültnek?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>4. Milyen gyakran érezte magát fizikailag kimerültnek?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==1?"checked=true":"")." name='physical_exhaustion' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==2?"checked=true":"")." name='physical_exhaustion' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==3?"checked=true":"")." name='physical_exhaustion' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==4?"checked=true":"")." name='physical_exhaustion' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==1?"checked=true":"")." name='physical_exhaustion' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==2?"checked=true":"")." name='physical_exhaustion' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==3?"checked=true":"")." name='physical_exhaustion' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["physical_exhaustion"])&&$_POST["physical_exhaustion"]==4?"checked=true":"")." name='physical_exhaustion' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát érzelmileg kimerültnek?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>5. Milyen gyakran érezte magát érzelmileg kimerültnek?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==1?"checked=true":"")." name='emotional_exhaustion' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==2?"checked=true":"")." name='emotional_exhaustion' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==3?"checked=true":"")." name='emotional_exhaustion' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==4?"checked=true":"")." name='emotional_exhaustion' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==1?"checked=true":"")." name='emotional_exhaustion' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==2?"checked=true":"")." name='emotional_exhaustion' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==3?"checked=true":"")." name='emotional_exhaustion' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["emotional_exhaustion"])&&$_POST["emotional_exhaustion"]==4?"checked=true":"")." name='emotional_exhaustion' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran fordult elő, hogy túl korán felébredt, és nem tudott visszaaludni?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'6. >Milyen gyakran fordult elő, hogy túl korán felébredt, és nem tudott visszaaludni?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==1?"checked=true":"")." name='bad_early_waking' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==2?"checked=true":"")." name='bad_early_waking' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==3?"checked=true":"")." name='bad_early_waking' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==4?"checked=true":"")." name='bad_early_waking' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==1?"checked=true":"")." name='bad_early_waking' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==2?"checked=true":"")." name='bad_early_waking' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==3?"checked=true":"")." name='bad_early_waking' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["bad_early_waking"])&&$_POST["bad_early_waking"]==4?"checked=true":"")." name='bad_early_waking' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát fáradtnak?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>7. Milyen gyakran érezte magát fáradtnak?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==1?"checked=true":"")." name='tired' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==2?"checked=true":"")." name='tired' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==3?"checked=true":"")." name='tired' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==4?"checked=true":"")." name='tired' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==1?"checked=true":"")." name='tired' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==2?"checked=true":"")." name='tired' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==3?"checked=true":"")." name='tired' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tired"])&&$_POST["tired"]==4?"checked=true":"")." name='tired' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran fordult elő, hogy többször is felébredt és nehezen aludt vissza?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>8. Milyen gyakran fordult elő, hogy többször is felébredt és nehezen aludt vissza?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==1?"checked=true":"")." name='difficult_to_fall_back_asleep' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==2?"checked=true":"")." name='difficult_to_fall_back_asleep' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==3?"checked=true":"")." name='difficult_to_fall_back_asleep' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==4?"checked=true":"")." name='difficult_to_fall_back_asleep' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==1?"checked=true":"")." name='difficult_to_fall_back_asleep' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==2?"checked=true":"")." name='difficult_to_fall_back_asleep' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==3?"checked=true":"")." name='difficult_to_fall_back_asleep' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficult_to_fall_back_asleep"])&&$_POST["difficult_to_fall_back_asleep"]==4?"checked=true":"")." name='difficult_to_fall_back_asleep' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran fordult elő, hogy nem tudott lazítani?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>9. Milyen gyakran fordult elő, hogy nem tudott lazítani?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==1?"checked=true":"")." name='cannot_relax' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==2?"checked=true":"")." name='cannot_relax' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==3?"checked=true":"")." name='cannot_relax' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==4?"checked=true":"")." name='cannot_relax' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==1?"checked=true":"")." name='cannot_relax' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==2?"checked=true":"")." name='cannot_relax' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==3?"checked=true":"")." name='cannot_relax' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["cannot_relax"])&&$_POST["cannot_relax"]==4?"checked=true":"")." name='cannot_relax' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran volt ingerlékeny?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>10. Milyen gyakran volt ingerlékeny?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==1?"checked=true":"")." name='irritability' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==2?"checked=true":"")." name='irritability' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==3?"checked=true":"")." name='irritability' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==4?"checked=true":"")." name='irritability' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==1?"checked=true":"")." name='irritability' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==2?"checked=true":"")." name='irritability' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==3?"checked=true":"")." name='irritability' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["irritability"])&&$_POST["irritability"]==4?"checked=true":"")." name='irritability' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát feszültnek, idegesnek?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>11. Milyen gyakran érezte magát feszültnek, idegesnek?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==1?"checked=true":"")." name='tension' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==2?"checked=true":"")."  name='tension' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==3?"checked=true":"")." name='tension' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==4?"checked=true":"")." name='tension' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==1?"checked=true":"")." name='tension' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==2?"checked=true":"")."  name='tension' value='2' />{$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==3?"checked=true":"")." name='tension' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["tension"])&&$_POST["tension"]==4?"checked=true":"")." name='tension' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran érezte magát stresszesnek?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>12. Milyen gyakran érezte magát stresszesnek?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==1?"checked=true":"")." name='stress' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==2?"checked=true":"")." name='stress' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==3?"checked=true":"")." name='stress' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==4?"checked=true":"")." name='stress' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==1?"checked=true":"")." name='stress' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==2?"checked=true":"")." name='stress' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==3?"checked=true":"")." name='stress' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["stress"])&&$_POST["stress"]==4?"checked=true":"")." name='stress' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Szokott-e emésztési problémákkal küzdeni?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>13. Szokott-e emésztési problémákkal küzdeni?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==1?"checked=true":"")." name='digestive_problems' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==2?"checked=true":"")." name='digestive_problems' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==3?"checked=true":"")." name='digestive_problems' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==4?"checked=true":"")." name='digestive_problems' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==1?"checked=true":"")." name='digestive_problems' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==2?"checked=true":"")." name='digestive_problems' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==3?"checked=true":"")." name='digestive_problems' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["digestive_problems"])&&$_POST["digestive_problems"]==4?"checked=true":"")." name='digestive_problems' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Milyen gyakran szenved allergiás tünetektől?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>14. Milyen gyakran szenved allergiás tünetektől?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==1?"checked=true":"")." name='allergic' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==2?"checked=true":"")." name='allergic' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==3?"checked=true":"")." name='allergic' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==4?"checked=true":"")." name='allergic' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==1?"checked=true":"")." name='allergic' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==2?"checked=true":"")." name='allergic' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==3?"checked=true":"")." name='allergic' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["allergic"])&&$_POST["allergic"]==4?"checked=true":"")." name='allergic' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Előfordul-e hogy koncentrációs nehézségekkel küzd?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>15. Előfordul-e hogy koncentrációs nehézségekkel küzd?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==1?"checked=true":"")." name='difficulty_concentrating' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==2?"checked=true":"")." name='difficulty_concentrating' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==3?"checked=true":"")." name='difficulty_concentrating' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==4?"checked=true":"")." name='difficulty_concentrating' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==1?"checked=true":"")." name='difficulty_concentrating' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==2?"checked=true":"")." name='difficulty_concentrating' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==3?"checked=true":"")." name='difficulty_concentrating' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_concentrating"])&&$_POST["difficulty_concentrating"]==4?"checked=true":"")." name='difficulty_concentrating' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Gyakran felejt el dolgokat?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>16. Gyakran felejt el dolgokat?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==1?"checked=true":"")." name='difficulty_remembering' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==2?"checked=true":"")." name='difficulty_remembering' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==3?"checked=true":"")." name='difficulty_remembering' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==4?"checked=true":"")." name='difficulty_remembering' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==1?"checked=true":"")." name='difficulty_remembering' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==2?"checked=true":"")." name='difficulty_remembering' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==3?"checked=true":"")." name='difficulty_remembering' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["difficulty_remembering"])&&$_POST["difficulty_remembering"]==4?"checked=true":"")." name='difficulty_remembering' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Mennyire gyakori, hogy munkaidőn túl is nehezen tud kikapcsolódni?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>17. Mennyire gyakori, hogy munkaidő után nehezen tud kikapcsolódni, lazítani?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==1?"checked=true":"")." name='relax_after_work' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==2?"checked=true":"")." name='relax_after_work' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==3?"checked=true":"")." name='relax_after_work' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==4?"checked=true":"")." name='relax_after_work' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==1?"checked=true":"")." name='relax_after_work' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==2?"checked=true":"")." name='relax_after_work' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==3?"checked=true":"")." name='relax_after_work' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["relax_after_work"])&&$_POST["relax_after_work"]==4?"checked=true":"")." name='relax_after_work' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Úgy érzi visszahúzódóvá vált?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>18. Úgy érzi visszahúzódóvá vált?</div>";
 
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==1?"checked=true":"")." name='withdrawn_personality' value='1' /> Állandóan</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==2?"checked=true":"")." name='withdrawn_personality' value='2' /> Gyakran</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==3?"checked=true":"")." name='withdrawn_personality' value='3' /> Ritkán</div>";
-        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==4?"checked=true":"")." name='withdrawn_personality' value='4' /> Egyáltalán nem</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==1?"checked=true":"")." name='withdrawn_personality' value='1' /> {$webText["allandoan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==2?"checked=true":"")." name='withdrawn_personality' value='2' /> {$webText["gyakran"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==3?"checked=true":"")." name='withdrawn_personality' value='3' /> {$webText["ritkan"]}</div>";
+        echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["withdrawn_personality"])&&$_POST["withdrawn_personality"]==4?"checked=true":"")." name='withdrawn_personality' value='4' /> {$webText["egyaltalannem"]}</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Összességében hogyan jellemezné Ön az egészségi állapotát?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>19. Összességében hogyan jellemezné Ön az egészségi állapotát?</div>";
 
         echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["describe_your_health"])&&$_POST["describe_your_health"]==1?"checked=true":"")." name='describe_your_health' value='1' /> Kitűnő</div>";
         echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["describe_your_health"])&&$_POST["describe_your_health"]==2?"checked=true":"")." name='describe_your_health' value='2' /> Nagyon jó</div>";
@@ -256,7 +262,7 @@ class PsychosocialFormPage extends CorePage {
         echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["describe_your_health"])&&$_POST["describe_your_health"]==4?"checked=true":"")." name='describe_your_health' value='4' /> Tűrhető</div>";
         echo "<div><input class='psychosocelement' type='radio' ".(isset($_POST["describe_your_health"])&&$_POST["describe_your_health"]==5?"checked=true":"")." name='describe_your_health' value='5' /> Rossz</div>";
 
-        echo "<div style='margin-top:20px;font-weight:bold'>Összességében hogyan jellemezné Ön az egészségi állapotát?</div>";
+        echo "<div style='margin-top:20px;font-weight:bold'>20. Összességében hogyan jellemezné Ön az egészségi állapotát?<br>(Kérjük, csak visszatérő panaszokat jelöljön be!)</div>";
 
         echo "<div><table>";
         echo "<tr><td><input class='psychosocelement' type=\"checkbox\" ".(isset($_POST["headache"])?"checked=true":"")." name=\"headache\" value=\"1\">&nbsp;Fejfájás</td><td><input type=\"checkbox\" ".(isset($_POST["dizziness"])?"checked=true":"")." name=\"dizziness\" value=\"1\">&nbsp;Szédülés</td></tr>";
