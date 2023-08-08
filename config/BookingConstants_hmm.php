@@ -75,7 +75,7 @@ class Booking_Constants {
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com, marton.gergely@hungariamed.hu";
 
     const TUDOSZURES_ID             = 58;
-    const LABOR_ID                  = 0;
+    const LABOR_ID                  = 48;
     const HALLASVIZSGALAT_ID        = 0;
     const COVID_ID                  = 0;
 
