@@ -313,6 +313,10 @@ class BookingPage extends CorePage
                 $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
+            if (isset($_POST["laboranswerneeded"]) && !isset($_POST["labor"])) {
+                $this->errors[] = "Kérjük válasszon, hogy szüksége van-e BEM vizsgálatra!";
+            }
+
             if (isset($_POST["tudoszuroanswerneeded"]) && !isset($_POST["tudoszuro"])) {
                 $this->errors[] = "Kérjük válasszon, hogy van-e érvényes tüdőszűrője!";
             }

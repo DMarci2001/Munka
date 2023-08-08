@@ -970,6 +970,13 @@ class BookingService
             $h .= "<input type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
             $h .= "</div>";
         }
+
+        if ($_SESSION['helyszindata']['laboropcio'] == 1 && $tid == 1 && in_array($helyszinId, [1, 100])) {
+            $h .= "<div><input type='hidden' name = 'laboranswerneeded' value = '1' /><span style='font-weight: bold;'>Szükségem van BEM vizsgálatra is.</span><br/>";
+            $h .= "<input type='radio' name = 'labor' value = '1' ".(isset($_POST["labor"]) && $_POST["labor"] == 1?"checked":"")."/>Igen<br/>";
+            $h .= "<input type='radio' name = 'labor' value = '0' ".(isset($_POST["labor"]) && $_POST["labor"] == 0?"checked":"")."/>Nem<br/>";
+            $h .= "</div>";
+        }
         return $h;
     }
 
