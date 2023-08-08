@@ -104,6 +104,9 @@ class AdminCompaniesPage extends AdminCorePage
                 if (!isset($_POST["onlyreg"])) $_POST["onlyreg"] = 0;
                 if (!isset($_POST["onlybeutalo"])) $_POST["onlybeutalo"] = 0;
                 if (!isset($_POST["tudoszuroopcio"])) $_POST["tudoszuroopcio"] = 0;
+                if (!isset($_POST["laboropcio"])) $_POST["laboropcio"] = 0;
+                if (!isset($_POST["laboropciotol"])) $_POST["laboropciotol"] = "";
+                if (!isset($_POST["laboropcioig"])) $_POST["laboropcioig"] = "";
                 if (!isset($_POST["nocim"])) $_POST["nocim"] = 0;
                 if (!isset($_POST["noregsms"])) $_POST["noregsms"] = 0;
                 if (!isset($_POST["alksend"])) $_POST["alksend"] = 0;
@@ -112,8 +115,8 @@ class AdminCompaniesPage extends AdminCorePage
                 if (!isset($_POST["dokirexTelephelyId"])) $_POST["dokirexTelephelyId"] = "";
 
                 sql_query(
-                    "update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=?,fieldoptions=?,no_doctor_select=?,dokirexTelephelyId=? where id=?",
-                    array($_POST["megnev"], $_POST["domain"], $_POST["email"], $_POST["foglalasemail"], $_POST["onlyreg"], $_POST["nocim"], $_POST["visszaigazolas"], $_POST["onlybeutalo"], $_POST["tudoszuroopcio"], $_POST["smshour"], $_POST["beutaloszoveg"], $_POST["beutaloszoveg_de"], $_POST["beutaloszoveg_en"], $_POST["protokoll"], $_POST["aktiv"], $_POST["noregsms"], $_POST["alksend"], $_POST["alkertsend"], $_POST["alksendint"], $_POST["sendmail"], $_POST["nofoglalas_hu"], $_POST["nofoglalas_en"], $_POST["nofoglalas_de"], implode(",", $fieldOptions), $_POST["no_doctor_select"], $_POST["dokirexTelephelyId"], $id)
+                    "update cegek set megnev=?,domain=?,email=?,foglalasemail=?,onlyreg=?,nocim=?,visszaigazolas=?,onlybeutalo=?,tudoszuroopcio=?,smshour=?,beutaloszoveg=?,beutaloszoveg_de=?,beutaloszoveg_en=?,protokoll=?,aktiv=?,noregsms=?,alksend=?,alkertsend=?,alksendint=?,sendmail=?,nofoglalas_hu=?,nofoglalas_en=?,nofoglalas_de=?,fieldoptions=?,no_doctor_select=?,dokirexTelephelyId=?,laboropcio=?,laboropciotol=?,laboropcioig=? where id=?",
+                    array($_POST["megnev"], $_POST["domain"], $_POST["email"], $_POST["foglalasemail"], $_POST["onlyreg"], $_POST["nocim"], $_POST["visszaigazolas"], $_POST["onlybeutalo"], $_POST["tudoszuroopcio"], $_POST["smshour"], $_POST["beutaloszoveg"], $_POST["beutaloszoveg_de"], $_POST["beutaloszoveg_en"], $_POST["protokoll"], $_POST["aktiv"], $_POST["noregsms"], $_POST["alksend"], $_POST["alkertsend"], $_POST["alksendint"], $_POST["sendmail"], $_POST["nofoglalas_hu"], $_POST["nofoglalas_en"], $_POST["nofoglalas_de"], implode(",", $fieldOptions), $_POST["no_doctor_select"], $_POST["dokirexTelephelyId"], $_POST["laboropcio"], $_POST["laboropciotol"], $_POST["laboropcioig"], $id)
                 );
 
                 logActivity("ceg", $id, $_POST["megnev"] . " adatlap", print_r($_POST, true));
@@ -672,6 +675,7 @@ class AdminCompaniesPage extends AdminCorePage
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"nocim\"" . ($_POST["nocim"] == 1 ? " checked" : "") . "> A rendelési cím ne, csak a cím megnevezése látszódjon a pacienseknek</td></tr>";
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"foglalasemail\"" . ($_POST["foglalasemail"] == 1 ? " checked" : "") . "> Menjen a foglalásokról e-mail értesítés</td></tr>";
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"tudoszuroopcio\"" . ($_POST["tudoszuroopcio"] == 1 ? " checked" : "") . "> Tüdőszűrő opció az üzemorvosi vizsgálatnál</td></tr>";
+            echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"laboropcio\"" . ($_POST["laboropcio"] == 1 ? " checked" : "") . "> Labor opció az üzemorvosi vizsgálatnál, eltérő beosztás: <input class=\"inputbox\" style=\"width:40px\" type=\"textbox\" value=\"{$_POST["laboropciotol"]}\" name=\"laboropciotol\" />-tól, <input class=\"inputbox\" style=\"width:40px\" type=\"textbox\" value=\"{$_POST["laboropcioig"]}\" name=\"laboropcioig\" />-ig</td></tr>";
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"alkertsend\"" . ($_POST["alkertsend"] == 1 ? " checked" : "") . "> Alkalmassági lejártáról értesítés a pácienseknek</td></tr>";
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"alksend\"" . ($_POST["alksend"] == 1 ? " checked" : "") . "> Alkalmassági lista küldése</td></tr>";
             echo "<tr><td colspan=\"2\" valign=\"top\"><input type=\"checkbox\" value=\"1\" name=\"no_doctor_select\"" . ($_POST["no_doctor_select"] == 1 ? " checked" : "") . "> Ne legyen orvos választás a foglalási folyamatban</td></tr>";
