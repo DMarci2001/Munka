@@ -42,7 +42,8 @@ class AdminReferralPage extends AdminCorePage {
 					$setDate = date("Ymdhis");
 					$setDate = date("Ymdhis",strtotime($setDate." + 1 second"));
 					$filename.= "-".date("Ymdhis",strtotime($setDate)).".pdf";
-					$mpdf = new \Mpdf\Mpdf();
+					//$mpdf = new \Mpdf\Mpdf();
+					$mpdf = new \Mpdf\Mpdf(['tempDir' => Booking_Constants::DOCUMENT_PATH]);
 					$mpdf->imageVars['myvariable'] = file_get_contents("../images/Pecset_TG.jpg");
 					$mpdf->WriteHTML($result['attachment']);
 					$mpdf->Output($filename,"D");
@@ -101,7 +102,9 @@ class AdminReferralPage extends AdminCorePage {
 					$setDate = date("Ymdhis",strtotime($setDate." + 1 second"));
 					$filename.= "-".date("Ymdhis",strtotime($setDate));
 					$attachment = "{$folder}{$filename}.pdf";
-					$mpdf = new \Mpdf\Mpdf();
+					
+					//$mpdf = new \Mpdf\Mpdf();
+					$mpdf = new \Mpdf\Mpdf(['tempDir' => Booking_Constants::DOCUMENT_PATH]);
 					$mpdf->imageVars['myvariable'] = file_get_contents("../images/Pecset_TG.jpg");
 					$mpdf->WriteHTML($result['attachment']);
 					if (!file_exists($attachment)) {
