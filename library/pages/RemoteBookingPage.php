@@ -381,6 +381,10 @@ class RemoteBookingPage extends CorePage{
 		$html.="<tr><td>Ellátó orvos: *</td><td><select onChange='setQuestions($(this).val(),{$szurestipus})' class='design-put' style='padding:3px;width:268px' id='selectorvos' name='selectorvos'>";
 		$html.= 	$options;
 		$html.="</select></td></tr>";
+
+		if(empty($options)){
+			header("Location:index.php");
+		}
 		
 		return $html;
 	}
