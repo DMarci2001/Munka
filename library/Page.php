@@ -66,10 +66,8 @@ class Page
 
         echo $this->utils->htmlheader($this->page->pageTitle);
         echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . ">";
-
-        echo "<div class='pagecontainer'>";
         echo $this->_pageMenu();
-
+        echo "<div class='pagecontainer'>";
         echo "<div class='contentcontainer'>";
         //echo $this->_pageHead();
         echo "<div style='padding:20px;'>";
