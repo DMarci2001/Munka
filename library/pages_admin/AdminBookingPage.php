@@ -970,7 +970,7 @@ class AdminBookingPage extends AdminCorePage
                 
                
                 if($reservationData["paid"]==1){
-                    if($r = sql_query("SELECT fullprice FROM labshop_vasarlasok WHERE cart_content LIKE '%\"".$reservationData["id"]."\"%'")->fetch(PDO::FETCH_ASSOC)){
+                    if($r = sql_query("SELECT fullprice FROM labshop_vasarlasok WHERE cart_content LIKE '%\"reservationId\": \"".$reservationData["id"]."\"%'")->fetch(PDO::FETCH_ASSOC)){
                         $osszeg = $r["fullprice"];
                     }
                 }else{
