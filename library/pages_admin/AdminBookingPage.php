@@ -334,6 +334,24 @@ class AdminBookingPage extends AdminCorePage
     public function showPage() {
         echo "<div id='webshoplist'>".$this->webShopService->showOrdersList()."</div>";
 
+        /*$q=sql_query("SELECT * FROM labshop_vasarlasok where cegid=688 AND payment_method=\"simplepay\" AND status=\"done\"");
+        while($r=sql_fetch_array($q)){
+           $cart =  json_decode($r["cart_content"],true);
+
+            foreach($cart as $cartIndex => $cartData){
+                if(isset($cartData["type"])){
+                   
+                    if(isset($cartData["reservationId"])){
+                        //echo "Method: ".$r["payment_method"].", ReservationId: ".$cartData["reservationId"]."<br>";
+
+                        echo "UPDATE foglalasok SET paid=1 WHERE id={$cartData["reservationId"]};<br>";
+                    }
+                    
+                }
+            }
+        }*/
+
+        //------>Dokirex páciens lista feltöltés
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
         //$dokirexService = new DokirexService();
@@ -947,9 +965,19 @@ class AdminBookingPage extends AdminCorePage
             $docSign = $reservationData["docid"] != null ? " <i title='file' class='fas fa-file'></i>" : "";
 
             $extraInfo = "";
+           
+            if (isset($this->paymentData[$reservationData["id"]]) || $reservationData["paid"]==1) {
+                
+               
+                if($reservationData["paid"]==1){
+                    if($r = sql_query("SELECT fullprice FROM labshop_vasarlasok WHERE cart_content LIKE \"%".$reservationData["id"]."%\"")->fetch(PDO::FETCH_ASSOC)){
+                        $osszeg = $r["fullprice"];
+                    }
+                }else{
+                    $osszeg = $this->paymentData[$reservationData["id"]]["osszeg"];
+                }
 
-            if (isset($this->paymentData[$reservationData["id"]])) {
-                $extraInfo = "<span style='color:darkgreen;font-weight: bold;'>FIZETVE! (".$this->paymentData[$reservationData["id"]]["osszeg"]." Ft)</span> ";
+                $extraInfo = "<span style='color:darkgreen;font-weight: bold;'>FIZETVE! (".$osszeg." Ft)</span> ";
             }
 
             if (!empty($reservationData["szuldatum"]) && strtotime("now") - strtotime($reservationData["szuldatum"]) < 567648000 && strtolower($reservationData["nev"]) != "szünet") {
