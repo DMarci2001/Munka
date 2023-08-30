@@ -230,6 +230,21 @@ class RemoteBookingPage extends CorePage{
 			$html.= "</p></div>";
 		}
 		
+		if($this->szuresData['id']==127){
+			
+			$html.= "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
+			$html.= "<h3 align='center' style='color:#FFF'>Figyelem!</h3>";
+			$html.= "<p style=' text-align:center;font-size:16px;color:#FFF'>";
+			$html.= "Kérjük a tüdőszűrő eredmény kikérése funkciót csak abban az esetben vegye igénybe, amennyiben korábban történt vizsgálatának eredményét szeretné ismételten elkérni (pl. elvesztés esetén).";
+			$html.= "</p>";
+			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
+			$html.= "A tüdőszűrő vizsgálat alkalmával minden esetben megkapja leletét e-mailen illetve az EESZT térbe is feltöltésre kerül.";
+			$html.= "</p>";
+			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
+			$html.= "<strong>Köszönjük.</strong>";
+			$html.= "</p></div>";
+		}
+
 		$html.= "<form method='POST' id='remoteForm' enctype='multipart/form-data'>";
 		
 		//Páciens adatok:
