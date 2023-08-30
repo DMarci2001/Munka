@@ -630,8 +630,9 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
             echo "<tr><td></td><td><div id='fodatadiv'></div></td></tr>";
             echo "<tr><td>Orvos E-mail címe:</td><td><input class='inputbox' style='width:600px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
-            echo "<tr><td>Színkód (Hex kód):</td><td><input class='inputbox' style='width:600px;' type='text' name='colorcode' value='{$_POST["colorcode"]}'></td></tr>";
-            echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'> <input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
+            echo "<tr><td>Színkód (Hex kód):</td><td><input type=\"color\" class=\"form-control form-control-color\" name=\"colorcode\" value=\"{$_POST["colorcode"]}\" title=\"Válassz ki egy színt!\"></td></tr>";
+            //<input class='inputbox' style='width:600px;' type='text' name='colorcode' value='{$_POST["colorcode"]}'></td></tr>";
+            echo "<tr><td valign='top' style='padding-top:5px;'>Orvos telefonszáma:</td><td><input class='inputbox' style='width:200px;' type='text' name='tel' value='{$_POST["tel"]}'><input type='checkbox' value=1 name='telpublic'".($_POST["telpublic"]==1?" checked":"")."> megjelenjen a foglalási oldalon <input type='checkbox' value=1 name='onlytel'".($_POST["onlytel"]==1?" checked":"")."> csak telefonra fogad bejelentkezést<div style='padding-top:5px;'>Fontos: A telefonszám formátuma 06201234567.</div></td></tr>";
 
             echo "<tr><td>SMS értesítés:</td><td><div id='smsalertsettings'>".$this->smsAlertSettings($oid)."</div></td></tr>";
 
