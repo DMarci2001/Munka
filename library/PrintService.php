@@ -21,7 +21,8 @@ class PrintService
         "matricamegj"        => "matricaMegj.html",
         "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf",
         "laborlelet1"        => "laborLelet1.html",
-        "makdailyreport"     => "mak.html"
+        "makdailyreport"     => "mak.html",
+        "aldibeosetup"       => "aldibeosetup"
     );
 
     private $inputs = array(
@@ -97,6 +98,11 @@ class PrintService
 
         if ($this->templateId == "makdailyreport") {
             $this->printMakDailyReport();
+            return;
+        }
+
+        if ($this->templateId == "aldibeosetup"){
+            $this->aldiBeoSetup();
             return;
         }
 
@@ -630,6 +636,184 @@ class PrintService
         //$templateContent = $this->setTemplateMacros($templateContent);
 
         echo $templateContent;
+    }
+
+    private function aldiBeoSetup(){
+        $utils = New Utils();
+        $style = "body{background-color:black;color:white;font-size:18px}";
+        $style.= ".error{color:red;}";
+        $style.= ".update{color:green;}";
+        $style.= ".bold{font-weight:bold;}";
+        $style.= ".beo{color:#2acaea;}";
+
+        $binterval = 3; //Perc
+        $orvosId = 1064;
+        $nap = 10;
+        $aktiv = 1;
+        $tipusok = "|94|";
+        $helyszinId = $groupId = 0;
+        $beonap = $tol = $ig = $beocegek = ""; //A cégek formátuma |cegid|
+        $beosztas = [];
+
+        $cegek = array(
+            340 => array("kulcsszavak"=>array("CTP","Központ","Központ","Központ - LOG"),"groupid"=>10087),
+            348 => array("kulcsszavak"=>array("üzletek"),"groupid"=>10089),
+            347 => array("kulcsszavak"=>array("AIIS"),"groupid"=>10088),
+        );
+
+        echo "<style>";
+        echo $style;
+        echo "</style>";
+
+        $global_errors = [];
+        $q=sql_query("SELECT * FROM aldi_beosztasok_2023 WHERE statusz is null");
+
+        
+        while($r=sql_fetch_array($q)){
+
+            $errors = $updates = [];
+            //Új adatok meghatározása:
+            $r["new_uzletszam"] = str_replace(".0","",$r["uzletszam"]);
+            $r["new_teljescim"] = "{$r["varos"]} ({$r["irsz"]}), {$r["cim"]}";
+
+
+            echo "<p class=\"bold\">Alap adatok a táblázatból:</p>";
+            echo "<pre>";
+            print_r($r);
+            echo "</pre>";
+
+            //Módosítások/Hibák/Frissítések:
+            //-->Helyszín
+            $helyszin=sql_query("SELECT * FROM helyszinek WHERE cim=?",[$r["new_teljescim"]])->fetchAll(PDO::FETCH_ASSOC);
+            if(!$helyszin){
+                $errors[] = "A {$r["new_teljescim"]} nem található a helyszínek között!<br>";
+                if(!array_search(end($errors), $global_errors)){
+                    $global_errors[] = end($errors);
+                }
+            }else{
+                if($r["new_teljescim"]!=$r["teljescim"]){
+                    sql_query("UPDATE aldi_beosztasok_2023 SET teljescim=? WHERE id=?",[$r["new_teljescim"],$r["id"]]);
+                    $updates[] = "Teljes cím módosítva! ({$r["teljescim"]}->{$r["new_teljescim"]})";
+                }else{
+                    $helyszinId = $helyszin[0]["id"];
+                }
+                
+            }
+
+            //Üzletszám korrigálása:
+            if(substr_count($r["uzletszam"],".0")>0){
+                sql_query("UPDATE aldi_beosztasok_2023 SET uzletszam=? WHERE id=?",array($r["new_uzletszam"],$r["id"]));
+                $updates[] = "Sikeres üzletszám korrigálás";
+            }
+
+            //Cégid meghatározása:
+            if(empty($r["cegid"])){
+                if(is_numeric($r["uzletszam"])){
+                    $updates[] = "Ez egy üzlet!";
+                    sql_query("UPDATE aldi_beosztasok_2023 SET cegid=? WHERE id=?",[348,$r["id"]]);
+                }else{
+                    foreach($cegek as $key=>$values){
+                        echo "ittvagyok<br>";
+                        if(in_array($r["uzletszam"],$values["kulcsszavak"])){
+                            $updates[] = "Új cég azonosító: {$key}";
+                            sql_query("UPDATE aldi_beosztasok_2023 SET cegid=? WHERE id=?",[$key,$r["id"]]);
+                            break;
+                        }
+                    }
+                }
+            }else{
+                $beocegek = "|{$r["cegid"]}|";
+                $groupId = $cegek[$r["cegid"]]["groupid"];
+            }
+
+            //Dátum ellenőrzése:
+            if($utils->validateDate($r["datum"],"Y-m-d")){
+                $beonap = $r["datum"];
+            }else{
+                $errors[] = "Hibás beosztási dátum formátum!";
+            }
+
+
+            //Rendelési idő meghatározása
+            if(empty($r["tol"] || $r["ig"])){
+                $beoIdo=explode("-",$r["idopont"]);
+                $tol = date("H:i",strtotime($beoIdo[0]));
+                $ig = date("H:i",strtotime($beoIdo[1]));
+                $updates[] = "Rendelés meghatározva {$tol}-tól, {$ig}-ig.";
+                if($utils->validateDate($tol,"H:i") && $utils->validateDate($ig,"H:i")){
+                    $updates[] = "A meghatározott rendelés formátuma helyes!";
+                }else{
+                    $errors[] = "A rendelés formátuma helytelen!";
+                }
+            }else{
+                $tol = $r["tol"];
+                $ig = $r["ig"];
+            }
+            
+            //------------------------------------------------------------------
+            echo "<p class=\"beo bold\">beosztáshoz szükséges információk:</p>";
+            $beosztas[] = array(
+                "orvosid" =>$orvosId, 
+                "helyszinid" =>$helyszinId,
+                "nap" =>$nap,
+                "beonap" =>$beonap,
+                "tol" => $tol,
+                "ig" => $ig,
+                "binterval"=>$binterval,
+                "tipusok" => $tipusok,
+                "aktiv" => $aktiv,
+                "groupid" => $groupId,
+                "beocegek" => $beocegek,
+            );
+
+            echo "<pre class=\"beo\">";
+            print_r(end($beosztas));
+            echo "</pre>";
+            
+            //------------------------------------------------------------------
+
+            //Hiba infók:
+            if(!empty($errors)){
+                echo "<p class=\"error bold\">Hibák:</p>";
+
+                echo "<pre class=\"error\">";
+                print_r($errors);
+                echo "</pre>";
+            }  
+
+            //Frissítési infók:
+            if(!empty($updates)){
+                echo "<p class=\"update bold\">Frissítések:</p>";
+
+                echo "<pre class=\"update\">";
+                print_r($updates);
+                echo "</pre>";
+            }
+
+            echo "<hr>";
+        }
+
+        //Globális hibák kiírása:
+        if(!empty($global_errors)){
+            echo "<p class=\"error bold\">Összes hiba:</p>";
+            echo "<pre class=\"error\">";
+            print_r($global_errors);
+            echo "</pre>";
+        }
+
+        //Beosztások:
+        if(!empty($beosztas)){
+            /*echo "<pre>";
+            print_r($beosztas);
+            echo "</pre>";*/
+            foreach($beosztas as $beo){
+                echo "<p>INSERT INTO orvos_beosztas_new 
+                         SET orvosid={$beo["orvosid"]},helyszinid={$beo["helyszinid"]},nap={$beo["nap"]},beonap=\"{$beo["beonap"]}\",tol=\"{$beo["tol"]}\",ig=\"{$beo["ig"]}\",binterval={$beo["binterval"]},tipusok=\"{$beo["tipusok"]}\",aktiv={$beo["aktiv"]},groupid={$beo["groupid"]},beocegek=\"{$beo["beocegek"]}\";</p>";
+            }
+            
+        }
+
+        return;
     }
 
     private function setAutoWidth($range) {

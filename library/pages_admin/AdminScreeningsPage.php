@@ -256,7 +256,7 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Webshop beállítások</div></td></tr>";
             echo "<tr><td colspan='2'>";
             echo "<input type='checkbox' value='1' name='noreservationwebshop'" . ($_POST["noreservationwebshop"] == 1 ? " checked" : "") . "> Nincs időpontfoglalás(webshop)<br>";
-            echo "<input type='checkbox' value='1' name='webshop_kiemeles'" . ($_POST["webshop_kiemeles"] == 1 ? " checked" : "") . "> Kiemelés <input type=\"text\" name='webshop_kiemeles_megnev' placeholder=\"Kiemelés megnevezése\" value=\"{$_POST["webshop_kiemeles_megnev"]}\"><br>";
+            echo "<input type='checkbox' value='1' name='webshop_kiemeles'" . ($_POST["webshop_kiemeles"] == 1 ? " checked" : "") . "> Kiemelés <input type=\"text\" name='webshop_kiemeles_megnev' placeholder=\"Kiemelés megnevezése\" value='{$_POST["webshop_kiemeles_megnev"]}'><br>";
             echo "</td></tr>";
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Figyelmeztetések</div></td></tr>";
             echo "<tr><td colspan='2' valign=top><input type='submit' name='addtipmegj' value='+ figyelmeztetés hozzáadása'></td></tr>";
