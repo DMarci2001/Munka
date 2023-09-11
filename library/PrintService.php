@@ -22,7 +22,8 @@ class PrintService
         "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf",
         "laborlelet1"        => "laborLelet1.html",
         "makdailyreport"     => "mak.html",
-        "aldibeosetup"       => "aldibeosetup"
+        "aldibeosetup"       => "aldibeosetup",
+        "innioertesites"     => "innioertesites",
     );
 
     private $inputs = array(
@@ -103,6 +104,11 @@ class PrintService
 
         if ($this->templateId == "aldibeosetup"){
             $this->aldiBeoSetup();
+            return;
+        }
+
+        if ($this->templateId == "innioertesites"){
+            $this->innioErtesites();
             return;
         }
 
@@ -896,7 +902,12 @@ class PrintService
         "Dr. Wiedemann István" => 45548,
         "Dr. Horváth Eszter" => 82802,
         "Dr. Tánczik Zsófia" => 94225,
-        "Dr. Hetei Tünde" => 91881
+        "Dr. Hetei Tünde" => 91881,
+        "Dr. Benkő Csongor" => 93266
     ];
+
+    private function innioErtesites(){
+
+    }
 
 }
