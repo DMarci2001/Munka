@@ -583,7 +583,7 @@ class SynlabService
             ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4"],
         ];
 
-        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV"];
+        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "ZLKT=g1h"];
 
         $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu"];
         $dir = "/var/pdfwork";
