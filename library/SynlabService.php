@@ -580,6 +580,7 @@ class SynlabService
             ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu"],
             ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu"],
             ["email" => "hmmszures@hungariamed.hu", "password" => "4L8PtsbJJB"],
+            ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4"],
         ];
 
         $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV"];
