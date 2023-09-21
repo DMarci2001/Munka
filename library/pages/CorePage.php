@@ -105,7 +105,7 @@ class CorePage {
         //if (session_id() == "64vift22qjk7pos5bgosl3hpbu") {
         //    return true;
         //}
-        return !isset($_SESSION["beutaloid"]) && $_GET["page"] == "booking" && isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]));
+        return !isset($_SESSION["beutaloid"]) && $_GET["page"] == "booking" && isset($_SESSION["helyszindata"]["extended_reservation"]) && $_SESSION["helyszindata"]["extended_reservation"] == 1 && (empty($_POST["szurestipus"]) || empty($_POST["helyszin"]) && !isset($_SESSION["labcode"]));
     }
 
     private function setLang() {

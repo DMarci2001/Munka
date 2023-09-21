@@ -32,7 +32,7 @@ class BookingPage extends CorePage
             $keltexmedWebService = new KeltexMedWebSQL();
             $keltexmedWebService->loadWebShopOrder();
         }
-
+        
 
         if (isset($_GET["showpaciensfiles"])) {
             echo $this->utils->showPaciensFiles();
@@ -584,9 +584,10 @@ class BookingPage extends CorePage
             Köszönjük, hogy <strong>\"{$tipusData["megnev"]}\"</strong> szolgáltatásunkat választotta.  
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br/><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>";
         }
-
         if (isset($_SESSION["labcode"])) {
+            
             if ($labData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=?", [$_SESSION["labcode"]]))) {
+                
                 if (strtoupper($labData["status"]) == "FINISHED" || ($labData["status"] == "done" && $labData["payment_method"] == "utanvet")) {
                     echo "<div style='margin-bottom:20px;'>Már bejejezte a foglalást ehhez a vásárláshoz!<br/><br/>Amennyiben szeretne egy másik csomagot is választani, kérem <a href='https://labshop.hungariamed.hu'>kattintson ide</a>";
                     unset($_SESSION["labcode"]);
