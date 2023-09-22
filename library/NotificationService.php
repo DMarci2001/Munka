@@ -1138,7 +1138,7 @@ END:VCALENDAR";
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
-        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata FROM labrequests r 
+        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
         WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
@@ -1157,12 +1157,18 @@ END:VCALENDAR";
             $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw {$ownerPassword} user_pw {$userPassword}`;
 
             $mail = self::getDefaultMailer();
-            //$mail->AddAddress($patientEmail);
-            $mail->AddAddress("jnsmobil@gmail.com");
+            $mail->AddAddress($patientEmail);
+            //$mail->AddBCC("jnsmobil@gmail.com");
+            //$mail->AddBCC("marton.gergely@hungariamed.hu");
             $mail->AddAttachment($pdfFileNameEncripted, $outFileName);
 
             $subject = $requestData["nev"]." labor lelet ".date("Y-m-d");
-            $mbody = "Automatikus labor lelet küldés";
+            $mbody = !empty($requestData["emailtext"]) ? nl2br($requestData["emailtext"]) : "Automatikus labor lelet küldés";
+
+            $mbody .= "<br/><img alt='Hungariamed-M Kft.' style='width:200px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' />";
+
+            $mail->From = "zelko.adrienn@hungariamed.hu";
+            $mail->FromName = "Zelkó Adrienn";
 
             $mail->Subject = $subject;
             $mail->Body = $mbody;
@@ -1171,7 +1177,10 @@ END:VCALENDAR";
             unlink($pdfFileName);
             unlink($pdfFileNameEncripted);
 
-            sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=? where id=?", [$requestData["email"], $requestData["id"]]);
+            $admin = $_SESSION["adminuser"]["nev"] ?? "noname";
+            $logText = "Kiküldve: ".date("Y.m.d H:i")." {$requestData["email"]} címre, {$admin} által<br/>";
+
+            sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=?, ertesiteslog=CONCAT(?, ertesiteslog) where id=?", [$requestData["email"], $logText, $requestData["id"]]);
         }
     }
 
