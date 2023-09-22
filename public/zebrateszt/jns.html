@@ -1,0 +1,36 @@
+<html>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<head>
+    <script type="text/javascript" src="BrowserPrint-3.1.250.min.js"></script>
+    <script type="text/javascript">
+
+        // Initialize the Browser Print SDK
+        //BrowserPrint.init();
+        function printStickers(fileUrl) {
+            BrowserPrint.getDefaultDevice("printer", function (printer) {
+                if (printer && printer.connection) {
+                    if (printer.connection === "usb" || printer.connection === "network") {
+
+                        let url = window.location.href.substring(0, window.location.href.lastIndexOf("/"));
+                        url = url + "/" + fileUrl;
+                        printer.sendFile(url, undefined, function (error) { console.error("Failed to print sticker:", error); })
+
+                    } else {
+                        console.error("The selected printer is not a Zebra printer.");
+                    }
+                } else {
+                    console.error("No printer available.");
+                }
+            }, function (error) {
+                console.error("Error retrieving default printer:", error);
+            });
+        }
+
+    </script>
+</head>
+<body>
+
+<span style="padding-right:50px; font-size:200%">Zebra Teszt</span><br/>
+<input type="button" value="jns teszt" onclick="printStickers('spektrumlab.txt');"><br/><br/>
+</body>
+</html>
