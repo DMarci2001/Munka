@@ -95,7 +95,14 @@ class BookingValidatePage extends CorePage {
                 echo "<br/><br/><a href='/'>{$webText["visszafooldal"]}</a>";
             } else {
                 $successText = $webText["foglalassuccesstext"];
-                
+
+                if (CompanyService::isAuchan()) {
+                    $successText.= "<strong>Felhívjuk figyelmét, hogy amennyiben több szolgáltatást is választott, akkor a választott időpontjához legközelebbi szabad időpontokat állította össze Önnek a rendszer. A pontos időpontokat a visszaigazoló email-ben találja meg.</strong><br/><br/>";
+                    $successText.= "Ha bármi kérdése van, a foglalt időpontját szeretné módosítani vagy lemondani, kérjük hívja ezt a telefonszámot: 06 30 537 1008";
+                    $successText.= "<hr>";
+                }
+
+
                 if (CompanyService::isBP() && false) {
                     //Létrehozok egy új sort a pass értékkel a psyhosoc táblában.
                     if($fogl=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=? AND rkod=?",array($_GET["id"],$_GET["rk"])))){

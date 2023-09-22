@@ -107,10 +107,43 @@ class BookingService
         }
     }
 
+    private function laborOptionBreak($time):bool {
+        $laborOption = $_GET["laborOption"] ?? 0;
+        $companyData = $_SESSION["helyszindata"];
+        if ($laborOption != 0) {
+            if (!empty($companyData["laboropcioig"])) {
+                if (strtotime($time) >= strtotime($companyData["laboropcioig"])) {
+                    return true;
+                }
+            }
+            if (!empty($companyData["laboropciotol"])) {
+                if (strtotime($time) < strtotime($companyData["laboropciotol"])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    private array $kiegIds = [];
+    private function kiegVizsgalatOverrideIfNeeded():void {
+        if (!empty($_GET["kiegChecked"])) {
+            $this->kiegIds = explode("_", $_GET["kiegChecked"]);
+            $this->kiegIds = array_unique($this->kiegIds);
+            if (count($this->kiegIds) == 1) {
+                $_GET["szurestipus"] = $this->kiegIds[0];
+            }
+        }
+    }
+
+
     public function showIdoPontValasztoV2() {
-        
         $this->lang = new Lang();
         $webText = $this->lang->webText;
+
+        $this->kiegVizsgalatOverrideIfNeeded();
 
         $html = "";
         if (isset($_GET["helyszin"]) && $_GET["helyszin"] != "undefined") {
@@ -145,17 +178,12 @@ class BookingService
             return json_encode(array("error" => $webText["valassznemet"], "html" => ""));
         }
 
-        //if (!$rowmax = $this->getMinMax($this->szuresTipus)) {
-        //    return json_encode(array("error" => $webText["nincssuresreidopontbeallitva"], "html" => ""));
-        //}
-
         $html .= "<div style='margin:10px 0px 10px 0px;'>";
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
         $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
         $html .= "<table style='width:100%;' cellpadding='0' cellspacing='0'><tr>";
         
         for ($i = 0; $i <= 6; $i++) {
-            
             $fix       = $i + $this->honnan;
             $nap       = date("Y-m-d", strtotime("this week monday +{$fix} day"));
             $wd        = date("N", strtotime($nap));
@@ -190,7 +218,6 @@ class BookingService
             $html.="<div style='display:table;width:100%;'>";
 
             foreach ($orvosList as $oKey => $orvosId) {
-                
                 $orvosData   = sql_query("select * from orvosok where id=?", [$orvosId])->fetch();
                 $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId);
                 $napiBeos    = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvosId);
@@ -199,9 +226,6 @@ class BookingService
 
                 if ($_SESSION["helyszindata"]["no_doctor_select"] == 0) {
                     $s = "width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;";
-                    if (session_id() == "itpmno31bm4gh9uh8vr9jrib4c") {
-                        //$s = "max-width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;border:1px solid red;";
-                    }
                     $html .= "<div style='{$s}'>{$orvosData["nev"]}</div>";
                 } else {
                     $html .= "<div style='width:70px;'></div>";
@@ -244,6 +268,10 @@ class BookingService
                             break;
                         }
 
+                        if ($this->laborOptionBreak($ora)) {
+                            continue;
+                        }
+
                         //beosztások beolvasása
                         if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) {
                             //szabad orvos kiválasztása
@@ -257,7 +285,7 @@ class BookingService
                                         if ($beoData["csaksorban"] == 1 && strpos($beoData["orvosnev"], "Várólista") !== false) {
                                             $varolista = 1;
                                         }
-                                        $buttonTitle = "{$orvosData["nev"]}";
+                                        $buttonTitle = $_SESSION["helyszindata"]["no_doctor_select"] == 0 ? "{$orvosData["nev"]}" : "szabad időpont";
                                         $buttonJava = "varolista={$varolista};chooseIdoPont(\"{$nap} {$ora}\",{$binterval},{$orvosId},{$this->helyszin},{$this->szuresTipus});return false;";
                                         break;
                                     }
@@ -857,6 +885,12 @@ class BookingService
             $cegId = $_SESSION["helyszinceg"];
         }
 
+        if (!$isPack) {
+            if (count($this->kiegIds) == 1) {
+                $isPack = true;
+            }
+        }
+
         $wora = $wceg = "";
         $wnoreservation = $isPack ? "":"and b.noreservation=0";
 
@@ -972,9 +1006,9 @@ class BookingService
         }
 
         if ($_SESSION['helyszindata']['laboropcio'] == 1 && $tid == 1 && in_array($helyszinId, [1])) {
-            $h .= "<div><input type='hidden' name = 'laboranswerneeded' value = '1' /><span style='font-weight: bold;'>Szükségem van BEM vizsgálatra is.</span><br/>";
-            $h .= "<input type='radio' name = 'labor' value = '1' ".(isset($_POST["labor"]) && $_POST["labor"] == 1?"checked":"")."/>Igen<br/>";
-            $h .= "<input type='radio' name = 'labor' value = '0' ".(isset($_POST["labor"]) && $_POST["labor"] == 0?"checked":"")."/>Nem<br/>";
+            $h .= "<div><input type='hidden' id='laboranswerneeded' name = 'laboranswerneeded' value = '1' /><span style='font-weight: bold;'>Szükségem van BEM vizsgálatra is.</span><br/>";
+            $h .= "<input type='radio' name = 'labor' value = '1' onchange='reservedTimeInvalidate();' ".(isset($_POST["labor"]) && $_POST["labor"] == 1?"checked":"")."/>Igen<br/>";
+            $h .= "<input type='radio' name = 'labor' value = '0' onchange='reservedTimeInvalidate();' ".(isset($_POST["labor"]) && $_POST["labor"] == 0?"checked":"")."/>Nem<br/>";
             $h .= "</div>";
         }
         return $h;
@@ -1140,6 +1174,7 @@ class BookingService
 
         $fid = $this->addReservationQuery($data);
         $this->replicateKiegeszitoVizsgalatok($fid); //kiegészítő vizsgálatok, pl tüdőszűrő hozzáadása
+        $this->doAuchanExceptions($fid);
 
         $this->newReservationId=$fid;
 
@@ -1636,6 +1671,19 @@ class BookingService
         return $warnings;
     }
 
+
+    const AUCHAN_SZURESEK = [
+        [103, 0, "Laborvizsgálatok - kisrutin", "Általános, szűrővizsgálat céljából válassza a legkisebb laborvizsgálatunkat. Vénás vérvétel: Vérkép, Süllyedés, Vércukor, Húgysav, Nátrium, Kálium, Karbamid, Kreatinin +eGFR, GOT, GPT, GGT, Alkalikus Foszfatáz AP, LDH, Koleszterin, Triglicerid, összbilirubin, HDL, LDL, Vas", []],
+        [13, 0, "Szemészet - optometrista", "A műszeres vizsgálat során az optometrista szakember vizsgálja a látásélességet, a fénytörési hibákat, a szemizmok tevékenységét, a szemlencsét. Javaslatot tesz az esetleges látás korrekciókra.", []],
+        [108, 0, "Szív terheléssel összefüggő vizsgálatok", "Szívstressz-mérésre alkalmas műszeres vizsgálat. A szív ingerületvezetési adataiból ad képet a szívizom állapotára, az ingerületvezetés folyamatára, és a szív-stresszkezelésének intenzitására.", []],
+        [103, 9500, "Laborvizsgálatok - nagyrutin", "Javasolt, mert számos betegség kimutatható az eredményekből, még a fizikálisan érzékelt panaszok megjelenése előtt. Átfogó vénás vérvétel (Női csomag): Vérkép, Süllyedés, Vércukor, Húgysav, Nátrium, Kálium, Kálcium, Magnézium, Karbamid, Kreatinin +eGFR, GOT, GPT, GGT, Alkalikus Foszfatáz AP, LDH, Koleszterin, Triglicerid, összbilirubin, HDL, LDL, Vas, CRP, Transzferin, TSH, D vitamin, CA-125. Átfogó vénás vérvétel (Férfi csomag): Vérkép, Süllyedés, Vércukor, Húgysav, Nátrium, Kálium, Kálcium, Magnézium, Karbamid, Kreatinin +eGFR, GOT, GPT, GGT, Alkalikus Foszfatáz AP, LDH, Koleszterin, Triglicerid, összbilirubin, HDL, LDL, Vas, CRP, Transzferin, TSH, D vitamin, PSA", []],
+        [103, 14000, "Laborvizsgálatok - pajzsmirigy vizsgálat", "A laborcsomag segítségével kimutatható a pajzsmirigy működési zavara (alul működés vagy túl működés) Vénás vérvétel: T3, T4, TSH, Anti TPO, TRAK", []],
+        [107, 6000, "ABI vizsgálat", "Keringési zavarok kiszűrése alkalmas műszeres vizsgálat .Kimutatható az  artériák szűkülete, és a kezdődő artériás elváltozások.", []],
+        [109, 8000, "Dietetika", "Táplálkozási tanácsadás, egyénre szabott diétás étrend kialakításával.", []],
+        [68, 8000, "Mozgásszervi vizsgálat", "Minden ízületre kiterjedő funkcionális mozgásszervi vizsgálat, tanácsadás.", []],
+    ];
+
+
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
@@ -1669,6 +1717,35 @@ class BookingService
             $text.= "</ul></div>";
         }
 
+        if (CompanyService::isAuchan()) {
+            //auchan override
+            $options = "";
+            foreach (self::AUCHAN_SZURESEK as $key => $auchanSzures) {
+                $onChange = "clearIdopontValasztoOnly();";
+                if (!empty($_POST["helyszin"])) {
+                    if (in_array($_POST["helyszin"], CompanyService::auchanSingleReservationPlaces())) {
+                        $onChange = "preventMultipleServiceSelect(this);";
+                    }
+                }
+
+                $price = "<span>(a vizsgálat költségét az Auchan Magyarország Kft téríti a munkavállalónak)</span>";
+                if ($auchanSzures[1] != 0) {
+                    if (empty($teriteses)) {
+                        $options.= "<div style='border-top:1px solid #ccc;padding-top:10px;'><div style='font-weight: bold;'>Térítéses vizsgálatok:</div><div>A kiegészítő vizsgálatok eredményei segítenek megismerni az aktuális egészségi állapotát. Szakembereink javaslatot tesznek a panaszok, tünetek kezelésére. Éljen a lehetőséggel, vegye igénybe a kiegészítő vizsgálatokat!</div></div>";
+                        $teriteses = 1;
+                    }
+                    $price = " - <span>".number_format($auchanSzures[1])." Ft</span>";
+                }
+                $options .= "<div style='margin-top:10px;'>";
+                $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$auchanSzures[0]}'/><label for='kiegoption{$key}'> {$auchanSzures[2]}</label> {$price}</div>";
+                if (!empty($auchanSzures[3])) {
+                    $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$auchanSzures[3]}</div>";
+                }
+                $options .= "</div>";
+            }
+
+            $text = "<div style='margin:5px 0px;font-weight: bold;'>Kérjük válassza ki az igényelt vizsgálatokat:</div><div style='margin-bottom: 10px;'>{$options}</div>";
+        }
 
         return $text;
     }
@@ -1698,12 +1775,18 @@ class BookingService
 
 
     public function deleteKiegeszitoVizsgalat($reservationData, $tipusId) {
-        if ($oldReservation = sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
+        if ($oldReservation = sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=? and taj<>''", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
             $this->deleteReservation($oldReservation["id"], $oldReservation["pass"]);
         }
     }
 
-    public function replicateReservationToAnotherService($reservationData, $tipusId):string {
+    private int $lastSubReservationId = 0;
+    private bool $replicateDuplicateCheck = true;
+    private array $replicatedTimes = [];
+
+    public function replicateReservationToAnotherService($reservationData, $tipusId, $testOnly = false):string {
+        $this->lastSubReservationId = 0;
+        //$this->replicatedTimes[] = $reservationData["datum"];
         $status = "";
         if (!$tipusData = sql_query("select id, megnev from szurestipusok where id=?", [$tipusId])->fetch(PDO::FETCH_ASSOC)) {
             return $status;
@@ -1712,8 +1795,10 @@ class BookingService
             return $status;
         }
 
-        if (sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
-            return $status;
+        if ($this->replicateDuplicateCheck) {
+            if (sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=?", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
+                return $status;
+            }
         }
 
         $date = date("Y-m-d", strtotime($reservationData["datum"]));
@@ -1723,14 +1808,14 @@ class BookingService
         $binterval = 0;
         $orvosId = 0;
         $weekDay = date("N", strtotime($reservationData["datum"]));
-        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND b.nap=? and aktiv=1", ["|{$tipusId}|", $weekDay]);
+        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=?", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"]]);
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
 
             $o = 0;
             $startTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["tol"]}"));
-            $lastTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["ig"]}"));
+            $lastTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["ig"]} -{$binterval} minute"));
             while (true) {
                 $addMinute = $o * $beoData["binterval"];
                 $checkTime = date("Y-m-d H:i:s", strtotime("{$startTime} + {$addMinute} minute"));
@@ -1742,14 +1827,22 @@ class BookingService
                     $bestTime = $checkTime;
                 }
 
-                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=?", [$checkTime, $tipusId]))) {
+                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=?", [$checkTime, $tipusId, $reservationData["helyszinid"]]))) {
                     $foundTimes[] = $checkTime;
                 }
 
                 $o++;
-                if (strtotime($checkTime) >= strtotime($lastTime) || $o > 100) {
+                if (strtotime($checkTime) > strtotime($lastTime) || $o > 100) {
                     break;
                 }
+            }
+        }
+
+        if ($testOnly) {
+            if (empty($foundTimes)) {
+                return "{$tipusData["megnev"]} szolgáltatásra már elfogytak erre a napra az időpontok, kérjük hívja a 06 30 537 1008 telefonszámot segítségért.";
+            } else {
+                return "";
             }
         }
 
@@ -1760,13 +1853,27 @@ class BookingService
         if (!empty($foundTimes)) {
             $diff = 1000000;
             $optimalTime = "";
-            
+            $notSoGoodTime = "";
+
             foreach ($foundTimes as $foundTime) {
                 $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime));
                 if ($checkDiff < $diff) {
-                    $diff = $checkDiff;
-                    $optimalTime = $foundTime;
+                    foreach ($this->replicatedTimes as $reservedTime) {
+                        $tempDiff = abs(strtotime($reservedTime) - strtotime($foundTime));
+                        if ($tempDiff < 5*60) {
+                            $notSoGoodTime = $foundTime;
+                        }
+                    }
+
+                    if ($notSoGoodTime != $foundTime) {
+                        $diff = $checkDiff;
+                        $optimalTime = $foundTime;
+                    }
                 }
+            }
+
+            if (empty($optimalTime)) {
+                $optimalTime = $notSoGoodTime;
             }
 
             $reservationData["parentid"] = $reservationData["id"];
@@ -1777,7 +1884,8 @@ class BookingService
             $reservationData["tudoszuro"] = 0;
             $reservationData["aktiv"] = 1;
             $reservationData["helyszin"] = $reservationData["helyszinid"];
-            $newReservationId = $this->addReservationQuery($reservationData);
+            $this->lastSubReservationId = $this->addReservationQuery($reservationData);
+            $this->replicatedTimes[] = $optimalTime;
 
             //Foglaljorvost.hu-nak átküldés
             //$foService = new FoglaljOrvostService();
@@ -1932,4 +2040,97 @@ class BookingService
     public function setLabShopStatus($id, $status) {
         sql_query("update labshop_vasarlasok set status=? where reservationid=? limit 1", [$status, $id]);
     }
+
+    public function doAuchanExceptions($reservationId):void {
+        if (Booking_Constants::SQL_DB != "keltexmed") {
+            return;
+        }
+
+        if (!CompanyService::isAuchan()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        //echo "debug info<br/><br/><pre>".print_r($_POST, true)."</pre>";
+        //die;
+
+        $reservedTipusok = $subServices = [];
+        $price = 0;
+        foreach (self::AUCHAN_SZURESEK as $key => $auchanSzures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $auchanSzures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $reservedTipusok[] = $tipusId;
+                }
+                $subServices[] = $auchanSzures[2];
+                $price += $auchanSzures[1];
+            }
+        }
+
+        if (count($reservedTipusok) <= 1) {
+            sql_query("update foglalasok set megj=trim(concat(megj, ?)) where id=?", [" Választott vizsgálat: ".implode(", ", $subServices). ". Ára: ".number_format($price)." Ft", $reservationId]);
+            return;
+        }
+
+        $subServices = $reservedTipusok = $reservationTipusMap = $priceMap = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::AUCHAN_SZURESEK as $key => $auchanSzures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $auchanSzures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    $reservationTipusMap[$tipusId] = $this->lastSubReservationId;
+                    $reservedTipusok[] = $tipusId;
+                }
+
+                $subServices[$tipusId][] = $auchanSzures[2];
+                if (!isset($priceMap[$tipusId])) {
+                    $priceMap[$tipusId] = 0;
+                }
+                $priceMap[$tipusId] += $auchanSzures[1];
+            }
+        }
+
+        foreach ($subServices as $tipusId => $subService) {
+            sql_query("update foglalasok set megj=trim(concat(megj, ?)) where id=?", [" Választott vizsgálat: ".implode(", ", $subService). ". Ára: ".number_format($priceMap[$tipusId])." Ft", $reservationTipusMap[$tipusId]]);
+        }
+    }
+
+    public function doAuchanServicesTest():string {
+        if (Booking_Constants::SQL_DB != "keltexmed") {
+            return "";
+        }
+
+        if (!CompanyService::isAuchan() || empty($_POST["helyszin"]) || empty($_POST["datum"])) {
+            return "";
+        }
+
+
+        $_POST["helyszinid"] = $_POST["helyszin"];
+
+        //echo "debug info<br/><br/><pre>".print_r($_POST, true)."</pre>";
+
+        $results = [];
+
+        $reservedTipusok = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::AUCHAN_SZURESEK as $key => $auchanSzures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $auchanSzures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $result = $this->replicateReservationToAnotherService($_POST, $tipusId, true);
+                    if (!empty($result)) {
+                        $results[] = $result;
+                    }
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        return implode("<br/>", $results);
+    }
+
 }

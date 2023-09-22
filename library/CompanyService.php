@@ -114,8 +114,18 @@ class CompanyService {
     }
 
     public static function isAstostecCompany($companyId = 0):bool {
-        return $_SESSION["helyszindata"]["domain"] == "astotec-teszt";
+        return $_SESSION["helyszindata"]["domain"] == "astotec";
     }
+
+    const AUCHAN_ID = 338;
+    public static function isAuchan($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "auchan" || ($companyId == self::AUCHAN_ID && Booking_Constants::SQL_DB == "keltexmed");
+    }
+
+    public static function auchanSingleReservationPlaces():array {
+        return [319, 321];
+    }
+
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos
 
