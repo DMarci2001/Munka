@@ -2,19 +2,52 @@
 
 class LaborKeroService
 {
+    const SPEKTRUMLAB_VERKEP_ID = 846;
 
     private string $errorMessage = "";
 
     public function __construct()
     {
+        if (!isset($_SESSION["spmatricaprinter"])) {
+            $_SESSION["spmatricaprinter"] = "zebra";
+        }
+        if (!isset($_SESSION["spmatricaprinterpos"])) {
+            $_SESSION["spmatricaprinterpos"] = "190,0";
+        }
+
+        if (isset($_POST["showSpektrumLabMatricaWin"])) {
+            Utils::jsonOut(["error" => "", "html" => $this->showSpectrumLabMatricaWin()]);
+        }
+
+        if (isset($_POST["saveSpMatricData"])) {
+            if (isset($_POST["printer"])) {
+                $_SESSION["spmatricaprinter"] = $_POST["printer"];
+            }
+            if (isset($_POST["printerpos"])) {
+                $_SESSION["spmatricaprinterpos"] = $_POST["printerpos"];
+            }
+
+            if (isset($_POST["checkedReq"])) {
+                $_SESSION["checkedReq"] = [];
+                $ids = explode("_", $_POST["checkedReq"]);
+                foreach ($ids as $id) {
+                    if (!empty($id)) {
+                        $_SESSION["checkedReq"][] = $id;
+                    }
+                }
+            }
+
+            Utils::jsonOut(["error" => "", "html" => $this->showPrinterButtons()]);
+        }
+
         if (isset($_POST["showlaborkerowindow"])) {
             $reservationId = intval($_POST["showlaborkerowindow"]);
             $error = "";
             $requestWindow = "";
             $reservation = sql_query("select * from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
-            if ($reservation["paciensid"] == 0) {
-                $error = "Hiba: PacinesId = 0";
-            }
+            //if ($reservation["paciensid"] == 0) {
+            //    $error = "Hiba: PacinesId = 0";
+            //}
 
             $utils = new Utils();
             if (!$utils->validateDate($reservation["szuldatum"], "Y-m-d")) {
@@ -65,8 +98,8 @@ class LaborKeroService
             $requestId = intval($_POST["rid"]);
             $reservationId = intval($_POST["fid"]);
             $service = new SpektrumlabService();
-            $service->getReceivedAnswer();
-            $service->fillMissingMessageRequestIds();
+            //$service->getReceivedAnswer();
+            //$service->fillMissingMessageRequestIds();
             if (!$service->serviceRunning()) {
                 $this->errorMessage = "Hiba: A SpectrumLab commcl szolgáltatás nem fut a szerveren.";
             }
@@ -189,6 +222,8 @@ class LaborKeroService
     public function getLaborRequestData($reservationId): array {
         if (!sql_query("select id from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
             sql_query("insert into labrequests set created=now(), resultdate=now(), createdby=?, provider='spektrumlab', foglalasid=?, laborpacks='[]', laboritems='[]', status='temp', pass=?", [$_SESSION["adminuser"]["username"], $reservationId, md5(date("YmdHis")).md5($reservationId.date("YmdHis"))]);
+            $newRequestId = sql_insert_id();
+            sql_query("insert into labrequestitems set requestid=?, itemid=?", [$newRequestId, self::SPEKTRUMLAB_VERKEP_ID]);
         }
         self::updateLaborKeroData($reservationId);
         $result = sql_query("select * from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
@@ -290,16 +325,29 @@ class LaborKeroService
         $html .= "<div id='labortetelekcheckboxes' style='height:610px;overflow: auto;'>";
 
         if ($showCheckBoxes) {
-            $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
-            LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
-            left join synlab_labor_kerolapok k on k.id=t2.appform 
-            LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
-            WHERE t.provider='spektrumlab' and t2.spid<>0
-            group by t.id
-            order by t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
+            if (true) {
+                $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
+                LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
+                left join synlab_labor_kerolapok k on k.id=t2.appform 
+                LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
+                WHERE t.provider='spektrumlab'
+                group by t.id
+                order by t2.appform is null, t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
+                LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
+                left join synlab_labor_kerolapok k on k.id=t2.appform 
+                LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
+                WHERE t.provider='spektrumlab' and t2.spid<>0
+                group by t.id
+                order by t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
+            }
 
             $lastAppForm = $lastCategory = "";
             foreach ($items as $item) {
+                if (empty($item["kerolap"])) {
+                    $item["kerolap"] = "Nem kategorizált";
+                }
                 if ($lastAppForm != $item["kerolap"]) {
                     $lastAppForm = $item["kerolap"];
                     $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>{$item["kerolap"]}</div>";
@@ -309,7 +357,7 @@ class LaborKeroService
                 //    $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
                 //}
                 $checked = in_array($item["id"], $selectedItems) ? "checked" : "";
-                $html .= "<div style='display:inline-block;width:190px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' id='litem{$item["id"]}' type='checkbox' value='1' {$checked}/> <label for='litem{$item["id"]}'>{$item["name"]}</label></span></div>";
+                $html .= "<div style='display:inline-block;width:186px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' id='litem{$item["id"]}' type='checkbox' value='1' {$checked}/> <label for='litem{$item["id"]}'>{$item["name"]}</label></span></div>";
             }
         } else {
             if ($this->errorMessage != "") {
@@ -344,14 +392,20 @@ class LaborKeroService
         $html .= "<div style='margin-top:10px;'>";
         $html .= "<input type='hidden' id='laborkeroreservationid' value='{$reservationId}' />";
         $html .= "<input type='hidden' id='laborkerorequestid' value='{$laborRequestData["id"]}' />";
-        if (in_array($laborRequestData["status"], ["temp", "pending"])) {
+        if (in_array($laborRequestData["status"], ["temp"])) {
             $html .= "<a class='printbutton' onclick='sendLaborKero();return false;' href='#' style='background: #00aa00'>Laborkérő küldése</a> ";
         }
-        if (in_array($laborRequestData["status"], ["sent"])) {
+        if (in_array($laborRequestData["status"], ["pending"])) {
             $html .= "<a class='printbutton' onclick='cancelLaborKero();return false;' href='#' style='background: #aa0000'>Laborkérő visszavonása</a> ";
         }
+
+        $statusText = $laborRequestData["status"];
+        if ($statusText == "pending") {
+            $statusText = "Laborkérés elküldve, eredmény még nem érkezett";
+        }
+
         $html .= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
-        $html .= "Status: {$laborRequestData["status"]}";
+        $html .= "Status: {$statusText}";
         $html .= "</div>";
 
         $html .= "</div>";
@@ -383,4 +437,96 @@ class LaborKeroService
             }
         }
     }
+
+    private function showSpectrumLabMatricaWin():string {
+        $html = "";
+
+        $printerName = $_SESSION["spmatricaprinter"];
+        $printerPos  = $_SESSION["spmatricaprinterpos"];
+
+        $html .= "<div style='background:#eee;border:10px solid white;'>";
+
+        $html .= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-print'></i>&nbsp;&nbsp;Spektrumlab matricák nyomtatása</div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+        $html .= "</div>";
+
+        $html .= "<div style='padding:10px;'>";
+        $html .= "<div style='min-height:210px;max-height:500px;overflow: auto;'>";
+
+        $html.= "<div style='margin-bottom: 10px;padding-bottom:10px;border-bottom:1px solid #ccc;'>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'>Nyomtató neve:&nbsp;&nbsp;</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'><input onchange='refreshPrinterButtons();' style='width:150px;' type='text' id='spprintername' value='{$printerName}' />&nbsp;&nbsp;</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'>Pos:&nbsp;&nbsp;</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'><input onchange='refreshPrinterButtons();' style='width:50px;' type='text' id='spprinterpps' value='{$printerPos}' />&nbsp;&nbsp;</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;'><a class='printbutton' target='_blank' href='#' onclick='return false;' style='padding:2px 5px;'>Beállítás</a></div>";
+        $html.= "</div>";
+
+        $messages = sql_query("SELECT m.* FROM labrequestmessages m WHERE m.datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND m.tipus='in' AND m.requestid<>0 ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($messages)) {
+           $html.= "<div style='margin: 40px 0px 5px 0px;font-weight: bold;text-align: center'>Nem található friss matrica adat</div>";
+        } else {
+            $requestIds = [];
+            foreach ($messages as $message) {
+                $rows = explode("\r", $message["content"]);
+                foreach ($rows as $row) {
+                    $fields = explode("|", $row);
+                    if ($fields[0] == "MSA" && ($fields[1] == "AA" || $fields[1] == "AR")) {
+                        $requestIds[] = $fields[2];
+                    }
+                }
+            }
+
+            $requestIds = array_unique($requestIds);
+            $_SESSION["checkedReq"] = [];
+
+            $html .= "<div id='matricacheckboxes'>";
+            foreach ($requestIds as $requestId) {
+                $matricaData = sql_query("select nev, taj, printmatrica from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+                $html .= "<div style='display:table-row;'>";
+                $checked = "";
+                if ($matricaData["printmatrica"] == 0) {
+                    $checked = "checked";
+                    $_SESSION["checkedReq"][] = $requestIds;
+                }
+                $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 5px;'><input onchange='refreshPrinterButtons();' type='checkbox' data-id='{$requestId}' id='spmatrica{$requestId}' value='1' {$checked} /></div>";
+                $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 10px;'>{$matricaData["nev"]} ({$matricaData["taj"]})</div>";
+                //$html .= "<div style='display:table-cell;vertical-align: middle;'>{$matricaData["taj"]}</div>";
+                $html .= "</div>";
+            }
+            $html .= "</div>";
+        }
+
+        $html.= "</div>";
+
+        $html .= "<div style='margin-top:10px;' id='printerbuttonscontainer'>".$this->showPrinterButtons()."</div>";
+
+        $html .= "</div>";
+
+        $html .= "</div>";
+
+        return $html;
+    }
+
+
+    private function showPrinterButtons():string {
+        $params = [
+            "printer" => $_SESSION["spmatricaprinter"],
+            "printerPos" => $_SESSION["spmatricaprinterpos"],
+            "checkedReq" => $_SESSION["checkedReq"]
+        ];
+
+        $testParams = [
+            "printer" => $_SESSION["spmatricaprinter"],
+            "printerPos" => $_SESSION["spmatricaprinterpos"],
+        ];
+
+        $html = "";
+        $html.= "<a class='printbutton' target='_blank' href='/admin/index.php?print&template=spektrumlabmatrica&params=".base64_encode(json_encode($params))."'>Nyomtatás</a> ";
+        $html.= "<a class='printbutton' target='_blank' href='/admin/index.php?print&template=spektrumlabmatrica&params=".base64_encode(json_encode($testParams))."'>Teszt nyomtatása</a> ";
+        $html.= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
+        return $html;
+    }
+
 }

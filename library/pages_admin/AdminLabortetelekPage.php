@@ -626,7 +626,7 @@ class AdminLabortetelekPage extends AdminCorePage
             $packageInstall = json_decode($packageData["items"]);
             $packageInstallSpektrum = json_decode($packageData["spektrumitems"]);
             $strPackageItems = "FIELD(slt.id," . implode(",", $packageInstall) . ") DESC,";
-            $strPackageItemsSpektrum = "FIELD(slt.id," . implode(",", $packageInstallSpektrum) . ") DESC,";
+            $strPackageItemsSpektrum = "slt.id in (" . implode(",", $packageInstallSpektrum) . ") DESC,";
         }
 
         //Le kell kérdeznem a tételeket:

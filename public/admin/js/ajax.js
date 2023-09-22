@@ -393,7 +393,7 @@ function setListDay(day) {
 }
 
 function setListDayAndHelyszin(day, helyszin) {
-    window.location = "index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day)+"&sethelyszin2="+encodeURIComponent(helyszin);
+    window.location = "index.php?page=booking&showelojegyzestable&setday="+encodeURIComponent(day)+"&sethelyszin2="+encodeURIComponent(helyszin);
 }
 
 
@@ -4065,7 +4065,51 @@ function showLaborKeroWin(fid) {
     })
 }
 
+function showSpektrumLabMatricaWin() {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {showSpektrumLabMatricaWin:1},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function refreshPrinterButtons() {
+    let printer = $("#spprintername").val();
+    let printerPos = $("#spprinterpos").val();
+    let checkedReq = "";
+
+    $('#matricacheckboxes input:checked').each(function() {
+        checkedReq += "_"+$(this).data('id');
+    });
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {saveSpMatricData:1, printer:printer, printerPos:printerPos, checkedReq:checkedReq},
+        success: function(response){
+            $("#printerbuttonscontainer").html(response.html);
+        }
+    })
+
+}
+
+
+var labRequestProcessRunning = false;
+
 function addPackToLaborRequest() {
+    if (labRequestProcessRunning) {
+        alert("Még fut az előző művelet, próbáld újra!");
+        return;
+    }
+    labRequestProcessRunning = true;
+
     let packId = $("#laborkercsomagcombo").val();
     let fid = $("#laborkeroreservationid").val();
 
@@ -4074,6 +4118,7 @@ function addPackToLaborRequest() {
         url:"index.php?page=booking",
         data: {addPackToLaborRequest:1, packId:packId, fid:fid},
         success: function(response){
+            labRequestProcessRunning = false;
             if (response.error != "") {
                 alert(response.error);
                 return;
@@ -4128,6 +4173,11 @@ function refreshLaborKeroMessages() {
 
 
 function sendLaborKero() {
+    if (labRequestProcessRunning) {
+        alert("Még fut az előző művelet, próbáld újra!");
+        return;
+    }
+
     let rid = $("#laborkerorequestid").val();
     let fid = $("#laborkeroreservationid").val();
 
@@ -4177,6 +4227,8 @@ function cancelLaborKero() {
 
 
 function laborkeroItemChange(el, itemId) {
+    labRequestProcessRunning = true;
+
     let rid=$("#laborkerorequestid").val();
 
     let checked = 0;
@@ -4189,6 +4241,7 @@ function laborkeroItemChange(el, itemId) {
         url:"index.php?page=booking",
         data: {laborkeroItemChange:1, checked:checked, itemId:itemId, rid:rid},
         success: function(response){
+            labRequestProcessRunning = false;
             if (response.error != "") {
                 alert(response.error);
                 return;
@@ -4210,8 +4263,6 @@ function checkLaborKeroMessages() {
 
 
 function toggleRequestDetailRow(id) {
-    $("#requestrow"+id).toggle();
-
     $.ajax({
         method: "POST",
         url: "index.php",

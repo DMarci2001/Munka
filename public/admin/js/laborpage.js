@@ -155,20 +155,37 @@ function showLaborPaciensEditor(rid) {
     })
 }
 
+function sendLeletWindow(el) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {showSendLeletWindow:$(el).data("id")},
+        success: function(response){
+            showGeneralPopup(response);
+        }
+    })
+}
 
-function saveLaborPaciensData() {
+
+function saveLaborPaciensData(hide) {
     let rid = $("#laborrequestid").val();
     let nev = $("#laborpaciensnev").val();
     let taj = $("#laborpacienstaj").val();
     let szuldatum = $("#laborpaciensszuldatum").val();
     let email = $("#laborpaciensemail").val();
+    let laboremailtext = "-";
+    if($("#laboremailtext").val()) {
+        laboremailtext = $("#laboremailtext").val();
+    }
 
-    hideGeneralPopup();
+    if (hide === 1) {
+        hideGeneralPopup();
+    }
 
     $.ajax({
         type:"POST",
         url:"index.php?page=labrequests",
-        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email},
+        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext},
         success: function(response){
             if (response.error != "") {
                 alert(response.error);
@@ -176,36 +193,66 @@ function saveLaborPaciensData() {
             }
             $("#requestrow"+rid).html(response.html);
             $.toast({
-                text: "Paciens adatok menteve: "+nev,
+                text: "Paciens adatok mentve: "+nev,
                 icon: 'success'
             });
         }
     })
 }
 
-function sendLeletEmail(el) {
-    let email = $(el).data("email");
-    let id = $(el).data("id");
+function sendLeletEmail() {
+    let rid = $("#laborrequestid").val();
+    let nev = $("#laborpaciensnev").val();
+    let taj = $("#laborpacienstaj").val();
+    let szuldatum = $("#laborpaciensszuldatum").val();
+    let email = $("#laborpaciensemail").val();
+    let laboremailtext = $("#laboremailtext").val();
 
-    if (confirm("Kiküldöd a leletet erre az email címre? ("+email+")")) {
-        $("#ertesitesform"+id).html("");
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $("#requestrow"+rid).html(response.html);
 
-        $.ajax({
-            type:"POST",
-            url:"index.php?page=labrequests",
-            data: {sendleletemail:1, id:id},
-            success: function(response){
-                if (response.error != "") {
-                    alert(response.error);
-                    return;
-                }
-                $("#ertesitesform"+id).html(response.html);
-                $.toast({
-                    text: "Lelet kiküldve: "+email,
-                    icon: 'success'
+            if (confirm("Kiküldöd a leletet erre az email címre? ("+email+")")) {
+                $("#ertesitesform"+rid).html("");
+                hideGeneralPopup();
+
+                $.ajax({
+                    type:"POST",
+                    url:"index.php?page=labrequests",
+                    data: {sendleletemail:1, id:rid},
+                    success: function(response){
+                        if (response.error != "") {
+                            alert(response.error);
+                            return;
+                        }
+                        $("#ertesitesform"+rid).html(response.html);
+                        $.toast({
+                            text: "Lelet kiküldve: "+email,
+                            icon: 'success'
+                        });
+                    }
                 });
             }
-        });
+        }
+    })
+}
 
-    }
+
+function loadLaborEmailTemplate(id) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {getlaboremailtemplate:id},
+        success: function(response){
+            $("#laboremailtext").val(response);
+        }
+    })
+    return false;
 }
