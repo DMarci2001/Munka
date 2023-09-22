@@ -47,11 +47,11 @@ class AdminBanktransactionsPage extends AdminCorePage {
 		$columnTitle.= "</tr>";
 
         if ($this->paymentSource == "bejelentkezo") {
-            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result FROM banktransactions trans
+            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.merchant,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result FROM banktransactions trans
 							LEFT JOIN foglalasok fogl ON fogl.id=trans.foglalasid
 							LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
 							LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
-							ORDER BY fogl.regdatum DESC, trans.datum desc")->fetchAll(PDO::FETCH_ASSOC);
+							ORDER BY trans.datum DESC, trans.datum desc")->fetchAll(PDO::FETCH_ASSOC);
         }
 
         if ($this->paymentSource == "keltexmedwebshop") {
@@ -74,7 +74,7 @@ class AdminBanktransactionsPage extends AdminCorePage {
 			$rows.="	<td {$border}>{$result['transid']}</td>";
 			$rows.="	<td {$border}>{$result['datum']}</td>";
 			//if($previousFoglId!=$result['foglid'] || $count==1){
-				$rows.="<td {$border}'>{$result['nev']}</td>";
+				$rows.="<td {$border}'>".($result["merchant"] == "PUBLICTESTHUF" ? "<span style='background:lightblue;color:#fff;padding:2px 5px;'>TESZT</span> ":"")."{$result['nev']}</td>";
 				$rows.="<td {$border} >{$result['telefon']}</td>";
 				$rows.="<td {$border} >{$result['email']}</td>";
 				$rows.="<td {$border} >{$result['vizsgalat']}</td>";

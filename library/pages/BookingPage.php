@@ -646,7 +646,12 @@ class BookingPage extends CorePage
                                 $_SESSION["labshopMegjegyzes"].= "Lab. elem: {$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
                             }
                         }
-                    }
+                        if(isset($product["type"]) && $product["type"]=="exam"){
+                            if ($itemData = sql_query("select a.megnev as name from arak a where id=?", [$product["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                                $labItemsHTML .= "<li style='list-style:outside;'>{$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft</li>";
+                                $_SESSION["labshopMegjegyzes"].= "Vizsgálat: {$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
+                            }
+                        }                    }
 
                     $outputHTML.= "<div style='margin-bottom:20px;border-bottom:1px solid #ccc;'>Ön a LabShop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/><br>";
 

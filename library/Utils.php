@@ -667,7 +667,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 }
                 break;
             case "torzsszam":
-                $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
+                if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
+                    $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
+                }
                 if ($_SESSION["helyszindata"]["domain"]=="bp-teszt" || $_SESSION["helyszindata"]["domain"]=="bp"){
                     $webText[$translateKey] = "NTID";
                 }

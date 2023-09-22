@@ -254,7 +254,7 @@ class SimplePayService {
     private $keltexmedWebShopMerchant = "S581901";
 
     public function startRefund($id, $osszeg, $source) {
-        $this->source = "source";
+        $this->source = $source;
         $transactionData = false;
         $merchant = $this->_getMerchantId();
         if ($this->source == "bejelentkezo") {

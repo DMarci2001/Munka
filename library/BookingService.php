@@ -306,11 +306,15 @@ class BookingService
                         //teszt: minden időpont foglalható
                         //$buttonJava="chooseIdoPont(\"{$nap} {$ora}\");return false;";
 
+                        $fesztivalOverride = CompanyService::isFesztivalCompany() && strtotime(date("Y-m-d")) == strtotime($nap);
+
                         if (strtotime("now + {$dist}") > strtotime("{$nap} {$ora}")) {
                             //mégse foglalható, múltbéli dátum vagy túl közeli
-                            $buttonTitle = "";
-                            $buttonClass = "foglaltbtn";
-                            $buttonJava = "nemfog();return false;";
+                            if (!$fesztivalOverride) {
+                                $buttonTitle = "";
+                                $buttonClass = "foglaltbtn";
+                                $buttonJava = "nemfog();return false;";
+                            }
                         }
 
                         if (strtotime("now + {$distFullDay}") > strtotime("{$nap} 23:59:59")) {
@@ -450,9 +454,9 @@ class BookingService
                 }
             }
 
-            if ($cegId == 82) {
-                //waberers
-                $dist = "0 hour";
+            if (in_array($cegId, [82, 664, 340, 347, 348]) && Booking_Constants::SQL_DB == "hungariamed") {
+                //0 órás cégek
+                $dist = "0 hour -2 hour";
             }
 
             if ($cegId == 46 && $helyszinId != 320) {
@@ -1112,10 +1116,13 @@ class BookingService
         return $doks;
     }
 
-    public function deleteReservation($id, $code, $force = false)
-    {
+    public function deleteReservation($id, $code, $force = false) {
+        if ($this->adminUser->korlatlanFoglalasTorles()) {
+            $force = true;
+        }
+
         if ($force) {
-            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and aktiv=0", array($id, $code, $code));
+            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?)", array($id, $code, $code));
         } else {
             $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
         }
@@ -1183,10 +1190,10 @@ class BookingService
             if ($labData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=?", [$_SESSION["labcode"]]))) {
                 sql_query("update labshop_vasarlasok set status='done', reservationid=? where hash=? limit 1", [$this->newReservationId, $_SESSION["labcode"]]);
 
-                $synlabService = new SynlabService();
-                $docAgent = new DocAgent();
-                $path = $synlabService->create_labshop_laborkero($labData["id"]);
-                $docAgent->saveLocalDoc($path, ["fid" => $this->newReservationId]);
+                //$synlabService = new SynlabService();
+                //$docAgent = new DocAgent();
+                //$path = $synlabService->create_labshop_laborkero($labData["id"]);
+                //$docAgent->saveLocalDoc($path, ["fid" => $this->newReservationId]);
             }
         }
 
@@ -1331,6 +1338,7 @@ class BookingService
         if (!isset($data["exportdata"])) $data["exportdata"] = "";
         if (!isset($data["currency"])) $data["currency"] = 0;
         if (!isset($data["lang"])) $data["lang"] = "hu";
+        if (!isset($data["paid"])) $data["paid"] = 0;
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
 
         sql_query(
@@ -1373,6 +1381,7 @@ class BookingService
 			foglalta=?,
 			exportdata=?,
 			externalid=?,
+			paid=?,
 			pass=?",
             array(
                 $data["parentid"],
@@ -1412,6 +1421,7 @@ class BookingService
                 $data["foglalta"],
                 $data["exportdata"],
                 $data["externalid"],
+                $data["paid"],
                 $data["pass"]
             )
         );

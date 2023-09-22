@@ -233,6 +233,11 @@ class DailyStatService {
         if (!empty($sheet)) {
             $testCell = $sheet->getCell("A1")->getValue();
             $testCellKieg = $sheet->getCell("H1")->getValue();
+            if ($testCell == "Workday ID") {
+                $this->processJenbacherExcel($sheet);
+                return "";
+            }
+
             if ($testCell == "Vizsgalat/UtolsoModositasDatuma" || $testCell == "Vizsgalat/FelvetelDatuma") {
                 $rowNr = 2;
                 if ($testCellKieg == "Egyedi/Tüdőszűrő helyszíne") {
@@ -609,6 +614,58 @@ class DailyStatService {
 
     public static function getTempFileName():string {
         return Booking_Constants::APP_PATH."library/other/tmp/".session_id().".xlsx";
+    }
+
+
+    private function processJenbacherExcel($sheet) {
+        $rowNr = 2;
+
+
+        sql_query("delete from dokirex_vizsgalatok where orvos=?", ["Jenbacher"]);
+
+        while (true) {
+            $id = $sheet->getCell("A{$rowNr}")->getFormattedValue();
+
+            if (empty($id)) {
+                break;
+            }
+
+            $szulDatum = str_replace(".", "-", $sheet->getCell("D{$rowNr}")->getFormattedValue());
+            $vizsgalatDatum = str_replace(".", "-", $sheet->getCell("U{$rowNr}")->getFormattedValue());
+            if (empty($vizsgalatDatum)) {
+                $vizsgalatDatum = "0000-00-00";
+            }
+
+            $ervenyesseg = str_replace(".", "-", $sheet->getCell("V{$rowNr}")->getFormattedValue());
+            if (empty($ervenyesseg)) {
+                $ervenyesseg = "2000-01-01";
+            }
+
+            $row = [
+                "datum" => "2020-01-01 00:00:00",
+                "nev" => $sheet->getCell("B{$rowNr}")->getValue(),
+                "szakrendeles" => "",
+                "orvos" => "Jenbacher",
+                "paciensid" => $sheet->getCell("F{$rowNr}")->getValue(),
+                "szuldatum" => date("Y-m-d", strtotime($szulDatum)),
+                "telephely" => "Jenbacher",
+                "munkakor" => "",
+                "email" => $sheet->getCell("AB{$rowNr}")->getValue(),
+                "korlatozas" => "",
+                "alkalmassag" => "",
+                "ervenyesseg" => date("Y-m-d H:i:s", strtotime($ervenyesseg)),
+                "vizsgalattipus" => "",
+                "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum))
+            ];
+
+            sql_query("insert into dokirex_vizsgalatok set 
+                                    datum=:datum, moddatum=:datum, nev=:nev,
+                                    szakrendeles=:szakrendeles, orvos=:orvos,
+                                    paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, email=:email, 
+                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum", $row);
+
+            $rowNr++;
+        }
     }
 
 }

@@ -140,7 +140,10 @@ class AdminUser {
         ],
         "jog_varoteremsupervisor" => [
             "name" => "Váróterem supervisor"
-        ]
+        ],
+        "jog_korlatlanfoglalastorles" => [
+            "name" => "Korlátlan foglalás törlés"
+        ],
 
     ];
 
@@ -524,6 +527,10 @@ class AdminUser {
 
     public function varoteremsupervisorAccess():bool{
         return $this->checkPermission("jog_varoteremsupervisor");
+    }
+
+    public function korlatlanFoglalasTorles():bool{
+        return $this->checkPermission("jog_korlatlanfoglalastorles");
     }
 
     public function onlyDoctorReservations():bool {

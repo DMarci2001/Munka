@@ -574,17 +574,18 @@ class SynlabService
     }
 
 
+
     public function downloadSynlabEmails() {
         $emailConfigs["hungariamed"] = [
-            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223"],
-            ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu"],
-            ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu"],
-            ["email" => "hmmszures@hungariamed.hu", "password" => "4L8PtsbJJB"],
-            ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4"],
+            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 100],
+            ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu", "emailToCheck" => 100],
+            ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu", "emailToCheck" => 100],
+            ["email" => "hmmszures@hungariamed.hu", "password" => "4L8PtsbJJB", "emailToCheck" => 200],
+            ["email" => "nmhh@hungariamed.hu", "password" => "k7ymino5TY", "emailToCheck" => 100],
+            ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4", "emailToCheck" => 100],
         ];
 
-        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "ZLKT=g1h"];
-
+        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h"];
         $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu"];
         $dir = "/var/pdfwork";
 
@@ -600,7 +601,7 @@ class SynlabService
             $connection = imap_open('{mail.hungariamed.hu/notls}', $emailConfig["email"], $emailConfig["password"]);
             $count = imap_num_msg($connection);
 
-            for ($i = 0; $i <= 50; $i++) {
+            for ($i = 0; $i <= $emailConfig["emailToCheck"]; $i++) {
                 $msgNum = $count - $i;
                 if ($msgNum <= 0) {
                     break;
@@ -636,8 +637,8 @@ class SynlabService
                                 $encoding  =  strtolower($part->encoding);
                                 $subtype   =  strtolower($part->subtype);
 
-                                if (sql_query("select id from labrequests where synlabfilename=? limit 1", [$fileName])->fetch(PDO::FETCH_ASSOC)) {
-                                    continue;
+                                if (sql_query("select id from labrequests where synlabfilename=? and folyamatban=0 limit 1", [$fileName])->fetch(PDO::FETCH_ASSOC)) {
+                                    //continue;
                                 }
 
                                 echo "{$encoding} {$subtype} {$fileName}\n";
@@ -676,6 +677,10 @@ class SynlabService
                                     $taj = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
                                     $szulDatum = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
                                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
+
+                                    if (sql_query("select id from labrequests where synlabfilename=? and folyamatban=? limit 1", [$fileName, $folyamatban])->fetch(PDO::FETCH_ASSOC)) {
+                                        continue;
+                                    }
 
                                     $bekuldokod = "";
                                     foreach ($this->bekuldoKodok as $kod) {

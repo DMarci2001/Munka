@@ -7,7 +7,7 @@ class AdminMenusPage extends AdminCorePage
         parent::__construct();
 
         if (isset($_GET["addnewmenu"])) {
-            sql_query("insert into hmmweb.q9a8m_menu set title='új menüpont', menutype='mainmenu', parent_id=1, published=0, lft=0");
+            sql_query("insert into hmmweb.mainmenu set title='új menüpont', menutype='mainmenu', parent_id=1, published=0, lft=0");
             header("location:index.php?page={$_GET["page"]}");
             die();
         }
@@ -53,10 +53,10 @@ class AdminMenusPage extends AdminCorePage
             die;
             */
 
-            sql_query("update hmmweb.q9a8m_menu set title=?, parent_id=?, published=?, lft=? where id=?", [$_POST["title"], $_POST["parent_id"], isset($_POST["published"])?1:0, $_POST["lft"], $_GET["szerk"]]);
+            sql_query("update hmmweb.mainmenu set title=?, parent_id=?, published=?, lft=? where id=?", [$_POST["title"], $_POST["parent_id"], isset($_POST["published"])?1:0, $_POST["lft"], $_GET["szerk"]]);
 
             if ($type != "") {
-                sql_query("update hmmweb.q9a8m_menu set type=?, alias=?, path=?, link=?, component_id=? where id=?", [$type, $alias, $path, $link, $componentId, $_GET["szerk"]]);
+                sql_query("update hmmweb.mainmenu set type=?, alias=?, path=?, link=?, component_id=? where id=?", [$type, $alias, $path, $link, $componentId, $_GET["szerk"]]);
             }
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
@@ -73,13 +73,13 @@ class AdminMenusPage extends AdminCorePage
         }
 
         if (isset($_GET["szerk"])) {
-            $menu = sql_fetch_array(sql_query("select * from hmmweb.q9a8m_menu where id=?", array($_GET["szerk"])));
+            $menu = sql_fetch_array(sql_query("select * from hmmweb.mainmenu where id=?", array($_GET["szerk"])));
 
             $GLOBALS["subtitle"] = $menu["title"];
 
             $id = $menu["id"];
 
-            $parents = sql_query("SELECT id, title, parent_id, path from hmmweb.q9a8m_menu m where m.parent_id=1 and m.menutype='mainmenu' ORDER BY m.lft", [])->fetchAll(PDO::FETCH_ASSOC);
+            $parents = sql_query("SELECT id, title, parent_id, path from hmmweb.mainmenu m where m.parent_id=1 and m.menutype='mainmenu' ORDER BY m.lft", [])->fetchAll(PDO::FETCH_ASSOC);
             $services = sql_query("SELECT id, megnev, webalias from szurestipusok t where t.webalias<>'' ORDER BY t.megnev", [])->fetchAll(PDO::FETCH_ASSOC);
             $contents = sql_query("select id, title, alias, state, created, publish_up, publish_down, catid, tipusid, tags from hmmweb.q9a8m_content order by trim(title)")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -154,7 +154,7 @@ class AdminMenusPage extends AdminCorePage
         if ($level == 0) {
             $html.= "<h2>Főmenü</h2>";
         }
-        $menus = sql_query("SELECT * from hmmweb.q9a8m_menu m where m.parent_id=? and m.menutype='mainmenu' ORDER BY m.lft", [$parentId])->fetchAll(PDO::FETCH_ASSOC);
+        $menus = sql_query("SELECT * from hmmweb.mainmenu m where m.parent_id=? and m.menutype='mainmenu' ORDER BY m.lft", [$parentId])->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($menus as $menu) {
             $aktivStyle = "";

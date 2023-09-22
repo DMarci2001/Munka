@@ -354,15 +354,15 @@ class AdminBookingPage extends AdminCorePage
         //------>Dokirex páciens lista feltöltés
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
-        $dokirexService = new DokirexService();
+        //$dokirexService = new DokirexService();
         //mindent lekérdezek
-        $q = sql_query("SELECT * from dokirex_insert_paciensek");
+        //$q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés
         /*$q = sql_query("SELECT lista.* FROM dokirex_insert_paciensek lista
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
-        $params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2023-08-29 07:30:00"));
+        //$params = array();
+        //$datum = date("Y-m-d H:i:s", strtotime("2023-06-16 07:30:00"));
         //while ($r = sql_fetch_array($q)) {
 
              //vessző eltűntetése:

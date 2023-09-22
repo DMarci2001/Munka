@@ -18,6 +18,7 @@ class PrintService
         "menedzsersetalolap" => "Menedzser_Setalolap(compressed)(fixed).pdf",
         "covidkerdoiv"       => "COVID-19_kérdőív_SZTK.pdf",
         "matrica"            => "matrica.html",
+        "spektrumlabmatrica" => "spektrumlabmatrica.html",
         "matricamegj"        => "matricaMegj.html",
         "nkfihsetalolap"     => "Menedzser_Setalolap(NKFIH).pdf",
         "laborlelet1"        => "laborLelet1.html",
@@ -117,6 +118,11 @@ class PrintService
             return;
         }
 
+        if ($this->templateId == "spektrumlabmatrica") {
+            $this->printSpektrumLabMatrica();
+            return;
+        }
+
         if (empty($this->templateId)) {
             die("error code 1256");
         }
@@ -156,7 +162,6 @@ class PrintService
             if (isset($fields["datum"])) {
                 $fields["datum"] = date("Y.m.d", strtotime($fields["datum"]));
             }
-
 
             $pdf = new FPDM("templates/{$this->templateFileName}");
             $pdf->Load($fields, true); // false-ra ha  ISO-8859-1, true-ra ha UTF-8 a beviteli szöveg
@@ -334,7 +339,9 @@ class PrintService
     }
 
     private function printLaborLelet() {
-        $outFileName = $this->reservationData["nev"]." laborlelet.pdf";
+        $nev = empty($this->laborRequestData["nev"]) ? "Névtelen":$this->laborRequestData["nev"];
+
+        $outFileName = "{$nev} laborlelet.pdf";
         header("Content-Type: application/pdf");
         header('Content-Disposition: attachment; filename="'.$outFileName.'"');
         echo base64_decode($this->laborRequestData["resultpdf"]);
@@ -908,6 +915,37 @@ class PrintService
 
     private function innioErtesites(){
 
+    }
+
+
+    private function printSpektrumLabMatrica() {
+        $fileName = "sp_matrica_".date("Y-m-d_H_i").".bat";
+        header("Pragma: no-cache");
+        header("Cache-Control: no-store, no-cache");
+        header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+        header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+        header("Cache-Control: must-revalidate");
+        header('Content-transfer-encoding: binary');
+        header("Content-Type: application/octet-stream");
+        header('Content-Disposition: attachment; filename="'.$fileName.'"');
+
+        echo 'echo off
+
+echo N>txt.txt
+echo R190,0,"">>txt.txt
+echo B82,32,0,2,2,6,69,B,"000010414001">>txt.txt
+echo A420,75,1,5,1,1,N,"1">>txt.txt
+echo A36,0,0,2,1,1,N,"au5800-1_1,au5800-2_1,dxi8">>txt.txt
+echo A156,16,0,2,1,1,N,"1/04.14.">>txt.txt
+echo A36,126,0,3,1,1,N,"SERUM">>txt.txt
+echo A36,147,0,2,1,1,N,"Teszt Beteg/1964.12.05.">>txt.txt
+echo A36,164,0,2,1,1,N,"Teszt bekuldo">>txt.txt
+echo P1>>txt.txt
+
+copy /B txt.txt \\\\127.0.0.1\zebra1
+';
+
+        die;
     }
 
 }
