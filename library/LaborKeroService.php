@@ -220,8 +220,13 @@ class LaborKeroService
     }
 
     public function getLaborRequestData($reservationId): array {
+        $createdBy = "automatic";
+        if (isset($_SESSION["adminuser"]["username"])) {
+            $createdBy = $_SESSION["adminuser"]["username"];
+        }
+
         if (!sql_query("select id from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
-            sql_query("insert into labrequests set created=now(), resultdate=now(), createdby=?, provider='spektrumlab', foglalasid=?, laborpacks='[]', laboritems='[]', status='temp', pass=?", [$_SESSION["adminuser"]["username"], $reservationId, md5(date("YmdHis")).md5($reservationId.date("YmdHis"))]);
+            sql_query("insert into labrequests set created=now(), resultdate=now(), createdby=?, provider='spektrumlab', foglalasid=?, laborpacks='[]', laboritems='[]', status='temp', pass=?", [$createdBy, $reservationId, md5(date("YmdHis")).md5($reservationId.date("YmdHis"))]);
             $newRequestId = sql_insert_id();
             sql_query("insert into labrequestitems set requestid=?, itemid=?", [$newRequestId, self::SPEKTRUMLAB_VERKEP_ID]);
         }
@@ -528,5 +533,70 @@ class LaborKeroService
         $html.= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
         return $html;
     }
+
+
+    public function storeLaborKeroFromLabShopData() {
+        $labShopReservations = sql_query("SELECT l.id AS laborid, l.cart_content,l.status, l.payment_method, f.* FROM labshop_vasarlasok l
+            LEFT JOIN foglalasok f ON f.id=l.reservationid
+            WHERE reservationid<>0 AND f.datum>NOW() ORDER BY f.datum limit 5")->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($labShopReservations as $labShopReservation) {
+            if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "FINISHED") {
+                continue;
+            }
+
+            if (sql_query("select id from labrequests where foglalasid=? limit 1", [$labShopReservation["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                continue;
+            }
+
+            $cartDatas = json_decode($labShopReservation["cart_content"], JSON_OBJECT_AS_ARRAY);
+            $onlyPackages = true;
+            foreach ($cartDatas as $cartData) {
+                if (isset($cartData["type"]) && $cartData["type"] != "package") {
+                    //nem csak csomag van benne, így skippeljük
+                    $onlyPackages = false;
+                }
+            }
+
+            if (!$onlyPackages) {
+                continue;
+            }
+
+            echo "{$labShopReservation["nev"]} only packs\n";
+
+            $items = $packs = [];
+
+            foreach ($cartDatas as $cartData) {
+                if (isset($cartData["type"]) && $cartData["type"] == "package") {
+                    if ($packData = sql_query("select cs.id, cs.name, cs.spektrumitems as items from synlab_labor_csomagok cs where cs.id=?", [$cartData["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                        $packItems = json_decode($packData["items"]);
+                        $packs[] = $packData["id"];
+                        echo "pack: {$packData["name"]} ".count($packItems)."\n";
+                        foreach ($packItems as $packItem) {
+                            if (!in_array($packItem, $items)) {
+                                $items[] = $packItem;
+                            }
+                        }
+                    }
+                }
+            }
+
+            $items = array_unique($items);
+
+            if (!empty($items)) {
+                $laborRequestData = $this->getLaborRequestData($labShopReservation["id"]);
+                sql_query("update labrequests set laborpacks=? where id=?", [json_encode($packs), $laborRequestData["id"]]);
+                foreach ($items as $item) {
+                    if (!sql_query("select requestid from labrequestitems where requestid=? and itemid=?", [$laborRequestData["id"], $item])->fetch(PDO::FETCH_ASSOC)) {
+                        sql_query("insert into labrequestitems set requestid=?, itemid=?", [$laborRequestData["id"], $item]);
+                    }
+                }
+            }
+        }
+
+
+    }
+
 
 }

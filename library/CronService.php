@@ -150,8 +150,12 @@ class CronService {
         //$this->refreshWorklist();
         //$this->sendManagerStatusEmail();
 
-        $service = new SynlabService();
-        $service->downloadSynlabEmails();
+        //$service = new SynlabService();
+        //$service->downloadSynlabEmails();
+
+        $laborKeroService = new LaborKeroService();
+        $laborKeroService->storeLaborKeroFromLabShopData();
+
 
         echo "teszt\n";
         die();
