@@ -327,7 +327,7 @@ class LaborKeroService
         $showCheckBoxes = $laborRequestData["status"] == "temp";
 
 
-        $html .= "<div id='labortetelekcheckboxes' style='height:610px;overflow: auto;'>";
+        $html .= "<div id='labortetelekcheckboxes' style='height:510px;overflow: auto;'>";
 
         if ($showCheckBoxes) {
             if (true) {
@@ -538,8 +538,9 @@ class LaborKeroService
     public function storeLaborKeroFromLabShopData() {
         $labShopReservations = sql_query("SELECT l.id AS laborid, l.cart_content,l.status, l.payment_method, f.* FROM labshop_vasarlasok l
             LEFT JOIN foglalasok f ON f.id=l.reservationid
-            WHERE reservationid<>0 AND f.datum>NOW() ORDER BY f.datum limit 5")->fetchAll(PDO::FETCH_ASSOC);
-
+            LEFT JOIN labrequests r ON r.foglalasid=f.id
+            WHERE reservationid<>0 AND f.datum>NOW() AND r.id is null 
+            ORDER BY f.datum limit 100")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($labShopReservations as $labShopReservation) {
             if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "FINISHED") {
@@ -560,10 +561,11 @@ class LaborKeroService
             }
 
             if (!$onlyPackages) {
+                echo "{$labShopReservation["nev"]} nem csak csomagok {$labShopReservation["laborid"]}\n";
                 continue;
             }
 
-            echo "{$labShopReservation["nev"]} only packs\n";
+            echo "{$labShopReservation["nev"]} only packs {$labShopReservation["laborid"]}\n";
 
             $items = $packs = [];
 
@@ -586,7 +588,7 @@ class LaborKeroService
 
             if (!empty($items)) {
                 $laborRequestData = $this->getLaborRequestData($labShopReservation["id"]);
-                sql_query("update labrequests set laborpacks=? where id=?", [json_encode($packs), $laborRequestData["id"]]);
+                sql_query("update labrequests set created=?, resultdate=?, laborpacks=?, laboritems=?, status='temp' where id=?", [$labShopReservation["datum"], $labShopReservation["datum"], json_encode($packs), json_encode($items), $laborRequestData["id"]]);
                 foreach ($items as $item) {
                     if (!sql_query("select requestid from labrequestitems where requestid=? and itemid=?", [$laborRequestData["id"], $item])->fetch(PDO::FETCH_ASSOC)) {
                         sql_query("insert into labrequestitems set requestid=?, itemid=?", [$laborRequestData["id"], $item]);

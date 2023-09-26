@@ -3,6 +3,13 @@
 //start: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/commcl.pid --exec /root/commcl/commcl
 //stop: start-stop-daemon --stop --pidfile /var/run/commcl.pid
 
+// "/var/tlink_hungariamed/in"
+// "/var/tlink_hungariamed/out"
+
+// "/var/commcl/out/"
+// "/root/commcl/commcl"
+
+
 class SpektrumlabService {
     private array $spektrumLabParams = [
         "hungariamed" => [
@@ -13,6 +20,8 @@ class SpektrumlabService {
             "inDir"=> "/var/commcl/in/",
             "outDir" => "/var/commcl/out/",
             "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
         ],
         "keltexmed" => [
             "login" => "keltexmed",
@@ -22,6 +31,8 @@ class SpektrumlabService {
             "inDir"=> "/var/commcl_keltexmed/in/",
             "outDir" => "/var/commcl_keltexmed/out/",
             "serviceName" => "/var/commcl_keltexmed/commcl",
+            "orvosNev" => "Dr Nagy Károly",
+            "orvosPecsetszam" => "59963"
         ],
     ];
     public array $params = [];
@@ -32,7 +43,6 @@ class SpektrumlabService {
 
     const EOF = "\r\n";
 
-    public bool $testing = false;
     public bool $orvosNemFontos = true;
 
     public function __construct() {
@@ -105,14 +115,14 @@ class SpektrumlabService {
         $paciensAnyjaNeve = self::ucName($reservationData["anyjaneve"]);
         $paciensSzulDatum = date("Ymd", strtotime($reservationData["szuldatum"]));
         $paciensGender = $reservationData["neme"] == 1 ? "M" : "F";
-        $paciensAddress = trim($reservationData["utca"]);
-        $paciensCity = trim($reservationData["varos"]);
+        $paciensAddress = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["utca"]));
+        $paciensCity = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["varos"]));
         $paciensIrsz = trim($reservationData["irsz"]);
         $paciensCountry = "HUN";
         $paciensTAJ = trim($reservationData["taj"]);
-        $orvosId = "44601";
-        $orvosPecsetSzam = "44601";
-        $orvosNev = "Dr. Magyar Judit";
+        $orvosId = $this->params["orvosPecsetszam"];
+        $orvosPecsetSzam = $this->params["orvosPecsetszam"];
+        $orvosNev = $this->params["orvosNev"];
         $bekuldoKod = $this->params["bekuldoKod"];;
         $bekuldoNev = $this->params["bekuldoNev"];;
         $naploszam = $requestData["id"];
@@ -130,18 +140,6 @@ class SpektrumlabService {
             $orvosId = "00000";
             $orvosNev = ".";
             $orvosPecsetSzam = "00000";
-        }
-
-        if ($this->testing) {
-            $paciensId = 104;
-            $paciensNev = ucwords(mb_strtolower("Tesztelő János"));
-            $paciensTAJ = "888888888";
-            $paciensGender = "F";
-            $paciensSzulDatum = "19891112";
-            $paciensAnyjaNeve = "Tesztelő Júlia";
-            $paciensAddress = "Tesztelő kőrút 24";
-            $paciensCity = "Székesfehérvár";
-            $paciensIrsz = "8000";
         }
 
         //MSH - Fejléc
@@ -288,6 +286,25 @@ class SpektrumlabService {
             //print_r($data);
             //sql_query("insert into synlab_labor_tetelek set provider='spektrumlab', appform=0, commazo=?, kod=?, name=?, elkeszules=1, category=0, price=0", [$data[0], $data[2], $data[1]]);
             //die("itt");
+        }
+    }
+
+    public function sendAutomaticRequests() {
+        $requests = sql_query("SELECT lm.id AS messageid, r.id AS requestid FROM labrequests r 
+            LEFT JOIN foglalasok f ON f.id=r.foglalasid
+            LEFT JOIN labrequestmessages lm ON lm.requestid=r.id
+            WHERE r.createdby='automatic' AND r.status='pending' AND lm.id IS NULL
+            ORDER BY r.created LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($requests as $request) {
+            for ($i=0;$i<10;$i++) {
+                $result = $this->writeNextRequest($request["requestid"]);
+                echo "result: {$result}\n";
+                if ($result == "") {
+                    break;
+                }
+                sleep(2);
+            }
         }
     }
 

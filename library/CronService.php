@@ -88,6 +88,12 @@ class CronService {
             $this->seemeBalanceCheck();
             $this->sendManagerStatusEmail();
 
+            $laborKeroService = new LaborKeroService();
+            $laborKeroService->storeLaborKeroFromLabShopData();
+
+            //$spektrumLabService = new SpektrumlabService();
+            //$spektrumLabService->sendAutomaticRequests();
+
             $service = new SynlabService();
             $service->downloadSynlabEmails();
         }
@@ -153,9 +159,11 @@ class CronService {
         //$service = new SynlabService();
         //$service->downloadSynlabEmails();
 
-        $laborKeroService = new LaborKeroService();
-        $laborKeroService->storeLaborKeroFromLabShopData();
+        //$laborKeroService = new LaborKeroService();
+        //$laborKeroService->storeLaborKeroFromLabShopData();
 
+        //$spektrumLabService = new SpektrumlabService();
+        //$spektrumLabService->sendAutomaticRequests();
 
         echo "teszt\n";
         die();

@@ -1,5 +1,23 @@
 $(document).ready(function () {
     initLaborEditor();
+
+    $('#futurefiltercheckbox').change(function() {
+        let futureFilter = 0;
+        if (this.checked) {
+            futureFilter = 1;
+        }
+
+        $.ajax({
+            type:"POST",
+            url:"index.php?page=labrequests",
+            data: {filterchange:1, futureFilter:futureFilter},
+            success: function(response){
+                $("#labrequestlist").html(response);
+            }
+        })
+    });
+
+
 });
 
 

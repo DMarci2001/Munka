@@ -1731,10 +1731,11 @@ class BookingService
             //auchan override
             $options = "";
             foreach (self::AUCHAN_SZURESEK as $key => $auchanSzures) {
+                $disabled = "";
                 $onChange = "clearIdopontValasztoOnly();";
                 if (!empty($_POST["helyszin"])) {
                     if (in_array($_POST["helyszin"], CompanyService::auchanSingleReservationPlaces())) {
-                        $onChange = "preventMultipleServiceSelect(this);";
+                        $onChange = "myAlert(\"A kiegészítő vizsgálatokra már nem fogadunk több foglalást!\");";
                     }
                 }
 
@@ -1743,11 +1744,22 @@ class BookingService
                     if (empty($teriteses)) {
                         $options.= "<div style='border-top:1px solid #ccc;padding-top:10px;'><div style='font-weight: bold;'>Térítéses vizsgálatok:</div><div>A kiegészítő vizsgálatok eredményei segítenek megismerni az aktuális egészségi állapotát. Szakembereink javaslatot tesznek a panaszok, tünetek kezelésére. Éljen a lehetőséggel, vegye igénybe a kiegészítő vizsgálatokat!</div></div>";
                         $teriteses = 1;
+                        if (in_array($_POST["helyszin"], [294])) {
+                            $options.= "<div style='color:red;margin-top:10px;'>A kiegészítő térítéses vizsgálatokra nem fogadunk több foglalást!</div>";
+                        }
                     }
                     $price = " - <span>".number_format($auchanSzures[1])." Ft</span>";
+                    if (in_array($_POST["helyszin"], [294])) {
+                        $disabled = "disabled";
+                        $onChange = "";
+                    }
+                    if (in_array($_POST["helyszin"], [0])) {
+                        $disabled = "";
+                        $onChange = "myAlert(\"A kiegészítő vizsgálatok választásához először válassza ki a helyszínt!\");$(this).prop(\"checked\", false);";
+                    }
                 }
                 $options .= "<div style='margin-top:10px;'>";
-                $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$auchanSzures[0]}'/><label for='kiegoption{$key}'> {$auchanSzures[2]}</label> {$price}</div>";
+                $options .= "<div><input {$disabled} onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$auchanSzures[0]}'/><label for='kiegoption{$key}'> {$auchanSzures[2]}</label> {$price}</div>";
                 if (!empty($auchanSzures[3])) {
                     $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$auchanSzures[3]}</div>";
                 }

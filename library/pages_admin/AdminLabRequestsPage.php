@@ -46,11 +46,21 @@ Asszisztens
             $_SESSION["labcegfilter"] = 0;
         }
 
+        if (!isset($_SESSION["labfuturefilter"])) {
+            $_SESSION["labfuturefilter"] = 0;
+        }
+
         if (isset($_GET["setlabcegfilter"])) {
             $_SESSION["labcegfilter"] = $_GET["setlabcegfilter"];
         }
 
         if (isset($_REQUEST["generalsearch"])) {
+            echo $this->listLabRequests();
+            die;
+        }
+
+        if (isset($_REQUEST["filterchange"])) {
+            $_SESSION["labfuturefilter"] = intval($_REQUEST["futureFilter"]);
             echo $this->listLabRequests();
             die;
         }
@@ -325,9 +335,8 @@ Asszisztens
 
         echo "<div style='margin-bottom:20px;'>";
         echo "<div style='display:table-cell;vertical-align: middle;'>";
-        //echo $this->cegFilter()."&nbsp;&nbsp;";
-        //echo $this->eszkozFilter();
         echo "<input data-page='labrequests' data-resultdiv='labrequestlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;&nbsp;&nbsp;&nbsp;";
+        //echo "<input type='checkbox' id='futurefiltercheckbox' value='1' ".($_SESSION["labfuturefilter"] == 1 ?"checked":"")." /> jövőbeniek is&nbsp;&nbsp;&nbsp;&nbsp;";
         echo "</div>";
 
 
@@ -402,6 +411,9 @@ Asszisztens
         $resultDate = date("Y-m-d H:i", strtotime($request["resultdate"]));
         if ($request["resultdate"] == $request["created"]) {
             $resultDate = "Elküldve..<br/>".date("Y-m-d H:i", strtotime($request["created"]));
+            if ($request["spelkuldve"] == 0) {
+                $resultDate = "<span style='color:red;'>Nincs elküldve</span><br/>".date("Y-m-d H:i", strtotime($request["created"]));
+            }
         }
 
         if ($request["folyamatban"] == 1) {
@@ -480,10 +492,18 @@ Asszisztens
             $queryParams[] = $params["id"];
         }
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext FROM labrequests r 
+        //if ($_SESSION["labfuturefilter"] == 0) {
+            //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
+        //}
+
+        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext 
+            FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
+            LEFT JOIN labrequestmessages lm on lm.requestid=r.id
             LEFT JOIN cegek c ON c.id=f.cegid
-            WHERE r.status<>'temp' {$w} ORDER BY r.resultdate DESC LIMIT 1000", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+            WHERE r.status<>'temp' {$w} 
+            GROUP BY r.id
+            ORDER BY r.resultdate DESC LIMIT 1000", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
