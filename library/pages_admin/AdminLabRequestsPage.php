@@ -15,7 +15,7 @@ Kérjük, hogy leletét lehetőség szerint ne telefonról, hanem számítógép
 A vizsgálatot követő egy héten belül kiértékelést küldünk. 
 
 Tisztelettel,
-Zelkó Adrienn
+#felhasznalo#
 Asszisztens
 ",
         "Tisztelt Páciensünk!
@@ -31,7 +31,7 @@ A vizsgálatot követő egy héten belül kiértékelést küldünk.
 A folyamatban lévő értékeket, az eredmények beérkezés után küldjük meg.
 
 Tisztelettel,
-Zelkó Adrienn
+#felhasznalo#
 Asszisztens
 "
     ];
@@ -67,7 +67,10 @@ Asszisztens
 
         if (isset($_REQUEST["getlaboremailtemplate"])) {
             $id = intval($_REQUEST["getlaboremailtemplate"]);
-            echo $this->messageTemplates[$id];
+            $template = $this->messageTemplates[$id];
+            $template = str_replace("#felhasznalo#", $this->adminUser->user["nev"], $template);
+            echo $template;
+
             die;
         }
 
@@ -305,6 +308,9 @@ Asszisztens
                 if (empty($requestData["taj"])) {
                     $error = "Nincs megadva a taj szám";
                 }
+                if (empty($this->adminUser->user["email"]) || !filter_var($this->adminUser->user["email"], FILTER_VALIDATE_EMAIL)) {
+                    $error = "Nincs megadva, vagy hibás az email címed";
+                }
                 if (empty($error)) {
                     $service = new NotificationService();
                     $service->sendLaborLeletEmail($id);
@@ -339,6 +345,9 @@ Asszisztens
         //echo "<input type='checkbox' id='futurefiltercheckbox' value='1' ".($_SESSION["labfuturefilter"] == 1 ?"checked":"")." /> jövőbeniek is&nbsp;&nbsp;&nbsp;&nbsp;";
         echo "</div>";
 
+        $felado = $this->adminUser->user["nev"];
+        $feladoEmail = empty(trim($this->adminUser->user["email"])) ? "<span style='color:red;'>nincs megadva email cím, így a lelet kiküldés nem lehetséges</span>":$this->adminUser->user["email"];
+        echo "<div style='margin:10px 0px 10px 0px;padding:10px 0px 10px 0px;border-top:1px solid #ccc;border-bottom:1px solid #ccc;'>A leletek kiküldésekor a levél feladója: {$felado}, email: {$feladoEmail}</div>";
 
         /*
         echo "<div style='display:table-cell;vertical-align: middle;'>";

@@ -77,7 +77,7 @@ class LaborKeroService
             }
 
             if (empty($error)) {
-                sql_query("update labrequests set status='pending' where id=?", [$requestId]);
+                sql_query("update labrequests set status='pending', createdby=? where id=?", [$_SESSION["adminuser"]["username"], $requestId]);
                 $error = $service->writeNextRequest($requestId);
                 //if (empty($error)) {
                     //sql_query("update labrequests set status='pending' where id=?", [$requestId]);

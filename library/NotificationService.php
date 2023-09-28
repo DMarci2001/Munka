@@ -1138,6 +1138,11 @@ END:VCALENDAR";
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
+        $adminUser = new AdminUser();
+        if (empty($adminUser->user["email"])) {
+            return;
+        }
+
         if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
@@ -1165,10 +1170,12 @@ END:VCALENDAR";
             $subject = $requestData["nev"]." labor lelet ".date("Y-m-d");
             $mbody = !empty($requestData["emailtext"]) ? nl2br($requestData["emailtext"]) : "Automatikus labor lelet küldés";
 
-            $mbody .= "<br/><img alt='Hungariamed-M Kft.' style='width:200px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' />";
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $mbody .= "<br/><img alt='Hungariamed-M Kft.' style='width:200px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' />";
+            }
 
-            $mail->From = "zelko.adrienn@hungariamed.hu";
-            $mail->FromName = "Zelkó Adrienn";
+            $mail->From = $adminUser->user["email"];
+            $mail->FromName = $adminUser->user["nev"];
 
             $mail->Subject = $subject;
             $mail->Body = $mbody;

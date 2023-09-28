@@ -3,11 +3,11 @@
 //start: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/commcl.pid --exec /root/commcl/commcl
 //stop: start-stop-daemon --stop --pidfile /var/run/commcl.pid
 
-// "/var/tlink_hungariamed/in"
-// "/var/tlink_hungariamed/out"
+// /var/tlink_hungariamed/in/
+// /var/tlink_hungariamed/out/
 
-// "/var/commcl/out/"
-// "/root/commcl/commcl"
+// /var/commcl/out/
+// /var/commcl/in/
 
 
 class SpektrumlabService {
@@ -17,8 +17,19 @@ class SpektrumlabService {
             "laborId" => "SPEKTRUMLAB",
             "bekuldoKod" => "000000370",
             "bekuldoNev" => "Hungária Med-M Kft.",
-            "inDir"=> "/var/commcl/in/",
-            "outDir" => "/var/commcl/out/",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
+            "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
+        ],
+        "hungariamed_suzuki" => [
+            "login" => "hungariamedm",
+            "laborId" => "SPEKTRUMLAB",
+            "bekuldoKod" => "000000396",
+            "bekuldoNev" => "Hungária Med-M Kft. (Suzuki szűrés)",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
             "serviceName" => "/root/commcl/commcl",
             "orvosNev" => "Dr. Magyar Judit",
             "orvosPecsetszam" => "44601"
@@ -51,6 +62,8 @@ class SpektrumlabService {
     }
 
     public function serviceRunning():bool {
+        return true;
+
         $output = `ps -aux | grep commcl`;
         if (substr_count($output, "commcl") >= 3) {
             return true;
