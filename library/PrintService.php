@@ -24,6 +24,7 @@ class PrintService
         "makdailyreport"     => "mak.html",
         "aldibeosetup"       => "aldibeosetup",
         "innioertesites"     => "innioertesites",
+        "bfkh_email_kuldes"  => "bfkh_email_kuldes",
     );
 
     private $inputs = array(
@@ -111,6 +112,12 @@ class PrintService
             $this->innioErtesites();
             return;
         }
+        if ($this->templateId == "bfkh_email_kuldes"){
+            $this->bfkh_email_kuldes();
+            return;
+        }
+
+        
 
         if ($this->templateId == "karton") {
             $this->printKartonPDF();
@@ -903,11 +910,260 @@ class PrintService
         "Dr. Horváth Eszter" => 82802,
         "Dr. Tánczik Zsófia" => 94225,
         "Dr. Hetei Tünde" => 91881,
-        "Dr. Benkő Csongor" => 93266
+        "Dr. Benkő Csongor" => 93266,
+        "Dr. Szénási Pál" => 25083
     ];
 
     private function innioErtesites(){
+        /*
+        Kilistázom az összes innio-s dolgozót és egyesével vizsgálom meg őket, hogy kell-e értesítést küldenem nekik.
+        legalább 2 féle képpen kéne megadjam, intervallumosan és napokkal
+        */
 
+        $verziok = [
+            "1_month_before_expiration",
+            "2_weeks_before_expiration",
+            "1_week_before_expiration",
+            "1_week_after_expiration",
+            "2_weeks_after_expiration",
+        ];
+
+        $notificationService = new NotificationService();
+        $telephely = "Jenbacher Gas Engines Hungary Kft.";
+        $method = "";
+        $waitingPeriod = 7; //napok
+        $x=0;
+
+        //Értesítő sablon kiválasztása
+        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?",[637,"remindertofogleu","1_month_before_expiration"])->fetch(PDO::FETCH_ASSOC);
+
+        //Cég dolgozóinak kilistázása
+        $q=sql_query("SELECT * FROM dokirex_vizsgalatok WHERE telephely=? GROUP BY paciensid",[$telephely]);
+
+        while($patientList=sql_fetch_array($q)){
+            
+            
+            if(!empty($patientList["paciensid"])){ //Ha nincs tajszám, akkor az eredeti első sorra fusson tovább, hagyja figyelmen kívül  a taj alapú keresést
+                $qr = sql_query("SELECT * FROM dokirex_vizsgalatok WHERE paciensid=? ORDER BY datum DESC LIMIT 1",array($patientList["paciensid"]));
+                $r = sql_fetch_array($qr);
+            }else{
+                $r = $patientList;
+            }
+
+            if(empty($r["email"])) continue; //Ha nincsen email cím, ne is mennyen tovább folytassa a köv. dolgozóval, úgysem tudok értesítést kiküldeni
+
+            //-> x nappal lejárat előtt
+            if(isset($_GET["method"]) && $_GET["method"]=="days_to_expiry"){
+                if(strtotime($r["ervenyesseg"])<strtotime("now + {$_GET["days"]} days")){
+
+                    $found=0;
+                    $notifications = $notificationService->checkPreviousNotifications($r["email"],"remindertofogleu");
+
+                    //Értesítés 1 hónappal lejárat előtt
+                    if(strtotime($r["ervenyesseg"])<=strtotime("now + 1 month") && strtotime($r["ervenyesseg"])>=strtotime("now + 2 weeks")){
+                        $found=1;
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?",[637,"remindertofogleu","1_month_before_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +1 month");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+
+                        //$notificationService->sendReminderToFogleu($r["email"],$r["nev"],$ertesito);
+                        echo "Lejárat:{$r["ervenyesseg"]} -> Értesítés 1 hónappal lejárat előtt<br>";
+                        if(!empty($notifications) && $key!==false) echo "<b>Utolsó értesítés: {$notifications[$key]["datum"]}</b><br>";
+                        echo "Név: {$r["nev"]}, email: {$r["email"]}<br><br>";
+                    }
+
+                    //Értesítés 2 héttel lejárat előtt
+                    if(strtotime($r["ervenyesseg"])<=strtotime("now + 2 weeks") && strtotime($r["ervenyesseg"])>=strtotime("now + 1 week")){
+                        $found=1;
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","2_weeks_before_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +2 weeks");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+
+                        //$notificationService->sendReminderToFogleu($r["email"],$r["nev"],$ertesito);
+                        echo "Lejárat:{$r["ervenyesseg"]} -> Értesítés 2 héttel lejárat előtt<br>";
+                        if(!empty($notifications) && $key!==false) echo "<b>Utolsó értesítés: {$notifications[$key]["datum"]}</b><br>";
+                        echo "Név: {$r["nev"]}, email: {$r["email"]}<br><br>";
+                    }
+
+                    //Értesítés 1 héttel lejárat előtt
+                    if(strtotime($r["ervenyesseg"])<=strtotime("now + 1 week") && strtotime($r["ervenyesseg"])>=strtotime("now")){
+                        $found=1;
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_before_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +1 week");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+
+                        //$notificationService->sendReminderToFogleu($r["email"],$r["nev"],$ertesito);
+                        echo "Lejárat:{$r["ervenyesseg"]} -> Értesítés 1 héttel lejárat előtt<br>";
+                        if(!empty($notifications) && $key!==false) echo "<b>Utolsó értesítés: {$notifications[$key]["datum"]}</b><br>";
+                        echo "Név: {$r["nev"]}, email: {$r["email"]}<br><br>";
+                    }
+
+                    //Értesítés 1 héttel lejárat után
+                    if(strtotime($r["ervenyesseg"])<=strtotime("now - 1 week") && strtotime($r["ervenyesseg"])>=strtotime("now - 2 weeks")){
+                        $found=1;
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_after_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -1 week");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+                        //$notificationService->sendReminderToFogleu($r["email"],$r["nev"],$ertesito);
+                        echo "Lejárat:{$r["ervenyesseg"]} -> Értesítés 1 héttel lejárat után<br>";
+                        if(!empty($notifications) && $key!==false) echo "<b>Utolsó értesítés: {$notifications[$key]["datum"]}</b><br>";
+                        echo "Név: {$r["nev"]}, email: {$r["email"]}<br><br>";
+                    }
+
+                     //Értesítés 2 héttel lejárat után
+                     if(strtotime($r["ervenyesseg"])<=strtotime("now - 2 weeks")){
+                        $found=1;
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","2_weeks_after_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -2 weeks");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+
+                        //$notificationService->sendReminderToFogleu($r["email"],$r["nev"],$ertesito);
+                        echo "Lejárat:{$r["ervenyesseg"]} -> Értesítés 2 héttel lejárat után<br>";
+                        if(!empty($notifications) && $key!==false) echo "<b>Utolsó értesítés: {$notifications[$key]["datum"]}</b><br>";
+                        echo "Név: {$r["nev"]}, email: {$r["email"]}<br><br>";
+                    }
+
+                    if($found==0){
+                        $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_after_expiration"])->fetch(PDO::FETCH_ASSOC);
+                        $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
+                        $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -1 week");
+                    
+                        if(!empty($notifications)){
+                            $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
+                            echo "md5: {$ertesitesAzonosito}<br>";
+                            if($key!==false){
+                                echo "<b>Már ment ki értesítés ekkor: {$notifications[$key]["datum"]}</b><br>";
+                            }else{
+                                echo "<b>Menne értesítés most.</b><br>";
+                                $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                                $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                            }
+                        }else{
+                            echo "<b>Menne értesítés most.</b><br>";
+                            $notificationService->sendReminderToFogleu($r["email"],$ertesito);
+                            $notificationService->createNotificationRecord("remindertofogleu",$ertesitesAzonosito,$r["email"],$ertesito["targy"],$ertesito["szoveg"]);
+                        }
+                        echo "<b>Ebbe a páciensbe nem futott bele: Név: {$r["nev"]}, email: {$r["email"]} -> Lejárat:{$r["ervenyesseg"]}</b><br><br>";
+                    }
+                    continue;
+                }
+            }
+        }
+
+        die();
+
+        //Metódus választás:
+        //-->ról / ig
+        if(isset($_GET["method"]) && $_GET["method"]=="interval"){
+            $method = " AND ervennyesseg BETWEEN '{$_GET["tol"]}' AND '{$_GET["ig"]}'";
+        }
+
+        //-> x nappal lejárat előtt
+        if(isset($_GET["method"]) && $_GET["method"]=="days_to_expiry"){
+            $method = "AND ervenyesseg <= '".date("Y-m-d",strtotime("now + {$_GET["days"]} days"))."'";
+        }
+
+        echo "SELECT * FROM dokirex_vizsgalatok WHERE telephely=? {$method}";
+
+        //sql_query("SELECT * FROM dokirex_vizsgalatok WHERE telephely=? {$method}",array($telephely));
+        
+    }
+
+    private function bfkh_email_kuldes(){
+        $notificationService = new NotificationService();
+        $q=sql_query("SELECT * FROM bfkh_email_kuldes WHERE sent is NULL");
+
+        $content = sql_query("SELECT * FROM ertesito_uzenetek WHERE id=?",[28])->fetch(PDO::FETCH_ASSOC);
+
+        while($r=sql_fetch_array($q)){
+            $notificationService->sendBFKHmarketing($r["email"],$content);
+            echo "e-mail sent to {$r["email"]}.<br>";
+            $notificationService->createNotificationRecord("bfkhmarketing",null,$r["email"],$content["targy"],$content["szoveg"]);
+            echo "notification record created in database.<br>";
+            sql_query("UPDATE bfkh_email_kuldes SET sent=NOW() WHERE id=?",[$r["id"]]);
+            echo "list object updated.<br>";
+        }
+        die("done.");
     }
 
 }
