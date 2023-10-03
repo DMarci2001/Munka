@@ -702,14 +702,15 @@ class HmmApi {
         $nap                = date("Y-m-d", strtotime($body["date"]));
         $reservationDate    = date("Y-m-d H:i", strtotime($body["date"]));
         $length             = $body["length"];
-        $cegId              = Booking_Constants::DEFAULT_COMPANY_ID;
-        $taj                = Utils::generateRandomString();
+        $cegId              = $body["companyId"] ?? Booking_Constants::DEFAULT_COMPANY_ID;
+        $taj                = $body["patientTaj"] ?? Utils::generateRandomString();
         $patientName        = $body["patientName"];
         $patientPhone       = $body["patientPhone"];
         $patientEmail       = $body["patientEmail"];
         $patientDateOfBirth = date("Y-m-d", strtotime($body["patientDateOfBirth"]));
         $patientMothersName = $body["patientMothersName"];
         $patientComment     = $body["patientComment"];
+        $paid               = $body["paid"] ?? 0;
 
         if (empty($body["patientDateOfBirth"])) {
             $patientDateOfBirth = "0000-00-00";
@@ -719,7 +720,7 @@ class HmmApi {
         }
 
         //print_r($this->calculateSlots($nap, $nap, $locationId, $specializationId, $doctorId));die;
-        foreach ($this->calculateSlots($nap, $nap, $locationId, $specializationId, $doctorId) as $slot) {
+        foreach ($this->calculateSlots($nap, $nap, $locationId, $specializationId, $doctorId, $cegId) as $slot) {
             if (date("Y-m-d H:i", strtotime($slot["date"])) == $reservationDate) {
                 $found = true;
                 break;
@@ -729,7 +730,6 @@ class HmmApi {
         if (!isset($found)) {
             $this->apiError(400, "E1002", "The slot is already taken.");
         }
-
 
         if ($paciensData = sql_fetch_array(sql_query("select id from felhasznalok where createdby=? and email=? and nev=? limit 1", [$this->tokenData["username"], $patientEmail, $patientName]))) {
             $paciensId = $paciensData["id"];
@@ -765,6 +765,7 @@ class HmmApi {
             "lang" => "hu",
             "orvosid" => $doctorId,
             "aktiv" => 1,
+            "paid" => $paid,
             "rn" => rand(1000000, 9999999)];
 
         $_REQUEST["rinterval"] = $data["rinterval"]; //fix
@@ -794,12 +795,13 @@ class HmmApi {
         $locationId       = $this->postParams["locationId"] ?? Booking_Constants::DEFAULT_PLACE_IDS[0];
         $specializationId = $this->postParams["specializationId"] ?? 0;
         $doctorId         = $this->postParams["doctorId"] ?? 0;
+        $companyId        = $this->postParams["companyId"] ?? 0;
 
-        return $this->calculateSlots($startDate, $endDate, $locationId, $specializationId, $doctorId);
+        return $this->calculateSlots($startDate, $endDate, $locationId, $specializationId, $doctorId, $companyId);
     }
 
 
-    private function calculateSlots($startDate, $endDate, $locationId, $specializationId, $doctorId):array {
+    private function calculateSlots($startDate, $endDate, $locationId, $specializationId, $doctorId, $companyId):array {
         $settings = new Booking_Settings();
         $slots = [];
         $doctorFilter = $doctorFilterSzabadsag = $doctorFilterReservation = $specializationFilter = "";
@@ -812,10 +814,15 @@ class HmmApi {
         if ($specializationId != 0) {
             $specializationFilter = "AND INSTR(tipusok, '|".intval($specializationId)."|')";
         }
+        if ($companyId != 0) {
+            $companyFilter = "AND INSTR(b.beocegek, '|".intval($companyId)."|')";
+        } else {
+            $companyFilter = "AND INSTR(b.beocegek, '|".intval(Booking_Constants::DEFAULT_COMPANY_ID)."|')";
+        }
 
         $beoDatas = sql_query("SELECT b.*, o.id as orvosId, o.nev FROM orvos_beosztas_new b
             LEFT JOIN orvosok o ON o.id=b.orvosid
-            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND b.helyszinid=? and b.aktiv=1 and b.noreservation=0 and instr(b.beocegek, ?)", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate)), $locationId, "|".Booking_Constants::DEFAULT_COMPANY_ID."|"])->fetchAll(PDO::FETCH_ASSOC);
+            WHERE ((nap = 10 AND beonap>=? AND beonap<=?) OR nap<10) AND nap<>0 {$specializationFilter} {$doctorFilter} AND b.helyszinid=? and b.aktiv=1 and b.noreservation=0 {$companyFilter} order by b.beonap", [date("Y-m-d", strtotime($startDate)), date("Y-m-d", strtotime($endDate)), $locationId])->fetchAll(PDO::FETCH_ASSOC);
 
         $szabadsagData = [];
         $szabadsagok = sql_query("select * from szabadsag where datumtol>=? {$doctorFilterSzabadsag}", [date("Y-m-d", strtotime($startDate))])->fetchAll(PDO::FETCH_ASSOC);

@@ -40,7 +40,6 @@ class NotificationService {
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
         }
 
@@ -97,6 +96,10 @@ class NotificationService {
 
             if ($this->isVarolista($row)) {
                 $mailTemplate = $this->userMailTemplateVarolista($row);
+            }
+
+            if (!empty($this->minimumTime)) {
+                $row["datum"] = $this->minimumTime;
             }
 
             $mail = $this->getDefaultMailer();
@@ -518,6 +521,9 @@ class NotificationService {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
         $packText = $this->_getPackText($row);
+        if (!empty($this->minimumTime)) {
+            $row["datum"] = $this->minimumTime;
+        }
         $extraMsg = ($row["custompatientemail_option"] == 1 && !empty($row["custompatientemail_text"]))? "<br/>".nl2br($row["custompatientemail_text"])."<br/>" : "<br/>";
 
         if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
@@ -530,11 +536,20 @@ class NotificationService {
         $mbody = "";
         $mbody .= "<h1>".date("Y.m.d. H:i", strtotime($row["datum"]))." - {$row["helyszin"]}</h1>";
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
-        $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br><br>";
-        if (!$this->isVarolista($row)) {
-            $mbody .= "<b>{$webTextLocal["idopont"]}: {$row["datum"]}</b><br><br>";
+        if (!empty($row["telefon"])) {
+            $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br>";
         }
-        $mbody .= "{$webTextLocal["szurestipus"]}: {$row["szurestipus"]}<br>";
+        $mbody .= "<br>";
+        if (!$this->isVarolista($row)) {
+            $mbody .= "<b>{$webTextLocal["idopont"]}: ".date("Y.m.d. H:i", strtotime($row["datum"]))."</b><br><br>";
+        }
+
+        $szuresTipus = $row["szurestipus"];
+        if (CompanyService::isAuchan()) {
+            $szuresTipus = $szuresTipus.". ".substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
+        }
+
+        $mbody .= "{$webTextLocal["szurestipus"]}: {$szuresTipus}<br>";
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
         $mbody .= "{$packText}";
         $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
@@ -556,7 +571,12 @@ class NotificationService {
                 $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$row["pass"]}\">Psyhosociális kérdőív link</a><br><br>";
             }
 
-            $mbody .= "Ha törölni szeretné ezt a foglalását, kérjük kattintson a következő linkre: <a href='https://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont regisztráció törlése</a><br>";
+            if (CompanyService::isAuchan()) {
+                $mbody.= "Ha bármi kérdése van, vagy a foglalt időpontját szeretné módosítani, kérjük hívja ezt a telefonszámot: 06 30 537 1008";
+                $mbody.= "<hr>";
+            }
+
+            $mbody .= "Ha le szeretné mondani ezt a foglalását, kérjük kattintson a következő linkre: <a href='https://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont foglalás törlése</a><br>";
             $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
             $mbody .= "<br/>";
             $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
@@ -641,17 +661,28 @@ class NotificationService {
     }
 
 
-    private function _getPackText($reservationData) {
+
+    private string $minimumTime = "";
+    private function _getPackText($reservationData):string {
         $packText = "";
 
-        $rescs = sql_query("SELECT f.id,sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=?", array($reservationData["id"]));
+        $rescs = sql_query("SELECT f.id, f.datum, f.cegid, f.megj, sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=? order by datum", array($reservationData["id"]));
         while ($rowcs = sql_fetch_array($rescs)) {
             if ($reservationData["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
             if ($reservationData["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
-            if (empty($packText)) {
-                $packText .= "<br/>Csomag tartalma:<br/>";
+
+            if (CompanyService::isAuchan($rowcs["cegid"])) {
+                if (empty($this->minimumTime)) {
+                    $this->minimumTime = $rowcs["datum"];
+                }
+                $name = substr($rowcs["megj"], strpos($rowcs["megj"], "Választott vizsgálat"));
+                $packText.= "<br/>{$name}<br/>Időpont: ".date("Y.m.d H:i", strtotime($rowcs["datum"]))."<br/>";
+            } else {
+                if (empty($packText)) {
+                    $packText .= "<br/>Csomag tartalma:<br/>";
+                }
+                $packText .= "{$rowcs["megnev"]}<br/>";
             }
-            $packText .= "{$rowcs["megnev"]}<br/>";
         }
 
         $rescs = sql_query("SELECT t.* FROM szurescsomagok_kapcs k LEFT JOIN szurestipusok t ON t.id=k.szurestipusid WHERE k.csomagid=? AND k.noreservation=1", [$reservationData["szurestipusid"]]);
@@ -1107,7 +1138,12 @@ END:VCALENDAR";
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
-        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata FROM labrequests r 
+        $adminUser = new AdminUser();
+        if (empty($adminUser->user["email"])) {
+            return;
+        }
+
+        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
         WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
@@ -1126,12 +1162,20 @@ END:VCALENDAR";
             $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw {$ownerPassword} user_pw {$userPassword}`;
 
             $mail = self::getDefaultMailer();
-            //$mail->AddAddress($patientEmail);
-            $mail->AddAddress("jnsmobil@gmail.com");
+            $mail->AddAddress($patientEmail);
+            //$mail->AddBCC("jnsmobil@gmail.com");
+            //$mail->AddBCC("marton.gergely@hungariamed.hu");
             $mail->AddAttachment($pdfFileNameEncripted, $outFileName);
 
             $subject = $requestData["nev"]." labor lelet ".date("Y-m-d");
-            $mbody = "Automatikus labor lelet küldés";
+            $mbody = !empty($requestData["emailtext"]) ? nl2br($requestData["emailtext"]) : "Automatikus labor lelet küldés";
+
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $mbody .= "<br/><img alt='Hungariamed-M Kft.' style='width:200px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' />";
+            }
+
+            $mail->From = $adminUser->user["email"];
+            $mail->FromName = $adminUser->user["nev"];
 
             $mail->Subject = $subject;
             $mail->Body = $mbody;
@@ -1140,7 +1184,10 @@ END:VCALENDAR";
             unlink($pdfFileName);
             unlink($pdfFileNameEncripted);
 
-            sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=? where id=?", [$requestData["email"], $requestData["id"]]);
+            $admin = $_SESSION["adminuser"]["nev"] ?? "noname";
+            $logText = "Kiküldve: ".date("Y.m.d H:i")." {$requestData["email"]} címre, {$admin} által<br/>";
+
+            sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=?, ertesiteslog=CONCAT(?, ertesiteslog) where id=?", [$requestData["email"], $logText, $requestData["id"]]);
         }
     }
 

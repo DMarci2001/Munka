@@ -80,6 +80,29 @@ function setDatumIndex(i) {
     datumIndex = i;
 }
 
+function reservedTimeInvalidate() {
+    $("#datum").val("");
+    $("#datumText").val("");
+    $("#datumText").css("background-image", "");
+    silentBookingPost();
+}
+
+function getKiegVizsgalatIds() {
+    let checkedKieg = "";
+    for (let i = 0; i < 10; i++) {
+        let id = "#kiegoption"+i;
+        if ($(id).length) {
+            if ($(id).is(":checked")) {
+                if (checkedKieg != "") {
+                    checkedKieg += "_";
+                }
+                checkedKieg += $(id).val();
+            }
+        }
+    }
+    return checkedKieg;
+}
+
 function showIdoPontValasztoV2(honnan, orvosid) {
     if (orvosid === undefined) {
         orvosid = 0;
@@ -90,15 +113,34 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         neme = 0;
     }
 
+    let laborOption = 0;
+    if ($("#laboranswerneeded").length) {
+        laborOption = $('input[name="labor"]:checked').val();
+        if (laborOption == undefined) {
+            myAlert("Kérjük válasszon, hogy szüksége van-e labor vizsgálatra!");
+            return;
+        }
+    }
+
     $("#loadingspinner"+datumIndex).show();
 
     $.ajax({
         type:"GET",
         url:"index.php",
         dataType:"JSON",
-        data: { showidopontvalasztov2: "1", honnan: honnan, helyszin: $("#helyszin").val(), szurestipus: $("#szurestipus").val(), selectoid: orvosid, neme: neme, taj: $("input[name='taj']").val(), betegallomany: $("#betegallomanynyilatkozat").prop("checked")},
+        data: {
+            showidopontvalasztov2: "1",
+            honnan: honnan,
+            helyszin: $("#helyszin").val(),
+            szurestipus: $("#szurestipus").val(),
+            selectoid: orvosid,
+            neme: neme,
+            taj: $("input[name='taj']").val(),
+            betegallomany: $("#betegallomanynyilatkozat").prop("checked"),
+            laborOption:laborOption,
+            kiegChecked:getKiegVizsgalatIds()
+        },
         success: function(data){
-           
             if (data.error != "") {
                 myAlert(data.error);
             } else {
@@ -203,6 +245,13 @@ function showInfoPageText(szurestipusid){
 }
 
 function clearIdopontValaszto() {
+    clearIdopontValasztoOnly();
+    $("#infopagetext").html("");
+    tappenzCheckRefresh();
+}
+
+
+function clearIdopontValasztoOnly() {
     clearSelectedDoctor();
     $("#datum").val("");
     $("#datum1").val("");
@@ -213,12 +262,10 @@ function clearIdopontValaszto() {
     $("#datumText2").val("");
     $("#datumText3").val("");
     $("#idopontvalasztodiv").html("");
-    $("#infopagetext").html("");
     $("#datumText").css("background-image", "");
     $("#datumText1").css("background-image", "");
     $("#datumText2").css("background-image", "");
     $("#datumText3").css("background-image", "");
-    tappenzCheckRefresh();
 
     $("#helyszinvalasztowarn").hide();
     $(".datarow").show();
@@ -227,6 +274,31 @@ function clearIdopontValaszto() {
         $("#helyszinvalasztowarn").show();
         $(".datarow").hide();
     }
+    return true;
+}
+
+function onlyUnique(value, index, array) {
+    return array.indexOf(value) === index;
+}
+
+function preventMultipleServiceSelect(el) {
+    let checkedKieg = new Array();
+    for (let i = 0; i < 10; i++) {
+        let id = "#kiegoption"+i;
+        if ($(id).length) {
+            if ($(id).is(":checked")) {
+                checkedKieg.push($(id).val());
+            }
+        }
+    }
+
+    checkedKieg = checkedKieg.filter(onlyUnique);
+    if (checkedKieg.length > 1) {
+        myAlert("Egyszerre csak 1 vizsgálathoz lehet időpontot foglalni. Ez alól kivételt képez a laborvizsgálat, amiből egyszerre többet is kijelölhet.");
+        $(el).prop('checked', false);
+        return;
+    }
+    clearIdopontValasztoOnly();
 }
 
 function showTipusMegj(tipusid) {

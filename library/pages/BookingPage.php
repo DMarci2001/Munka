@@ -3,6 +3,8 @@
 class BookingPage extends CorePage
 {
 
+    const AUCHAN_WARN = "Figyelem, az Auchan munkatársi szűrőprogram időpontjainak foglalása 2023.09.18. 9:00 órától lehetséges!";
+
     private BookingService $bookingService;
     public array $paymentMethods = [
         "utanvet" => "Utánvét",
@@ -32,7 +34,7 @@ class BookingPage extends CorePage
             $keltexmedWebService = new KeltexMedWebSQL();
             $keltexmedWebService->loadWebShopOrder();
         }
-        
+
 
         if (isset($_GET["showpaciensfiles"])) {
             echo $this->utils->showPaciensFiles();
@@ -156,6 +158,36 @@ class BookingPage extends CorePage
                 if (empty($_POST["taj"])) {
                     $this->errors[] = "{$webText["tajkotelezo"]}";
                 }
+            }
+
+
+            //auchan esetén kötelező kieg vizsgálat választás
+            if (CompanyService::isAuchan()) {
+                $selectedKiegVizsgalat = [];
+                foreach (BookingService::AUCHAN_SZURESEK as $key => $auchanSzures) {
+                    if (isset($_POST["kiegoption{$key}"])) {
+                        $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
+                    }
+                }
+                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                if (empty($selectedKiegVizsgalat)) {
+                    $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }
+
+                if (count($selectedKiegVizsgalat) > 1 && in_array($_POST["helyszin"], CompanyService::auchanSingleReservationPlaces())) {
+                    $this->errors[] = "Egyszerre csak egy vizsgálathoz lehet időpontot foglalni. Ez alól kivételt képez a laborvizsgálat, amiből egyszerre többet is kijelölhet.";
+                }
+
+                $result = $this->bookingService->doAuchanServicesTest();
+                if (!empty($result)) {
+                    $this->errors[] = $result;
+                }
+
+                if (count($selectedKiegVizsgalat) == 1) {
+                    $_POST["szurestipus"] = $selectedKiegVizsgalat[0];
+                }
+
+                $this->setAuchanWarning();
             }
 
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
@@ -430,13 +462,10 @@ class BookingPage extends CorePage
 
             if (!isset($_SESSION["user"])) {
                 $captchaError = $this->utils->checkCaptcha();
-                if (!empty($captchaError)) {
+                if (!empty($captchaError) && empty($this->errors)) {
                     $this->errors[] = $captchaError;
                 }
             }
-
-
-            
 
             if (empty($this->errors) && isset($multipleTimes)) {
                 //leágazás több időpont esetén
@@ -537,6 +566,9 @@ class BookingPage extends CorePage
         height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- End Google Tag Manager (noscript) -->';
 
+        //auchan esetén ideiglenes üzenet
+        $this->setAuchanWarning();
+
         echo $this->displayFejlec();
         echo $this->showErrors();
 
@@ -584,10 +616,13 @@ class BookingPage extends CorePage
             Köszönjük, hogy <strong>\"{$tipusData["megnev"]}\"</strong> szolgáltatásunkat választotta.  
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br/><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</div>";
         }
+
+        if (CompanyService::isAuchan()) {
+            echo "<div style='margin-bottom:20px;padding-bottom:20px;border-bottom: 1px solid #ccc;'>Ha bármi kérdése van, vagy korábban foglalt időpontját szeretné módosítani, kérjük hívja ezt a telefonszámot: 06 30 537 1008</div>";
+        }
+
         if (isset($_SESSION["labcode"])) {
-            
             if ($labData = sql_fetch_array(sql_query("select * from labshop_vasarlasok where hash=?", [$_SESSION["labcode"]]))) {
-                
                 if (strtoupper($labData["status"]) == "FINISHED" || ($labData["status"] == "done" && $labData["payment_method"] == "utanvet")) {
                     echo "<div style='margin-bottom:20px;'>Már bejejezte a foglalást ehhez a vásárláshoz!<br/><br/>Amennyiben szeretne egy másik csomagot is választani, kérem <a href='https://labshop.hungariamed.hu'>kattintson ide</a>";
                     unset($_SESSION["labcode"]);
@@ -611,7 +646,12 @@ class BookingPage extends CorePage
                                 $_SESSION["labshopMegjegyzes"].= "Lab. elem: {$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
                             }
                         }
-                    }
+                        if(isset($product["type"]) && $product["type"]=="exam"){
+                            if ($itemData = sql_query("select a.megnev as name from arak a where id=?", [$product["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                                $labItemsHTML .= "<li style='list-style:outside;'>{$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft</li>";
+                                $_SESSION["labshopMegjegyzes"].= "Vizsgálat: {$itemData["name"]} - {$product["unit"]} db - ".number_format($product["price"])." Ft\n";
+                            }
+                        }                    }
 
                     $outputHTML.= "<div style='margin-bottom:20px;border-bottom:1px solid #ccc;'>Ön a LabShop vásárlásához készül időpontot foglalni. A vásálás értéke: <span style='font-family: robotobold;'>" . number_format($labData["fullprice"]) . " Ft</span>. Választott fizetési mód: <span style='font-family: robotobold;'>" . $this->paymentMethods[$labData["payment_method"]] . "</span>.<br/><br>";
 
@@ -662,7 +702,7 @@ class BookingPage extends CorePage
             if (!empty($this->telephelyek)) {
                 echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
             }
-            echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
+            echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
             if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             }
@@ -682,7 +722,13 @@ class BookingPage extends CorePage
                 if ($numberOfTimes > 1) {
                     $index = $i;
                 }
-                echo "<tr class='datarow'><td valign='middle'<div style=''>{$numberTexts[$index]}: *</div></td><td>" . $this->_reservationTimeSelector($index) . "</td></tr>";
+
+                $timeSelector = $this->_reservationTimeSelector($index);
+
+                echo "<tr class='datarow'><td valign='middle'><div style=''>{$numberTexts[$index]}: *</div></td><td>{$timeSelector["html"]}</td></tr>";
+                if (!empty($timeSelector["message"])) {
+                    echo "<tr class='datarow'><td valign='middle'></td><td><div style='display:inline-block;padding:5px;color:white;background:red;'>{$timeSelector["message"]}</div></td></tr>";
+                }
             }
             echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
         } else {
@@ -887,7 +933,11 @@ class BookingPage extends CorePage
 
         if (!isset($_SESSION["user"])) {
             echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
-            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+            if (CompanyService::isAuchan()) {
+                echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> Az <a href='https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf' target='_blank' >Adatvédelmi tájékoztatót</a> és az <a target='_blank' href='https://www.keltexmed.hu/site/images/keltexmed_aszf.pdf'>ÁSZF</a>-et elolvastam, a fenti adatkezeléshez hozzájárulok.</div></td></tr>";
+            } else {
+                echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
+            }
         }
 
         if (CompanyService::isAstostecCompany()) {
@@ -931,34 +981,45 @@ class BookingPage extends CorePage
         else return "FAILED";
     }
 
-    private function _reservationTimeSelector($index = "") {
+    private function _reservationTimeSelector($index = ""):array {
         $webText = $this->lang->webText;
 
         $dateStyle = (!empty($_POST["datum{$index}"]) ? "background-image:url(images/check.png);" : "") . "background-repeat:no-repeat;background-position:right 5px center;width:150px;height:24px;margin-right:5px;padding:4px 5px;font-size:16px;";
         $dateVal = substr($_POST["datum{$index}"], 0, 16);
-        $dateValText = "";
-        
+
         if (!isset($_POST["orvosselected{$index}"])) {
             $_POST["orvosselected{$index}"] = 0;
         }
 
+        $enableCache  = true;
+        $freeFound    = false;
         $firstFreeDay = 0;
         $testDay      = 0;
         $helyszin     = intval($_POST["helyszin"]);
         $szurestipus  = intval($_POST["szurestipus"]);
+        $message      = "";
 
-        if (isset($_SESSION["firstfreeday{$szurestipus}_{$helyszin}"])) {
+        if (CompanyService::isAuchan()) {
+            $enableCache = false;
+        }
+
+        if (isset($_SESSION["firstfreeday{$szurestipus}_{$helyszin}"]) && $enableCache) {
             $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"];
+            $freeFound = true;
         } else {
-            while ($testDay < 44) {
-                
-                $this->bookingService->setHelyszin($_POST["helyszin"]);
-                $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
+            while ($testDay < 100) {
+                $this->bookingService->setHelyszin($helyszin);
+                $this->bookingService->setSzuresTipus($szurestipus);
                 $this->bookingService->setHonnan($testDay);
-                $json = $this->bookingService->showIdoPontValasztoV2($testDay);
+                $json = $this->bookingService->showIdoPontValasztoV2();
+
+                if (substr_count($json, "foglaltbtn")) {
+                    $firstFreeDay = $testDay;
+                }
 
                 if (substr_count($json, "foglalhatobtn")) {
                     $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"] = $testDay;
+                    $freeFound = true;
                     break;
                 }
                 $testDay += 7;
@@ -978,7 +1039,15 @@ class BookingPage extends CorePage
         $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner{$index}' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";
-        return $html;
+
+        if (!$freeFound && !empty($helyszin) && !empty($szurestipus)) {
+            $serviceData = sql_query("select ispack from szurestipusok where id=?", [$szurestipus])->fetch(PDO::FETCH_ASSOC);
+            if ($serviceData["ispack"] == 0) {
+                $message = "Sajnáljuk, erre a rendelésre pillanatnyilag nincs szabad időpontunk.";
+            }
+        }
+
+        return ["html" => $html, "message" => $message];
     }
 
     private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0)
@@ -1000,7 +1069,7 @@ class BookingPage extends CorePage
         }
 
 
-        $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and (nap<10 or (nap=10 and beonap>=date(now()))) and b.noreservation=0", ["|{$_SESSION["helyszindata"]["id"]}|"]);
+        $res = sql_query("SELECT tipusok FROM orvos_beosztas_new b WHERE (instr(b.beocegek, ?) or b.beocegek='') and b.aktiv=1 and b.nap<>0 and (nap<10 or (nap=10 and beonap>=date(now()))) and b.noreservation=0", ["|{$_SESSION["helyszindata"]["id"]}|"]);
         while ($row = sql_fetch_array($res)) {
             $ta = explode("|", $row["tipusok"]);
             for ($i = 0; $i < count($ta); $i++) {
@@ -1193,5 +1262,16 @@ class BookingPage extends CorePage
 
 
         return $html;
+    }
+
+    private function setAuchanWarning() {
+        //return;
+
+        if (CompanyService::isAuchan()) {
+            if (strtotime("now") < strtotime("2023-09-18 09:00:00")) {
+                $this->errors = [];
+                $this->errors[] = self::AUCHAN_WARN;
+            }
+        }
     }
 }

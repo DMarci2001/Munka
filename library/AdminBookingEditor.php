@@ -561,13 +561,16 @@ class AdminBookingEditor {
                 //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
-                if (Booking_Constants::SQL_DB == "hungariamed") {
+                //if (Booking_Constants::SQL_DB == "hungariamed") {
                     $resultArrived = false;
                     if (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC)) {
                         $resultArrived = true;
                     }
                     $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő".($resultArrived ? " <i class='fa-solid fa-circle-check'></i>":"")."</a>&nbsp;&nbsp;";
-                }
+                    if (session_id() == "74r4rmfqqenv0komlulj6is2uq") {
+                        $html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
+                    }
+                //}
                 $html .= "</div>";
             }
 

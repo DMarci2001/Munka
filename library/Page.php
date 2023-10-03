@@ -66,8 +66,8 @@ class Page
 
         echo $this->utils->htmlheader($this->page->pageTitle);
         echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . ">";
-        echo $this->_pageMenu();
         echo "<div class='pagecontainer'>";
+        echo $this->_pageMenu();
         echo "<div class='contentcontainer'>";
         //echo $this->_pageHead();
         echo "<div style='padding:20px;'>";
@@ -135,6 +135,9 @@ class Page
             $html .= "<img height='{$this->page->customLogoHeight}' src='{$this->page->customLogo}' alt='' title='' style='margin-right:10px;' /> ";
         }
 
+        if (CompanyService::isAuchan()) {
+            $html .= "<a href='{$mainURL}'><img height='43' src='/images/Auchan-Logo.png' alt='' title='Auchan' style='margin:0px 0px 0px -20px;' /></a>";
+        }
         $html .= "<a href='{$mainURL}'><img height='45' src='" . Booking_Constants::SITE_LOGO . "' alt='' title='" . Booking_Constants::SITE_NAME . "' style='margin-right:20px;' /></a>";
 
         $html .= "</div>";

@@ -1,11 +1,52 @@
 <?php
 
-class SpektrumlabService {
-    const LOGIN = "hungariamedm";
-    const LABORID = "SPEKTRUMLAB";
+//start: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/commcl.pid --exec /root/commcl/commcl
+//stop: start-stop-daemon --stop --pidfile /var/run/commcl.pid
 
-    const IN_DIR = "/var/commcl/in/";
-    const OUT_DIR = "/var/commcl/out/";
+// /var/tlink_hungariamed/in/
+// /var/tlink_hungariamed/out/
+
+// /var/commcl/out/
+// /var/commcl/in/
+
+
+class SpektrumlabService {
+    private array $spektrumLabParams = [
+        "hungariamed" => [
+            "login" => "hungariamedm",
+            "laborId" => "SPEKTRUMLAB",
+            "bekuldoKod" => "000000370",
+            "bekuldoNev" => "Hungária Med-M Kft.",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
+            "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
+        ],
+        "hungariamed_suzuki" => [
+            "login" => "hungariamedm",
+            "laborId" => "SPEKTRUMLAB",
+            "bekuldoKod" => "000000396",
+            "bekuldoNev" => "Hungária Med-M Kft. (Suzuki szűrés)",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
+            "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
+        ],
+        "keltexmed" => [
+            "login" => "keltexmed",
+            "laborId" => "SPEKTRUMLAB",
+            "bekuldoKod" => "000000390",
+            "bekuldoNev" => "Keltexmed Kft.",
+            "inDir"=> "/var/commcl_keltexmed/in/",
+            "outDir" => "/var/commcl_keltexmed/out/",
+            "serviceName" => "/var/commcl_keltexmed/commcl",
+            "orvosNev" => "Dr Nagy Károly",
+            "orvosPecsetszam" => "59963"
+        ],
+    ];
+    public array $params = [];
 
     const IN_FILE = "lab.msg";
     const OUT_FILE = "lab.msg";
@@ -13,14 +54,16 @@ class SpektrumlabService {
 
     const EOF = "\r\n";
 
-    public bool $testing = true;
     public bool $orvosNemFontos = true;
 
     public function __construct() {
-
+        $index = Booking_Constants::SQL_DB;
+        $this->params = $this->spektrumLabParams[$index];
     }
 
     public function serviceRunning():bool {
+        return true;
+
         $output = `ps -aux | grep commcl`;
         if (substr_count($output, "commcl") >= 3) {
             return true;
@@ -47,11 +90,11 @@ class SpektrumlabService {
     }
 
     public function getReceivedAnswer() {
-        $inFileName = self::IN_DIR.self::IN_FILE;
-        $inSemaforFileName = self::IN_DIR.self::SEMAFOR_FILE;
+        $inFileName = $this->params["inDir"] . self::IN_FILE;
+        $inSemaforFileName = $this->params["inDir"] . self::SEMAFOR_FILE;
         //válasz feldolgozás, utána fájlok törlése
-        if (is_file($inSemaforFileName) ) {
-            if (is_file($inFileName) ) {
+        if (is_file($inSemaforFileName)) {
+            if (is_file($inFileName)) {
                 $content = file_get_contents($inFileName);
                 sql_query("insert into labrequestmessages set tipus='in', datum=now(), content=?", [$content]);
             }
@@ -59,31 +102,42 @@ class SpektrumlabService {
         }
     }
 
+
+    private static function ucName($name):string {
+        $name = Utils::convertAccentsAndSpecialToNormal(trim($name));
+        if ($name == mb_strtoupper($name)) {
+            //nagybetűs nevek visszakonvertálása nagy kezdőbetűs kisbetűs nevekké
+            $name = ucwords(mb_strtolower($name));
+        }
+        return $name;
+    }
+
+
     public function generateHL7FileByRequestId($requestId):string {
         $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
         $reservationData = sql_query("select f.*, o.nev as orvosnev from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$requestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC);
         $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
         $result = "";
 
-        $login = self::LOGIN;
-        $laborId = self::LABORID;
+        $login = $this->params["login"];
+        $laborId = $this->params["laborId"];
         $kuldesDatum = date("YmdHi");
         $adatBlokkAzonosito = $requestData["id"];
         $paciensId = trim($reservationData["paciensid"]);
-        $paciensNev = ucwords(mb_strtolower(trim($reservationData["nev"])));
-        $paciensAnyjaNeve = trim($reservationData["anyjaneve"]);
+        $paciensNev = self::ucName($reservationData["nev"]);
+        $paciensAnyjaNeve = self::ucName($reservationData["anyjaneve"]);
         $paciensSzulDatum = date("Ymd", strtotime($reservationData["szuldatum"]));
         $paciensGender = $reservationData["neme"] == 1 ? "M" : "F";
-        $paciensAddress = trim($reservationData["utca"]);
-        $paciensCity = trim($reservationData["varos"]);
+        $paciensAddress = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["utca"]));
+        $paciensCity = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["varos"]));
         $paciensIrsz = trim($reservationData["irsz"]);
         $paciensCountry = "HUN";
         $paciensTAJ = trim($reservationData["taj"]);
-        $orvosId = "44601";
-        $orvosPecsetSzam = "44601";
-        $orvosNev = "Dr. Magyar Judit";
-        $bekuldoKod = "000000370";
-        $bekuldoNev = "Hungária Med-M Kft.";
+        $orvosId = $this->params["orvosPecsetszam"];
+        $orvosPecsetSzam = $this->params["orvosPecsetszam"];
+        $orvosNev = $this->params["orvosNev"];
+        $bekuldoKod = $this->params["bekuldoKod"];;
+        $bekuldoNev = $this->params["bekuldoNev"];;
         $naploszam = $requestData["id"];
         $bekuldesDatum = date("Ymd");
         $felveteliDatum = date("YmdHi", strtotime($reservationData["datum"]));
@@ -91,22 +145,14 @@ class SpektrumlabService {
             $paciensGender = "X";
         }
 
+        if ($paciensId == 0) {
+            $paciensId = "f{$paciensTAJ}";
+        }
+
         if ($this->orvosNemFontos) {
             $orvosId = "00000";
             $orvosNev = ".";
             $orvosPecsetSzam = "00000";
-        }
-
-        if ($this->testing) {
-            $paciensId = 104;
-            $paciensNev = ucwords(mb_strtolower("Tesztelő János"));
-            $paciensTAJ = "888888888";
-            $paciensGender = "F";
-            $paciensSzulDatum = "19891112";
-            $paciensAnyjaNeve = "Tesztelő Júlia";
-            $paciensAddress = "Tesztelő kőrút 24";
-            $paciensCity = "Székesfehérvár";
-            $paciensIrsz = "8000";
         }
 
         //MSH - Fejléc
@@ -117,6 +163,8 @@ class SpektrumlabService {
         $result .= "PV1||O|||||{$orvosId}^{$orvosNev}~{$orvosPecsetSzam}|||||||^{$bekuldoKod}^{$bekuldoNev}^||||||4P||||0||||||||||||||||||||{$felveteliDatum}|".self::EOF;
         //ZPV - További kérő adatok
         $result .= "ZPV|||||||||||||||||{$naploszam}||{$bekuldesDatum}".self::EOF;
+        //ZPD - nyomtató paraméterek
+        $result .= "ZPD|TYPE:EPL2~OFFSX:1200~OFFSY:40|".self::EOF;
         //ORC - Kérés azonosító
         $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}||".self::EOF;
 
@@ -154,23 +202,24 @@ class SpektrumlabService {
     }
 
     public function requestRunning():bool {
-        return is_file(self::OUT_DIR.self::SEMAFOR_FILE) && is_file(self::OUT_DIR.self::OUT_FILE);
+        return is_file($this->params["outDir"].self::SEMAFOR_FILE) && is_file($this->params["outDir"].self::OUT_FILE);
     }
 
     public function writeSemaforFile() {
-        file_put_contents(self::OUT_DIR.self::SEMAFOR_FILE, "");
+        file_put_contents($this->params["outDir"].self::SEMAFOR_FILE, "");
     }
 
     public function writeRequestFile($data) {
-        file_put_contents(self::OUT_DIR.self::OUT_FILE, $data);
+        file_put_contents($this->params["outDir"].self::OUT_FILE, $data);
     }
 
     public function deleteInFiles() {
-        unlink(self::IN_DIR.self::SEMAFOR_FILE);
-        unlink(self::IN_DIR.self::IN_FILE);
+        unlink($this->params["inDir"].self::IN_FILE);
+        unlink($this->params["inDir"].self::SEMAFOR_FILE);
     }
 
     public function processPdfFromMessages():void {
+        $tempPdf = "/var/pdfwork/spekTemp.pdf";
         $messages = sql_query("SELECT * FROM labrequestmessages WHERE STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
             $lastRequestId = 0;
@@ -178,12 +227,18 @@ class SpektrumlabService {
             $rows = explode("\r", $message["content"]);
             foreach ($rows as $key => $row) {
                 $fields = explode("|", $row);
-                if ($fields[0] == "OBR") {
+                if (trim($fields[0]) == "OBR") {
                     $lastRequestId = intval($fields[2]);
                     $lastResultDate = date("Y-m-d H:i:s", strtotime($fields[7]));
                 }
-                if ($fields[3] == "LELETPDF") {
-                    sql_query("update labrequests set status='done', resultpdf=?, resultdate=? where id=?", [$fields[5], $lastResultDate, $lastRequestId]);
+                if (trim($fields[3]) == "LELETPDF") {
+                    file_put_contents($tempPdf, base64_decode($fields[5]));
+                    $parser = new \Smalot\PdfParser\Parser();
+                    $pdf = $parser->parseFile($tempPdf);
+                    $text = $pdf->getText();
+                    $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
+
+                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=? where id=?", [$folyamatban, $fields[5], $lastResultDate, $lastRequestId]);
                     $lastRequestId = intval($fields[2]);
                 }
             }
@@ -244,6 +299,25 @@ class SpektrumlabService {
             //print_r($data);
             //sql_query("insert into synlab_labor_tetelek set provider='spektrumlab', appform=0, commazo=?, kod=?, name=?, elkeszules=1, category=0, price=0", [$data[0], $data[2], $data[1]]);
             //die("itt");
+        }
+    }
+
+    public function sendAutomaticRequests() {
+        $requests = sql_query("SELECT lm.id AS messageid, r.id AS requestid FROM labrequests r 
+            LEFT JOIN foglalasok f ON f.id=r.foglalasid
+            LEFT JOIN labrequestmessages lm ON lm.requestid=r.id
+            WHERE r.createdby='automatic' AND r.status='pending' AND lm.id IS NULL
+            ORDER BY r.created LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($requests as $request) {
+            for ($i=0;$i<10;$i++) {
+                $result = $this->writeNextRequest($request["requestid"]);
+                echo "result: {$result}\n";
+                if ($result == "") {
+                    break;
+                }
+                sleep(2);
+            }
         }
     }
 

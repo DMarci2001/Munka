@@ -355,7 +355,6 @@ class AdminBookingPage extends AdminCorePage
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
         //$dokirexService = new DokirexService();
-
         //mindent lekérdezek
         //$q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés

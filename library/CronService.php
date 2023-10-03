@@ -68,8 +68,12 @@ class CronService {
 			$foService = new FoglaljOrvostService();
 			$foService->retryFailedMessages();
 
-            $spekrtumLabService = new SpektrumlabService();
-            $spekrtumLabService->processPdfFromMessages();
+            //if (Booking_Constants::SQL_DB == "hungariamed") {
+                $spekrtumLabService = new SpektrumlabService();
+                $spekrtumLabService->getReceivedAnswer();
+                $spekrtumLabService->fillMissingMessageRequestIds();
+                $spekrtumLabService->processPdfFromMessages();
+            //}
         }
 
         if ($this->interval == "1ora") {
@@ -83,6 +87,12 @@ class CronService {
             $this->checkCollisions();
             $this->seemeBalanceCheck();
             $this->sendManagerStatusEmail();
+
+            $laborKeroService = new LaborKeroService();
+            $laborKeroService->storeLaborKeroFromLabShopData();
+
+            //$spektrumLabService = new SpektrumlabService();
+            //$spektrumLabService->sendAutomaticRequests();
 
             $service = new SynlabService();
             $service->downloadSynlabEmails();
@@ -121,9 +131,8 @@ class CronService {
     }
 
     private function _tesztStuff() {
-        $service = new SynlabService();
-        $service->downloadSynlabEmails();
-
+        //$service = new SpektrumlabService();
+        //$service->processPdfFromMessages();
 
         //$dicomService = new DicomService();
         //$dicomService->processEntries();
@@ -146,6 +155,15 @@ class CronService {
 
         //$this->refreshWorklist();
         //$this->sendManagerStatusEmail();
+
+        //$service = new SynlabService();
+        //$service->downloadSynlabEmails();
+
+        //$laborKeroService = new LaborKeroService();
+        //$laborKeroService->storeLaborKeroFromLabShopData();
+
+        //$spektrumLabService = new SpektrumlabService();
+        //$spektrumLabService->sendAutomaticRequests();
 
         echo "teszt\n";
         die();
