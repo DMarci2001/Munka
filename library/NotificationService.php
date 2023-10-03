@@ -1144,4 +1144,50 @@ END:VCALENDAR";
         }
     }
 
+    public function checkPreviousNotifications($email,$tipus):array{
+        if($q = sql_query("SELECT * FROM notifications WHERE destination=? AND tipus=? ORDER by datum DESC",array($email,$tipus))->fetchAll(PDO::FETCH_ASSOC)){
+            return $q;
+        }else{
+            return [];
+        }
+       
+    }
+
+
+    public function sendReminderToFogleu($email,$content){
+
+        //Helyettesítendő szövegek:
+        
+
+        $mail = self::getDefaultMailer();
+        //$mail->AddAddress($email);
+        //Teszt:
+        $mail->addAddress("tesztemail@hungariamed.hu");
+        $subject = $content["targy"];
+        $mbody = $content["szoveg"];
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
+
+    public function sendBFKHmarketing($email,$content){
+
+        //Helyettesítendő szövegek:
+        $filePath = "templates/labor_kiertekeles_es_ajanlas.pdf";
+        $fileName = "Labor kiértékelés és ajánlás.pdf";
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($email);
+        $mail->AddBCC("tesztemail@hungariamed.hu");
+        //Teszt:
+        //$mail->addAddress("tesztemail@hungariamed.hu");
+        $subject = $content["targy"];
+        $mbody = $content["szoveg"];
+
+        $mail->Subject = $subject;
+        $mail->Body = $mbody;
+        $mail->AddAttachment($filePath, $fileName);
+        $mail->Send();
+    }
 }

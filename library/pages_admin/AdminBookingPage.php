@@ -355,6 +355,7 @@ class AdminBookingPage extends AdminCorePage
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
         $dokirexService = new DokirexService();
+        
         //mindent lekérdezek
         $q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés
@@ -362,14 +363,18 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         $params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2023-08-29 07:30:00"));
-        //while ($r = sql_fetch_array($q)) {
+        $datum = date("Y-m-d H:i:s", strtotime("2023-10-02 08:00:00"));
+        $orvosid=0;
+        $helyszinid=0;
+        $rinterval=5;
+        $szurestipusid=1;
+        while ($r = sql_fetch_array($q)) {
 
              //vessző eltűntetése:
-            /*$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);
+            //$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);
 
             //Páciens cím adatok tagolása:
-            $teljescimRaw = explode(" ", $r["teljes_cim"]);
+            /*$teljescimRaw = explode(" ", $r["teljes_cim"]);
 
             $irsz = $teljescimRaw[0];
             $varos = $teljescimRaw[1];
@@ -405,11 +410,11 @@ class AdminBookingPage extends AdminCorePage
 
             //Páciens insertelése a foglalások táblába:
             /*sql_query(
-                "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=5,helyszinid=322,szurestipusid=1,nev=?,email=?,telefon=?,
+                "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
                                                   szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
-                                                  smssent=1,orvosassigned=750,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
+                                                  smssent=1,orvosassigned=1242,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
                 array(
-                    $r["cegid"],$r["fid"], date("Y-m-d H:i:s"), $datum, $r["nev"], $r["email"], $r["telefon"],
+                    $r["cegid"],$r["fid"], date("Y-m-d H:i:s"), $datum, $rinterval, $helyszinid, $szurestipusid, $r["nev"], $r["email"], $r["telefon"],
                     $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],
                     $r["MunkakorID"],$r["TelephelyID"]
                 )
@@ -418,7 +423,7 @@ class AdminBookingPage extends AdminCorePage
             sql_query("UPDATE dokirex_insert_paciensek SET foglid=? WHERE id=?",array($foglid,$r["id"]));
             echo "Sikeres foglalás rögzítés és insert tábla frissítés! (".$foglid.")<br>";
 
-            $datum = date("Y-m-d H:i:s", strtotime($datum . " + 5 minutes"));*/
+            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));*/
 
 
             /*$params = array(
@@ -459,10 +464,10 @@ class AdminBookingPage extends AdminCorePage
                 "PaciensEgyediUrlapID"=> -1,
                 "Value"=> strval($fogl["dokirexmunkakorid"])
             );
-            $dokirexService->insertUpdateFormElementValue($params);*/
+            $dokirexService->insertUpdateFormElementValue($params);
 
             //Cég rögzítése:
-            /*$params = array(
+            $params = array(
                 "FormElementID"=>15,
                 "PaciensID"=>$fogl["dokirex_userid"],
                 "PaciensEgyediUrlapID"=> -1,
@@ -470,7 +475,7 @@ class AdminBookingPage extends AdminCorePage
             );
             $dokirexService->insertUpdateFormElementValue($params);
             echo "Sikeres telephely rögzítés a dokirexben! ({$r["foglid"]})<br>";*/
-        //}
+        }
         
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
