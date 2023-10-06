@@ -4080,6 +4080,47 @@ function showSpektrumLabMatricaWin() {
     })
 }
 
+function printSpektrumlabMatrica(id, p) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {printSpektrumlabMatrica:id, p:p},
+        success: function(response){
+            if (response.substring(0, 5) === "error") {
+                alert(response.substring(5));
+                return;
+            }
+            zebraPrint(response);
+        }
+    })
+}
+
+
+function zebraPrint(zplCode) {
+    BrowserPrint.getDefaultDevice("printer", function (printer) {
+        if (printer && printer.connection) {
+            if (printer.connection === "usb" || printer.connection === "network") {
+                printer.send(zplCode, zebraPrintComplete, function (error) { alert("Hiba történt nyomtatás közben: "+error); });
+            } else {
+                alert("Error 1403: A beállított nyomtató nem zebra nyomtató");
+            }
+        } else {
+            alert("Error 1400: Nem található a nyomtató");
+        }
+    }, function (error) {
+        alert("Error 1401: Nincs beállítva alapértelmezett nyomtató");
+    });
+}
+
+
+function zebraPrintComplete() {
+    $.toast({
+        text: 'Cimke nyomatatás sikerült',
+        position: 'mid-center',
+        stack: false
+    })
+}
+
 function refreshPrinterButtons() {
     let printer = $("#spprintername").val();
     let printerPos = $("#spprinterpos").val();
@@ -4175,6 +4216,10 @@ function refreshLaborKeroMessages() {
 function sendLaborKero() {
     if (labRequestProcessRunning) {
         alert("Még fut az előző művelet, próbáld újra!");
+        return;
+    }
+
+    if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a Spektrumlab ügyfélszolgálata tudja módosítani!")) {
         return;
     }
 

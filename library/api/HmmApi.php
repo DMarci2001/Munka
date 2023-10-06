@@ -870,7 +870,7 @@ class HmmApi {
                 }
 
                 if ($nap == date("Y-m-d")) {
-                    continue;
+                    //continue;
                 }
 
                 if ($dayFound) {
@@ -910,6 +910,10 @@ class HmmApi {
 
                             $timeFrom = "{$nap} {$ora}:00";
                             $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + ".($binterval-1)." minute"));
+
+                            if (strtotime($timeFrom) < strtotime("now")) {
+                                continue;
+                            }
 
                             if (isset($reservationTable[$orvosId][$timeFrom]) || isset($reservationTable[$orvosId][$timeTo])) {
                                 continue;

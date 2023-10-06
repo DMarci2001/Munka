@@ -328,7 +328,44 @@ class AdminBookingPage extends AdminCorePage
             $api = new BookingSyncApi();
             $api->modifyReservation($fid);
             die("syncok");
-        } 
+        }
+
+        if (isset($_POST["printSpektrumlabMatrica"])) {
+            $id = intval($_POST["printSpektrumlabMatrica"]);
+            $pass = $_POST["p"];
+
+            if ($id == 0 && $pass == "0") {
+                $matrica = 'Ck4KUjAsMApCMjc5LDM0LDAsMiwyLDYsNjksQiwiMDAwNTQwOTI5MDAzIgpBNjE3LDU5LDEsNSwxLDEsTiwiNTQiCkEyMzMsMiwwLDIsMSwxLE4sImR4aDgwMCxkeGg5MDAiCkEzNDcsMTgsMCwyLDEsMSxOLCI1NC8wOS4yOS4iCkEyMzMsMTI4LDAsMywxLDEsTiwiRURUQSIKQTIzMywxNDksMCwyLDEsMSxOLCJUZXN6dCBFbGVrLzE5ODguMTEuMTUuIgpBMjMzLDE2NiwwLDIsMSwxLE4sIktlbHRleG1lZCBLZnQiClAxCg==';
+                echo iconv("ISO-8859-2", "UTF-8", base64_decode($matrica));
+                die;
+            }
+
+            if (!sql_query("select id from foglalasok where id=? and pass=?", [$id, $pass])->fetch(PDO::FETCH_ASSOC)) {
+                echo "errorFoglalás nem található!";
+                die;
+            }
+
+            if (!$codeData = sql_query("select matricacode from labrequests where foglalasid=? and provider='spektrumlab' limit 1", [$id])->fetch(PDO::FETCH_ASSOC)) {
+                echo "errorLaborkérés nem található!";
+                die;
+            }
+            $error = "";
+            $matrica = $codeData["matricacode"];
+
+            if (empty($matrica)) {
+                $error = "Ehhez a kéréshez nem érkezett matrica.";
+            }
+
+            if (!empty($error)) {
+                echo "error{$error}";
+                die;
+            }
+
+            echo iconv("ISO-8859-2", "UTF-8", base64_decode($matrica));
+            die;
+
+            //Utils::jsonOut(["error" => $error, "matrica" => iconv("CP850", "UTF-8", base64_decode($matrica))], "iso-8859-2");
+        }
     }
 
     public function showPage() {

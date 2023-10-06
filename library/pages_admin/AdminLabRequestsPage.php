@@ -439,7 +439,7 @@ Asszisztens
         $html.= "<div style='{$cellStyle}'>{$request["szuldatum"]}<div>{$request["taj"]}</div></div>";
         $html.= "<div style='{$cellStyle}'>";
         if ($request["result"] == 1) {
-            $html.= "<div style=''><a class='printbutton' target='_blank' href='https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=laborlelet1&rid={$request["id"]}&p={$request["pass"]}' style='background: #00aa00;padding:1px 5px;'>Lelet letöltése</a></div>";
+            $html.= "<div style=''><a class='printbutton' target='_blank' href='index.php?print&template=laborlelet1&rid={$request["id"]}&p={$request["pass"]}' style='background: #00aa00;padding:1px 5px;'>Lelet letöltése</a></div>";
         }
         $html.= "</div>";
         $html.= "<div style='{$cellStyle}'><div id='ertesitesform{$request["id"]}'>".$this->userErtesitesForm($request)."</div></div>";

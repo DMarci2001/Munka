@@ -71,8 +71,7 @@ class AdminBookingEditor {
 
 
         if (isset($_POST["foglalasmentesnaptar2"]) || isset($_POST["foglalasmentesnaptaresertesites2"]) && $this->user->authenticated()) {
-
-            $fid=intval($_POST["fid"]);
+            $fid = intval($_POST["fid"]);
             if (!isset($_POST["szuldatum"])) {
                 if (isset($_POST["szuldatumev"])) {
                     $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -120,6 +119,8 @@ class AdminBookingEditor {
                 $_POST["cegid"] = sql_insert_id();
                 $this->notificationService->newCompanyNotification($_POST["cegid"]);
             }
+
+            $this->setAuchanDataToAll($_POST, $fid);
 
             sql_query("update foglalasok set
                 modifiedby=?,
@@ -199,7 +200,7 @@ class AdminBookingEditor {
             }
 
             $rowf = sql_fetch_array(sql_query("select * from foglalasok where id=?",array($fid)));
-            logActivity("foglalas",$fid,"{$_POST["nev"]} foglalás adatlap {$rowf["datum"]}",print_r($_POST,true));
+            logActivity("foglalas",$fid,"{$_POST["nev"]} foglalás adatlap {$rowf["datum"]}", json_encode($_POST,JSON_PRETTY_PRINT));
 
             if ($_POST["orvosassigned"]==0 && $_POST["cegid"]!=0) {
                 $oid = $this->bookingService->selectFreeOrvosForIdopont($fid);
@@ -567,9 +568,10 @@ class AdminBookingEditor {
                         $resultArrived = true;
                     }
                     $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő".($resultArrived ? " <i class='fa-solid fa-circle-check'></i>":"")."</a>&nbsp;&nbsp;";
-                    if (session_id() == "74r4rmfqqenv0komlulj6is2uq") {
-                        $html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
-                    }
+                    //if (session_id() == "41crg5phek9bkdvamrqb111aee") {
+                        //$html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
+                        $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
+                    //}
                 //}
                 $html .= "</div>";
             }
@@ -886,6 +888,19 @@ class AdminBookingEditor {
         }
 
         return "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+    }
+
+
+    private function setAuchanDataToAll($data, $fid) {
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $auchanCondition = "and helyszinid IN (293, 294, 295, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 322, 319, 320, 321) and datum>'2023-10-02 00:00:00' and datum<'2023-10-18 23:59:00'";
+            if ($reservationData = sql_query("select taj from foglalasok where id=? {$auchanCondition}", [$fid])->fetch(PDO::FETCH_ASSOC)) {
+                if (!empty(trim($reservationData["taj"]))) {
+                    sql_query("UPDATE foglalasok SET email=?, telefon=?, szuldatum=?, anyjaneve=?, szulhely=?, neme=?, irsz=?, varos=?, utca=?, munkakor=?, cegid=? WHERE taj=? {$auchanCondition} LIMIT 10",
+                        [$data["email"], $data["telefon"], $data["szuldatum"], $data["anyjaneve"], $data["szulhely"], $data["neme"], $data["irsz"], $data["varos"], $data["utca"], $data["munkakor"], $data["cegid"], $reservationData["taj"]]);
+                }
+            }
+        }
     }
 
 }

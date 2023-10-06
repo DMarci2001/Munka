@@ -586,7 +586,7 @@ class SynlabService
         ];
 
         $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h"];
-        $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu"];
+        $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu", "janoskorhaz@synlabhungary.hu"];
         $dir = "/var/pdfwork";
 
 
@@ -773,10 +773,6 @@ class SynlabService
                                         }
                                     }
                                 }
-
-
-                                //echo "|".$nev."|";
-                                //die;
 
                             }
                         }

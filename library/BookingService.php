@@ -1745,12 +1745,12 @@ class BookingService
                     if (empty($teriteses)) {
                         $options.= "<div style='border-top:1px solid #ccc;padding-top:10px;'><div style='font-weight: bold;'>Térítéses vizsgálatok:</div><div>A kiegészítő vizsgálatok eredményei segítenek megismerni az aktuális egészségi állapotát. Szakembereink javaslatot tesznek a panaszok, tünetek kezelésére. Éljen a lehetőséggel, vegye igénybe a kiegészítő vizsgálatokat!</div></div>";
                         $teriteses = 1;
-                        if (in_array($_POST["helyszin"], [294, 308, 316])) {
+                        if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300])) {
                             $options.= "<div style='color:red;margin-top:10px;'>A kiegészítő térítéses vizsgálatokra nem fogadunk több foglalást!</div>";
                         }
                     }
                     $price = " - <span>".number_format($auchanSzures[1])." Ft</span>";
-                    if (in_array($_POST["helyszin"], [294, 308, 316])) {
+                    if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300])) {
                         $disabled = "disabled";
                         $onChange = "";
                     }

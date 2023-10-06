@@ -499,6 +499,9 @@ class BookingPage extends CorePage
                 }
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
+
+                logActivity("foglalas", $fid,"{$_POST["nev"]} felhasználó foglalás", json_encode($_POST,JSON_PRETTY_PRINT));
+
                 $this->record_covid_vaccination_data($fid,$_POST);
                 header("location:{$forwardURL}");
                 die();

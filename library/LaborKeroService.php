@@ -305,7 +305,7 @@ class LaborKeroService
         $html .= "</div>";
 
         $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 10px;width:10px;'>";
-        $html .= "<a class='printbutton' onclick='addPackToLaborRequest();return false;' href='#' style='background: #00aa00'><i class='fa-solid fa-plus'></i> csomag</a> ";
+        $html .= "<a title='Csomag hozzáadása a laborkéréshez' class='printbutton' onclick='addPackToLaborRequest();return false;' href='#' style='background: #00aa00'><i class='fa-solid fa-plus'></i> hozzáadás</a> ";
         $html .= "</div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'>";
         if (empty($requestPacks)) {
@@ -457,8 +457,9 @@ class LaborKeroService
         $html .= "</div>";
 
         $html .= "<div style='padding:10px;'>";
-        $html .= "<div style='min-height:210px;max-height:500px;overflow: auto;'>";
+        $html .= "<div style='min-height:210px;max-height:400px;overflow: auto;'>";
 
+        /*
         $html.= "<div style='margin-bottom: 10px;padding-bottom:10px;border-bottom:1px solid #ccc;'>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>Nyomtató neve:&nbsp;&nbsp;</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><input onchange='refreshPrinterButtons();' style='width:150px;' type='text' id='spprintername' value='{$printerName}' />&nbsp;&nbsp;</div>";
@@ -466,8 +467,9 @@ class LaborKeroService
         $html.= "<div style='display:table-cell;vertical-align: middle;'><input onchange='refreshPrinterButtons();' style='width:50px;' type='text' id='spprinterpps' value='{$printerPos}' />&nbsp;&nbsp;</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'><a class='printbutton' target='_blank' href='#' onclick='return false;' style='padding:2px 5px;'>Beállítás</a></div>";
         $html.= "</div>";
+        */
 
-        $messages = sql_query("SELECT m.* FROM labrequestmessages m WHERE m.datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND m.tipus='in' AND m.requestid<>0 ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
+        $messages = sql_query("SELECT m.* FROM labrequestmessages m WHERE m.datum>DATE_SUB(NOW(), INTERVAL 30 DAY) AND m.tipus='in' AND m.requestid<>0 ORDER BY datum DESC LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
 
         if (empty($messages)) {
            $html.= "<div style='margin: 40px 0px 5px 0px;font-weight: bold;text-align: center'>Nem található friss matrica adat</div>";

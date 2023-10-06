@@ -1,14 +1,15 @@
 <?php
 
-//start: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/commcl.pid --exec /root/commcl/commcl
-//stop: start-stop-daemon --stop --pidfile /var/run/commcl.pid
+//start commcl: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/commcl.pid --exec /root/commcl/commcl
+//stop commcl: start-stop-daemon --stop --pidfile /var/run/commcl.pid
 
-// /var/tlink_hungariamed/in/
-// /var/tlink_hungariamed/out/
+//hungariamed tlink
+//start tlink: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/tlink_hungariamed.pid --exec /var/tlink_hungariamed/tlinkl
+//stop tlink: start-stop-daemon --stop --pidfile /var/run/tlink_hungariamed.pid
 
-// /var/commcl/out/
-// /var/commcl/in/
-
+//keltexmed tlink
+//start tlink: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/tlink_keltexmed.pid --exec /var/tlink_keltexmed/tlinkl
+//stop tlink: start-stop-daemon --stop --pidfile /var/run/tlink_keltexmed.pid
 
 class SpektrumlabService {
     private array $spektrumLabParams = [
@@ -39,8 +40,8 @@ class SpektrumlabService {
             "laborId" => "SPEKTRUMLAB",
             "bekuldoKod" => "000000390",
             "bekuldoNev" => "Keltexmed Kft.",
-            "inDir"=> "/var/commcl_keltexmed/in/",
-            "outDir" => "/var/commcl_keltexmed/out/",
+            "inDir"=> "/var/tlink_keltexmed/in/",
+            "outDir" => "/var/tlink_keltexmed/out/",
             "serviceName" => "/var/commcl_keltexmed/commcl",
             "orvosNev" => "Dr Nagy Károly",
             "orvosPecsetszam" => "59963"
@@ -164,7 +165,7 @@ class SpektrumlabService {
         //ZPV - További kérő adatok
         $result .= "ZPV|||||||||||||||||{$naploszam}||{$bekuldesDatum}".self::EOF;
         //ZPD - nyomtató paraméterek
-        $result .= "ZPD|TYPE:EPL2~OFFSX:1200~OFFSY:40|".self::EOF;
+        $result .= "ZPD|TYPE:EPL2~OFFSX:1110~OFFSY:10|".self::EOF;
         //ORC - Kérés azonosító
         $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}||".self::EOF;
 
@@ -230,6 +231,12 @@ class SpektrumlabService {
                 if (trim($fields[0]) == "OBR") {
                     $lastRequestId = intval($fields[2]);
                     $lastResultDate = date("Y-m-d H:i:s", strtotime($fields[7]));
+                }
+                if (trim($fields[0]) == "MSA") {
+                    $lastRequestId = intval($fields[2]);
+                }
+                if (trim($fields[0]) == "ZPO" && !empty($lastRequestId)) {
+                    sql_query("update labrequests set matricacode=? where id=?", [$fields[1], $lastRequestId]);
                 }
                 if (trim($fields[3]) == "LELETPDF") {
                     file_put_contents($tempPdf, base64_decode($fields[5]));

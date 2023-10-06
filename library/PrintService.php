@@ -118,7 +118,7 @@ class PrintService
             return;
         }
 
-        
+
 
         if ($this->templateId == "karton") {
             $this->printKartonPDF();
@@ -948,8 +948,8 @@ class PrintService
         $q=sql_query("SELECT * FROM dokirex_vizsgalatok WHERE telephely=? GROUP BY paciensid",[$telephely]);
 
         while($patientList=sql_fetch_array($q)){
-            
-            
+
+
             if(!empty($patientList["paciensid"])){ //Ha nincs tajszám, akkor az eredeti első sorra fusson tovább, hagyja figyelmen kívül  a taj alapú keresést
                 $qr = sql_query("SELECT * FROM dokirex_vizsgalatok WHERE paciensid=? ORDER BY datum DESC LIMIT 1",array($patientList["paciensid"]));
                 $r = sql_fetch_array($qr);
@@ -972,7 +972,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?",[637,"remindertofogleu","1_month_before_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +1 month");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1001,7 +1001,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","2_weeks_before_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +2 weeks");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1030,7 +1030,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_before_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now +1 week");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1059,7 +1059,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_after_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -1 week");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1087,7 +1087,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","2_weeks_after_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -2 weeks");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1114,7 +1114,7 @@ class PrintService
                         $ertesito = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? AND tipus=? AND verzio=?", [637,"remindertofogleu","1_week_after_expiration"])->fetch(PDO::FETCH_ASSOC);
                         $ertesito["szoveg"] = str_replace("#nev#",$r["nev"],$ertesito["szoveg"]);
                         $ertesitesAzonosito = md5($r["ervenyesseg"].$r["email"]."now -1 week");
-                    
+
                         if(!empty($notifications)){
                             $key = array_search($ertesitesAzonosito, array_column($notifications, "objectid"));
                             echo "md5: {$ertesitesAzonosito}<br>";
@@ -1153,7 +1153,7 @@ class PrintService
         echo "SELECT * FROM dokirex_vizsgalatok WHERE telephely=? {$method}";
 
         //sql_query("SELECT * FROM dokirex_vizsgalatok WHERE telephely=? {$method}",array($telephely));
-        
+
     }
 
     private function bfkh_email_kuldes(){
