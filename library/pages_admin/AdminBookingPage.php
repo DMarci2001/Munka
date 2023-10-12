@@ -268,13 +268,132 @@ class AdminBookingPage extends AdminCorePage
                 $tipusAdd[] = $tipusId;
             }
 
-            $tipusok = sql_query("select id, megnev from szurestipusok where id in (" . implode(",", $tipusAdd) . ")")->fetchAll(PDO::FETCH_ASSOC);
+            $tipusok = sql_query("select id, megnev, ispack from szurestipusok where id in (" . implode(",", $tipusAdd) . ")")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($tipusok as $tipus) {
-                $addIdopontJavaScript = "addIdopont(\"{$_GET["idopont"]}\", \"{$tipus["id"]}\", this);return false;";
-                echo "<div> &gt; <a href='#' onclick='{$addIdopontJavaScript}'>{$tipus["megnev"]}</a></div>";
+                if (true) {
+                    if ($tipus["ispack"] == 1) {
+                        $addIdopontJavaScript = "packConfirmDialog(\"{$_GET["idopont"]}\", \"{$tipus["id"]}\", this);return false;";
+                        echo "<div> <i class='fa-solid fa-box-open'></i> <a href='#' onclick='{$addIdopontJavaScript}'>{$tipus["megnev"]}</a></div>";
+                    } else {
+                        $addIdopontJavaScript = "addIdopont(\"{$_GET["idopont"]}\", \"{$tipus["id"]}\", this);return false;";
+                        echo "<div> &gt; <a href='#' onclick='{$addIdopontJavaScript}'>{$tipus["megnev"]}</a></div>";
+                    }
+                } else {
+                    $addIdopontJavaScript = "addIdopont(\"{$_GET["idopont"]}\", \"{$tipus["id"]}\", this);return false;";
+                    echo "<div> &gt; <a href='#' onclick='{$addIdopontJavaScript}'>{$tipus["megnev"]}</a></div>";
+                }
             }
 
             die;
+        }
+
+        if  (isset($_REQUEST["packConfirmDialog"])) {
+            $tipus = intval($_REQUEST["tipus"]);
+            $time = $_REQUEST["idopont"];
+
+            if (!$packData = sql_query("select id, megnev from szurestipusok t where t.id=?", [$tipus])->fetch(PDO::FETCH_ASSOC)) {
+                die("Tipus not found!");
+            }
+
+            echo "<b>{$packData["megnev"]}</b>";
+
+            $packCheckBoxes = "";
+            $genderCheckBoxNeeded = 0;
+            $packItems = sql_query("SELECT t.id, t.megnev, k.nemerequired, k.noreservation FROM szurescsomagok_kapcs k
+                LEFT JOIN szurestipusok t ON t.id=k.szurestipusid
+                WHERE csomagid=? and k.noreservation=0 ORDER BY k.id", array($packData["id"]))->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($packItems as $packItem) {
+                $defaultChecked = "checked";
+                $cClass = "";
+                if ($packItem["nemerequired"]) {
+                    $defaultChecked = "";
+                    $genderCheckBoxNeeded = 1;
+                    $cClass = $packItem["nemerequired"] == 1 ? " pack_man_exam" : " pack_woman_exam";
+                }
+                $packCheckBoxes.= "<div><input class='pack_items{$cClass}' type='checkbox' value='{$packItem["id"]}' {$defaultChecked} /> {$packItem["megnev"]}</div>";
+            }
+
+
+            echo "<div style='margin-top:5px;'><input type='text' id='packPatientName' value='' style='width:200px;' placeholder='Paciens neve'/></div>";
+            echo "<input type='hidden' id='packTipus' value='{$tipus}' />";
+            echo "<input type='hidden' id='packTime' value='{$time}' />";
+            echo "<input type='hidden' id='genderNeeded' value='{$genderCheckBoxNeeded}' />";
+
+            if ($genderCheckBoxNeeded == 1) {
+                echo "<div style='margin-top:5px;'>";
+                echo "<input name='packGender' id='packGender' type='radio' value='1' onclick='checkGenderPackContents(1);' /> Férfi&nbsp;&nbsp;";
+                echo "<input name='packGender' id='packGender' type='radio' value='2' onclick='checkGenderPackContents(2);' /> Nő&nbsp;&nbsp;";
+                echo "<div>";
+            } else {
+                echo "<div style='display:none;'>";
+                echo "<input name='packGender' id='packGender' type='radio' value='0' checked />";
+                echo "</div>";
+            }
+
+            echo "<div style='margin-top:5px;'>{$packCheckBoxes}</div>";
+
+            echo "<div style='margin-top:5px;'>";
+            echo "<div id='elojloader_packsave' style='display:none;'><img src='/admin/images/loading.svg' style='width: 30px;'/></div>";
+            echo "<a class='printbutton packbuttons' onclick='reservePackContents();return false;' href='#'>Lefoglalás</a> ";
+            echo "<a class='printbutton packbuttons' onclick='$(\".eloj_dialog\").hide();return false;' href='#'>Mégse</a> ";
+            echo "<div>";
+
+            die;
+        }
+
+        if (isset($_POST["reservePackContents"])) {
+            //error_reporting(E_ALL);
+            //ini_set('display_errors', 1);
+
+            $patientName = $_POST["packPatientName"];
+            $packTipus = $_POST["packTipus"];
+            $packTime = $_POST["packTime"];
+            $packGender = $_POST["packGender"];
+            $packContentIds = explode(",", $_POST["packContentIds"]);
+            if (empty($patientName)) {
+                $patientName = "nincs név";
+            }
+
+            $_GET["orvosid"] = $_POST["orvosid"];
+            $_GET["szt"] = $packTipus;
+            $_GET["addidopont"] = $packTime;
+            $_GET["rinterval"] = $_POST["rinterval"];
+            $result = $this->bookingService->addIdoPontNew();
+            $packReservationId = $result["reservationId"];
+
+            if ($packReservationId != 0) {
+                $this->bookingService->replicateTajRequired = false;
+                $this->bookingService->replicateDuplicateCheck = false;
+
+                sql_query("update foglalasok set nev=?, neme=? where id=?", [$patientName, $packGender, $packReservationId]);
+                $packReservationData = sql_query("select * from foglalasok where id=?", [$packReservationId])->fetch(PDO::FETCH_ASSOC);
+
+                $results = [];
+                //időpontok tesztelése
+                foreach ($packContentIds as $tipusId) {
+                    $result = $this->bookingService->replicateReservationToAnotherService($packReservationData, $tipusId, true);
+                    if (!empty($result)) {
+                        $results[] = $result;
+                    }
+                }
+
+                if (!empty($results)) {
+                    $this->bookingService->deleteReservation($packReservationId, $packReservationData["pass"], true);
+                    Utils::jsonOut(["error" => implode("\n", $results), "message" => "", "html" => ""]);
+                }
+
+                //időpontok lefoglalása
+                $lefoglalva = 0;
+                foreach ($packContentIds as $tipusId) {
+                    $this->bookingService->replicateReservationToAnotherService($packReservationData, $tipusId);
+                    $lefoglalva++;
+                }
+
+                Utils::jsonOut(["error" => "", "message" => "Lefoglalva {$lefoglalva} időpont.", "html" => $this->showElojegyzesTableNew($_SESSION["setday"])]);
+            } else {
+                Utils::jsonOut(["error" => "A foglalás közben hiba történt!", "message" => "", "html" => ""]);
+            }
+
         }
 
         if (isset($_REQUEST["refreshceglist"])) {
@@ -361,7 +480,12 @@ class AdminBookingPage extends AdminCorePage
                 die;
             }
 
-            echo iconv("ISO-8859-2", "UTF-8", base64_decode($matrica));
+
+            //header('Content-Type: text/html; charset=cp850');
+
+            //echo mb_convert_encoding(base64_decode($matrica), "CP850", "UTF-8");
+            echo utf8_encode(base64_decode($matrica));
+            //echo base64_decode($matrica);
             die;
 
             //Utils::jsonOut(["error" => $error, "matrica" => iconv("CP850", "UTF-8", base64_decode($matrica))], "iso-8859-2");

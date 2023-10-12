@@ -120,6 +120,10 @@ class SpektrumlabService {
         $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
         $result = "";
 
+        if (CompanyService::isSuzuki($reservationData["cegid"])) {
+            $this->params = $this->spektrumLabParams["hungariamed_suzuki"];
+        }
+
         $login = $this->params["login"];
         $laborId = $this->params["laborId"];
         $kuldesDatum = date("YmdHi");

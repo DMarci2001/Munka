@@ -477,6 +477,10 @@ class AdminUser {
         return $this->checkPermission("jog_labortetelek");
     }
 
+    public function laborRequestPageAccess():bool{
+        return $this->checkPermission("jog_labrequests");
+    }
+
     public function beallitasBPsegedtablaAccess():bool {
         return $this->checkPermission("jog_bp_seged_tabla");
     }

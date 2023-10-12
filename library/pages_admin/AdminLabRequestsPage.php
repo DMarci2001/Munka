@@ -327,7 +327,7 @@ Asszisztens
     }
 
     public function showPage() {
-        if (!$this->adminUser->labortetelAccess()) {
+        if (!$this->adminUser->laborRequestPageAccess()) {
             echo $this->noPermissionMessage();
             return;
         }

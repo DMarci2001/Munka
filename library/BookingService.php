@@ -993,7 +993,7 @@ class BookingService
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
                 $h .= "<div style='margin:10px 0px;'>";
-                $h .= "<div style='font-weight:bold;'>Ha kér, válasszon kiegészítő szolgáltatást:</div>";
+                $h .= "<div style='font-weight:bold;'>Válasszon szolgáltatást:</div>";
                 while ($row = sql_fetch_array($res)) {
                     $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
@@ -1286,6 +1286,8 @@ class BookingService
             $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])));
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
+            $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
+            $data["megj"] = $data["megj"] == "" ? "{$tipusData["megnev"]}":"{$tipusData["megnev"]} - {$data["megj"]}";
 
             foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
                 if ($parentReservationData["szurestipusid"] == $subTypeId) {
@@ -1438,8 +1440,7 @@ class BookingService
     private $copyReservationData = [];
     private $copy = false;
 
-    public function addIdoPont()
-    {
+    public function addIdoPont():int {
         //ide már csak orvosid paraméterrel érkezhet hívás!
         //input:
         //$_GET["orvosid"]
@@ -1451,6 +1452,7 @@ class BookingService
             die("errorA foglalás nem sikerült, nem vagy bejelentkezve!");
         }
 
+        $fid = 0;
         if (isset($_SESSION["helyszin"])) {
             $foService = new FoglaljOrvostService();
 
@@ -1513,8 +1515,93 @@ class BookingService
             $api = new BookingSyncApi();
             $api->newReservation($fid);
         }
+        return $fid;
     }
 
+    public function addIdoPontNew():array {
+        //ide már csak orvosid paraméterrel érkezhet hívás!
+        //input:
+        //$_GET["orvosid"]
+        //$_GET["szt"]
+        //$_GET["addidopont"]
+        //$_GET["rinterval"]
+
+        $result = ["error" => "", "reservationId" => 0];
+
+        if (empty($this->adminUser->user)) {
+            $result["error"] = "A foglalás nem sikerült, nem vagy bejelentkezve!";
+            return $result;
+        }
+
+        $fid = 0;
+        if (isset($_SESSION["helyszin"])) {
+            $foService = new FoglaljOrvostService();
+
+            $szuresTipusId = intval($_GET["szt"]);
+            $cegId         = 0;
+            $orvosId       = !empty($_GET["orvosid"]) ? intval($_GET["orvosid"]) : 0;
+
+            if ($this->adminUser->isCegAdmin()) {
+                $cegIds = $this->adminUser->getCegListArray();
+                if (isset($cegIds[1])) {
+                    $cegId = $cegIds[1];
+                }
+            }
+
+            $errorMsg = "Az orvos nem elérhető!";
+
+            if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=? and aktiv=1", [$orvosId]))) {
+                if ($orvosData["onlytel"] == 1) {
+                    //$result["error"] = "Ez az orvos csak a telefonjára fogad foglalást!";
+                    //return $result;
+                }
+                if ($orvosData["externalonly"] == 1) {
+                    //$result["error"] = "Ehhez az orvoshoz a recepció nem rögzíthet foglalást!";
+                    //return $result;
+                }
+            }
+
+            //if ($orvosId == 117) {
+            //managerszűrés korlátlan
+            //    $selectedOrvosId = $orvosId;
+            //}
+            if ($this->orvosIdopontIsFree($_GET["addidopont"], $orvosId, $_GET["rinterval"])) {
+                $selectedOrvosId = $orvosId;
+            }
+
+            if (!isset($selectedOrvosId)) {
+                $result["error"] = $errorMsg;
+                return $result;
+            }
+
+            sql_query("insert into foglalasok set aktiv=1,foglalta=?,regdatum=now(),nev='nincs név',cegid=?,helyszinid=?,szurestipusid=?,orvosassigned=?,datum=?", array($this->adminUser->user["username"], $cegId, $_SESSION["helyszin"], $szuresTipusId, $selectedOrvosId, $_GET["addidopont"]));
+            $fid = sql_insert_id();
+
+            if (!empty($this->copyReservationData)) {
+                sql_query("update foglalasok set regdatum=now(), foglalta=?, modifiedby=?, modifiedtime=now(), cegid=?, paciensid=?, nev=?, email=?, telefon=?, szuldatum=?, szulhely=?, anyjaneve=?, neme=?, taj=?, irsz=?, varos=?, utca=?, munkaltato=?, munkakor=?, adoszam=?, rkod=?, megj=?, alkalmassag=?, alkalmassagido=?, alkalmassagikhet=?, tudoszuroervenyesseg=?, tudoszuro=?, smssent=1 where id=?",
+                    [$this->copyReservationData["foglalta"], $this->adminUser->user["username"], $this->copyReservationData["cegid"], $this->copyReservationData["paciensid"], $this->copyReservationData["nev"], $this->copyReservationData["email"], $this->copyReservationData["telefon"], $this->copyReservationData["szuldatum"], $this->copyReservationData["szulhely"], $this->copyReservationData["anyjaneve"], $this->copyReservationData["neme"], $this->copyReservationData["taj"], $this->copyReservationData["irsz"], $this->copyReservationData["varos"], $this->copyReservationData["utca"], $this->copyReservationData["munkaltato"], $this->copyReservationData["munkakor"], $this->copyReservationData["adoszam"], rand(11000,98000), $this->copyReservationData["megj"], $this->copyReservationData["alkalmassag"], $this->copyReservationData["alkalmassagido"], $this->copyReservationData["alkalmassagikhet"], $this->copyReservationData["tudoszuroervenyesseg"], $this->copyReservationData["tudoszuro"], $fid]);
+                logActivity("foglalas", $fid,"{$this->copyReservationData["nev"]} foglalás másolása {$this->copyReservationData["datum"]} -> {$_GET["moveidopont"]}","");
+            } else {
+                logActivity("foglalas", $fid, "foglalás hozzáadása {$_GET["addidopont"]}", print_r($_POST, true));
+            }
+
+            $this->updateFoglalasData($fid);
+
+            if ($selectedOrvosId == 0) {
+                $oid = $this->selectFreeOrvosForIdopont($fid);
+                //echo $oid;
+                sql_query("update foglalasok set orvosassigned=? where id=? and orvosassigned=0", array($oid, $fid));
+            }
+
+            //Foglaljorvost.hu-nak átküldés
+            $foService->newReservation($fid);
+
+            $api = new BookingSyncApi();
+            $api->newReservation($fid);
+        }
+        $result["reservationId"] = $fid;
+        return $result;
+    }
 
     public function deleteAllKiegeszitoVizsgalatok($reservationData) {
         if (Booking_Constants::SQL_DB == "keltexmed" && $reservationData["szurestipusid"] == 1) {
@@ -1627,11 +1714,11 @@ class BookingService
         return $html;
     }
 
-    public function getPublicServices($helyszinId) {
+    public function getPublicServices($helyszinId):array {
         $docAgent = new DocAgent();
         $docAgent->showDefaultAsset = true;
 
-        $rest = sql_query("SELECT b.* FROM orvos_beosztas_new b
+        $rest = sql_query("SELECT b.*, b.noreservation as bnoreservation FROM orvos_beosztas_new b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE (instr(b.beocegek, ?) or b.beocegek='') AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
             AND (b.nap<10 or (b.nap=10 and b.beonap>=date(now())))
@@ -1657,7 +1744,13 @@ class BookingService
         while ($tipusData = sql_fetch_array($res)) {
             $tipusData["doctors"] = $this->beosztasService->getDoctors(11, 1, $tipusData["id"]);
             $tipusData["assets"] = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $tipusData["id"]);
-            $services[] = $tipusData;
+
+            if ($tipusData["webdoktor"] == 1 || sql_query("SELECT b.* FROM orvos_beosztas_new b
+            LEFT JOIN orvosok o on o.id = b.orvosid
+            WHERE (instr(b.beocegek, ?) or b.beocegek='') AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=? and INSTR(tipusok, '|{$tipusData["id"]}|') and noreservation=0 AND (b.nap<10 or (b.nap=10 and b.beonap>=date(now())))
+            LIMIT 1", ["|{$_SESSION["helyszindata"]["id"]}|", $helyszinId])->fetch(PDO::FETCH_ASSOC)) {
+                $services[] = $tipusData;
+            }
         }
 
         return $services;
@@ -1745,12 +1838,12 @@ class BookingService
                     if (empty($teriteses)) {
                         $options.= "<div style='border-top:1px solid #ccc;padding-top:10px;'><div style='font-weight: bold;'>Térítéses vizsgálatok:</div><div>A kiegészítő vizsgálatok eredményei segítenek megismerni az aktuális egészségi állapotát. Szakembereink javaslatot tesznek a panaszok, tünetek kezelésére. Éljen a lehetőséggel, vegye igénybe a kiegészítő vizsgálatokat!</div></div>";
                         $teriteses = 1;
-                        if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300])) {
+                        if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300, 320, 321, 322, 304, 307])) {
                             $options.= "<div style='color:red;margin-top:10px;'>A kiegészítő térítéses vizsgálatokra nem fogadunk több foglalást!</div>";
                         }
                     }
                     $price = " - <span>".number_format($auchanSzures[1])." Ft</span>";
-                    if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300])) {
+                    if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300, 320, 321, 322, 304, 307])) {
                         $disabled = "disabled";
                         $onChange = "";
                     }
@@ -1804,8 +1897,9 @@ class BookingService
     }
 
     private int $lastSubReservationId = 0;
-    private bool $replicateDuplicateCheck = true;
+    public bool $replicateDuplicateCheck = true;
     private array $replicatedTimes = [];
+    public bool $replicateTajRequired = true;
 
     public function replicateReservationToAnotherService($reservationData, $tipusId, $testOnly = false):string {
         $this->lastSubReservationId = 0;
@@ -1814,7 +1908,7 @@ class BookingService
         if (!$tipusData = sql_query("select id, megnev from szurestipusok where id=?", [$tipusId])->fetch(PDO::FETCH_ASSOC)) {
             return $status;
         }
-        if (empty(trim($reservationData["taj"]))) {
+        if (empty(trim($reservationData["taj"])) && $this->replicateTajRequired) {
             return $status;
         }
 
