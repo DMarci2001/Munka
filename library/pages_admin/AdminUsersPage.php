@@ -31,7 +31,7 @@ class AdminUsersPage extends AdminCorePage {
         if (isset($_POST["usermentes"]) || isset($_POST["userform"])) {
             $id = intval($_GET["szerk"]);
 
-            sql_query("update users set	nev=?, email=?, tel=?, username=? where id=?",array($_POST["nev"], $_POST["email"], $_POST["tel"], $_POST["username"], $id));
+            sql_query("update users set	nev=?, email=?, tel=?, username=?, pecsetszam=? where id=?",array($_POST["nev"], $_POST["email"], $_POST["tel"], $_POST["username"], $_POST["pecsetszam"], $id));
 
             if ($_POST["password"]!="") sql_query("update users set password=md5(?)	where id=?",array($_POST["password"], $id));
 
@@ -102,6 +102,7 @@ class AdminUsersPage extends AdminCorePage {
             echo "<tr><td>Felhasználónév:</td><td><input autocomplete='off' class='inputbox' style='width:200px;' type='text' name='username' value='{$_POST["username"]}'></td></tr>";
             echo "<tr><td>E-mail:</td><td><input autocomplete='off' class='inputbox' style='width:300px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td>Telefon:</td><td><input autocomplete='off' class='inputbox' style='width:100px;' type='text' name='tel' value='{$_POST["tel"]}'></td></tr>";
+            echo "<tr><td>Pecsétszám (ha orvos):</td><td><input class='inputbox' style='width:100px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'></td></tr>";
             echo "<tr><td>Új jelszó:</td><td><input autocomplete='off' class='inputbox' style='width:200px;' type='text' name='password' value=''></td></tr>";
 
             if ($this->adminUser->jogosultsagAccess()) {

@@ -219,7 +219,7 @@ class AdminBookingPage extends AdminCorePage
                     left join szurestipusok sz on sz.id=f.szurestipusid
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
-                where {$sqlFilter} and f.nev<>'nincs név' {$cegFilter} " . ($this->adminUser->onlyDoctorReservations() ? " and f.orvosassigned=" . intval($this->adminUser->user["orvosid"]) : "") . "
+                where {$sqlFilter} and f.nev<>'nincs név' {$cegFilter} " . ($this->adminUser->onlyDoctorReservations() ? " and f.orvosassigned in(".$this->adminUser->getUserDoctorIds().")" : "") . "
                 order by f.datum desc
                 
                 limit 1000",
@@ -314,7 +314,7 @@ class AdminBookingPage extends AdminCorePage
             }
 
 
-            echo "<div style='margin-top:5px;'><input type='text' id='packPatientName' value='' style='width:200px;' placeholder='Paciens neve'/></div>";
+            echo "<div style='margin-top:5px;'><input type='text' id='packPatientName' value='' style='width:200px;' placeholder='Paciens TAJ száma'/></div>";
             echo "<input type='hidden' id='packTipus' value='{$tipus}' />";
             echo "<input type='hidden' id='packTime' value='{$time}' />";
             echo "<input type='hidden' id='genderNeeded' value='{$genderCheckBoxNeeded}' />";
@@ -345,7 +345,7 @@ class AdminBookingPage extends AdminCorePage
             //error_reporting(E_ALL);
             //ini_set('display_errors', 1);
 
-            $patientName = $_POST["packPatientName"];
+            $patientName = trim($_POST["packPatientName"]);
             $packTipus = $_POST["packTipus"];
             $packTime = $_POST["packTime"];
             $packGender = $_POST["packGender"];
@@ -360,12 +360,26 @@ class AdminBookingPage extends AdminCorePage
             $_GET["rinterval"] = $_POST["rinterval"];
             $result = $this->bookingService->addIdoPontNew();
             $packReservationId = $result["reservationId"];
+            $moreMessage = "";
 
             if ($packReservationId != 0) {
                 $this->bookingService->replicateTajRequired = false;
                 $this->bookingService->replicateDuplicateCheck = false;
+                $this->bookingService->replicateToFirstAvailableTime = true;
 
                 sql_query("update foglalasok set nev=?, neme=? where id=?", [$patientName, $packGender, $packReservationId]);
+
+                if (!empty($patientName)) {
+                    $patientData = $this->bookingService->getPatientByTAJ($patientName, $packReservationId);
+                    if (empty($patientData["error"])) {
+                        sql_query("update foglalasok set cegid=?, paciensid=?, taj=?, nev=?, neme=?, telefon=?, email=?, anyjaneve=?, szulhely=?, szuldatum=?, irsz=?, varos=?, utca=?, munkakor=? where id=?",
+                            [$patientData["cegid"], $patientData["id"], $patientData["taj"], $patientData["nev"], $patientData["neme"], $patientData["telefon"], $patientData["email"], $patientData["anyjaneve"], $patientData["szulhely"], $patientData["szuldatum"], $patientData["irsz"], $patientData["varos"], $patientData["utca"], $patientData["munkakor"], $packReservationId]);
+                    } else {
+                        $moreMessage = "{$patientData["error"]}\n";
+                    }
+                }
+
+
                 $packReservationData = sql_query("select * from foglalasok where id=?", [$packReservationId])->fetch(PDO::FETCH_ASSOC);
 
                 $results = [];
@@ -389,7 +403,7 @@ class AdminBookingPage extends AdminCorePage
                     $lefoglalva++;
                 }
 
-                Utils::jsonOut(["error" => "", "message" => "Lefoglalva {$lefoglalva} időpont.", "html" => $this->showElojegyzesTableNew($_SESSION["setday"])]);
+                Utils::jsonOut(["error" => "", "message" => "{$moreMessage}Lefoglalva {$lefoglalva} időpont.", "html" => $this->showElojegyzesTableNew($_SESSION["setday"])]);
             } else {
                 Utils::jsonOut(["error" => "A foglalás közben hiba történt!", "message" => "", "html" => ""]);
             }
@@ -993,7 +1007,7 @@ class AdminBookingPage extends AdminCorePage
             }
         }
 
-        if (!empty($foglalasok)) {
+        if (!empty($foglalasok) && !$this->adminUser->onlyDoctorReservations()) {
             $this->showInterval = true;
             $this->showDoctorName = true;
 

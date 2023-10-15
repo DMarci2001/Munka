@@ -1900,6 +1900,7 @@ class BookingService
     public bool $replicateDuplicateCheck = true;
     private array $replicatedTimes = [];
     public bool $replicateTajRequired = true;
+    public bool $replicateToFirstAvailableTime = false;
 
     public function replicateReservationToAnotherService($reservationData, $tipusId, $testOnly = false):string {
         $this->lastSubReservationId = 0;
@@ -1946,6 +1947,9 @@ class BookingService
 
                 if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=?", [$checkTime, $tipusId, $reservationData["helyszinid"]]))) {
                     $foundTimes[] = $checkTime;
+                    if ($this->replicateToFirstAvailableTime) {
+                        break;
+                    }
                 }
 
                 $o++;
@@ -2249,5 +2253,37 @@ class BookingService
 
         return implode("<br/>", $results);
     }
+
+
+    public function getPatientByTAJ($taj, $fid=0, $pid=0):array {
+        $w = "";
+        if (!$this->adminUser->allCegJog()) {
+            $w = "and cegid in (" . $this->adminUser->getCegList() . ")";
+        }
+
+        if (!$data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? and parentid=0 {$w} order by modifiedtime desc, id desc limit 1", [$taj, $fid]))) {
+            if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w} order by id desc", [$taj, $pid]))) {
+                $data["id"] = 0;
+            } else {
+                $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+            }
+        }
+
+        //ha nincs találat, akkor keltexmed esetén benézünk a hmm-re is
+        if (isset($data["error"]) && Booking_Constants::SQL_DB == "keltexmed" && $this->adminUser->allCegJog()) {
+            //keresés hmm-ben
+            $data["error"] = "";
+            if (!$data = sql_fetch_array(sql_query_common("SELECT * FROM foglalasok WHERE taj = ? order by datum desc limit 1", [$taj]))) {
+                $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+            }
+        }
+
+        if (!isset($data["error"])) {
+            $data["error"] = "";
+        }
+
+        return $data;
+    }
+
 
 }

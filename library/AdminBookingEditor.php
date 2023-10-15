@@ -72,6 +72,7 @@ class AdminBookingEditor {
 
         if (isset($_POST["foglalasmentesnaptar2"]) || isset($_POST["foglalasmentesnaptaresertesites2"]) && $this->user->authenticated()) {
             $fid = intval($_POST["fid"]);
+            $reservationData = sql_query("select datum from foglalasok where id=?", [$fid])->fetch(PDO::FETCH_ASSOC);
             if (!isset($_POST["szuldatum"])) {
                 if (isset($_POST["szuldatumev"])) {
                     $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -91,7 +92,6 @@ class AdminBookingEditor {
 
             $eljottIdopont = "0000-00-00 00:00:00";
             if (isset($_POST["eljottidopont"])) {
-                $reservationData = sql_query("select datum from foglalasok where id=?", [$fid])->fetch(PDO::FETCH_ASSOC);
                 $eljottIdopont = date("Y-m-d", strtotime($reservationData["datum"]))." ".$_POST["eljottidopont"].":00";
             }
 
@@ -161,6 +161,40 @@ class AdminBookingEditor {
             where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
                 $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
                 $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
+
+
+
+            $day = date("Y-m-d", strtotime($reservationData["datum"]));
+
+            sql_query("update foglalasok set
+                modifiedby=?,
+                modifiedtime=now(),
+                cegid=?,
+                taj=?,
+                nszam=?,
+                torzsszam=?,
+                nev=?,
+                munkakor=?,
+                adoszam=?,
+                email=?,
+                telefon=?,
+                szuldatum=?,
+                szulhely=?,
+                anyjaneve=?,
+                neme=?,
+                testalkat=?,
+                irsz=?,
+                varos=?,
+                utca=?,
+                dokirexmunkakorid=?,
+                dokirexcegid=?
+                WHERE parentid=? and parentid<>0 and datum>'{$day} 00:00:00' and datum<'{$day} 23:59:59' LIMIT 10", [$this->user->user["username"], intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
+                    $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
+
+            if (isset($_POST["megj"])) {
+                sql_query("update foglalasok set megj=? where megj='' and parentid=? and parentid<>0 and datum>'{$day} 00:00:00' and datum<'{$day} 23:59:59' LIMIT 10", [$_POST["megj"], $fid]);
+            }
+
 
 
             if (!empty($_POST["paciensid"])) {
@@ -330,36 +364,11 @@ class AdminBookingEditor {
                 $this->utils->jsonOut(["error" => "error"]);
             }
 
-            $w = "";
-            if (!$this->user->allCegJog()) {
-                $w = "and cegid in (" . $this->adminUser->getCegList() . ")";
-            }
-
-
             $taj = $_REQUEST["AFForm"];
             $fid = $_REQUEST["fid"] ?? 0;
             $pid = $_REQUEST["pid"] ?? 0;
 
-            if (!$data = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE taj = ? and id<>? and parentid=0 {$w} order by modifiedtime desc, id desc limit 1", [$taj, $fid]))) {
-                if ($data = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? and id<>? {$w} order by id desc", [$taj, $pid]))) {
-                    $data["id"] = 0;
-                } else {
-                    $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
-                }
-            }
-
-            //ha nincs találat, akkor keltexmed esetén benézünk a hmm-re is
-            if (isset($data["error"]) && Booking_Constants::SQL_DB == "keltexmed" && $this->user->allCegJog()) {
-                //keresés hmm-ben
-                $data["error"] = "";
-                if (!$data = sql_fetch_array(sql_query_common("SELECT * FROM foglalasok WHERE taj = ? order by datum desc limit 1", [$taj]))) {
-                    $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
-                }
-            }
-
-            if (!isset($data["error"])) {
-                $data["error"] = "";
-            }
+            $data = $this->bookingService->getPatientByTAJ($taj, $fid, $pid);
 
             $this->utils->jsonOut($data);
             die();
