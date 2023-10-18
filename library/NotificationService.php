@@ -26,7 +26,7 @@ class NotificationService {
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
             $mail->CharSet = "UTF-8";
-            $mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
+            //$mail->AddReplyTo(Booking_Constants::NO_REPLY_ADDRESS);
             $mail->IsHTML(true);
         } else {
             $mail->isSMTP();
@@ -1159,7 +1159,7 @@ END:VCALENDAR";
 
             file_put_contents($pdfFileName, base64_decode($requestData["resultpdf"]));
 
-            $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw {$ownerPassword} user_pw {$userPassword}`;
+            $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} user_pw {$userPassword}`;
 
             $mail = self::getDefaultMailer();
             $mail->AddAddress($patientEmail);

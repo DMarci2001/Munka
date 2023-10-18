@@ -499,6 +499,9 @@ class BookingPage extends CorePage
                 }
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
+
+                logActivity("foglalas", $fid,"{$_POST["nev"]} felhasználó foglalás", json_encode($_POST,JSON_PRETTY_PRINT));
+
                 $this->record_covid_vaccination_data($fid,$_POST);
                 header("location:{$forwardURL}");
                 die();
@@ -734,8 +737,9 @@ class BookingPage extends CorePage
         } else {
             echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
         }
- 
-        if (!$this->utils->getFieldHidden("doksi")) {
+
+        //ezentúl csak üzemorvosi vizsgálatnál lesz doksi feltöltés mező
+        if (!$this->utils->getFieldHidden("doksi") && $_POST["szurestipus"] == 1) {
             echo "<tr class='datarow'><td></td><td>&nbsp;</td></tr>";
             echo "<tr class='datarow'><td></td><td>";
             echo "<div class='datarow'>{$webText["dokfelinfo"]}</div>";
@@ -1229,6 +1233,10 @@ class BookingPage extends CorePage
                     continue;
                 }
 
+                //if ($tipusData["bnoreservation"] != 0) {
+                //    continue;
+                //}
+
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
                 if (empty($tipusData["facode"])) {
@@ -1254,7 +1262,7 @@ class BookingPage extends CorePage
         }
 
         if (!empty($introText)) {
-            $html .= "<div style='margin:40px 0px 0px 0px;padding:0px 20px 40px 20px;border-top:1px solid #888;'>";
+            $html .= "<div style='margin:40px 0px 0px 0px;padding:30px 20px 40px 20px;border-top:1px solid #888;'>";
             $html .= "<h2 style='font-size:32px;font-family:robotolight;'>" . $this->lang->getText("miert.bennunket", "Miért bennünket válasszon?") . "</h2>";
             $html .= $introText;
             $html .= "<div>";

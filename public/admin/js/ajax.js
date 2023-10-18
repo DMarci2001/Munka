@@ -479,7 +479,7 @@ function addIdopont(idopont, szt, el) {
     let pos = $(el).offset();
     $("#elojloader").show();
     $("#elojloader").css("top", pos.top-2);
-    $("#elojloader").css("left", 182);
+    $("#elojloader").css("left", 190);
 
     $.ajax({
         url: 'index.php',
@@ -495,6 +495,72 @@ function addIdopont(idopont, szt, el) {
             }
         }
     });
+}
+
+function reservePackContents() {
+    let genderNeeded = $("#genderNeeded").val();
+    let packTime = $("#packTime").val();
+    let packTipus = $("#packTipus").val();
+    let packGender = $('input[name="packGender"]:checked').val();
+    let packPatientName = $("#packPatientName").val();
+    if (genderNeeded === "1") {
+        alert("A csomag foglalásához ki kell választani a paciens nemét!");
+        return;
+    }
+
+    let packContentIds = [];
+    $('input.pack_items[type=checkbox]').each(function () {
+        if (this.checked) {
+            packContentIds.push($(this).val());
+        }
+    });
+
+    $("#elojloader_packsave").show();
+    $(".packbuttons").hide();
+
+    $.ajax({
+        url: 'index.php?page=booking',
+        type: 'POST',
+        data: { reservePackContents:1, packPatientName:packPatientName, packTipus: packTipus, packTime: packTime, packContentIds: packContentIds.join(","), rinterval:selectedInterval, orvosid:selectedOrvos, packGender:packGender },
+        success: function (data) {
+            $("#elojloader_packsave").hide();
+            $(".packbuttons").show();
+            if (data.error != "") {
+                alert(data.error);
+            } else {
+                if (data.html != "") {
+                    $(".eloj_dialog").hide();
+                    $("#elojegyzestable").html(data.html);
+                    if (data.message != "") {
+                        alert(data.message)
+                    }
+                    afterElojegyzesTableInit();
+                }
+            }
+        }
+    });
+}
+
+function packConfirmDialog(idopont, tipus) {
+    $.ajax({
+        url: 'index.php',
+        type: 'GET',
+        data: { page: 'booking', packConfirmDialog: 1, tipus: tipus, idopont: idopont },
+        success: function (data) {
+            $(".eloj_dialogcontent").html(data);
+        }
+    });
+}
+
+function checkGenderPackContents(gender) {
+    if (gender === 1) {
+        $(".pack_man_exam").prop("checked", true);
+        $(".pack_woman_exam").prop("checked", false);
+    } else {
+        $(".pack_man_exam").prop("checked", false);
+        $(".pack_woman_exam").prop("checked", true);
+    }
+    $("#genderNeeded").val(0);
 }
 
 function afterElojegyzesTableInit() {
@@ -562,7 +628,7 @@ function removeIdopont(id, p, page, el) {
         let pos = $(el).offset();
         $("#elojloader").show();
         $("#elojloader").css("top", pos.top - 2);
-        $("#elojloader").css("left", 182);
+        $("#elojloader").css("left", 190);
     }
 
     $.ajax({
@@ -4080,6 +4146,47 @@ function showSpektrumLabMatricaWin() {
     })
 }
 
+function printSpektrumlabMatrica(id, p) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {printSpektrumlabMatrica:id, p:p},
+        success: function(response){
+            if (response.substring(0, 5) === "error") {
+                alert(response.substring(5));
+                return;
+            }
+            zebraPrint(response);
+        }
+    })
+}
+
+
+function zebraPrint(zplCode) {
+    BrowserPrint.getDefaultDevice("printer", function (printer) {
+        if (printer && printer.connection) {
+            if (printer.connection === "usb" || printer.connection === "network") {
+                printer.send(zplCode, zebraPrintComplete, function (error) { alert("Hiba történt nyomtatás közben: "+error); });
+            } else {
+                alert("Error 1403: A beállított nyomtató nem zebra nyomtató");
+            }
+        } else {
+            alert("Error 1400: Nem található a nyomtató");
+        }
+    }, function (error) {
+        alert("Error 1401: Nincs beállítva alapértelmezett nyomtató");
+    });
+}
+
+
+function zebraPrintComplete() {
+    $.toast({
+        text: 'Cimke nyomatatás sikerült',
+        position: 'mid-center',
+        stack: false
+    })
+}
+
 function refreshPrinterButtons() {
     let printer = $("#spprintername").val();
     let printerPos = $("#spprinterpos").val();
@@ -4175,6 +4282,10 @@ function refreshLaborKeroMessages() {
 function sendLaborKero() {
     if (labRequestProcessRunning) {
         alert("Még fut az előző művelet, próbáld újra!");
+        return;
+    }
+
+    if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a Spektrumlab ügyfélszolgálata tudja módosítani!")) {
         return;
     }
 

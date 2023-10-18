@@ -135,7 +135,7 @@ class AdminPage {
             echo "<td></td>";
         }
         echo "<td>";
-        echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT." | ".session_id()."</div>";
+        echo "<div class='footersor'>&copy; ".Booking_Constants::FOOTER_COPYRIGHT." | ".session_id()." | <a onclick='printSpektrumlabMatrica(\"0\", \"0\");return false;' href='#'>zteszt</a></div>";
         echo "</td></tr>";
 
         echo "</table>";

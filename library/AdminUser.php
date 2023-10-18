@@ -123,7 +123,7 @@ class AdminUser {
             "name" => "Érkeztetés menüpont kezelése"
         ],
         "jog_onlydoctorreservations" => [
-            "name" => "Felhasználó saját foglalásait láthassa"
+            "name" => "Felhasználó (orvos) csak a saját foglalásait láthassa"
         ],
         "jog_megjegyzes" => [
             "name" => "Paciens megjegyzéseket láthatja",
@@ -353,6 +353,22 @@ class AdminUser {
         return $user;
     }
 
+    public function getUserDoctorIds():string {
+        $doctorIds = [-100];
+        if (!empty($this->user["orvosid"])) {
+            $doctorIds[] = $this->user["orvosid"];
+        }
+
+        if (!empty($this->user["pecsetszam"])) {
+            $doctors = sql_query("select id from orvosok where pecsetszam=? and aktiv=1", [$this->user["pecsetszam"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($doctors as $doctor) {
+                $doctorIds[] = $doctor["id"];
+            }
+        }
+
+        return implode(",", $doctorIds);
+    }
+
     private function checkPermission($key):bool {
         return ($this->authenticated() && isset($this->user[$key]) && $this->user[$key] == 1);
     }
@@ -477,6 +493,10 @@ class AdminUser {
         return $this->checkPermission("jog_labortetelek");
     }
 
+    public function laborRequestPageAccess():bool{
+        return $this->checkPermission("jog_labrequests");
+    }
+
     public function beallitasBPsegedtablaAccess():bool {
         return $this->checkPermission("jog_bp_seged_tabla");
     }
@@ -534,7 +554,7 @@ class AdminUser {
     }
 
     public function onlyDoctorReservations():bool {
-        return $this->checkPermission("jog_onlydoctorreservations") && $this->userIsOrvos();
+        return $this->checkPermission("jog_onlydoctorreservations");
     }
 
     public function userIsOrvos():bool {
