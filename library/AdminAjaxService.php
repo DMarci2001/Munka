@@ -201,7 +201,7 @@ class AdminAjaxService {
                 //Munkakör rögzítése:
                 if($p["dokirexmunkakorid"]){
                     $params = array(
-                        "FormElementID"=>16,
+                        "FormElementID"=>235,
                         "PaciensID"=>$p["dokirex_userid"],
                         "PaciensEgyediUrlapID"=> -1,
                         "Value"=> strval($p["dokirexmunkakorid"])
@@ -212,7 +212,7 @@ class AdminAjaxService {
                 //Cég rögzítése:
                 if($p["dokirexcegid"]){
                     $params = array(
-                        "FormElementID"=>15,
+                        "FormElementID"=>234,
                         "PaciensID"=>$p["dokirex_userid"],
                         "PaciensEgyediUrlapID"=> -1,
                         "Value"=> strval($p["dokirexcegid"])

@@ -355,6 +355,8 @@ class AdminBookingPage extends AdminCorePage
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
         //$dokirexService = new DokirexService();
+        //echo $dokirexService->updateListMunkakor();
+
         //mindent lekérdezek
         //$q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés
@@ -362,10 +364,10 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2023-10-02 08:00:00"));
-        $orvosid=0;
-        $helyszinid=0;
-        $rinterval=5;
+        $datum = date("Y-m-d H:i:s", strtotime("2023-10-03 08:00:00"));
+        $orvosassigned=357;
+        $helyszinid=321;
+        $rinterval=1;
         $szurestipusid=1;*/
         //while ($r = sql_fetch_array($q)) {
 
@@ -411,11 +413,11 @@ class AdminBookingPage extends AdminCorePage
             /*sql_query(
                 "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
                                                   szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
-                                                  smssent=1,orvosassigned=1242,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
+                                                  smssent=1,orvosassigned=?,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
                 array(
                     $r["cegid"],$r["fid"], date("Y-m-d H:i:s"), $datum, $rinterval, $helyszinid, $szurestipusid, $r["nev"], $r["email"], $r["telefon"],
                     $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],
-                    $r["MunkakorID"],$r["TelephelyID"]
+                    $orvosassigned,$r["MunkakorID"],$r["TelephelyID"]
                 )
             );
             $foglid= sql_insert_id();
@@ -448,16 +450,16 @@ class AdminBookingPage extends AdminCorePage
                 "KozgyogySzam" => null,
                 "FelvevoID" => "3",
                 "UtolsoModositoID" => "3"
-            );
+            );*/
 
             //Páciens rögzítése:
-            $dokirexService->insertPaciensIntoDokirex($params);
-            echo "Sikeres dokirex rögzítés! ({$r["foglid"]})<br>";*/
+            //$dokirexService->insertPaciensIntoDokirex($params);
+            //echo "Sikeres dokirex rögzítés! ({$r["foglid"]})<br>";
 
-            //$fogl = sql_fetch_array(sql_query("SELECT nev,dokirex_userid,dokirexmunkakorid,dokirexcegid FROM foglalasok WHERE id=?",array($r["foglid"])));
+            /*$fogl = sql_fetch_array(sql_query("SELECT nev,dokirex_userid,dokirexmunkakorid,dokirexcegid FROM foglalasok WHERE id=?",array($r["foglid"])));
 
             //Munkakör:
-            /*$params = array(
+            $params = array(
                 "FormElementID"=>16,
                 "PaciensID"=>$fogl["dokirex_userid"],
                 "PaciensEgyediUrlapID"=> -1,
