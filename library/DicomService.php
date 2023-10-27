@@ -191,8 +191,9 @@ class DicomService {
             $w.= $this->adminUser->cegSQLFilter("d.cegid");
         }
 
-        if ($this->adminUser->user["username"] == "drkizman" || $this->adminUser->user["username"] == "kizman") {
+        if (in_array($this->adminUser->user["username"], ["drkizman", "kizman", "___drosvai@t-online.hu"])) {
             $w.= " and institutionName<>'Veszprém Mobil'";
+            //$w.= " and leletcreatedby<>'Dr. Dánielisz Zsuzsanna'";
         }
 
         if (!empty($params["search"])) {

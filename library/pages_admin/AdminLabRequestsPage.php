@@ -75,7 +75,7 @@ Asszisztens
         }
 
         if (isset($_POST["savelaborpaciensdata"])) {
-            if (!$this->adminUser->labortetelAccess()) {
+            if (!$this->adminUser->laborRequestPageAccess()) {
                 Utils::jsonOut(["error" => "Jogosultság hiba", "html" => ""]);
             }
 
@@ -93,7 +93,7 @@ Asszisztens
         }
 
         if (isset($_POST["showlaborpacienseditor"])) {
-            if (!$this->adminUser->labortetelAccess()) {
+            if (!$this->adminUser->laborRequestPageAccess()) {
                 Utils::jsonOut(["error" => "Jogosultság hiba", "html" => ""]);
             }
 
