@@ -324,6 +324,29 @@ Asszisztens
             die;
         }
 
+
+        if (isset($_GET["importinzulin"])) {
+            $messages = sql_query("SELECT * FROM labrequestmessages m WHERE tipus='in' AND INSTR(content, 'inzu') AND DATE(datum)='2023-10-20'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($messages as $message) {
+                $lastRequestId = 0;
+                $rows = explode("\r", $message["content"]);
+                foreach ($rows as $key => $row) {
+                    $fields = explode("|", $row);
+                    if (trim($fields[0]) == "OBR") {
+                        $lastRequestId = intval($fields[2]);
+                    }
+
+                    if (substr_count($row, "|inz")) {
+                        echo "set {$lastRequestId}<br/>";
+                        sql_query("update labrequests set printmatrica=1 where id=?", [$lastRequestId]);
+                    }
+                }
+            }
+            echo "done";
+            die;
+        }
+
+
     }
 
     public function showPage() {
@@ -429,6 +452,10 @@ Asszisztens
             $resultDate.= "<div style=''><span style='display:inline-block;background:red;color:#fff;padding:2px 4px;border-radius: 4px;'>folyamatban</span></div>";
         }
 
+        if ($request["printmatrica"] == 1) {
+            $resultDate.= "<div style=''><span style='display:inline-block;background:limegreen;color:#fff;padding:2px 4px;border-radius: 4px;'>INZULIN</span></div>";
+        }
+
         $html.= "<div style='{$cellStyle}'>{$resultDate}</div>";
         $html.= "<div style='{$cellStyle}'>";
         $html.= "<div><a title='kérés megtekintése' target='_blank' onclick='toggleRequestDetailRow(\"{$request["id"]}\");return false;' href='#'>{$request["provider"]}</a></div>";
@@ -505,7 +532,7 @@ Asszisztens
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext 
+        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN labrequestmessages lm on lm.requestid=r.id

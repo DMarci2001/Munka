@@ -2,6 +2,7 @@
 
 class Log {
     const REPORTPROCESS_ID = 45;
+    const SIMPLEPAY = 97;
 
     public function __construct() {
 

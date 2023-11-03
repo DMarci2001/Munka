@@ -462,11 +462,12 @@ class HmmApi {
         if ($pageParams["tipusid"] != 0) {
             $domainData["orvosok"] = sql_query("SELECT b.`orvosid`, o.nev FROM orvos_beosztas_new b
                 LEFT JOIN orvosok o ON o.id=b.`orvosid` 
-                WHERE INSTR(b.`tipusok`, ?) AND b.aktiv=1 AND o.pecsetszam<>'temp' AND TRIM(o.pecsetszam)<>''
+                WHERE INSTR(b.`tipusok`, ?) AND b.aktiv=1 AND o.pecsetszam<>'temp' AND TRIM(o.pecsetszam)<>'' and b.helyszinid=1 and b.aktiv=1
+                and (b.nap<10 or (b.nap=10 and b.beonap>date_sub(now(), interval 7 day)))
                 GROUP BY b.orvosid", ["|{$pageParams["tipusid"]}|"])->fetchAll(PDO::FETCH_ASSOC);
 
             $domainData["arak"] = sql_query("SELECT price, megnev FROM arak WHERE tipusid=? AND INSTR(cegid, '|243|')", [$pageParams["tipusid"]])->fetchAll(PDO::FETCH_ASSOC);
-            $domainData["egeszsegpenztarak"] = sql_query("SELECT * FROM egeszsegpenztarak order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+            $domainData["egeszsegpenztarak"] = sql_query("SELECT * FROM egeszsegpenztarak where aktiv=1 order by megnev")->fetchAll(PDO::FETCH_ASSOC);
         }
 
         return [
@@ -710,6 +711,10 @@ class HmmApi {
         $patientDateOfBirth = date("Y-m-d", strtotime($body["patientDateOfBirth"]));
         $patientMothersName = $body["patientMothersName"];
         $patientComment     = $body["patientComment"];
+        $patientGender      = $body["patientGender"] ?? 0;
+        $patientPostcode    = $body["patientPostcode"] ?? "0000";
+        $patientCity        = $body["patientCity"] ?? "";
+        $patientAddress     = $body["patientAddress"] ?? "";
         $paid               = $body["paid"] ?? 0;
 
         if (empty($body["patientDateOfBirth"])) {
@@ -754,11 +759,11 @@ class HmmApi {
             "szuldatum" => $patientDateOfBirth,
             "szulhely" => "",
             "anyjaneve" => $patientMothersName,
-            "neme" => 0,
+            "neme" => $patientGender,
             "taj" => $taj,
-            "irsz" => "0000",
-            "varos" => "",
-            "utca" => "",
+            "irsz" => $patientPostcode,
+            "varos" => $patientCity,
+            "utca" => $patientAddress,
             "megj" => $patientComment,
             "munkakor" => "",
             "tudoszuro" => 0,

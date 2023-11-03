@@ -362,7 +362,7 @@ class DailyStatService {
         $from = date("Y-m-d 00:00:00", strtotime($from));
         $to = date("Y-m-d 23:59:59", strtotime($to));
 
-        return sql_query("select * from foglalasok f where f.datum>=? and f.datum<=? and f.eljott=1", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query("select id from foglalasok f where f.datum>=? and f.datum<=? and f.eljott=1", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function getRontgen($from, $to = ""):array {

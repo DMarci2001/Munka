@@ -585,10 +585,18 @@ class SynlabService
             ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4", "emailToCheck" => 100],
         ];
 
-        $pdfPasswords = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h"];
-        $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu", "janoskorhaz@synlabhungary.hu"];
-        $dir = "/var/pdfwork";
+        $emailConfigs["keltexmed"] = [
+            ["email" => "keltexmed@keltexmed.hu", "password" => "Keltex55", "emailToCheck" => 200],
+        ];
 
+        $mailServer["hungariamed"] = "{mail.hungariamed.hu/notls}";
+        $mailServer["keltexmed"] = "{isp.itcoffee.hu/notls}";
+
+        $pdfPasswords["hungariamed"] = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h"];
+        $pdfPasswords["keltexmed"]   = ["MMMLA+3a"];
+
+        $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu", "janoskorhaz@synlabhungary.hu"];
+        $dir = "/var/pdfwork_".Booking_Constants::SQL_DB;
 
         if (!isset($emailConfigs[Booking_Constants::SQL_DB])) {
             return;
@@ -598,7 +606,7 @@ class SynlabService
 
         foreach ($emailConfigs[Booking_Constants::SQL_DB] as $emailConfig) {
             echo "reading account: ".$emailConfig["email"]. "\n";
-            $connection = imap_open('{mail.hungariamed.hu/notls}', $emailConfig["email"], $emailConfig["password"]);
+            $connection = imap_open($mailServer[Booking_Constants::SQL_DB], $emailConfig["email"], $emailConfig["password"]);
             $count = imap_num_msg($connection);
 
             for ($i = 0; $i <= $emailConfig["emailToCheck"]; $i++) {
@@ -608,7 +616,7 @@ class SynlabService
                 }
 
                 $header = imap_headerinfo($connection, $msgNum);
-                $raw_body = imap_body($connection, $msgNum);
+                //$raw_body = imap_body($connection, $msgNum);
                 $subject = $header->subject;
                 $from = $header->from[0]->mailbox . "@" . $header->from[0]->host;
                 $structure = imap_fetchstructure($connection, $msgNum);
@@ -660,7 +668,7 @@ class SynlabService
 
                                     unlink($tempFileDecoded);
 
-                                    foreach ($pdfPasswords as $pdfPassword) {
+                                    foreach ($pdfPasswords[Booking_Constants::SQL_DB] as $pdfPassword) {
                                         $output = `qpdf --password={$pdfPassword} --decrypt {$tempFile} '{$tempFileDecoded}'`;
                                         if (is_file($tempFileDecoded)) {
                                             break;
@@ -678,7 +686,7 @@ class SynlabService
                                     $szulDatum = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
                                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
-                                    if (sql_query("select id from labrequests where synlabfilename=? and folyamatban=? limit 1", [$fileName, $folyamatban])->fetch(PDO::FETCH_ASSOC)) {
+                                    if (sql_query("select id from labrequests where synlabfilename=? and resultdate=? limit 1", [$fileName, $mailDate])->fetch(PDO::FETCH_ASSOC)) {
                                         continue;
                                     }
 
@@ -744,7 +752,7 @@ class SynlabService
 
                                     $unpacked = false;
                                     $unzipDir = "{$dir}/unzip/";
-                                    foreach ($pdfPasswords as $pdfPassword) {
+                                    foreach ($pdfPasswords[Booking_Constants::SQL_DB] as $pdfPassword) {
                                         $output = `unzip -o -P {$pdfPassword} lelet.zip -d {$unzipDir}`;
                                         if (substr_count("incorrect pass", $output) == 0) {
                                             $unpacked = true;

@@ -103,6 +103,10 @@ class LaborKeroService
             if (!$service->serviceRunning()) {
                 $this->errorMessage = "Hiba: A SpectrumLab commcl szolgáltatás nem fut a szerveren.";
             }
+
+            $lastCheck = $service->getReceivedAnswer();
+            $service->processPdfFromMessages(true);
+
             echo $this->laborKeroWindow($reservationId);
             die;
         }
@@ -244,17 +248,30 @@ class LaborKeroService
         $result = ["db" => 0, "price" => "", "text" => ""];
         $packPrice = 0;
         $itemPrice = 0;
+        $companyId = 0;
 
         $packItems = [];
-        $laborRequestData = sql_query("select id, laborpacks from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+        $laborRequestData = sql_query("select id, foglalasid, laborpacks from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+        if ($reservationData = sql_query("select cegid from foglalasok where id=?", [$laborRequestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC)) {
+            $companyId = $reservationData["cegid"];
+        }
         $selectedItems = $this->getLaborRequestItems($requestId);
         $requestPacks = json_decode($laborRequestData["laborpacks"], JSON_OBJECT_AS_ARRAY);
 
         foreach ($requestPacks as $pack) {
             $packData = sql_query("select items, price from synlab_labor_csomagok where id=?", [$pack])->fetch(PDO::FETCH_ASSOC);
+            $price = $packData["price"];
+
+            if ($priceData = sql_query("select * from synlab_labor_arak where tipus=1 and tid=? and companyid=? and aktiv=1 limit 1", [$pack, $companyId])->fetch(PDO::FETCH_ASSOC)) {
+                $price = $priceData["price"];
+            }
+
             $packIds = json_decode($packData["items"], JSON_OBJECT_AS_ARRAY);
             $packItems = array_merge($packItems, $packIds);
-            $packPrice += $packData["price"];
+            if ($price == -1) {
+                $price = 0;
+            }
+            $packPrice += $price;
         }
 
         $packItems = array_unique($packItems);
@@ -278,7 +295,7 @@ class LaborKeroService
         $requestPacks = json_decode($laborRequestData["laborpacks"]);
         $selectedItems = $this->getLaborRequestItems($laborRequestData["id"]);
         $totalData = $this->calculateLaborKeroPrice($laborRequestData["id"]);
-        $reservationData = sql_query("select id, nev, szuldatum, taj from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
+        $reservationData = sql_query("select id, nev, szuldatum, taj, pass from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
 
         $html = "";
 
@@ -377,10 +394,16 @@ class LaborKeroService
                 $html.= "<div style='margin: 10px 0px;'><a class='printbutton' target='_blank' href='https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=laborlelet1&rid={$laborRequestData["id"]}&p={$laborRequestData["pass"]}' style='background: #00aa00'>Lelet megtekintése</a></div>";
             }
 
+            if ($laborRequestData["matricacode"] != "") {
+                $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>Matrica megérkezett</div>";
+                $html.= "<div style='margin: 10px 0px;'><a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$reservationData["id"]}\", \"{$reservationData["pass"]}\");return false;' href='#' style='background: #00aa00'>Vonalkódos matrica nyomtatása</a></div>";
+            }
+
             foreach ($messages as $message) {
                 $messageHead = "";
                 if ($message["tipus"] == "in") {
-                    $messageHead = "Bejövő üzenet a SpektrumLab-tól {$message["datum"]}";
+                    //$messageHead = "Bejövő üzenet a SpektrumLab-tól {$message["datum"]}";
+                    continue;
                 }
                 if ($message["tipus"] == "out") {
                     $messageHead = "Kimenő üzenet a SpektrumLab felé {$message["datum"]}";

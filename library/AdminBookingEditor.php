@@ -559,10 +559,10 @@ class AdminBookingEditor {
                 $html .= "<div style='margin-bottom:5px;'>";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Alkalmassági</a>&nbsp;&nbsp;";
-                if(Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()){
+                if (Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()) {
                     $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
                 }
-                
+
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
@@ -572,15 +572,15 @@ class AdminBookingEditor {
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
                 //if (Booking_Constants::SQL_DB == "hungariamed") {
-                    $resultArrived = false;
-                    if (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC)) {
-                        $resultArrived = true;
-                    }
-                    $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő".($resultArrived ? " <i class='fa-solid fa-circle-check'></i>":"")."</a>&nbsp;&nbsp;";
-                    //if (session_id() == "41crg5phek9bkdvamrqb111aee") {
-                        //$html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
-                        $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
-                    //}
+                $resultArrived = false;
+                if (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $resultArrived = true;
+                }
+                $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . ($resultArrived ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
+                //if (session_id() == "41crg5phek9bkdvamrqb111aee") {
+                //$html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
+                //}
                 //}
                 $html .= "</div>";
             }
@@ -597,27 +597,26 @@ class AdminBookingEditor {
             $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
             $html .= "<table style='font-size:12px;'>";
 
-
             $html .= "<tr>";
             $html .= "<td width='60' style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</td>";
-            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"],$row["cegid"]) : "") . "</td>";
+            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</td>";
             $html .= "<td  style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</td>";
             $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</td>";
             $html .= "</tr>";
 
             $html .= "<tr>";
-            $html .= "<td width='64'>Cég:</td><td width='226'>".$this->companySelector($row["cegid"])."</td>";
-            $html .= "<td width='64'>Orvos:</td><td>".$this->doctorSelector($row)."&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
+            $html .= "<td width='64'>Cég:</td><td width='226'>" . $this->companySelector($row["cegid"]) . "</td>";
+            $html .= "<td width='64'>Orvos:</td><td>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
 
             if ($row["nev"] == "nincs név") {
                 $row["nev"] = "";
             }
 
-            $couponCode = "";
-            if ($result = sql_fetch_array(sql_query("SELECT * FROM kupon_lista WHERE foglalasid={$row["id"]}"))) {
-                $couponCode = $result["kuponkod"];
-            }
+            //$couponCode = "";
+            //if ($result = sql_fetch_array(sql_query("SELECT * FROM kupon_lista WHERE foglalasid={$row["id"]}"))) {
+                //$couponCode = $result["kuponkod"];
+            //}
 
             if ($row["paciensid"] == 0) {
                 $html .= "<tr><td colspan='4' valign='top'>";
@@ -756,7 +755,7 @@ class AdminBookingEditor {
                 $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
             }
             //onClick='addToWaitList({$row["id"]})'
-            if($this->user->varoteremuiAccess()){
+            if ($this->user->varoteremuiAccess()) {
                 $html .= $this->varoteremService->doc_choose_button($row);
             }
 
@@ -779,7 +778,7 @@ class AdminBookingEditor {
         $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
         $items = [];
-        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 YEAR) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>2 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
+        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>2 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
             $items[] = "'".trim(str_replace("'", "", $munkakor["munkakor"]))."'";
         }
 

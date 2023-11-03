@@ -2,14 +2,12 @@
 
 class AdminLeletService {
 
-    private $adminUser;
     public function __construct()
     {
 
-        $this->adminUser = new AdminUser();
-
         if (isset($_REQUEST['open_lelet'])) {
-            if ($this->adminUser->leletModAccess()) {
+            if($_SESSION['adminuser']['jog_leletszerk'] == 1)
+            {
                 $lelet_id = $_REQUEST['open_lelet'];
                 $textarea_name = "lelet-page-".$lelet_id;
                 $lelet = sql_fetch_array(sql_query("SELECT * FROM paciens_leletek WHERE lelet_id=?",array($lelet_id)));
