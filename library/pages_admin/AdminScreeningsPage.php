@@ -153,8 +153,8 @@ class AdminScreeningsPage extends AdminCorePage
                     }
                 }
 
-                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?, facode=?, infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,noreservationwebshop=?,webshop_kiemeles=?,webshop_kiemeles_megnev=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=?, webalias=?, webkiemelt=?, webdescription=? where id=?",
-                    [$_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"], $_POST["facode"], $_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],$_POST["noreservationwebshop"],$_POST["webshop_kiemeles"],$_POST["webshop_kiemeles_megnev"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'], $_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_GET["szerk"]]);
+                sql_query("update szurestipusok set megnev=?,megnev_de=?,megnev_en=?, facode=?, infopage=?,infopagetext=?,aktiv=?,ispack=?,simplepayaktiv=?,onlysimplepay=?,customform=?,noreservation=?,noreservationwebshop=?,webshop_kiemeles=?,webshop_kiemeles_szint=?,webshop_kiemeles_megnev=?,custominputs=?,askandansweraktiv=?,askandanswers=?,webdoktor=?,custompatientemail_option=?,custompatientemail_text=?,hideorvosvalaszto=?,disablefileupload=?, webalias=?, webkiemelt=?, webdescription=? where id=?",
+                    [$_POST["megnev"],$_POST["megnev_de"],$_POST["megnev_en"], $_POST["facode"], $_POST["infopage"],$_POST["infopagetext"],$_POST["aktiv"],$_POST["ispack"],$_POST['simplepayaktiv'],$_POST['onlysimplepay'],$_POST['customform'],$_POST["noreservation"],$_POST["noreservationwebshop"],$_POST["webshop_kiemeles"],$_POST["webshop_kiemeles_szint"],$_POST["webshop_kiemeles_megnev"],implode(",",$fieldOptions),$_POST['askandansweraktiv'],json_encode($questionArr,JSON_UNESCAPED_UNICODE),$_POST['webdoktor'],$_POST['custompatientemail_option'],$_POST['custompatientemail_text'],$_POST['hideorvosvalaszto'],$_POST['disablefileupload'], $_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_GET["szerk"]]);
 
                 logActivity("szurestipus",$_GET["szerk"],"{$_POST["megnev"]} adatlap",print_r($_POST,true));
             }
@@ -256,7 +256,14 @@ class AdminScreeningsPage extends AdminCorePage
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Webshop beállítások</div></td></tr>";
             echo "<tr><td colspan='2'>";
             echo "<input type='checkbox' value='1' name='noreservationwebshop'" . ($_POST["noreservationwebshop"] == 1 ? " checked" : "") . "> Nincs időpontfoglalás(webshop)<br>";
-            echo "<input type='checkbox' value='1' name='webshop_kiemeles'" . ($_POST["webshop_kiemeles"] == 1 ? " checked" : "") . "> Kiemelés <input type=\"text\" name='webshop_kiemeles_megnev' placeholder=\"Kiemelés megnevezése\" value='{$_POST["webshop_kiemeles_megnev"]}'><br>";
+            echo "<input type='checkbox' value='1' name='webshop_kiemeles'" . ($_POST["webshop_kiemeles"] == 1 ? " checked" : "") . "> Kiemelés <input type=\"text\" name='webshop_kiemeles_megnev' placeholder=\"Kiemelés megnevezése\" value='{$_POST["webshop_kiemeles_megnev"]}'>&nbsp;";
+            echo "<select name='webshop_kiemeles_szint'>";
+            echo "<option " . ($_POST["webshop_kiemeles_szint"] == 0 ? " selected" : "") . " value=\"0\">0</option>";
+            echo "<option " . ($_POST["webshop_kiemeles_szint"] == 1 ? " selected" : "") . " value=\"1\">1</option>";
+            echo "<option " . ($_POST["webshop_kiemeles_szint"] == 2 ? " selected" : "") . " value=\"2\">2</option>";
+            echo "<option " . ($_POST["webshop_kiemeles_szint"] == 3 ? " selected" : "") . " value=\"3\">3</option>";
+            echo "</select>";
+            echo "<br>";
             echo "</td></tr>";
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Figyelmeztetések</div></td></tr>";
             echo "<tr><td colspan='2' valign=top><input type='submit' name='addtipmegj' value='+ figyelmeztetés hozzáadása'></td></tr>";

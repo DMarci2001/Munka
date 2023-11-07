@@ -641,7 +641,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     }
                 }
                 if($_SESSION["helyszindata"]["domain"]=="fgsz"){
-                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=?",array(220));
+                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=? ORDER BY munkakor ASC",array(220));
                     $extraHTML.= "<tr class='datarow'>";
                     $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
                     $extraHTML.= "<td>";
