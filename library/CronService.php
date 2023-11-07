@@ -71,7 +71,7 @@ class CronService {
             //if (Booking_Constants::SQL_DB == "hungariamed") {
                 $spekrtumLabService = new SpektrumlabService();
                 $spekrtumLabService->getReceivedAnswer();
-                $spekrtumLabService->fillMissingMessageRequestIds();
+                //$spekrtumLabService->fillMissingMessageRequestIds();
                 $spekrtumLabService->processPdfFromMessages();
             //}
         }
@@ -156,8 +156,8 @@ class CronService {
         //$this->refreshWorklist();
         //$this->sendManagerStatusEmail();
 
-        //$service = new SynlabService();
-        //$service->downloadSynlabEmails();
+        $service = new SynlabService();
+        $service->downloadSynlabEmails();
 
         //$laborKeroService = new LaborKeroService();
         //$laborKeroService->storeLaborKeroFromLabShopData();

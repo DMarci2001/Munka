@@ -918,7 +918,8 @@ class PrintService
         "Dr. Tánczik Zsófia" => 94225,
         "Dr. Hetei Tünde" => 91881,
         "Dr. Benkő Csongor" => 93266,
-        "Dr. Szénási Pál" => 25083
+        "Dr. Szénási Pál" => 25083,
+        "Dr. Tóth-Kovalik Ádám" => 96276,
     ];
 
     private function innioErtesites(){

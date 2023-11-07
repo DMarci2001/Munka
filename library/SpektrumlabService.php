@@ -90,7 +90,20 @@ class SpektrumlabService {
         return "";
     }
 
-    public function getReceivedAnswer() {
+    public function getReceivedAnswer():string {
+        //check mikor futott utoljára
+        $lastCheck = "";
+        $lastCheckFile = $this->params["inDir"]."lastCheck";
+        if (is_file($lastCheckFile)) {
+            $lastCheck = file_get_contents($lastCheckFile);
+        }
+        if (!empty($lastCheck)) {
+            if ((strtotime("now") - strtotime($lastCheck)) < 5) {
+                return $lastCheck;
+            }
+        }
+        file_put_contents($lastCheckFile, date("Y-m-d H:i:s"));
+
         $inFileName = $this->params["inDir"] . self::IN_FILE;
         $inSemaforFileName = $this->params["inDir"] . self::SEMAFOR_FILE;
         //válasz feldolgozás, utána fájlok törlése
@@ -101,6 +114,7 @@ class SpektrumlabService {
             }
             $this->deleteInFiles();
         }
+        return $lastCheck;
     }
 
 
@@ -223,9 +237,9 @@ class SpektrumlabService {
         unlink($this->params["inDir"].self::SEMAFOR_FILE);
     }
 
-    public function processPdfFromMessages():void {
+    public function processPdfFromMessages($smallOnly = false):void {
         $tempPdf = "/var/pdfwork/spekTemp.pdf";
-        $messages = sql_query("SELECT * FROM labrequestmessages WHERE STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
             $lastRequestId = 0;
             $lastResultDate = "0000-00-00 00:00:00";
@@ -255,6 +269,23 @@ class SpektrumlabService {
             }
 
             sql_query("update labrequestmessages set status='processed' where id=?", [$message["id"]]);
+        }
+    }
+
+    public function processBarCodeFromMessages():void {
+        $messages = sql_query("SELECT LENGTH(content), m.* FROM labrequestmessages m WHERE tipus='in' AND datum>DATE_SUB(NOW(), INTERVAL 10 MINUTE) AND LENGTH(content)<20000 ORDER BY datum DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($messages as $message) {
+            $lastRequestId = 0;
+            $rows = explode("\r", $message["content"]);
+            foreach ($rows as $key => $row) {
+                $fields = explode("|", $row);
+                if (trim($fields[0]) == "ORC") {
+                    $lastRequestId = intval($fields[2]);
+                }
+                if (trim($fields[0]) == "ZPO" && !empty($lastRequestId)) {
+                    sql_query("update labrequests set matricacode=? where id=?", [$fields[1], $lastRequestId]);
+                }
+            }
         }
     }
 

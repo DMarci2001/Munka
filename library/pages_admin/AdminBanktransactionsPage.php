@@ -36,6 +36,22 @@ class AdminBanktransactionsPage extends AdminCorePage {
             return;
         }
 
+        //orderid mező kitöltése
+        $vasarlasok = sql_query("select id, cart_content from labshop_vasarlasok where date>date_sub(now(), interval 1 week) and (bankorderid is null or reservationid=0) order by date desc")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($vasarlasok as $vasarlas) {
+            $data = json_decode($vasarlas["cart_content"], JSON_OBJECT_AS_ARRAY);
+            if (isset($data["orderid"])) {
+                $reservationId = 0;
+                foreach ($data as $key => $subData) {
+                    if (isset($subData["reservationId"]) && $reservationId == 0) {
+                        $reservationId = $subData["reservationId"];
+                    }
+                }
+                sql_query("update labshop_vasarlasok set bankorderid=?, reservationid=? where id=?", [$data["orderid"], $reservationId, $vasarlas["id"]]);
+            }
+        }
+
+
 		$html=$columnTitle=$rows=$border="";
 		//$count=$previousFoglId=0;
 		$columns=array("Azonosító","Dátum","Név","Telefon","E-mail","Vizsgálat","Orvos","Összeg","Eredmény");
@@ -46,8 +62,10 @@ class AdminBanktransactionsPage extends AdminCorePage {
         }
 		$columnTitle.= "</tr>";
 
+        $request = [];
+
         if ($this->paymentSource == "bejelentkezo") {
-            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.merchant,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result FROM banktransactions trans
+            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.merchant,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result, trans.orderid FROM banktransactions trans
 							LEFT JOIN foglalasok fogl ON fogl.id=trans.foglalasid
 							LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
 							LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
@@ -63,27 +81,42 @@ class AdminBanktransactionsPage extends AdminCorePage {
         }
 
         foreach ($request as $result) {
-			//$count++;
+            $signs = "";
+            $cartItems = [];
+            if (!empty($result["orderid"])) {
+                if ($labshopData = sql_query("SELECT f.*, v.cart_content from labshop_vasarlasok v LEFT JOIN foglalasok f ON f.id=v.reservationid WHERE v.bankorderid=?", [$result["orderid"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $result["nev"] = $labshopData["nev"];
+                    $result["telefon"] = $labshopData["telefon"];
+                    $result["email"] = $labshopData["email"];
+                    $signs.= "<span style='background:lightblue;color:#fff;padding:2px 5px;'>LABSHOP</span> ";
+
+                    $cartContents = json_decode($labshopData["cart_content"], JSON_OBJECT_AS_ARRAY);
+                    foreach ($cartContents as $cartContent) {
+                        if (isset($cartContent["type"]) && $cartContent["type"] == "package") {
+                            $itemData = sql_query("select name from synlab_labor_csomagok cs where cs.id=?", [$cartContent["id"]])->fetch(PDO::FETCH_ASSOC);
+                            $cartItems[] = "<span style='background:lightslategray;color:#fff;padding:2px 5px;white-space: nowrap;'>{$itemData["name"]} {$cartContent["price"]} Ft</span>";
+                        }
+                    }
+
+                }
+            }
+
+            $signs.= $result["merchant"] == "PUBLICTESTHUF" ? "<span style='background:lightblue;color:#fff;padding:2px 5px;'>TESZT</span> ":"";
+
 			$resultCSS="style='font-weight:bold'";
-			//if($previousFoglId==0) $previousFoglId=$result['foglid'];
-			//if($previousFoglId!=$result['foglid']) $border="style='border-top:1px solid black'";
-			//else $border="";
             $border="style='border-top:1px solid black'";
 			$rows.="<tr>";
-			//$rows.="	<td {$border}>#{$count}.</td>";
-			$rows.="	<td {$border}>{$result['transid']}</td>";
-			$rows.="	<td {$border}>{$result['datum']}</td>";
-			//if($previousFoglId!=$result['foglid'] || $count==1){
-				$rows.="<td {$border}'>".($result["merchant"] == "PUBLICTESTHUF" ? "<span style='background:lightblue;color:#fff;padding:2px 5px;'>TESZT</span> ":"")."{$result['nev']}</td>";
-				$rows.="<td {$border} >{$result['telefon']}</td>";
-				$rows.="<td {$border} >{$result['email']}</td>";
-				$rows.="<td {$border} >{$result['vizsgalat']}</td>";
-				$rows.="<td {$border} >{$result['orvosnev']}</td>";
-			//}
-			//else{
-			//	$rows.="<td {$border} ></td><td {$border}></td><td {$border}></td><td {$border}></td><td {$border}></td>";
-			//}
-			
+			$rows.="<td {$border}>{$result['transid']}</td>";
+			$rows.="<td {$border}>{$result['datum']}</td>";
+            $rows.="<td {$border}'>{$signs}{$result['nev']}</td>";
+            $rows.="<td {$border} >{$result['telefon']}</td>";
+            $rows.="<td {$border} >{$result['email']}</td>";
+            if (empty($cartItems)) {
+                $rows .= "<td {$border} >{$result['vizsgalat']}</td>";
+                $rows .= "<td {$border} >{$result['orvosnev']}</td>";
+            } else {
+                $rows .= "<td colspan='2' {$border} >".implode(" ", $cartItems)."</td>";
+            }
 			
 			$rows.="	<td {$border} align='right'>{$result['osszeg']} Ft</td>";
 			if($result['result']=="FINISHED") $resultCSS="style='font-weight:bold;color:#00cc00'";
@@ -96,7 +129,6 @@ class AdminBanktransactionsPage extends AdminCorePage {
 			$rows.="	</td>";
 			
 			$rows.="</tr>";
-			$previousFoglId=$result['foglid'];
 		}
 
         $html.= "<div>";

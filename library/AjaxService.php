@@ -173,6 +173,146 @@ class AjaxService {
             }
             die;
         }
+
+
+        if (isset($_GET["tesztcuccok"])) {
+            $service = new SpektrumlabService();
+            $service->setSpectrumLabKapcs();
+
+            die("ok");
+        }
+
+        /*
+        $nameData = [
+            "Deli" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+            "" => ["", ""],
+        ];
+        */
+
+        if (isset($_GET["pdfenc"])) {
+
+            /*
+            $nameData = [
+                "Baju" => ["BAJUSZNÁCS-BÁLINT CSENGE", "114861209"],
+                "Balo" => ["BALOTAI ATTILA", "031066509"],
+                "Benc" => ["BENCZÉNÉ DR. GONDOS ÁGNES VERONIKA", "085852958"],
+                "Bott" => ["BOTTLÓ PÉTER DONÁT", "117326330"],
+                "Csel" => ["CSELOVSZKI DÉNES", "036287556"],
+                "Cser" => ["CSERNÁK ANDRÁS", "044046310"],
+                "Feke" => ["FEKETE KLAUDIA", "114049234"],
+                "Have" => ["HAVÉR BALÁZS", "19760723"],
+                "Juha" => ["JUHÁSZ ERVIN", "025543959"],
+                "Kuvi" => ["KUVIK ANNAMÁRIA", "083651542"],
+                "Mocs" => ["MÓCSA FLÓRIÁN ALEX", "119264155"],
+                "Olah" => ["OLÁH LÁSZLÓ", "035993849"],
+                "Sime" => ["SIMEONOV MARTIN", "115060807"],
+                "Szab" => ["SZABÓ RITA ÁGNES DR.", "078793299"],
+            ];
+            */
+
+            /*
+            $nameData = [
+                "Alma" => ["ALMÁSI ILDIKÓ", "074876828"],
+                "Balo" => ["BALOG KATALIN", "080390152"],
+                "Bott" => ["BOTTYÁN PETRA", "091996297"],
+                "Csaj" => ["CSAJKÓ ELIZA", "111221347"],
+                "Csem" => ["CSEMEZ GABRIELLA", "084968926"],
+                "Fabi" => ["FÁBIÁN RÉKA", "107676690"],
+                "Fehe" => ["FEHÉR JÁNOS", "023747003"],
+                "Gros" => ["GRÓSZNÉ KÓCZÁN MÓNIKA", "079947701"],
+                "Hajd" => ["HAJDÚ CSILLA", "083339637"],
+                "Heid" => ["HEIDTNÉ MOLNÁR KRISZTINA", "085331204"],
+                "Huck" => ["HUCKER IVETT", "087421730"],
+                "Jano" => ["JÁNOS MARIANNA", "080285580"],
+                "Joo" => ["JOÓ IMRE", "024685454"],
+                "Mocz" => ["MÓCZI KORINA DR.", "115476855"],
+                "Nagy" => ["NAGY-BERTA ZSUZSANNA", "077357012"],
+                "Pech" => ["PECHÁR PATRIK", "110588933"],
+                "Ripp" => ["RIPPERT-PETŐ SZANDRA", "093448565"],
+                "Sall" => ["SALLAI VIRÁG", "088570130"],
+                "Simo1971" => ["SIMON ÉVA", "079077147"],
+                "Simo1984" => ["SIMON ÉVA ERIKA", "088695286"],
+                "Szta" => ["SZTANYIK ANDREA", "086352970"],
+                "Tegz" => ["TEGZESNÉ VAJDA ÁGNES", "084392299"],
+                "Tima" => ["TÍMÁR SAROLTA", "078671560"],
+                "Vask" => ["VASKÓ KÁRMEN ÁGNES", "084725558"],
+                "Vass" => ["VASS KATALIN", "083028069"],
+            ];
+            */
+
+            $nameData = [
+                "Bara" => ["BARABÁSI SÁNDOR ZSOLT", "025312760"],
+                "Szab" => ["SZABÓ VIKTÓRIA MERCÉDESZ", "082123312"],
+            ];
+
+            $dir = "/var/pdfwork";
+            //$password = "AJ4/YFjY"; //synlab
+            //$password = "gk2q+JQU"; //mak
+            $password = "Ge-Weq5u"; //törvényszék
+
+            $d = dir($dir);
+            while (false !== ($entry = $d->read())) {
+                $outFile = $outFileZip = "";
+                $zipPassword = "";
+
+                foreach ($nameData as $key => $data) {
+                    if (substr_count($entry, $key) && substr_count($entry, "_2023")) {
+                        $outFile = "{$data[0]}.PDF";
+                        $outFileZip = "{$data[0]}.zip";
+                        if (substr_count($entry, "-1")) {
+                            $outFile = "{$data[0]}-1.PDF";
+                            $outFileZip = "{$data[0]}-1.zip";
+                        }
+                        $zipPassword = $data[1];
+                        break;
+                    }
+                }
+
+                if (empty($outFile) || empty($zipPassword)) {
+                    continue;
+                }
+
+                if (substr_count(strtolower($entry), ".pdf")) {
+                    $output = `qpdf --password={$password} --decrypt {$dir}/{$entry} '{$dir}/{$outFile}'`;
+                    echo $output;
+
+                    $output = `zip -j --password {$zipPassword} '{$dir}/{$outFileZip}' '{$dir}/{$outFile}'`;
+
+                    echo $entry." zip -p {$zipPassword} '{$dir}/{$outFileZip}' '{$dir}/{$outFile}' ".$output."<br/>";
+                }
+            }
+
+            die("ok");
+        }
+
+
+
+
     }
 
 }

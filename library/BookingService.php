@@ -1313,6 +1313,15 @@ class BookingService
         }
     }
 
+    public function getDokirexCompanyID($companyId):int {
+        $dokirexCompanyId = 0;
+        if ($companyId != 0) {
+            
+        }
+
+        return $dokirexCompanyId;
+    }
+
     public function addReservationQuery($data) {
         if (!isset($data["szulhely"])) $data["szulhely"] = "";
         if (!isset($data["telephely"])) $data["telephely"] = "";
@@ -1342,6 +1351,8 @@ class BookingService
         if (!isset($data["lang"])) $data["lang"] = "hu";
         if (!isset($data["paid"])) $data["paid"] = 0;
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
+        if (!isset($data["cegid"])) $data["cegid"] = 0;
+        if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"]);
 
         sql_query(
             "insert into foglalasok set 
@@ -1838,12 +1849,12 @@ class BookingService
                     if (empty($teriteses)) {
                         $options.= "<div style='border-top:1px solid #ccc;padding-top:10px;'><div style='font-weight: bold;'>Térítéses vizsgálatok:</div><div>A kiegészítő vizsgálatok eredményei segítenek megismerni az aktuális egészségi állapotát. Szakembereink javaslatot tesznek a panaszok, tünetek kezelésére. Éljen a lehetőséggel, vegye igénybe a kiegészítő vizsgálatokat!</div></div>";
                         $teriteses = 1;
-                        if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300, 320, 321, 322, 304, 307])) {
+                        if (true) {
                             $options.= "<div style='color:red;margin-top:10px;'>A kiegészítő térítéses vizsgálatokra nem fogadunk több foglalást!</div>";
                         }
                     }
                     $price = " - <span>".number_format($auchanSzures[1])." Ft</span>";
-                    if (in_array($_POST["helyszin"], [294, 308, 316, 302, 313, 319, 314, 320, 309, 310, 300, 320, 321, 322, 304, 307])) {
+                    if (true) {
                         $disabled = "disabled";
                         $onChange = "";
                     }
@@ -1953,7 +1964,7 @@ class BookingService
                 }
 
                 $o++;
-                if (strtotime($checkTime) > strtotime($lastTime) || $o > 100) {
+                if (strtotime($checkTime) > strtotime($lastTime) || $o > 200) {
                     break;
                 }
             }
@@ -1961,7 +1972,7 @@ class BookingService
 
         if ($testOnly) {
             if (empty($foundTimes)) {
-                return "{$tipusData["megnev"]} szolgáltatásra már elfogytak erre a napra az időpontok, kérjük hívja a 06 30 537 1008 telefonszámot segítségért.";
+                return "{$tipusData["megnev"]} szolgáltatásra már elfogytak erre a napra az időpontok, kérjük hívja a 06-1-800-9333 telefonszámot segítségért.";
             } else {
                 return "";
             }

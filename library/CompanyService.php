@@ -9,6 +9,7 @@ class CompanyService {
     const BP_ID             = 74;
     const ASTOTEC_ID        = 664;
     const SUZUKI_ID         = 81;
+    const SUZUKI_EGESZSEGUT_ID = 504;
 
     public static array $makIds = [373, 374, 375, 376];
 
@@ -128,7 +129,7 @@ class CompanyService {
     }
 
     public static function isSuzuki($companyId = 0):bool {
-        return $companyId == self::SUZUKI_ID && Booking_Constants::SQL_DB == "hungariamed";
+        return ($companyId == self::SUZUKI_ID || $companyId == self::SUZUKI_EGESZSEGUT_ID) && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

@@ -65,10 +65,6 @@ class AdminBpSettingsPage extends AdminCorePage
        //Ha hibára futott hagyja abba a kódot
        if(!empty($this->errors)) return;
 
-       //Törlöm az első sort, mert arra már nincs szükség
-       unset($array[0]);
-       $array = array_values($array);
-
        //Törlöm a régi tábla tartalmát
        sql_query("DELETE FROM bp_beutalo_seged_tabla");
 

@@ -25,7 +25,11 @@ if (isset($_GET["ack"])) {
     ];
 
     if (substr_count($result->orderRef, "gyor") == 0) {
-        if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [str_replace(Booking_Constants::SQL_DB,"", $result->orderRef)]))) {
+        Log::store(Log::SIMPLEPAY, "simplepay_ack", "", $json);
+
+        $orderRef = str_replace("labshop", "", $result->orderRef);
+
+        if (!$foglalasData = sql_fetch_array(sql_query("select f.* from banktransactions b left join foglalasok f on f.id = b.foglalasid where b.id=?", [str_replace(Booking_Constants::SQL_DB,"", $orderRef)]))) {
             die("reservation not found");
         }
         if ($result->status == "FINISHED") {
@@ -36,8 +40,8 @@ if (isset($_GET["ack"])) {
         }
 
         $simpleService->setOrderId($foglalasData["id"]);
-        $simpleService->setTransactionLog($result->orderRef, $result->transactionId, $result->status);
-        $simpleService->setAckLog($result->orderRef, $json);
+        $simpleService->setTransactionLog($orderRef, $result->transactionId, $result->status);
+        $simpleService->setAckLog($orderRef, $json);
     } else {
         //keresés a győri adatbázisban!
         $result = file_get_contents("https://audi.hungariamed.hu/api/ackCheck.php?id={$result->orderRef}&status={$result->status}&transactionid={$result->transactionId}");
