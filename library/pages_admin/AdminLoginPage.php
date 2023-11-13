@@ -60,6 +60,7 @@ class AdminLoginPage extends AdminCorePage {
 
             if ($code == 4053 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
                 $_SESSION["2facomplete"] = $code;
+                logintryLog("smscodetry",$this->adminUser->user["username"],"success",$code);
                 sql_query("update users set authorizeduntil = date_add(now(), interval 1 day) where id=?", array($this->adminUser->user["id"]));
                 header("location:index.php");
                 die();
@@ -67,8 +68,9 @@ class AdminLoginPage extends AdminCorePage {
                 if ($this->adminUser->user["codetry"] > 3) {
                     sql_query("update users set status=0 where id=?", array($this->adminUser->user["id"]));
                 }
+                logintryLog("smscodetry",$this->adminUser->user["username"],"failed",$code);
                 sql_query("update users set codetry=codetry+1 where id=?", array($this->adminUser->user["id"]));
-
+                
                 $_SESSION["error"] = "A megadott kód helytelen!";
                 header("location:index.php");
                 die();
