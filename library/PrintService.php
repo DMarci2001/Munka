@@ -920,6 +920,7 @@ class PrintService
         "Dr. Benkő Csongor" => 93266,
         "Dr. Szénási Pál" => 25083,
         "Dr. Tóth-Kovalik Ádám" => 96276,
+        "Dr. Váradi Zoltán" => 95840,
     ];
 
     private function innioErtesites(){

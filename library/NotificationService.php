@@ -1237,4 +1237,25 @@ END:VCALENDAR";
         $mail->AddAttachment($filePath, $fileName);
         $mail->Send();
     }
+
+
+    public function sendUserSMSCode() {
+        $adminUser = new AdminUser();
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($adminUser->user["email"]);
+        //$mail->AddBCC("jnsmobil@gmail.com");
+        //$mail->AddBCC("marton.gergely@hungariamed.hu");
+
+        $mbody = "Kedves {$adminUser->user["nev"]}!<br><br/>";
+        $mbody .= "A bejelentkezéshez a kód a következő:<br/>
+        <br/>
+        <span style='font-size: 24px;font-weight: bold;'>{$adminUser->user["logincode"]}</span>
+        <br/>";
+        $mbody .= "<br/>Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME." Csapata!<br/><br/>";
+
+        $mail->Subject = "Hungariamed belépési kód";
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
 }

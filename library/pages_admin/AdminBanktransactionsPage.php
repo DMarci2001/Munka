@@ -96,6 +96,10 @@ class AdminBanktransactionsPage extends AdminCorePage {
                             $itemData = sql_query("select name from synlab_labor_csomagok cs where cs.id=?", [$cartContent["id"]])->fetch(PDO::FETCH_ASSOC);
                             $cartItems[] = "<span style='background:lightslategray;color:#fff;padding:2px 5px;white-space: nowrap;'>{$itemData["name"]} {$cartContent["price"]} Ft</span>";
                         }
+                        if (isset($cartContent["type"]) && $cartContent["type"] == "exam") {
+                            $itemData = sql_query("select megnev from arak t where t.id=?", [$cartContent["id"]])->fetch(PDO::FETCH_ASSOC);
+                            $cartItems[] = "<span style='background:lightslategray;color:#fff;padding:2px 5px;white-space: nowrap;'>{$itemData["megnev"]} {$cartContent["price"]} Ft</span>";
+                        }
                     }
 
                 }
@@ -124,7 +128,11 @@ class AdminBanktransactionsPage extends AdminCorePage {
 			$rows.="	<td {$border}><span {$resultCSS}>{$result['result']}</span></td>";
 			$rows.="	<td {$border}>";
 			if ( $result['result']=="FINISHED" && $this->adminUser->tranzakcioModAccess()){
-				$rows.="[<a href='#' class='retransfer_button' onClick='showRefundWindow(\"{$this->paymentSource}\", {$result['id']})' >VISSZAUTALÁS</a>]";
+                $source = $this->paymentSource;
+                if (!empty($result["orderid"])) {
+                    $source = "labshop";
+                }
+				$rows.="[<a href='#' class='retransfer_button' onClick='showRefundWindow(\"{$source}\", {$result['id']})' >VISSZAUTALÁS</a>]";
 			}
 			$rows.="	</td>";
 			

@@ -94,6 +94,8 @@ class AdminUsersPage extends AdminCorePage {
             $row = $this->adminUser->buildPermissions($row);
             $_POST = $row;
 
+            $loginCode = $row["logincode"] != "" ? "Kód: {$row["logincode"]}, eddig jó: {$row["authorizeduntil"]}":"";
+
             echo "<div style='background-color:#fff;padding:0px;'>";
             echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='userform' value='1'/><input type='hidden' name='userid' value='{$_POST["id"]}'/>";
             echo "<table style='font-size:12px;'>";
@@ -103,7 +105,7 @@ class AdminUsersPage extends AdminCorePage {
             echo "<tr><td>E-mail:</td><td><input autocomplete='off' class='inputbox' style='width:300px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
             echo "<tr><td>Telefon:</td><td><input autocomplete='off' class='inputbox' style='width:100px;' type='text' name='tel' value='{$_POST["tel"]}'></td></tr>";
             echo "<tr><td>Pecsétszám (ha orvos):</td><td><input class='inputbox' style='width:100px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'></td></tr>";
-            echo "<tr><td>Új jelszó:</td><td><input autocomplete='off' class='inputbox' style='width:200px;' type='text' name='password' value=''></td></tr>";
+            echo "<tr><td>Új jelszó:</td><td><input autocomplete='off' class='inputbox' style='width:200px;' type='text' name='password' value=''> {$loginCode}</td></tr>";
 
             if ($this->adminUser->jogosultsagAccess()) {
                 echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";

@@ -191,11 +191,10 @@ class AdminBookingEditor {
                 WHERE parentid=? and parentid<>0 and datum>'{$day} 00:00:00' and datum<'{$day} 23:59:59' LIMIT 10", [$this->user->user["username"], intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
                     $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
-            if (isset($_POST["megj"])) {
-                sql_query("update foglalasok set megj=? where megj='' and parentid=? and parentid<>0 and datum>'{$day} 00:00:00' and datum<'{$day} 23:59:59' LIMIT 10", [$_POST["megj"], $fid]);
-            }
-
-
+            //mégse írjuk felül a manager foglalás megjegyzéseket
+            //if (isset($_POST["megj"])) {
+            //    sql_query("update foglalasok set megj=? where megj='' and parentid=? and parentid<>0 and datum>'{$day} 00:00:00' and datum<'{$day} 23:59:59' LIMIT 10", [$_POST["megj"], $fid]);
+            //}
 
             if (!empty($_POST["paciensid"])) {
                 sql_query("update foglalasok set paciensid=? where id=? and paciensid=0", [$_POST["paciensid"], $fid]);

@@ -296,14 +296,30 @@ class BookingPage extends CorePage
                 }
             }
             if (!$this->utils->getFieldHidden("szuldatum") && $this->utils->getFieldRequired("szuldatum")) {
+                $birthDateError = false;
                 if (empty($_POST["szuldatum"])) {
                     $this->errors[] = "{$webText["szulkotelezo"]}";
+                    $birthDateError = true;
                 }
                 if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) {
                     $this->errors[] = "{$webText["szulformat"]}";
+                    $birthDateError = true;
                 } else {
                     if (strtotime($_POST["szuldatum"]) > strtotime("now - 1 day")) {
                         $this->errors[] = "{$webText["szulformat"]}";
+                        $birthDateError = true;
+                    }
+                }
+
+                if (!$birthDateError) {
+                    if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "belgyógy") && strtotime($_POST["szuldatum"]) > strtotime("now - 18 year")) {
+                        $this->errors[] = "Belgyógyászati vizsgálat esetén a minimum életkor 18 év!";
+                    }
+                    if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "mammo") && strtotime($_POST["szuldatum"]) > strtotime("now - 40 year")) {
+                        $this->errors[] = "Mammográfia vizsgálat esetén a minimum életkor 40 év!";
+                    }
+                    if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "ultrahang") && strtotime($_POST["szuldatum"]) > strtotime("now - 16 year")) {
+                        $this->errors[] = "Ultrahang vizsgálat esetén a minimum életkor 16 év!";
                     }
                 }
             }
@@ -700,12 +716,13 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
+            $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
             //beutaló nélkül szabad választás
             if (!empty($this->telephelyek)) {
                 echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
             }
-            echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($_POST["szurestipus"]) . "</div></td></tr>";
+            echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
             if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             }

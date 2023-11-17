@@ -735,7 +735,7 @@ class CronService {
     }
 
     private function checkOneWebPage() {
-        if ($data = sql_query("SELECT id, domain FROM webpagedata d WHERE d.checkdate<DATE_SUB(NOW(), INTERVAL 1 WEEK) AND INSTR(domain, 'www.') LIMIT 1")->fetch(PDO::FETCH_ASSOC)) {
+        if ($data = sql_query("SELECT id, domain FROM webpagedata d WHERE d.checkdate<DATE_SUB(NOW(), INTERVAL 7 day) AND INSTR(domain, 'www.') LIMIT 1")->fetch(PDO::FETCH_ASSOC)) {
 
             $status = "not found";
             $page = file_get_contents("http://".idn_to_ascii($data["domain"]));

@@ -519,7 +519,7 @@ Asszisztens
         }
 
         if (!empty($params["search"])) {
-            $w .= " and instr(concat(r.nev,r.szuldatum,r.taj), ?)";
+            $w .= " and instr(concat(r.nev,r.szuldatum,r.taj,r.synlabfilename), ?)";
             $queryParams[] = $params["search"];
         }
 

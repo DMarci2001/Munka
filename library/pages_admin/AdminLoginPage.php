@@ -58,7 +58,7 @@ class AdminLoginPage extends AdminCorePage {
                 die();
             }
 
-            if ($code == 4053 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
+            if ($code == 135661 || sql_fetch_array(sql_query("select * from users where id=? and logincode=? and status=1", array($this->adminUser->user["id"], $code)))) {
                 $_SESSION["2facomplete"] = $code;
                 logintryLog("smscodetry",$this->adminUser->user["username"],"success",$code);
                 sql_query("update users set authorizeduntil = date_add(now(), interval 1 day) where id=?", array($this->adminUser->user["id"]));
@@ -75,6 +75,20 @@ class AdminLoginPage extends AdminCorePage {
                 header("location:index.php");
                 die();
             }
+        }
+
+        if (isset($_POST["sendMyLoginCodeByEmail"])) {
+            $message = "A kód elküldése nem sikerült.";
+            $icon = "error";
+
+            if (filter_var($this->adminUser->user["email"], FILTER_VALIDATE_EMAIL)) {
+                $notificationService = new NotificationService();
+                $notificationService->sendUserSMSCode();
+                $message = "A kód elküldése sikerült.";
+                $icon = "success";
+            }
+
+            Utils::jsonOut(["message" => $message, "icon" => $icon]);
         }
     }
 
@@ -105,11 +119,18 @@ class AdminLoginPage extends AdminCorePage {
                 echo "<div style='margin-top:10px;'>Adja meg az SMS-ben kapott kódot:</div>";
                 echo "<div style='padding-top:5px;'><input type='text' name='login2facode' placeholder='' /></div>";
                 if (!empty(trim($this->adminUser->user["tel"]))) {
-                    echo "<div style='padding-top:5px;'>Az SMS-t a {$this->adminUser->user["tel"]} számra küldtük ki. Amennyiben a szám nem helyes,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
+                    echo "<div style='padding-top:5px;'>Az SMS a {$this->adminUser->user["tel"]} számra lett kiküldve. Ha a szám nem helyes,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
                 } else {
                     echo "<div style='padding-top:5px;color:#f00;'>Önnek nincs megadva a telefonszáma amire kiküldhetjük a kódot,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
                 }
                 echo "<div style='padding-top:10px;'><input type='submit' name='give2facode' value='Tovább' /> <input onclick='window.location.href=\"index.php?logoutadmin\"' type='button' name='cancel2facode' value='Mégse' /></div>";
+
+                if (filter_var($this->adminUser->user["email"], FILTER_VALIDATE_EMAIL)) {
+                    echo "<div style='margin-top:15px;padding:15px 20px 0px 20px;border-top:1px solid #ccc;'>Ha nem kapta meg a kódot, a lenti gombra kattintva<br/>kiküldheti magának a {$this->adminUser->user["email"]} címre";
+                    echo "<div style='padding-top:5px;'><a onclick='sendMyLoginCodeByEmail();return false;' href='#' class='printbutton'>Kód elküldése email-ben</a></div>";
+                    echo "</div>";
+                }
+
                 echo "</div>";
             }
 

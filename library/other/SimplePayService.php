@@ -210,7 +210,7 @@ class SimplePayService {
         $return["status"] = "ok";
 
         $transactionData = false;
-        if ($source == "bejelentkezo") {
+        if ($source == "bejelentkezo" || $source == "labshop") {
             $transactionData = sql_fetch_array(sql_query("select * from banktransactions where id=?", [$id]));
         }
         if ($source == "keltexmedwebshop") {
@@ -268,6 +268,10 @@ class SimplePayService {
             $transactionData = sql_fetch_array($keltexMedSql->sqlQuery("select * from banktransactions where id=?", [$id]));
             $id = "keltexmedhu{$id}";
             $merchant = $this->keltexmedWebShopMerchant;
+        }
+        if ($this->source == "labshop" && Booking_Constants::SQL_DB == "hungariamed") {
+            $transactionData = sql_fetch_array(sql_query("select * from banktransactions where id=?", [$id]));
+            $id = "labshop".$id;
         }
 
         $html = "";

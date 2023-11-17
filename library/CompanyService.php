@@ -11,7 +11,7 @@ class CompanyService {
     const SUZUKI_ID         = 81;
     const SUZUKI_EGESZSEGUT_ID = 504;
 
-    public static array $makIds = [373, 374, 375, 376];
+    public static array $makIds = [4,373, 374, 375, 376];
 
     public function __construct()
     {

@@ -577,6 +577,7 @@ class SynlabService
 
     public function downloadSynlabEmails() {
         $emailConfigs["hungariamed"] = [
+            ["email" => "tigazszures@hungariamed.hu", "password" => "Ree8ceix", "emailToCheck" => 100],
             ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 100],
             ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu", "emailToCheck" => 100],
             ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu", "emailToCheck" => 100],
@@ -592,7 +593,7 @@ class SynlabService
         $mailServer["hungariamed"] = "{mail.hungariamed.hu/notls}";
         $mailServer["keltexmed"] = "{isp.itcoffee.hu/notls}";
 
-        $pdfPasswords["hungariamed"] = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h"];
+        $pdfPasswords["hungariamed"] = ["AJ4/YFjY", "gk2q+JQU", "Ge-Weq5u", "dc8d+crV", "j8/EyFFp", "ZLKT=g1h", "AtNZ6=aN"];
         $pdfPasswords["keltexmed"]   = ["MMMLA+3a"];
 
         $validSenders = ["hungary@synlab.com", "lelet@synlabhungary.hu", "janoskorhaz@synlabhungary.hu"];
@@ -601,8 +602,6 @@ class SynlabService
         if (!isset($emailConfigs[Booking_Constants::SQL_DB])) {
             return;
         }
-
-        $utils = new Utils();
 
         foreach ($emailConfigs[Booking_Constants::SQL_DB] as $emailConfig) {
             echo "reading account: ".$emailConfig["email"]. "\n";
@@ -674,61 +673,26 @@ class SynlabService
                                             break;
                                         }
                                     }
-                                    $parser = new \Smalot\PdfParser\Parser();
-                                    $pdf = $parser->parseFile($tempFileDecoded);
-                                    $text = $pdf->getText();
-
-                                    $errors = [];
-
-                                    $nev = substr($text, strpos($text, "Születési id") + 18, 100);
-                                    $nev = substr($nev, 0, strpos($nev, "\t"));
-                                    $taj = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
-                                    $szulDatum = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
-                                    $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
                                     if (sql_query("select id from labrequests where synlabfilename=? and resultdate=? limit 1", [$fileName, $mailDate])->fetch(PDO::FETCH_ASSOC)) {
                                         continue;
                                     }
 
-                                    $bekuldokod = "";
-                                    foreach ($this->bekuldoKodok as $kod) {
-                                        if (substr_count($text, "({$kod})")) {
-                                            $bekuldokod = $kod;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!ctype_digit($taj)) {
-                                        $taj = "";
-                                        $errors[] = "TAJ szám nem található";
-                                    }
-                                    if (!$utils->validateDate($szulDatum, "Y.m.d")) {
-                                        $szulDatum = "";
-                                        $errors[] = "Születési Dátum nem található";
-                                    }
-
-                                    $patientEmail = "";
-                                    if (!empty($taj) && !empty($szulDatum)) {
-                                        //email kibányászása
-                                        if ($reservationData = sql_query("select email from foglalasok where taj=? and szuldatum=? order by datum desc limit 1", [$taj, str_replace(".", "-", $szulDatum)])->fetch(PDO::FETCH_ASSOC)) {
-                                            $patientEmail = $reservationData["email"];
-                                        }
-
-                                    }
+                                    $parsedPatientData = $this->parsePatientDataFromPDF($tempFileDecoded);
 
                                     sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?, folyamatban=?, bekuldokod=?", [
                                         $mailDate,
-                                        $nev,
-                                        $taj,
-                                        $szulDatum,
-                                        $patientEmail,
+                                        $parsedPatientData["nev"],
+                                        $parsedPatientData["taj"],
+                                        $parsedPatientData["szulDatum"],
+                                        $parsedPatientData["patientEmail"],
                                         $emailConfig["email"],
                                         $fileName,
-                                        json_encode(["errors" => implode(", ", $errors)]),
+                                        "",
                                         base64_encode(file_get_contents($tempFileDecoded)),
-                                        md5(date("YmdHis")) . md5($taj . date("Y-m-d His")),
-                                        $folyamatban,
-                                        $bekuldokod
+                                        md5(date("YmdHis")) . md5($parsedPatientData["taj"] . date("Y-m-d His")),
+                                        $parsedPatientData["folyamatban"],
+                                        $parsedPatientData["bekuldokod"]
                                     ]);
                                 }
 
@@ -753,7 +717,7 @@ class SynlabService
                                     $unpacked = false;
                                     $unzipDir = "{$dir}/unzip/";
                                     foreach ($pdfPasswords[Booking_Constants::SQL_DB] as $pdfPassword) {
-                                        $output = `unzip -o -P {$pdfPassword} lelet.zip -d {$unzipDir}`;
+                                        $output = `unzip -o -P {$pdfPassword} {$dir}/lelet.zip -d {$unzipDir}`;
                                         if (substr_count("incorrect pass", $output) == 0) {
                                             $unpacked = true;
                                             break;
@@ -765,13 +729,17 @@ class SynlabService
 
                                         while (false !== ($entry = $d->read())) {
                                             if (substr_count(strtolower($entry), ".pdf")) {
+                                                $leletPDF = base64_encode(file_get_contents("{$unzipDir}{$entry}"));
+                                                if (sql_query("select id from labrequests where resultdate=? and resultpdf=? limit 1", [$mailDate, $leletPDF])->fetch(PDO::FETCH_ASSOC)) {
+                                                    continue;
+                                                }
 
                                                 sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
                                                     $mailDate,
                                                     $emailConfig["email"],
                                                     $fileName,
                                                     json_encode(["nev" => $entry, "taj" => "", "szuldatum" => "", "email" => "", "errors" => "Zip fájlból kicsomagolt lelet!"]),
-                                                    base64_encode(file_get_contents("{$unzipDir}{$entry}")),
+                                                    $leletPDF,
                                                     md5(date("YmdHis")) . md5($entry . date("Y-m-d His")),
                                                 ]);
 
@@ -787,16 +755,67 @@ class SynlabService
                     }
                     $a++;
                 }
-
-
-
             }
-
         }
 
         echo "yeee";
         echo "\n";
 
     }
+
+
+    private function parsePatientDataFromPDF($pdfFile):array {
+        $utils = new Utils();
+
+        $config = new \Smalot\PdfParser\Config();
+        $config->setHorizontalOffset('');
+        $parser = new \Smalot\PdfParser\Parser([], $config);
+        $pdf = $parser->parseFile($pdfFile);
+        $text = $pdf->getText();
+
+        if (substr_count($text, "Mikrobiológiai Labor")) {
+            //mikrobiológiai lelet
+            $nev = trim(substr($text, strpos($text, "Név:\n") + 5, 100));
+            $result["nev"] = substr($nev, 0, strpos($nev, "\n"));
+            $taj = trim(substr($text, strpos($text, "Taj:\n") + 5, 50));
+            $result["taj"] = trim(substr($taj, 0, strpos($taj, "\n")));
+            $szulDatum = trim(substr($text, strpos($text, "Született:\n") + 11, 50));
+            $result["szulDatum"] = date("Y.m.d", strtotime(substr($szulDatum, 0, strpos($szulDatum, "\n"))));
+        }
+
+        if (empty($result["nev"])) {
+            $nev = substr($text, strpos($text, "Születési id") + 18, 100);
+            $result["nev"] = substr($nev, 0, strpos($nev, "\t"));
+            $result["taj"] = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
+            $result["szulDatum"] = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
+            $result["folyamatban"] = substr_count($text, "Folyamatban") ? 1 : 0;
+        }
+
+        $result["bekuldokod"] = "";
+        foreach ($this->bekuldoKodok as $kod) {
+            if (substr_count($text, "({$kod})")) {
+                $result["bekuldokod"] = $kod;
+                break;
+            }
+        }
+
+        if (!ctype_digit($result["taj"])) {
+            $result["taj"] = "";
+        }
+        if (!$utils->validateDate($result["szulDatum"], "Y.m.d")) {
+            $result["szulDatum"] = "";
+        }
+
+        $result["patientEmail"] = "";
+        if (!empty($result["taj"]) && !empty($result["szulDatum"])) {
+            //email kibányászása
+            if ($reservationData = sql_query("select email from foglalasok where taj=? and szuldatum=? order by datum desc limit 1", [$result["taj"], str_replace(".", "-", $result["szulDatum"])])->fetch(PDO::FETCH_ASSOC)) {
+                $result["patientEmail"] = $reservationData["email"];
+            }
+        }
+
+        return $result;
+    }
+
 
 }

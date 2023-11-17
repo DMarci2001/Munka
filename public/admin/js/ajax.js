@@ -4181,7 +4181,7 @@ function zebraPrint(zplCode) {
 
 function zebraPrintComplete() {
     $.toast({
-        text: 'Cimke nyomatatás sikerült',
+        text: 'Cimke nyomtatás sikerült',
         position: 'mid-center',
         stack: false
     })
@@ -4384,3 +4384,16 @@ function toggleRequestDetailRow(id) {
     });
 }
 
+function sendMyLoginCodeByEmail() {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=login",
+        data: {sendMyLoginCodeByEmail:1},
+        success: function(response){
+            $.toast({
+                text: response.message,
+                icon: response.icon
+            });
+        }
+    });
+}

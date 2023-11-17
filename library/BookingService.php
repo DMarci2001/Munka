@@ -895,7 +895,7 @@ class BookingService
             }
         }
 
-        $wora = $wceg = "";
+        $wora = $wceg = $wcegSecondary = "";
         $wnoreservation = $isPack ? "":"and b.noreservation=0";
 
         if (!empty($ora)) {
@@ -908,7 +908,11 @@ class BookingService
                 $wceg = "and (instr(b.beocegek, '|{$cegId}|') or b.beocegek='')";
             }
         } else {
-            $wceg = "AND ((INSTR(b.beocegek, '|{$cegId}|') OR b.beocegek='') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))";
+            if ($isPack && Booking_Constants::SQL_DB == "hungariamed") {
+                //manadzserek cég jelölés, hogy oda csak menedzserek foglalhassanak
+                $wcegSecondary = "|92|";
+            }
+            $wceg = "AND ((INSTR(b.beocegek, '|{$cegId}|') OR b.beocegek='{$wcegSecondary}') OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))";
         }
 
         //időpontra beosztott orvosok kiolvasása
@@ -1932,10 +1936,8 @@ class BookingService
 
         $date = date("Y-m-d", strtotime($reservationData["datum"]));
         $foundTimes = [];
-        $bestTime = "";
+        $bestTime = [];
         $bestCheck = 1000000;
-        $binterval = 0;
-        $orvosId = 0;
         $weekDay = date("N", strtotime($reservationData["datum"]));
         $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=?", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"]]);
         while ($beoData = sql_fetch_array($beoRes)) {
@@ -1952,12 +1954,12 @@ class BookingService
                 $diff = abs(strtotime($reservationData["datum"]) - strtotime($checkTime));
                 if ($diff < $bestCheck) {
                     //itt csak letárolom a legjobb időt, ez csak akkor kell, ha elfogyott minden hely
-                    $bestCheck = $diff;
+                    $bestCheck = ["time" => $checkTime, "binterval" => $binterval, "orvosId" => $orvosId];
                     $bestTime = $checkTime;
                 }
 
                 if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=?", [$checkTime, $tipusId, $reservationData["helyszinid"]]))) {
-                    $foundTimes[] = $checkTime;
+                    $foundTimes[] = ["time" => $checkTime, "binterval" => $binterval, "orvosId" => $orvosId];
                     if ($this->replicateToFirstAvailableTime) {
                         break;
                     }
@@ -1984,14 +1986,14 @@ class BookingService
 
         if (!empty($foundTimes)) {
             $diff = 1000000;
-            $optimalTime = "";
-            $notSoGoodTime = "";
+            $optimalTime = [];
+            $notSoGoodTime = [];
 
             foreach ($foundTimes as $foundTime) {
-                $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime));
+                $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime["time"]));
                 if ($checkDiff < $diff) {
                     foreach ($this->replicatedTimes as $reservedTime) {
-                        $tempDiff = abs(strtotime($reservedTime) - strtotime($foundTime));
+                        $tempDiff = abs(strtotime($reservedTime["time"]) - strtotime($foundTime["time"]));
                         if ($tempDiff < 5*60) {
                             $notSoGoodTime = $foundTime;
                         }
@@ -2009,9 +2011,9 @@ class BookingService
             }
 
             $reservationData["parentid"] = $reservationData["id"];
-            $reservationData["datum"] = $optimalTime;
-            $reservationData["rinterval"] = $binterval;
-            $reservationData["orvosid"] = $orvosId;
+            $reservationData["datum"] = $optimalTime["time"];
+            $reservationData["rinterval"] = $optimalTime["binterval"];
+            $reservationData["orvosid"] = $optimalTime["orvosId"];
             $reservationData["szurestipus"] = $tipusId;
             $reservationData["tudoszuro"] = 0;
             $reservationData["aktiv"] = 1;
@@ -2026,7 +2028,7 @@ class BookingService
             //$api = new BookingSyncApi();
             //$api->newReservation($newReservationId);
 
-            $status = "{$tipusData["megnev"]} időpont foglalva: {$optimalTime}\n";
+            $status = "{$tipusData["megnev"]} időpont foglalva: {$optimalTime["time"]}\n";
         }
 
         return $status;
