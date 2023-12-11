@@ -710,8 +710,9 @@ class AdminAjaxService {
             }
 
             if($f["cegid"]==220){
-                $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
+                $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes FROM foglalasok fogl
                 LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                LEFT JOIN felhasznalok felh ON felh.taj=fogl.taj
                 WHERE fogl.id=?",array($_POST["fid"]));
                 if($referalData=sql_fetch_array($refQuery)){
                     $referalData["munkakor"] = $_POST["bid"];
@@ -782,6 +783,7 @@ class AdminAjaxService {
         }
 
         new LaborKeroService();
+        new InvoiceService();
     }
 
     private function getActiveUsers(AdminUser $adminUser):string {
