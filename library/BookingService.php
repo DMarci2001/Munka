@@ -1227,8 +1227,9 @@ class BookingService
             //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$data["cegid"],$foglalasinfo["pass"]));
         }
         if($data["cegid"]==220){
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+            LEFT JOIN felhasznalok felh on felh.taj=fogl.taj
             WHERE fogl.id=?",array($fid));
             if($referalData=sql_fetch_array($refQuery)){
                 echo $this->createReferalDoc($referalData,"fgsz-beutalo");
@@ -2065,6 +2066,7 @@ class BookingService
             "kelte" => date("Y.m.d", strtotime($data["regdatum"])),
             "keltezes" => date("Y.m.d", strtotime($data["regdatum"])),
             "teljescim" => $this->pdfChars($data["teljescim"]),
+            "beutalo_megjegyzes" => $this->pdfChars($data["beutalo_megjegyzes"]),
             "auth_id" => $auth_id
         ];
         
