@@ -1206,7 +1206,7 @@ class BookingService
             
             $referalType="bp-normal";
             //El kell döntenem, hogy a dolgozó milyen beutalót kell kapjon, ehhez lesz egy segéd tábla
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev,fogl.pass AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev,fogl.pass AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid,felh.torzsszam FROM foglalasok fogl
                                    LEFT JOIN bp_beutalo_seged_tabla helpdesk ON helpdesk.ntid=fogl.torzsszam
                                    LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                                    WHERE fogl.id=?",array($fid));
@@ -1227,7 +1227,7 @@ class BookingService
             //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$data["cegid"],$foglalasinfo["pass"]));
         }
         if($data["cegid"]==220){
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes,felh.szervezet_megnev,felh.khkod,felh.torzsszam FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
             LEFT JOIN felhasznalok felh on felh.taj=fogl.taj
             WHERE fogl.id=?",array($fid));
@@ -2066,9 +2066,28 @@ class BookingService
             "kelte" => date("Y.m.d", strtotime($data["regdatum"])),
             "keltezes" => date("Y.m.d", strtotime($data["regdatum"])),
             "teljescim" => $this->pdfChars($data["teljescim"]),
-            "beutalo_megjegyzes" => $this->pdfChars($data["beutalo_megjegyzes"]),
             "auth_id" => $auth_id
         ];
+
+        if($data["cegid"]==220){
+            $input["beutalo_megjegyzes"] = $this->pdfChars($data["beutalo_megjegyzes"]);
+            $input["szervezet"] = $this->pdfChars($data["szervezet_megnev"]);
+            $input["torzsszam"] = $this->pdfChars($data["torzsszam"]);
+            $input["khkod"] = $this->pdfChars($data["khkod"]);
+
+            if($data["vizsgalat"]=="Időszakos- Foglalkozás Egészségügyi vizsgálat"){
+                $input["indoklas"]= "Elözö vizsgálat érvényessége hamarosan lejár";
+            }
+            if($data["vizsgalat"]=="Előzetes - Foglalkozás Egészségügyi vizsgálat"){
+                $input["indoklas"]= "Munkába állást megelözö orvosi alkalmassági vizsgálat";
+            }
+            if($data["vizsgalat"]=="Soronkívüli- Foglalkozás Egészségügyi vizsgálat"){
+                $input["indoklas"]= "hozott dokumentumok/javaslat alapján";
+            }
+            if($data["vizsgalat"]=="Záró- Foglalkozás Egészségügyi vizsgálat"){
+                $input["indoklas"]= "Foglalkoztatás megszűnése";
+            }
+        }
         
         if($this->availableDocs[$key]["type"]=="full-form"){
             $input = $this->set_referal_values($data,$input);
