@@ -4153,11 +4153,11 @@ function showSzamlazasWin(fid){
     $.ajax({
         type:"POST",
         url:"index.php",
-        //dataType: "json",
+        dataType: "json",
         data: {invoiceWindow:fid},
         success: function(response){
-           console.log(response);
-           return;
+           //console.log(response);
+           //return;
             if (response.error != "") {
                 alert(response.error);
                 return;
