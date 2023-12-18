@@ -3,11 +3,11 @@
 class Page
 {
 
-    private $utils;
-    private $lang;
+    private Utils $utils;
+    private Lang $lang;
     public $page;
-    public $companyService;
-    public $user;
+    public CompanyService $companyService;
+    public User $user;
 
     public function __construct()
     {
@@ -18,15 +18,10 @@ class Page
 
         $this->page = $this->_getActualPage();
 
-        if (isset($_GET["exporttest"])) {
-            $exportService = new ReservationExportService();
-            $exportService->exportReservation(133405);
-            die("ok");
-        }
+        $this->checkReferer();
     }
 
-    private function _getActualPage()
-    {
+    private function _getActualPage() {
         if (isset($_POST["page"])) {
             $_GET["page"] =  $_POST["page"];
         }
@@ -77,24 +72,17 @@ class Page
         echo "</div>";
         echo "</div>";
 
-        //if (session_id() == "eegns1sefhdcnp0egctqp9658i") {
-            $settings = new Booking_Settings();
+        $settings = new Booking_Settings();
+        $chatAvailable = $settings->chatStatus == 1;
 
-            $chatAvailable = $settings->chatStatus == 1;
-
-            if ($chatAvailable == 0) {
-                //ha session aktív, akkor mégis legyen online
-                if (sql_query("select id from chatsession where session=?", [session_id()])->fetch(PDO::FETCH_ASSOC)) {
-                    //$chatAvailable = true;
-                }
+        if ($chatAvailable == 0) {
+            //ha session aktív, akkor mégis legyen online
+            if (sql_query("select id from chatsession where session=?", [session_id()])->fetch(PDO::FETCH_ASSOC)) {
+                //$chatAvailable = true;
             }
+        }
 
-            if ($chatAvailable) {
-                echo "<div id='hmmchat' data-supportname='Hungariamed-M' data-supporttitle='Ügyfélszolgálat'></div>";
-            }
-        //}
-
-        if (session_id() == "hfbqek335ru0n0hpc9qgbmvos5") {
+        if ($chatAvailable) {
             echo "<div id='hmmchat' data-supportname='Hungariamed-M' data-supporttitle='Ügyfélszolgálat'></div>";
         }
 
@@ -245,5 +233,14 @@ class Page
         $html .= " ".session_id();
         $html .= "</div>";
         return $html;
+    }
+
+
+    private function checkReferer() {
+        if (!empty($_SERVER["HTTP_REFERER"])) {
+            if (substr_count($_SERVER["HTTP_REFERER"], "sanitas")) {
+                $_SESSION["referer"] = "sanitas";
+            }
+        }
     }
 }

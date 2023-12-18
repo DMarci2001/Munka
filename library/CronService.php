@@ -7,7 +7,7 @@ class CronService {
     private $utils;
     private $bookingService;
 
-    private $smsWarningEmails = ["jnsmobil@gmail.com", "lazar.gabriella@hungariamed.hu", "marton.gergely@hungariamed.hu"];
+    private $smsWarningEmails = ["jnsmobil@gmail.com", "Luncz.brigitta@hungariamed.hu", "lazar.gabriella@hungariamed.hu", "marton.gergely@hungariamed.hu"];
     private $smsWarningLimit  = 20000;
 
     const HMM_ESZTERGOM_HELYSZINID = 532;

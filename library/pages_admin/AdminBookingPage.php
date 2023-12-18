@@ -1188,6 +1188,9 @@ class AdminBookingPage extends AdminCorePage
             if ($reservationData["foglalta"] == "foglaljorvost") {
                 $htmlout .= "<span class='externalmark' title='foglaljorvost foglalás'>FO</span>&nbsp;&nbsp;";
             }
+            if ($reservationData["foglalta"] == "sanitas") {
+                $htmlout .= "<span class='externalmark' title='foglaljorvost foglalás'>SANITAS</span>&nbsp;&nbsp;";
+            }
 
             $htmlout .= "</td>";
             $htmlout .= "<td valign='top' nowrap>";

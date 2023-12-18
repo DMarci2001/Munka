@@ -77,11 +77,11 @@ class LaborKeroService
             }
 
             if (empty($error)) {
-                sql_query("update labrequests set status='pending', createdby=? where id=?", [$_SESSION["adminuser"]["username"], $requestId]);
+                sql_query("update labrequests set status='pending', laboritems=?, createdby=? where id=?", [json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
                 $error = $service->writeNextRequest($requestId);
-                //if (empty($error)) {
-                    //sql_query("update labrequests set status='pending' where id=?", [$requestId]);
-                //}
+                if (!empty($error)) {
+                    sql_query("update labrequests set status='temp' where id=?", [$requestId]);
+                }
             }
 
             Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
@@ -347,23 +347,13 @@ class LaborKeroService
         $html .= "<div id='labortetelekcheckboxes' style='height:510px;overflow: auto;'>";
 
         if ($showCheckBoxes) {
-            if (true) {
-                $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
-                LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
-                left join synlab_labor_kerolapok k on k.id=t2.appform 
-                LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
-                WHERE t.provider='spektrumlab'
-                group by t.id
-                order by t2.appform is null, t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
-            } else {
-                $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
-                LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
-                left join synlab_labor_kerolapok k on k.id=t2.appform 
-                LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
-                WHERE t.provider='spektrumlab' and t2.spid<>0
-                group by t.id
-                order by t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
-            }
+            $items = sql_query("select t.*, k.name as kerolap, kat.name as categoryname from synlab_labor_tetelek t
+            LEFT JOIN synlab_labor_tetelek t2 on t2.spid = t.id
+            left join synlab_labor_kerolapok k on k.id=t2.appform 
+            LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t2.category
+            WHERE t.provider='spektrumlab' and t.visibility=1
+            group by t.id
+            order by t2.appform is null, t2.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
 
             $lastAppForm = $lastCategory = "";
             foreach ($items as $item) {
@@ -379,7 +369,7 @@ class LaborKeroService
                 //    $html .= "<div style='font-weight:bold;padding-bottom:3px;'>{$item["categoryname"]}</div>";
                 //}
                 $checked = in_array($item["id"], $selectedItems) ? "checked" : "";
-                $html .= "<div style='display:inline-block;width:186px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' id='litem{$item["id"]}' type='checkbox' value='1' {$checked}/> <label for='litem{$item["id"]}'>{$item["name"]}</label></span></div>";
+                $html .= "<div class='laborkerovizsgalatcheck' data-vizsgalat='{$item["name"]}' style='display:inline-block;width:186px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item["name"]}'><input onchange='laborkeroItemChange($(this), {$item["id"]});' id='litem{$item["id"]}' type='checkbox' value='1' {$checked}/> <label for='litem{$item["id"]}'>{$item["name"]}</label></span></div>";
             }
         } else {
             if ($this->errorMessage != "") {
@@ -433,7 +423,10 @@ class LaborKeroService
         }
 
         $html .= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
-        $html .= "Status: {$statusText}";
+        $html .= "Status: {$statusText} ";
+        if (in_array($laborRequestData["status"], ["temp"])) {
+            $html.= "<input type='text' style='float: right;' id='laborVizsgalatFilterText' placeholder='vizsgálatok szűrése' />";
+        }
         $html .= "</div>";
 
         $html .= "</div>";
@@ -568,7 +561,7 @@ class LaborKeroService
             ORDER BY f.datum limit 100")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($labShopReservations as $labShopReservation) {
-            if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "FINISHED") {
+            if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "done" && $labShopReservation["status"] != "FINISHED") {
                 continue;
             }
 
@@ -622,7 +615,31 @@ class LaborKeroService
             }
         }
 
+    }
 
+    public function getItemsWithoutPack($requestId):array {
+        $packItems = $allItems = $itemsWithoutPack = [];
+        $requestData = sql_query("select laborpacks from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+        $packs = json_decode($requestData["laborpacks"], JSON_OBJECT_AS_ARRAY);
+        foreach ($packs as $pack) {
+            if ($packData = sql_query("select spektrumitems as items from synlab_labor_csomagok where id=?", [$pack])->fetch(PDO::FETCH_ASSOC)) {
+                $items = json_decode($packData["items"], JSON_OBJECT_AS_ARRAY);
+                foreach ($items as $item) {
+                    if (!in_array($item, $packItems)) {
+                        $packItems[] = $item;
+                    }
+                }
+            }
+        }
+
+        $items = sql_query("select * from labrequestitems where requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($items as $item) {
+            if  (in_array($item["itemid"], $packItems)) {
+                $itemsWithoutPack[] = $item["itemid"];
+            }
+        }
+
+        return $itemsWithoutPack;
     }
 
 

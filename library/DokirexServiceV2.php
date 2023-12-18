@@ -39,6 +39,9 @@ class DokirexService
             $this->dbPassword = Booking_Constants::DOKIREX_V2_KELTEXMED_PASSWORD;
         }
 
+        if (isset($_SESSION["dokirextoken"])) {
+            unset($_SESSION["dokirextoken"]);
+        }
         if (!isset($_SESSION["dokirextoken"])) {
             $this->token = $this->getToken();
             if (!empty($this->token)) {

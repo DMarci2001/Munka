@@ -365,6 +365,29 @@ class AdminLabortetelekPage extends AdminCorePage
         }
 
 
+        if (isset($_GET["fastlist"])) {
+            $packs = sql_query("select * from synlab_labor_csomagok p where aktiv=1 order by p.name")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($packs as $pack) {
+                echo "<div><strong>{$pack["name"]}</strong></div>";
+
+
+                $items = json_decode($pack["spektrumitems"]);
+                if (empty($items)) {
+                    $items = [0];
+                }
+
+                $items = sql_query("select * from synlab_labor_tetelek t where id in (".implode(",", $items).") order by t.name")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($items as $item) {
+                    echo "<div>{$item["name"]}</div>";
+                }
+
+
+
+            }
+            die;
+        }
+
+
     }
 
 
@@ -530,7 +553,7 @@ class AdminLabortetelekPage extends AdminCorePage
         //Le kell kérdeznem a csomagokat:
         $rq = sql_query("SELECT slc.*,slk.name AS kerolap FROM synlab_labor_csomagok slc
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slc.appform
-                         ORDER BY name ASC");
+                         ORDER BY slc.aktiv desc, name ASC");
 
         $qf = sql_query("SELECT id,name FROM synlab_labor_kerolapok ORDER BY name ASC");
 
@@ -556,9 +579,26 @@ class AdminLabortetelekPage extends AdminCorePage
         $html.= "</tr>";
 
         while ($resq = sql_fetch_array($rq)) {
-            $items = json_decode($resq["items"]);
+            $items = json_decode($resq["spektrumitems"]);
             if (empty($items)) {
                 $items = [];
+            }
+
+
+
+            $itemTexts = [];
+            if (!empty($items)) {
+                $items = sql_query("select * from synlab_labor_tetelek t where id in (" . implode(",", $items) . ") order by t.name")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($items as $item) {
+                    $itemTexts[] = $item["name"];
+                    //echo "<div>{$item["name"]}</div>";
+                }
+            }
+
+
+            if ($resq["aktiv"] == 0 && !isset($separator)) {
+                $separator = true;
+                $html.= "<tr><td colspan='20'><div style='border-top:1px solid #888;padding-top: 10px;margin-top: 10px;font-weight: bold;'>Inaktív csomagok</div><div style='border-top:1px solid #888;padding-top: 10px;margin-top: 10px;'></div></td></tr>";
             }
 
             $html.= "<tr>";
@@ -609,6 +649,11 @@ class AdminLabortetelekPage extends AdminCorePage
 
             $html.= "</div></td>";
             $html.= "</tr>";
+
+            //if (!empty($itemTexts)) {
+                $html.= "<tr><td colspan='10'><div style='max-width: 800px;border-bottom:1px solid #ccc;padding-bottom: 5px;'>".implode(", ", $itemTexts)."</div></td></tr>";
+            //}
+
         }
 
         $html.= "</table>";

@@ -190,6 +190,25 @@ class BookingPage extends CorePage
                 $this->setAuchanWarning();
             }
 
+            //oif esetén ellenőrzések
+            if (CompanyService::isOIF()) {
+                $selectedKiegVizsgalat = [];
+                foreach (BookingService::OIF_SZURESEK as $key => $szures) {
+                    if (isset($_POST["kiegoption{$key}"])) {
+                        $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
+                    }
+                }
+                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                if (empty($selectedKiegVizsgalat)) {
+                    $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }
+
+                $result = $this->bookingService->doOIFServicesTest();
+                if (!empty($result)) {
+                    $this->errors[] = $result;
+                }
+            }
+
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
             if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
             if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";
@@ -292,7 +311,7 @@ class BookingPage extends CorePage
             }
             if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
                 if (empty($_POST["szulhely"])) {
-                    $this->errors[] = "{$webText["szulhelykotelezo"]}!";
+                    $this->errors[] = "{$webText["szulhelykotelezo"]}";
                 }
             }
             if (!$this->utils->getFieldHidden("szuldatum") && $this->utils->getFieldRequired("szuldatum")) {
@@ -476,6 +495,8 @@ class BookingPage extends CorePage
             if (!isset($_POST["rinterval"])) $_POST["rinterval"] = 0;
             if (!isset($_POST["telephely"])) $_POST["telephely"] = "";
 
+            $_POST["foglalta"] = $this->getReferer();
+
             if (!isset($_SESSION["user"])) {
                 $captchaError = $this->utils->checkCaptcha();
                 if (!empty($captchaError) && empty($this->errors)) {
@@ -527,6 +548,10 @@ class BookingPage extends CorePage
                 $this->errors = [];
             }
         }
+    }
+
+    private function getReferer():string {
+        return !empty($_SESSION["referer"]) ? $_SESSION["referer"] : "";
     }
 
     public function showPage()
