@@ -855,6 +855,11 @@ class HmmApi {
                     continue;
                 }
 
+                //AND (b.validfrom='0000-00-00' OR b.validfrom<=:day) AND (b.validto='0000-00-00' OR b.validto>=:day)
+                if (($beosztas["validfrom"] != "0000-00-00" && strtotime($beosztas["validfrom"]) > strtotime($nap)) || ($beosztas["validto"] != "0000-00-00" && strtotime($beosztas["validto"]) < strtotime($nap))) {
+                    continue;
+                }
+
                 $weekDay     = date("N", strtotime($nap));
                 $weekNumber  = date("W", strtotime($nap));
 

@@ -783,7 +783,7 @@ class AdminAjaxService {
         }
 
         new LaborKeroService();
-        new InvoiceService();
+        //new InvoiceService();
     }
 
     private function getActiveUsers(AdminUser $adminUser):string {

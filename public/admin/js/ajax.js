@@ -4127,6 +4127,7 @@ function showLaborKeroWin(fid) {
                 return;
             }
             showGeneralPopup(response.html);
+            setupLaborVizsgalatFilter();
         }
     })
 }
@@ -4224,6 +4225,24 @@ function saveAlkalmassagiWin(fid){
             hideGeneralPopup();
         }
     })
+}
+
+
+function setupLaborVizsgalatFilter() {
+    $("#laborVizsgalatFilterText").keyup(function () {
+        let filter = $(this).val();
+        if (filter.length >= 2) {
+            $(".laborkerovizsgalatcheck").hide();
+            $('.laborkerovizsgalatcheck').each(function (i, obj) {
+                let vizsgalat = $(this).data("vizsgalat");
+                if (vizsgalat.toLowerCase().includes(filter.toLowerCase())) {
+                    $(this).show();
+                }
+            });
+        } else {
+            $(".laborkerovizsgalatcheck").show();
+        }
+    });
 }
 
 function showSpektrumLabMatricaWin() {
@@ -4330,6 +4349,7 @@ function addPackToLaborRequest() {
                 icon: 'success'
             });
             showGeneralPopup(response.html);
+            setupLaborVizsgalatFilter();
         }
     })
 }
@@ -4355,6 +4375,7 @@ function removePackFromLaborRequest(packId) {
                 icon: 'success'
             });
             showGeneralPopup(response.html);
+            setupLaborVizsgalatFilter();
         }
     })
 }
@@ -4380,6 +4401,7 @@ function sendLaborKero() {
         return;
     }
 
+    $(".laborkerovizsgalatcheck").show();
     if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a Spektrumlab ügyfélszolgálata tudja módosítani!")) {
         return;
     }

@@ -368,6 +368,12 @@ Asszisztens
         //echo "<input type='checkbox' id='futurefiltercheckbox' value='1' ".($_SESSION["labfuturefilter"] == 1 ?"checked":"")." /> jövőbeniek is&nbsp;&nbsp;&nbsp;&nbsp;";
         echo "</div>";
 
+        if (isset($_GET["tesztjns"])) {
+            $service = new SpektrumlabService();
+            echo $service->importItems();
+        }
+
+
         $felado = $this->adminUser->user["nev"];
         $feladoEmail = empty(trim($this->adminUser->user["email"])) ? "<span style='color:red;'>nincs megadva email cím, így a lelet kiküldés nem lehetséges</span>":$this->adminUser->user["email"];
         echo "<div style='margin:10px 0px 10px 0px;padding:10px 0px 10px 0px;border-top:1px solid #ccc;border-bottom:1px solid #ccc;'>A leletek kiküldésekor a levél feladója: {$felado}, email: {$feladoEmail}</div>";

@@ -124,6 +124,11 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "auchan" || ($companyId == self::AUCHAN_ID && Booking_Constants::SQL_DB == "keltexmed");
     }
 
+    const OIF_ID = 499;
+    public static function isOIF($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "oif" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
     public static function auchanSingleReservationPlaces():array {
         return [319, 321];
     }

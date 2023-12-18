@@ -68,8 +68,11 @@ class AdminPlacesPage extends AdminCorePage {
                 ceglink=?,
                 geocodejson=?,
                 halozat=?,
-                aktiv=?
-            where id=?",array($_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $json, $_POST["halozat"], $_POST["aktiv"], $_GET["szerk"]));
+                aktiv=?,
+                autoirsz=?,
+                autovaros=?,
+                autoutca=?
+            where id=?",[$_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $json, $_POST["halozat"], $_POST["aktiv"], $_POST["autoirsz"], $_POST["autovaros"], $_POST["autoutca"], $_GET["szerk"]]);
 
             logActivity("helyszin",$_GET["szerk"],"{$_POST["cim"]} adatlap",print_r($_POST,true));
 
@@ -110,6 +113,10 @@ class AdminPlacesPage extends AdminCorePage {
             }
 
             echo "<tr><td>Geocode result:</td><td><pre style='background:#eee;padding:10px;'>{$geoResult}</pre></td></tr>";
+
+            echo "<tr><td>Automata Irsz:</td><td><input class='inputbox' style='width:40px;' type='text' name='autoirsz' value='{$_POST["autoirsz"]}'></td></tr>";
+            echo "<tr><td>Automata Város:</td><td><input class='inputbox' style='width:400px;' type='text' name='autovaros' value='{$_POST["autovaros"]}'></td></tr>";
+            echo "<tr><td>Automata Utca:</td><td><input class='inputbox' style='width:400px;' type='text' name='autoutca' value='{$_POST["autoutca"]}'></td></tr>";
 
 
             echo "<tr><td colspan='2' valign='top'><hr></td></tr>";
