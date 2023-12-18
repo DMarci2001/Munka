@@ -144,6 +144,9 @@ class AdminUser {
         "jog_korlatlanfoglalastorles" => [
             "name" => "Korlátlan foglalás törlés"
         ],
+        "jog_szamlakeszites" => [
+            "name" => "Számla készités"
+        ],
 
     ];
 
@@ -560,6 +563,11 @@ class AdminUser {
     public function onlyDoctorReservations():bool {
         return $this->checkPermission("jog_onlydoctorreservations");
     }
+
+    public function szamlakeszitesAccess():bool {
+        return $this->checkPermission("jog_szamlakeszites");
+    }
+    
 
     public function userIsOrvos():bool {
         return !empty($this->user["pecsetszam"]) && !empty($this->user["orvosid"]);

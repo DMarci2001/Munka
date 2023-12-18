@@ -71,7 +71,10 @@ require_once(__DIR__ . "/library/pages_admin/DailyStat/DailyStatService.php");
 require_once(__DIR__ . "/library/VaroteremService.php");
 require_once(__DIR__ . "/library/SpektrumlabService.php");
 require_once(__DIR__ . "/library/LaborKeroService.php");
+require_once(__DIR__ . "/library/InvoiceService.php");
+require_once(__DIR__ . "/library/LabshopService.php");
 
+require_once(__DIR__ . "/library/other/szamlaagent/examples/autoload.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
 require_once(__DIR__ . "/library/other/SimplePayService.php");

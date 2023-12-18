@@ -411,6 +411,43 @@ class AdminBookingEditor {
             echo $this->showQuestionButtons($data["id"], $data["questions"]);
             die;
         }
+
+        if(isset($_POST["showalkalmassagiwin"])){
+            $row = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",[$_POST["showalkalmassagiwin"]]));
+            die(json_encode(array("html"=>$this->_alkalmassagFolder_new($row),"error"=>"")));
+        }
+
+        if(isset($_POST["saveAlkalmassagiBox"])){
+            $error = "";
+            if(isset($_POST["fid"])){
+
+                if(!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]="";
+                if(!isset($_POST["alkalmassagido"])) $_POST["alkalmassagido"]="";
+                if(!isset($_POST["alkalmassagikhet"])) $_POST["alkalmassagikhet"]="";
+                if(!isset($_POST["alkalmassagkorl"])) $_POST["alkalmassagkorl"]="";
+                if(!isset($_POST["vernyomas"])) $_POST["vernyomas"]="";
+                if(!isset($_POST["orvosszoveg"])) $_POST["orvosszoveg"]="";
+                if(!isset($_POST["alkalmassaguserid"])) $_POST["alkalmassaguserid"]="";
+
+                sql_query("UPDATE foglalasok SET alkalmassag=?,alkalmassagikhet=?,alkalmassagkorl=?,
+                                  vernyomas=?,orvosszoveg=?,alkalmassaguserid=?,alkalmassagido=?
+                       WHERE id=?",
+                       array($_POST["alkalmassag"],$_POST["alkalmassagikhet"],$_POST["alkalmassagkorl"],
+                             $_POST["vernyomas"],$_POST["orvosszoveg"],$_POST["alkalmassaguserid"],
+                             $_POST["alkalmassagido"],$_POST["fid"]));
+            }else{
+                $error="Ismeretlen foglalás azonosító.";
+            }
+            
+            die(json_encode(array("error"=>$error)));
+        }
+
+        /*if(isset($_POST["showSzamlazasWin"])){
+            echo "<pre>";
+            print_r($_POST);
+            echo "</pre>";
+            die();
+        }*/
     }
 
     private function companySelector($selectedCompanyId):string {
@@ -471,29 +508,20 @@ class AdminBookingEditor {
                 left join orvosok o on o.id=f.orvosassigned
                 left join cegek c on c.id=f.cegid
                 where f.id=? and f.pass=?",array($id, $p)))) {
-
             $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
+            $html .= "<div style=\"position: absolute;left: -38px;top: 100px;background-color: #e0e0e0;\"><img title='alkalmasság' onclick='showAlkalmassagiWin({$row["id"]});' src='https://bejelentkezes.hungariamed.hu/admin/images/achievement.webp' style='width:38px;cursor:pointer;' /></div>";
+            
+           if($this->user->szamlakeszitesAccess()) $html .= "<div style=\"position: absolute;left: -38px;top: 138px;background-color: #e0e0e0;width:38px;height:38px\"><i style=\"font-size:30px;position:absolute;left:8px;cursor:pointer\" title=\"Számlázás\" onClick='showSzamlazasWin({$row["id"]})' class=\"fa-solid fa-file-invoice-dollar\"></i></div>";
+            //$html .= $this->_alkalmassagFolder($row);
+            //$html .= $this->_szamlafolder($row);
 
-            $html .= $this->_alkalmassagFolder($row);
-
-            $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
-
-            $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
-            $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
-            $html .= "</div>";
+  
 
             //if (!empty($this->user->user["pecsetszam"])) {
             //    $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
             //}
 
-            $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
-            $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
-            $html .= "<option value='0'>Válasszon!</option>";
-            foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
-                $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
-            }
-            $html .= "</select>";
-            $html .= "</div>";
+
 
             $html .= "</div>";
             $html .= "</div>";
@@ -817,10 +845,89 @@ class AdminBookingEditor {
         return $html;
     }
 
+    private function _alkalmassagFolder_new($row){
+        $html = "";
+
+        $html .= "<div style='width:500x;background:#eee;'>";
+        $html .= "<form id=\"alkalmassgibox\">";
+        $html .= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class=\"fa-solid fa-award\"></i>&nbsp;&nbsp;{$row["nev"]} - {$row["szuldatum"]} - {$row["taj"]}</div>";
+        $html .= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+        $html .= "</div>";
+
+        $html .= "<div style='padding:10px;'>";
+
+        if (CompanyService::isFesztivalCompany($row["cegid"]) || ($row["helyszinid"] == 536 && Booking_Constants::SQL_DB == "hungariamed")) {
+            if (true || session_id() == "ou0p3m9hvs3iofkdr1cnjoiorh") {
+                $html.= "<div id='alkquestions'>";
+                $html.= $this->showQuestionButtons($row["id"], $row["questions"]);
+                $html.= "</div>";
+            } else {
+                $text = nl2br($row["questions"]);
+                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
+                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
+                $html .= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
+            }
+            if (empty($row["orvosszoveg"])) {
+                $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
+            }
+        }
+
+        $html.= "<div class='mainalkform'>";
+        foreach ($this->adminUtils->settings->alkalmassagvariaciok as $key => $value) {
+            $oc = "";
+            $sb = "";
+            if ($key != "I") {
+                $oc = "onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
+                $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
+            }
+            $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
+            if ($key == "I") {
+                $html.= "<div style='padding:0px 0px 0px 25px;'>";
+                $html.= "<input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó ";
+                $html.= "<input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó ";
+                $html.= "<input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év ";
+                $html.= "<input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év ";
+                $html.= "<input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év ";
+                $html.= "</div>";
+            }
+            if ($key == "IN") {
+                $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
+            }
+            if ($key == "K") {
+                $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
+            }
+            $html .= "</div>";
+        }
+
+        $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
+
+        $html .= "</div>";
+
+        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+
+        $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
+        $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
+        $html .= "</div>";
+        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
+        $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
+        $html .= "<option value='0'>Válasszon!</option>";
+        foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
+            $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
+        }
+        $html .= "</select>";
+        $html .= "</div>";
+        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+        $html .= "  <a class='printbutton' onclick='saveAlkalmassagiWin({$row["id"]});return false;' href='#' style='background: #00aa00'>Mentés</a>";
+        $html .= "</div>";
+        $html .= "</form>";
+        $html .= "</div>";
+        return $html;
+    }
     private function _alkalmassagFolder($row):string {
         $html = "";
         $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
-        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
+        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='https://bejelentkezes.hungariamed.hu/admin/images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
         $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
 
         if (CompanyService::isFesztivalCompany($row["cegid"]) || ($row["helyszinid"] == 536 && Booking_Constants::SQL_DB == "hungariamed")) {
@@ -869,6 +976,35 @@ class AdminBookingEditor {
         $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
 
         $html .= "</div>";
+
+        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+
+        $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
+        $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
+        $html .= "</div>";
+        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
+        $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
+        $html .= "<option value='0'>Válasszon!</option>";
+        foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
+            $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
+        }
+        $html .= "</select>";
+        $html .= "</div>";
+        return $html;
+    }
+
+    private function _szamlafolder($row):string{
+        $html = "";
+        $html.="<div id=\"szamlafolder\" style=\"position: absolute; margin-top: 160px; margin-left: -45px; z-index: -1; transition: all 0.1s linear 0s;\">";
+        $html.="    <div style=\"display:table-cell;vertical-align: top;\">";
+        $html.="        <div style=\"padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;\"></div>";
+        $html.="    </div>";
+        $html.="    <div style=\"display:table-cell;vertical-align: top;\">";
+        $html.="        <div style=\"padding:8px;background:#ddd;\">";
+        $html.="        </div>";
+        $html.="    </div>";
+        $html.="</div>";
+
         return $html;
     }
 

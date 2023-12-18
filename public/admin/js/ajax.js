@@ -4131,6 +4131,101 @@ function showLaborKeroWin(fid) {
     })
 }
 
+function showAlkalmassagiWin(fid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {showalkalmassagiwin:fid},
+        success: function(response){
+           
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function showSzamlazasWin(fid){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {invoiceWindow:fid},
+        success: function(response){
+           //console.log(response);
+           //return;
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function addItemToInvoice_in_window(fid,type,id){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        //dataType: "json",
+        data: {addItemToInvoice_in_window:fid,type:type,id:id},
+        success: function(response){
+           console.log(response);
+           return;
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+
+        }
+    })
+}
+
+function autofillHealthFundData(name){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {autofillHealthFundData:name},
+        success: function(response){
+           console.log(response);
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $("#name").val(response.name);
+            $("#postcode").val(response.postcode);
+            $("#address").val(response.address);
+            $("#city").val(response.city);
+            $("#taxnumber").val(response.taxnumber);
+        }
+    })
+}
+
+function saveAlkalmassagiWin(fid){
+    let data = $("#alkalmassgibox").serialize();
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: "saveAlkalmassagiBox=true&fid="+fid+"&"+data,
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $.toast({
+                text: "Alkalmassági adatok rögzítve.",
+                icon: 'success'
+            });
+            hideGeneralPopup();
+        }
+    })
+}
+
 function showSpektrumLabMatricaWin() {
     $.ajax({
         type:"POST",
