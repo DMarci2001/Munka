@@ -61,9 +61,9 @@ class InvoiceService
     public function __construct()
     {
         if(isset($_POST["invoiceWindow"])){
-            //echo $this->invoiceAdminWindow($_POST["invoiceWindow"]);
-            //die();
-            die(json_encode(array("error"=>"","html"=>$this->invoiceAdminWindow($_POST["invoiceWindow"]))));
+            echo $this->invoiceAdminWindow($_POST["invoiceWindow"]);
+            die();
+            //die(json_encode(array("error"=>"","html"=>$this->invoiceAdminWindow($_POST["invoiceWindow"]))));
         }
 
         if(isset($_POST["autofillHealthFundData"])){
