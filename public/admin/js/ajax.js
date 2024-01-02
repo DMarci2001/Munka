@@ -961,6 +961,7 @@ function foglalasMentes(page, allowNewCompany) {
             }
             
             $("#idoponteditor").html(response.html);
+            initDateInput();
             $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable", null,
                 function(responseText){
                     afterElojegyzesTableInit();

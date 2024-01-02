@@ -310,9 +310,67 @@ class AjaxService {
             die("ok");
         }
 
+        if (isset($_GET["fgszimport"])) {
+            $sorok = explode("\n", $this->fgszCsv);
+            foreach ($sorok as $sor) {
+                $mezok = explode(";", $sor);
+                $cimData = explode(" ", $mezok[6]);
+                $utcaData = explode(", ", $mezok[6]);
+                $cegid = 220;
+                $helyszinid = 461;
+                $orvos = 1078;
+                $rinterval = 5;
+                $szurestipusid = 48;
+                $datum = "2023-11-22 {$mezok[0]}";
+                $neme = 1;
+                $torzsszam = $mezok[1];
+                $nev = $mezok[2];
+                $szuldatum = str_replace(".", "-", $mezok[4]);
+                $telefon = $mezok[3];
+                $taj = $mezok[5];
+                $irsz = trim($cimData[0]);
+                $varos = trim(str_replace(",", "", $cimData[1]));
+                $utca = trim($utcaData[1]);
 
+                if (empty($nev)) {
+                    continue;
+                }
 
+                $query = "insert into foglalasok set cegid='{$cegid}', helyszinid='{$helyszinid}', orvosassigned='{$orvos}',rinterval='{$rinterval}',szurestipusid='{$szurestipusid}', aktiv=1, checked=1,regdatum=now(), 
+                           neme={$neme}, datum='{$datum}', torzsszam='{$torzsszam}', nev='{$nev}', telefon='{$telefon}', szuldatum='{$szuldatum}', taj='{$taj}', irsz='{$irsz}', varos='{$varos}', utca='{$utca}'";
+
+                echo $query."<br/>";
+                sql_query($query);
+            }
+
+            die;
+        }
 
     }
+
+
+    private string $fgszCsv = "07:00:00;9328116;Pirzsók László;+36709387906;1983.07.16;039204684;8981 Gellénháza, Napsugár utca 8                                                                    ;;;;;
+07:05:00;9360692;Tóth Martin;+36202631530;1998.09.16;115213508;8985 Becsvölgye, Új utca 4                                                                          ;;;;;
+07:10:00;9328010;Császár Sándor;+36206109734;1976.07.21;034129470;8900 Zalaegerszeg, Hóvirág utca 18                                                                  ;;X;;;
+07:15:00;9322617;Szabó Attila;+36202117734;1966.09.19;026926838;8900 Zalaegerszeg, Ördöngős völgy 11                                                                ;;X;;;
+07:20:00;9322662;Kardos József;+36204217685;1970.01.30;029180624;8808 Nagykanizsa(Palin), Vadrózsa utca 47                                                           ;;;;;
+07:25:00;9360625;Kiss László;+36704663267;1969.02.25;028542308;8800 Nagykanizsa, Kazanlak körút 12 B lh. 2. em. 11                                                 ;;;;;
+07:30:00;9321621;Kovács Gábor;+36703738211;1973.01.08;031198255;8649 Balatonberény, Ady Endre utca 1                                                                ;;;;;
+07:35:00;9321646;Kustán Róbert;+36205701638;1966.04.05;026636593;8900 Zalaegerszeg, Mártírok útja 62 3. em. 6                                                        ;;;;;
+07:40:00;9329963;Kocsis Géza;+36303707910;1961.10.11;024057309;8900 Zalaegerszeg, Dózsa György utca 50 fszt. 4                                                     ;;;;;
+07:45:00;9360670;Agg Dávid;+36301484564;1994.02.27;094986097;8921 Alibánfa, Deák Ferenc u 12/A                                                                   ;;;;;
+07:50:00;9360714;Simon László Károly;+36703738222;1968.08.28;105767671;8946 Tófej, Kosuth Lajos utca 3                                                                     ;;;;;
+07:55:00;9329924;Bodó László;+36703738120;1967.03.13;027215014;8900 Zalaegerszeg, Vizslaparki út 31 1. em. 10                                                      ;;;;;
+08:00:00;9360455;Kiss Bence;+36202923699;1991.03.13;043862531;8900 Zalaegerszeg, Baross Gábor utca 23 B4 ép. 4. em. 16                                            ;;;;;
+08:05:00;9360181;Kovács Andor;+36704669757;1964.12.31;025890129;8981 Gellénháza, Park utca 8                                                                        ;;;;;
+08:10:00;9360517;Kajdi Szilárd;+36204557946;1974.08.25;032426539;8943 Bocfölde, Bartók Béla u 11 ép.                                                                 ;;;;;
+08:15:00;9360728;Foki György;+36704661556;1988.10.09;042397159;8900 Zalaegerszeg, Göcseji út 45 4. em. 45                                                          ;;;;;
+08:20:00;9321600;Auer Zoltán;+36202194037;1969.04.13;028636434;9684 Egervölgy, Kossuth Lajos utca 122                                                              ;;;;;
+08:25:00;9330700;Hóbor József;+36304366318;1963.11.20;025255230;8900 Zalaegerszeg, Landorhegyi út 18/A A lh. 1. em. 4                                               ;;;;;
+09:25:00;9321626;Juhász László;+36204600489;1961.12.04;024135306;7271 Fonó, Petőfi utca 38                                                                           ;;;;;
+10:00:00;9322565;Molnár László;+36704661586;1977.11.09;035221560;8200 Veszprém, Haszkovó utca 17/C 1. em. 5                                                          ;;;;;
+10:05:00;9360767;Kiss Gábor;+36703396516;1977.04.14;034740396;8200 Veszprém, Fáskert utca 12 1 ép.                                                                ;;;;;
+";
+
 
 }
