@@ -782,8 +782,166 @@ class AdminAjaxService {
             die($adminUtils->ceglista(null,$_POST["cegid"]));
         }
 
+        if (isset($_REQUEST["keltexmedstatok"])) {
+            $munkakorokContent = file_get_contents(__DIR__."/stathoz_munkakorok.csv");
+            $rows = explode("\n", $munkakorokContent);
+            $munkakorMap = [];
+            foreach ($rows as $key => $row) {
+                if ($key == 0) {
+                    continue;
+                }
+                $fields = explode(";", $row);
+
+                //echo $fields[0]."<br>";
+                $munkakorMap[$fields[0]] = $fields[1];
+            }
+
+
+
+            $statContent = file_get_contents(__DIR__."/stathoz.csv");
+
+            $rows = explode("\n", $statContent);
+
+            $korcsoportok = ["0-20" => 0, "21-30" => 0, "31-40" => 0, "41-50" => 0, "51-60" => 0, "61-70" => 0, "71-200" => 0];
+            $bmicsoportok = ["0-18.5" => 0, "18.5-24.9" => 0, "25-29.9" => 0, "30-34.9" => 0, "35-39.9" => 0, "40-200" => 0];
+            $vernyomascsoportok = ["0-129" => 0, "130-999" => 0];
+
+            $korok = [];
+            $bmik = [];
+            $vernyomasok = [];
+            $pulzusok = [];
+            $korlatozasok = [];
+            $szemuveggel = 0;
+            $kontaktlencsevel = 0;
+            $munkakorok = [];
+            $munkakorFizikai = 0;
+            $munkakorSzellemi = 0;
+            $munkakorVegyes = 0;
+            $munkakorNincs = 0;
+
+
+            foreach ($rows as $key => $row) {
+                if ($key == 0) {
+                    continue;
+                }
+
+                $fields = explode(";", $row);
+
+                $kor = date("Y", strtotime("now")) - date("Y", strtotime(str_replace(".", "-", $fields[2])));
+                $korok[] = $kor;
+                if (!empty($fields[3])) {
+                    $bmi = $fields[3];
+                    foreach ($bmicsoportok as $key => $val) {
+                        $minMax = explode("-", $key);
+                        $min = $minMax[0];
+                        $max = $minMax[1];
+                        if ($bmi >= $min && $bmi <= $max) {
+                            $bmicsoportok[$key]++;
+                            break;
+                        }
+                    }
+                    $bmik[] = str_replace(",", ".", $bmi);
+                }
+                if (!empty($fields[4])) {
+                    $vernyomas = intval($fields[4]);
+                    foreach ($vernyomascsoportok as $key => $val) {
+                        $minMax = explode("-", $key);
+                        $min = $minMax[0];
+                        $max = $minMax[1];
+                        if ($bmi >= $min && $bmi <= $max) {
+                            $vernyomascsoportok[$key]++;
+                            break;
+                        }
+                    }
+                    $vernyomasok[] = $vernyomas;
+                }
+                if (!empty($fields[5])) {
+                    $pulzusok[] = $fields[5];
+                }
+                if (!empty($fields[6])) {
+                    $korlatozasok[] = $fields[6];
+                }
+                if (!empty($fields[8])) {
+                    $munkakorok[] = $fields[8];
+                }
+
+                if (substr_count(strtolower($fields[6]), "szemüveg")) {
+                    $szemuveggel++;
+                }
+                if (substr_count(strtolower($fields[6]), "kontakt")) {
+                    $kontaktlencsevel++;
+                }
+                //echo $fields[0]." ".$kor." ";
+
+
+                foreach ($korcsoportok as $key => $val) {
+                    $minMax = explode("-", $key);
+                    $min = $minMax[0];
+                    $max = $minMax[1];
+                    if ($kor >= $min && $kor <= $max) {
+                        $korcsoportok[$key]++;
+                        break;
+                    }
+                }
+
+                $munkakor = trim($fields[8]);
+                if (isset($munkakorMap[$munkakor])) {
+                    $m = trim($munkakorMap[$munkakor]);
+                    if ($m == "0") {
+                        $munkakorNulla++;
+                    }
+                    if ($m == "1") {
+                        $munkakorFizikai++;
+                    }
+                    if ($m == "2") {
+                        $munkakorSzellemi++;
+                    }
+                    if ($m == "3") {
+                        $munkakorVegyes++;
+                    }
+                } else {
+                    $munkakorNincs++;
+                }
+
+            }
+
+            echo "korcsoportok:<br/>";
+            echo "<pre>".print_r($korcsoportok, true)."</pre>";
+
+            echo "bmi csoportok:<br/>";
+            echo "<pre>".print_r($bmicsoportok, true)."</pre>";
+
+            echo "vérnyomás csoportok:<br/>";
+            echo "<pre>".print_r($vernyomascsoportok, true)."</pre>";
+
+            echo "szemüveggel:<br/>";
+            echo "<pre>".$szemuveggel."</pre>";
+
+            echo "kontakt lencsével:<br/>";
+            echo "<pre>".$kontaktlencsevel."</pre>";
+
+
+            //$munkakorok = array_unique($munkakorok);
+
+            echo "<pre>fizikai: {$munkakorFizikai}</pre>";
+            echo "<pre>szellemi: {$munkakorSzellemi}</pre>";
+            echo "<pre>vegyes: {$munkakorVegyes}</pre>";
+            echo "<pre>nulla: {$munkakorNulla}</pre>";
+            echo "<pre>nincs megadva munkakör: {$munkakorNincs}</pre>";
+
+
+
+            
+
+
+            //echo count($munkakorok). " ";
+            //print_r($munkakorok);
+            //echo $statContent;
+            die;
+        }
+
         new LaborKeroService();
-        //new InvoiceService();
+        new InvoiceService();
     }
 
     private function getActiveUsers(AdminUser $adminUser):string {

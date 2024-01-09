@@ -14,8 +14,18 @@ class AdminWebServicesPage extends AdminCorePage
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
         }
+        if (isset($_POST["addlinkedservice"]) && isset($_GET["szerk"])) {
+            sql_query("insert into sitedata set datum=now(), tipus='linkedservice', tipusid=?", [$_GET["szerk"]]);
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
         if (isset($_GET["deltipar"]) && isset($_GET["szerk"])) {
             sql_query("delete from arak where id=? and tipusid=?", [$_GET["deltipar"], $_GET["szerk"]]);
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+        if (isset($_GET["dellinkedservice"]) && isset($_GET["szerk"])) {
+            sql_query("delete from sitedata where id=? and tipusid=?", [$_GET["dellinkedservice"], $_GET["szerk"]]);
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die();
         }
@@ -29,6 +39,13 @@ class AdminWebServicesPage extends AdminCorePage
                     $sor++;
                 }
 
+                $sor = 1;
+                while (isset($_POST["linkedserviceid{$sor}"])) {
+                    sql_query("update sitedata set value1=?, value2=?, value3=?, sorrend=?, aktiv=? where id=?",
+                        [$_POST["linkedserviceurl{$sor}"], $_POST["linkedserviceurltitle{$sor}"], $_POST["linkedservicetitle{$sor}"], $_POST["linkedservicesorrend{$sor}"], isset($_POST["linkedserviceaktiv{$sor}"])?1:0, $_POST["linkedserviceid{$sor}"]]);
+                    $sor++;
+                }
+
                 sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seokeywords=?, seodescription=? where id=?",
                     [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seokeywords"], $_POST["seodescription"], $_GET["szerk"]]);
 
@@ -36,6 +53,15 @@ class AdminWebServicesPage extends AdminCorePage
             }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
+            die();
+        }
+
+        if (isset($_POST["packdatasave"])) {
+            if ($this->adminUser->beallitasWebAdatokAccess()) {
+                sql_query("insert into sitedata set datum=now(), username=?, tipus='packjson', valuetext=?", [$this->adminUser->user["username"], $_POST["packdataeditor"]]);
+            }
+
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
         }
 
@@ -93,6 +119,39 @@ class AdminWebServicesPage extends AdminCorePage
                 echo "<td style='text-align: center;'><input type='text' name='sorrend{$sor}' value='{$price["sorrend"]}' style='width:14px;' placeholder='időtartam' title='időtartam módosító'/> </td>";
                 echo "<td><input type='text' name='price{$sor}' value='{$price["price"]}' style='width:50px;' placeholder='ár'/>&nbsp;HUF</td>";
                 echo "<td style='font-size: 14px;'>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deltipar={$price["id"]}' onclick='return confirm(\"Biztos törlöd ezt az árat?\")'><i class='fas fa-trash'></i></a></td>";
+                echo "</tr>";
+                $sor++;
+            }
+
+            echo "</table>";
+            echo "</td></tr>";
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Kapcsolódó szolgáltatások</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><input type='submit' name='addlinkedservice' value='+ hozzáadás'></td></tr>";
+
+            echo "<tr><td colspan='2'>";
+            echo "<table cellpadding='0' cellspacing='0'>";
+
+            $sor = 1;
+            $linkedServices = sql_query("select * from sitedata where tipus='linkedservice' and tipusid=? order by sorrend", [$id])->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($linkedServices)) {
+                echo "<tr style='font-weight: bold;'>";
+                echo "<td style='padding:5px 0px;'>Aktív&nbsp;&nbsp;</td>";
+                echo "<td style='padding:5px 0px;'>URL&nbsp;&nbsp;</td>";
+                echo "<td style='padding:5px 0px;'>URL szöveg&nbsp;&nbsp;</td>";
+                echo "<td style='padding:5px 0px;'>Szöveg&nbsp;&nbsp;</td>";
+                echo "<td style='padding:5px 0px;'>Sorrend&nbsp;&nbsp;</td>";
+                echo "<td style='padding:5px 0px;'>&nbsp;</td>";
+                echo "</tr>";
+            }
+            foreach ($linkedServices as $linkedService) {
+                echo "<tr>";
+                echo "<td><input type='hidden' name='linkedserviceid{$sor}' id='linkedserviceid{$sor}' value='{$linkedService["id"]}' /><input type='checkbox' title='aktiv' name='linkedserviceaktiv{$sor}' value='1' ".($linkedService["aktiv"] == 1 ? "checked":"")."/>&nbsp;</td>";
+                echo "<td><input type='text' name='linkedserviceurl{$sor}' value='{$linkedService["value1"]}' style='width:250px;' placeholder='URL' />&nbsp;</td>";
+                echo "<td><input type='text' name='linkedserviceurltitle{$sor}' value='{$linkedService["value2"]}' style='width:250px;' placeholder='URL szöveg' />&nbsp;</td>";
+                echo "<td><input type='text' name='linkedservicetitle{$sor}' value='{$linkedService["value3"]}' style='width:250px;' placeholder='rövid szöveg' />&nbsp;</td>";
+                echo "<td style='text-align: center;'><input type='text' name='linkedservicesorrend{$sor}' value='{$linkedService["sorrend"]}' style='width:14px;' placeholder='sorrend' title='sorrend'/>&nbsp;</td>";
+                echo "<td style='font-size: 14px;'>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&dellinkedservice={$linkedService["id"]}' onclick='return confirm(\"Biztos törlöd ezt az sort?\")'><i class='fas fa-trash'></i></a></td>";
                 echo "</tr>";
                 $sor++;
             }
@@ -187,11 +246,29 @@ class AdminWebServicesPage extends AdminCorePage
 
 
         echo "<h2>A weboldalon megjelenő szolgáltatások</h2>";
+        echo "<div style='margin:20px 0px;'>".$this->packDataEditor()."</div>";
         echo $kiemeltServicesHTML;
         echo "<hr style='margin:0px 0px 20px 0px;'>";
         echo "<h2>Egyéb, a weboldalon nem használt szolgáltatások</h2>";
         echo $otherServicesHTML;
+    }
 
+
+    private function packDataEditor():string {
+        $html = "";
+
+        $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
+
+        $html.= "<div style='margin-bottom: 10px;'>[<a href='#' onclick='$(\"#packdataeditordiv\").slideToggle();return false;'>Csomagok adatai</a>]</div>";
+        $html.= "<div id='packdataeditordiv' style='display:none;'>";
+        $html.= "<form name='iform' method='post' enctype='multipart/form-data'>";
+        $html.= "<textarea id='packdataeditor' name='packdataeditor' style='width:100%;height:500px;'>{$packData["valuetext"]}</textarea>";
+        $html.= "<br><input type='submit' name='packdatasave' value='Mentés'> ";
+        $html.= "<input type='button' name='scancel' value='Vissza' onclick='$(\"#packdataeditordiv\").slideToggle();'> ";
+        $html.= "</form>";
+        $html.= "</div>";
+
+        return $html;
     }
 
 

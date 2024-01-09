@@ -405,6 +405,7 @@ class HmmApi {
         foreach ($items as $contentData) {
             $images = json_decode($contentData["images"], JSON_OBJECT_AS_ARRAY);
             $introImage = "";
+            $contentImages = [];
             if (isset($images["image_intro"]) && !empty($images["image_intro"])) {
                 $introImage = "https://www.hungariamed.hu/{$images["image_intro"]}";
             }
@@ -416,15 +417,23 @@ class HmmApi {
             $images = $docAgent->getAssetsByType(DocAgent::ASSET_CONTENT_TITLE_IMAGE, $contentData["id"]);
             if (!empty($images)) {
                 $introImage = "https://bejelentkezes.hungariamed.hu".$images[0]["url"];
+                foreach ($images as $image) {
+                    $contentImages[] = [
+                        "title" => "",
+                        "url"   => "https://bejelentkezes.hungariamed.hu".$image["url"],
+                    ];
+                }
+
             }
 
             $contents[] = [
-                "id"          => $contentData["id"],
-                "title"       => $contentData["title"],
-                "introImage"  => $introImage,
-                "created"     => $contentData["created"],
-                "alias"       => $contentData["alias"],
-                "fulltext"    => $contentData["fulltext"],
+                "id"            => $contentData["id"],
+                "title"         => $contentData["title"],
+                "introImage"    => $introImage,
+                "contentImages" => $contentImages,
+                "created"       => $contentData["created"],
+                "alias"         => $contentData["alias"],
+                "fulltext"      => $contentData["fulltext"],
             ];
         }
 
