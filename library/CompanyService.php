@@ -33,7 +33,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="fgsz";
+            $d="budapestbrand";
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
@@ -127,6 +127,11 @@ class CompanyService {
     const OIF_ID = 499;
     public static function isOIF($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "oif" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
+    const BudapestBrand_ID = 840; 
+    public static function isBudapestBrand($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "budapestbrand" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
     }
 
     public static function auchanSingleReservationPlaces():array {

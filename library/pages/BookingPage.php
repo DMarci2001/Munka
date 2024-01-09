@@ -209,6 +209,25 @@ class BookingPage extends CorePage
                 }
             }
 
+             //BudapestBrand esetén ellenőrzések
+             if (CompanyService::isBudapestBrand()) {
+                $selectedKiegVizsgalat = [];
+                foreach (BookingService::BudapestBrand_SZURESEK as $key => $szures) {
+                    if (isset($_POST["kiegoption{$key}"])) {
+                        $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
+                    }
+                }
+                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                if (empty($selectedKiegVizsgalat)) {
+                    $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }
+
+                $result = $this->bookingService->doBudapestBrandServicesTest();
+                if (!empty($result)) {
+                    $this->errors[] = $result;
+                }
+            }
+
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
             if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
             if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";

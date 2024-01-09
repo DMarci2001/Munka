@@ -1201,6 +1201,7 @@ class BookingService
         $this->replicateKiegeszitoVizsgalatok($fid); //kiegészítő vizsgálatok, pl tüdőszűrő hozzáadása
         $this->doAuchanExceptions($fid);
         $this->doOIFExceptions($fid);
+        $this->doBudapestBrandExceptions($fid);
 
         $this->newReservationId=$fid;
 
@@ -1833,6 +1834,12 @@ class BookingService
         [137, 0, "Szemészet", "Képernyő előtti munkavégzéshez szükséges szemészeti szűrővizsgálat, 2 évente szükséges megismételni.", []],
     ];
 
+    const BudapestBrand_SZURESEK = [
+        [48, 0, "Laborvizsgálat", "", []],
+        [15,0,"Hasi-és kismedencei ultrahang","",[]],
+        //Menedzser csomag neve: Komplex egészségügyi szűrés - BudapestBrand
+    ];
+
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
@@ -1911,6 +1918,21 @@ class BookingService
             //auchan override
             $options = "";
             foreach (self::OIF_SZURESEK as $key => $szures) {
+                $onChange = "clearIdopontValasztoOnly();";
+                $options .= "<div style='margin-top:10px;'>";
+                $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
+                if (!empty($szures[3])) {
+                    $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$szures[3]}</div>";
+                }
+                $options .= "</div>";
+            }
+            $text = "<div style='margin:5px 0px;font-weight: bold;'>Kérjük válassza ki az igényelt vizsgálatokat:</div><div style='margin-bottom: 10px;'>{$options}</div>";
+        }
+
+        if (CompanyService::isBudapestBrand() && $szurestipusid == 1) {
+            //auchan override
+            $options = "";
+            foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
                 $onChange = "clearIdopontValasztoOnly();";
                 $options .= "<div style='margin-top:10px;'>";
                 $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
@@ -2331,6 +2353,40 @@ class BookingService
 
     }
 
+    public function doBudapestBrandExceptions($reservationId):void {
+        if (!CompanyService::isBudapestBrand()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $reservedTipusok = [];
+        foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        $reservedTipusok = $reservationTipusMap = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    $reservationTipusMap[$tipusId] = $this->lastSubReservationId;
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+    }
+
     public function doAuchanServicesTest():string {
         if (Booking_Constants::SQL_DB != "keltexmed") {
             return "";
@@ -2390,6 +2446,33 @@ class BookingService
 
         return implode("<br/>", $results);
     }
+
+    public function doBudapestBrandServicesTest():string {
+        if (!CompanyService::isBudapestBrand() || empty($_POST["helyszin"]) || empty($_POST["datum"])) {
+            return "";
+        }
+
+        $_POST["helyszinid"] = $_POST["helyszin"];
+
+        $results = [];
+        $reservedTipusok = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $result = $this->replicateReservationToAnotherService($_POST, $tipusId, true);
+                    if (!empty($result)) {
+                        $results[] = $result;
+                    }
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        return implode("<br/>", $results);
+    }
+
 
     public function getPatientByTAJ($taj, $fid=0, $pid=0):array {
         $w = "";
