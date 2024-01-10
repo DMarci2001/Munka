@@ -673,6 +673,30 @@ function addReplaceDoctor(nap, helyszin, beoid, sourceoid) {
     });
 }
 
+function addCrewData(nap, helyszin, beoid, orvos, asszisztens) {
+    
+    console.log(orvos);
+    console.log(asszisztens);
+    //return;
+    $.ajax({
+        url:'index.php',
+        type:'POST',
+        dataType:'json',
+        data:{page:"booking", addcrewdata:1, helyszin:helyszin, nap:nap, beoid:beoid, orvosnev:orvos, asszisztensnev:asszisztens},
+        success:function(response) {
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            successToast("Személyzet hozzáadva");
+            cancelFoglalasMove();
+            $("#idoponteditor").slideUp();
+            $("#elojegyzestable").html(response.html);
+            afterElojegyzesTableInit();
+        }
+    });
+}
+
 function removeReplaceDoctor(nap, oid) {
     $.ajax({
         url:'index.php',
