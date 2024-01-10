@@ -1222,7 +1222,7 @@ class BookingService
             
             $referalType="bp-normal";
             //El kell döntenem, hogy a dolgozó milyen beutalót kell kapjon, ehhez lesz egy segéd tábla
-            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev,fogl.pass AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid,felh.torzsszam FROM foglalasok fogl
+            $refQuery = sql_query("SELECT fogl.id AS fid,fogl.nev,fogl.szuldatum,fogl.taj,fogl.regdatum,fogl.munkakor,sz.megnev,fogl.pass AS vizsgalat,helpdesk.type,helpdesk.worklocation,helpdesk.ntid,fogl.torzsszam FROM foglalasok fogl
                                    LEFT JOIN bp_beutalo_seged_tabla helpdesk ON helpdesk.ntid=fogl.torzsszam
                                    LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                                    WHERE fogl.id=?",array($fid));
