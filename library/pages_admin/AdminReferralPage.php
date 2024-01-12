@@ -141,7 +141,7 @@ class AdminReferralPage extends AdminCorePage {
 
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Molnárné Szabó Anikó részére elküldeni</strong> a <a href=\"mailto:molnarne.szabo.aniko@opustigaz.hu\" style=\"color:#a90000\">molnarne.szabo.aniko@opustigaz.hu</a> e-mail címre.</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Lente Gyöngyi részére elküldeni</strong> a <a href=\"mailto:lente.gyongyi@opustitasz.hu\" style=\"color:#a90000\">lente.gyongyi@opustitasz.hu</a> e-mail címre.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Bármely felmerülő kérdéssel kapcsolatban ügyfélkapcsolati munkatársunk áll szolgálatára.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>Telefonos ügyfélszolgálat:</b><br>";
 					$mbody.= "<i>Munkanapokon 08:00 –tol 16:00-ig.</i><br>";
@@ -193,7 +193,7 @@ class AdminReferralPage extends AdminCorePage {
 				if (isset($_POST['saveTest'])) {
 					$mail->AddAddress("tesztemail@hungariamed.hu");
 				} else {
-					$mail->AddAddress("molnarne.szabo.aniko@opustigaz.hu");
+					$mail->AddAddress("lente.gyongyi@opustitasz.hu");
 				}
 			
 				if (!empty(Booking_Constants::USER_BCC_MAIL)) {
