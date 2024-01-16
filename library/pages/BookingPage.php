@@ -198,10 +198,10 @@ class BookingPage extends CorePage
                         $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
                     }
                 }
-                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                /*$selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
                 if (empty($selectedKiegVizsgalat)) {
                     $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
-                }
+                }*/
 
                 $result = $this->bookingService->doOIFServicesTest();
                 if (!empty($result)) {
