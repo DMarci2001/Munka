@@ -217,10 +217,12 @@ class BookingPage extends CorePage
                         $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
                     }
                 }
-                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                //Ha nincs vizsgálat nem engedjen foglalni.
+
+                /*$selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
                 if (empty($selectedKiegVizsgalat)) {
                     $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
-                }
+                }*/
 
                 $result = $this->bookingService->doBudapestBrandServicesTest();
                 if (!empty($result)) {
