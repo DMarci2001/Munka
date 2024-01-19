@@ -540,6 +540,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return $weeks;
     }
 
+    public function azonositotipusCheck($string){
+        $type="";
+        //$type=2 TAJ
+        //$type=4 Útlevél
+
+        if(ctype_digit($string) && strlen($string)==9){
+            $type = 2;
+        }else{
+            $type = 4;
+        }
+
+        return $type;
+    }
+
 
     public function dataField($fieldName) {
         $lang = new Lang();
@@ -558,7 +572,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         switch ($fieldName) {
             case "taj":
                 $translateKey = "tajszam";
-                $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
+                //$inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                 break;
             case "email":
                 if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {

@@ -160,6 +160,17 @@ class BookingPage extends CorePage
                 }
             }
 
+            //Ha regexel akarom ellenőrizni magyar útlevélre
+            /*$idTypes = array(
+                0=>array("tipus">="TAJ","regex"=>""),
+                1=>array("tipus"=>"Utlevel","regex"=>'^[A-Za-z]{2}+[1-9]{3,7}')
+            );
+
+            foreach($idTypes as $type){
+                if(preg_match($type["regex"], $_POST["taj"])){
+                    $this->errors[$type["tipus"]];
+                }
+            }*/
 
             //auchan esetén kötelező kieg vizsgálat választás
             if (CompanyService::isAuchan()) {
@@ -231,7 +242,7 @@ class BookingPage extends CorePage
             }
 
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
-            if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
+            //if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
             if ($_POST["helyszin"] == "0") $this->errors[] = "{$webText["helyszinkotelezo"]}";
             if ($_POST["szurestipus"] == "0") $this->errors[] = "{$webText["szurestipuskotelezo"]}";
 

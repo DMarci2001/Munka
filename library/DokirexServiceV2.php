@@ -631,6 +631,10 @@ class DokirexService
         $params["SzuletesiDatum"] = str_replace("-", "", $params["SzuletesiDatum"]);
         $params["SzuletesiDatum"] = substr($params["SzuletesiDatum"], 0, 4) . "-" . substr($params["SzuletesiDatum"], 4, 2) . "-" . substr($params["SzuletesiDatum"], 6, 2);
 
+        //Azonositó tipus meghatározása:
+        $utils = new Utils();
+        $params["AzonositoTipusID"] = $utils->azonositotipusCheck($params["Azonosito"]);
+
         return $params;
     }
 
