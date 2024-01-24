@@ -95,16 +95,26 @@ class BeosztasService {
         return $reso->fetchAll();
     }
 
-    public function getDoctorCompanies($doctorId) {
-        $companyIds = [0];
+    public function getDoctorInfos($doctorId, $type = "company") {
+        $companyIds = $typeIds = [0];
         $beos = sql_query("select * from orvos_beosztas_new where orvosid=?", [$doctorId])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($beos as $beo) {
             $idk = array_filter(explode("|", $beo["beocegek"]));
             $companyIds = array_merge($companyIds, $idk);
+
+            $idk = array_filter(explode("|", $beo["tipusok"]));
+            $typeIds = array_merge($typeIds, $idk);
         }
         $companyIds = array_unique($companyIds);
+        $typeIds = array_unique($typeIds);
 
-        return sql_query("select id, megnev from cegek where id in (".implode(",", $companyIds).")")->fetchAll(PDO::FETCH_ASSOC);
+        if ($type == "company") {
+            return sql_query("select id, megnev from cegek where id in (" . implode(",", $companyIds) . ")")->fetchAll(PDO::FETCH_ASSOC);
+        }
+        if ($type == "service") {
+            return sql_query("select id, megnev from szurestipusok where id in (" . implode(",", $typeIds) . ")")->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return false;
     }
 
     public function getPlaceCompanies($placeId, $tipusId = 0) {

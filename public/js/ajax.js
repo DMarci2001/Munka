@@ -103,6 +103,19 @@ function getKiegVizsgalatIds() {
     return checkedKieg;
 }
 
+function getCheckedServices() {
+    let checkedServices = "";
+    $('.altipuscheck').each(function (index, obj) {
+        if (this.checked === true) {
+            if (checkedServices != "") {
+                checkedServices += "_";
+            }
+            checkedServices += $(this).attr("name").replace("altipus", "");
+        }
+    });
+    return checkedServices;
+}
+
 function showIdoPontValasztoV2(honnan, orvosid) {
     if (orvosid === undefined) {
         orvosid = 0;
@@ -138,6 +151,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             taj: $("input[name='taj']").val(),
             betegallomany: $("#betegallomanynyilatkozat").prop("checked"),
             laborOption:laborOption,
+            checkedServices:getCheckedServices(),
             kiegChecked:getKiegVizsgalatIds()
         },
         success: function(data){
@@ -151,23 +165,6 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         }
 
     });
-
-    /*$.ajax({
-        method: "GET",
-        url: "index.php",
-        data: { showidopontvalasztov2: "1", honnan: honnan, helyszin: $("#helyszin").val(), szurestipus: $("#szurestipus").val(), selectoid: orvosid, neme: neme, taj: $("input[name='taj']").val(), betegallomany: $("#betegallomanynyilatkozat").prop("checked") }
-    }).done(function (data) {
-        //console.log(data);
-       
-        if (data.error != "") {
-            myAlert(data.error);
-        } else {
-            $("#idopontvalasztodiv").html(data.html);
-            $("#idopontvalasztodiv").slideDown();
-        }
-        $("#loadingspinner"+datumIndex).hide();
-    });*/
-
 }
 
 function showIdoPontValasztoV3(honnan, orvosid, szurestipus, helyszin) {

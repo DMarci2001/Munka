@@ -31,14 +31,17 @@ class BookingSyncApi {
 
         if ($action == "storenewreservation") {
             $this->storeNewReservationAction($input);
+            die;
         }
 
         if ($action == "modifyremotereservation") {
             $this->modifyRemoteReservationAction($input);
+            die;
         }
 
         if ($action == "deleteremotereservation") {
             $this->deleteRemoteReservationAction($input);
+            die;
         }
 
         if ($action == "storebeosztas") {
@@ -345,12 +348,20 @@ class BookingSyncApi {
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json; charset=utf8", "Signature: ".Booking_Constants::API_KEY]);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 
         $result = curl_exec($ch);
         $return['httpCode'] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $return['response'] = json_decode($result, true);
+        $return['response'] = print_r($result, true);
 
-        //print_r($result);die;
+        /*
+        if (session_id()=="vh86m967mhmn4503b8n2n7fsk0" || session_id() == "l34d4cmh5817uc1fdnb18gc4ms") {
+            echo "ide:".$url;
+            echo "<pre>".print_r($data, true)."</pre>";
+            echo "<pre>result:".print_r($return, true)."</pre>";
+        }
+        */
 
         if ($return["httpCode"] == 200 && isset($return["error"]) && $return["error"] == "") {
             return true;

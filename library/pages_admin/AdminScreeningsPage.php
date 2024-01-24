@@ -21,6 +21,37 @@ class AdminScreeningsPage extends AdminCorePage
     {
         parent::__construct();
 
+        if (isset($_GET["deleteTipus"])) {
+            $id = intval($_GET["deleteTipus"]);
+            $tipusData = sql_query("SELECT * FROM szurestipusok WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            $error = "";
+
+            $orvosok = sql_query("SELECT o.nev, b.* FROM orvos_beosztas_new b LEFT JOIN orvosok o ON o.id=b.orvosid WHERE INSTR(tipusok, '|{$id}|') group by o.nev")->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($orvosok)) {
+                foreach ($orvosok as $orvos) {
+                    $error .= "{$orvos["nev"]} beosztásában szerepel, vagy szerepelt<br/>";
+                }
+            }
+
+            $reservationData = sql_query("SELECT COUNT(*) as hany from foglalasok where szurestipusid=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            if ($reservationData["hany"] > 0) {
+                $error.= "{$reservationData["hany"]} foglalás létezik ezzel a tipussal<br/>";
+            }
+
+            $priceData = sql_query("SELECT COUNT(*) as hany from arak a where a.tipusid=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            if ($priceData["hany"] > 0) {
+                $error.= "Ár van megadva ehhez a tipushoz<br/>";
+            }
+
+            if (!empty($error)) {
+                $_SESSION["tipuserror"] = "{$tipusData["megnev"]} törlése nem lehetséges:<br/>{$error}";
+            } else {
+                sql_query("delete from szurestipusok where id=?", [$id]);
+            }
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            die();
+        }
+
         if (isset($_GET["deltipmegj"]) && isset($_GET["szerk"])) {
             sql_query("delete from szurestipusok_megj where id='".intval($_GET["deltipmegj"])."' and tipusid='".intval($_GET["szerk"])."'");
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
@@ -386,6 +417,11 @@ class AdminScreeningsPage extends AdminCorePage
         GROUP BY t.id
         ORDER BY !instr(megnev,'Új tétel'),megnev")->fetchAll(PDO::FETCH_ASSOC);
 
+        if (isset($_SESSION["tipuserror"])) {
+            echo "<div style='color:white;background:red;padding:10px;margin-bottom:20px;display:inline-block;'>{$_SESSION["tipuserror"]}</div>";
+            unset($_SESSION["tipuserror"]);
+        }
+
         $foStat = sql_fetch_array(sql_query("select count(*) as hany from szurestipusok where fotid<>0"));
         if (count($services) > 0 && Booking_Constants::FO_CONNECTION_ENABLED) {
             echo "<div style='margin-bottom: 10px;'>{$foStat["hany"]} típus szinkronizálva a foglaljorvost.hu-val - <a href='index.php?page={$_GET["page"]}&syncfofields'>frissítés</a></div>";
@@ -422,7 +458,7 @@ class AdminScreeningsPage extends AdminCorePage
 
                 echo "</div>";
                 echo "<div style='display:table-cell;text-align: right;vertical-align: middle;'>";
-                echo "<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$service["id"]}'><i class='fas fa-trash-alt'></i></a>";
+                echo "<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&deleteTipus={$service["id"]}'><i class='fas fa-trash-alt'></i></a>";
                 echo "</div>";
                 echo "</div>";
 
@@ -478,7 +514,7 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "&nbsp;&nbsp;<span class='fo_badge' title='fo id: {$row["fotid"]}'>FOGLALJORVOST</span>";
             }
             echo "</div></td>";
-            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt a szűréstipust?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&deleteTipus={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
             echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }

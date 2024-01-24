@@ -30,6 +30,6 @@ class User {
     }
 
     public static function debugUser() {
-        return isset($_SESSION["debuguser"]) || session_id() == "8g7hvunr2d8aoqfl98t0brv80c";
+        return isset($_SESSION["debuguser"]) || session_id() == "mroqsati011us8d3coi7rr3vvj";
     }
 }

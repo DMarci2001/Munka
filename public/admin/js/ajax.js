@@ -4539,3 +4539,94 @@ function sendMyLoginCodeByEmail() {
         }
     });
 }
+
+function toggleDoctorDisabledService(id, serviceId) {
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"doctors", toggleDoctorDisabledService:id, serviceId:serviceId}
+    }).done(function (msg) {
+        $("#serviceselector").html(msg);
+    });
+}
+
+var imageCropX = 0;
+var imageCropY = 0;
+var imageCropWidth = 0;
+var imageCropHeight = 0;
+
+function showImageEditor(el) {
+    let imageURL = $(el).data("originalurl");
+    let docId = $(el).data("id");
+    let dataId = $(el).data("dataid");
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {showimageeditor:1, imageURL:imageURL, docId:docId, dataId:dataId},
+        success: function(response){
+            if (response.message !== "") {
+                alert(response.message);
+                return;
+            }
+
+            showGeneralPopup(response.html);
+            const image = document.getElementById('imagetoedit');
+            const cropper = new Cropper(image, {
+                aspectRatio: 1 / 1,
+                crop(event) {
+                    imageCropX = event.detail.x;
+                    imageCropY = event.detail.y;
+                    imageCropWidth = event.detail.width;
+                    imageCropHeight = event.detail.height;
+                },
+            });
+        }
+    });
+}
+
+function saveCroppedImage(el) {
+    hideGeneralPopup();
+
+    $.toast({
+        text: "Kép vágása folyamatban...",
+        icon: 'success'
+    });
+
+    let docId = $(el).data("id");
+    let dataId = $(el).data("dataid");
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {saveCroppedImage:1, docId:docId, imageCropX:imageCropX, imageCropY:imageCropY, imageCropWidth:imageCropWidth, imageCropHeight:imageCropHeight},
+        success: function(response){
+            if (response.message !== "") {
+                alert(response.message);
+                return;
+            }
+            $.toast({
+                text: "Kép vágása sikerült",
+                icon: 'success'
+            });
+            window.location.href='index.php?page=webservices&szerk='+dataId;
+        }
+    });
+}
+
+function toggleLaborProvider(fid) {
+    if (!confirm("Biztos labor szolgáltatót váltasz?")) {
+        return;
+    }
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {toggleLaborProvider:fid},
+        success: function(response){
+            showGeneralPopup(response.html);
+            setupLaborVizsgalatFilter();
+            $.toast({
+                text: response.message,
+                icon: 'success'
+            });
+        }
+    })
+}

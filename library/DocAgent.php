@@ -212,7 +212,9 @@ class DocAgent {
                 $path = $this->_getAssetImagePath($fileId);
 
                 $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
+                $kepfileOriginal = "{$path}/{$tipus}_original_{$fileId}.{$extension}";
                 @move_uploaded_file($uploadedFile["tmp_name"], $kepfile);
+                copy($kepfile, $kepfileOriginal);
 
                 $size = GetImageSize($kepfile);
                 $xsize = $size[0];
@@ -227,7 +229,9 @@ class DocAgent {
                     $src_img = ImageCreateFromPNG($kepfile);
                     unlink($kepfile);
                     $kepfile = "{$path}/{$tipus}_{$fileId}.jpg";
+                    $kepfileOriginal = "{$path}/{$tipus}_original_{$fileId}.jpg";
                     imagejpeg($src_img, $kepfile);
+                    copy($kepfile, $kepfileOriginal);
                 }
 
                 $scale = [512, 512];
@@ -282,7 +286,11 @@ class DocAgent {
 
     public function deleteAsset($tipus, $id) {
         $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
-        unlink($path);
+        @unlink($path);
+        $path = self::_getAssetImagePath($id)."{$tipus}_original_{$id}.jpg";
+        @unlink($path);
+        $path = self::_getAssetImagePath($id)."{$tipus}_original_{$id}.jpeg";
+        @unlink($path);
         sql_query("delete from dokumentumok where assetid=? and id=? limit 1", [$tipus, $id]);
     }
 
@@ -308,9 +316,11 @@ class DocAgent {
         }
         foreach ($images as $imageData) {
             $photoURL = $this->getAssetImageURL($imageData)."?v=".date("YmdHis");
+            $photoOriginalURL = str_replace($imageData["assetid"], $imageData["assetid"]."_original", $photoURL);
             $html.= "<div style='display:inline-block;'>";
-            $html.= "<a href='{$photoURL}' target='_blank'><img class='assetimageitem' src='{$photoURL}' /></a>";
-            $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Kép törlése</a></div>";
+            $html.= "<a data-dataid='{$dataId}' data-id='{$imageData["id"]}' data-originalurl='{$photoOriginalURL}' onclick='showImageEditor(this);return false;' href='{$photoURL}' target='_blank'><img class='assetimageitem' src='{$photoURL}' /></a>";
+            $html.= "<div style='margin-top:0px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Kép törlése</a></div>";
+            //$html.= print_r($imageData, true);
             $html.= "</div>";
         }
 
