@@ -156,8 +156,8 @@ class CronService {
         //$this->refreshWorklist();
         //$this->sendManagerStatusEmail();
 
-        $service = new SynlabService();
-        $service->downloadSynlabEmails();
+        //$service = new SynlabService();
+        //$service->pdfTeszt();
 
         //$laborKeroService = new LaborKeroService();
         //$laborKeroService->storeLaborKeroFromLabShopData();
@@ -165,8 +165,25 @@ class CronService {
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
 
+        //$this->addSyncReservations();
+
+        $service = new SynlabService();
+        $result = $service->writeNextRequest(12464);
+
+        echo $result."\n";
+
         echo "teszt\n";
         die();
+    }
+
+    private function addSyncReservations() {
+        $api = new BookingSyncApi();
+        $reservations = sql_query("SELECT * FROM foglalasok WHERE szurestipusid='102' AND datum>NOW()")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($reservations as $reservation) {
+            echo $reservation["nev"]."\n";
+            $api->modifyReservation($reservation["id"]);
+        }
+        die("done\n");
     }
 
     private function readEmailReports() {

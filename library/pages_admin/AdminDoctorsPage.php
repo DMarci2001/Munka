@@ -1,9 +1,7 @@
 <?php
 
 class AdminDoctorsPage extends AdminCorePage {
-
-    private $bookingService;
-    private $beoEditor;
+    private AdminBeoEditor $beoEditor;
     private array $services;
 
     public function __construct()
@@ -585,6 +583,30 @@ class AdminDoctorsPage extends AdminCorePage {
             echo $this->list($this->doctorListQuery($_REQUEST["term"]));
             die;
         }
+
+        if (isset($_REQUEST["toggleDoctorDisabledService"])) {
+            $doctorId = $_REQUEST["toggleDoctorDisabledService"];
+            $serviceId = $_REQUEST["serviceId"];
+
+            $doctorData = sql_query("select id, disabledservices from orvosok where id=?", [$doctorId])->fetch(PDO::FETCH_ASSOC);
+            $disabledServices = json_decode($doctorData["disabledservices"], JSON_OBJECT_AS_ARRAY);
+            if (empty($disabledServices)) {
+                $disabledServices = [];
+            }
+            if (in_array($serviceId, $disabledServices)) {
+                if (($key = array_search($serviceId, $disabledServices)) !== false) {
+                    unset($disabledServices[$key]);
+                }
+            } else {
+                $disabledServices[] = $serviceId;
+            }
+
+            sql_query("update orvosok set disabledservices=? where id=?", [json_encode($disabledServices), $doctorId]);
+
+            echo $this->serviceSelector($doctorId);
+            die;
+        }
+
     }
 
     public function showPage() {
@@ -678,6 +700,14 @@ class AdminDoctorsPage extends AdminCorePage {
 				$szurestipus=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($tipus)));
 				echo "<tr><td colspan='2'><div><a href='#' title='Szűrésípushoz tartozó kérdések szerkesztése.' onClick='setQndA({$_GET['szerk']},{$tipus});return false;'>{$szurestipus['megnev']}</a></div></td></tr>";
 			}
+
+            $serviceEditor = $this->serviceSelector($_GET["szerk"]);
+
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Szolgáltatások</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'>";
+            echo "<div id='serviceselector'>{$serviceEditor}</div>";
+            echo "</td></tr>";
+
 
             $linkedServices = json_decode($_POST["szurestipusok"], JSON_OBJECT_AS_ARRAY);
 
@@ -874,6 +904,28 @@ class AdminDoctorsPage extends AdminCorePage {
             }
         }
 
+        return $html;
+    }
+
+    private function serviceSelector($doctorId):string {
+        $beosztasService = new BeosztasService();
+        $tipusok = $beosztasService->getDoctorInfos($doctorId, "service");
+
+        $doctorData = sql_query("select id, disabledservices from orvosok where id=?", [$doctorId])->fetch(PDO::FETCH_ASSOC);
+        $disabledServices = json_decode($doctorData["disabledservices"], JSON_OBJECT_AS_ARRAY);
+        if (empty($disabledServices)) {
+            $disabledServices = [];
+        }
+
+        $html = "";
+        $html.= "<div style='padding-bottom: 5px;'>Kattints a szolgáltatásra amit az orvos nem szolgáltat</div>";
+        foreach ($tipusok as $tipus) {
+            $services = sql_query("select * from arak where tipusid=? order by sorrend, megnev", [$tipus["id"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($services as $service) {
+                $html.= "<div><a onclick='toggleDoctorDisabledService({$doctorId}, {$service["id"]});return false;' ".(in_array($service["id"], $disabledServices)?"style='text-decoration:line-through'":"")." href='#'>{$service["megnev"]}</a></div>";
+            }
+
+        }
         return $html;
     }
 }

@@ -323,7 +323,7 @@ class DicomService {
     }
 
     public function setCompanyId($id, $companyId) {
-        sql_query_common("update dicom set cegid=? where patientID=? limit 1", [$companyId, $id]);
+        sql_query_common("update dicom set cegid=? where patientID=? limit 10", [$companyId, $id]);
     }
 
     public static function setSelectedCompany($company) {

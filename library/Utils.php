@@ -369,6 +369,9 @@ class Utils {
             $htmlout .= '<script src="https://cdn.tiny.cloud/1/6gy62135dsr0pjrg1jx08egwhvjyuhbo8a463re02bmikbzj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>';
 
             $htmlout .= '<script src="/admin/js/BrowserPrint-3.1.250.min.js"></script>';
+
+            $htmlout .= '<link href="/admin/js/cropperjs-main/dist/cropper.css" rel="stylesheet">';
+            $htmlout .= '<script src="/admin/js/cropperjs-main/dist/cropper.js"></script>';
         } else {
             $htmlout .= '<link href="/chat/chatStyle.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/chat/chatJs.js"></script>';

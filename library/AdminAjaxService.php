@@ -72,7 +72,7 @@ class AdminAjaxService {
                 sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
             }
             if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
-                sql_query("insert into szurestipusok set megnev='Új tétel'");
+                //sql_query("insert into szurestipusok set megnev='Új tétel'");
             }
             if ($_GET["page"] == "users" && $adminUser->jogosultsagAccess()) {
                 sql_query("insert into users set nev='Új felhasználó'");
@@ -781,6 +781,70 @@ class AdminAjaxService {
         if(isset($_REQUEST["initCeglistSelect2"])){
             die($adminUtils->ceglista(null,$_POST["cegid"]));
         }
+
+        if (isset($_REQUEST["showimageeditor"])) {
+            $docId = intval($_REQUEST["docId"]);
+            $dataId = intval($_REQUEST["dataId"]);
+            $message = $html = "";
+
+            $docAgent = new DocAgent();
+            if ($imageData = sql_query("select * from dokumentumok where id=?", [$docId])->fetch(PDO::FETCH_ASSOC)) {
+                $imagePath = $docAgent->getAssetImageURL($imageData, true);
+                $originalImagePath = str_replace($imageData["assetid"], $imageData["assetid"]."_original", $imagePath);
+                if (!is_file($originalImagePath)) {
+                    $message = "A vágás használatához a képet újra fel kell tölteni.";
+                }
+            } else {
+                $message = "A kép betöltése nem lehetséges!";
+            }
+
+
+            $html.= "<div style='background:#eee;border:10px solid white;'>";
+
+            $html.= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+            $html.= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-print'></i>&nbsp;&nbsp;Kép kivágás</div>";
+            $html.= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+            $html.= "</div>";
+
+            $html.= "<div style='padding:10px;'>";
+            $html.= "<div style='min-height:210px;max-height:700px;max-widht:900px;overflow: auto;'>";
+
+            $html.= "<img id='imagetoedit' style='display: block;max-width:100%;width:1000px;height:700px;' src='{$_REQUEST["imageURL"]}' />";
+            $html.= "</div>";
+
+            $html.= "<div style='margin-top:10px;' id='buttonscontainer'>";
+            $html.= "<a data-dataid='{$dataId}' data-id='{$docId}' onclick='saveCroppedImage(this);return false;' class='printbutton' target='_blank' href='#'>Mentés</a> ";
+            $html.= "<a class='printbutton' onclick='hideGeneralPopup();return false;' href='#'>Bezárás</a> ";
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+            $this->jsonOut(["message" => $message, "html" => $html]);
+        }
+
+        if (isset($_REQUEST["saveCroppedImage"])) {
+            $docId = intval($_REQUEST["docId"]);
+            $imageCropX = intval($_REQUEST["imageCropX"]);
+            $imageCropY = intval($_REQUEST["imageCropY"]);
+            $imageCropWidth = intval($_REQUEST["imageCropWidth"]);
+            $imageCropHeight = intval($_REQUEST["imageCropHeight"]);
+
+            $message = "";
+
+            $docAgent = new DocAgent();
+            if ($imageData = sql_query("select * from dokumentumok where id=?", [$docId])->fetch(PDO::FETCH_ASSOC)) {
+                $imagePath = $docAgent->getAssetImageURL($imageData, true);
+                $originalImagePath = str_replace($imageData["assetid"], $imageData["assetid"]."_original", $imagePath);
+                $execute = "convert {$originalImagePath} -crop {$imageCropWidth}x{$imageCropHeight}+{$imageCropX}+{$imageCropY} {$imagePath}";
+                //$message.= $execute;
+                `{$execute}`;
+            }
+
+            $this->jsonOut(["message" => $message]);
+        }
+
 
         if (isset($_REQUEST["keltexmedstatok"])) {
             $munkakorokContent = file_get_contents(__DIR__."/stathoz_munkakorok.csv");

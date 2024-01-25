@@ -133,7 +133,7 @@ class BookingService
             $this->kiegIds = explode("_", $_GET["kiegChecked"]);
             $this->kiegIds = array_unique($this->kiegIds);
             if (count($this->kiegIds) == 1) {
-                $_GET["szurestipus"] = $this->kiegIds[0];
+                //$_GET["szurestipus"] = $this->kiegIds[0];
             }
         }
     }
@@ -176,6 +176,11 @@ class BookingService
 
         if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
             return json_encode(array("error" => $webText["valassznemet"], "html" => ""));
+        }
+
+        $checkedServices = [];
+        if (!empty($_GET["checkedServices"])) {
+            $checkedServices = explode("_", $_GET["checkedServices"]);
         }
 
         $html .= "<div style='margin:10px 0px 10px 0px;'>";
@@ -221,6 +226,19 @@ class BookingService
                 $orvosData   = sql_query("select * from orvosok where id=?", [$orvosId])->fetch();
                 $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId);
                 $napiBeos    = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvosId);
+
+                $thisServiceIsDisabled = 0;
+                $disabledServices = json_decode($orvosData["disabledservices"], JSON_OBJECT_AS_ARRAY);
+                if (!empty($disabledServices) && !empty($checkedServices)) {
+                    foreach ($checkedServices as $checkedService) {
+                        if (in_array($checkedService, $disabledServices)) {
+                            $thisServiceIsDisabled = $checkedService;
+                        }
+                    }
+                }
+                if ($thisServiceIsDisabled != 0) {
+                    continue;
+                }
 
                 $html .= "<div style='display:table-cell;text-align:center;vertical-align: top;" . ($oKey > 1 ? "padding-left:3px;" : "") . "'>";
 
@@ -911,7 +929,7 @@ class BookingService
         } else {
             if ($isPack && Booking_Constants::SQL_DB == "hungariamed") {
                 //manadzserek cég jelölés, hogy oda csak menedzserek foglalhassanak
-                $wcegSecondary = "|92|";
+                $wcegSecondary = "92";
             }
             $wceg = "AND ((INSTR(b.beocegek, '|{$cegId}|') OR INSTR(b.beocegek, '|{$wcegSecondary}|')) OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))";
         }
@@ -926,8 +944,6 @@ class BookingService
         AND (b.validfrom='0000-00-00' OR b.validfrom<='{$nap}') AND (b.validto='0000-00-00' OR b.validto >='{$nap}')
 		AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1 and o.aktiv=1 {$wnoreservation}
         ORDER BY o.nev, o.onlytel, b.tol";
-
-        //echo $query;die;
 
         $beosztasok = sql_query($query)->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1004,7 +1020,7 @@ class BookingService
                 while ($row = sql_fetch_array($res)) {
                     $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
+                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
                 }
                 $h .= "</div>";
             }
@@ -1054,9 +1070,11 @@ class BookingService
 
         $plusMinute = 0;
         $serviceName = "";
+        $serviceNum = 0;
         $prices = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", ["|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]]);
         foreach ($prices as $price) {
             if (isset($data["altipus{$price["id"]}"])) {
+                $serviceNum++;
                 $price["plusminute"] = $this->plusMinuteDrotozasok($price["plusminute"], $price["id"], $data["orvosselected"]);
                 if ($price["plusminute"] > $plusMinute) {
                     $plusMinute = $price["plusminute"];
@@ -1065,13 +1083,19 @@ class BookingService
             }
         }
 
+        //Dr. Danielisz Zsuszannánál több szolgáltatás választása esetén hosszabb idő foglalás
+        if ($serviceNum > 1 && $plusMinute == 0 && $data["orvosselected"] == 1289 && Booking_Constants::SQL_DB == "hungariamed") {
+            $serviceName = "több";
+            $plusMinute = $data["rinterval"] * 2;
+        }
+
         if ($plusMinute > 0 && !empty($data["datum"]) && !empty($data["rinterval"]) && !empty($data["orvosselected"])) {
             $nap = date("Y-m-d", strtotime($data["datum"]));
             $allInterval = $plusMinute > $data["rinterval"] ? $plusMinute : $data["rinterval"];
             if (sql_fetch_array(sql_query("SELECT id, datum FROM foglalasok WHERE datum>=?
                    AND ((datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE)) OR (datum>=? AND datum<DATE_ADD(?, INTERVAL ? MINUTE)))
                    AND orvosassigned=?", ["{$nap} 00:00:00", $data["datum"], $data["datum"], $data["datum"], $data["datum"], $allInterval, $data["orvosselected"]]))) {
-                $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
+                $result["error"] = "Ha {$serviceName} szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
             }
 
             //utolsó időpont check
@@ -1079,7 +1103,7 @@ class BookingService
                 if ($doctorBeo = $this->beosztasService->getBeosztasDataForDoctor($data["orvosselected"], $nap, $data["helyszin"], $data["szurestipus"])) {
                     $end = date("H:i", strtotime("{$data["datum"]} + {$allInterval} minute"));
                     if (strtotime($end) > strtotime($doctorBeo["ig"])) {
-                        $result["error"] = "Ha \"{$serviceName}\" szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
+                        $result["error"] = "Ha {$serviceName} szolgáltatásunkat választja, olyan időpontot válasszon ahol egyben szabad {$allInterval} perc";
                     }
                 }
             }
@@ -1269,9 +1293,11 @@ class BookingService
 
         //altipusok tárolása
         $rinterval = $data["rinterval"];
+        $serviceNum = 0;
         $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and csomag=0", array("|{$_SESSION["helyszindata"]["id"]}|", $data["szurestipus"]));
         while ($row = sql_fetch_array($res)) {
             if (isset($data["altipus{$row["id"]}"])) {
+                $serviceNum++;
                 $row["plusminute"] = $this->plusMinuteDrotozasok($row["plusminute"], $row["id"], $data["orvosid"]);
                 if ($row["plusminute"] > $rinterval) {
                     $rinterval = $row["plusminute"];
@@ -1279,6 +1305,12 @@ class BookingService
                 }
                 sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", array($fid, $row["id"], $row["megnev"], $row["price"], $row["penznem"]));
             }
+        }
+
+        //Dr. Danielisz Zsuszannánál több szolgáltatás választása esetén hosszabb idő foglalás
+        if ($serviceNum > 1 && $data["orvosid"] == 1289 && Booking_Constants::SQL_DB == "hungariamed") {
+            $rinterval = $data["rinterval"] * 2;
+            sql_query("update foglalasok set rinterval=? where id=? limit 1", [$rinterval, $fid]);
         }
 
         $this->addSubReservation($data, $fid);
@@ -1915,7 +1947,6 @@ class BookingService
         }
 
         if (CompanyService::isOIF() && $szurestipusid == 1) {
-            //auchan override
             $options = "";
             foreach (self::OIF_SZURESEK as $key => $szures) {
                 $onChange = "clearIdopontValasztoOnly();";
@@ -1930,7 +1961,6 @@ class BookingService
         }
 
         if (CompanyService::isBudapestBrand() && $szurestipusid == 1) {
-            //auchan override
             $options = "";
             foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
                 $onChange = "clearIdopontValasztoOnly();";
@@ -2005,7 +2035,7 @@ class BookingService
         $bestTime = [];
         $bestCheck = 1000000;
         $weekDay = date("N", strtotime($reservationData["datum"]));
-        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=?", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"]]);
+        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=? order by !instr(b.bmegj, 'magán')", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"]]);
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
@@ -2016,6 +2046,10 @@ class BookingService
             while (true) {
                 $addMinute = $o * $beoData["binterval"];
                 $checkTime = date("Y-m-d H:i:s", strtotime("{$startTime} + {$addMinute} minute"));
+
+                if (strtotime($checkTime) > strtotime($lastTime) || $o > 200) {
+                    break;
+                }
 
                 $diff = abs(strtotime($reservationData["datum"]) - strtotime($checkTime));
                 if ($diff < $bestCheck) {
@@ -2032,9 +2066,6 @@ class BookingService
                 }
 
                 $o++;
-                if (strtotime($checkTime) > strtotime($lastTime) || $o > 200) {
-                    break;
-                }
             }
         }
 

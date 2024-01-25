@@ -17,7 +17,7 @@ class ElsosegelyVizsgaPage extends CorePage {
         $this->showMainMenu = false;
         $this->showLangMenu = false;
         $this->lockInPage = true;
-        $this->pageTitle = "Elsősegély teszt - Hungáriamed";
+        $this->pageTitle = "Elsősegély teszt - ".Booking_Constants::COMPANY_NAME_SHORT;
 
         if (isset($_REQUEST["vizsgaformsavedata"])) {
             if (isset($_POST["cegid"])) {
@@ -111,7 +111,7 @@ class ElsosegelyVizsgaPage extends CorePage {
 
     }
 
-    private $users = [
+    private array $users = [
         [
             "username" => "null",
             "password" => "null12345",
@@ -150,9 +150,9 @@ class ElsosegelyVizsgaPage extends CorePage {
         ],
         [
             "username" => "evizsga",
-            "password" => "evizsga443",
-            "validfrom" => "2023-05-23 08:00:00",
-            "validuntil" => "2023-05-26 08:00:00"
+            "password" => "evizsga445",
+            "validfrom" => "2024-01-24 08:00:00",
+            "validuntil" => "2024-02-02 18:00:00"
         ],
     ];
 

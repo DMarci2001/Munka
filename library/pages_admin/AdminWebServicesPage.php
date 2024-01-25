@@ -56,15 +56,63 @@ class AdminWebServicesPage extends AdminCorePage
             die();
         }
 
-        if (isset($_POST["packdatasave"])) {
-            if ($this->adminUser->beallitasWebAdatokAccess()) {
-                sql_query("insert into sitedata set datum=now(), username=?, tipus='packjson', valuetext=?", [$this->adminUser->user["username"], $_POST["packdataeditor"]]);
-            }
+        if (isset($_POST["addmanagerwebitem"])) {
+            $id = intval($_GET["pack"]);
+            $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
+            $packs = json_decode($packData["valuetext"], JSON_OBJECT_AS_ARRAY);
+            $packs["manager1"][$id]["items"][] = ["új elem", ""];
+            $this->savePack($packs);
 
-            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&pack={$_GET["pack"]}");
             die();
         }
 
+        if (isset($_GET["delmanagerwebitem"])) {
+            $deleteKey = intval($_GET["delmanagerwebitem"]);
+            $id = intval($_GET["pack"]);
+            $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
+            $packs = json_decode($packData["valuetext"], JSON_OBJECT_AS_ARRAY);
+            unset($packs["manager1"][$id]["items"][$deleteKey]);
+            $this->savePack($packs);
+
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&pack={$_GET["pack"]}");
+            die();
+        }
+
+        if (isset($_POST["packmentes"])) {
+            if ($this->adminUser->beallitasWebAdatokAccess()) {
+                $id = intval($_GET["pack"]);
+                $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
+                $packs = json_decode($packData["valuetext"], JSON_OBJECT_AS_ARRAY);
+                $pack = $packs["manager1"][$id];
+
+                $pack["name"] = $_POST["name"];
+                $pack["alias"] = $_POST["alias"];
+                $pack["background"] = $_POST["background"];
+                $pack["kategoria"] = $_POST["kategoria"];
+                $pack["price"] = $_POST["price"];
+                $packs["manager1"][$id] = $pack;
+
+                foreach ($pack["items"] as $key => $item) {
+                    if (isset($_POST["itemdescription{$key}"])) {
+                        $itemName = $item[0];
+                        $packs["descriptions"][$itemName] = $_POST["itemdescription{$key}"];
+                        //echo $itemName." ".$_POST["packdescription{$key}"];die;
+                    }
+                }
+
+                $this->savePack($packs);
+            }
+
+            header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&pack={$_GET["pack"]}");
+            die();
+        }
+
+    }
+
+
+    private function savePack($packData):void {
+        sql_query("insert into sitedata set datum=now(), username=?, tipus='packjson', valuetext=?", [$this->adminUser->user["username"], json_encode($packData, JSON_PRETTY_PRINT)]);
     }
 
     public function showPage()
@@ -73,6 +121,67 @@ class AdminWebServicesPage extends AdminCorePage
             echo $this->noPermissionMessage();
             return;
         }
+
+        if (isset($_GET["pack"])) {
+            $id = intval($_GET["pack"]);
+            $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
+            $packs = json_decode($packData["valuetext"], JSON_OBJECT_AS_ARRAY);
+            $pack = $packs["manager1"][$id];
+            $descriptions = $packs["descriptions"];
+
+            $GLOBALS["subtitle"] = $pack["name"];
+
+            echo "<div style='background-color:#fff;padding:0px;'>";
+            echo "<form name='iform' method='post' enctype='multipart/form-data'>";
+            echo "<h2>{$pack["name"]}</h2>";
+
+            echo "<table style='font-size:12px;'>";
+
+            echo "<tr><td>Megnevezés:&nbsp;</td><td><input class='inputbox' style='width:500px;' type='text' name='name' value='{$pack["name"]}'  /></td></tr>";
+            echo "<tr><td>Alias:</td><td><input class='inputbox' style='width:500px;' type='text' name='alias' value='{$pack["alias"]}'  /></td></tr>";
+            echo "<tr><td>Ár:</td><td><input class='inputbox' style='width:100px;' type='text' name='price' value='{$pack["price"]}'  /></td></tr>";
+            echo "<tr><td>Háttérszín:</td><td><input class='inputbox' style='width:100px;' type='text' name='background' value='{$pack["background"]}'  /></td></tr>";
+            echo "<tr><td>Kategória:</td><td><input class='inputbox' style='width:100px;' type='text' name='kategoria' value='{$pack["kategoria"]}'  /></td></tr>";
+
+            echo "<tr><td colspan='2'>&nbsp;</td></tr>";
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Csomag elemei</div></td></tr>";
+            echo "<tr><td colspan='2' valign='top'><input type='submit' name='addmanagerwebitem' value='+ elem hozzáadása'></td></tr>";
+
+            echo "<tr><td colspan='2'>";
+            echo "<table cellpadding='0' cellspacing='0'>";
+
+            $sor = 1;
+            echo "<tr style='font-weight: bold;'>";
+            echo "<td style='padding:5px 0px;'>Megnevezés&nbsp;&nbsp;</td>";
+            echo "<td style='padding:5px 0px;'>Sorrend&nbsp;&nbsp;</td>";
+            echo "<td style='padding:5px 0px;'>&nbsp;</td>";
+            echo "</tr>";
+            foreach ($pack["items"] as $key => $item) {
+                $description = $descriptions[$item[0]] ?? "";
+                echo "<tr>";
+                echo "<td><input type='text' name='megnev{$key}' value='{$item[0]}' style='width:450px;' placeholder='megnevezés' /></td>";
+                echo "<td style='text-align: center;'><input type='text' name='sorrend{$key}' value='{$key}' style='width:14px;' placeholder='sorrend' title='sorrend'/> </td>";
+                echo "<td style='font-size: 14px;'>&nbsp;<a onclick='$(\"#packdescription{$key}\").slideToggle();return false;' href='#'>szöveg</a>&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&pack={$_GET["pack"]}&delmanagerwebitem={$key}' onclick='return confirm(\"Biztos törlöd ezt az elemet?\")'><i class='fas fa-trash'></i></a></td>";
+                echo "</tr>";
+                echo "<tr>";
+                echo "<td colspan='10'><div id='packdescription{$key}' style='display:none;'><textarea class='mce' name='itemdescription{$key}' style='width:550px;height:500px;'>{$description}</textarea></div></td>";
+                echo "</tr>";
+            }
+
+            echo "</table>";
+            echo "</td></tr>";
+
+            echo "<tr><td colspan='2'>&nbsp;</td></tr>";
+            echo "</table>";
+
+            echo "<br><input type='submit' name='packmentes' value='Mentés'> ";
+            echo "<input type='submit' name='scancel' value='Vissza'> ";
+            echo "</form>";
+
+            echo "</div>";
+            return;
+        }
+
 
         if (isset($_GET["szerk"])) {
             $service = sql_fetch_array(sql_query("select * from szurestipusok where id=?", [$_GET["szerk"]]));
@@ -246,7 +355,7 @@ class AdminWebServicesPage extends AdminCorePage
 
 
         echo "<h2>A weboldalon megjelenő szolgáltatások</h2>";
-        echo "<div style='margin:20px 0px;'>".$this->packDataEditor()."</div>";
+        echo "<div style='margin:20px 0px;'>" . $this->packDataEditor() . "</div>";
         echo $kiemeltServicesHTML;
         echo "<hr style='margin:0px 0px 20px 0px;'>";
         echo "<h2>Egyéb, a weboldalon nem használt szolgáltatások</h2>";
@@ -256,16 +365,17 @@ class AdminWebServicesPage extends AdminCorePage
 
     private function packDataEditor():string {
         $html = "";
-
         $packData = sql_query("select * from sitedata where tipus='packjson' order by datum desc limit 1")->fetch(PDO::FETCH_ASSOC);
 
-        $html.= "<div style='margin-bottom: 10px;'>[<a href='#' onclick='$(\"#packdataeditordiv\").slideToggle();return false;'>Csomagok adatai</a>]</div>";
-        $html.= "<div id='packdataeditordiv' style='display:none;'>";
-        $html.= "<form name='iform' method='post' enctype='multipart/form-data'>";
-        $html.= "<textarea id='packdataeditor' name='packdataeditor' style='width:100%;height:500px;'>{$packData["valuetext"]}</textarea>";
-        $html.= "<br><input type='submit' name='packdatasave' value='Mentés'> ";
-        $html.= "<input type='button' name='scancel' value='Vissza' onclick='$(\"#packdataeditordiv\").slideToggle();'> ";
-        $html.= "</form>";
+        $packs = json_decode($packData["valuetext"], JSON_OBJECT_AS_ARRAY);
+
+        $html.= "<div style='margin-bottom: 10px;'>Menedzser csomagok: ";
+        foreach ($packs["manager1"] as $key => $pack) {
+            if ($key != 0) {
+                $html.= "&nbsp;&bull;&nbsp;";
+            }
+            $html.= "<a href='index.php?page={$_GET["page"]}&pack={$key}'>{$pack["name"]}</a>";
+        }
         $html.= "</div>";
 
         return $html;
