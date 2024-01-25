@@ -192,7 +192,7 @@ class DicomService {
         }
 
         if (in_array($this->adminUser->user["username"], ["drkizman", "kizman", "drosvai@t-online.hu"])) {
-            //$w.= " and institutionName<>'Veszprém Mobil'";
+            $w.= " and institutionName<>'Veszprém Mobil'";
             //$w.= " and leletcreatedby<>'Dr. Dánielisz Zsuzsanna'";
         }
 
