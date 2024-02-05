@@ -258,7 +258,10 @@ class AdminBookingEditor {
                 if($this->adminUtils->checkBejelentkezoCegForDokirexCegid($_POST["dokirexcegid"],$_POST["cegid"])!==false){
                     $updatedokirexjson = false;
                 }else{
-                    $updatedokirexjson = true;
+                    if(!$telephelyek = sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE cegid=?",$_POST["cegid"]))){
+                        $updatedokirexjson = true;
+                    }
+                   
                 }
             }else{
                 $updatedokirexjson = false;
