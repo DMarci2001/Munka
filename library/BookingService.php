@@ -1368,10 +1368,19 @@ class BookingService
         }
     }
 
-    public function getDokirexCompanyID($companyId):int {
+    public function getDokirexCompanyID($companyId,$foglalasData):int {
         $dokirexCompanyId = 0;
         if ($companyId != 0) {
+            $resq=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",[$companyId]));
+            $dokirexcegids = json_encode($resq["dokirexcegid_json"],true);
             
+            $dokirexCompanyId = $dokirexcegids[0];
+
+            //Ha van telephelyid akkor nézze meg a cegvars-t és onnan keresse elő a rendszer a rögzített dokirexcegid-t
+            if(isset($foglalasData["telephelyid"]) && !empty($foglalasData["telephelyid"])){
+                $rest = sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$foglalasData["telephelyid"]]));
+                $dokirexCompanyId = $rest["dokirexcegid"];
+            }
         }
 
         return $dokirexCompanyId;
@@ -1408,7 +1417,7 @@ class BookingService
         if (!isset($data["paid"])) $data["paid"] = 0;
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
         if (!isset($data["cegid"])) $data["cegid"] = 0;
-        if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"]);
+        if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"],$data);
 
         sql_query(
             "insert into foglalasok set 
@@ -1452,7 +1461,8 @@ class BookingService
 			exportdata=?,
 			externalid=?,
 			paid=?,
-			pass=?",
+			pass=?,
+            dokirexcegid=?",
             array(
                 $data["parentid"],
                 $data["paciensid"],
@@ -1493,7 +1503,8 @@ class BookingService
                 $data["exportdata"],
                 $data["externalid"],
                 $data["paid"],
-                $data["pass"]
+                $data["pass"],
+                $data["dokirexcegid"]
             )
         );
 

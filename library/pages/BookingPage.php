@@ -1275,11 +1275,11 @@ class BookingPage extends CorePage
                 if ($rowt["selectable"] == 0) {
                     $disabled = "disabled style='background:#888;color:#fff;'";
                 }
-                $html .= "<option {$disabled} value='{$rowt["id"]}'" . ($_POST["selectedtelephely"] == $rowt["id"] || $num == 1 ? " selected" : "") . ">{$rowt["megnev"]}</option>";
+                $html .= "<option {$disabled} value='{$rowt["id"]}'" . (isset($_POST["selectedtelephely"])&&$_POST["selectedtelephely"] == $rowt["id"] || $num == 1 ? " selected" : "") . ">{$rowt["megnev"]}</option>";
 
                 foreach ($this->telephelyek as $telephely) {
                     if ($telephely["parentid"] == $rowt["id"]) {
-                        $html .= "<option value='{$telephely["id"]}'" . ($_POST["selectedtelephely"] == $telephely["id"] || $num == 1 ? " selected" : "") . ">{$telephely["megnev"]}</option>";
+                        $html .= "<option value='{$telephely["id"]}'" . (isset($_POST["selectedtelephely"])&&$_POST["selectedtelephely"] == $telephely["id"] || $num == 1 ? " selected" : "") . ">{$telephely["megnev"]}</option>";
                         if ($num == 1) {
                             $_POST["selectedtelephely"] = $telephely["id"];
                         }
