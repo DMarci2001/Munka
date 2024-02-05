@@ -1057,9 +1057,10 @@ class BookingService
 
     public function plusMinuteDrotozasok($plusMinute, $priceId, $orvosId) {
         if (Booking_Constants::SQL_DB == "hungariamed") {
-            if ($priceId == 120 && $orvosId == 971) {
-                $plusMinute = 60;
-            }
+            //dr kósa duplázás
+            //if ($priceId == 120 && $orvosId == 971) {
+            //    $plusMinute = 60;
+            //}
         }
         return $plusMinute;
     }
@@ -1378,6 +1379,7 @@ class BookingService
 
     public function addReservationQuery($data) {
         if (!isset($data["szulhely"])) $data["szulhely"] = "";
+        if (!isset($data["telephelyid"])) $data["telephelyid"] = "";
         if (!isset($data["telephely"])) $data["telephely"] = "";
         if (!isset($data["anyjaneve"])) $data["anyjaneve"] = "";
         if (!isset($data["torzsszam"])) $data["torzsszam"] = "";
@@ -1416,6 +1418,7 @@ class BookingService
             cegid=?,
             datum=?,
             rinterval=?,
+            telephelyid=?,
             telephely=?,
             helyszinid=?,
             szurestipusid=?,
@@ -1456,6 +1459,7 @@ class BookingService
                 $data["cegid"],
                 $data["datum"],
                 intval($data["rinterval"]),
+                $data["telephelyid"],
                 $data["telephely"],
                 $data["helyszin"],
                 $data["szurestipus"],
@@ -1868,7 +1872,7 @@ class BookingService
 
     const BudapestBrand_SZURESEK = [
         [48, 0, "Laborvizsgálat", "", []],
-        [15,0,"Hasi-és kismedencei ultrahang","",[]],
+        //[15,0,"Hasi-és kismedencei ultrahang","",[]],
         //Menedzser csomag neve: Komplex egészségügyi szűrés - BudapestBrand
     ];
 

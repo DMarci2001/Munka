@@ -124,6 +124,22 @@ function initLaborEditor() {
         })
     });
 
+    $(document).on("change", ".synlabcommcodeinput", function(){
+        let id = $(this).data("id");
+        let code = $(this).val();
+
+        $.ajax({
+            type:"POST",
+            url:"index.php?page=labortetelek",
+            data: {synlabcodeinput:1, id:id, code:code},
+            success: function(response){
+                $.toast({
+                    text: "Kód mentve",
+                    icon: 'success'
+                });
+            }
+        })
+    });
 }
 
 function changeLaborCsomagCompanyShow(id){

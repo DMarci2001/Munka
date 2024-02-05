@@ -157,10 +157,10 @@ Asszisztens
             $html .= "<div style='min-height:210px;overflow: auto;'>";
 
             if (substr_count($requestData["provider"], "@")) {
-                $html.= "<div style='margin: 40px 0px 5px 0px;font-weight: bold;text-align: center'>Synlab esetén a labor kérés adatai<br/>nem elérhetőek</div>";
+                $html.= "<div style='margin: 40px 0px 5px 0px;font-weight: bold;text-align: center'>Email címről letöltött lelet esetén<br/>a labor kérés adatai nem elérhetőek</div>";
             }
 
-            if ($requestData["provider"] == "spektrumlab") {
+            if (in_array($requestData["provider"], [LaborKeroService::LABOR_PROVIDER_SYNLAB, LaborKeroService::LABOR_PROVIDER_SPEKTRUMLAB])) {
                 $items = sql_query("SELECT i.itemid, t.* FROM labrequestitems i LEFT JOIN synlab_labor_tetelek t ON t.id=i.itemid WHERE i.requestid=?", [$id])->fetchAll(PDO::FETCH_ASSOC);
 
                 //$html.= "<div style='margin-bottom: 5px;'><a class='printbutton' target='_blank' onclick='showLaborKeroWin({$requestData["foglalasid"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő megtekintése</a></div>";
@@ -190,7 +190,7 @@ Asszisztens
                 }
 
                 if ($requestData["result"] == 1) {
-                    $html.="<div style='margin:5px 0px;'>Eredmények megérkeztek: {$requestData["resultdate"]}</div>";
+                    $html.="<div style='margin:5px 0px;'>Lelet megérkezett: {$requestData["resultdate"]}</div>";
                 }
             }
 
@@ -426,7 +426,14 @@ Asszisztens
         $html.= "</div>";
 
         foreach ($requests as $request) {
-            $html.= "<div id='requestrow{$request["id"]}' style='display:table-row;".($request["provider"] == "spektrumlab" ? "background:#ffd;":"")."'>";
+            $bg = "#fff";
+            if ($request["provider"] == LaborKeroService::LABOR_PROVIDER_SPEKTRUMLAB) {
+                $bg = "#ffd";
+            }
+            if ($request["provider"] == LaborKeroService::LABOR_PROVIDER_SYNLAB) {
+                $bg = "#e0f3e0";
+            }
+            $html.= "<div id='requestrow{$request["id"]}' style='display:table-row;background:{$bg};'>";
             $html.= $this->labRequestRow($request);
             $html.= "</div>";
         }
@@ -449,7 +456,7 @@ Asszisztens
         $resultDate = date("Y-m-d H:i", strtotime($request["resultdate"]));
         if ($request["resultdate"] == $request["created"]) {
             $resultDate = "Elküldve..<br/>".date("Y-m-d H:i", strtotime($request["created"]));
-            if ($request["spelkuldve"] == 0) {
+            if ($request["spelkuldve"] == 0 && $request["provider"] == LaborKeroService::LABOR_PROVIDER_SPEKTRUMLAB) {
                 $resultDate = "<span style='color:red;'>Nincs elküldve</span><br/>".date("Y-m-d H:i", strtotime($request["created"]));
             }
         }

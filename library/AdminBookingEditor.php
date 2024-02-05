@@ -27,6 +27,12 @@ class AdminBookingEditor {
         $this->notificationService = new NotificationService();
         $this->varoteremService = new VaroteremService();
 
+        if (isset($_POST["setdefaulttelephely"])) {
+            $cegId = $_POST["setdefaulttelephely"];
+            echo $this->telephelySelector($cegId, 0);
+            die;
+        }
+
         if (isset($_GET["showidoponteditor"])) {
             echo $this->_showBookingEditor($_GET["showidoponteditor"], $_GET["p"]);
             die();
@@ -111,6 +117,7 @@ class AdminBookingEditor {
             if (!isset($_POST["testalkat"])) $_POST["testalkat"]=0;
             if (!isset($_POST["dokirexmunkakorid"])) $_POST["dokirexmunkakorid"]=0;
             if (!isset($_POST["dokirexcegid"])) $_POST["dokirexcegid"]=0;
+            if (!isset($_POST["telephelyid"])) $_POST["telephelyid"]=0;
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -127,6 +134,7 @@ class AdminBookingEditor {
                 modifiedtime=now(),
                 orvosassigned=?,
                 cegid=?,
+                telephelyid=?,
                 taj=?,
                 nszam=?,
                 torzsszam=?,
@@ -158,7 +166,7 @@ class AdminBookingEditor {
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
-            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
+            where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), intval($_POST["telephelyid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
                 $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
                 $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
@@ -467,6 +475,36 @@ class AdminBookingEditor {
         return $html;
     }
 
+    private function telephelySelector($selectedCompanyId, $telephelyId):string {
+        $telephelyek = sql_query("select * from cegvars where cegid=? and (placeids<>'' or selectable=0) order by sorrend, megnev", [$selectedCompanyId])->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($telephelyek)) {
+            return "";
+        }
+
+        $html = "";
+        $html .= "<select name='telephelyid' id='telephelyid' style='width:200px;' title='Telephely'>";
+        $html .= "<option value='0'>Telephely?</option>";
+
+        foreach ($telephelyek as $rowt) {
+            if ($rowt["parentid"] == 0) {
+                $disabled = "";
+                if ($rowt["selectable"] == 0) {
+                    $disabled = "disabled style='background:#888;color:#fff;'";
+                }
+                $html .= "<option {$disabled} value='{$rowt["id"]}'" . ($telephelyId == $rowt["id"] ? " selected" : "") . ">{$rowt["megnev"]}</option>";
+
+                foreach ($telephelyek as $telephely) {
+                    if ($telephely["parentid"] == $rowt["id"]) {
+                        $html .= "<option value='{$telephely["id"]}'" . ($telephelyId == $telephely["id"] ? " selected" : "") . ">{$telephely["megnev"]}</option>";
+                    }
+                }
+            }
+        }
+
+        $html .= "</select>";
+        return $html;
+    }
+
     private function doctorSelector($reservationData):string {
         $html = "";
         $nap = substr($reservationData["datum"], 0, 10);
@@ -632,7 +670,10 @@ class AdminBookingEditor {
             $html .= "</tr>";
 
             $html .= "<tr>";
-            $html .= "<td width='64'>Cég:</td><td width='226'>" . $this->companySelector($row["cegid"]) . "</td>";
+            $html .= "<td width='64'>Cég:</td><td width='226'>";
+            $html .= "<div>" . $this->companySelector($row["cegid"]) . "</div>";
+            $html .= "<div id='bookingeditortelephely'>" . $this->telephelySelector($row["cegid"], $row["telephelyid"]) . "</div>";
+            $html .= "</td>";
             $html .= "<td width='64'>Orvos:</td><td>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
 

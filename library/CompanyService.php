@@ -10,6 +10,7 @@ class CompanyService {
     const ASTOTEC_ID        = 664;
     const SUZUKI_ID         = 81;
     const SUZUKI_EGESZSEGUT_ID = 504;
+    const BME_ID            = 851;
 
     public static array $makIds = [4,373, 374, 375, 376];
 
@@ -132,6 +133,10 @@ class CompanyService {
     const BudapestBrand_ID = 840; 
     public static function isBudapestBrand($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "budapestbrand" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
+    public static function isBME($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "bme" || ($companyId == self::BME_ID && Booking_Constants::SQL_DB == "hungariamed");
     }
 
     public static function auchanSingleReservationPlaces():array {

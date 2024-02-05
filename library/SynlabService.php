@@ -1,6 +1,9 @@
 <?php
 
 use mikehaertl\pdftk\Pdf;
+use phpseclib3\Net\SFTP;
+use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\PublicKeyLoader;
 
 class SynlabService
 {
@@ -8,7 +11,8 @@ class SynlabService
 
     public function __construct()
     {
-        
+        $index = Booking_Constants::SQL_DB;
+        $this->params = $this->synLabParams[$index];
     }
 
     public function createLabItem()
@@ -64,7 +68,7 @@ class SynlabService
                 $max = 14;
             }
             echo "<div style=\"display:inline-block;background-color:#088DA5;color:white;float:left;border:1px solid black;margin:2px;min-width:300px;width:24.6%;height:" . ($max * 27) . "px;overflow-y:auto\"><table style=\"display:inline-block;float:left;width:300px\">";
-            echo "<tr><td colspan=\"3\" style=\"font-size:20px;white-space:wrap;\"><strong>{$resc["name"]}</strong>";
+            echo "<tr><td colspan=\"3\" style=\"font-size:20px;white-space:nowrap;\"><strong>{$resc["name"]}</strong>";
 
             //Ha van mennyiség megadási kötelezettség:
 
@@ -573,9 +577,37 @@ class SynlabService
         return $filename;
     }
 
+    public function pdfTeszt() {
+        $result = $this->parsePatientDataFromPDF("/var/pdfwork_hungariamed/mikro.pdf");
+        print_r($result);
+
+        //$config = new \Smalot\PdfParser\Config();
+        //$config->setHorizontalOffset('');
+        //$parser = new \Smalot\PdfParser\Parser([], $config);
+        //$pdf = $parser->parseFile("/var/pdfwork_hungariamed/mikro.pdf");
+        //$text = $pdf->getText();
+        //file_put_contents("/var/pdfwork_hungariamed/mikro2.txt", $text);
+        //die("txt ok");
+
+        die("end\n");
+    }
 
 
     public function downloadSynlabEmails() {
+
+        //$result = $this->parsePatientDataFromPDF("/var/pdfwork_hungariamed/mikro.pdf");
+        //print_r($result);die;
+
+        //$config = new \Smalot\PdfParser\Config();
+        //$config->setHorizontalOffset('');
+        //$parser = new \Smalot\PdfParser\Parser([], $config);
+        //$pdf = $parser->parseFile("/var/pdfwork_hungariamed/mikro.pdf");
+        //$text = $pdf->getText();
+        //file_put_contents("/var/pdfwork_hungariamed/mikro.txt", $text);
+        //die("txt ok");
+
+
+
         $emailConfigs["hungariamed"] = [
             ["email" => "tigazszures@hungariamed.hu", "password" => "Ree8ceix", "emailToCheck" => 100],
             ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 100],
@@ -775,19 +807,19 @@ class SynlabService
 
         if (substr_count($text, "Mikrobiológiai Labor")) {
             //mikrobiológiai lelet
-            $nev = trim(substr($text, strpos($text, "Név:\n") + 5, 100));
+            $nev = trim(substr($text, strpos($text, "Név:") + 5, 100));
             $result["nev"] = substr($nev, 0, strpos($nev, "\n"));
-            $taj = trim(substr($text, strpos($text, "Taj:\n") + 5, 50));
-            $result["taj"] = trim(substr($taj, 0, strpos($taj, "\n")));
-            $szulDatum = trim(substr($text, strpos($text, "Született:\n") + 11, 50));
-            $result["szulDatum"] = date("Y.m.d", strtotime(substr($szulDatum, 0, strpos($szulDatum, "\n"))));
+            $taj = trim(substr($text, strpos($text, "Taj:") + 5, 50));
+            $result["taj"] = trim(substr($taj, 0, strpos($taj, "(")));
+            $szulDatum = trim(substr($text, strpos($text, "Született:") + 11, 50));
+            $result["szulDatum"] = substr($szulDatum, 0, 10);
         }
 
         if (empty($result["nev"])) {
             $nev = substr($text, strpos($text, "Születési id") + 18, 100);
-            $result["nev"] = substr($nev, 0, strpos($nev, "\t"));
+            $result["nev"] = substr($nev, 0, strpos($nev, "\n"));
             $result["taj"] = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
-            $result["szulDatum"] = substr($text, strpos($text, "www.synlab.hu") + 15, 10);
+            $result["szulDatum"] = substr($text, strpos($text, "www.synlab.hu") + 14, 10);
             $result["folyamatban"] = substr_count($text, "Folyamatban") ? 1 : 0;
         }
 
@@ -817,5 +849,214 @@ class SynlabService
         return $result;
     }
 
+
+    private array $synLabParams = [
+        "hungariamed" => [
+            "login" => "hungariamedk",
+            "laborId" => "GLIMS9",
+            "bekuldoKod" => "000000719",
+            "bekuldoNev" => "Hungária Med-M Kft.",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
+            "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
+        ],
+        "hungariamed_suzuki" => [
+            "login" => "hungariamedk",
+            "laborId" => "GLIMS9",
+            "bekuldoKod" => "000000719",
+            "bekuldoNev" => "Hungária Med-M Kft. (Suzuki szűrés)",
+            "inDir"=> "/var/tlink_hungariamed/in/",
+            "outDir" => "/var/tlink_hungariamed/out/",
+            "serviceName" => "/root/commcl/commcl",
+            "orvosNev" => "Dr. Magyar Judit",
+            "orvosPecsetszam" => "44601"
+        ],
+        "keltexmed" => [
+            "login" => "keltexmed",
+            "laborId" => "GLIMS9",
+            "bekuldoKod" => "000000719",
+            "bekuldoNev" => "Keltexmed Kft.",
+            "inDir"=> "/var/tlink_keltexmed/in/",
+            "outDir" => "/var/tlink_keltexmed/out/",
+            "serviceName" => "/var/commcl_keltexmed/commcl",
+            "orvosNev" => "Dr Nagy Károly",
+            "orvosPecsetszam" => "59963"
+        ],
+    ];
+
+    public array $params = [];
+    private SFTP $sftp;
+    private string $sftpConnected = "";
+    private array $folders = ["k" => "hungariamedk", "s" => "hungariameds", "b" => "hungariamedb"];
+
+    const EOF = "\r\n";
+
+    const SYNLAB_PRIVATE_KEY = "-----BEGIN RSA PRIVATE KEY-----MIIEpAIBAAKCAQEAoaNlzEW5Ygt9SmSjCDozNsVr/nf6U7uUdPX5fOGMBEfv4cA5CjuWhSdYVA63FtDd0rHQSJ/fXOMU47LtgztdzSd8PtKzfMpSKaI5z5zGEFCZLcT4YMzPYtc9pSr/5nIjBpqO+C9IezKq/lnHV6Y98vaFBL1R9XxfWAv6Y+4ycMNxJCRKDWuCage2Kt79gTtGsyjzZ/YuTFirhhTRmdRIUFVUzCZ6W4xHITqGn5VuCfmlZDnxo5PisbIDb+OkhPoFCmwxFZIxU2wZlAWVoLEx80ZaXbqsRLIiW0yqnXAaK3LjRg8G8rTO8hR8DA+LqFLY4Z+LuklSwHCTGwF1NdeFBwIDAQABAoIBAQCeA+LMo4zrcFf3lhJbRKo0bSN6DUhG+yXSgXR4xPXgaYL0qroYatBnM2OCKTCLuXxhMTtxA/mUENqnDpBqrmqw2Fz5/XlCEXfpA5KIh7aI1IIq4FgAKbjD4697/GFWo1Xias5BidfNuGa5aIMcCISfNKgtTfcFiaSbqnoJnx7oZFM+GBRdxPnOMayvp3rH5QE9zUMgssq6P215rfx05zEhdHooZu5RB3YxEkgDxBmLU6ugPBYnH20yTo9//ZrzoBF8RcNStZCKfa77oJsByDHKk3hk3svxKLgl9VAviJLfkJToAbwqZWKvv7W/bhDKlujFjeLeA7KzLrTzxP8/tRPBAoGBAPV5sGf94uvBx3+jrnrdIZ8/3lZzhMeE+kYfTp4cMDarmrJIGaXXoZOJufoMXDEMm8aKBjyUXA6vlKZIuqrCjguqfxZT0TGV4ZUPDyB90YRCaYw2d/EOO1iJf1hMN+UVs+OfFjXtKTFupsU5XBWvbTrR2UL0NGJR5e+cTDSuh4ZJAoGBAKiRhZkvzEMmNw8oFwH22FvjLbZLzGk8a3SQnrLU+TfjZFwryZxVzHb7aPxePUrt39EPM+vmfK6FaonlLYDHccFqs6Wt6lmc2NAElrmItGoGEB1paujL5xBXhq8cfRGN3FNaWtLb84xsSqQ0zjcsH6uY7iDVJL5YcoklIaMHcnDPAoGBANMF+Jt9S10mqazVdkIS5Tt0eVtSVVv7ufccJMaRLvVgkk0e5EWIWFNv+5u0knBsCWIk93WOiJDraduE/EudkuT+feAgz95Tnag5WOSypLGRMhEiJfvpIyValkm+w/JAtPNBqKNVLKtdFyrGw520wC7nhWEkc//trcBNWcmUG9dZAoGAJmTWyBhR7u1yVvprmx/tEajBzaagDUwcsXULIHJPvUIGptO2XOxR4LvMosaYMUvS0Zwj2FQsC9gJdxUC8zT6HPK/rjnZicWmwGJ7LhEL/qYY34oWNqXSoC8/Vv0nI2trRnTrAOHmLBKyQYphecGMCRqRClthvhUJKWGSsr5Me5MCgYAbG0Aa8J8ivP1yMeK5UhdiT8PP8sX50hbYEuUddkq+XRxLdumz96NONoyNDZ3LPWZ+CKVPgN4sUDNXFPbMTWxE0WbBPyescm8fZuRwwxgj9P24W9uzS/J0b3s3taW3r5wM6RwCqrKkvVgn/VFZZZT1FA0PMaiWzdVKt48HCq9wdA==-----END RSA PRIVATE KEY-----";
+
+    public function generateHL7FileByRequestId($requestId):string {
+        $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+        $reservationData = sql_query("select f.*, o.nev as orvosnev from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$requestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC);
+        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+        $result = "";
+
+        $login = strtoupper($this->params["login"]);
+        $laborId = $this->params["laborId"];
+        $kuldesDatum = date("YmdHi");
+        $adatBlokkAzonosito = $requestData["id"];
+        $paciensId = trim($reservationData["paciensid"]);
+        $paciensNev = $reservationData["nev"];
+        $paciensAnyjaNeve = $reservationData["anyjaneve"];
+        $paciensSzulDatum = date("Ymd", strtotime($reservationData["szuldatum"]));
+        $paciensGender = $reservationData["neme"] == 1 ? "M" : "F";
+        $paciensAddress = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["utca"]));
+        $paciensCity = Utils::convertAccentsAndSpecialToNormal(trim($reservationData["varos"]));
+        $paciensIrsz = trim($reservationData["irsz"]);
+        $paciensCountry = "HUN";
+        $paciensTAJ = trim($reservationData["taj"]);
+        $orvosId = $this->params["orvosPecsetszam"];
+        $orvosPecsetSzam = $this->params["orvosPecsetszam"];
+        $orvosNev = $this->params["orvosNev"];
+        $bekuldoKod = $this->params["bekuldoKod"];;
+        $bekuldoNev = $this->params["bekuldoNev"];;
+        $naploszam = $requestData["id"];
+        $bekuldesDatum = date("Ymd");
+        $felveteliDatum = date("YmdHi", strtotime($reservationData["datum"]));
+        if ($reservationData["neme"] == 0) {
+            $paciensGender = "X";
+        }
+
+        if ($paciensId == 0) {
+            $paciensId = "f{$paciensTAJ}";
+        }
+
+        $billingMarks = "70";
+        if (false) {
+            $billingMarks = "7";
+        }
+
+        //MSH|^~\&|HIS||GLIMS9||202104011201||ORM^O01|40582|P|2.3|||NE|AL|
+        //PID|||6202090||Teszt^Zsolt|Próba Zsuzsanna|19750831|F|||Aszfaltozott utca 4/A^^Ecser^^2233^HUN|||+36201234567|||||123123123||||Budapest|||HUN||||N|
+        //PV1||O|H100 Vérvételi helység^^^|2|||25152^VendégOrvos~25152|||H0010^001062550||||B^001062550^H100 Vérvételi helység^H0010^25152|||||0|4||||0||||||||||||||||||||202104011155|
+        //ORC|NW|82779^HIS|||||^^^^202104011154^N||202104011155|PEVIK^Péter Viktória|25152^Vendég Orvos||||||||||
+        //OBR|1|82779^HIS||PT2^Protrombin^|||202104011000||||||||||||||
+        //OBR|2|82779^HIS||PROLA^Prolaktin^|||202104011000||||||||||||||
+        //OBX|1|ST|IRDIAG||U9990^Sine morbo||||||
+
+        //MSH - Fejléc
+        $result .= "MSH|^~\&|{$login}||{$laborId}||{$kuldesDatum}||ORM^O01|{$adatBlokkAzonosito}|P|2.3|||NE|AL|".self::EOF;
+        //PID - Betegadatok
+        $result .= "PID|||{$paciensId}|X^HMM{$paciensId}|{$paciensNev}|{$paciensAnyjaNeve}|{$paciensSzulDatum}|{$paciensGender}|||{$paciensAddress}^^{$paciensCity}^^{$paciensIrsz}^{$paciensCountry}||||||||{$paciensTAJ}|||||||{$paciensCountry}||||N".self::EOF;
+        //PV1 - Kérő adatok
+        $result .= "PV1||O|||||{$orvosId}^{$orvosNev}~{$orvosPecsetSzam}|||||||^{$bekuldoKod}^{$bekuldoNev}^||||||{$billingMarks}||||0||||||||||||||||||||{$felveteliDatum}|".self::EOF;
+        //ZPV - További kérő adatok
+        //$result .= "ZPV|||||||||||||||||{$naploszam}||{$bekuldesDatum}".self::EOF;
+        //ZPD - nyomtató paraméterek
+        //$result .= "ZPD|TYPE:EPL2~OFFSX:1110~OFFSY:10|".self::EOF;
+        //ORC - Kérés azonosító
+        //ORC|NW|82779^HIS|||||^^^^202104011154^N||202104011155|PEVIK^Péter Viktória|25152^Vendég Orvos||||||||||
+        $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}||".self::EOF;
+
+        $sor = 1;
+        foreach ($items as $item) {
+            //OBR - Tesztek kérése
+            $result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["commazo"]}^{$item["name"]}^|||||||||||||||||" . self::EOF;
+            //$result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["commazo"]}^{$item["name"]}^||||||{$login}|O" . self::EOF;
+            $sor++;
+        }
+
+        return $result;
+    }
+
+
+    public function connectSFTP($folder):bool {
+        if (empty($this->sftp)) {
+            if ($this->sftpConnected == $folder) {
+                return true;
+            }
+            $rsa = PublicKeyLoader::load(self::SYNLAB_PRIVATE_KEY);
+
+            $sftp = new SFTP('hl7.synlabhungary.hu', 2222);
+            if (!$sftp->login($folder, $rsa)) {
+                return false;
+            }
+            $this->sftp = $sftp;
+            $this->sftpConnected = $folder;
+        }
+        return true;
+    }
+
+    public function batchWriteRequests():void {
+        $folder = $this->folders["k"]; //még csak klinika kémia
+        if ($this->connectSFTP($folder)) {
+            if (!$this->sftp->file_exists("MedOut/".strtoupper($folder).".msg")) {
+                $data = "";
+                $requests = sql_query("select * from labrequests where provider='synlab' and status='waiting' and created>DATE_SUB(NOW(), INTERVAL 1 DAY) order by created limit 10")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($requests as $requestData) {
+                    $data .= $this->generateHL7FileByRequestId($requestData["id"]);
+                    sql_query("update labrequests set status='pending' where id=?", [$requestData["id"]]);
+                }
+                if (!empty($data)) {
+                    $this->sftp->put("MedOut/".strtoupper($folder).".msg", iconv("UTF-8", "ISO-8859-2", $data));
+                    $this->sftp->put("MedOut/".strtoupper($folder).".sem", "");
+                    sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='out', datum=now(), content=?, requestid=0", [$folder, $data]);
+                }
+            }
+        }
+    }
+
+    public function getReceivedAnswer():void {
+        foreach ($this->folders as $folder) {
+            if ($this->connectSFTP($folder)) {
+                $inFileName = "MedIn/" . strtoupper($folder) . ".msg";
+                $inSemaforFileName = "MedIn/" . strtoupper($folder) . ".sem";
+                if ($this->sftp->file_exists($inSemaforFileName) && $this->sftp->file_exists($inFileName)) {
+                    $content = $this->sftp->get($inFileName);
+                    sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='in', datum=now(), content=?", [$folder, $content]);
+                    $this->sftp->delete($inSemaforFileName);
+                    $this->sftp->delete($inFileName);
+                }
+            }
+        }
+    }
+
+    public function processPdfFromMessages($smallOnly = false):void {
+        $tempPdf = "/var/pdfwork/synTemp.pdf";
+        $tempZip = "/var/pdfwork/synTemp.zip";
+        $folder = $this->folders["k"]; //még csak klinika kémia
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider='synlab' and synlabtype=? and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10", [$folder])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($messages as $message) {
+            $lastRequestId = 0;
+            $lastResultDate = "0000-00-00 00:00:00";
+            $rows = explode("\r", $message["content"]);
+            foreach ($rows as $key => $row) {
+                $fields = explode("|", $row);
+                if (trim($fields[0]) == "MSH") {
+                    $lastResultDate = date("Y-m-d H:i:s", strtotime($fields[6]));
+                }
+                if (trim($fields[0]) == "ORC") {
+                    $lastRequestId = intval($fields[2]);
+                }
+                if (substr_count($fields[3], "PDF attachment")) {
+                    $base64Zip = str_replace("^^^Base64^", "", $fields[5]);
+                    file_put_contents($tempZip, base64_decode($base64Zip));
+                    `unzip -o -p {$tempZip} >{$tempPdf}`;
+
+                    $parser = new \Smalot\PdfParser\Parser();
+                    $pdf = $parser->parseFile($tempPdf);
+                    $text = $pdf->getText();
+                    $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
+
+                    $base64Pdf = base64_encode(file_get_contents($tempPdf));
+
+                    //echo "date:{$lastResultDate}, id:{$lastRequestId}\n";
+                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=? where id=?", [$folyamatban, $base64Pdf, $lastResultDate, $lastRequestId]);
+                }
+            }
+
+            sql_query("update labrequestmessages set status='processed' where id=?", [$message["id"]]);
+        }
+    }
 
 }

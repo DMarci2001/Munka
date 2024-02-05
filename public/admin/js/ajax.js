@@ -3722,6 +3722,15 @@ function setDefaultDokirexCegId(cegid){
             initCeglistSelect2(cegid);
         }
     });
+
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: { setdefaulttelephely: cegid },
+        success: function (data) {
+            $("#bookingeditortelephely").html(data);
+        }
+    });
 }
 
 function initCeglistSelect2(cegid){
@@ -4279,6 +4288,15 @@ function setupLaborVizsgalatFilter() {
             $(".laborkerovizsgalatcheck").show();
         }
     });
+
+    /*
+    $('#laborkercsomagcombo').select2({
+        allowClear: true,
+        tags: true,
+        dropdownAutoWidth : true,
+    })
+    */
+
 }
 
 function showSpektrumLabMatricaWin() {
@@ -4438,7 +4456,7 @@ function sendLaborKero() {
     }
 
     $(".laborkerovizsgalatcheck").show();
-    if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a Spektrumlab ügyfélszolgálata tudja módosítani!")) {
+    if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a labor ügyfélszolgálata tudja módosítani!")) {
         return;
     }
 
@@ -4623,14 +4641,16 @@ function saveCroppedImage(el) {
     });
 }
 
-function toggleLaborProvider(fid) {
-    if (!confirm("Biztos labor szolgáltatót váltasz?")) {
-        return;
+function toggleLaborProvider(selection, fid) {
+    if (selection === "") {
+        if (!confirm("Biztos labor szolgáltatót váltasz?")) {
+            return;
+        }
     }
     $.ajax({
         type:"POST",
         url:"index.php?page=booking",
-        data: {toggleLaborProvider:fid},
+        data: {toggleLaborProvider:fid, selection:selection},
         success: function(response){
             showGeneralPopup(response.html);
             setupLaborVizsgalatFilter();

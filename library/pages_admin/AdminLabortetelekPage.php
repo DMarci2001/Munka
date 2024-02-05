@@ -364,6 +364,14 @@ class AdminLabortetelekPage extends AdminCorePage
             die;
         }
 
+        if (isset($_POST["synlabcodeinput"])) {
+            $id = intval($_POST["id"]);
+            $code = $_POST["code"];
+
+            sql_query("update synlab_labor_tetelek set commazo=? where id=?", [$code, $id]);
+            die;
+        }
+
 
         if (isset($_GET["fastlist"])) {
             $packs = sql_query("select * from synlab_labor_csomagok p where aktiv=1 order by p.name")->fetchAll(PDO::FETCH_ASSOC);
@@ -435,6 +443,105 @@ class AdminLabortetelekPage extends AdminCorePage
         return $html;
     }
 
+    private function convertSynlabName($code):string {
+        $code = str_replace(" IgE", "", $code);
+        $code = str_replace(" IgG", "", $code);
+        $code = str_replace("-", "", $code);
+        $code = str_replace(" ", "", $code);
+        $code = str_replace("/ELISA", "", $code);
+        $code = str_replace("/MIF", "", $code);
+        $code = str_replace("/CLIA", "", $code);
+        $code = str_replace("/ELFA", "", $code);
+        $code = str_replace("/CMIA", "", $code);
+        $code = str_replace("/IFA", "", $code);
+        $code = str_replace("/immunoblot", "", $code);
+        $code = str_replace("/recomLine", "", $code);
+        return strtolower($code);
+    }
+
+    private function synLabCodeEditorWindow():string {
+        $html = "<div style='font-size: 18px;margin-bottom: 20px;'>SynLab vizsgálat azonosítók megadása</div>";
+
+
+        $content = file_get_contents(__DIR__."/synlabkodok.csv");
+        $codeTable = [];
+
+        $rows = explode("\n", $content);
+        foreach ($rows as $row) {
+            $fields = explode(";", $row);
+            $kod = $fields[6] ?? "";
+            $nev = $fields[8] ?? "";
+            if (substr_count($kod, "#") || substr_count($kod, "$")) {
+                continue;
+            }
+            $nev =  $this->convertSynlabName($nev);
+            $codeTable[$nev] = $kod;
+        }
+
+        $content = iconv("ISO-8859-2", "UTF-8", file_get_contents(__DIR__."/synlabkodokmikro.csv"));
+
+        $rows = explode("\n", $content);
+        $lastCode = "";
+        foreach ($rows as $row) {
+            $fields = explode(";", $row);
+            $kod = $fields[0] ?? "";
+            $nev = $fields[3] ?? "";
+            if (empty($kod)) {
+                $kod = $lastCode;
+            } else {
+                $lastCode = $kod;
+            }
+            $nev =  $this->convertSynlabName($nev);
+            $codeTable[$nev] = $kod;
+        }
+
+        $lastAppForm = "";
+        $synlabItems = sql_query("select t.*, k.name as kerolap from synlab_labor_tetelek t 
+         LEFT JOIN synlab_labor_kerolapok k ON k.id=t.appform 
+         where provider='synlab' order by appform=0, appform, name")->fetchAll(PDO::FETCH_ASSOC);
+        $html .= "<div style='display:table-cell;vertical-align: top;padding-right: 20px;'>";
+        $html .= "<div style='display:table;'>";
+        foreach ($synlabItems as $synlabItem) {
+            if ($lastAppForm != $synlabItem["kerolap"]) {
+                $lastAppForm = $synlabItem["kerolap"];
+                $html .= "<div style='display:table-row;'>";
+                if (empty($synlabItem["kerolap"])) {
+                    $synlabItem["kerolap"] = "Nem kategorizált";
+                }
+                $html .= "<div style='display:table-cell;font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;margin-bottom:5px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>{$synlabItem["kerolap"]}</div>";
+                $html .= "<div style='display:table-cell;font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'></div>";
+                $html .= "</div>";
+                $html .= "<div style='display:table-row;height:5px;'>";
+                $html .= "</div>";
+            }
+
+            $html .= "<div style='display:table-row;'>";
+            $html .= "<div style='display:table-cell;vertical-align: middle;'>";
+            $html .= "<div>{$synlabItem["name"]}</div>";
+            $html .= "</div>";
+
+            $commAzo = $synlabItem["commazo"];
+            if (empty($commAzo)) {
+                $name = $this->convertSynlabName($synlabItem["name"]);
+                if (isset($codeTable[$name])) {
+                    $commAzo = $codeTable[$name];
+                    sql_query("update synlab_labor_tetelek set commazo=? where id=? limit 1", [$commAzo, $synlabItem["id"]]);
+                }
+            }
+
+            $html .= "<div style='display:table-cell;vertical-align: middle;'>";
+            $html .= "<input class='synlabcommcodeinput' type='text' data-id='{$synlabItem["id"]}' name='itemcode{$synlabItem["id"]}' id='itemcode{$synlabItem["id"]}' value='{$commAzo}' />";
+            $html .= "</div>";
+
+            $html .= "</div>";
+        }
+        $html .= "</div>";
+        $html .= "</div>";
+
+
+        return $html;
+    }
+
     public function showPage()
     {
 
@@ -445,6 +552,11 @@ class AdminLabortetelekPage extends AdminCorePage
 
         if (isset($_GET["parositas"])) {
             echo $this->parositasWindow();
+            return;
+        }
+
+        if (isset($_GET["synlabcodeeditor"])) {
+            echo $this->synLabCodeEditorWindow();
             return;
         }
 

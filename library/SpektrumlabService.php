@@ -82,7 +82,7 @@ class SpektrumlabService {
             $data = $this->generateHL7FileByRequestId($requestData["id"]);
             $this->writeRequestFile($data);
             $this->writeSemaforFile();
-            sql_query("insert into labrequestmessages set tipus='out', datum=now(), content=?, requestid=?", [$data, $requestData["id"]]);
+            sql_query("insert into labrequestmessages set laborprovider='spektrumlab', tipus='out', datum=now(), content=?, requestid=?", [$data, $requestData["id"]]);
         } else {
             return "Laborkérés nem található!";
         }
@@ -110,7 +110,7 @@ class SpektrumlabService {
         if (is_file($inSemaforFileName)) {
             if (is_file($inFileName)) {
                 $content = file_get_contents($inFileName);
-                sql_query("insert into labrequestmessages set tipus='in', datum=now(), content=?", [$content]);
+                sql_query("insert into labrequestmessages set laborprovider='spektrumlab', tipus='in', datum=now(), content=?", [$content]);
             }
             $this->deleteInFiles();
         }
@@ -239,7 +239,7 @@ class SpektrumlabService {
 
     public function processPdfFromMessages($smallOnly = false):void {
         $tempPdf = "/var/pdfwork/spekTemp.pdf";
-        $messages = sql_query("SELECT * FROM labrequestmessages WHERE STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
             $lastRequestId = 0;
             $lastResultDate = "0000-00-00 00:00:00";

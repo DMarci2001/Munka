@@ -69,11 +69,19 @@ class CronService {
 			$foService->retryFailedMessages();
 
             //if (Booking_Constants::SQL_DB == "hungariamed") {
-                $spekrtumLabService = new SpektrumlabService();
-                $spekrtumLabService->getReceivedAnswer();
-                //$spekrtumLabService->fillMissingMessageRequestIds();
-                $spekrtumLabService->processPdfFromMessages();
-            //}
+            $spektrumLabService = new SpektrumlabService();
+            $spektrumLabService->getReceivedAnswer();
+            //$spektrumLabService->fillMissingMessageRequestIds();
+            $spektrumLabService->processPdfFromMessages();
+
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                //synlab feldolgozás
+                $service = new SynlabService();
+                $service->batchWriteRequests();
+                $service->getReceivedAnswer();
+                $service->processPdfFromMessages();
+            }
+
         }
 
         if ($this->interval == "1ora") {
@@ -168,9 +176,11 @@ class CronService {
         //$this->addSyncReservations();
 
         $service = new SynlabService();
-        $result = $service->writeNextRequest(12464);
+        $service->batchWriteRequests();
+        $service->getReceivedAnswer();
+        $service->processPdfFromMessages();
 
-        echo $result."\n";
+        //echo $result."\n";
 
         echo "teszt\n";
         die();

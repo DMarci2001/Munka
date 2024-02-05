@@ -20,7 +20,7 @@ class BookingPage extends CorePage
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
 
-        $this->telephelyek = sql_query("select * from cegvars where cegid=? and placeids<>'' order by megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
+        $this->telephelyek = sql_query("select * from cegvars where cegid=? and (placeids<>'' or selectable=0) order by sorrend, megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET["labcode"])) {
             //labshopból érkezés, labor foglaláshoz irányítás
@@ -408,7 +408,7 @@ class BookingPage extends CorePage
                 $this->errors[] = "{$webText["aszfkotelezo"]}";
             }
 
-            if (isset($_POST["telephely"]) && empty(trim($_POST["telephely"]))) {
+            if (isset($_POST["selectedtelephely"]) && (empty($_POST["selectedtelephely"]) || $_POST["selectedtelephely"] == 0)) {
                 $this->errors[] = "{$webText["telephelykotelezo"]}";
             }
 
@@ -480,6 +480,9 @@ class BookingPage extends CorePage
             //	$this->errors[] ="Már van egy foglalása ".substr($rowe["datum"],0,16)." időpontra. Ha újra szeretne foglalni, kérjük törölje az előző foglalását! <a style='color:#ff0;' href='index.php?page=torles&id={$rowe["id"]}&rk={$rowe["rkod"]}'>Időpont törlése</a>";
             //}
 
+            if (isset($_POST["selectedtelephely"])) {
+                $_POST["telephelyid"] = $_POST["selectedtelephely"];
+            }
             if ($_POST["orvosselected"] != "") {
                 $_POST["orvosid"] = $_POST["orvosselected"];
             }
@@ -1265,12 +1268,26 @@ class BookingPage extends CorePage
 
         $html .= "<select name='selectedtelephely' id='selectedtelephely' onchange='silentBookingPost();'>";
         $html .= "<option value='0'>Válasszon telephelyet!</option>";
+
         foreach ($this->telephelyek as $rowt) {
-            $html .= "<option value='{$rowt["id"]}'" . ($_POST["selectedtelephely"] == $rowt["id"] || $num == 1 ? " selected" : "") . ">{$rowt["megnev"]}</option>";
-            if ($num == 1) {
-                $_POST["selectedtelephely"] = $rowt["id"];
+            if ($rowt["parentid"] == 0) {
+                $disabled = "";
+                if ($rowt["selectable"] == 0) {
+                    $disabled = "disabled style='background:#888;color:#fff;'";
+                }
+                $html .= "<option {$disabled} value='{$rowt["id"]}'" . ($_POST["selectedtelephely"] == $rowt["id"] || $num == 1 ? " selected" : "") . ">{$rowt["megnev"]}</option>";
+
+                foreach ($this->telephelyek as $telephely) {
+                    if ($telephely["parentid"] == $rowt["id"]) {
+                        $html .= "<option value='{$telephely["id"]}'" . ($_POST["selectedtelephely"] == $telephely["id"] || $num == 1 ? " selected" : "") . ">{$telephely["megnev"]}</option>";
+                        if ($num == 1) {
+                            $_POST["selectedtelephely"] = $telephely["id"];
+                        }
+                    }
+                }
             }
         }
+
         $html .= "</select>";
 
         return $html;
