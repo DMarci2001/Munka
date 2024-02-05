@@ -1372,16 +1372,17 @@ class BookingService
         $dokirexCompanyId = 0;
         if ($companyId != 0) {
             $resq=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",[$companyId]));
-            $dokirexcegids = json_encode($resq["dokirexcegid_json"],true);
-            
+            $dokirexcegids = json_decode($resq["dokirexcegid_json"],true);
             $dokirexCompanyId = $dokirexcegids[0];
 
             //Ha van telephelyid akkor nézze meg a cegvars-t és onnan keresse elő a rendszer a rögzített dokirexcegid-t
             if(isset($foglalasData["telephelyid"]) && !empty($foglalasData["telephelyid"])){
                 $rest = sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$foglalasData["telephelyid"]]));
-                $dokirexCompanyId = $rest["dokirexcegid"];
+                $dokirexCompanyId = intval($rest["dokirexcegid"]);
             }
         }
+
+        echo $dokirexCompanyId;
 
         return $dokirexCompanyId;
     }
