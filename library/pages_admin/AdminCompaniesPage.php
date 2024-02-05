@@ -773,64 +773,6 @@ class AdminCompaniesPage extends AdminCorePage
 
 
 
-            echo "<tr><td colspan='2'><div class='tdsepdiv' onClick='$(\"#staff-list-extra-info\").slideToggle();'>Állományi lista</div>";
-            echo "<br><div id='staff-list-extra-info' style='display:none'>";
-            echo "<p>A listának az alábbi sorrendben kell tartalmazza a következő oszlopokat:</p>";
-
-            echo "<p>A csillagos mezők mindenképp kötelezőek, a többi mező opcionális, a listában hagyd üresen az oszlopot amelyiket nem tartalmazza a lista.</p>";
-            echo "</div>";
-            echo "</td></tr>";
-            echo "<tr><td colspan='2' valign='top'>";
-            echo "*Név:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='nev-column' value='A'/>&nbsp;";
-            echo "*TAJ:&nbsp;<input  type='textbox' style='width:16px;text-align:center' id='taj-column' value='B'/>&nbsp;";
-            echo "*Szül. dátum:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='szuldatum-column' value='D'/>&nbsp;";
-            echo "Szül. hely:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='szulhely-column' value='C'/>&nbsp;";
-            echo "Anyja neve:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='anyjaneve-column' value='E'/>&nbsp;";
-            echo "Lakcím:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='lakcim-column' value='H'/>&nbsp;";
-            echo "E-mail:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='email-column' value='I'/>&nbsp;";
-            echo "Tel1:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='tel1-column' value='J'/>&nbsp;";
-            echo "Tel2:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='tel2-column' value='K'/>&nbsp;";
-            echo "Szerv. egység:&nbsp;<input type='textbox' style='width:16px;text-align:center' id='szerv-column' value='F'/>";
-            echo "<br><br>";
-            echo "ÚJ állományi lista hozzáadása: <input type='file' name='staff-list-file' onChange='readExcel();return false' id='staff-list-file'/><span id='excel_loading'></span>";
-            //echo "<input type='submit' name='addstafflist' value='Lista hozzáadása'>";
-
-            echo "</td></tr>";
-            echo "<tr><td colspan='2'><div id='excel-processing-result'></div></td></tr>";
-
-            $staffListRequest = sql_query("SELECT * FROM allomanyi_listak WHERE cegid=? or parentid=?", array($_GET["szerk"], $_POST["parentid"]));
-
-            if (sql_num_rows($staffListRequest) > 0) {
-
-                while ($staffResult = sql_fetch_array($staffListRequest)) $staffData[] = $staffResult;
-
-                echo "<tr><td colspan='2'><div>";
-                echo "<p>Állomány: " . count($staffData) . " fő&nbsp;&nbsp;<input type='button' onClick='$(\"#staff-list-container\").toggle();' value='Lista megtekintése'></p>";
-                echo "</div></td></tr>";
-
-                echo "<tr><td colspan='2'><div id='staff-list-container' style='display:none;'><br>";
-                echo "<span style='font-weight:bold'>Keresés: </span>";
-                echo "<input class='design-put' type='textbox' id='staff-list-search-bar' onkeyup='Staff_List_Searching({$_GET["szerk"]},$(this).val(),$(\"#staff-list-filter-by-organization\").val())' title='Név,TAJ,E-mail,szül.dátum..'  placeholder='Név,TAJ,E-mail,szül.dátum...' value='' />";
-                echo "<span id='staff-list-search-bar-loading'></span>&nbsp;&nbsp;";
-                echo "<select class='design-put' id='staff-list-filter-by-organization' onChange='Staff_List_Filtering({$_GET["szerk"]},$(\"#staff-list-search-bar\").val(),$(this).val())'>";
-                echo "<option value=0> - Válassz! - </option>";
-                $szervq = sql_query("SELECT * FROM cegvars WHERE cegid=? OR parentid=? ORDER BY megnev ASC", array($_GET["szerk"], $_POST["parentid"]));
-                while ($szerv = sql_fetch_array($szervq)) {
-                    echo "<option value='{$szerv["id"]}'>{$szerv["megnev"]}</option>";
-                }
-                echo "</select>";
-                echo "<span id='staff-list-filter-loading'></span>&nbsp;&nbsp;";
-                echo "<div style='display:inline-block;border:0px solid #888;background-color:#aaa;padding:5px 10px;font-size:14px;color:#fff;cursor:pointer;border-radius:5px;transition:all .1s linear'><img src='https://dokirex.hu/favicon.ico'/>&nbsp;Dokirex adat importálás</div>&nbsp;&nbsp;";
-                echo "<div style='display:inline-block;border:0px solid #888;background-color:#a00;padding:5px 10px;font-size:14px;color:#fff;cursor:pointer;border-radius:5px;transition:all .1s linear'><img src='images/trash.png'/>&nbsp;Kijelölt sorok törlése</div>&nbsp;&nbsp;";
-                echo "<div style='display:inline-block;border:0px solid #888;background-color:#41b6c6;margin-top:-1px;padding:6.5px 10px;font-size:14px;color:#fff;cursor:pointer;border-radius:5px;transition:all .1s linear'><i class=\"fas fa-cloud-upload-alt\"></i>&nbsp;Új belépők importálása</div>";
-
-                echo "<div id='staff-list-box'>";
-                echo $this->show_allomanyi_lista($_GET["szerk"]);
-                echo "</div>";
-                echo "</div></td></tr>";
-            }
-
-
             //Itt meg kell jelenítenem az értesítő üzeneteket...
             //Legördülő listából kellene kiválasztani az aktuálisan szerkeszthető üzeneteket
             //Az új hozzáadása meg egy + gomb lenne a lista mellett közvetlen
@@ -840,97 +782,43 @@ class AdminCompaniesPage extends AdminCorePage
             //meg lehetne csinálni a kövekező sablonokat/cég
 
 
-            echo "<tr><td colspan='2'><div class='tdsepdiv'>Értesítő üzenetek</div></td></tr>";
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Telephelyek / Szervezteti egységek</div></td></tr>";
             //kell egy lekérdezés, amivel megszerzem az értesítő üzeneteket
-            $notificationsData = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=? ORDER BY targy ASC", array($_GET["szerk"]));
-            $selectedNotification = null;
-            $notificationExist = false;
-            echo "<tr><td colspan='2'><div id='notification-editor-container'>";
-            echo "<select id='notification-selector' onChange='Load_Notification_Message($(this).val(),{$_GET["szerk"]})'>";
-            while ($notificationSelect = sql_fetch_array($notificationsData)) {
-                $notificationExist = true;
-                if (empty($selectedNotification)) {
-                    $selectedNotification = $notificationSelect;
+            echo "<tr><td colspan='2'><div>";
+            echo "<input type='button' name='set-new-notification-message' onClick='' value='+ Hozzáadás'>";
+            echo "<div>";
+            echo "<table>";
+            $telephelyek= $this->utils->getCegTelephelyCsoportok($_GET["szerk"]);
+            $sor = 0;
+            $q=sql_query("SELECT * FROM cegvars WHERE cegid=?",[$_GET["szerk"]]);
+            while($resq=sql_fetch_array($q)){
+                $sor++;
+                echo "  <tr>";
+                echo "      <td><select name=\"telephely_parentid{$sor}\" style=\"width:200px\">";
+                echo "          <option value=\"0\" ".($resq["parentid"]==0?"selected=\"true\"":"").">Csoport</option>";
+                foreach($telephelyek as $telephely){
+                    echo "      <option ".($telephely["id"]==$resq["parentid"]?"selected=\"true\"":"")." value=\"{$telephely["id"]}\">{$telephely["name"]}</option>";
                 }
-                echo "<option value='{$notificationSelect["id"]}'>{$notificationSelect["megnev"]}</option>";
-            }
-            if ($notificationExist == false) {
-                echo "<option disabled='true' selected='true'>Nincs még üzenet beállítva</option>";
-            }
-            echo "</select>&nbsp;&nbsp;";
-            if ($notificationExist == true) {
-                echo "<input type='button' name='edit-notification-message' onClick='Edit_Notification_Message($(\"#notification-selector\").val())'  value='</> Üzenet szeresztése'>&nbsp;&nbsp;";
-                echo "<input type='button' name='delete-notification-message' onClick='Delete_Notification_Message($(\"#notification-selector\").val())'  value='- Üzenet törlése'>&nbsp;&nbsp;";
-            }
-            echo "<input type='button' name='set-new-notification-message' onClick='New_Notification_Message({$_GET["szerk"]})' value='+ Értesítő üzenet hozzáadása'>";
+                echo "      </select></td>";//Parentid helye
+                echo "      <td><input type=\"textbox\" value=\"{$resq["megnev"]}\" name=\"telephely_megnev{$sor}\" style=\"width:400px\"></td>";//Szervezeti egység neve
+                echo "      <td>".($resq["parentid"]!=0?$this->adminUtils->ceglista($resq["dokirexcegid"], null,"onChange='setTelephelyDokireId({$resq["id"]},$(this).val())'"):"")."</td>";//Selectable értéke (egyenlőre nemtudom miez)
+                echo "      <td id=telephelyhelyszingomb{$resq["id"]}>".$this->utils->showTelephelyHelyszinek($resq)."</td>";//Helyszínek amik meg jelennek ezalatt a szervezeti egység alatt
+                echo "      <td id=telephszurestipusgomb{$resq["id"]}>".$this->utils->showSzurestipusok($resq)."</td>";//Vizsgálat típusok amiket elláthatunk itt
 
-            if ($notificationExist == true) {
-                $notificationEditorStyle = "width:800px;border:1px solid #a3a3a3;padding:5px;margin-top:10px";
-            } else {
-                $notificationEditorStyle = "width:800px;padding:5px;margin-top:10px";
+                echo "  </tr>";
+                echo "  <tr>";
+                echo "      <td colspan=\"5\"><div id=\"helyszinvalaszto{$resq["id"]}\"></div></td>";
+                echo "  </tr>";
+                echo "  <tr>";
+                echo "      <td colspan=\"5\"><div id=\"szuresvalaszto{$resq["id"]}\"></div></td>";
+                echo "  </tr>";
             }
-
-            echo "<div id='notification-editor' style='{$notificationEditorStyle}'>";
-            if ($notificationExist == true) {
-                echo "<p style='font-size:16px'><strong>Tárgy:</strong>&nbsp;&nbsp;" . $selectedNotification["targy"] . "</p><hr><br><br>";
-                echo $selectedNotification["szoveg"];
-            }
-
+            
+            echo "</table>";
             echo "</div>";
             echo "</div></td></tr>";
 
-            echo "<tr><td colspan='2'><div class='tdsepdiv'>Egyéni értésítési lista készítése</div></td></tr>";
-
-
-            echo "<tr><td colspan='2'><div>";
-            echo "<select name='notification-list-type'>";
-            echo "<option value='by_fitness_expire'>Alkalmassági idő szerint</option>";
-            echo "<option value='by_excel_list'>Excel lista szerint</option>";
-            echo "<option value='by_organizational_units'>Szervezeti egység szerint</option>";
-            echo "</select>&nbsp;&nbsp;";
-            echo "<button type='submit' name='create-notification-list' >Lista hozzáadása</button>";
-            echo "</div></td></tr>";
-
             echo "<tr><td colspan='2'></td></tr>";
-
-            $lista_tipusok = array(
-                "by_fitness_expire" => "Alkalmassági idő szerint",
-                "by_excel_list" => "Excel lista szerint",
-                "by_organizational_units" => "Szervezeti egység szerint"
-            );
-
-            $eelq = sql_query("SELECT * FROM egyeni_ertesitesi_listak WHERE cegid=?", array($_GET["szerk"]));
-            while ($eel = sql_fetch_array($eelq)) {
-
-                $szervek = json_decode($eel["szervek"], true);
-
-                echo "<tr><td colspan='2'><div><form id='{$eel["id"]}' method='post'>";
-                echo "<input type='textbox' disabled='true' value='{$lista_tipusok[$eel["tipus"]]}'>&nbsp;&nbsp;";
-                echo "<button class='tlink' style='cursor:pointer;backgroun-color:white' id='{$eel["id"]}-organizational-list' type='button' onClick='Show_Organizational_List({$_GET["szerk"]},{$eel["id"]})'>" . (!empty($szervek) ? count($szervek) . " egység" : "0 egység") . "</button>";
-
-                if (empty($eel["elesitve"])) {
-                    echo "<input type='button' onClick='Save_Custom_Notification_List({$eel["id"]})' value='Mentés'/>&nbsp;&nbsp;";
-                    echo "<input type='button' onClick='Delete_Custom_Notification_List({$eel["id"]})' value='Törlés'/>&nbsp;&nbsp;";
-                    echo "<input type='button' onClick='Inicialize_Custom_Notification_List({$eel["id"]})' value='Rögzítés'/><br><br>";
-                } else {
-                    echo "&nbsp;&nbsp;<span style='border:1px solid #a3a3a3;padding:3px;font-weight:bold'>Élesítve: {$eel["elesitve"]}</span><br><br>";
-                }
-
-
-                echo "<div id='{$eel["id"]}-szervek' style='width:800px'></div>";
-
-                echo "<input type='textbox' id='{$eel["id"]}-megnev' value='{$eel["megnev"]}'>&nbsp;&nbsp;";
-                echo "<select id='{$eel["id"]}-uzenet'>";
-                $uzenetek = sql_query("SELECT * FROM ertesito_uzenetek WHERE cegid=?", array($_GET["szerk"]));
-                while ($uzenet = sql_fetch_array($uzenetek)) {
-                    echo "<option " . ($eel["uzenetid"] == $uzenet["id"] ? "selected='true'" : "") . " value='{$uzenet["id"]}'>{$uzenet["megnev"]}</option>";
-                }
-                echo "</select>&nbsp;&nbsp;<input type='button' onClick='Show_Affected_Staff({$eel["id"]})' value='Értesítési lista' />";
-                echo "<div id='{$eel["id"]}-staff-list' style='width:800px'></div>";
-                echo "<p>Megjegyzés:</p><textarea id='{$eel["id"]}-leiras' style='width:800px;height:80px;'>{$eel["leiras"]}</textarea>";
-
-                echo "</form></div></td></tr>";
-            }
 
 
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Nincs foglalás szöveg</div></td></tr>";

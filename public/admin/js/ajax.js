@@ -3702,6 +3702,17 @@ function setCegBubble(cid,dokirexcegid,res){
     });
 }
 
+function setTelephelyDokireId(telephelyid,dokirexcegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {setTelephelyDokireId:true,telephelyid:telephelyid,dokirexcegid:dokirexcegid},
+        success: function (response) {
+            console.log(response);
+        }
+    });
+}
+
 function setDefaultDokirexCegId(cegid){
     $.ajax({
         type: "POST",
@@ -4630,3 +4641,63 @@ function toggleLaborProvider(fid) {
         }
     })
 }
+
+function showTelephelyHelyszinValaszto(telephelyid){
+    if($("#helyszinvalaszto"+telephelyid).children().length>0){
+        $("#helyszinvalaszto"+telephelyid).empty();
+        return;
+    }
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        data: {showTelephelyHelyszinValaszto:telephelyid},
+        success: function(response){
+            $("#helyszinvalaszto"+telephelyid).html(response);
+        }
+    })
+}
+
+function selectTelephelyHelyszin(telephelyid,helyszinid){
+    $.ajax({
+        type:"POST",
+        dataType:"json",
+        url:"index.php",
+        data: {selectTelephelyHelyszin:true,telephelyid:telephelyid,helyszinid:helyszinid},
+        success: function(response){
+            $("#helyszinvalaszto"+telephelyid).html(response.selector);
+            $("#telephelyhelyszingomb"+telephelyid).html(response.button);
+        }
+    })
+}
+
+function showTelephelySzurestipusValaszto(telephelyid){
+    if($("#szuresvalaszto"+telephelyid).children().length>0){
+        $("#szuresvalaszto"+telephelyid).empty();
+        return;
+    }
+
+
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        data: {showTelephelySzurestipusValaszto:telephelyid},
+        success: function(response){
+            $("#szuresvalaszto"+telephelyid).html(response);
+
+        }
+    })
+}
+
+function selectTelephelySzurestipus(telephelyid,szurestipusid){
+    $.ajax({
+        type:"POST",
+        dataType:"json",
+        url:"index.php",
+        data: {selectTelephelySzurestipus:true,telephelyid:telephelyid,szurestipusid:szurestipusid},
+        success: function(response){
+            $("#szuresvalaszto"+telephelyid).html(response.selector);
+            $("#telephszurestipusgomb"+telephelyid).html(response.button);
+        }
+    })
+}
+

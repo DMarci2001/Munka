@@ -1004,6 +1004,88 @@ class AdminAjaxService {
             die;
         }
 
+        if(isset($_POST["showTelephelyHelyszinValaszto"])){
+            $telephelyid=$_POST["showTelephelyHelyszinValaszto"];
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+            if($telephely["parentid"]==0) die();
+            $utils = new Utils();
+            die($utils->showTelephelyHelyszinValaszto($telephely));
+        }
+
+        if(isset($_POST["showTelephelySzurestipusValaszto"])){
+         
+            $telephelyid=$_POST["showTelephelySzurestipusValaszto"];
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+            if($telephely["parentid"]==0) die();
+            $utils = new Utils();
+            die($utils->showTelephelySzurestipusValaszto($telephely));
+        }
+
+        if(isset($_POST["selectTelephelyHelyszin"])){
+            $telephelyid=$_POST["telephelyid"];
+            $helyszinid=$_POST["helyszinid"];
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+            if($telephely["parentid"]==0) die();
+            $helyszinek = json_decode($telephely["placeids"]);
+            $index = array_search($helyszinid,$helyszinek);
+
+            //Ha már benne van akkor törlöm
+            if($index!==false){
+                unset($helyszinek[$index]);
+                $helyszinek = array_values($helyszinek);
+                sql_query("UPDATE cegvars SET placeids=? WHERE id=? AND cegid=?",[json_encode($helyszinek,true),$telephely["id"],$telephely["cegid"]]);
+            }else{
+                //Ha nincs, akkor házzadom :)
+                $helyszinek[] = $helyszinid;
+                sql_query("UPDATE cegvars SET placeids=? WHERE id=? AND cegid=?",[json_encode($helyszinek,true),$telephely["id"],$telephely["cegid"]]);
+            }
+            $utils = new Utils();
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+            die(json_encode(
+                array(
+                    "selector"=>$utils->showTelephelyHelyszinValaszto($telephely),
+                    "button"=>$utils->showTelephelyHelyszinek($telephely)
+                )));
+        }
+
+        if(isset($_POST["selectTelephelySzurestipus"])){
+            $telephelyid=$_POST["telephelyid"];
+            $szurestipusid=$_POST["szurestipusid"];
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+            if($telephely["parentid"]==0) die();
+            $szuresek = json_decode($telephely["szurestipusids"]);
+            $index = array_search($szurestipusid,$szuresek);
+
+            //Ha már benne van akkor törlöm
+            if($index!==false){
+                unset($szuresek[$index]);
+                $szuresek = array_values($szuresek);
+                sql_query("UPDATE cegvars SET szurestipusids=? WHERE id=? AND cegid=?",[json_encode($szuresek,true),$telephely["id"],$telephely["cegid"]]);
+            }else{
+                //Ha nincs, akkor házzadom :)
+                $szuresek[] = $szurestipusid;
+                sql_query("UPDATE cegvars SET szurestipusids=? WHERE id=? AND cegid=?",[json_encode($szuresek,true),$telephely["id"],$telephely["cegid"]]);
+            }
+            $utils = new Utils();
+            $telephely=sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE id=?",[$telephelyid]));
+
+            die(json_encode(
+                array(
+                    "selector"=>$utils->showTelephelySzurestipusValaszto($telephely),
+                    "button"=> $utils->showSzurestipusok($telephely)
+                )));
+        }
+
+        if(isset($_POST["setTelephelyDokireId"])){
+            /*echo "<pre>";
+            print_r($_POST);
+            echo "</pre>";*/
+            if(empty($_POST["dokirexcegid"])) $_POST["dokirexcegid"] = null;
+            sql_query("UPDATE cegvars SET dokirexcegid=? WHERE id=?",[$_POST["dokirexcegid"],$_POST["telephelyid"]]);
+            die();
+        }
+
+
         new LaborKeroService();
         new InvoiceService();
     }

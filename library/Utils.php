@@ -1050,4 +1050,74 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'Vevőkapcsolattartó',
     ];
 
+    public function getCegTelephelyCsoportok($cegid){
+        $telephelyek= [];
+        $q= sql_query("SELECT * FROM cegvars WHERE cegid=? AND parentid=0",[$cegid]);
+        while($res=sql_fetch_array($q)) $telephelyek[] = array("id"=>$res["id"],"name"=>$res["megnev"]);
+        return $telephelyek;
+    }
+
+    public function showTelephelyHelyszinek($cegvarRow){
+        $h = "";
+        if($cegvarRow["parentid"]==0) return "";
+        $placeids = json_decode($cegvarRow["placeids"],true);
+        if(!empty($placeids)){
+        $h=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(cim) as cimek FROM helyszinek WHERE id IN(".implode(",",$placeids).")"));
+        }
+        $html = "<span id=\"helyszinstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"".(isset($h["cimek"])?$h["cimek"]:"")."\" onclick='showTelephelyHelyszinValaszto({$cegvarRow["id"]});return false;'>".count($placeids)." Helyszín</a></span>";
+        return $html;
+    }
+
+    public function showSzurestipusok($cegvarRow){
+        $h = "";
+        if($cegvarRow["parentid"]==0) return "";
+        $szurestipusids = json_decode($cegvarRow["szurestipusids"],true);
+        if(!empty($szurestipusids)){
+            $h=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev) as szuresek FROM szurestipusok WHERE id IN(".implode(",",$szurestipusids).")"));
+        }
+        $html = "<span id=\"szuresstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"".(isset($h["szuresek"])?$h["szuresek"]:"")."\" onclick='showTelephelySzurestipusValaszto({$cegvarRow["id"]});return false;'>".count($szurestipusids)." Típus</a></span>";
+        
+        
+        return $html;
+    }
+
+    public function showTelephelyHelyszinValaszto($telephely){
+        $html = "";
+        $telephelyek = json_decode($telephely["placeids"]);
+
+            $q=sql_query("SELECT beo.helyszinid,h.cim FROM orvos_beosztas_new beo
+                                LEFT JOIN helyszinek h ON h.id=beo.helyszinid
+                                WHERE INSTR(beo.beocegek,\"|{$telephely["cegid"]}|\") GROUP BY beo.helyszinid");
+            $html.= "<div class=\"width:1000px;padding:4px 0px;\">";
+            while($helyszin=sql_fetch_array($q)){
+                $onClick = "onClick='selectTelephelyHelyszin({$telephely["id"]},{$helyszin["helyszinid"]})'";
+                $html.= "<a style=\"cursor:pointer\" {$onClick} class=\"".(in_array($helyszin["helyszinid"],$telephelyek)?"serviceselected":"servicenotselected")."\">";
+                $html.= $helyszin["cim"];
+                $html.= "</a>&nbsp;";
+            }
+            $html.= "</div>";
+
+            return $html;
+    }
+
+    public function showTelephelySzurestipusValaszto($telephely){
+        $html = "";
+        $szuresek = json_decode($telephely["szurestipusids"]);
+
+            $q=sql_query("SELECT sz.id,sz.megnev FROM szurestipusok sz
+                         LEFT JOIN orvos_beosztas_new beo ON INSTR(beo.tipusok,CONCAT(\"|\",sz.id,\"|\"))
+                         WHERE INSTR(beo.beocegek,CONCAT('|',".$telephely["cegid"].",'|')) GROUP BY sz.id");
+
+            $html.= "<div class=\"width:1000px;padding:4px 0px;\">";
+            while($szures=sql_fetch_array($q)){
+                $onClick = "onClick='selectTelephelySzurestipus({$telephely["id"]},{$szures["id"]})'";
+                $html.= "<a style=\"cursor:pointer\" {$onClick} class=\"".(in_array($szures["id"],$szuresek)?"serviceselected":"servicenotselected")."\">";
+                $html.= $szures["megnev"];
+                $html.= "</a>&nbsp;";
+            }
+            $html.= "</div>";
+
+            return $html;
+    }
+
 }
