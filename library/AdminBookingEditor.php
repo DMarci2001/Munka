@@ -118,6 +118,9 @@ class AdminBookingEditor {
             if (!isset($_POST["dokirexmunkakorid"])) $_POST["dokirexmunkakorid"]=0;
             if (!isset($_POST["dokirexcegid"])) $_POST["dokirexcegid"]=0;
             if (!isset($_POST["telephelyid"])) $_POST["telephelyid"]=0;
+            if (!isset($_POST["alkalmassagikhet"])) $_POST["alkalmassagikhet"]=0;
+            if (!isset($_POST["alkalmassagkorl"])) $_POST["alkalmassagkorl"]=0;
+            
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
 
@@ -258,8 +261,10 @@ class AdminBookingEditor {
                 if($this->adminUtils->checkBejelentkezoCegForDokirexCegid($_POST["dokirexcegid"],$_POST["cegid"])!==false){
                     $updatedokirexjson = false;
                 }else{
-                    if(!$telephelyek = sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE cegid=?",$_POST["cegid"]))){
+                    if(!$telephelyek = sql_fetch_array(sql_query("SELECT * FROM cegvars WHERE cegid=?",[$_POST["cegid"]]))){
                         $updatedokirexjson = true;
+                    }else{
+                        $updatedokirexjson = false;
                     }
                    
                 }
