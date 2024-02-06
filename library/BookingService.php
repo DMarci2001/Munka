@@ -993,7 +993,7 @@ class BookingService
     public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]) {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
-        
+
         $h = "";
         if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0 and (helyszinid=? or helyszinid=0)", [$cegid, $tid,$helyszinId]))) {
             if (!empty(trim($row["megj"]))) {
@@ -1376,7 +1376,11 @@ class BookingService
         if ($companyId != 0) {
             $resq=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",[$companyId]));
             $dokirexcegids = json_decode($resq["dokirexcegid_json"],true);
-            $dokirexCompanyId = $dokirexcegids[0];
+           
+            //Csak akkor küldjön vissza bármit is, hogyha nem üres
+            if(!empty($dokirexcegids)){
+                $dokirexCompanyId = $dokirexcegids[0];
+            }
 
             //Ha van telephelyid akkor nézze meg a cegvars-t és onnan keresse elő a rendszer a rögzített dokirexcegid-t
             if(isset($foglalasData["telephelyid"]) && !empty($foglalasData["telephelyid"])){
