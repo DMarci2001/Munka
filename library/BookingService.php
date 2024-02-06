@@ -1388,9 +1388,6 @@ class BookingService
                 $dokirexCompanyId = intval($rest["dokirexcegid"]);
             }
         }
-
-        echo $dokirexCompanyId;
-
         return $dokirexCompanyId;
     }
 
