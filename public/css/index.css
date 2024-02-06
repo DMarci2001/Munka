@@ -1050,15 +1050,19 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbutton_hungariamed {
-    position:absolute;
+    /*position:absolute;*/
     border-radius: 3px;
-    bottom:20px;
-    left: 25px;
+    /*bottom:20px;
+    left: 50%;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
     box-sizing: border-box;
     background: #aaa;
+    width:150px
+    
+    /*margin-top:20px;*/
+
 }
 
 .vizsgalatdobozbutton_hungariamed:hover {
@@ -1066,15 +1070,16 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbutton_keltexmed {
-    position:absolute;
+    /*position:absolute;*/
     border-radius: 3px;
-    bottom:20px;
-    left: 25px;
+    /*bottom:20px;
+    left: 25px;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
     box-sizing: border-box;
     background: #318bb4;
+    width:150px
 }
 
 .vizsgalatdobozbutton_keltexmed:hover {
@@ -1082,15 +1087,16 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbuttonwebdoctor {
-    position:absolute;
+    /*position:absolute;*/
     border-radius: 3px;
-    bottom:20px;
-    left: 25px;
+    /*bottom:20px;
+    left: 25px;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
     box-sizing: border-box;
     background: #c02a2a;
+    width:150px;
 }
 
 .vizsgalatdobozbuttonwebdoctor:hover {

@@ -53,7 +53,7 @@ class CorePage {
         if ($this->isExtendedForm() && !isset($_SESSION["user"])) {
             $html = "<div style='display:table;width:100%;padding-bottom:10px;'>";
             $html.= "<div class='fejlecdiv_".Booking_Constants::SQL_DB."'>";
-            $html.= "<div class='inner_text_".Booking_Constants::SQL_DB."'>".strtoupper(str_replace("á", "Á", Booking_Constants::COMPANY_NAME_SHORT))."<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>Küldetésünk az egészség!</span></div><br/>";
+            $html.= "<div class='inner_text_".Booking_Constants::SQL_DB."'>".strtoupper(str_replace("á", "Á", Booking_Constants::COMPANY_NAME_SHORT))."<br/><span style='font-size:16px;font-family:robotoregular;color:#666;'>{$webText["kuldetes_slogen"]}</span></div><br/>";
             $html.= "</div>";
             $html.= "</div>";
             return $html;

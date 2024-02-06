@@ -991,6 +991,9 @@ class BookingService
     }
 
     public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]) {
+        $this->lang = new Lang();
+        $webText = $this->lang->webText;
+        
         $h = "";
         if ($row = sql_fetch_array(sql_query("select * from szurestipusok_megj where (cegid=? or cegid=0) and tipusid=? and csomag=0 and (helyszinid=? or helyszinid=0)", [$cegid, $tid,$helyszinId]))) {
             if (!empty(trim($row["megj"]))) {
@@ -1016,7 +1019,7 @@ class BookingService
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
                 $h .= "<div style='margin:10px 0px;'>";
-                $h .= "<div style='font-weight:bold;'>Válasszon szolgáltatást:</div>";
+                $h .= "<div style='font-weight:bold;'>{$webText["valasszonszolgaltatast"]}:</div>";
                 while ($row = sql_fetch_array($res)) {
                     $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
