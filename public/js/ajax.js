@@ -279,7 +279,7 @@ function setSzurestipusValaszto(){
             success: function (response) {
                 $("#szurestipusvalaszto").html(response.szurestipusValaszto);
                 $("#helyszinvalaszto").html(response.helyszinValaszto);
-                $(showInfoPageText(response.id);
+                showInfoPageText(response.id);
             }
         });
     }
