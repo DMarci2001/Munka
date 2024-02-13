@@ -122,8 +122,52 @@ class BookingPage extends CorePage
             die();
         }
 
+        if(isset($_POST["setSzurestipusValaszto"])){
+
+           /*
+           Férfi: 1, Nő: 2
+           A kor meghatározás: 45+-
+           
+           Meg kell találjam a cég alapján az elérhető csomagokat
+           */
+          $today = date("Y-m-d");
+          $diff = date_diff(date_create($_POST["szuldatum"]), date_create($today));
+          $kor = $diff->format("%y");
+
+            $tipusok = [];
+            $reqTipusok=sql_query("SELECT beo.tipusok FROM orvos_beosztas_new beo
+                                   WHERE INSTR(beo.beocegek,\"|{$_SESSION["helyszindata"]["id"]}|\")");
+            
+            while($resTipusok=sql_fetch_array($reqTipusok)){
+                $resTipusok["tipusok"] = substr($resTipusok["tipusok"], 1, -1);
+                $resTipusok["tipusok"] = explode("|",$resTipusok["tipusok"]);
+
+                $tipusok = array_merge($tipusok,$resTipusok["tipusok"]);
+            }
+            $tipusok = array_values(array_filter(array_unique($tipusok)));
+
+            $q=sql_query("SELECT sz.id,sz.megnev,sz.recommendedage,sz.recommendedgender FROM szurestipusok sz 
+                          WHERE sz.id IN(".implode(",",$tipusok).") AND ispack=1 
+                          GROUP BY sz.id");
+
+            while($res=sql_fetch_array($q)){
+                if($res["recommendedgender"]==$_POST["neme"]){
+                    if(!empty($res["recommendedage"])){
+                       if($this->ifStatement("{$kor}{$res["recommendedage"]}",$kor.$res["recommendedage"])){
+                        $szurestipusId=$res["id"];
+                       }
+                    }
+                }
+            }
+
+            die(json_encode(["szurestipusValaszto"=>$this->_szuresTipusValasztoNew($szurestipusId),
+                            "helyszinValaszto"=>$this->_reservationPlaceSelectorNew($szurestipusId),
+                            "id"=>$szurestipusId]));
+        }
+
 
         if (isset($_POST["idopontfoglalas"])) {
+          
             $companyService = new CompanyService();
 
             //nem kötelező mezők létrehozása ha nincsenek
@@ -776,6 +820,13 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
+            if (CompanyService::isSuzukiTeszt()) {
+                $customJs="onChange='setSzurestipusValaszto()'";
+                echo $this->utils->dataField("neme",true,$customJs);
+                echo $this->utils->dataField("szuldatum",true,$customJs);
+                echo "<input type=\"hidden\" name=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
+            }
+
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
             //beutaló nélkül szabad választás
@@ -783,9 +834,9 @@ class BookingPage extends CorePage
                 echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
             }
             echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
-            if (!empty($infoPageText)) {
+            //if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
-            }
+            //}
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
             echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";   
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
@@ -1215,13 +1266,17 @@ class BookingPage extends CorePage
         return $htmlout;
     }
 
-    private function _reservationPlaceSelectorNew()
+    private function _reservationPlaceSelectorNew($forcedSzurestipusId=null)
     {
         $html        = "";
-        $szuresTipus = $_POST["szurestipus"];
+        $szuresTipus = (isset($_POST["szurestipus"])?$_POST["szurestipus"]:$forcedSzurestipusId);
         $webText     = $this->lang->webText;
         $helyszinek  = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"], $szuresTipus);
         $numOfH      = count($helyszinek);
+
+        if($forcedSzurestipusId){
+            $szuresTipus = $forcedSzurestipusId;
+        }
 
         $_SESSION["orvosselected"] = 0;
 
@@ -1249,7 +1304,7 @@ class BookingPage extends CorePage
                 if ($_SESSION["helyszindata"]["nocim"] == 1) {
                     $rowt["cim"] = $rowt["megnev"];
                 }
-                $html .= "<option value='{$rowt["id"]}'" . ($_POST["helyszin"] == $rowt["id"] || $numOfH == 1 ? " selected" : "") . ">{$rowt["cim"]}</option>";
+                $html .= "<option value='{$rowt["id"]}'" . (isset($_POST["helyszin"]) && $_POST["helyszin"] == $rowt["id"] || $numOfH == 1 ? " selected" : "") . ">{$rowt["cim"]}</option>";
                 if ($numOfH == 1) {
                     $_POST["helyszin"] = $rowt["id"];
                 }
@@ -1373,5 +1428,13 @@ class BookingPage extends CorePage
                 $this->errors[] = self::AUCHAN_WARN;
             }
         }
+    }
+
+    private function ifStatement($query, $body) {
+
+        $condition = eval("return $query;");
+        
+        if ($condition) return $body;
+        return;
     }
 }

@@ -116,7 +116,30 @@ function getCheckedServices() {
     return checkedServices;
 }
 
+function getSpecialManagerRequiedData(){
+    var data = {};
+    //Végig megyek minden input mezőn ami az infopagetext-ben van
+    $("#infopagetext").find(":input").each(function(){
+        var name = $(this).attr("name");
+        var value = $(this).val();
+        //Ha checkboxról van szó:
+        if($(this).attr("type")=="checkbox"){
+            if($(this).is(":checked")){
+                value = 1;
+            }else{
+                return true;
+            }
+        }
+        data[name] = value;
+    })
+    return data;
+}
+
 function showIdoPontValasztoV2(honnan, orvosid) {
+
+    var extraData = getSpecialManagerRequiedData();
+    var data = [];
+
     if (orvosid === undefined) {
         orvosid = 0;
     }
@@ -134,6 +157,23 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             return;
         }
     }
+    var data = {
+        showidopontvalasztov2: "1",
+        honnan: honnan,
+        helyszin: $("#helyszin").val(),
+        szurestipus: $("#szurestipus").val(),
+        selectoid: orvosid,
+        neme: neme,
+        taj: $("input[name='taj']").val(),
+        betegallomany: $("#betegallomanynyilatkozat").prop("checked"),
+        laborOption:laborOption,
+        checkedServices:getCheckedServices(),
+        kiegChecked:getKiegVizsgalatIds()
+    };
+
+    data = $.extend(data,extraData);
+
+    console.table(data);
 
     $("#loadingspinner"+datumIndex).show();
 
@@ -141,20 +181,9 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         type:"GET",
         url:"index.php",
         dataType:"JSON",
-        data: {
-            showidopontvalasztov2: "1",
-            honnan: honnan,
-            helyszin: $("#helyszin").val(),
-            szurestipus: $("#szurestipus").val(),
-            selectoid: orvosid,
-            neme: neme,
-            taj: $("input[name='taj']").val(),
-            betegallomany: $("#betegallomanynyilatkozat").prop("checked"),
-            laborOption:laborOption,
-            checkedServices:getCheckedServices(),
-            kiegChecked:getKiegVizsgalatIds()
-        },
+        data: data,
         success: function(data){
+            //console.table(data);
             if (data.error != "") {
                 myAlert(data.error);
             } else {
@@ -227,6 +256,34 @@ function tappenzCheckRefresh() {
     }).done(function (msg) {
         $("#tappenzcheck").html(msg);
     });
+}
+
+function setSzurestipusValaszto(){
+    var score = neme = 0;
+    var szuldatum = "";
+    if($("select[name=\"szuldatumev\"]").val()>0)  score++;
+    if($("select[name=\"szuldatumho\"]").val()>0)  score++;
+    if($("select[name=\"szuldatumnap\"]").val()>0) score++;
+    if($("input[name=\"neme\"]:checked").length>0) score++;
+    
+    if(score==4){
+        console.log("score: "+score);
+        szuldatum = $("select[name=\"szuldatumev\"]").val()+"-"+$("select[name=\"szuldatumho\"]").val()+"-"+$("select[name=\"szuldatumnap\"]").val();
+        neme = $("input[name=\"neme\"]:checked").val();
+       
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            dataType:"JSON",
+            data: {setSzurestipusValaszto:true,szuldatum:szuldatum,neme:neme},
+            success: function (response) {
+                $("#szurestipusvalaszto").html(response.szurestipusValaszto);
+                $("#helyszinvalaszto").html(response.helyszinValaszto);
+                $(showInfoPageText(response.id);
+            }
+        });
+    }
+    
 }
 
 function showInfoPageText(szurestipusid){

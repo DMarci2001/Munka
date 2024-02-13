@@ -124,7 +124,7 @@ class Utils {
         return $q;
     }
 
-    public function datumSelector($date, $prefix, $future = 0, $class = null) {
+    public function datumSelector($date, $prefix, $future = 0, $class = null,$customJs="") {
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -134,7 +134,7 @@ class Utils {
         $ho  = substr($date,5,2);
         $nap = substr($date,8,2);
 
-        $h.= "<select {$class} name='{$prefix}ev'>";
+        $h.= "<select {$class} {$customJs} name='{$prefix}ev'>";
         $h.= "<option value='0'>{$webText["ev"]}</option>";
         if ($future == 0) {
             for ($i = date("Y"); $i > date("Y") - 100; $i--) {
@@ -148,14 +148,14 @@ class Utils {
 
         $h.= "</select> ";
 
-        $h.= "<select {$class} name='{$prefix}ho'>";
+        $h.= "<select {$class} {$customJs} name='{$prefix}ho'>";
         $h.= "<option value='0'>{$webText["ho"]}</option>";
         for ($i=1;$i<=12;$i++) {
             $h.= "<option value='{$i}'".($ho==$i?" selected":"").">{$webText["honaptext"][$i]}</option>";
         }
         $h.= "</select> ";
 
-        $h.= "<select {$class} name='{$prefix}nap'>";
+        $h.= "<select {$class} {$customJs} name='{$prefix}nap'>";
         $h.= "<option value='0'>{$webText["nap"]}</option>";
         for ($i=1;$i<=31;$i++) {
             $h.= "<option value='{$i}'".($nap==$i?" selected":"").">{$i}</option>";
@@ -558,7 +558,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
 
 
-    public function dataField($fieldName) {
+    public function dataField($fieldName,$RequiedForced=false,$customJs="") {
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -609,7 +609,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
                 break;
             case "szuldatum":
-                $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum")."</td></tr>";
+                $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum",0,null,$customJs)."</td></tr>";
                 break;
             case "szulhely":
                 //if ($_SESSION['helyszindata']['id'] == 46) {
@@ -618,7 +618,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
-                $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
+                $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' {$customJs} name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' {$customJs} name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
                 //if ($_SESSION['helyszindata']['id'] == 46) {
@@ -710,7 +710,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         
 
-        if (!$hidden) {
+        if (!$hidden || $RequiedForced) {
             if (empty($extraHTML)) {
                 if(isset($_POST[$field])){
                     $value = $_POST[$field];
@@ -723,7 +723,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             }
         }
         $html.= $extraRow;
-        $html = str_replace("#requiredmark#",$required?"*":"", $html);
+        $html = str_replace("#requiredmark#",$required||$RequiedForced?"*":"", $html);
 
         return $html;
     }

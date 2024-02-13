@@ -34,7 +34,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="bme";
+            $d="bejelentkezes";
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
@@ -145,6 +145,10 @@ class CompanyService {
 
     public static function isSuzuki($companyId = 0):bool {
         return ($companyId == self::SUZUKI_ID || $companyId == self::SUZUKI_EGESZSEGUT_ID) && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isSuzukiTeszt($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "suzukiteszt" && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

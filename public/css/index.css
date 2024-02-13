@@ -1160,3 +1160,9 @@ and (max-width: 1200px) {
 strong {
     font-family: robotobold;
 }
+.accordion-button:not(.collapsed){
+    background-color:white !important;
+    color:white;
+}
+
+

@@ -72,7 +72,7 @@ class AdminAjaxService {
                 sql_query("update orvosok set username='d{$oid}',jelszo=SUBSTR(MD5(CONCAT(nev,id)) FROM 3 FOR 6) where id='{$oid}'");
             }
             if ($_GET["page"] == "screenings" && $adminUser->szurestipusAccess()) {
-                //sql_query("insert into szurestipusok set megnev='Új tétel'");
+                sql_query("insert into szurestipusok set megnev='Új tétel'");
             }
             if ($_GET["page"] == "users" && $adminUser->jogosultsagAccess()) {
                 sql_query("insert into users set nev='Új felhasználó'");

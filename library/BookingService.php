@@ -178,6 +178,10 @@ class BookingService
             return json_encode(array("error" => $webText["valassznemet"], "html" => ""));
         }
 
+        if (count($this->getGenderPackContentTypes($this->szuresTipus)) != 0 && $this->neme == 0) {
+            return json_encode(array("error" => $webText["valassznemet"], "html" => ""));
+        }
+
         $checkedServices = [];
         if (!empty($_GET["checkedServices"])) {
             $checkedServices = explode("_", $_GET["checkedServices"]);
@@ -361,7 +365,7 @@ class BookingService
                         //új managerfoglalás módszer
                         if (!empty($this->packContentTypes)) {
                             if (!isset($availableData[$nap])) {
-                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap);
+                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET);
                             }
                             if (!empty($availableData[$nap]["error"])) {
                                 $buttonTitle = "";
@@ -571,7 +575,7 @@ class BookingService
         $this->betegallomany = $betegallomany;
     }
 
-    public function getPackageAvailabilityForDay($day, $limitTimes = true):array {
+    public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array()):array {
         $vanFixError = false;
         $error = "";
         $timeTableForPackage = [];
@@ -587,7 +591,19 @@ class BookingService
         }
 
         foreach ($checkForTypes as $packTypeId) {
-            if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId, 0, true)) {
+            $orvos = 0;
+
+            //Orvos választás ha van előre küldött adatt
+            if(isset($data["prefDoctor{$packTypeId}"])){
+                $orvos = $data["prefDoctor{$packTypeId}"];
+            }
+
+            //Ha foglaló kivette a kötelező elemek közül a vizsgálatot akkor kihagyjuk a loopból ezt a szűréstípust.
+            if(!isset($data["szurestipus{$packTypeId}"])){
+                continue;
+            }
+
+            if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId, $orvos, true)) {
                 foreach ($beos as &$beoData) {
                     if ($beoData["nopack"] != 0) {
                         continue;
@@ -1317,6 +1333,7 @@ class BookingService
             sql_query("update foglalasok set rinterval=? where id=? limit 1", [$rinterval, $fid]);
         }
 
+        //Menedzser csomag időpont foglalások
         $this->addSubReservation($data, $fid);
 
         if (isset($_SESSION["remotebeutalo"]) || $_SESSION["helyszindata"]["visszaigazolas"] == 0 || $this->isOnlineTipus($data["szurestipus"])) {
@@ -1341,18 +1358,34 @@ class BookingService
     public function addSubReservation($data, $parentId)
     {
         if ($this->szuresTipusData["ispack"] == 1) {
-            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])));
+            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])),true,$data);
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
             $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
             $data["megj"] = $data["megj"] == "" ? "{$tipusData["megnev"]}":"{$tipusData["megnev"]} - {$data["megj"]}";
 
+            $originMegj = $data["megj"];
             foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
                 if ($parentReservationData["szurestipusid"] == $subTypeId) {
+
                     //a parent tipus időpontját pontosítjuk
                     //sql_query("update foglalasok set datum=?, orvosassigned=? where id=?", array($subData["idopont"], $subData["orvosid"], $parentId));
                     sql_query("update foglalasok set orvosassigned=? where id=?", [$subData["orvosid"], $parentId]);
                     continue;
+                }
+
+                $servicesToMegj = "";
+                //Megvizsgálom, hogy van-e a szűréstípushoz tartozó egyéb szolgáltatás
+                $reskapcs = sql_fetch_array(sql_query("SELECT * FROM szurescsomagok_kapcs WHERE csomagid=? AND szurestipusid=?",[$parentReservationData["szurestipusid"],$subTypeId]));
+                if(!empty($reskapcs["otherservices"])){
+                    //Ha van, akkor dekódolom a JSON objektumot és végig fuok rajta egy loopban.
+                    $otherservices = json_decode($reskapcs["otherservices"],true);
+                    foreach($otherservices as $index => $service){
+                        //Ha találok egyezést szűréstípusid és index érték alapján, akkor hozzáadom az adatbázisban található szöveg értéket a megjegyzéshez.
+                        if(isset($data["otherservices-{$subTypeId}-{$index}"]) && $subTypeId==$reskapcs["szurestipusid"]){
+                            $servicesToMegj = " + {$service}";
+                        }
+                    }
                 }
 
                 $data["datum"] = $subData["idopont"];
@@ -1365,6 +1398,7 @@ class BookingService
                 $data["orvosid"] = $subData["orvosid"];
                 $data["szurestipus"] = $subTypeId;
                 $data["rinterval"] = $subData["interval"];
+                $data["megj"] = $originMegj.$servicesToMegj;
 
                 $this->addReservationQuery($data);
             }
@@ -1910,6 +1944,7 @@ class BookingService
         }
 
         $tipusData = sql_query("select * from szurestipusok t where t.id=?", [$szurestipusid])->fetch(PDO::FETCH_ASSOC);
+        //Ha menedzser csomagról van szó:
         if (isset($tipusData["ispack"]) && $tipusData["ispack"] == 1) {
             $pack = sql_query("select t.megnev, t.id  from szurescsomagok_kapcs k 
              left join szurestipusok t on t.id = k.szurestipusid
@@ -1921,6 +1956,39 @@ class BookingService
                 $text.= "<li>{$packData["megnev"]}</li>";
             }
             $text.= "</ul></div>";
+        }
+
+        if (CompanyService::isSuzukiTeszt()) {
+
+            //Csomag tartalmának kilistázása
+            $pack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                               LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
+                               WHERE k.csomagid=? ORDER BY t.megnev", [$szurestipusid])->fetchAll(PDO::FETCH_ASSOC);
+
+            if($pack){
+                //Megjelenített szöveg kezdete
+                $text = "<div style='margin:5px 0px;font-weight: bold;'>A csomag az alábbi vizsgálatokat tartalmazza:</div>";
+                $text.= "<div style='margin-bottom: 10px;'>";
+                
+                //Vizsgálatok megjelenítése:
+                $text.= $this->managerCsomagSzerkeszto($pack);
+
+                $text.= "</div>";
+            }
+            
+            //Egyéb vizsgálat hozzáadása:
+            $extraVizsg=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",[$szurestipusid]));
+            if(!empty($extraVizsg["plusvizsgalat"])){
+                $vizsgalatok = json_decode($extraVizsg["plusvizsgalat"],true);
+                
+                foreach($vizsgalatok as $vizsgalatid){
+                    $resv = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                           LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
+                           WHERE k.szurestipusid=? GROUP BY k.szurestipusid ORDER BY t.megnev", [$vizsgalatid])->fetchAll(PDO::FETCH_ASSOC);
+
+                    $text.= $this->managerCsomagSzerkeszto($resv);
+                }
+            }
         }
 
         if (CompanyService::isAuchan()) {
@@ -2553,6 +2621,72 @@ class BookingService
         }
 
         return $data;
+    }
+
+    public function managerCsomagSzerkeszto($pack){
+        $text = "";
+
+        foreach($pack as $packData){
+            $checked="checked=\"true\"";
+            
+           
+            if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
+                $checked="";
+            }
+            $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
+            $onChange = "onChange='clearIdopontValasztoOnly()'";
+            $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} ({$packData["szurestipusid"]})&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
+            
+            $text .= "<div class=\"\" id=\"descriptonForSzurestipus{$packData["szurestipusid"]}\">";
+            /*$text .= "  <div style='padding-left:25px;font-size:12px;'>";
+            $text .= "    <span><strong>A vizsgálatról:</strong></span>";
+            $text .= "  </div>";*/
+            $text .= "  <div style='padding-left:27px;font-size:12px;color:#999;text-align:justify'>{$packData["shortdescription"]}</div>";
+
+            //Orvos választó:
+            if(!empty($packData["optionaldoctors"])){
+                $onChange = "onChange='clearIdopontValasztoOnly()'";
+                $orvosok = json_decode($packData["optionaldoctors"],true);
+                $text .= "<div style='padding-top:5px;padding-left:25px;font-size:12px;'>";
+                $text .= "  <span style=\"font-weight:bold\">Orvos választás:&nbsp;&nbsp;</span>";
+                $text .= "  <select {$onChange} name=\"prefDoctor{$packData["szurestipusid"]}\">";
+                $text .= "<option value=\"0\">Nincs kiválasztva</option>";
+                foreach($orvosok as $orvos){
+                    $selected="";
+                    $orvosData = sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",[$orvos]));
+                    if(isset($_POST["prefDoctor{$packData["szurestipusid"]}"]) && $_POST["prefDoctor{$packData["szurestipusid"]}"] == $orvosData["id"]){
+                        $selected="selected=\"true\"";
+                    }
+                    $text .= "<option {$selected} value=\"{$orvosData["id"]}\">{$orvosData["nev"]}</option>";
+                }
+                $text .= "</select></div>";
+            }
+
+            //Egyéb szolgáltatások:
+            if(!empty($packData["otherservices"])){
+                $x=0;
+                $onChange = "onChange='clearIdopontValasztoOnly()'";
+                $szolgaltatasok = json_decode($packData["otherservices"],true);
+                $text .= "  <div style='padding-top:5px;padding-left:25px;font-size:12px;'>";
+                $text .= "    <span><strong>Igénybe vehető egyéb szolgáltatásaink:</strong></span>";
+                $text .= "  </div>";
+                $text .= "  <div style='padding-left:27px;font-size:12px;'>";
+                foreach($szolgaltatasok as $index => $szolg){
+                    $checked="";
+                    if(isset($_POST["otherservices-{$packData["szurestipusid"]}-{$index}"]) && $_POST["otherservices-{$packData["szurestipusid"]}-{$index}"]=="on"){
+                        $checked="checked=\"true\"";
+                    }
+                    $text .= "<input {$onChange} name=\"otherservices-{$packData["szurestipusid"]}-{$index}\" {$checked} type=\"checkbox\" />&nbsp;<span>{$szolg}</span>";
+                    $x++;
+                }
+                $text .= "  </div>";
+            }
+
+            $text .= "</div>";
+
+            $text .= "<hr style=\"margin-top:10px;margin-bottom:10px;\"></hr>";
+        }
+        return $text;
     }
 
 
