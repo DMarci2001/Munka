@@ -1977,7 +1977,7 @@ class BookingService
             }
             
             //Egyéb vizsgálat hozzáadása:
-            $extraVizsg=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",[$szurestipusid]));
+            /*$extraVizsg=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",[$szurestipusid]));
             if(!empty($extraVizsg["plusvizsgalat"])){
                 $vizsgalatok = json_decode($extraVizsg["plusvizsgalat"],true);
                 
@@ -1988,7 +1988,7 @@ class BookingService
 
                     $text.= $this->managerCsomagSzerkeszto($resv);
                 }
-            }
+            }*/
         }
 
         if (CompanyService::isAuchan()) {
