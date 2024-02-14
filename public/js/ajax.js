@@ -157,6 +157,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             return;
         }
     }
+    
     var data = {
         showidopontvalasztov2: "1",
         honnan: honnan,
@@ -172,8 +173,6 @@ function showIdoPontValasztoV2(honnan, orvosid) {
     };
 
     data = $.extend(data,extraData);
-
-    console.table(data);
 
     $("#loadingspinner"+datumIndex).show();
 
@@ -267,7 +266,6 @@ function setSzurestipusValaszto(){
     if($("input[name=\"neme\"]:checked").length>0) score++;
     
     if(score==4){
-        console.log("score: "+score);
         szuldatum = $("select[name=\"szuldatumev\"]").val()+"-"+$("select[name=\"szuldatumho\"]").val()+"-"+$("select[name=\"szuldatumnap\"]").val();
         neme = $("input[name=\"neme\"]:checked").val();
        

@@ -134,6 +134,13 @@ class BookingPage extends CorePage
           $diff = date_diff(date_create($_POST["szuldatum"]), date_create($today));
           $kor = $diff->format("%y");
 
+          //Ha 2024.08.31-ig betölti a 45-öt akkor már vegyük 45-nek xd Miki kérése volt.
+          if($kor==44){
+            if(date("Y-m-d",strtotime($_POST["szuldatum"]))<=date("Y-m-d",strtotime("1979-08-31"))){
+                $kor=45;
+            }
+          }
+
             $tipusok = [];
             $reqTipusok=sql_query("SELECT beo.tipusok FROM orvos_beosztas_new beo
                                    WHERE INSTR(beo.beocegek,\"|{$_SESSION["helyszindata"]["id"]}|\")");
@@ -1203,6 +1210,11 @@ class BookingPage extends CorePage
     {
         $tipusok = [];
         $tipusnevek = [];
+        $suzukiDisabled = "";
+
+        if(CompanyService::isSuzukiTeszt()){
+            $suzukiDisabled = "disabled=\"true\"";
+        }
 
         $rest = sql_query("select * from szurestipusok");
         while ($rowt = sql_fetch_array($rest)) {
@@ -1241,7 +1253,10 @@ class BookingPage extends CorePage
         }
 
         $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();' style='width:100%;'>";
+        if($suzukiDisabled){
+            $htmlout .= "<input type=\"hidden\" id=\"szurestipushidden\" name=\"szurestipus\" value=\"".(isset($_REQUEST["szurestipus"])?$_REQUEST["szurestipus"]:$selected)."\">";
+        }
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();' style='width:100%;' {$suzukiDisabled}>";
         $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
 
         if (isset($tipusok)) {
@@ -1290,9 +1305,14 @@ class BookingPage extends CorePage
         $webText     = $this->lang->webText;
         $helyszinek  = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"], $szuresTipus);
         $numOfH      = count($helyszinek);
+        $disabled    = "";
 
         if($forcedSzurestipusId){
             $szuresTipus = $forcedSzurestipusId;
+        }
+        if(CompanyService::isSuzukiTeszt()){
+            $disabled = "disabled=\"true\"";
+            //$_POST["helyszin"]=1;
         }
 
         $_SESSION["orvosselected"] = 0;
@@ -1307,8 +1327,8 @@ class BookingPage extends CorePage
                 $validPlaces = json_decode($telephelyData["placeids"], JSON_OBJECT_AS_ARRAY);
             }
         }
-
-        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;'>";
+        
+        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;' {$disabled}>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {
@@ -1328,6 +1348,10 @@ class BookingPage extends CorePage
             }
         }
         $html .= "</select>";
+
+        if($disabled){
+            $html .= "<input type=\"hidden\" name=\"helyszin\" id=\"helyszin\" value=\"".(isset($_POST["helyszin"])?$_POST["helyszin"]:"")."\"/>";
+        }
 
         $html .= "<div id='helyszinvalasztowarn' style='display:none;background:#ff6961;color:#fff;font-size:16px;padding:10px;margin:10px 0px 0px 0px;'>Figyelem! Ha a győri címünkre szeretne foglalni, használja a győri bejelentkezési felületünket, majd ott kövesse az \"üzemorvosi vizsgálat\" linket. Foglalását telefonon is megteheted a következő számon: +36 20 373 3343<br/><br/><a class='newbutton' href='https://gyor-bejelentkezes.hungariamed.hu'>Folytatás a győri bejelentkező felületen</a></div>";
 
