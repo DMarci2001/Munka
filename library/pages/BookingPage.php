@@ -816,6 +816,9 @@ class BookingPage extends CorePage
 
             echo "<tr><td>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>" . $this->_szuresTipusValasztoNew($beutalodata["szurestipusid"], 1) . "</div></td></tr>";
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $beutalodata["szurestipusid"], $beutalodata["helyszinid"]);
+
+
+
             if (!empty($tipusMegj)) {
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
@@ -829,6 +832,7 @@ class BookingPage extends CorePage
 
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
+            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
             //beutaló nélkül szabad választás
             if (!empty($this->telephelyek)) {
                 echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
@@ -838,7 +842,20 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             //}
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
-            echo "<tr><td></td><td><div id='szurestipusmegj'>" . $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]) . "</div></td></tr>";   
+            
+            if(CompanyService::isFGSZ()){
+                $helyszinek= array(125,132,96);
+                if(in_array($_POST["helyszin"],$helyszinek)){
+                    $tipusMegj = "<span><strong>Időpontfoglalás vérvételre:</strong></span><br>";
+                    $tipusMegj.= "<span style=\"display:inline-block;margin-top:5px;\">Pongor Anita</span><br>";
+                    $tipusMegj.= "<span style=\"display:inline-block;margin-bottom:5px\"><i>Kapcsolattartó munkatárs</i></span><br>";
+                    $tipusMegj.= "<span style=\"display:inline-block;margin-left:5px\"><strong>Tel.:</strong> 06/30-337-8223</span><br>";
+                    $tipusMegj.= "<span style=\"display:inline-block;margin-left:5px\"><strong>E-mail:</strong> <a href=\"mailto:pongor.anita@hungariamed.hu\">pongor.anita@hungariamed.hu</a></span><br>";
+                    $tipusMegj.= "<span style=\"display:inline-block;margin-left:5px\"><strong>Elérhető:</strong> H-P 8:00-16:00</span>";
+                }
+            }
+
+            echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";   
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
         }
        
