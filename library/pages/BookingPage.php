@@ -1054,7 +1054,7 @@ class BookingPage extends CorePage
 
         if (!isset($beutalodata)) {
             echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
-            echo "<textarea class='inputbox' style='height:100px;width:400px;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
+            echo "<textarea class='inputbox' style='height:100px;width:100%;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             //apollo tyres kivétel
             if ($_SESSION["helyszindata"]["id"] == 43) {
                 echo "<div>";
@@ -1081,7 +1081,7 @@ class BookingPage extends CorePage
         }
 
         if (!isset($_SESSION["user"])) {
-            echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
+            echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG' style='width:200px;'></div></td></tr>";
             if (CompanyService::isAuchan()) {
                 echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> Az <a href='https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf' target='_blank' >Adatvédelmi tájékoztatót</a> és az <a target='_blank' href='https://www.keltexmed.hu/site/images/keltexmed_aszf.pdf'>ÁSZF</a>-et elolvastam, a fenti adatkezeléshez hozzájárulok.</div></td></tr>";
             } else {
@@ -1241,7 +1241,7 @@ class BookingPage extends CorePage
         }
 
         $htmlout = "";
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();'>";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();' style='width:100%;'>";
         $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
 
         if (isset($tipusok)) {
@@ -1308,7 +1308,7 @@ class BookingPage extends CorePage
             }
         }
 
-        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();'>";
+        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;'>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {

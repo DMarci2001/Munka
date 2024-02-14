@@ -318,7 +318,7 @@ class Utils {
 
         $htmlout.="<title>{$pageTitle}</title>";
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />";
-        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
+        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />';
         $favicon="/images/".Booking_Constants::SITE_FAVICON;
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) {
             $favicon="/images/logo_{$subdomain}.png";

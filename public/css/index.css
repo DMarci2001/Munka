@@ -985,12 +985,14 @@ and (max-width: 1200px) {
     .headercontainer {
         margin:20px 0px;
         padding:0px 20px;
+        min-width: 460px;
     }
     .contentcontainer {
         margin:0px;
         min-height:0px;
         background-color:#fff;
         border-radius:0px;
+        min-width: 500px;
     }
     .footercontainer, footercontainer_suzuki {
         border-bottom-left-radius:0px;

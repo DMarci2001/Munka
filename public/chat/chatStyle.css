@@ -208,7 +208,7 @@ ul li{
 #chat_body{
     height: 450px;
 }
-.chat_login p,.chat_body li, p, .chatlink {
+.chat_login p,.chat_body li, .chatlink {
     -webkit-animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
     animation: zoomIn .5s cubic-bezier(.42, 0, .58, 1);
 }
