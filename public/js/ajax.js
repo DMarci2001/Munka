@@ -275,6 +275,9 @@ function setSzurestipusValaszto(){
             dataType:"JSON",
             data: {setSzurestipusValaszto:true,szuldatum:szuldatum,neme:neme},
             success: function (response) {
+                if(response.notification!=""){
+                    myAlert(response.notification);
+                }
                 $("#szurestipusvalaszto").html(response.szurestipusValaszto);
                 $("#helyszinvalaszto").html(response.helyszinValaszto);
                 showInfoPageText(response.id);

@@ -167,9 +167,12 @@ class BookingPage extends CorePage
                 }
             }
 
+
+
             die(json_encode(["szurestipusValaszto"=>$this->_szuresTipusValasztoNew($szurestipusId),
                             "helyszinValaszto"=>$this->_reservationPlaceSelectorNew($szurestipusId),
-                            "id"=>$szurestipusId]));
+                            "id"=>$szurestipusId,
+                            "notification"=>$this->setNotificatitonForPackage($szurestipusId)]));
         }
 
 
@@ -1478,4 +1481,24 @@ class BookingPage extends CorePage
         if ($condition) return $body;
         return;
     }
+
+    private function setNotificatitonForPackage($szurestipusId){
+        $notification = "";
+        $csomag = sql_fetch_array(sql_query("SELECT megnev FROM szurestipusok WHERE id=?",array($szurestipusId)));
+
+
+        if(CompanyService::isSuzukiTeszt()){
+            $notification = "Kiválasztott csomag:<br> <strong>{$csomag["megnev"]}</strong><br>";
+            $notification.= "<br>Tartalma:";
+            $q=sql_query("SELECT sz.megnev FROM szurescsomagok_kapcs szk 
+                          LEFT JOIN szurestipusok sz ON szk.szurestipusid=sz.id
+                          WHERE szk.csomagid=?",array($szurestipusId));
+
+            while($res=sql_fetch_array($q)){
+                $notification.= "<br>{$res["megnev"]}";
+            }
+            $notification.= "<br><br><strong>Amennyiben nem szeretne valamelyik vizsgálaton részt venni, kérem, kapcsolja ki a vizsgálat melletti checkboxot.</strong>";
+        }
+        return $notification;
+    } 
 }
