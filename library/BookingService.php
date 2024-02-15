@@ -19,6 +19,7 @@ class BookingService
     private AdminUser $adminUser;
     public int $newReservationId;
     public MunkakorVizsgalatok $munkakorVizsgalatok;
+    private $utils;
 
     public $availableDocs = array(
         array("name" => "Éjszakai", "cegid"=>74, "type"=> "simple", "value" => "bp-nightshift", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/bp_A_munkakori_beutalo_generalNight.pdf"),
@@ -42,6 +43,7 @@ class BookingService
         $this->notificationService = new NotificationService();
         $this->adminUser = new AdminUser();
         $this->munkakorVizsgalatok = new MunkakorVizsgalatok();
+        $this->utils = new Utils();
     }
 
     private function holterReserved($day):bool {
@@ -2628,7 +2630,11 @@ class BookingService
 
         foreach($pack as $packData){
             $checked="checked=\"true\"";
+
             
+
+            //Ha más nevet kell használni csak a cégre akkor ide bele kell futnia
+            $packData["megnev"] = $this->utils->AlternativSzurestipusNevByCeg($packData["szurestipusid"],$packData["megnev"]);
            
             if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
                 $checked="";

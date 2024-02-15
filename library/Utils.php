@@ -1120,4 +1120,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             return $html;
     }
 
+    public function AlternativSzurestipusNevByCeg($szurestipusId,$megnev){
+        $resq = sql_query("SELECT * FROM eltero_ceg_szurestipus_nevek WHERE cegid=? and szurestipusid=?",array($_SESSION["helyszindata"]["id"],$szurestipusId));
+        if($altmegnev=sql_fetch_array($resq)){
+            $megnev = $altmegnev["megnev"];
+            return $megnev;
+        }
+        
+        return $megnev;
+    }
+
 }
