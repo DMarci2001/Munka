@@ -1038,22 +1038,34 @@ class BookingService
             if (sql_num_rows($res) > 0) {
                 $chooseText = $webText["valasszonszolgaltatast"];
                 $hidden = "";
+                $priceDisplay = false;
+
                 if (CompanyService::isBME()) {
-                    $chooseText = "Ha kér, válasszon extra szolgáltatást";
-                    $hidden = "display:none;";
-                    $h.= "<div style='margin-bottom:10px;'><a href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kér térítéses kiegészítő vizsgálatot?</a></div>";
+                    $priceDisplay = true;
+                    $chooseText = "Ha kér, válasszon a Fehérvári úton elérhető téritéses szolgáltatást";
+                    //$hidden = "display:none;";
+                    //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
                 }
+
                 $h .= "<div id='kiegdiv' style='margin:10px 0px;{$hidden}'>";
-                $h .= "<div style='font-weight:bold;'>{$chooseText}:</div>";
+                $h .= "<div style='font-weight:bold;margin-bottom:5px;'>{$chooseText}:</div>";
                 while ($row = sql_fetch_array($res)) {
                     //$lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     $lengthText = "";
+                    $priceText = "";
+                    if ($priceDisplay) {
+                        if (substr_count($row["megnev"], "Labor")) {
+                            $priceText = " (" . number_format($row["price"]) . " Ft-tól)";
+                        } else {
+                            $priceText = " (" . number_format($row["price"]) . " Ft)";
+                        }
+                    }
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
+                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
                 }
                 if (CompanyService::isBME()) {
-                    $h.= "<div style='margin-top:10px;'><a href='https://www.keltexmed.hu/site/images/arlista_keltexmed.pdf' target='_blank'>Teljes KeltexMed árlista</a><br/>További szakvizsgálatainkat a 1135 Budapest, Jász u. 33-35.-ös címünkön található Egészségügyi Központunkba 
-                        tudja igénybe venni, az alábbi <a href='https://bejelentkezes.hungariamed.hu' target='_blank'>bejelentkező rendszeren</a> keresztül.</div>";
+                    $h.= "<div style='margin-top:10px;'><a href='https://www.keltexmed.hu/site/images/arlista_keltexmed.pdf' target='_blank'>Teljes KeltexMed árlista</a>";
+                    $h.= "<div class='bmecolumn2'><div style='font-weight:bold;margin-bottom:5px;'>További szakvizsgálatok</div>A 1135 Budapest, Jász u. 33-35.-ös címünkön található Egészségügyi Központunkba tudja igénybe venni, az alábbi <a style='text-decoration:underline;' href='https://bejelentkezes.hungariamed.hu' target='_blank'>bejelentkező&nbsp;rendszeren</a> keresztül. Figyelem, ezen a helyszínen nincs lehetőség üzemorvosi vizsgálat elvégzésére.</div>";
                 }
                 $h .= "</div>";
             }
@@ -1428,7 +1440,7 @@ class BookingService
         if ($companyId != 0) {
             $resq=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",[$companyId]));
             $dokirexcegids = json_decode($resq["dokirexcegid_json"],true);
-           
+
             //Csak akkor küldjön vissza bármit is, hogyha nem üres
             if(!empty($dokirexcegids)){
                 $dokirexCompanyId = $dokirexcegids[0];
@@ -1987,20 +1999,20 @@ class BookingService
                 //Megjelenített szöveg kezdete
                 $text = "<div style='margin:5px 0px;font-weight: bold;'>A csomag az alábbi vizsgálatokat tartalmazza:</div>";
                 $text.= "<div style='margin-bottom: 10px;'>";
-                
+
                 //Vizsgálatok megjelenítése:
                 $text.= $this->managerCsomagSzerkeszto($pack);
 
                 $text.= "</div>";
             }
-            
+
             //Egyéb vizsgálat hozzáadása:
             /*$extraVizsg=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",[$szurestipusid]));
             if(!empty($extraVizsg["plusvizsgalat"])){
                 $vizsgalatok = json_decode($extraVizsg["plusvizsgalat"],true);
-                
+
                 foreach($vizsgalatok as $vizsgalatid){
-                    $resv = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                    $resv = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k
                            LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
                            WHERE k.szurestipusid=? GROUP BY k.szurestipusid ORDER BY t.megnev", [$vizsgalatid])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -2329,7 +2341,7 @@ class BookingService
                 $input["indoklas"]= "Foglalkoztatás megszűnése";
             }
         }
-        
+
         if($this->availableDocs[$key]["type"]=="full-form"){
             $input = $this->set_referal_values($data,$input);
         }
@@ -2690,18 +2702,18 @@ class BookingService
         foreach($pack as $packData){
             $checked="checked=\"true\"";
 
-            
+
 
             //Ha más nevet kell használni csak a cégre akkor ide bele kell futnia
             $packData["megnev"] = $this->utils->AlternativSzurestipusNevByCeg($packData["szurestipusid"],$packData["megnev"]);
-           
+
             if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
                 $checked="";
             }
             $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
             $onChange = "onChange='clearIdopontValasztoOnly()'";
             $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} ({$packData["szurestipusid"]})&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
-            
+
             $text .= "<div class=\"\" id=\"descriptonForSzurestipus{$packData["szurestipusid"]}\">";
             /*$text .= "  <div style='padding-left:25px;font-size:12px;'>";
             $text .= "    <span><strong>A vizsgálatról:</strong></span>";

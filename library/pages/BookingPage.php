@@ -25,6 +25,10 @@ class BookingPage extends CorePage
 
         $this->detectServiceSelect();
 
+        if (CompanyService::isBME() && empty($_POST["helyszin"])) {
+            $_POST["helyszin"] = 100;
+        }
+
         $this->telephelyek = sql_query("select * from cegvars where cegid=? and (placeids<>'' or selectable=0) order by sorrend, megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
         if (isset($_GET["labcode"])) {
@@ -152,7 +156,7 @@ class BookingPage extends CorePage
            /*
            Férfi: 1, Nő: 2
            A kor meghatározás: 45+-
-           
+
            Meg kell találjam a cég alapján az elérhető csomagokat
            */
           $today = date("Y-m-d");
@@ -169,7 +173,7 @@ class BookingPage extends CorePage
             $tipusok = [];
             $reqTipusok=sql_query("SELECT beo.tipusok FROM orvos_beosztas_new beo
                                    WHERE INSTR(beo.beocegek,\"|{$_SESSION["helyszindata"]["id"]}|\")");
-            
+
             while($resTipusok=sql_fetch_array($reqTipusok)){
                 $resTipusok["tipusok"] = substr($resTipusok["tipusok"], 1, -1);
                 $resTipusok["tipusok"] = explode("|",$resTipusok["tipusok"]);
@@ -202,7 +206,7 @@ class BookingPage extends CorePage
 
 
         if (isset($_POST["idopontfoglalas"])) {
-          
+
             $companyService = new CompanyService();
 
             //nem kötelező mezők létrehozása ha nincsenek
@@ -911,13 +915,14 @@ class BookingPage extends CorePage
                     $telephelySelectText = "Tanszék";
                 }
                 echo "<tr><td>{$telephelySelectText}: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
+                echo "<tr><td></td><td></td></tr>";
             }
             echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
             //if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             //}
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
-            
+
             if(CompanyService::isFGSZ()){
                 $helyszinek= array(125,132,96);
                 if(in_array($_POST["helyszin"],$helyszinek)){
@@ -930,7 +935,7 @@ class BookingPage extends CorePage
                 }
             }
 
-            echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";   
+            echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             echo "<tr><td></td><td><div id='tappenzcheck'>" . $this->bookingService->tappenzCheckHTML($_POST["helyszin"]) . "</div></td></tr>";
         }
        
@@ -1393,14 +1398,15 @@ class BookingPage extends CorePage
             $webText["valasszhelyszint"] = "Válassza ki előbb a telephelyet!";
             if (CompanyService::isBME()) {
                 $webText["valasszhelyszint"] = "Válassza ki előbb a tanszéket!";
-            }        }
+            }
+        }
 
         if (!empty($this->telephelyek) && !empty($_POST["selectedtelephely"])) {
             if ($telephelyData = sql_query("select * from cegvars where id=? and placeids<>''", [$_POST["selectedtelephely"]])->fetch(PDO::FETCH_ASSOC)) {
                 $validPlaces = json_decode($telephelyData["placeids"], JSON_OBJECT_AS_ARRAY);
             }
         }
-        
+
         $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;' {$disabled}>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
         if (!empty($szuresTipus)) {
@@ -1440,7 +1446,7 @@ class BookingPage extends CorePage
             $telephelySelectText = "Válasszon tanszéket!";
         }
 
-        $html .= "<select name='selectedtelephely' id='selectedtelephely' onchange='silentBookingPost();'>";
+        $html .= "<select name='selectedtelephely' id='selectedtelephely' onchange='silentBookingPost();' style='width:100%;'>";
         $html .= "<option value='0'>{$telephelySelectText}</option>";
 
         foreach ($this->telephelyek as $rowt) {
@@ -1552,7 +1558,7 @@ class BookingPage extends CorePage
     private function ifStatement($query, $body) {
 
         $condition = eval("return $query;");
-        
+
         if ($condition) return $body;
         return;
     }

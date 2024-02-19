@@ -1182,3 +1182,33 @@ strong {
     background:#0FCE6C;
     text-decoration: none;
 }
+
+.bmebutton {
+    display:inline-block;
+    border-radius: 3px;
+    padding:10px 10px;
+    box-sizing: border-box;
+    text-decoration: none;
+    background: rgb(131,58,180);
+    background: linear-gradient(90deg, rgba(60,60,60,1) 30%, rgba(200,0,0,1) 70%);
+    color:white;
+    font-size:16px;
+}
+
+.bmebutton:hover {
+    text-decoration: none;
+}
+
+.bmecolumn1 {
+    display:block;
+    padding-top:10px;
+    margin-top:10px;
+}
+
+.bmecolumn2 {
+    display:block;
+    padding:10px 0px 10px 0px;
+    margin:10px 0px 10px 0px;;
+    border-top:1px solid #000;
+    border-bottom:1px solid #000;
+}
