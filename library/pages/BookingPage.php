@@ -12,13 +12,18 @@ class BookingPage extends CorePage
     ];
 
     private array $telephelyek = [];
+    private array $selectedVizsgalatok = [];
 
     public function __construct()
     {
         parent::__construct();
 
+        //unset($_SESSION["cartTimes"]);
+
         $this->bookingService = new BookingService();
         $webText = $this->lang->webText;
+
+        $this->detectServiceSelect();
 
         $this->telephelyek = sql_query("select * from cegvars where cegid=? and (placeids<>'' or selectable=0) order by sorrend, megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -46,6 +51,26 @@ class BookingPage extends CorePage
             $docAgent->deleteDoc($_POST["id"], $_POST["k"]);
             echo $this->utils->showPaciensFiles();
             die();
+        }
+
+        if (isset($_POST["displaySlots"])) {
+            $reservationService = new ReservationService();
+            $reservationService->reservationTypeId = $_POST["reservationTypeId"];
+            $reservationService->cartRow = $_POST["cartRow"] ?? 0;
+            $reservationService->num = $_POST["num"] ?? 0;
+            echo $reservationService->displaySlots();
+            die;
+        }
+
+        if (isset($_POST["selectSubTime"])) {
+            $reservationTypeId = $_POST["reservationTypeId"];
+            $mainServiceId = $_POST["mainServiceId"];
+            //$_POST["registered"] = date("Y-m-d H:i:s");
+
+            $_SESSION["cartTimes"][$reservationTypeId] = $_POST;
+
+            echo $this->bookingService->getInfoPageText($mainServiceId);
+            die;
         }
 
         if(isset($_POST["uniqaEmailCheck"])){
@@ -214,6 +239,13 @@ class BookingPage extends CorePage
                 }
             }
 
+            if (isset($_POST["szurestipus"])) {
+                $subServices = sql_query("select szurestipusid from szurescsomagok_kapcs k where csomagid=?", [$_POST["szurestipus"]])->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($subServices as $subService) {
+                    $this->selectedVizsgalatok[] = $subService["szurestipusid"];
+                }
+            }
+
             //Ha regexel akarom ellenőrizni magyar útlevélre
             /*$idTypes = array(
                 0=>array("tipus">="TAJ","regex"=>""),
@@ -279,15 +311,18 @@ class BookingPage extends CorePage
                 $selectedKiegVizsgalat = [];
                 foreach (BookingService::BudapestBrand_SZURESEK as $key => $szures) {
                     if (isset($_POST["kiegoption{$key}"])) {
+                        if (!empty($szures[5]) && empty($_SESSION["cartTimes"][$szures[0]])) {
+                            $this->errors[] = "Válasszon a kiegészítő vizsgálathoz időpontot!";
+                        }
                         $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
                     }
                 }
-                //Ha nincs vizsgálat nem engedjen foglalni.
 
-                /*$selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                //Ha nincs vizsgálat nem engedjen foglalni.
+                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
                 if (empty($selectedKiegVizsgalat)) {
-                    $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
-                }*/
+                    //$this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }
 
                 $result = $this->bookingService->doBudapestBrandServicesTest();
                 if (!empty($result)) {
@@ -417,6 +452,9 @@ class BookingPage extends CorePage
                 }
 
                 if (!$birthDateError) {
+                    if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "tüdősz") && strtotime($_POST["szuldatum"]) > strtotime("now - 18 year")) {
+                        $this->errors[] = "{$webText["tudoszurominimumkorerror"]}";
+                    }
                     if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "belgyógy") && strtotime($_POST["szuldatum"]) > strtotime("now - 18 year")) {
                         $this->errors[] = "{$webText["belgyogyminimumkorerror"]}";
                     }
@@ -425,6 +463,14 @@ class BookingPage extends CorePage
                     }
                     if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "ultrahang") && strtotime($_POST["szuldatum"]) > strtotime("now - 16 year")) {
                         $this->errors[] = "{$webText["uhminimumkorerror"]}";
+                    }
+
+                    foreach ($this->selectedVizsgalatok as $szurestipusId) {
+                        if ($checkTipusData = sql_query("select megnev from szurestipusok where id=?", [$szurestipusId])->fetch(PDO::FETCH_ASSOC)) {
+                            if (substr_count(strtolower($checkTipusData["megnev"]), "tüdősz") && strtotime($_POST["szuldatum"]) > strtotime("now - 18 year")) {
+                                $this->errors[] = "{$webText["tudoszurominimumkorerror"]}";
+                            }
+                        }
                     }
                 }
             }
@@ -628,6 +674,10 @@ class BookingPage extends CorePage
 
                 logActivity("foglalas", $fid,"{$_POST["nev"]} felhasználó foglalás", json_encode($_POST,JSON_PRETTY_PRINT));
 
+                if (isset($_SESSION["cartTimes"])){
+                    unset($_SESSION["cartTimes"]);
+                }
+
                 $this->record_covid_vaccination_data($fid,$_POST);
                 header("location:{$forwardURL}");
                 die();
@@ -697,6 +747,7 @@ class BookingPage extends CorePage
         echo '<!-- Google Tag Manager (noscript) -->
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P89C75S"
         height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
         <!-- End Google Tag Manager (noscript) -->';
 
         //auchan esetén ideiglenes üzenet
@@ -740,6 +791,15 @@ class BookingPage extends CorePage
             echo $this->_preSelectForm();
             echo "</div>";
             return;
+        }
+
+        if (CompanyService::isBME()) {
+            echo "<ul>";
+            echo "<li style='list-style: circle;'><strong>1117 Budapest, Fehérvári út 44. 1.em</strong> Foglalkozás-egészségügyi vizsgálat, Egyéni térítéses szakvizsgálatok</li>";
+            echo "<li style='list-style: circle;'><strong>1116 Budapest, Albertfalva u. 3.</strong> Foglalkozás-egészségügyi vizsgálat</li>";
+            echo "<li style='list-style: circle;'><strong>1135 Budapest, Jász utca 33-35.</strong> Egyéni térítéses vizsgálatok</li>";
+            echo "</ul>";
+            echo "<hr>";
         }
 
         echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'>";
@@ -801,6 +861,7 @@ class BookingPage extends CorePage
         }
 
 
+
         echo "<table cellpadding='3' cellspacing='0'>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
@@ -845,7 +906,11 @@ class BookingPage extends CorePage
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
             //beutaló nélkül szabad választás
             if (!empty($this->telephelyek)) {
-                echo "<tr><td>Telephely: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
+                $telephelySelectText = "Telephely";
+                if (CompanyService::isBME()) {
+                    $telephelySelectText = "Tanszék";
+                }
+                echo "<tr><td>{$telephelySelectText}: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
             }
             echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
             //if (!empty($infoPageText)) {
@@ -1253,6 +1318,9 @@ class BookingPage extends CorePage
         if (!empty($this->telephelyek) && empty($_POST["selectedtelephely"])) {
             $tipusok = [];
             $valasszon = "Válassza ki előbb a telephelyet";
+            if (CompanyService::isBME()) {
+                $valasszon = "Válassza ki előbb a tanszéket!";
+            }
         }
 
         $htmlout = "";
@@ -1323,7 +1391,9 @@ class BookingPage extends CorePage
         if (!empty($this->telephelyek) && empty($_POST["selectedtelephely"])) {
             $helyszinek = [];
             $webText["valasszhelyszint"] = "Válassza ki előbb a telephelyet!";
-        }
+            if (CompanyService::isBME()) {
+                $webText["valasszhelyszint"] = "Válassza ki előbb a tanszéket!";
+            }        }
 
         if (!empty($this->telephelyek) && !empty($_POST["selectedtelephely"])) {
             if ($telephelyData = sql_query("select * from cegvars where id=? and placeids<>''", [$_POST["selectedtelephely"]])->fetch(PDO::FETCH_ASSOC)) {
@@ -1365,8 +1435,13 @@ class BookingPage extends CorePage
         $html = "";
         $num = count($this->telephelyek);
 
+        $telephelySelectText = "Válasszon telephelyet!";
+        if (CompanyService::isBME()) {
+            $telephelySelectText = "Válasszon tanszéket!";
+        }
+
         $html .= "<select name='selectedtelephely' id='selectedtelephely' onchange='silentBookingPost();'>";
-        $html .= "<option value='0'>Válasszon telephelyet!</option>";
+        $html .= "<option value='0'>{$telephelySelectText}</option>";
 
         foreach ($this->telephelyek as $rowt) {
             if ($rowt["parentid"] == 0) {
@@ -1482,6 +1557,15 @@ class BookingPage extends CorePage
         return;
     }
 
+    private function detectServiceSelect() {
+        if (isset($_GET["service"]) && !isset($_POST["szurestipus"])) {
+            if ($serviceData = sql_query("select id from szurestipusok where webalias=? limit 1", [$_GET["service"]])->fetch(PDO::FETCH_ASSOC)) {
+                $_POST["szurestipus"] = $serviceData["id"];
+                $_POST["helyszin"] = Booking_Constants::DEFAULT_PLACE_IDS[0];
+            }
+        }
+    }
+
     private function setNotificatitonForPackage($szurestipusId){
         $notification = "";
         $csomag = sql_fetch_array(sql_query("SELECT megnev FROM szurestipusok WHERE id=?",array($szurestipusId)));
@@ -1500,5 +1584,5 @@ class BookingPage extends CorePage
             $notification.= "<br><br><strong>Amennyiben nem szeretne valamelyik vizsgálaton részt venni, kérem, kapcsolja ki a vizsgálat melletti checkboxot.</strong>";
         }
         return $notification;
-    } 
+    }
 }

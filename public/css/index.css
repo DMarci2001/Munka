@@ -1168,3 +1168,17 @@ strong {
 }
 
 
+.freesubidopontbutton {
+    display:inline-block;
+    margin-top:4px;
+    background:#0FBE7C;
+    color:#fff;
+    padding:2px 4px;
+    border-radius: 4px;
+    transition: all .1s linear;
+}
+
+.freesubidopontbutton:hover {
+    background:#0FCE6C;
+    text-decoration: none;
+}

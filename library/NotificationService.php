@@ -681,7 +681,12 @@ class NotificationService {
                 if (empty($packText)) {
                     $packText .= "<br/>Csomag tartalma:<br/>";
                 }
-                $packText .= "{$rowcs["megnev"]}<br/>";
+                $packText .= "{$rowcs["megnev"]}";
+                if (CompanyService::isBudapestBrand($rowcs["cegid"])) {
+                    $packText.= ", időpont: ".date("Y.m.d H:i", strtotime($rowcs["datum"]));
+                }
+
+                $packText.= "<br/>";
             }
         }
 

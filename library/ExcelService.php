@@ -639,13 +639,13 @@ class ExcelService {
         $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->sheet->setTitle("RTG lista");
 
+        $this->titleRow("A1", " RTG lista {$from} - {$to}");
+
         $from.= " 00:00:00";
         $to.= " 23:59:59";
 
         $institutionNames = DicomService::getInstitutesQuery();
         $data = sql_query_common("select d.contentDate, d.patientName, d.patientBirthDate, d.patientOtherIDs, d.studyDescription, count(*) as db from dicom d where d.contentDate>? AND d.contentDate<=? and d.institutionName in ({$institutionNames}) GROUP BY d.patientName, d.patientBirthDate ORDER BY d.contentDate", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->titleRow("A1", " RTG lista {$from} - {$to}");
 
         //lista
         $sor = 5;
@@ -917,6 +917,50 @@ class ExcelService {
         $this->sheet->getColumnDimension('A')->setWidth(20);
     }
 
+    public function _laborLeletLista($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Laborlelet lista");
+
+        $this->titleRow("A1", " Laborlelet lista {$from} - {$to}");
+
+        $from.= " 00:00:00";
+        $to.= " 23:59:59";
+
+        $data = sql_query("select r.resultdate, r.provider, nev, taj, szuldatum from labrequests r where resultdate>? AND resultdate<=? and status='done' and resultpdf<>'' ORDER BY resultdate", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        //lista
+        $sor = 5;
+        $this->headingRow("A", $sor, ["Dátum", "Szolgáltató", "Paciens", "Szül. dátum", "TAJ"]);
+
+        $sor++;
+        $total = 0;
+        foreach ($data as $rowData) {
+            $provider = $rowData["provider"];
+            if (substr_count($provider, "@")) {
+                $provider = "SynLab";
+            }
+            $this->dataRow("A", $sor, [$rowData["resultdate"], $provider, $rowData["nev"], $rowData["szuldatum"], (string)$rowData["taj"]]);
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+            $total ++;
+            $sor++;
+        }
+
+
+        $sor = 3;
+        $this->dataRow("A", $sor, ["Összes lelet: {$total}"]);
+
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('B')->setWidth(20);
+        $this->sheet->getColumnDimension('C')->setWidth(30);
+        $this->sheet->getColumnDimension('D')->setWidth(15);
+        $this->sheet->getColumnDimension('E')->setWidth(15);
+    }
+
     public function napiStat($from, $to) {
         $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
 
@@ -931,6 +975,7 @@ class ExcelService {
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
             $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
+            $this->_laborLeletLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
             $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);

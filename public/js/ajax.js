@@ -11,6 +11,7 @@ $(document).ready(function () {
     initDateFilterPicker();
     initHMMChat();
     initIrszAutoFill();
+    initSubReservationButtons();
 });
 
 
@@ -1149,4 +1150,54 @@ function initIrszAutoFill() {
     });
 }
 
+function initSubReservationButtons() {
+    $(".subreservationopenbutton").click(function () {
+        let reservationTypeId = $(this).data("reservationtypeid");
+
+        $("#reservationContainer" + reservationTypeId).slideToggle();
+
+        $.ajax({
+            method: 'POST',
+            url: '/index.php',
+            data: "displaySlots=1&reservationTypeId=" + reservationTypeId
+        }).done(function (data) {
+            $("#reservationContainer" + reservationTypeId).html(data);
+            bindIdopontButtons();
+        });
+
+        return false;
+    });
+}
+
+
+function bindIdopontButtons() {
+    $(".freesubidopontbutton").click(function() {
+        let cartRow = $(this).data("cartrow");
+        let num = $(this).data("num");
+        let reservationTypeId = $(this).data("reservationtypeid");
+        let doctorId = $(this).data("doctorid");
+        let length = $(this).data("length");
+        let time = $(this).data("time");
+        let timeExists = $(this).data("timeexists");
+        let mainServiceId = $("#szurestipus").val();
+
+        if (timeExists === 1) {
+            myAlert("Ezt az időpontot már kiválasztottad!");
+            return false;
+        }
+
+        $("#reservationContainer"+reservationTypeId).slideToggle();
+
+        $.ajax({
+            method:'POST',
+            url:'/index.php',
+            data: "selectSubTime=1&reservationTypeId="+reservationTypeId+"&cartRow="+cartRow+"&num="+num+"&doctorId="+doctorId+"&length="+length+"&time="+time+"&mainServiceId="+mainServiceId
+        }).done(function(data){
+            $("#infopagetext").html(data);
+            initSubReservationButtons();
+        });
+
+        return false;
+    });
+}
 

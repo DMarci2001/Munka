@@ -340,7 +340,7 @@ class AdminAjaxService {
             ];
 
             if ($adminUser->jogosultsagAccess()) {
-                $warnings = sql_query("select * from warnings where checked=0 order by created")->fetchAll(PDO::FETCH_ASSOC);
+                $warnings = sql_query("select * from warnings where checked=0 and created>date_sub(now(), interval 1 month) order by created")->fetchAll(PDO::FETCH_ASSOC);
                 $numberOfWarnings = count($warnings);
                 $return["number"] = $numberOfWarnings;
                 if ($numberOfWarnings > 0) {

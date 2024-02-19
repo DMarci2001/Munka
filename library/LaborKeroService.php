@@ -350,7 +350,7 @@ class LaborKeroService
             LEFT JOIN synlab_labor_tetel_kategoriak kat ON kat.id=t.category
             WHERE t.provider='synlab' AND t.visibility=1
             GROUP BY t.id
-            ORDER BY t.appform IS NULL, t.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
+            ORDER BY (t.appform IS NULL or t.appform=0), t.appform, t.name")->fetchAll(PDO::FETCH_ASSOC);
         }
 
         if ($_SESSION["laborprovider"] == self::LABOR_PROVIDER_SPEKTRUMLAB) {
