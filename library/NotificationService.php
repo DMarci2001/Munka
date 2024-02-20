@@ -119,10 +119,10 @@ class NotificationService {
 
             if(CompanyService::isSuzukiTeszt()){
                 if($row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti nő csomag"){
-                    $mail->AddAttachment(__DIR__ . "/public/images/Suzuki menedzser tajekoztato - 45 alattiaknak.docx");
+                    $mail->AddAttachment(__DIR__ . "../public/images/Suzuki menedzser tajekoztato - 45 alattiaknak.docx");
                 }
                 if($row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti nő csomag"){
-                    $mail->AddAttachment(__DIR__ . "/public/images/Suzuki menedzser tajekoztato - 45 felettieknek.docx");
+                    $mail->AddAttachment(__DIR__ . "../public/images/Suzuki menedzser tajekoztato - 45 felettieknek.docx");
                 }
             }
 
