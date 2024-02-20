@@ -73,6 +73,7 @@ require_once(__DIR__ . "/library/SpektrumlabService.php");
 require_once(__DIR__ . "/library/LaborKeroService.php");
 require_once(__DIR__ . "/library/InvoiceService.php");
 require_once(__DIR__ . "/library/LabshopService.php");
+require_once(__DIR__ . "/library/ReservationService.php");
 
 require_once(__DIR__ . "/library/other/szamlaagent/examples/autoload.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");

@@ -206,7 +206,7 @@ class BookingService
             }
 
             $html .= "<td valign='top'>";
-            $html .= "<div style='" . ($nap == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
+            $html .= "<div style='" . ($nap == date("Y-m-d") ? "background:#405d5b;" : "background:#607d8b;") . "margin:8px 1px;padding:4px 10px 4px 10px;color:#fff;font-weight:bold;text-align:center;white-space: nowrap;'>{$nap}<br/>{$webText["hetnap"][$wd]}</div>";
 
             if (in_array($nap, $this->getSzunnapok())) {
                 $html .= "<div style='text-align:center;margin:5px;padding:5px 0px;color:#888;'>Munkaszüneti<br/>nap</div>";
@@ -601,7 +601,7 @@ class BookingService
             }
 
             //Ha foglaló kivette a kötelező elemek közül a vizsgálatot akkor kihagyjuk a loopból ezt a szűréstípust.
-            if(!isset($data["szurestipus{$packTypeId}"])){
+            if(!isset($data["szurestipus{$packTypeId}"]) && CompanyService::isSuzukiTeszt()){
                 continue;
             }
 
@@ -1033,15 +1033,39 @@ class BookingService
             $h .= "</div>";
         }
 
-        if ($helyszinId == 1) {
+        if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100) {
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
-                $h .= "<div style='margin:10px 0px;'>";
-                $h .= "<div style='font-weight:bold;'>{$webText["valasszonszolgaltatast"]}:</div>";
+                $chooseText = $webText["valasszonszolgaltatast"];
+                $hidden = "";
+                $priceDisplay = false;
+
+                if (CompanyService::isBME()) {
+                    $priceDisplay = true;
+                    $chooseText = "Ha kér, válasszon a Fehérvári úton elérhető téritéses szolgáltatást";
+                    //$hidden = "display:none;";
+                    //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
+                }
+
+                $h .= "<div id='kiegdiv' style='margin:10px 0px;{$hidden}'>";
+                $h .= "<div style='font-weight:bold;margin-bottom:5px;'>{$chooseText}:</div>";
                 while ($row = sql_fetch_array($res)) {
-                    $lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
+                    //$lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
+                    $lengthText = "";
+                    $priceText = "";
+                    if ($priceDisplay) {
+                        if (substr_count($row["megnev"], "Labor")) {
+                            $priceText = " (" . number_format($row["price"]) . " Ft-tól)";
+                        } else {
+                            $priceText = " (" . number_format($row["price"]) . " Ft)";
+                        }
+                    }
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}</div>";
+                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                }
+                if (CompanyService::isBME()) {
+                    $h.= "<div style='margin-top:10px;'><a href='https://www.keltexmed.hu/site/images/arlista_keltexmed.pdf' target='_blank'>Teljes KeltexMed árlista</a>";
+                    $h.= "<div class='bmecolumn2'><div style='font-weight:bold;margin-bottom:5px;'>További szakvizsgálatok</div>A 1135 Budapest, Jász u. 33-35.-ös címünkön található Egészségügyi Központunkba tudja igénybe venni, az alábbi <a style='text-decoration:underline;' href='https://bejelentkezes.hungariamed.hu' target='_blank'>bejelentkező&nbsp;rendszeren</a> keresztül. Figyelem, ezen a helyszínen nincs lehetőség üzemorvosi vizsgálat elvégzésére.</div>";
                 }
                 $h .= "</div>";
             }
@@ -1078,6 +1102,10 @@ class BookingService
 
     public function plusMinuteDrotozasok($plusMinute, $priceId, $orvosId) {
         if (Booking_Constants::SQL_DB == "hungariamed") {
+            //dr fontosnál nem kell semmi plusz idő
+            if ($orvosId == 335) {
+                $plusMinute = 0;
+            }
             //dr kósa duplázás
             //if ($priceId == 120 && $orvosId == 971) {
             //    $plusMinute = 60;
@@ -1420,7 +1448,7 @@ class BookingService
         if ($companyId != 0) {
             $resq=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",[$companyId]));
             $dokirexcegids = json_decode($resq["dokirexcegid_json"],true);
-           
+
             //Csak akkor küldjön vissza bármit is, hogyha nem üres
             if(!empty($dokirexcegids)){
                 $dokirexCompanyId = $dokirexcegids[0];
@@ -1860,7 +1888,7 @@ class BookingService
         $rest = sql_query("SELECT b.*, b.noreservation as bnoreservation FROM orvos_beosztas_new b
             LEFT JOIN orvosok o on o.id = b.orvosid
             WHERE (instr(b.beocegek, ?) or b.beocegek='') AND b.aktiv=1 AND o.aktiv=1 AND b.`helyszinid`=?
-            AND (b.nap<10 or (b.nap=10 and b.beonap>=date(now())))
+            AND (b.nap<10 or (b.nap=10 and b.beonap>=date(now()))) AND (b.validto='0000-00-00' OR b.validto>DATE(NOW()))
 			GROUP BY b.tipusok", ["|{$_SESSION["helyszindata"]["id"]}|", $helyszinId]);
 
         $tipusok = [0];
@@ -1932,7 +1960,7 @@ class BookingService
 
     const BudapestBrand_SZURESEK = [
         [48, 0, "Laborvizsgálat", "", []],
-        //[15,0,"Hasi-és kismedencei ultrahang","",[]],
+        [15,0,"Hasi-és kismedencei ultrahang","",[], 1],
         //Menedzser csomag neve: Komplex egészségügyi szűrés - BudapestBrand
     ];
 
@@ -1979,20 +2007,20 @@ class BookingService
                 //Megjelenített szöveg kezdete
                 $text = "<div style='margin:5px 0px;font-weight: bold;'>A csomag az alábbi vizsgálatokat tartalmazza:</div>";
                 $text.= "<div style='margin-bottom: 10px;'>";
-                
+
                 //Vizsgálatok megjelenítése:
                 $text.= $this->managerCsomagSzerkeszto($pack);
 
                 $text.= "</div>";
             }
-            
+
             //Egyéb vizsgálat hozzáadása:
             /*$extraVizsg=sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",[$szurestipusid]));
             if(!empty($extraVizsg["plusvizsgalat"])){
                 $vizsgalatok = json_decode($extraVizsg["plusvizsgalat"],true);
-                
+
                 foreach($vizsgalatok as $vizsgalatid){
-                    $resv = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                    $resv = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k
                            LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
                            WHERE k.szurestipusid=? GROUP BY k.szurestipusid ORDER BY t.megnev", [$vizsgalatid])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -2061,11 +2089,29 @@ class BookingService
         if (CompanyService::isBudapestBrand() && $szurestipusid == 1) {
             $options = "";
             foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
+                $tipusId = $szures[0];
                 $onChange = "clearIdopontValasztoOnly();";
+                if (isset($_SESSION["cartTimes"][$tipusId])) {
+                    $_POST["kiegoption{$key}"] = 1;
+                }
                 $options .= "<div style='margin-top:10px;'>";
                 $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
                 if (!empty($szures[3])) {
                     $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$szures[3]}</div>";
+                }
+                if (!empty($szures[5])) {
+                    $options.= "<div style='margin-left:25px;'>";
+
+                    $reservationButtonText = "<i class='fa-regular fa-clock'></i> időpont kiválasztása";
+                    $reservationButtonClass = "cartreservationbutton";
+                    if (isset($_SESSION["cartTimes"][$tipusId])) {
+                        $reservationButtonText = "<i class='fa-regular fa-clock'></i> " . $_SESSION["cartTimes"][$tipusId]["time"];
+                        $reservationButtonClass = "cartreservationbuttonfilled";
+                    }
+                    $options.= "<a class='{$reservationButtonClass} subreservationopenbutton' data-reservationtypeid='{$tipusId}' href='#'>{$reservationButtonText}</a>&nbsp;";
+
+                    $options.= "<div id='reservationContainer{$tipusId}' style='display:none;'><div style='margin:0px 0px 10px 0px;'>Időpontok betöltése folyamatban...</div></div>";
+                    $options.= "</div>";
                 }
                 $options .= "</div>";
             }
@@ -2110,6 +2156,27 @@ class BookingService
     private array $replicatedTimes = [];
     public bool $replicateTajRequired = true;
     public bool $replicateToFirstAvailableTime = false;
+
+    public function replicateReservationToAnotherServiceWithSelectedTime($reservationData, $tipusId, $cartData):string {
+        $status = "";
+        if (!$tipusData = sql_query("select id, megnev from szurestipusok where id=?", [$tipusId])->fetch(PDO::FETCH_ASSOC)) {
+            return $status;
+        }
+
+        $reservationData["parentid"] = $reservationData["id"];
+        $reservationData["datum"] = $cartData["time"];
+        $reservationData["rinterval"] = $cartData["length"];
+        $reservationData["orvosid"] = $cartData["doctorId"];
+        $reservationData["szurestipus"] = $tipusId;
+        $reservationData["tudoszuro"] = 0;
+        $reservationData["aktiv"] = 1;
+        $reservationData["helyszin"] = $reservationData["helyszinid"];
+        $this->lastSubReservationId = $this->addReservationQuery($reservationData);
+        $this->replicatedTimes[] = $cartData["time"];
+
+        return "{$tipusData["megnev"]} időpont foglalva: {$cartData["time"]}\n";
+    }
+
 
     public function replicateReservationToAnotherService($reservationData, $tipusId, $testOnly = false):string {
         $this->lastSubReservationId = 0;
@@ -2282,7 +2349,7 @@ class BookingService
                 $input["indoklas"]= "Foglalkoztatás megszűnése";
             }
         }
-        
+
         if($this->availableDocs[$key]["type"]=="full-form"){
             $input = $this->set_referal_values($data,$input);
         }
@@ -2507,7 +2574,11 @@ class BookingService
             if (isset($_POST["kiegoption{$key}"])) {
                 $tipusId = $szures[0];
                 if (!in_array($tipusId, $reservedTipusok)) {
-                    $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    if (isset($_SESSION["cartTimes"][$tipusId])) {
+                        $this->replicateReservationToAnotherServiceWithSelectedTime($reservationData, $tipusId, $_SESSION["cartTimes"][$tipusId]);
+                    } else {
+                        $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    }
                     $reservationTipusMap[$tipusId] = $this->lastSubReservationId;
                     $reservedTipusok[] = $tipusId;
                 }
@@ -2639,18 +2710,18 @@ class BookingService
         foreach($pack as $packData){
             $checked="checked=\"true\"";
 
-            
+
 
             //Ha más nevet kell használni csak a cégre akkor ide bele kell futnia
             $packData["megnev"] = $this->utils->AlternativSzurestipusNevByCeg($packData["szurestipusid"],$packData["megnev"]);
-           
+
             if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
                 $checked="";
             }
             $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
             $onChange = "onChange='clearIdopontValasztoOnly()'";
             $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} ({$packData["szurestipusid"]})&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
-            
+
             $text .= "<div class=\"\" id=\"descriptonForSzurestipus{$packData["szurestipusid"]}\">";
             /*$text .= "  <div style='padding-left:25px;font-size:12px;'>";
             $text .= "    <span><strong>A vizsgálatról:</strong></span>";

@@ -853,34 +853,15 @@ class SynlabService
     private array $synLabParams = [
         "hungariamed" => [
             "login" => "hungariamedk",
-            "laborId" => "GLIMS9",
             "bekuldoKod" => "000000719",
             "bekuldoNev" => "Hungária Med-M Kft.",
-            "inDir"=> "/var/tlink_hungariamed/in/",
-            "outDir" => "/var/tlink_hungariamed/out/",
-            "serviceName" => "/root/commcl/commcl",
-            "orvosNev" => "Dr. Magyar Judit",
-            "orvosPecsetszam" => "44601"
-        ],
-        "hungariamed_suzuki" => [
-            "login" => "hungariamedk",
-            "laborId" => "GLIMS9",
-            "bekuldoKod" => "000000719",
-            "bekuldoNev" => "Hungária Med-M Kft. (Suzuki szűrés)",
-            "inDir"=> "/var/tlink_hungariamed/in/",
-            "outDir" => "/var/tlink_hungariamed/out/",
-            "serviceName" => "/root/commcl/commcl",
             "orvosNev" => "Dr. Magyar Judit",
             "orvosPecsetszam" => "44601"
         ],
         "keltexmed" => [
             "login" => "keltexmed",
-            "laborId" => "GLIMS9",
             "bekuldoKod" => "000000719",
             "bekuldoNev" => "Keltexmed Kft.",
-            "inDir"=> "/var/tlink_keltexmed/in/",
-            "outDir" => "/var/tlink_keltexmed/out/",
-            "serviceName" => "/var/commcl_keltexmed/commcl",
             "orvosNev" => "Dr Nagy Károly",
             "orvosPecsetszam" => "59963"
         ],
@@ -895,14 +876,29 @@ class SynlabService
 
     const SYNLAB_PRIVATE_KEY = "-----BEGIN RSA PRIVATE KEY-----MIIEpAIBAAKCAQEAoaNlzEW5Ygt9SmSjCDozNsVr/nf6U7uUdPX5fOGMBEfv4cA5CjuWhSdYVA63FtDd0rHQSJ/fXOMU47LtgztdzSd8PtKzfMpSKaI5z5zGEFCZLcT4YMzPYtc9pSr/5nIjBpqO+C9IezKq/lnHV6Y98vaFBL1R9XxfWAv6Y+4ycMNxJCRKDWuCage2Kt79gTtGsyjzZ/YuTFirhhTRmdRIUFVUzCZ6W4xHITqGn5VuCfmlZDnxo5PisbIDb+OkhPoFCmwxFZIxU2wZlAWVoLEx80ZaXbqsRLIiW0yqnXAaK3LjRg8G8rTO8hR8DA+LqFLY4Z+LuklSwHCTGwF1NdeFBwIDAQABAoIBAQCeA+LMo4zrcFf3lhJbRKo0bSN6DUhG+yXSgXR4xPXgaYL0qroYatBnM2OCKTCLuXxhMTtxA/mUENqnDpBqrmqw2Fz5/XlCEXfpA5KIh7aI1IIq4FgAKbjD4697/GFWo1Xias5BidfNuGa5aIMcCISfNKgtTfcFiaSbqnoJnx7oZFM+GBRdxPnOMayvp3rH5QE9zUMgssq6P215rfx05zEhdHooZu5RB3YxEkgDxBmLU6ugPBYnH20yTo9//ZrzoBF8RcNStZCKfa77oJsByDHKk3hk3svxKLgl9VAviJLfkJToAbwqZWKvv7W/bhDKlujFjeLeA7KzLrTzxP8/tRPBAoGBAPV5sGf94uvBx3+jrnrdIZ8/3lZzhMeE+kYfTp4cMDarmrJIGaXXoZOJufoMXDEMm8aKBjyUXA6vlKZIuqrCjguqfxZT0TGV4ZUPDyB90YRCaYw2d/EOO1iJf1hMN+UVs+OfFjXtKTFupsU5XBWvbTrR2UL0NGJR5e+cTDSuh4ZJAoGBAKiRhZkvzEMmNw8oFwH22FvjLbZLzGk8a3SQnrLU+TfjZFwryZxVzHb7aPxePUrt39EPM+vmfK6FaonlLYDHccFqs6Wt6lmc2NAElrmItGoGEB1paujL5xBXhq8cfRGN3FNaWtLb84xsSqQ0zjcsH6uY7iDVJL5YcoklIaMHcnDPAoGBANMF+Jt9S10mqazVdkIS5Tt0eVtSVVv7ufccJMaRLvVgkk0e5EWIWFNv+5u0knBsCWIk93WOiJDraduE/EudkuT+feAgz95Tnag5WOSypLGRMhEiJfvpIyValkm+w/JAtPNBqKNVLKtdFyrGw520wC7nhWEkc//trcBNWcmUG9dZAoGAJmTWyBhR7u1yVvprmx/tEajBzaagDUwcsXULIHJPvUIGptO2XOxR4LvMosaYMUvS0Zwj2FQsC9gJdxUC8zT6HPK/rjnZicWmwGJ7LhEL/qYY34oWNqXSoC8/Vv0nI2trRnTrAOHmLBKyQYphecGMCRqRClthvhUJKWGSsr5Me5MCgYAbG0Aa8J8ivP1yMeK5UhdiT8PP8sX50hbYEuUddkq+XRxLdumz96NONoyNDZ3LPWZ+CKVPgN4sUDNXFPbMTWxE0WbBPyescm8fZuRwwxgj9P24W9uzS/J0b3s3taW3r5wM6RwCqrKkvVgn/VFZZZT1FA0PMaiWzdVKt48HCq9wdA==-----END RSA PRIVATE KEY-----";
 
-    public function generateHL7FileByRequestId($requestId):string {
+    public function generateHL7FileByRequestId($requestId, $requestType):string {
         $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
         $reservationData = sql_query("select f.*, o.nev as orvosnev from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$requestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC);
-        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+
+        $kerolapFilter = 1;
+        $laborId = "GLIMS9";
+        if ($requestType == "b") {
+            $kerolapFilter = 2;
+            $laborId = "MEDWORKS";
+        }
+        if ($requestType == "s") {
+            $kerolapFilter = 4;
+            $laborId = "MEDWORKS";
+        }
+
+        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=? and t.appform=?", [$requestId, $kerolapFilter])->fetchAll(PDO::FETCH_ASSOC);
         $result = "";
 
+        if (empty($items)) {
+            return $result;
+        }
+
         $login = strtoupper($this->params["login"]);
-        $laborId = $this->params["laborId"];
         $kuldesDatum = date("YmdHi");
         $adatBlokkAzonosito = $requestData["id"];
         $paciensId = trim($reservationData["paciensid"]);
@@ -918,14 +914,23 @@ class SynlabService
         $orvosId = $this->params["orvosPecsetszam"];
         $orvosPecsetSzam = $this->params["orvosPecsetszam"];
         $orvosNev = $this->params["orvosNev"];
-        $bekuldoKod = $this->params["bekuldoKod"];;
-        $bekuldoNev = $this->params["bekuldoNev"];;
+        $bekuldoKod = $this->params["bekuldoKod"];
+        $bekuldoNev = $this->params["bekuldoNev"];
         $naploszam = $requestData["id"];
         $bekuldesDatum = date("Ymd");
         $felveteliDatum = date("YmdHi", strtotime($reservationData["datum"]));
         if ($reservationData["neme"] == 0) {
             $paciensGender = "X";
         }
+        $hisCode = "H0001";
+        $oepCode = "15";
+        if ($requestType == "b") {
+            $oepCode = "16";
+        }
+        if ($requestType == "s") {
+            $oepCode = "17";
+        }
+        $munkahely = "HMMLABOR";
 
         if ($paciensId == 0) {
             $paciensId = "f{$paciensTAJ}";
@@ -949,20 +954,22 @@ class SynlabService
         //PID - Betegadatok
         $result .= "PID|||{$paciensId}|X^HMM{$paciensId}|{$paciensNev}|{$paciensAnyjaNeve}|{$paciensSzulDatum}|{$paciensGender}|||{$paciensAddress}^^{$paciensCity}^^{$paciensIrsz}^{$paciensCountry}||||||||{$paciensTAJ}|||||||{$paciensCountry}||||N".self::EOF;
         //PV1 - Kérő adatok
-        $result .= "PV1||O|||||{$orvosId}^{$orvosNev}~{$orvosPecsetSzam}|||||||^{$bekuldoKod}^{$bekuldoNev}^||||||{$billingMarks}||||0||||||||||||||||||||{$felveteliDatum}|".self::EOF;
+        $result .= "PV1||O|||||{$orvosId}^{$orvosNev}~{$orvosPecsetSzam}|||{$hisCode}^{$oepCode}||||^{$bekuldoKod}^{$bekuldoNev}^||||||{$billingMarks}||||0||||||||||||||||||||{$felveteliDatum}|".self::EOF;
+        if (in_array($requestType, ["b", "s"])) {
+            $result .= "ZVX|{$hisCode}|{$oepCode}|{$munkahely}|" . self::EOF;
+        }
         //ZPV - További kérő adatok
         //$result .= "ZPV|||||||||||||||||{$naploszam}||{$bekuldesDatum}".self::EOF;
         //ZPD - nyomtató paraméterek
         //$result .= "ZPD|TYPE:EPL2~OFFSX:1110~OFFSY:10|".self::EOF;
         //ORC - Kérés azonosító
         //ORC|NW|82779^HIS|||||^^^^202104011154^N||202104011155|PEVIK^Péter Viktória|25152^Vendég Orvos||||||||||
-        $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^^R||{$kuldesDatum}||".self::EOF;
+        $result .= "ORC|NW|{$requestId}^{$login}|||||^^^^{$felveteliDatum}^R||{$kuldesDatum}||".self::EOF;
 
         $sor = 1;
         foreach ($items as $item) {
             //OBR - Tesztek kérése
             $result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["commazo"]}^{$item["name"]}^|||||||||||||||||" . self::EOF;
-            //$result .= "OBR|{$sor}|{$requestId}^{$login}||{$item["commazo"]}^{$item["name"]}^||||||{$login}|O" . self::EOF;
             $sor++;
         }
 
@@ -970,53 +977,73 @@ class SynlabService
     }
 
 
-    public function connectSFTP($folder):bool {
-        if (empty($this->sftp)) {
-            if ($this->sftpConnected == $folder) {
-                return true;
-            }
-            $rsa = PublicKeyLoader::load(self::SYNLAB_PRIVATE_KEY);
-
-            $sftp = new SFTP('hl7.synlabhungary.hu', 2222);
-            if (!$sftp->login($folder, $rsa)) {
-                return false;
-            }
-            $this->sftp = $sftp;
-            $this->sftpConnected = $folder;
+    public function synlabProcess():void {
+        foreach ($this->folders as $key => $folder) {
+            $this->connectSFTP($folder);
+            $this->getReceivedAnswer($folder);
+            $this->writeRequests($key, $folder);
+            $this->disconnectSFTP();
         }
+    }
+
+
+    private function connectSFTP($folder):bool {
+        if ($this->sftpConnected == $folder) {
+            return true;
+        }
+        $rsa = PublicKeyLoader::load(self::SYNLAB_PRIVATE_KEY);
+
+        $sftp = new SFTP('hl7.synlabhungary.hu', 2222);
+        if (!$sftp->login($folder, $rsa)) {
+            echo "cant connect {$folder}\n";
+            return false;
+        }
+
+        echo "connecting: {$folder}\n";
+
+        $this->sftp = $sftp;
+        $this->sftpConnected = $folder;
         return true;
     }
 
-    public function batchWriteRequests():void {
-        $folder = $this->folders["k"]; //még csak klinika kémia
-        if ($this->connectSFTP($folder)) {
-            if (!$this->sftp->file_exists("MedOut/".strtoupper($folder).".msg")) {
-                $data = "";
-                $requests = sql_query("select * from labrequests where provider='synlab' and status='waiting' and created>DATE_SUB(NOW(), INTERVAL 1 DAY) order by created limit 10")->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($requests as $requestData) {
-                    $data .= $this->generateHL7FileByRequestId($requestData["id"]);
-                    sql_query("update labrequests set status='pending' where id=?", [$requestData["id"]]);
-                }
-                if (!empty($data)) {
-                    $this->sftp->put("MedOut/".strtoupper($folder).".msg", iconv("UTF-8", "ISO-8859-2", $data));
-                    $this->sftp->put("MedOut/".strtoupper($folder).".sem", "");
-                    sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='out', datum=now(), content=?, requestid=0", [$folder, $data]);
+    private function disconnectSFTP():void {
+        if (!empty($this->sftp)) {
+            $this->sftp->disconnect();
+        }
+    }
+
+    private function writeRequests($key, $folder):void {
+        $requests = sql_query("select * from labrequests where provider='synlab' and status='waiting' and created>DATE_SUB(NOW(), INTERVAL 1 DAY) and !INSTR(synlabstatus, '{$key}_') order by created limit 10")->fetchAll(PDO::FETCH_ASSOC);
+        if (!empty($requests)) {
+            if ($this->connectSFTP($folder)) {
+                if (!$this->sftp->file_exists("MedOut/" . strtoupper($folder) . ".msg")) {
+                    $data = "";
+                    foreach ($requests as $requestData) {
+                        $data .= $this->generateHL7FileByRequestId($requestData["id"], $key);
+                        sql_query("update labrequests set synlabstatus=? where id=?", [str_replace("{$key}_", "", $requestData["synlabstatus"]).$key."_", $requestData["id"]]);
+                        sql_query("update labrequests set status='pending' where id=? and instr(synlabstatus, 'k_') and instr(synlabstatus, 's_') and instr(synlabstatus, 'b_')", [$requestData["id"]]);
+                    }
+                    if (!empty($data)) {
+                        echo "uploading: {$folder}\n";
+                        $this->sftp->put("MedOut/" . strtoupper($folder) . ".msg", iconv("UTF-8", "ISO-8859-2", $data));
+                        $this->sftp->put("MedOut/" . strtoupper($folder) . ".sem", "");
+                        sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='out', datum=now(), content=?, requestid=0", [$folder, $data]);
+                    }
                 }
             }
         }
     }
 
-    public function getReceivedAnswer():void {
-        foreach ($this->folders as $folder) {
-            if ($this->connectSFTP($folder)) {
-                $inFileName = "MedIn/" . strtoupper($folder) . ".msg";
-                $inSemaforFileName = "MedIn/" . strtoupper($folder) . ".sem";
-                if ($this->sftp->file_exists($inSemaforFileName) && $this->sftp->file_exists($inFileName)) {
-                    $content = $this->sftp->get($inFileName);
-                    sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='in', datum=now(), content=?", [$folder, $content]);
-                    $this->sftp->delete($inSemaforFileName);
-                    $this->sftp->delete($inFileName);
-                }
+    private function getReceivedAnswer($folder):void {
+        if ($this->connectSFTP($folder)) {
+            $inFileName = "MedIn/" . strtoupper($folder) . ".msg";
+            $inSemaforFileName = "MedIn/" . strtoupper($folder) . ".sem";
+            if ($this->sftp->file_exists($inSemaforFileName) && $this->sftp->file_exists($inFileName)) {
+                echo "downloading: {$folder}\n";
+                $content = $this->sftp->get($inFileName);
+                sql_query("insert into labrequestmessages set laborprovider='synlab', synlabtype=?, tipus='in', datum=now(), content=?", [$folder, iconv("ISO-8859-2", "UTF-8", $content)]);
+                $this->sftp->delete($inSemaforFileName);
+                $this->sftp->delete($inFileName);
             }
         }
     }

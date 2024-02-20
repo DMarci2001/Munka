@@ -36,8 +36,8 @@ class AdminBeoEditor {
                 $_POST["validto"] = "0000-00-00";
             }
 
-            $params = [$nap, $_POST["beonap"], $_POST["hetek"], $_POST["helyszinid"], $sorban, $aktiv, $_POST["tol"], $_POST["ig"], $potig, $noreservation, $_POST["validfrom"], $_POST["validto"], $_POST["bmegj"], $nopack, $nyitasmindencegnek, $nyitaslejaratennyivel, $_POST["beosztasid"]];
-            sql_query("update orvos_beosztas_new set nap=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=?, open_beo_for_all_company=?, release_beo_before_expire_time=? where id=?", $params);
+            $params = [$nap, $_POST["binterval"], $_POST["beonap"], $_POST["hetek"], $_POST["helyszinid"], $sorban, $aktiv, $_POST["tol"], $_POST["ig"], $potig, $noreservation, $_POST["validfrom"], $_POST["validto"], $_POST["bmegj"], $nopack, $nyitasmindencegnek, $nyitaslejaratennyivel, $_POST["beosztasid"]];
+            sql_query("update orvos_beosztas_new set nap=?, binterval=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=?, open_beo_for_all_company=?, release_beo_before_expire_time=? where id=?", $params);
 
             die("ok");
         }
@@ -210,7 +210,7 @@ class AdminBeoEditor {
                 $titl = $rowtt["megnevek"];
             }
 
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' title='egy kezelés időtartama' id='intervalchooser{$beo["id"]}' onclick='changeInterval({$beo["id"]}, this.value);'>";
+            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' title='egy kezelés időtartama' id='intervalchooser{$beo["id"]}' name='binterval'>";
             foreach ($this->adminUtils->settings->validIntervals as $interval) {
                 $html.= "<option value='{$interval}'" . ($beo["binterval"] == $interval ? " selected" : "") . ">{$interval} perc</option>";
             }
