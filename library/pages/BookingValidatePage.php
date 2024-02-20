@@ -96,6 +96,26 @@ class BookingValidatePage extends CorePage {
             } else {
                 $successText = $webText["foglalassuccesstext"];
 
+                if(CompanyService::isSuzukiTeszt()){
+
+                    $successText = "";
+
+                    $successText.="Köszönjük, hogy a Hungária Med-M. szolgáltatását választotta.<br><br>";
+                    $successText.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
+                    $successText.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($this->foglalasData["datum"]))."<br>";
+                    $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br><br>";
+                    $successText.="<strong>Vizsgálatok helyszíne:</strong> 1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője<br>";
+                    $successText.="<ul style=\"margin-left:10px\">";
+                    $successText.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található</li>";
+                    $successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges</li>";
+                    $successText.="</ul>";
+                    $successText.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+                    $successText.="<ul style=\"margin-left:10px\">";
+                    $successText.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 3 munkanappal és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
+                    $successText.=" <li style=\"list-style: disc;\"><span>Továbbá fog kapni 24 órával a vizsgálat előtt egy SMS értesítő üzenetet is.</li>";
+                    $successText.="</ul>";
+                }
+
                 if (CompanyService::isAuchan()) {
                     $successText.= "<strong>Felhívjuk figyelmét, hogy amennyiben több szolgáltatást is választott, akkor a választott időpontjához legközelebbi szabad időpontokat állította össze Önnek a rendszer. A pontos időpontokat a visszaigazoló email-ben találja meg.</strong><br/><br/>";
                     $successText.= "Ha bármi kérdése van, a foglalt időpontját szeretné módosítani vagy lemondani, kérjük hívja ezt a telefonszámot: 06 30 537 1008";
@@ -103,14 +123,17 @@ class BookingValidatePage extends CorePage {
                 }
 
 
-                if (CompanyService::isBP() && false) {
+                if (CompanyService::isBP()) {
                     //Létrehozok egy új sort a pass értékkel a psyhosoc táblában.
                     if($fogl=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=? AND rkod=?",array($_GET["id"],$_GET["rk"])))){
                         if(!$exists=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($fogl["pass"])))){
-                            sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fogl["id"],$fogl["cegid"],$fogl["pass"]));
+                            //0-ára állítom a foglalást, hogy 1 óra múlva törlődjön, hogy ha em töltené ki a kérdőívet.
+                            //sql_query("update foglalasok set aktiv=0 where id=?", array($this->foglalasData["id"]));
+                            //Létre hozom a kérdőív adatsorát az adatbázisban:
+                            //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fogl["id"],$fogl["cegid"],$fogl["pass"]));
+                            //Átirányítom a kérdőív oldalára:
                         }
                         
-        
                         $successText = $webText["foglalassuccesstextbp"];
                         $link = "https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$fogl["pass"]}";
                         $successText = str_replace("#psyhosockerdoivlink#",$link,$successText);
@@ -133,7 +156,7 @@ class BookingValidatePage extends CorePage {
                 <a href='/'>{$webText["visszafooldal"]}</a>";
 
                 $bookingService->notificationService->sendToCegAndOrvos($this->id);
-                $bookingService->notificationService->sendUserReservationNotification($this->id);
+                $bookingService->notificationService->sendUserReservationNotification($this->id,true);
             }
 
             //módosítás sync ha kell

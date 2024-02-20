@@ -166,9 +166,7 @@ class BookingPage extends CorePage
                     }
                 }
             }
-
-
-
+            
             die(json_encode(["szurestipusValaszto"=>$this->_szuresTipusValasztoNew($szurestipusId),
                             "helyszinValaszto"=>$this->_reservationPlaceSelectorNew($szurestipusId),
                             "id"=>$szurestipusId,
@@ -804,6 +802,14 @@ class BookingPage extends CorePage
         echo "<table cellpadding='3' cellspacing='0'>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
+
+        if(CompanyService::isBP()){
+            //Figyelmeztetés a piszohosc kitöltésére
+            echo "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
+            echo $webText["pszihoszocialis_kerdoiv_figyelmeztetes"];
+            echo "</div>";
+        }
+        
 
         if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_COOKIE["lang"] != "hu" && trim($_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"]) != "") {
             $_SESSION["helyszindata"]["beutaloszoveg"] = $_SESSION["helyszindata"]["beutaloszoveg_{$_COOKIE["lang"]}"];

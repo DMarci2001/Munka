@@ -2,7 +2,9 @@
 class PsychosocialFormPage extends CorePage {
 
     private $psyhosocData;
+    private $foglalasData;
     public $showLangMenu;
+    private $notificationService;
     public $lang;
 
     public function __construct()
@@ -13,10 +15,19 @@ class PsychosocialFormPage extends CorePage {
         $this->showLangMenu = true;
         $this->lockInPage   = true;
         $this->lang = new Lang();
-        
+        $this->notificationService = new NotificationService();
+
         if(isset($_GET["pass"])){
             if($existspsyhosoc=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($_GET["pass"])))){
                 $this->psyhosocData = $existspsyhosoc;
+            }
+            $this->foglalasData=sql_fetch_array(sql_query("SELECT fogl.*,h.cim,sz.* FROM foglalasok fogl
+                                                           LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
+                                                           LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                                                           WHERE fogl.pass=?",array($_GET["pass"])));
+
+            if ($_COOKIE["lang"] != "hu" && trim($this->foglalasData["megnev_{$_COOKIE["lang"]}"]) != "") {
+                $this->foglalasData["megnev"] = $this->foglalasData["megnev_{$_COOKIE["lang"]}"];
             }
         }
 
@@ -78,7 +89,9 @@ class PsychosocialFormPage extends CorePage {
                         $data["susceptibility_to_infection"],$data["burning_sensation_in_the_chest"],$data["constipation"],$data["itch"],
                         $data["inner_pain"],$data["internal_tremor"],$this->psyhosocData["datum"],$data["id"]
                        ));
-            
+
+            sql_query("UPDATE foglalasok SET aktiv=1 WHERE id=?",array($this->foglalasData["id"]));
+
             header("location:index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=success");
             die();
         }
@@ -106,9 +119,32 @@ class PsychosocialFormPage extends CorePage {
     }
 
     private function successPsyhosocNotification(){
-        echo "<h2>Köszönjük hogy kitöltötte a Pszichoszociális kérdőívet!</h2>";
-        echo "<p>Megtudja tekinteni és módosítani is tudja a kérdőívét, ha a \"módosítás gombra kattint.\"</p>";
-        echo "<a class=\"newbutton\" href=\"index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=modify\">Kérdőív megtekintése és módosítása</a>";
+        $webText = $this->lang->webText;
+        $html = "";
+
+        //Értesítések kiküldése:
+        $this->notificationService->sendToCegAndOrvos($this->foglalasData["id"]);
+        $this->notificationService->sendUserReservationNotification($this->foglalasData["id"]);
+
+        $replaceable = array("#idopont#","#helyszin#","#szurestipus#","#link#");
+        $newText = array(
+                    date("Y.m.d H:i",
+                    strtotime($this->foglalasData["datum"])),$this->foglalasData["cim"],$this->foglalasData["megnev"],
+                    "index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=modify\""
+                );
+
+        $html.= $webText["pszihosoc_success"];
+        /*$html.= "<h2>Köszönjük hogy kitöltötte a Pszichoszociális kérdőívet!</h2>";
+        $html.= "<p>Foglalása mentésre került, időpontja: </p>";
+        $html.= "<span><strong> - Időpont: </strong>#idopont#,<br>";
+        $html.= "<strong> - Helyszín: </strong>#helyszin#,<br>";
+        $html.= "<strong> - Vizsgálat típusa: </strong>#szurestipus#</span><br><br>";
+        $html.= "<p>Megtudja tekinteni és módosítani is tudja a kérdőívét, ha a \"módosítás gombra kattint.\"</p>";
+        $html.= "<a class=\"newbutton\" href=\"#link#\">Kérdőív megtekintése és módosítása</a>";*/
+
+        $html = str_replace($replaceable,$newText,$html);
+
+        echo $html;
     }
 
     private function psyhosocForm(){

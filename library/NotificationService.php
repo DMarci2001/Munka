@@ -117,6 +117,15 @@ class NotificationService {
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
 
+            if(CompanyService::isSuzukiTeszt()){
+                if($row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti nő csomag"){
+                    $mail->AddAttachment();
+                }
+                if($row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti nő csomag"){
+                    $mail->AddAttachment();
+                }
+            }
+
             $mail->Send();
 
             $this->createNotificationRecord("usernotification", $id, $row["email"], $mailTemplate["subject"], $mailTemplate["body"]);
@@ -535,6 +544,7 @@ class NotificationService {
 
         $mbody = "";
         $mbody .= "<h1>".date("Y.m.d. H:i", strtotime($row["datum"]))." - {$row["helyszin"]}</h1>";
+
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         if (!empty($row["telefon"])) {
             $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br>";
@@ -547,6 +557,23 @@ class NotificationService {
         $szuresTipus = $row["szurestipus"];
         if (CompanyService::isAuchan()) {
             $szuresTipus = $szuresTipus.". ".substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
+        }
+
+        if(CompanyService::isSuzukiTeszt()){
+            $mbody ="Köszönjük, hogy a Hungária Med-M. szolgáltatását választotta.<br><br>";
+            $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
+            $mbody.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($row["datum"]))."<br>";
+            $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br><br>";
+            $mbody.="<strong>Vizsgálatok helyszíne:</strong> 1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője<br>";
+            $mbody.="<ul style=\"margin-left:10px\">";
+            $mbody.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található</li>";
+            $mbody.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges</li>";
+            $mbody.="</ul>";
+            $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+            $mbody.="<ul style=\"margin-left:10px\">";
+            $mbody.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 3 munkanappal és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
+            $mbody.=" <li style=\"list-style: disc;\"><span>Továbbá fog kapni 24 órával a vizsgálat előtt egy SMS értesítő üzenetet is.</li>";
+            $mbody.="</ul>";
         }
 
         $mbody .= "{$webTextLocal["szurestipus"]}: {$szuresTipus}<br>";
@@ -690,7 +717,7 @@ class NotificationService {
             if ($reservationData["rlang"] == "en" && $rowcs["megnev_en"] != "") $rowcs["megnev"] = $rowcs["megnev_en"];
             if ($reservationData["rlang"] == "de" && $rowcs["megnev_de"] != "") $rowcs["megnev"] = $rowcs["megnev_de"];
             if (empty($packText)) {
-                $packText .= "<br/>Csomag tartalma:<br/>";
+                $packText .= "<br/><strong>Csomag tartalma:</strong><br/>";
             }
             $packText .= "{$rowcs["megnev"]}<br/>";
         }
