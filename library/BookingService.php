@@ -1375,7 +1375,7 @@ class BookingService
             $forwardURL = "index.php?page=bookingsuccessful";
         }
 
-        if(CompanyService::isBP()){
+        if(CompanyService::isBP() && false){
             //Itt kell létrehozzam a pszihosoc kérdőív adatsort a foglalási adatok alapján és legenerálnom a forwardurl-t.
             $fogl= sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($fid)));
             sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$fogl["cegid"],$fogl["pass"]));
