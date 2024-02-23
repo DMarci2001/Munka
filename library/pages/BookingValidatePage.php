@@ -109,10 +109,15 @@ class BookingValidatePage extends CorePage {
                     $successText.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található</li>";
                     $successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges</li>";
                     $successText.="</ul>";
+
                     $successText.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
                     $successText.="<ul style=\"margin-left:10px\">";
-                    $successText.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 3 munkanappal és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
+                    
+                    $successText.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 1 héttel és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
+                    $successText.=" <li style=\"list-style: disc;\">A bejelentkezést követően a foglalásról egy megerősítő e-mailt küld a rendszer, mely tartalmazza a foglalással és a vizsgálatokkal kapcsolatos információkat.</li>";
                     $successText.=" <li style=\"list-style: disc;\"><span>Továbbá fog kapni 24 órával a vizsgálat előtt egy SMS értesítő üzenetet is.</li>";
+                    $successText.=" <li style=\"list-style: disc;\">Tovább 24 órával a vizsgálat előtt egy SMS emlékeztetőt is küldünk Önnek.</li>";
+
                     $successText.="</ul>";
                 }
 
