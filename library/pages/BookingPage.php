@@ -663,7 +663,27 @@ class BookingPage extends CorePage
                 die;
             }
 
+            //Ha Suzukis, töltse ki az összes adatát a rendszer
+            if(CompanyService::isSuzukiTeszt()){
+                if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE cegid=? AND taj=?",array($_SESSION["helyszindata"]["id"],$_POST["taj"])))){ 
+                    $this->errors[] = "Nem található ilyen TAJ számmal fehasználó az adatbázisban!";
+                }
+            }
+
+
             if (empty($this->errors)) {
+
+                if(CompanyService::isSuzukiTeszt()){
+                    $_POST["nev"]       = $suzukiData["nev"];
+                    $_POST["szuldatum"] = $suzukiData["szuldatum"];
+                    $_POST["szulhely"]  = $suzukiData["szulhely"];
+                    $_POST["anyjaneve"] = $suzukiData["anyjaneve"];
+                    $_POST["irsz"]      = $suzukiData["irsz"];
+                    $_POST["varos"]     = $suzukiData["varos"];
+                    $_POST["utca"]      = $suzukiData["utca"];
+                    $_POST["neme"]      = $suzukiData["neme"];
+                }
+
                 if (!empty($_POST["telefon"]) && !empty($_POST["korzetszam"])) {
                     $_POST["telefon"] = "+36{$_POST["korzetszam"]}{$_POST["telefon"]}";
                 }
