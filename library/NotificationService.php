@@ -586,7 +586,7 @@ class NotificationService {
             $mbody.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található.</li>";
             $mbody.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
             $mbody.="</ul>";
-            $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+            $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések: </strong><br>";
             $mbody.="<ul style=\"margin-left:10px\">";
             $mbody.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 1 héttel és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
             $mbody.=" <li style=\"list-style: disc;\">A bejelentkezést követően a foglalásról egy megerősítő e-mailt küld a rendszer, mely tartalmazza a foglalással és a vizsgálatokkal kapcsolatos információkat.</li>";
