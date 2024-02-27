@@ -100,14 +100,15 @@ class BookingValidatePage extends CorePage {
 
                     $successText = "";
 
-                    $successText.="Köszönjük, hogy a Hungária Med-M. szolgáltatását választotta.<br><br>";
+                    $successText.="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
                     $successText.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
                     $successText.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($this->foglalasData["datum"]))."<br>";
                     $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br><br>";
-                    $successText.="<strong>Vizsgálatok helyszíne:</strong> 1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője<br>";
+                    $successText.="<strong>Vizsgálatok helyszíne:</strong><br>";
                     $successText.="<ul style=\"margin-left:10px\">";
-                    $successText.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található</li>";
-                    $successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges</li>";
+                    $successText.="<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";
+                    $successText.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található.</li>";
+                    $successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
                     $successText.="</ul>";
 
                     $successText.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
@@ -115,7 +116,7 @@ class BookingValidatePage extends CorePage {
 
                     $successText.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 1 héttel és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
                     $successText.=" <li style=\"list-style: disc;\">A bejelentkezést követően a foglalásról egy megerősítő e-mailt küld a rendszer, mely tartalmazza a foglalással és a vizsgálatokkal kapcsolatos információkat.</li>";
-                    $successText.=" <li style=\"list-style: disc;\">Tovább 24 órával a vizsgálat előtt egy SMS emlékeztetőt is küldünk Önnek.</li>";
+                    $successText.=" <li style=\"list-style: disc;\">24 órával a vizsgálat előtt SMS értesítést küldünk Önnek.</li>";
 
                     $successText.="</ul>";
                 }
