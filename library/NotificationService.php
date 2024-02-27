@@ -2,7 +2,7 @@
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
+use mikehaertl\pdftk\Pdf;
 
 class NotificationService {
     private $utils;
@@ -118,12 +118,28 @@ class NotificationService {
             }
 
             if(CompanyService::isSuzukiTeszt()){
+                //Kiválasztom melyik fájlt akarom csatolni a levélhez.
                 if($row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti nő csomag"){
-                    $mail->AddAttachment(__DIR__ . "/../public/images/Suzuki menedzser tajekoztato 45 alattiaknak.pdf");
+                    $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf"; 
                 }
                 if($row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti nő csomag"){
-                    $mail->AddAttachment(__DIR__ . "/../public/images/Suzuki menedzser tajekoztato 45 felettieknek.pdf");
+                    $filename = "Suzuki menedzser tajekoztato 45 felettieknek.pdf";
                 }
+
+                //PDF szerkesztő inicializálása
+                $pdf = new Pdf(__DIR__ . "/../public/images/".$filename);
+                //Input értékek betöltése
+                $input = array(
+                    "nev"=> $row["nev"],
+                    "idopont"=> $row["datum"],
+                    "szurocsomag"=>$row["szurestipus"]
+                );
+                //Módosítások mentése
+                $result = $pdf->fillForm($input)
+                ->flatten()
+                ->saveAs($attachment="/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
+
+                $mail->AddAttachment($attachment);
             }
 
             $mail->Send();
