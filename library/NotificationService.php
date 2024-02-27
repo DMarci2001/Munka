@@ -576,14 +576,15 @@ class NotificationService {
         }
 
         if(CompanyService::isSuzukiTeszt()){
-            $mbody ="Köszönjük, hogy a Hungária Med-M. szolgáltatását választotta.<br><br>";
+            $mbody ="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
             $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
             $mbody.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($row["datum"]))."<br>";
             $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br><br>";
-            $mbody.="<strong>Vizsgálatok helyszíne:</strong> 1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője<br>";
+            $mbody.="<strong>Vizsgálatok helyszíne:</strong><br>";
             $mbody.="<ul style=\"margin-left:10px\">";
-            $mbody.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található</li>";
-            $mbody.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges</li>";
+            $mbody.="<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";
+            $mbody.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található.</li>";
+            $mbody.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
             $mbody.="</ul>";
             $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
             $mbody.="<ul style=\"margin-left:10px\">";
