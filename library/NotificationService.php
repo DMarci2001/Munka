@@ -131,7 +131,7 @@ class NotificationService {
                 //Input értékek betöltése
                 $input = array(
                     "nev"=> $row["nev"],
-                    "idopont"=> $row["datum"],
+                    "idopont"=> str_replace("-",".",$row["datum"]),
                     "szurocsomag"=>$row["szurestipus"]
                 );
                 //Módosítások mentése
