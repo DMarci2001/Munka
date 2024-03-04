@@ -18,7 +18,7 @@ class BookingValidatePage extends CorePage {
 
         $this->id = intval($_GET["id"]);
         $this->rk = $_GET["rk"];
-        $this->foglalasData = sql_fetch_array(sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,f.* FROM foglalasok f
+        $this->foglalasData = sql_fetch_array(sql_query("SELECT h.cim AS helyszin,sz.megnev AS szurestipus,sz.csomagidotartam,f.* FROM foglalasok f
             LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
             LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
             WHERE f.id=? and f.rkod=?", array($this->id, $this->rk)));
@@ -103,7 +103,8 @@ class BookingValidatePage extends CorePage {
                     $successText.="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
                     $successText.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
                     $successText.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($this->foglalasData["datum"]))."<br>";
-                    $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br><br>";
+                    $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br>";
+                    $successText.="<strong>Várható ellátási idő:</strong> <i>{$this->foglalasData["csomagidotartam"]}</i><br><br>";
                     $successText.="<strong>Vizsgálatok helyszíne:</strong><br>";
                     $successText.="<ul style=\"margin-left:10px\">";
                     $successText.="<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";
@@ -133,7 +134,7 @@ class BookingValidatePage extends CorePage {
                     if($fogl=sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=? AND rkod=?",array($_GET["id"],$_GET["rk"])))){
                         if(!$exists=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($fogl["pass"])))){
                             //0-ára állítom a foglalást, hogy 1 óra múlva törlődjön, hogy ha em töltené ki a kérdőívet.
-                            //sql_query("update foglalasok set aktiv=0 where id=?", array($this->foglalasData["id"]));
+                            sql_query("update foglalasok set aktiv=0 where id=?", array($this->foglalasData["id"]));
                             //Létre hozom a kérdőív adatsorát az adatbázisban:
                             //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fogl["id"],$fogl["cegid"],$fogl["pass"]));
                             //Átirányítom a kérdőív oldalára:

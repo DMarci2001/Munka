@@ -64,7 +64,7 @@ class NotificationService {
     public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
-        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, sz.custompatientemail_option, sz.custompatientemail_text, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon 
+        $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, sz.custompatientemail_option, sz.custompatientemail_text, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon, csomagidotartam 
         FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
@@ -579,7 +579,8 @@ class NotificationService {
             $mbody ="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
             $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
             $mbody.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($row["datum"]))."<br>";
-            $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br><br>";
+            $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br>";
+            $mbody.="<strong>Várható ellátási idő:</strong> <i>{$row["csomagidotartam"]}</i><br><br>";
             $mbody.="<strong>Vizsgálatok helyszíne:</strong><br>";
             $mbody.="<ul style=\"margin-left:10px\">";
             $mbody.="<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";

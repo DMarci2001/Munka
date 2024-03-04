@@ -666,7 +666,7 @@ class BookingPage extends CorePage
             //Ha Suzukis, töltse ki az összes adatát a rendszer
             if(CompanyService::isSuzukiTeszt()){
                 if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE cegid=? AND taj=?",array($_SESSION["helyszindata"]["id"],$_POST["taj"])))){ 
-                    $this->errors[] = "Nem található ilyen TAJ számmal fehasználó az adatbázisban!";
+                    $this->errors[] = "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre, kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
                 }
             }
 
@@ -888,7 +888,7 @@ class BookingPage extends CorePage
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
-        if(CompanyService::isBP() && false){
+        if(CompanyService::isBP()){
             //Figyelmeztetés a piszohosc kitöltésére
             echo "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
             echo $webText["pszihoszocialis_kerdoiv_figyelmeztetes"];
@@ -1600,11 +1600,12 @@ class BookingPage extends CorePage
 
     private function setNotificatitonForPackage($szurestipusId){
         $notification = "";
-        $csomag = sql_fetch_array(sql_query("SELECT megnev FROM szurestipusok WHERE id=?",array($szurestipusId)));
+        $csomag = sql_fetch_array(sql_query("SELECT megnev,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusId)));
 
 
         if(CompanyService::isSuzukiTeszt()){
             $notification = "Kiválasztott csomag:<br> <strong>{$csomag["megnev"]}</strong><br>";
+            $notification.= "<strong>Várható ellátási idő:</strong> <i>{$csomag["csomagidotartam"]}</i><br>";
             $notification.= "<br>Tartalma:";
             $q=sql_query("SELECT sz.megnev FROM szurescsomagok_kapcs szk 
                           LEFT JOIN szurestipusok sz ON szk.szurestipusid=sz.id

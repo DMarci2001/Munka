@@ -1967,7 +1967,7 @@ class BookingService
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
-        $data = sql_fetch_array(sql_query("SELECT infopagetext FROM szurestipusok WHERE id=?",array($szurestipusid)));
+        $data = sql_fetch_array(sql_query("SELECT infopagetext,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusid)));
        
         if(!empty($data["infopagetext"])){
             $text = $data["infopagetext"];
@@ -2007,7 +2007,7 @@ class BookingService
                 //Megjelenített szöveg kezdete
                 $text = "<div style='margin:5px 0px;font-weight: bold;'>A csomag az alábbi vizsgálatokat tartalmazza:</div>";
                 $text.= "<div style='margin-bottom: 10px;'>";
-
+                $text.= "<div style=\"margin-bottom:15px;margin-left:5px;\"><strong>Várható ellátási idő:</strong> <i>{$data["csomagidotartam"]}</i></div>";
                 //Vizsgálatok megjelenítése:
                 $text.= $this->managerCsomagSzerkeszto($pack);
 
@@ -2718,6 +2718,8 @@ class BookingService
             if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
                 $checked="";
             }
+
+
             $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
             $onChange = "onChange='clearIdopontValasztoOnly()'";
             $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} ({$packData["szurestipusid"]})&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";

@@ -346,6 +346,13 @@ class AjaxService {
             die;
         }
 
+        if(isset($_POST["checkwhitelist"])){
+            if(!$onlist=sql_fetch_array(sql_query("SELECT * FROM suzuki_white_list WHERE taj=?",array($_POST["taj"])))){
+                echo "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre.<br><br> Kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
+            }
+            die();
+        }
+
     }
 
 

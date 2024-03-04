@@ -709,6 +709,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             
         }
         
+        if(CompanyService::isSuzukiTeszt() && $fieldName=="taj"){
+            $jsCall = "onfocusout='checkWhiteList($(this).val())'";
+        }
 
         if (!$hidden || $RequiedForced) {
             if (empty($extraHTML)) {
