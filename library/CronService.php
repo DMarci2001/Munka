@@ -77,8 +77,7 @@ class CronService {
             if (Booking_Constants::SQL_DB == "hungariamed") {
                 //synlab feldolgozás
                 $service = new SynlabService();
-                //$service->batchWriteRequests();
-                //$service->getReceivedAnswer();
+                $service->synlabProcess();
                 $service->processPdfFromMessages();
             }
 

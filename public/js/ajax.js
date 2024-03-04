@@ -12,6 +12,7 @@ $(document).ready(function () {
     initHMMChat();
     initIrszAutoFill();
     initSubReservationButtons();
+    initBmeButtons();
 });
 
 
@@ -1214,3 +1215,14 @@ function bindIdopontButtons() {
     });
 }
 
+function initBmeButtons() {
+    $(".bmeservicebox").click(function () {
+        if ($(this).find("input[type='checkbox']").is(":checked")) {
+            $(this).css("border", "2px solid #f0f0f0");
+            $(this).find("input[type='checkbox']").prop("checked", false);
+        } else {
+            $(this).css("border", "2px solid #888");
+            $(this).find("input[type='checkbox']").prop("checked", true);
+        }
+    });
+}

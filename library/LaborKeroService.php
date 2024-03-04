@@ -8,6 +8,8 @@ class LaborKeroService
 
     private string $errorMessage = "";
     public string $laborProvider;
+    public string $bekuldoKod;
+    public string $bekuldoKodSpektrumLab;
     private array $laborNames = [self::LABOR_PROVIDER_SYNLAB => "SynLab", self::LABOR_PROVIDER_SPEKTRUMLAB => "SpektrumLab"];
     private string $testSession = "9ddh9hedkfve8nr1l7pkb2qjm0";
 
@@ -17,6 +19,19 @@ class LaborKeroService
             $_SESSION["laborprovider"] = self::LABOR_PROVIDER_SPEKTRUMLAB;
         }
         $this->laborProvider = $_SESSION["laborprovider"];
+
+        if (!isset($_SESSION["laborbekuldokod"])) {
+            $_SESSION["laborbekuldokod"] = SynlabService::DEFAULT_BEKULDOKOD;
+        }
+        $this->bekuldoKod = $_SESSION["laborbekuldokod"];
+
+        if (!isset($_SESSION["laborbekuldokodspektrumlab"])) {
+            $_SESSION["laborbekuldokodspektrumlab"] = SpektrumlabService::DEFAULT_BEKULDOKOD;
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $_SESSION["laborbekuldokodspektrumlab"] = SpektrumlabService::DEFAULT_BEKULDOKOD_KELTEXMED;
+            }
+        }
+        $this->bekuldoKodSpektrumLab = $_SESSION["laborbekuldokodspektrumlab"];
 
         if (!isset($_SESSION["spmatricaprinter"])) {
             $_SESSION["spmatricaprinter"] = "zebra";
@@ -103,6 +118,26 @@ class LaborKeroService
             Utils::jsonOut(["message" => $message, "html" => $requestWindow]);
         }
 
+        if (isset($_POST["changeLaborBekuldoKod"])) {
+            $reservationId = intval($_POST["changeLaborBekuldoKod"]);
+            $laborId = $_POST["laborId"];
+            $message = "A beküldőkód nem változott";
+
+            if ($laborId == self::LABOR_PROVIDER_SYNLAB) {
+                $_SESSION["laborbekuldokod"] = $_POST["selection"];
+                $this->bekuldoKod = $_SESSION["laborbekuldokod"];
+                $message = "Beküldőkód megváltozott: " . $this->bekuldoKod;
+            }
+
+            if ($laborId == self::LABOR_PROVIDER_SPEKTRUMLAB) {
+                $_SESSION["laborbekuldokodspektrumlab"] = $_POST["selection"];
+                $this->bekuldoKodSpektrumLab = $_SESSION["laborbekuldokodspektrumlab"];
+                $message = "Beküldőkód megváltozott: " . $this->bekuldoKodSpektrumLab;
+            }
+
+            Utils::jsonOut(["message" => $message, "html" => $this->laborKeroWindow($reservationId)]);
+        }
+
         if (isset($_POST["sendlaborkero"])) {
             $requestId = intval($_POST["rid"]);
             $reservationId = intval($_POST["fid"]);
@@ -115,12 +150,12 @@ class LaborKeroService
 
             if (empty($error)) {
                 if ($this->laborProvider == self::LABOR_PROVIDER_SYNLAB) {
-                    sql_query("update labrequests set status='waiting', laboritems=?, createdby=? where id=?", [json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
+                    sql_query("update labrequests set status='waiting', bekuldokod=?, laboritems=?, createdby=? where id=?", [$this->bekuldoKod, json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
                 }
 
                 if ($this->laborProvider == self::LABOR_PROVIDER_SPEKTRUMLAB) {
                     $service = new SpektrumlabService();
-                    sql_query("update labrequests set status='pending', laboritems=?, createdby=? where id=?", [json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
+                    sql_query("update labrequests set status='pending', bekuldokod=?, laboritems=?, createdby=? where id=?", [$this->bekuldoKodSpektrumLab, json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
                     $error = $service->writeNextRequest($requestId);
                     if (!empty($error)) {
                         sql_query("update labrequests set status='temp' where id=?", [$requestId]);
@@ -444,7 +479,7 @@ class LaborKeroService
                 $html.= "</div>";
             } else {
                 if ($this->laborProvider == self::LABOR_PROVIDER_SYNLAB) {
-                    $html .= "<div style='color:red;font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;font-size: 14px;'>A synlab laborkérés fejlesztés alatt áll, ne használd még!</div>";
+                    $html .= "<div style='color:red;font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;font-size: 14px;'>Synlab részére egyelőre csak a klinika kémia és allergia vizsgálatok küldhetők!</div>";
                 }
 
                 $items = $this->getItems();
@@ -509,7 +544,11 @@ class LaborKeroService
         $html .= "<input type='hidden' id='laborkeroreservationid' value='{$reservationId}' />";
         $html .= "<input type='hidden' id='laborkerorequestid' value='{$laborRequestData["id"]}' />";
         if (in_array($laborRequestData["status"], ["temp"])) {
-            $html .= "<a class='printbutton' onclick='sendLaborKero();return false;' href='#' style='background: #00aa00'>".$this->laborNames[$this->laborProvider]." laborkérő küldése</a> ";
+            $buttonTitle = $this->laborNames[$this->laborProvider]." laborkérő küldése";
+            if ($this->laborProvider == self::LABOR_PROVIDER_SYNLAB) {
+                $buttonTitle.= " <i class='fa-solid fa-caret-right'></i> {$this->bekuldoKod}";
+            }
+            $html .= "<a class='printbutton' onclick='sendLaborKero();return false;' href='#' style='background: #00aa00'>{$buttonTitle}</a> ";
         }
         if (in_array($laborRequestData["status"], ["waiting"])) {
             $html .= "<a class='printbutton' onclick='cancelLaborKero();return false;' href='#' style='background: #aa0000'>Laborkérő visszavonása</a> ";
@@ -524,7 +563,34 @@ class LaborKeroService
 
         if (in_array($laborRequestData["status"], ["temp"])) {
             $html.= "Labor: ";
-            $html.= "<a style='padding:2px 4px;background:red;color:white;border-radius:3px;' href='#' onclick='toggleLaborProvider(\"\", {$reservationId});return false;'>".$this->laborNames[$_SESSION["laborprovider"]]."</a> &bull; ";
+            $html.= "<select name='laborproviderselector' id='laborproviderselector' onchange='toggleLaborProvider($(this).val(), {$reservationId});' style='background:#ffc;'>";
+            $html.= "<option value='".self::LABOR_PROVIDER_SPEKTRUMLAB."'".(self::LABOR_PROVIDER_SPEKTRUMLAB == $this->laborProvider ?" selected":"").">".$this->laborNames[self::LABOR_PROVIDER_SPEKTRUMLAB]."</option>";
+            $html.= "<option value='".self::LABOR_PROVIDER_SYNLAB."'".(self::LABOR_PROVIDER_SYNLAB == $this->laborProvider ?" selected":"").">".$this->laborNames[self::LABOR_PROVIDER_SYNLAB]."</option>";
+            $html.= "</select>&nbsp;&nbsp;";
+
+            if ($this->laborProvider == self::LABOR_PROVIDER_SYNLAB) {
+                $html.= "Beküldőkód: ";
+                $html.= "<select name='laborbekuldokodselector' id='laborbekuldokodselector' onchange='changeLaborBekuldoKod(\"".self::LABOR_PROVIDER_SYNLAB."\", $(this).val(), {$reservationId});' style='width:210px;background:#ffc;'>";
+                foreach (SynlabService::BEKOLDO_KOD_MAP as $bekuldoKod => $bekuldoKodName) {
+                    $html .= "<option value='{$bekuldoKod}'" . ($bekuldoKod == $this->bekuldoKod ? " selected" : "") . ">{$bekuldoKod} - {$bekuldoKodName}</option>";
+                }
+                $html.= "</select>&nbsp;&nbsp;";
+            }
+
+            if ($this->laborProvider == self::LABOR_PROVIDER_SPEKTRUMLAB) {
+                $html.= "Beküldőkód: ";
+                $html.= "<select name='laborbekuldokodselector' id='laborbekuldokodselector' onchange='changeLaborBekuldoKod(\"".self::LABOR_PROVIDER_SPEKTRUMLAB."\", $(this).val(), {$reservationId});' style='width:210px;background:#ffc;'>";
+                $codeMap = SpektrumlabService::BEKOLDO_KOD_MAP;
+                if (Booking_Constants::SQL_DB == "keltexmed") {
+                    $codeMap = SpektrumlabService::BEKOLDO_KOD_MAP_KELTEXMED;
+                }
+                foreach ($codeMap as $bekuldoKod => $bekuldoKodName) {
+                    $html .= "<option value='{$bekuldoKod}'" . ($bekuldoKod == $this->bekuldoKodSpektrumLab ? " selected" : "") . ">{$bekuldoKod} - {$bekuldoKodName}</option>";
+                }
+                $html.= "</select>&nbsp;&nbsp;";
+            }
+
+            //$html.= "<a style='padding:2px 4px;background:red;color:white;border-radius:3px;' href='#' onclick='toggleLaborProvider(\"\", {$reservationId});return false;'>".$this->laborNames[$_SESSION["laborprovider"]]."</a> &bull; ";
         }
 
 

@@ -1403,7 +1403,7 @@ class BookingPage extends CorePage
     private function _reservationPlaceSelectorNew($forcedSzurestipusId=null)
     {
         $html        = "";
-        $szuresTipus = (isset($_POST["szurestipus"])?$_POST["szurestipus"]:$forcedSzurestipusId);
+        $szuresTipus = $_POST["szurestipus"] ?? $forcedSzurestipusId;
         $webText     = $this->lang->webText;
         $helyszinek  = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"], $szuresTipus);
         $numOfH      = count($helyszinek);

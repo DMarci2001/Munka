@@ -9,6 +9,37 @@ class SynlabService
 {
     public array $bekuldoKodok = ["000000719", "HMMSZURES", "HMMMAALLK"];
 
+    const BEKOLDO_KOD_MAP = [
+        "MMFGSMIS" => "Hungaria Med-M Kft. (FGSZ Zrt. - Miskolc)",
+        "HMMKECSKE" => "Hungaria Med-M Kft. (Kecskemét)",
+        "HMMSUDLGZ" => "Hungaria Med-M Kft. (SUZUKI dolgozói)",
+        "HMMSUMNGR" => "Hungaria Med-M Kft. (SUZUKI manager)",
+        "000000719" => "Hungaria Med-M Kft.",
+        "000000460" => "Hungaria Med-M Kft. (FCSM)",
+        "000000463" => "Hungaria Med-M Kft. (TIGÁZ)",
+        "000000907" => "Hungaria Med-M Kft (Gyöngyös Apolló)",
+        "000001287" => "Hungaria Med-M Kft. (HungaroControl Zrt. szűrés)",
+        "000000982" => "Hungaria Med-M Kit. (Győr)",
+        "000000787" => "Hungaria Med-M Kft. (ALDI)",
+        "000001079" => "Hungaria Med-M Kft. (Fehérvári út)",
+        "000000887" => "Hungaria Mcd-M Kft. (Hungarocontrol)",
+        "000000946" => "Hungaria Med-M Kft. (Paks2 Budapest)",
+        "000000789" => "Hungaria Med-M Kft. (Paks2)",
+        "HMMFGSZRT" => "Hungaria Med-M Kft. (FGSZ Zrt.)",
+        "HMMFGHJSZ" => "Hungaria Med-M Kft. (FGSZ Zrt. - Hajdúszoboszló)",
+        "HMMPOLGAR" => "Hungaria Med-M Kft. (Polgár)",
+        "HMMSZEGED" => "Hungaria Med-M Kft. (Szeged)",
+        "HMMIDEGEN" => "Hungaria Med-M Kft. (Idegenrendészet)",
+        "HMEDMNKFI" => "Hungaria Med-M Kft. (NKFI)",
+        "HMEDMMKK0" => "Hungaria Med-M Kft. (MKK)",
+        "HMEDTORVSZ" => "Hungaria Med-M Kft. (Törvényszék)",
+        "HMMMMOVAR" => "Hungaria Med-M Kft. (Mosonmagyaróvár)",
+        "HMMKELTEX" => "Hungaria Med-M Kft. (KELTEX HMM)",
+        "HMMKFTBME" => "Hungaria Med-M Kft. (BME)",
+    ];
+
+    const DEFAULT_BEKULDOKOD = "000000719";
+
     public function __construct()
     {
         $index = Booking_Constants::SQL_DB;
@@ -914,7 +945,7 @@ class SynlabService
         $orvosId = $this->params["orvosPecsetszam"];
         $orvosPecsetSzam = $this->params["orvosPecsetszam"];
         $orvosNev = $this->params["orvosNev"];
-        $bekuldoKod = $this->params["bekuldoKod"];
+        $bekuldoKod = $requestData["bekuldokod"];
         $bekuldoNev = $this->params["bekuldoNev"];
         $naploszam = $requestData["id"];
         $bekuldesDatum = date("Ymd");

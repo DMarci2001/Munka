@@ -4662,6 +4662,22 @@ function toggleLaborProvider(selection, fid) {
     })
 }
 
+function changeLaborBekuldoKod(laborId, selection, fid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {changeLaborBekuldoKod:fid, selection:selection, laborId:laborId},
+        success: function(response){
+            showGeneralPopup(response.html);
+            setupLaborVizsgalatFilter();
+            $.toast({
+                text: response.message,
+                icon: 'success'
+            });
+        }
+    })
+}
+
 function showTelephelyHelyszinValaszto(telephelyid){
     if($("#helyszinvalaszto"+telephelyid).children().length>0){
         $("#helyszinvalaszto"+telephelyid).empty();
