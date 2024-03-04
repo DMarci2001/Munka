@@ -665,7 +665,7 @@ class BookingPage extends CorePage
 
             //Ha Suzukis, töltse ki az összes adatát a rendszer
             if(CompanyService::isSuzukiTeszt()){
-                if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE cegid=? AND taj=?",array($_SESSION["helyszindata"]["id"],$_POST["taj"])))){ 
+                if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM suzuki_white_list WHERE taj=?",array($_POST["taj"])))){ 
                     $this->errors[] = "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre, kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
                 }
             }
