@@ -288,6 +288,19 @@ function setSzurestipusValaszto(){
     
 }
 
+function checkWhiteList(taj){
+    $.ajax({
+        url: 'index.php',
+        type: 'POST',
+        data: {checkwhitelist:true,taj:taj},
+        success: function (response) {
+            if(response!=""){
+                myAlert(response);
+            }
+        }
+    });
+}
+
 function showInfoPageText(szurestipusid){
 
     console.log(szurestipusid);
