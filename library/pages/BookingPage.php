@@ -664,7 +664,7 @@ class BookingPage extends CorePage
             }
 
             //Ha Suzukis, töltse ki az összes adatát a rendszer
-            if(CompanyService::isSuzukiTeszt()){
+            if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
                 if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM suzuki_white_list WHERE taj=?",array($_POST["taj"])))){ 
                     $this->errors[] = "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre, kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
                 }
@@ -673,7 +673,7 @@ class BookingPage extends CorePage
 
             if (empty($this->errors)) {
 
-                if(CompanyService::isSuzukiTeszt()){
+                if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
                     $_POST["nev"]       = $suzukiData["nev"];
                     $_POST["szuldatum"] = $suzukiData["szuldatum"];
                     $_POST["szulhely"]  = $suzukiData["szulhely"];
@@ -924,7 +924,7 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
-            if (CompanyService::isSuzukiTeszt()) {
+            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
                 $customJs="onChange='setSzurestipusValaszto()'";
                 echo $this->utils->dataField("neme",true,$customJs);
                 echo $this->utils->dataField("szuldatum",true,$customJs);
@@ -1311,7 +1311,7 @@ class BookingPage extends CorePage
         $tipusnevek = [];
         $suzukiDisabled = "";
 
-        if(CompanyService::isSuzukiTeszt()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
             $suzukiDisabled = "disabled=\"true\"";
         }
 
@@ -1412,7 +1412,7 @@ class BookingPage extends CorePage
         if($forcedSzurestipusId){
             $szuresTipus = $forcedSzurestipusId;
         }
-        if(CompanyService::isSuzukiTeszt()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
             $disabled = "disabled=\"true\"";
             //$_POST["helyszin"]=1;
         }
@@ -1603,7 +1603,7 @@ class BookingPage extends CorePage
         $csomag = sql_fetch_array(sql_query("SELECT megnev,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusId)));
 
 
-        if(CompanyService::isSuzukiTeszt()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
             $notification = "Kiválasztott csomag:<br> <strong>{$csomag["megnev"]}</strong><br>";
             $notification.= "<strong>Várható ellátási idő:</strong> <i>{$csomag["csomagidotartam"]}</i><br>";
             $notification.= "<br>Tartalma:";

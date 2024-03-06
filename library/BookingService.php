@@ -601,7 +601,7 @@ class BookingService
             }
 
             //Ha foglaló kivette a kötelező elemek közül a vizsgálatot akkor kihagyjuk a loopból ezt a szűréstípust.
-            if(!isset($data["szurestipus{$packTypeId}"]) && CompanyService::isSuzukiTeszt()){
+            if(!isset($data["szurestipus{$packTypeId}"]) && (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser())){
                 continue;
             }
 
@@ -1996,7 +1996,7 @@ class BookingService
             $text.= "</ul></div>";
         }
 
-        if (CompanyService::isSuzukiTeszt()) {
+        if (CompanyService::isSuzukiTeszt() || companyService::isSuzukiMenedzser()) {
 
             //Csomag tartalmának kilistázása
             $pack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
@@ -2722,7 +2722,7 @@ class BookingService
 
             $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
             $onChange = "onChange='clearIdopontValasztoOnly()'";
-            $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} ({$packData["szurestipusid"]})&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
+            $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]}&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
 
             $text .= "<div class=\"\" id=\"descriptonForSzurestipus{$packData["szurestipusid"]}\">";
             /*$text .= "  <div style='padding-left:25px;font-size:12px;'>";

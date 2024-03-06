@@ -117,7 +117,7 @@ class NotificationService {
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
 
-            if(CompanyService::isSuzukiTeszt()){
+            if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
                 //Kiválasztom melyik fájlt akarom csatolni a levélhez.
                 if($row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti nő csomag"){
                     $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf"; 
@@ -575,7 +575,7 @@ class NotificationService {
             $szuresTipus = $szuresTipus.". ".substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
         }
 
-        if(CompanyService::isSuzukiTeszt()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
             $mbody ="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
             $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
             $mbody.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($row["datum"]))."<br>";

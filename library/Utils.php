@@ -709,7 +709,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             
         }
         
-        if(CompanyService::isSuzukiTeszt() && $fieldName=="taj"){
+        if((CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) && $fieldName=="taj"){
             $jsCall = "onfocusout='checkWhiteList($(this).val())'";
         }
 

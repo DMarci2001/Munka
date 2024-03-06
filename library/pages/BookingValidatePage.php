@@ -96,7 +96,7 @@ class BookingValidatePage extends CorePage {
             } else {
                 $successText = $webText["foglalassuccesstext"];
 
-                if(CompanyService::isSuzukiTeszt()){
+                if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
 
                     $successText = "";
 
