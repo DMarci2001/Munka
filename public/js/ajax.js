@@ -270,6 +270,8 @@ function setSzurestipusValaszto(){
     if(score==4){
         szuldatum = $("select[name=\"szuldatumev\"]").val()+"-"+$("select[name=\"szuldatumho\"]").val()+"-"+$("select[name=\"szuldatumnap\"]").val();
         neme = $("input[name=\"neme\"]:checked").val();
+
+        clearIdopontValasztoOnly();
        
         $.ajax({
             url: 'index.php',
