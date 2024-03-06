@@ -34,7 +34,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="suzukiteszt";
+            $d="suzuki-menedzserszures";
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
@@ -149,6 +149,10 @@ class CompanyService {
 
     public static function isSuzukiTeszt($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "suzukiteszt" && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isSuzukiMenedzser($companyId = 0):bool{
+        return $_SESSION["helyszindata"]["domain"] == "suzuki-menedzserszures" && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function isFGSZ($companyId = 0):bool {
