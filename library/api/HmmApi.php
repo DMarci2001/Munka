@@ -659,6 +659,8 @@ class HmmApi {
             "patientMothersName" => $reservationData["anyjaneve"],
             "patientComment" => $reservationData["megj"],
             "patientNotification" => false,
+            "active" => $reservationData["aktiv"],
+            "expiration" => $reservationData["expire"],
             "modifiedAt" => date("c", strtotime($reservationData["regdatum"]))
         ];
     }
@@ -672,8 +674,8 @@ class HmmApi {
                 $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
                 $this->_checkReservationBody($body);
 
-                sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=? where id=? and pass=?",
-                    [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $reservationData["id"], $body["authorizationCode"]]);
+                sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=?, aktiv=?, expire=? where id=? and pass=?",
+                    [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $body["active"], $body["expiration"], $reservationData["id"], $body["authorizationCode"]]);
 
                 return $this->_reservationArray(sql_fetch_array(sql_query("select * from foglalasok where id=?", [$reservationData["id"]])));
             } else {
@@ -725,6 +727,8 @@ class HmmApi {
         $patientCity        = $body["patientCity"] ?? "";
         $patientAddress     = $body["patientAddress"] ?? "";
         $paid               = $body["paid"] ?? 0;
+        $expiration         = $body["expiration"] ?? "0000-00-00 00:00:00";
+        $active             = $body["active"] ?? 1;
 
         if (empty($body["patientDateOfBirth"])) {
             $patientDateOfBirth = "0000-00-00";
@@ -778,8 +782,9 @@ class HmmApi {
             "tudoszuro" => 0,
             "lang" => "hu",
             "orvosid" => $doctorId,
-            "aktiv" => 1,
+            "aktiv" => $active,
             "paid" => $paid,
+            "expire" => $expiration,
             "rn" => rand(1000000, 9999999)];
 
         $_REQUEST["rinterval"] = $data["rinterval"]; //fix
@@ -967,6 +972,15 @@ class HmmApi {
                 }
            }
         }
+
+        usort($slots, function($a, $b) {
+            if ($a["date"] > $b["date"]) {
+                return 1;
+            } elseif ($a["date"] < $b["date"]) {
+                return -1;
+            }
+            return 0;
+        });
 
         return $slots;
     }

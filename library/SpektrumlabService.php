@@ -47,6 +47,24 @@ class SpektrumlabService {
             "orvosPecsetszam" => "59963"
         ],
     ];
+
+    const BEKOLDO_KOD_MAP = [
+        "000000370" => "Hungaria Med-M Kft.",
+        "000000477" => "Hungária Med-M Kft. (TESCO)",
+        "000000479" => "Hungária Med-M Kft. (Suzuki egészségút)",
+        "000000480" => "Hungária Med-M Kft. (Suzuki dolgozói)",
+        "000000481" => "Hungária Med-M Kft. (MÁESZ)",
+        "000000482" => "Hungária Med-M Kft. (Külső szűrés)",
+        "000000483" => "Hungária Med-M Kft. (Hazai pálya)",
+    ];
+
+    const BEKOLDO_KOD_MAP_KELTEXMED = [
+        "000000390" => "Keltexmed Kft.",
+    ];
+
+    const DEFAULT_BEKULDOKOD = "000000370";
+    const DEFAULT_BEKULDOKOD_KELTEXMED = "000000390";
+
     public array $params = [];
 
     const IN_FILE = "lab.msg";
@@ -138,6 +156,11 @@ class SpektrumlabService {
             $this->params = $this->spektrumLabParams["hungariamed_suzuki"];
         }
 
+        $codeMap = SpektrumlabService::BEKOLDO_KOD_MAP;
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $codeMap = SpektrumlabService::BEKOLDO_KOD_MAP_KELTEXMED;
+        }
+
         $login = $this->params["login"];
         $laborId = $this->params["laborId"];
         $kuldesDatum = date("YmdHi");
@@ -155,8 +178,8 @@ class SpektrumlabService {
         $orvosId = $this->params["orvosPecsetszam"];
         $orvosPecsetSzam = $this->params["orvosPecsetszam"];
         $orvosNev = $this->params["orvosNev"];
-        $bekuldoKod = $this->params["bekuldoKod"];;
-        $bekuldoNev = $this->params["bekuldoNev"];;
+        $bekuldoKod = $requestData["bekuldokod"];
+        $bekuldoNev = $codeMap[$this->params["bekuldokod"]];
         $naploszam = $requestData["id"];
         $bekuldesDatum = date("Ymd");
         $felveteliDatum = date("YmdHi", strtotime($reservationData["datum"]));

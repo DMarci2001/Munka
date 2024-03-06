@@ -1207,8 +1207,28 @@ strong {
 
 .bmecolumn2 {
     display:block;
+    /*background:#a9d099;*/
+    /*color:#fff;*/
     padding:10px 0px 10px 0px;
-    margin:10px 0px 10px 0px;;
-    border-top:1px solid #000;
-    border-bottom:1px solid #000;
+    margin:10px 0px 10px 0px;
+    border-top:1px solid #888;
+    border-bottom:1px solid #888;
+}
+
+.bmeservicebox {
+    display:inline-block;
+    width:165px;
+    height:165px;
+    background-position:center;
+    background-repeat: no-repeat;
+    padding:0px;
+    margin:10px 10px 0px 0px;
+    vertical-align: top;
+    cursor:pointer;
+    border:2px solid #fff;
+    user-select: none;
+}
+
+.bmeservicebox:hover {
+    /*border:2px solid #888;*/
 }

@@ -1039,10 +1039,12 @@ class BookingService
                 $chooseText = $webText["valasszonszolgaltatast"];
                 $hidden = "";
                 $priceDisplay = false;
+                $tileMode = false;
 
                 if (CompanyService::isBME()) {
                     $priceDisplay = true;
-                    $chooseText = "Ha kér, válasszon a Fehérvári úton elérhető téritéses szolgáltatást";
+                    $tileMode = session_id() == "gtefskm5mqb91q928dabh4lqg9";
+                    $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül";
                     //$hidden = "display:none;";
                     //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
                 }
@@ -1052,20 +1054,41 @@ class BookingService
                 while ($row = sql_fetch_array($res)) {
                     //$lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     $lengthText = "";
-                    $priceText = "";
+                    $priceText = $priceTextBox = "";
                     if ($priceDisplay) {
                         if (substr_count($row["megnev"], "Labor")) {
-                            $priceText = " (" . number_format($row["price"]) . " Ft-tól)";
+                            $priceText = " (" . number_format($row["price"], 0, " ", "&nbsp;") . " Ft-tól)";
+                            $priceTextBox = number_format($row["price"], 0, " ", "&nbsp;") . " Ft-tól";
                         } else {
-                            $priceText = " (" . number_format($row["price"]) . " Ft)";
+                            $priceText = " (" . number_format($row["price"], 0, " ", "&nbsp;") . " Ft)";
+                            $priceTextBox = number_format($row["price"], 0, " ", "&nbsp;") . " Ft";
                         }
                     }
                     //if ($_COOKIE["lang"]!="hu" && trim($row["megnev_{$_COOKIE["lang"]}"])!="") $row["megnev"]=$row["megnev_{$_COOKIE["lang"]}"];
-                    $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                    if ($tileMode) {
+
+                        $bmeBackgroundMap = [
+                            "ABI érrendszer vizsgálat" => "abi.png",
+                            "Dietetika" => "dietetika.png",
+                            "12 elvezetéses nyugalmi EKG, vérnyomás-, pulzus mérés" => "ekg.png",
+                            "Laborvizsgálat" => "labor.png",
+                            "Vércukor - koleszterin" => "lipidpanel.png",
+                            "Tüdőszűrés" => "tudoszures.png",
+                            "Szívstressz-Vicardio vizsgálat" => "vicardio.png",
+                        ];
+
+                        $h.= "<div class='bmeservicebox' style='background:url(/images/bme/{$bmeBackgroundMap[$row["megnev"]]});background-size:cover;'>";
+                        $h.= "<input type='checkbox' class='altipuscheck' style='display:none;' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " />";
+                        $h.= "<div style='height:125px;overflow: hidden;'><div style='margin-top:10px;background:rgba(0, 0, 0, .5);color:white;padding:10px;font-weight: bold;text-transform: uppercase;'>{$row["megnev"]}</div></div>";
+                        $h.= "<div style='font-size:15px;background:rgba(255, 255, 255, .7);color:#b00;padding:10px;'><strong>{$priceTextBox}</strong></div>";
+                        $h.= "</div>";
+                    } else {
+                        $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                    }
                 }
                 if (CompanyService::isBME()) {
-                    $h.= "<div style='margin-top:10px;'><a href='https://www.keltexmed.hu/site/images/arlista_keltexmed.pdf' target='_blank'>Teljes KeltexMed árlista</a>";
-                    $h.= "<div class='bmecolumn2'><div style='font-weight:bold;margin-bottom:5px;'>További szakvizsgálatok</div>A 1135 Budapest, Jász u. 33-35.-ös címünkön található Egészségügyi Központunkba tudja igénybe venni, az alábbi <a style='text-decoration:underline;' href='https://bejelentkezes.hungariamed.hu' target='_blank'>bejelentkező&nbsp;rendszeren</a> keresztül. Figyelem, ezen a helyszínen nincs lehetőség üzemorvosi vizsgálat elvégzésére.</div>";
+                    $h.= "<div style='margin-top:10px;'><a href='https://www.keltexmed.hu/site/images/arlista_keltexmed.pdf?v202402' target='_blank'>Teljes KeltexMed árlista</a>";
+                    $h.= "<div class='bmecolumn2'><div style='font-weight:bold;margin-bottom:5px;'>További szakvizsgálatok</div>A 1135 Budapest, Jász u. 33-35. szám alatt található Egészségügyi Központunkban tudják igénybe venni.<br/>Időpontfoglaláshoz kettintson  ide: <a style='text-decoration:underline;' href='https://bejelentkezes.hungariamed.hu' target='_blank'>bejelentkező&nbsp;rendszer</a>.<br/>Figyelem, ezen a helyszínen nincs lehetőség üzemorvosi vizsgálat elvégzésére.</div>";
                 }
                 $h .= "</div>";
             }
@@ -1492,6 +1515,7 @@ class BookingService
         if (!isset($data["currency"])) $data["currency"] = 0;
         if (!isset($data["lang"])) $data["lang"] = "hu";
         if (!isset($data["paid"])) $data["paid"] = 0;
+        if (!isset($data["expire"])) $data["expire"] = "0000-00-00 00:00:00";
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
         if (!isset($data["cegid"])) $data["cegid"] = 0;
         if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"],$data);
@@ -1538,6 +1562,7 @@ class BookingService
 			exportdata=?,
 			externalid=?,
 			paid=?,
+			expire=?,
 			pass=?,
             dokirexcegid=?",
             array(
@@ -1580,6 +1605,7 @@ class BookingService
                 $data["exportdata"],
                 $data["externalid"],
                 $data["paid"],
+                $data["expire"],
                 $data["pass"],
                 $data["dokirexcegid"]
             )
