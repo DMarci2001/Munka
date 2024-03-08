@@ -119,10 +119,10 @@ class NotificationService {
 
             if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
                 //Kiválasztom melyik fájlt akarom csatolni a levélhez.
-                if($row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év alatti nő csomag"){
+                if($row["szurestipus"]=="Suzuki 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki 45 év alatti nő csomag"){
                     $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf"; 
                 }
-                if($row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki teszt menedzser 45 év feletti nő csomag"){
+                if($row["szurestipus"]=="Suzuki 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki 45 év feletti nő csomag"){
                     $filename = "Suzuki menedzser tajekoztato 45 felettieknek.pdf";
                 }
 
