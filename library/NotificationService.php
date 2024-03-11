@@ -62,6 +62,7 @@ class NotificationService {
     }
 
     public function sendUserReservationNotification($id, $force = false) {
+
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
         $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, sz.custompatientemail_option, sz.custompatientemail_text, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon, csomagidotartam 
@@ -73,6 +74,7 @@ class NotificationService {
         WHERE f.id=?",  [$id]);
 
         if ($row = sql_fetch_array($res)) {
+
             if (self::hasNotification("usernotification", $id) && !isset($_GET["mailtest"]) && !$force) {
                 return;
             }
@@ -611,7 +613,7 @@ class NotificationService {
 
         if ($row["rlang"] != "de" && $row["rlang"] != "en") {
 
-            if (CompanyService::isBP() && false) {
+            if (CompanyService::isBP() && true) {
                 $mbody .= "A pszihoszociális kérdőívet az alábbi linken tudja megtekinteni és kitölteni:<br>";
                 $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$row["pass"]}\">Psyhosociális kérdőív link</a><br><br>";
             }

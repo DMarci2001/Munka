@@ -578,6 +578,7 @@ class BookingService
     }
 
     public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array()):array {
+
         $vanFixError = false;
         $error = "";
         $timeTableForPackage = [];
@@ -605,11 +606,27 @@ class BookingService
                 continue;
             }
 
+            /*if($packTypeId==14){
+                echo "itt vagyok :|<br>";
+            }*/
+
+           
+
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId, $orvos, true)) {
+                /*echo $day."<br>";
+                echo "<pre>";
+                print_r($beos);
+                echo "</pre>";*/
                 foreach ($beos as &$beoData) {
                     if ($beoData["nopack"] != 0) {
                         continue;
                     }
+                    //if($beoData==14){
+                        /*echo "<pre>";
+                        print_r($beoData);
+                        echo "</pre>";*/
+                    //}
+                    
                     $orvosId     = $beoData["orvosid"];
                     $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];
@@ -1398,7 +1415,7 @@ class BookingService
             $forwardURL = "index.php?page=bookingsuccessful";
         }
 
-        if(CompanyService::isBP() && false){
+        if(CompanyService::isBP() && true){
             //Itt kell létrehozzam a pszihosoc kérdőív adatsort a foglalási adatok alapján és legenerálnom a forwardurl-t.
             $fogl= sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($fid)));
             sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$fogl["cegid"],$fogl["pass"]));

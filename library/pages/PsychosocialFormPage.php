@@ -21,7 +21,7 @@ class PsychosocialFormPage extends CorePage {
             if($existspsyhosoc=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($_GET["pass"])))){
                 $this->psyhosocData = $existspsyhosoc;
             }
-            $this->foglalasData=sql_fetch_array(sql_query("SELECT fogl.*,h.cim,sz.* FROM foglalasok fogl
+            $this->foglalasData=sql_fetch_array(sql_query("SELECT fogl.*,fogl.id as foglid,h.cim,sz.*,sz.id as szurestipusid FROM foglalasok fogl
                                                            LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
                                                            LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                                                            WHERE fogl.pass=?",array($_GET["pass"])));
@@ -90,7 +90,7 @@ class PsychosocialFormPage extends CorePage {
                         $data["inner_pain"],$data["internal_tremor"],$this->psyhosocData["datum"],$data["id"]
                        ));
 
-            sql_query("UPDATE foglalasok SET aktiv=1 WHERE id=?",array($this->foglalasData["id"]));
+            sql_query("UPDATE foglalasok SET aktiv=1 WHERE id=?",array($this->foglalasData["foglid"]));
 
             header("location:index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=success");
             die();
@@ -123,8 +123,8 @@ class PsychosocialFormPage extends CorePage {
         $html = "";
 
         //Értesítések kiküldése:
-        $this->notificationService->sendToCegAndOrvos($this->foglalasData["id"]);
-        $this->notificationService->sendUserReservationNotification($this->foglalasData["id"]);
+        $this->notificationService->sendToCegAndOrvos($this->foglalasData["foglid"]);
+        $this->notificationService->sendUserReservationNotification($this->foglalasData["foglid"]);
 
         $replaceable = array("#idopont#","#helyszin#","#szurestipus#","#link#");
         $newText = array(
