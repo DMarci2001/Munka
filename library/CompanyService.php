@@ -105,7 +105,7 @@ class CompanyService {
     }
 
     public static function isBP($companyId = 0):bool {
-        return $_SESSION["helyszindata"]["domain"] == "bp";
+        return $_SESSION["helyszindata"]["domain"] == "bp" || $companyId == self::BP_ID;
     }
 
     public static function isFesztivalEgyeb($companyId = 0):bool {
