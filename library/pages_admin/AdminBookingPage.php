@@ -547,12 +547,20 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2023-10-02 08:00:00"));
-        $orvosid=0;
-        $helyszinid=0;
+        $datum = date("Y-m-d H:i:s", strtotime("2024-03-14 06:00:00"));
+        $orvosid=1341;
+        $helyszinid=634;
         $rinterval=5;
-        $szurestipusid=1;*/
+        $szurestipusid=58;
+        $cegId=897;*/
         //while ($r = sql_fetch_array($q)) {
+
+            /*echo "INSERT INTO foglalasok SET cegid={$cegId},regdatum=NOW(),datum=\"{$datum}\",rinterval={$rinterval},helyszinid={$helyszinid},szurestipusid={$szurestipusid},nev=\"{$r["nev"]}\",email=\"\",telefon=\"\",
+                                                  szuldatum=\"{$r["szuldatum"]}\",szulhely=\"{$r["szulhely"]}\",anyjaneve=\"{$r["anyjaneve"]}\",taj=\"{$r["taj"]}\",irsz=\"{$r["Iranyitoszam"]}\",varos=\"{$r["Telepules"]}\",utca=\"{$r["Cim"]}\",munkakor=\"{$r["munkakor"]}\",aktiv=1,ertesitve=1,
+                                                  smssent=1,orvosassigned={$orvosid},checked=1;<br><br>";
+
+            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));*/
+                                                
 
              //vessző eltűntetése:
             //$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);

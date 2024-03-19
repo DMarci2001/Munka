@@ -147,6 +147,9 @@ class AdminUser {
         "jog_szamlakeszites" => [
             "name" => "Számla készités"
         ],
+        "jog_suzukistat" => [
+            "name" => "Suzuki statisztika láthatja"
+        ]
 
     ];
 
@@ -567,10 +570,13 @@ class AdminUser {
     public function szamlakeszitesAccess():bool {
         return $this->checkPermission("jog_szamlakeszites");
     }
-    
 
     public function userIsOrvos():bool {
         return !empty($this->user["pecsetszam"]) && !empty($this->user["orvosid"]);
+    }
+
+    public function suzukiStatAccess():bool {
+        return $this->checkPermission("jog_suzukistat");
     }
 
 }
