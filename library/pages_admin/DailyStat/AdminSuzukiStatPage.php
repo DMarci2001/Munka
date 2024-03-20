@@ -173,6 +173,8 @@ class AdminSuzukiStatPage extends AdminCorePage
     private function show_suzuki_stat_data_table($data){
         $html = "";
 
+        $lang = new Lang();
+        $webText = $lang->webText;
 
         $html.= "<div class=\"h6\">Összes foglalás ".date("Y.m.d",strtotime(self::startDate))." óta: <strong>".count($this->fetch_suzuki_bookings())."db</strong></div>";
         $html.= "<table class=\"table table-striped\">";
@@ -206,7 +208,7 @@ class AdminSuzukiStatPage extends AdminCorePage
 
             $html.= "<tr class=\"h6\">";
             $html.= "<th class=\"text-center\" scope=\"row\">".($key+1).".</th>";
-            $html.= "<td class=\"text-center\">".str_replace("-",".",$value["booking_date"])."</td>";
+            $html.= "<td class=\"text-center\">".str_replace("-",".",$value["booking_date"]).", ".ucfirst($webText["hetnap"][date("N",strtotime($value["booking_date"]))])."</td>";
             $html.= "<td class=\"text-center\" style=\"{$color_01}\">".($package_01_limit!=0?(isset($value["package_01_type"])?$value["package_01_type"]."/".$package_01_limit:"0/".$package_01_limit):" - ")."</td>";
             $html.= "<td class=\"text-center\" style=\"{$color_02}\">".($package_02_limit!=0?(isset($value["package_02_type"])?$value["package_02_type"]."/".$package_02_limit:"0/".$package_02_limit):" - ")."</td>";
             $html.= "<td class=\"text-center\">".(isset($value["2"])?$value["2"]."db":" - ")."</td>";
