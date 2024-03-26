@@ -128,8 +128,8 @@ class HmmApi {
             $result = $this->reservationsPut();
         }
 
-        if ($this->apiMethod == "reservations" && $this->requestMethod == "DELETE") {
-            $result = $this->reservationsDelete();
+        if ($this->apiMethod == "reservation" && $this->requestMethod == "DELETE") {
+            $result = $this->reservationDelete();
         }
 
         if ($this->apiMethod == "dokirexInsertVizsglapAdatok") {
@@ -707,7 +707,7 @@ class HmmApi {
     }
 
     //A hívás segítségével a Szolgáltató rendszerében rögzített foglalás törölhető.
-    private function reservationsDelete():array {
+    private function reservationDelete():array {
         if (!empty($this->apiParam)) {
             $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
 

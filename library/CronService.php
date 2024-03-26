@@ -60,6 +60,7 @@ class CronService {
             $this->sendLabShopMails();
             $this->checkOneWebPage();
             $this->refreshWorklist();
+            $this->deleteExpiredReservations();
             //$this->dokirexUserIdFill();
 
 			$dicomService = new DicomService();
@@ -862,5 +863,22 @@ class CronService {
         }
     }
 
+    /**
+     * Lejáratos foglalások törlése a foglalasok táblálból.
+     * @param   datetime    $expire A foglalasok táblában az "expire" oszlop értéke alapján törlöm ki a foglalásokat.
+    */
+    private function deleteExpiredReservations()
+    {   
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            if($reservations = sql_query("SELECT * FROM foglalasok WHERE expire < NOW() AND expire <> \"0000-00-00 00:00:00\" AND datum > NOW() ")->fetchAll(PDO::FETCH_ASSOC))
+            {
+                $bookingService = new BookingService();
+                foreach($reservations as $reservationData){
+                    $this->bookingService->deleteReservation($reservationData["id"],$reservationData["pass"]);
+                }
+            }
 
+            return "Finished process.";
+        }
+    }
 }

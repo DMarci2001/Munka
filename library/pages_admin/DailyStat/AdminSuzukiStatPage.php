@@ -43,7 +43,9 @@ class AdminSuzukiStatPage extends AdminCorePage
     {
         $notificationService = new NotificationService();
 
-        echo $notificationService->suzukiManagerNotificationList("2024-03-25");
+        //echo $notificationService->suzukiManagerNotificationList("2024-03-25");
+
+        //echo $this->deleteExpiredReservations();
 
         $bookings = $this->fetch_suzuki_bookings();
         $data = $this->arrange_suzuki_stat_data($bookings);
