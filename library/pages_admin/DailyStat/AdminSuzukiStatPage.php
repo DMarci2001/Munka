@@ -41,6 +41,10 @@ class AdminSuzukiStatPage extends AdminCorePage
 
     public function showPage()
     {
+        $notificationService = new NotificationService();
+
+        //echo $notificationService->suzukiManagerNotificationList();
+
         $bookings = $this->fetch_suzuki_bookings();
         $data = $this->arrange_suzuki_stat_data($bookings);
         $this->show_suzuki_stat_data_table($data);

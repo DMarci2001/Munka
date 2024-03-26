@@ -165,7 +165,7 @@ function getConfigFile() {
                 $config = "demo";
             }
             if (substr_count($host, "marciteszt.hungariamed.hu")) {
-                $config = "hmm";
+                $config = "marciteszt";
             }
         }
         if (substr_count($host, "keltexmed.")) {

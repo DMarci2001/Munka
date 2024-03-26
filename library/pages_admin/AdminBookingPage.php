@@ -547,12 +547,12 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2024-03-14 06:00:00"));
-        $orvosid=1341;
-        $helyszinid=634;
+        $datum = date("Y-m-d H:i:s", strtotime("2024-03-22 07:30:00"));
+        $orvosid=1344;
+        $helyszinid=459;
         $rinterval=5;
-        $szurestipusid=58;
-        $cegId=897;*/
+        $szurestipusid=48;
+        $cegId=220;*/
         //while ($r = sql_fetch_array($q)) {
 
             /*echo "INSERT INTO foglalasok SET cegid={$cegId},regdatum=NOW(),datum=\"{$datum}\",rinterval={$rinterval},helyszinid={$helyszinid},szurestipusid={$szurestipusid},nev=\"{$r["nev"]}\",email=\"\",telefon=\"\",
@@ -604,10 +604,10 @@ class AdminBookingPage extends AdminCorePage
             /*sql_query(
                 "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
                                                   szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
-                                                  smssent=1,orvosassigned=1242,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
+                                                  smssent=1,orvosassigned=?,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
                 array(
                     $r["cegid"],$r["fid"], date("Y-m-d H:i:s"), $datum, $rinterval, $helyszinid, $szurestipusid, $r["nev"], $r["email"], $r["telefon"],
-                    $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],
+                    $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],$orvosid,
                     $r["MunkakorID"],$r["TelephelyID"]
                 )
             );
@@ -981,7 +981,7 @@ class AdminBookingPage extends AdminCorePage
                     if ($this->lastIdopont == "") {
                         //nem volt foglalás, üres időpont kirakás
                         $htmlout .= "<tr style=''>";
-                        $htmlout .= "<td valign='top' nowrap style='" . $this->datePastStyle($nap, $ora) . "'>{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</td>";
+                        $htmlout .= "<td valign='top' nowrap style=''>". $this->idopontStatusIcon()."<span style=\"" . $this->datePastStyle($nap, $ora) . "\">{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</span></td>";
                         $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
                         if ($szabi) {
                             $htmlout .= "<td valign='top'>Szabadság miatt nem foglalható</td>";
@@ -1146,7 +1146,7 @@ class AdminBookingPage extends AdminCorePage
         }
 
         $htmlout .= "<tr style=''>";
-        $htmlout .= "<td valign='top' nowrap style='" . $this->datePastStyle($nap, $ora) . "'>" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</td>";
+        $htmlout .= "<td valign='top' nowrap style=''>". $this->idopontStatusIcon($reservationData)."&nbsp;<span style=\"" . $this->datePastStyle($nap, $ora) . "\">". ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</span></td>";
         $htmlout .= "<td valign='top' nowrap>";
         if ($this->foglalasButtonVolt == 0 && "{$nap} {$idopontShow}" == "{$nap} {$ora}" && !$noAdd) {
             $htmlout .= "<a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;";
@@ -1327,5 +1327,40 @@ class AdminBookingPage extends AdminCorePage
         }
         $html .= "</select> ";
         return $html;
+    }
+
+    private function idopontStatusIcon($reservationData = array())
+    {   
+        //Mikor bepipálja  hogy eljött: <i class="fa-solid fa-user"></i>
+        //Mikor berakja kittike a váróba: <i class="fa-solid fa-user-clock"></i>
+        //Mikor bent van a vizsgálaton: <i class="fa-solid fa-user-doctor"></i>
+        //Mikor a páciensel vizsgálaton végeztek: <i class="fa-solid fa-user-check"></i>
+        $icon = "&nbsp;&nbsp;&nbsp;";
+        $statusIconArray = array(
+            0 => array("status" => "eljott", "icon" => "<i title=\"Eljött\" class=\"fa-solid fa-user\"></i>"),
+            1 => array("status" => "varakozik", "icon" => "<i title=\"Várakozik\" class=\"fa-solid fa-user-clock\"></i>"),
+            2 => array("status" => "vizsgalaton", "icon" => "<i title=\"Vizsgálaton\" class=\"fa-solid fa-user-doctor\"></i>"),
+            3 => array("status" => "vizsgalat_kesz", "icon" => "<i title=\"Vizsgálat kész\" class=\"fa-solid fa-user-check\"></i>")
+        );
+
+        //Ha nem én, jani, kitti, vagy kisg ne jelenítsen meg semmit.
+        if(!in_array($_SESSION["adminuser"]["id"],array(280,243,1))){
+            return $icon;
+        }
+
+        if(!empty($reservationData)){
+            if($reservationData["eljott"]==1){
+                $icon = $statusIconArray["0"]["icon"];
+            }
+    
+            if($varoteremData = sql_query("SELECT * FROM varoterem WHERE fid=? ORDER BY id DESC LIMIT 1",array($reservationData["id"]))->fetch(PDO::FETCH_ASSOC)){
+                $key = array_search($varoteremData["statusz"],array_column($statusIconArray,"status"));
+                if($key!==false){
+                    $icon = $statusIconArray[$key]["icon"];
+                }
+            }
+        }
+
+        return $icon;
     }
 }

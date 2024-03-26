@@ -4,14 +4,17 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use mikehaertl\pdftk\Pdf;
 
-class NotificationService {
+class NotificationService
+{
     private $utils;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->utils = new Utils();
     }
 
-    public static function getDefaultMailer():PHPMailer {
+    public static function getDefaultMailer(): PHPMailer
+    {
         $mail = new PHPMailer();
 
         if (Booking_Constants::SQL_DB == "keltexmed") {
@@ -46,22 +49,26 @@ class NotificationService {
         return $mail;
     }
 
-    public function createNotificationRecord($tipus, $objectid, $destination, $subject = "", $text = "") {
+    public function createNotificationRecord($tipus, $objectid, $destination, $subject = "", $text = "")
+    {
         $adminUser = new AdminUser();
         $uid = $adminUser->user["id"] ?? 0;
 
         sql_query("INSERT INTO notifications SET datum=now(), tipus=?, objectid=?, destination=?, targy=?, szoveg=?, uid=?", [$tipus, $objectid, $destination, $subject, $text, $uid]);
     }
 
-    public static function hasNotification($tipus, $objectid):bool {
+    public static function hasNotification($tipus, $objectid): bool
+    {
         return (bool)sql_fetch_array(sql_query("select id from notifications where tipus=? and objectid=?", [$tipus, $objectid]));
     }
 
-    public static function getNotificationsByType($tipus, $objectid):array {
+    public static function getNotificationsByType($tipus, $objectid): array
+    {
         return sql_query("select * from notifications where tipus=? and objectid=? order by datum desc", [$tipus, $objectid])->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function sendUserReservationNotification($id, $force = false) {
+    public function sendUserReservationNotification($id, $force = false)
+    {
 
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
@@ -119,27 +126,27 @@ class NotificationService {
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
 
-            if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
                 //Kiválasztom melyik fájlt akarom csatolni a levélhez.
-                if($row["szurestipus"]=="Suzuki 45 év alatti férfi csomag" || $row["szurestipus"]=="Suzuki 45 év alatti nő csomag"){
-                    $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf"; 
+                if ($row["szurestipus"] == "Suzuki 45 év alatti férfi csomag" || $row["szurestipus"] == "Suzuki 45 év alatti nő csomag") {
+                    $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf";
                 }
-                if($row["szurestipus"]=="Suzuki 45 év feletti férfi csomag" || $row["szurestipus"]=="Suzuki 45 év feletti nő csomag"){
+                if ($row["szurestipus"] == "Suzuki 45 év feletti férfi csomag" || $row["szurestipus"] == "Suzuki 45 év feletti nő csomag") {
                     $filename = "Suzuki menedzser tajekoztato 45 felettieknek.pdf";
                 }
 
                 //PDF szerkesztő inicializálása
-                $pdf = new Pdf(__DIR__ . "/../public/images/".$filename);
+                $pdf = new Pdf(__DIR__ . "/../public/images/" . $filename);
                 //Input értékek betöltése
                 $input = array(
-                    "nev"=> $row["nev"],
-                    "idopont"=> str_replace("-",".",$row["datum"]),
-                    "szurocsomag"=>$row["szurestipus"]
+                    "nev" => $row["nev"],
+                    "idopont" => str_replace("-", ".", $row["datum"]),
+                    "szurocsomag" => $row["szurestipus"]
                 );
                 //Módosítások mentése
                 $result = $pdf->fillForm($input)
-                ->flatten()
-                ->saveAs($attachment="/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
+                    ->flatten()
+                    ->saveAs($attachment = "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename);
 
                 $mail->AddAttachment($attachment);
             }
@@ -151,7 +158,8 @@ class NotificationService {
     }
 
 
-    public function sendToCegAndOrvos($id, $force = 0, $test = 0) {
+    public function sendToCegAndOrvos($id, $force = 0, $test = 0)
+    {
         if (Utils::isDemoSite()) {
             return;
         }
@@ -288,14 +296,14 @@ class NotificationService {
                     $mail->Body = $mbody;
                     $mail->Send();
 
-                    $this->createNotificationRecord("cegnotification", $row["id"], $row["cegemail"].",".$row["hmedemail"], $subject, $mbody);
+                    $this->createNotificationRecord("cegnotification", $row["id"], $row["cegemail"] . "," . $row["hmedemail"], $subject, $mbody);
                 }
             }
         }
-
     }
 
-    public function sendUserVisszaIgazolas($id) {
+    public function sendUserVisszaIgazolas($id)
+    {
         $lang = new Lang();
         //Visszaigazolás a foglalásról, megerősítés kérése
         $h = "cim";
@@ -375,7 +383,8 @@ class NotificationService {
     }
 
 
-    public function reservationReminder($data){
+    public function reservationReminder($data)
+    {
         $deleteURL = "http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$data["id"]}&rk={$data["rkod"]}&setlang={$data["rlang"]}";
 
         $mail = $this->getDefaultMailer();
@@ -385,30 +394,31 @@ class NotificationService {
         $subject = "Időpontfoglalás Emlékeztető - {$data["megnev"]}";
 
         $mbody = "<p style='font-size:18px;font-weight:bold;'>Tisztelt hölgyem/uram!</p>";
-        $mbody.= "";
-        $mbody.= "<p style=''>Szeretnénk emlékeztetni, hogy <strong>".date("Y.m.d H:i",strtotime($data["datum"]))."-ra</strong> időpontfoglalása van,<br><br>";
+        $mbody .= "";
+        $mbody .= "<p style=''>Szeretnénk emlékeztetni, hogy <strong>" . date("Y.m.d H:i", strtotime($data["datum"])) . "-ra</strong> időpontfoglalása van,<br><br>";
 
-        $mbody.= "<strong>Ellátás megnevezése:</strong><br/>{$data["megnev"]}<br/>";
-        $mbody.= "<strong>Helyszín:</strong><br/>{$data["cim"]}<br/>";
-        $mbody.= "<strong>Ellátó orvos vagy rendelő megnevezése:</strong></br>{$data["nev"]}<br/>";
+        $mbody .= "<strong>Ellátás megnevezése:</strong><br/>{$data["megnev"]}<br/>";
+        $mbody .= "<strong>Helyszín:</strong><br/>{$data["cim"]}<br/>";
+        $mbody .= "<strong>Ellátó orvos vagy rendelő megnevezése:</strong></br>{$data["nev"]}<br/>";
 
-        $mbody.= "<br><br>";
-        $mbody.= "Az ellátás folytonossága érdekében kérjük, hogy legalább <strong>15 percel</strong> a lefoglalt időpont előtt sziveskedjék megjelenni!<br>";
-        $mbody.= "Ha bármilyen okból nem tud megjelenni a vizsgálaton, vagy lemondaná a foglalást kérem <a style='color:#a00;' href='{$deleteURL}' target='_blank'>kattintson ide az időpont törléséhez.</a></p>";
+        $mbody .= "<br><br>";
+        $mbody .= "Az ellátás folytonossága érdekében kérjük, hogy legalább <strong>15 percel</strong> a lefoglalt időpont előtt sziveskedjék megjelenni!<br>";
+        $mbody .= "Ha bármilyen okból nem tud megjelenni a vizsgálaton, vagy lemondaná a foglalást kérem <a style='color:#a00;' href='{$deleteURL}' target='_blank'>kattintson ide az időpont törléséhez.</a></p>";
 
-        $mbody.= "<p>Köszönjük, ".Booking_Constants::COMPANY_NAME." Csapata!</p>";
+        $mbody .= "<p>Köszönjük, " . Booking_Constants::COMPANY_NAME . " Csapata!</p>";
 
         $mail->Subject = $subject;
         $mail->Body = $mbody;
         $mail->Send();
 
-        sql_query("UPDATE foglalasok SET emlekezteto_mail = 1 WHERE id=?",array($data['id']));
+        sql_query("UPDATE foglalasok SET emlekezteto_mail = 1 WHERE id=?", array($data['id']));
 
         $this->createNotificationRecord("emlekezteto", $data["id"], $data["email"], $subject, $mbody);
     }
 
 
-    private function orvosMailTemplate($rowf, $rowo) {
+    private function orvosMailTemplate($rowf, $rowo)
+    {
         $mbody = "";
 
         $from = Booking_Constants::NO_REPLY_ADDRESS;;
@@ -448,7 +458,8 @@ class NotificationService {
         return $template;
     }
 
-    private function orvosMailTemplateRemote($rowf, $rowo) {
+    private function orvosMailTemplateRemote($rowf, $rowo)
+    {
         $mbody = "";
 
         $from = Booking_Constants::NO_REPLY_ADDRESS;;
@@ -485,7 +496,8 @@ class NotificationService {
         return $template;
     }
 
-    private function orvosMailTemplateMultiTime($rowf, $rowo):array {
+    private function orvosMailTemplateMultiTime($rowf, $rowo): array
+    {
         $mbody = "";
 
         $from = Booking_Constants::NO_REPLY_ADDRESS;;
@@ -493,9 +505,9 @@ class NotificationService {
         if ($rowo["visszaigazol"] == 1 && $rowo["visszaigazolemail"] != "") {
             $dateLinks = "";
 
-            $reservations = sql_query("select id, pass, datum from foglalasok where fgroupid=? and regdatum>=? order by datum",[$rowf["fgroupid"], date("Y-m-d 00:00:00", strtotime($rowf["regdatum"]))])->fetchAll(PDO::FETCH_ASSOC);
+            $reservations = sql_query("select id, pass, datum from foglalasok where fgroupid=? and regdatum>=? order by datum", [$rowf["fgroupid"], date("Y-m-d 00:00:00", strtotime($rowf["regdatum"]))])->fetchAll(PDO::FETCH_ASSOC);
             foreach ($reservations as $reservation) {
-                $dateLinks.= "<a href='".Booking_Constants::MAIN_URL."/index.php?selectthistime={$reservation["id"]}&p={$reservation["pass"]}'>".date("Y.m.d. H:i", strtotime($reservation["datum"]))."</a><br/>";
+                $dateLinks .= "<a href='" . Booking_Constants::MAIN_URL . "/index.php?selectthistime={$reservation["id"]}&p={$reservation["pass"]}'>" . date("Y.m.d. H:i", strtotime($reservation["datum"])) . "</a><br/>";
             }
 
             $mbody .= "Kedves {$rowo["nev"]}!<br>
@@ -523,11 +535,13 @@ class NotificationService {
         return $template;
     }
 
-    private function isVarolista($reservationData) {
+    private function isVarolista($reservationData)
+    {
         return substr_count($reservationData["orvosnev"], "Várólista") != 0;
     }
 
-    private function userMailTemplateVarolista($row) {
+    private function userMailTemplateVarolista($row)
+    {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
 
@@ -544,14 +558,15 @@ class NotificationService {
     }
 
 
-    private function userMailTemplate($row) {
+    private function userMailTemplate($row)
+    {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
         $packText = $this->_getPackText($row);
         if (!empty($this->minimumTime)) {
             $row["datum"] = $this->minimumTime;
         }
-        $extraMsg = ($row["custompatientemail_option"] == 1 && !empty($row["custompatientemail_text"]))? "<br/>".nl2br($row["custompatientemail_text"])."<br/>" : "<br/>";
+        $extraMsg = ($row["custompatientemail_option"] == 1 && !empty($row["custompatientemail_text"])) ? "<br/>" . nl2br($row["custompatientemail_text"]) . "<br/>" : "<br/>";
 
         if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
             if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
@@ -561,7 +576,7 @@ class NotificationService {
         }
 
         $mbody = "";
-        $mbody .= "<h1>".date("Y.m.d. H:i", strtotime($row["datum"]))." - {$row["helyszin"]}</h1>";
+        $mbody .= "<h1>" . date("Y.m.d. H:i", strtotime($row["datum"])) . " - {$row["helyszin"]}</h1>";
 
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         if (!empty($row["telefon"])) {
@@ -569,31 +584,31 @@ class NotificationService {
         }
         $mbody .= "<br>";
         if (!$this->isVarolista($row)) {
-            $mbody .= "<b>{$webTextLocal["idopont"]}: ".date("Y.m.d. H:i", strtotime($row["datum"]))."</b><br><br>";
+            $mbody .= "<b>{$webTextLocal["idopont"]}: " . date("Y.m.d. H:i", strtotime($row["datum"])) . "</b><br><br>";
         }
 
         $szuresTipus = $row["szurestipus"];
         if (CompanyService::isAuchan()) {
-            $szuresTipus = $szuresTipus.". ".substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
+            $szuresTipus = $szuresTipus . ". " . substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
         }
 
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
-            $mbody ="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
-            $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
-            $mbody.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($row["datum"]))."<br>";
-            $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br>";
-            $mbody.="<strong>Várható ellátási idő:</strong> <i>{$row["csomagidotartam"]}</i><br><br>";
-            $mbody.="<strong>Vizsgálatok helyszíne:</strong><br>";
-            $mbody.="<ul style=\"margin-left:10px\">";
-            $mbody.="<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";
-            $mbody.="<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található.</li>";
-            $mbody.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
-            $mbody.="</ul>";
-            $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések: </strong><br>";
-            $mbody.="<ul style=\"margin-left:10px\">";
-            $mbody.=" <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 1 héttel és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
-            $mbody.=" <li style=\"list-style: disc;\">Tovább 24 órával a vizsgálat előtt egy SMS emlékeztetőt is küldünk Önnek.</li>";
-            $mbody.="</ul>";
+        if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
+            $mbody = "Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
+            $mbody .= "Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
+            $mbody .= "<strong>Vizsgálat időpontja:</strong> " . date("Y.m.d H:i", strtotime($row["datum"])) . "<br>";
+            $mbody .= "<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br>";
+            $mbody .= "<strong>Várható ellátási idő:</strong> <i>{$row["csomagidotartam"]}</i><br><br>";
+            $mbody .= "<strong>Vizsgálatok helyszíne:</strong><br>";
+            $mbody .= "<ul style=\"margin-left:10px\">";
+            $mbody .= "<li style=\"list-style: disc;\">1135 Budapest, Jász utca 33-35. Hungária Med-M Kft. rendelője.</li>";
+            $mbody .= "<li style=\"list-style: disc;\">Bejárat a Béke Patika épületének oldalán található.</li>";
+            $mbody .= "<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
+            $mbody .= "</ul>";
+            $mbody .= "<strong>Vizsgálatokkal kapcsolatos értesítések: </strong><br>";
+            $mbody .= "<ul style=\"margin-left:10px\">";
+            $mbody .= " <li style=\"list-style: disc;\">Call-centeres munkatársunk a vizsgálat előtt 1 héttel és közvetlenül a vizsgálat előtt 1 munkanappal meg fogja Önt keresni egy közvetlen egyeztetés céljából a vizsgálatokkal kapcsolatban.</li>";
+            $mbody .= " <li style=\"list-style: disc;\">Tovább 24 órával a vizsgálat előtt egy SMS emlékeztetőt is küldünk Önnek.</li>";
+            $mbody .= "</ul>";
         }
 
         $mbody .= "{$webTextLocal["szurestipus"]}: {$szuresTipus}<br>";
@@ -619,8 +634,8 @@ class NotificationService {
             }
 
             if (CompanyService::isAuchan()) {
-                $mbody.= "Ha bármi kérdése van, vagy a foglalt időpontját szeretné módosítani, kérjük hívja ezt a telefonszámot: 06 30 537 1008";
-                $mbody.= "<hr>";
+                $mbody .= "Ha bármi kérdése van, vagy a foglalt időpontját szeretné módosítani, kérjük hívja ezt a telefonszámot: 06 30 537 1008";
+                $mbody .= "<hr>";
             }
 
             $mbody .= "Ha le szeretné mondani ezt a foglalását, kérjük kattintson a következő linkre: <a href='https://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont foglalás törlése</a><br>";
@@ -646,7 +661,8 @@ class NotificationService {
         return $template;
     }
 
-    private function userMailTemplateWebDoctor($row) {
+    private function userMailTemplateWebDoctor($row)
+    {
         $mbody = "<b>Kedves Páciensünk,</b><br/>
         <br/>
         Köszönjük, hogy megtisztelt minket bizalmával és a Hungária Med-M Web-Doktor
@@ -682,9 +698,10 @@ class NotificationService {
         return $template;
     }
 
-    private function userMailTemplateManualBooking($row) {
+    private function userMailTemplateManualBooking($row)
+    {
 
-        $cegInfo = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($row["cegid"])));
+        $cegInfo = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?", array($row["cegid"])));
 
         $deleteLink = "http://{$cegInfo["megnev"]}.hungariamed.hu/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}";
 
@@ -710,7 +727,8 @@ class NotificationService {
 
 
     private string $minimumTime = "";
-    private function _getPackText($reservationData):string {
+    private function _getPackText($reservationData): string
+    {
         $packText = "";
 
         $rescs = sql_query("SELECT f.id, f.datum, f.cegid, f.megj, sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=? order by datum", array($reservationData["id"]));
@@ -723,17 +741,17 @@ class NotificationService {
                     $this->minimumTime = $rowcs["datum"];
                 }
                 $name = substr($rowcs["megj"], strpos($rowcs["megj"], "Választott vizsgálat"));
-                $packText.= "<br/>{$name}<br/>Időpont: ".date("Y.m.d H:i", strtotime($rowcs["datum"]))."<br/>";
+                $packText .= "<br/>{$name}<br/>Időpont: " . date("Y.m.d H:i", strtotime($rowcs["datum"])) . "<br/>";
             } else {
                 if (empty($packText)) {
                     $packText .= "<br/>Csomag tartalma:<br/>";
                 }
                 $packText .= "{$rowcs["megnev"]}";
                 if (CompanyService::isBudapestBrand($rowcs["cegid"])) {
-                    $packText.= ", időpont: ".date("Y.m.d H:i", strtotime($rowcs["datum"]));
+                    $packText .= ", időpont: " . date("Y.m.d H:i", strtotime($rowcs["datum"]));
                 }
 
-                $packText.= "<br/>";
+                $packText .= "<br/>";
             }
         }
 
@@ -755,7 +773,8 @@ class NotificationService {
     }
 
 
-    private function getCalendarItem($foglalasData) {
+    private function getCalendarItem($foglalasData)
+    {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($foglalasData["rlang"]);
 
@@ -809,7 +828,8 @@ END:VCALENDAR";
     }
 
 
-    public function sendMissingDataEmail($id) {
+    public function sendMissingDataEmail($id)
+    {
         $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus,sz.megnev_en AS szurestipus_en,sz.megnev_de AS szurestipus_de,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail,c.domain,o.nev as orvosnev,
         CONCAT(SHA1(CONCAT(f.regdatum, f.id)), SHA1(CONCAT(f.nev, f.regdatum)), SHA1(CONCAT(f.id, f.nev, f.regdatum))) AS h 
         FROM foglalasok f
@@ -825,7 +845,7 @@ END:VCALENDAR";
             Ezt a levelet azért kapja, mert  a FoglaljOrvost.hu felületén időpontot foglalt egészségközpontunkba.<br/>
             Az ügyintézés meggyorsítása és a várakozási idő csökkentése érdekében a következő űrlapon megadhatja a szükséges adatait.<br/>
             <br/>
-            Az adatok megadásához <a href='".Booking_Constants::MAIN_URL."/index.php?page=missingdata&r={$row["id"]}&h={$row["h"]}'>kattintson ide</a><br/>
+            Az adatok megadásához <a href='" . Booking_Constants::MAIN_URL . "/index.php?page=missingdata&r={$row["id"]}&h={$row["h"]}'>kattintson ide</a><br/>
             <br/>
             Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
 
@@ -836,7 +856,7 @@ END:VCALENDAR";
             //$mail->AddBCC("jns@jns.hu");
             //}
 
-            $subject = "[".Booking_Constants::COMPANY_NAME_SHORT."] Kérjük adja meg az adatait";
+            $subject = "[" . Booking_Constants::COMPANY_NAME_SHORT . "] Kérjük adja meg az adatait";
             $mail->Subject = $subject;
             $mail->Body = $body;
 
@@ -846,7 +866,8 @@ END:VCALENDAR";
         }
     }
 
-    public function newAdminPassEmail($userData) {
+    public function newAdminPassEmail($userData)
+    {
         $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
         $p = "";
         for ($i = 0; $i < 6; $i++) {
@@ -872,7 +893,8 @@ END:VCALENDAR";
         sql_query("update users set password=? where id=?", [md5($p), $userData["id"]]);
     }
 
-    public function newUserPassEmail($userData, $lang = "hu") {
+    public function newUserPassEmail($userData, $lang = "hu")
+    {
         $pchars = "abcdefghijklmnpqrstuvwxyz1234567899";
         $p = "";
         for ($i = 0; $i < Booking_Constants::GENERATED_PASSWORD_LENGTH; $i++) {
@@ -889,7 +911,7 @@ END:VCALENDAR";
         $mbody .= "Az új jelszava: <b>{$p}</b><br><br>";
         $mbody .= "Az új jelszavát bejelentkezés követően az adatmódosítás menüpont alatt tudja megváltoztatni.<br/>";
         $mbody .= "<br/>";
-        $mbody .= "Üdvözlettel:<br>".Booking_Constants::COMPANY_NAME;
+        $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
 
         if ($_COOKIE["lang"] == "de") {
             $mbody = "Lieber {$userData["nev"]}!<br/><br/>";
@@ -897,7 +919,7 @@ END:VCALENDAR";
             $mbody .= "Die neue Kennwort: <b>{$p}</b><br><br>";
             $mbody .= "Nach den anmelden können Sie um  einem neuem Kennwort bitten.<br/>";
             $mbody .= "<br/>";
-            $mbody .= "Freundlichen Grüssen:<br>".Booking_Constants::COMPANY_NAME;
+            $mbody .= "Freundlichen Grüssen:<br>" . Booking_Constants::COMPANY_NAME;
         }
         if ($_COOKIE["lang"] == "en") {
             $mbody = "Dear {$userData["nev"]}!<br/><br/>";
@@ -905,7 +927,7 @@ END:VCALENDAR";
             $mbody .= "Your new password: <b>{$p}</b><br><br>";
             $mbody .= "You can change your new password under the profile page.<br/>";
             $mbody .= "<br/>";
-            $mbody .= "Regards<br>".Booking_Constants::COMPANY_NAME;
+            $mbody .= "Regards<br>" . Booking_Constants::COMPANY_NAME;
         }
 
         $mail->Subject = $subject;
@@ -915,7 +937,8 @@ END:VCALENDAR";
         sql_query("update felhasznalok set jelszo=?	where id=?", [md5($p), $userData["id"]]);
     }
 
-    public function sendDebugEmail($subject, $mbody) {
+    public function sendDebugEmail($subject, $mbody)
+    {
         $mail = self::getDefaultMailer();
         $mail->AddAddress("jnsmobil@gmail.com");
         $mail->AddBCC("m.gergely9409@gmail.com");
@@ -924,7 +947,8 @@ END:VCALENDAR";
         $mail->Send();
     }
 
-    public function sendEljottMail($foglalasData) {
+    public function sendEljottMail($foglalasData)
+    {
         $mail = self::getDefaultMailer();
         //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
         //$mail->AddAddress("jns@jns.hu");
@@ -944,7 +968,8 @@ END:VCALENDAR";
         }
     }
 
-    function sendNotConfirmedReservationMessages($reservationId) {
+    function sendNotConfirmedReservationMessages($reservationId)
+    {
         /*
         nem visszaigazolt foglalás esetén:
         - mail a paciensnek
@@ -972,7 +997,7 @@ END:VCALENDAR";
             $mbody .= "Előző levelünkben küldött megerősítő hivatkozásra nem kattintott rá, ezért a {$row["datum"]} időpontra szóló foglalását töröltük.<br/>";
             $mbody .= "Azonosító: {$row["id"]}<br/>";
             $mbody .= "<br/>";
-            $mbody .= "Üdvözlettel:<br/>".Booking_Constants::COMPANY_NAME;
+            $mbody .= "Üdvözlettel:<br/>" . Booking_Constants::COMPANY_NAME;
 
             $mail->Subject = $subject;
             $mail->Body = $mbody;
@@ -1003,7 +1028,8 @@ END:VCALENDAR";
         }
     }
 
-    public function covidListMessage($covidListId) {
+    public function covidListMessage($covidListId)
+    {
         $res = sql_query("SELECT f.email, n.* 
         FROM covid_oltas_naplo n
         LEFT JOIN felhasznalok f ON f.id=n.userid
@@ -1019,15 +1045,14 @@ END:VCALENDAR";
                 A " . $data["regdatum"] . " időpontban megadott oltási eseményt hitelesítettük, ha további kérdése lenne, kérem forduljon bizalommal a HR osztályhoz.<br/>
                 Köszönjük a részvételét a felmérésben!<br/>
                 <br/>
-                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
-                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
-                ;
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . "<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME . "' />";;
             }
 
             if ($data["statusz"] == "DENIED") {
                 $reason = "";
                 if (!empty(trim($data["deniedtext"]))) {
-                    $reason = "<strong>Az elutasítás oka:</strong><br/>".nl2br($data["deniedtext"])."<br/><br/>";
+                    $reason = "<strong>Az elutasítás oka:</strong><br/>" . nl2br($data["deniedtext"]) . "<br/><br/>";
                 }
 
                 $subject = "Oltás esemény regisztráció feldolgozva";
@@ -1043,9 +1068,8 @@ END:VCALENDAR";
                 <br/>
                 Köszönjük a részvételét a felmérésben!<br/>
                 <br/>
-                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME."<br/><br/> 
-                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
-                ;
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . "<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME . "' />";;
             }
 
             $mail = $this->getDefaultMailer();
@@ -1059,11 +1083,11 @@ END:VCALENDAR";
 
             $this->createNotificationRecord("covidlistmessage", $covidListId, $data["email"], $subject, $body);
         }
-
     }
 
 
-    public function newCompanyNotification($companyId) {
+    public function newCompanyNotification($companyId)
+    {
         if ($companyData = sql_query("select * from cegek where id=?", [$companyId])->fetch(PDO::FETCH_ASSOC)) {
             $adminUser = new AdminUser();
             $mail = self::getDefaultMailer();
@@ -1072,14 +1096,15 @@ END:VCALENDAR";
                 $mail->addAddress(trim($email));
             }
 
-            $mail->Subject = "Új cég rögzítve a ".Booking_Constants::FOOTER_COPYRIGHT." bejelentkezőbe";
+            $mail->Subject = "Új cég rögzítve a " . Booking_Constants::FOOTER_COPYRIGHT . " bejelentkezőbe";
 
-            $mail->Body = "Cég neve: {$companyData["megnev"]}<br/>Rögzítette: ".$adminUser->user["username"];
+            $mail->Body = "Cég neve: {$companyData["megnev"]}<br/>Rögzítette: " . $adminUser->user["username"];
             $mail->send();
         }
     }
 
-    public function tesztMessage() {
+    public function tesztMessage()
+    {
         $mail = self::getDefaultMailer();
 
         $mail->addAddress("jnsmobil@gmail.com");
@@ -1088,7 +1113,8 @@ END:VCALENDAR";
         $mail->send();
     }
 
-    function deleteMessage($reservationId) {
+    function deleteMessage($reservationId)
+    {
         $res = sql_query("SELECT o.email as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
@@ -1130,7 +1156,8 @@ END:VCALENDAR";
         }
     }
 
-    public function sendLabShopMail($labShopData) {
+    public function sendLabShopMail($labShopData)
+    {
         $mail = self::getDefaultMailer();
         $mail->AddAddress($labShopData["email"]);
         //$mail->AddAddress("jnsmobil@gmail.com");
@@ -1158,8 +1185,8 @@ END:VCALENDAR";
         </ul>
         <br/>";
         $mbody .= "<br/>
-                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME." Csapata!<br/><br/> 
-                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME."' />";
+                Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . " Csapata!<br/><br/> 
+                <img style='width:150px;' src='https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png' alt='" . Booking_Constants::COMPANY_NAME . "' />";
 
         $mail->Subject = $subject;
         $mail->Body = $mbody;
@@ -1167,7 +1194,8 @@ END:VCALENDAR";
     }
 
 
-    public function sendManagerStatusMail() {
+    public function sendManagerStatusMail()
+    {
         $page = new AdminManagerStatusPage();
 
         $mail = self::getDefaultMailer();
@@ -1175,7 +1203,7 @@ END:VCALENDAR";
         $mail->AddAddress("kuzdyg@hungariamed.hu");
         $mail->AddAddress("marton.gergely@hungariamed.hu");
 
-        $subject = "Manager csomag status ".date("Y-m-d");
+        $subject = "Manager csomag status " . date("Y-m-d");
 
         $mbody = $page->managerStatList(14);
 
@@ -1186,7 +1214,8 @@ END:VCALENDAR";
 
     const OWNER_PASSWORD = "que3ikieP";
 
-    public function sendLaborLeletEmail($id) {
+    public function sendLaborLeletEmail($id)
+    {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
@@ -1199,9 +1228,9 @@ END:VCALENDAR";
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
         WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
-            $pdfFileName = Booking_Constants::DOCUMENT_PATH."labor".md5($id.rand(1,10000)).".pdf";
-            $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH."laborenc".md5($id.rand(1,10000)).".pdf";
-            $outFileName = $requestData["nev"]." laborlelet.pdf";
+            $pdfFileName = Booking_Constants::DOCUMENT_PATH . "labor" . md5($id . rand(1, 10000)) . ".pdf";
+            $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH . "laborenc" . md5($id . rand(1, 10000)) . ".pdf";
+            $outFileName = $requestData["nev"] . " laborlelet.pdf";
             $userPassword = trim($requestData["taj"]);
             if (empty($userPassword)) {
                 $userPassword = str_replace(".", "", str_replace("-", "", $requestData["szuldatum"]));
@@ -1219,7 +1248,7 @@ END:VCALENDAR";
             //$mail->AddBCC("marton.gergely@hungariamed.hu");
             $mail->AddAttachment($pdfFileNameEncripted, $outFileName);
 
-            $subject = $requestData["nev"]." labor lelet ".date("Y-m-d");
+            $subject = $requestData["nev"] . " labor lelet " . date("Y-m-d");
             $mbody = !empty($requestData["emailtext"]) ? nl2br($requestData["emailtext"]) : "Automatikus labor lelet küldés";
 
             if (Booking_Constants::SQL_DB == "hungariamed") {
@@ -1237,26 +1266,27 @@ END:VCALENDAR";
             unlink($pdfFileNameEncripted);
 
             $admin = $_SESSION["adminuser"]["nev"] ?? "noname";
-            $logText = "Kiküldve: ".date("Y.m.d H:i")." {$requestData["email"]} címre, {$admin} által<br/>";
+            $logText = "Kiküldve: " . date("Y.m.d H:i") . " {$requestData["email"]} címre, {$admin} által<br/>";
 
             sql_query("update labrequests set ertesitve=1, ertesitesdatum=now(), ertesitesemail=?, ertesiteslog=CONCAT(?, ertesiteslog) where id=?", [$requestData["email"], $logText, $requestData["id"]]);
         }
     }
 
-    public function checkPreviousNotifications($email,$tipus):array{
-        if($q = sql_query("SELECT * FROM notifications WHERE destination=? AND tipus=? ORDER by datum DESC",array($email,$tipus))->fetchAll(PDO::FETCH_ASSOC)){
+    public function checkPreviousNotifications($email, $tipus): array
+    {
+        if ($q = sql_query("SELECT * FROM notifications WHERE destination=? AND tipus=? ORDER by datum DESC", array($email, $tipus))->fetchAll(PDO::FETCH_ASSOC)) {
             return $q;
-        }else{
+        } else {
             return [];
         }
-       
     }
 
 
-    public function sendReminderToFogleu($email,$content){
+    public function sendReminderToFogleu($email, $content)
+    {
 
         //Helyettesítendő szövegek:
-        
+
 
         $mail = self::getDefaultMailer();
         //$mail->AddAddress($email);
@@ -1270,8 +1300,8 @@ END:VCALENDAR";
         $mail->Send();
     }
 
-    public function sendBFKHmarketing($email,$content){
-
+    public function sendBFKHmarketing($email, $content)
+    {
         //Helyettesítendő szövegek:
         $filePath = "templates/labor_kiertekeles_es_ajanlas.pdf";
         $fileName = "Labor kiértékelés és ajánlás.pdf";
@@ -1291,7 +1321,8 @@ END:VCALENDAR";
     }
 
 
-    public function sendUserSMSCode() {
+    public function sendUserSMSCode()
+    {
         $adminUser = new AdminUser();
 
         $mail = self::getDefaultMailer();
@@ -1304,10 +1335,146 @@ END:VCALENDAR";
         <br/>
         <span style='font-size: 24px;font-weight: bold;'>{$adminUser->user["logincode"]}</span>
         <br/>";
-        $mbody .= "<br/>Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME." Csapata!<br/><br/>";
+        $mbody .= "<br/>Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . " Csapata!<br/><br/>";
 
         $mail->Subject = "Hungariamed belépési kód";
         $mail->Body = $mbody;
         $mail->Send();
+    }
+
+    /**
+     * Suzuki menedzser foglalásokról értesíti a megjelölt e-mail címeket.
+     * @param   datetime    $notificationTime       Minden nap, az itt megadott időpontban kiküldi a felek részére az értesíést.
+     * @param   int         $tipus                  webservicelog táblában ezzel az változó értékkel tudom majd kilistázni az előzmény adatokat.
+     * @param   int         $cegId                  Cég azonosító filter.
+     * @param   array       $szurestipusIds         Szűréstípus filter.
+     */
+    public function suzukiManagerNotificationList()
+    {
+        $tipus                  = 12;
+        $notificationTime       = date("Y-m-d 19:00");
+        $cegId                  = 892;
+        $szurestipusIds         = [219, 220, 221, 222];
+        $szurestipusIdsString   = implode(",", $szurestipusIds);
+        $EmailAddresses         = ["marton.gergely@hungariamed.hu","szabo.melinda@hungariamed.hu"];
+        $webservicelogs         = [];
+
+        /**
+         * Ki listázni azokat az időpontokat, amiknek az esedékessége a most és a most+7 napban van.
+         * BETWEEN NOW() AND NOW() + 7 DAYS
+         * A foglalt időpontot kell nézzem.
+        */
+        $reservations = sql_query(
+            "SELECT fogl.id,fogl.datum as \"Időpont\",sz.megnev as \"Csomag\",fogl.nev as \"Teljesnév\",fogl.email as \"E-mail\",fogl.telefon as \"Telefon\" FROM foglalasok fogl
+            LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+            WHERE fogl.cegid=? AND fogl.szurestipusid IN ({$szurestipusIdsString}) AND fogl.datum BETWEEN NOW() AND (NOW() + INTERVAL 7 DAY) AND foglalta=\"\"
+            ORDER BY fogl.datum ASC",
+            array($cegId)
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        /**
+         * Ki listázom a log fájlokat 14 napra visszamenőleg, hogy összevessem a foglalásokkal. 
+        */
+        $webservicelogs = sql_query(
+            "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum>\"".date("Y-m-d",strtotime("NOW - 7 days"))."\"",
+            array($tipus)
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($reservations as $key=>$reservation){
+            /**
+             * Le kell ellenőriznem, hogy nem volt-e már értesítésre megjelölve a foglalás.
+            */
+            $reservationDate = date("Y-m-d",strtotime($reservation["Időpont"]));
+            $maxRange = date("Y-m-d",strtotime("NOW - 7 days"));
+
+            //Első értesítés ellenőzrése
+            $firstNotificationCheck = sql_query(
+                "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum > \"".$maxRange."\" AND keres=? AND action=?",
+                array($tipus,$reservation["id"],"first-notification")
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            //Ha nagyobb, akkor simán szakítsa meg az értesítést.
+            //echo "Az időpont kisebb mint az aktuális idő? ".strtotime($reservationDate).">".strtotime(date("Y-m-d",strtotime("now + 1 days")))."<br>";
+            if(!empty($firstNotificationCheck) && strtotime($reservationDate)>strtotime(date("Y-m-d",strtotime("now + 1 days")))){
+                echo "nem értesítem erről a Melindát.<br>";
+                unset($reservations[$key]);
+            }
+
+             //Második értesítés ellenőrzése
+             $secondNotificationCheck = sql_query(
+                "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum > \"".$maxRange."\" AND keres=? AND action=?",
+                array($tipus,$reservation["id"],"second-notification")
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            if(empty($secondNotificationCheck) && strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("now + 1 days")))){
+                echo "Értesíteni kell.<br>";;
+            }else{
+                if(!empty($firstNotificationCheck)){
+                    unset($reservations[$key]);
+                }
+            }       
+        }
+
+        echo "<pre>";
+        print_r($reservations);
+        echo "</pre>";
+        //return;
+        /**
+         * E-mailek kiküldése
+        */
+
+        if(!empty($reservations)){
+                $mail = self::getDefaultMailer();
+            for($i=0;$i<count($EmailAddresses);$i++){
+                $mail->AddAddress($EmailAddresses[$i]);
+            }
+            $mbody = "A levél tartalmazza a következő munkanapon értesítendő Suzukis menedzsereket.";
+            $mail->Subject = "Suzuki értesítő küldés";
+            $mail->Body = $mbody;
+
+            /**
+             * Létrehozom az Excel fájlt és hozzá adom a levélhez mint csatolmány.
+            */
+            $excelService = new ExcelService();
+            if($fileName = $excelService->generateXlsxFromArray($reservations)){
+                $mail->AddAttachment($fileName);
+            }
+
+            /**
+             * Levél küldése.
+            */
+            if($mail->Send()){
+                foreach($reservations as $key=>$reservation){
+                    //Első értesítés ellenőzrése
+                    $maxRange = date("Y-m-d",strtotime("NOW - 7 days"));
+                    $firstNptificationCheck = sql_query(
+                        "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum > \"".$maxRange."\" AND keres=? AND action=?",
+                        array($tipus,$reservation["id"],"first-notification")
+                    )->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    if(!$firstNptificationCheck){
+                        sql_query("INSERT INTO webservicelog SET datum= NOW(), tipus=?, keres=?,action=?",
+                            array($tipus,$reservation["id"],"first-notification")
+                        );
+                    }
+                    
+                    //Második értesítés ellenőrzése
+                    $reservationDate = date("Y-m-d",strtotime($reservation["Időpont"]));
+                    if(strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("now + 1 days")))){
+                        sql_query("INSERT INTO webservicelog SET datum= NOW(), tipus=?, keres=?,action=?",
+                            array($tipus,$reservation["id"],"second-notification")
+                        );
+                    }
+                    //Csatolmány törlése
+                    unlink($fileName);
+                }
+                return "Success e-mail send.";
+            }
+        }else{
+            return "Nothing to send.";
+        }
+        
+        
+        return "Something went wrong.";
     }
 }

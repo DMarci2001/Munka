@@ -48,6 +48,7 @@ class ExcelService {
         } catch (\PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
             return false;
         }
+        return true;
     }
 
     public function getSpreadSheet() {
@@ -291,6 +292,12 @@ class ExcelService {
     private function setAutoWidth($range) {
         foreach($range as $columnID) {
             $this->sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+    }
+
+     private function setAutoWidthInCustomSheet($range,$sheet) {
+        foreach($range as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
     }
 
@@ -1075,6 +1082,35 @@ class ExcelService {
 
         $this->setAutoWidth(range('J','P'));
         $this->sheet->getColumnDimension('I')->setWidth(25);
+    }
+
+    public function generateXlsxFromArray($array){
+        //outputSpreadSheetFile
+        //Oszlopnevek
+        $columnNames = array_keys($array[0]);
+        $row = 1;
+        $filename = Booking_Constants::DOCUMENT_PATH."/Értesítendő Suzuki lista.xlsx";
+        $spreadSheet = new Spreadsheet();
+        $this->sheet = $spreadSheet->getActiveSheet();
+        $this->headingRow("A", $row, $columnNames);
+       
+        for($i=0;$row<=count($array);$i++){
+            $row++;
+            $values = array_values($array[$i]);
+            $this->dataRow("A", $row, $values);
+        }
+
+        $this->setAutoWidth(range('A', 'E'));
+
+        try {
+            $writer = IOFactory::createWriter($spreadSheet, 'Xlsx');
+            $writer->save($filename);
+        } catch (\PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
+            return false;
+        }
+
+        return $filename;
+
     }
 
 
