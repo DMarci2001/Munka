@@ -981,7 +981,7 @@ class AdminBookingPage extends AdminCorePage
                     if ($this->lastIdopont == "") {
                         //nem volt foglalás, üres időpont kirakás
                         $htmlout .= "<tr style=''>";
-                        $htmlout .= "<td valign='top' nowrap style=''>". $this->idopontStatusIcon()."<span style=\"" . $this->datePastStyle($nap, $ora) . "\">{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</span></td>";
+                        $htmlout .= "<td valign='top' nowrap style=''>". $this->idopontStatusIcon()."&nbsp;<span style=\"" . $this->datePastStyle($nap, $ora) . "\">{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</span></td>";
                         $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
                         if ($szabi) {
                             $htmlout .= "<td valign='top'>Szabadság miatt nem foglalható</td>";
