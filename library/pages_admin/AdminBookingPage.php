@@ -1344,7 +1344,7 @@ class AdminBookingPage extends AdminCorePage
         );
 
         //Ha nem én, jani, kitti, vagy kisg ne jelenítsen meg semmit.
-        if(!in_array($_SESSION["adminuser"]["id"],array(280,243,1))){
+        if(!in_array($_SESSION["adminuser"]["id"],array(280,243,1,51))){
             return $icon;
         }
 
