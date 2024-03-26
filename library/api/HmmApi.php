@@ -116,6 +116,10 @@ class HmmApi {
             $result = $this->reservationsGet();
         }
 
+        if ($this->apiMethod == "reservation" && $this->requestMethod == "GET") {
+            $result = $this->reservationGet();
+        }
+
         if ($this->apiMethod == "reservations" && $this->requestMethod == "POST") {
             $result = $this->reservationsPost();
         }
@@ -557,7 +561,6 @@ class HmmApi {
             "userName" => $tokenData["username"],
             ".issued" => date("r", $now),
             ".expires" => date("r", $expires)
-
         ];
     }
 
@@ -577,10 +580,25 @@ class HmmApi {
         return false;
     }
 
+
+    //A hívás a Szolgáltató adatbázisában rögzített AdMedes foglalások adatait adja vissza.
+    private function reservationGet():array {
+        $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+        if (!$reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", [intval($body["id"]), $body["authorizationCode"]]))) {
+            $this->apiError(400, "E1003", "Reservation not found.");
+        }
+
+        return $this->_reservationArray($reservationData);
+    }
+
+
     //A hívás a Szolgáltató adatbázisában rögzített AdMedes foglalások adatait adja vissza.
     private function reservationsGet():array {
         if (!empty($this->apiParam)) {
-            if (!$reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", [intval($this->apiParam)]))) {
+            $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+            if (!$reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", [intval($this->apiParam), $body["authorizationCode"]]))) {
                 $this->apiError(400, "E1003", "Reservation not found.");
             }
 
@@ -661,7 +679,8 @@ class HmmApi {
             "patientNotification" => false,
             "active" => $reservationData["aktiv"],
             "expiration" => $reservationData["expire"],
-            "modifiedAt" => date("c", strtotime($reservationData["regdatum"]))
+            "modifiedAt" => date("c", strtotime($reservationData["regdatum"])),
+            "authorizationCode" => $reservationData["pass"],
         ];
     }
 
@@ -690,7 +709,9 @@ class HmmApi {
     //A hívás segítségével a Szolgáltató rendszerében rögzített foglalás törölhető.
     private function reservationsDelete():array {
         if (!empty($this->apiParam)) {
-            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and foglalta=?", [intval($this->apiParam), $this->tokenData["username"]]))) {
+            $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($this->apiParam), $body["authorizationCode"], $this->tokenData["username"]]))) {
                 $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
                 return [];
             } else {
@@ -716,12 +737,16 @@ class HmmApi {
         $length             = $body["length"];
         $cegId              = $body["companyId"] ?? Booking_Constants::DEFAULT_COMPANY_ID;
         $taj                = $body["patientTaj"] ?? Utils::generateRandomString();
-        $patientName        = $body["patientName"];
-        $patientPhone       = $body["patientPhone"];
-        $patientEmail       = $body["patientEmail"];
-        $patientDateOfBirth = date("Y-m-d", strtotime($body["patientDateOfBirth"]));
-        $patientMothersName = $body["patientMothersName"];
-        $patientComment     = $body["patientComment"];
+        $patientName        = $body["patientName"] ?? "nincs név";
+        $patientPhone       = $body["patientPhone"] ?? "";
+        $patientEmail       = $body["patientEmail"] ?? "";
+        if (isset($body["patientDateOfBirth"])) {
+            $patientDateOfBirth = date("Y-m-d", strtotime($body["patientDateOfBirth"]));
+        } else {
+            $patientDateOfBirth = "0000-00-00";
+        }
+        $patientMothersName = $body["patientMothersName"] ?? "";
+        $patientComment     = $body["patientComment"] ?? "";
         $patientGender      = $body["patientGender"] ?? 0;
         $patientPostcode    = $body["patientPostcode"] ?? "0000";
         $patientCity        = $body["patientCity"] ?? "";
@@ -850,7 +875,7 @@ class HmmApi {
         }
 
         $reservationTable = [];
-        $reservations = sql_query("select datum, rinterval, orvosassigned from foglalasok where datum>now() and datum<date_add(now(), interval 31 day) {$doctorFilterReservation}");
+        $reservations = sql_query("select datum, rinterval, orvosassigned from foglalasok where datum>? and datum<? {$doctorFilterReservation}", [date("Y-m-d 00:00:00", strtotime($startDate)), date("Y-m-d 23:59:59", strtotime($endDate))]);
         while ($reservation = sql_fetch_array($reservations)) {
             $rinterval = $reservation["rinterval"] == 0 ? 15 : $reservation["rinterval"];
             for ($r = 0; $r < $rinterval; $r++) {
