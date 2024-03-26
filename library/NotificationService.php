@@ -1344,20 +1344,23 @@ END:VCALENDAR";
 
     /**
      * Suzuki menedzser foglalásokról értesíti a megjelölt e-mail címeket.
-     * @param   datetime    $notificationTime       Minden nap, az itt megadott időpontban kiküldi a felek részére az értesíést.
+     * @param   string      $notificationDate       Értesítési nap meghatározása.
      * @param   int         $tipus                  webservicelog táblában ezzel az változó értékkel tudom majd kilistázni az előzmény adatokat.
      * @param   int         $cegId                  Cég azonosító filter.
      * @param   array       $szurestipusIds         Szűréstípus filter.
      */
-    public function suzukiManagerNotificationList()
+    public function suzukiManagerNotificationList($notificationDate="")
     {
         $tipus                  = 12;
-        $notificationTime       = date("Y-m-d 19:00");
         $cegId                  = 892;
         $szurestipusIds         = [219, 220, 221, 222];
         $szurestipusIdsString   = implode(",", $szurestipusIds);
         $EmailAddresses         = ["marton.gergely@hungariamed.hu","szabo.melinda@hungariamed.hu"];
         $webservicelogs         = [];
+
+        if(empty($notificationDate)){
+            $notificationDate = date("Y-m-d");
+        }
 
         /**
          * Ki listázni azokat az időpontokat, amiknek az esedékessége a most és a most+7 napban van.
@@ -1367,7 +1370,7 @@ END:VCALENDAR";
         $reservations = sql_query(
             "SELECT fogl.id,fogl.datum as \"Időpont\",sz.megnev as \"Csomag\",fogl.nev as \"Teljesnév\",fogl.email as \"E-mail\",fogl.telefon as \"Telefon\" FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-            WHERE fogl.cegid=? AND fogl.szurestipusid IN ({$szurestipusIdsString}) AND fogl.datum BETWEEN NOW() AND (NOW() + INTERVAL 7 DAY) AND foglalta=\"\"
+            WHERE fogl.cegid=? AND fogl.szurestipusid IN ({$szurestipusIdsString}) AND fogl.datum BETWEEN \"{$notificationDate}\" AND (\"{$notificationDate}\" + INTERVAL 7 DAY) AND foglalta=\"\"
             ORDER BY fogl.datum ASC",
             array($cegId)
         )->fetchAll(PDO::FETCH_ASSOC);
@@ -1376,7 +1379,7 @@ END:VCALENDAR";
          * Ki listázom a log fájlokat 14 napra visszamenőleg, hogy összevessem a foglalásokkal. 
         */
         $webservicelogs = sql_query(
-            "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum>\"".date("Y-m-d",strtotime("NOW - 7 days"))."\"",
+            "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum>\"".date("Y-m-d",strtotime("{$notificationDate} - 7 days"))."\"",
             array($tipus)
         )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1385,7 +1388,7 @@ END:VCALENDAR";
              * Le kell ellenőriznem, hogy nem volt-e már értesítésre megjelölve a foglalás.
             */
             $reservationDate = date("Y-m-d",strtotime($reservation["Időpont"]));
-            $maxRange = date("Y-m-d",strtotime("NOW - 7 days"));
+            $maxRange = date("Y-m-d",strtotime("{$notificationDate} - 7 days"));
 
             //Első értesítés ellenőzrése
             $firstNotificationCheck = sql_query(
@@ -1395,7 +1398,7 @@ END:VCALENDAR";
 
             //Ha nagyobb, akkor simán szakítsa meg az értesítést.
             //echo "Az időpont kisebb mint az aktuális idő? ".strtotime($reservationDate).">".strtotime(date("Y-m-d",strtotime("now + 1 days")))."<br>";
-            if(!empty($firstNotificationCheck) && strtotime($reservationDate)>strtotime(date("Y-m-d",strtotime("now + 1 days")))){
+            if(!empty($firstNotificationCheck) && strtotime($reservationDate)>strtotime(date("Y-m-d",strtotime("{$notificationDate} + 1 days")))){
                 echo "nem értesítem erről a Melindát.<br>";
                 unset($reservations[$key]);
             }
@@ -1406,7 +1409,7 @@ END:VCALENDAR";
                 array($tipus,$reservation["id"],"second-notification")
             )->fetchAll(PDO::FETCH_ASSOC);
 
-            if(empty($secondNotificationCheck) && strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("now + 1 days")))){
+            if(empty($secondNotificationCheck) && strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("{$notificationDate} + 1 days")))){
                 echo "Értesíteni kell.<br>";;
             }else{
                 if(!empty($firstNotificationCheck)){
@@ -1446,22 +1449,22 @@ END:VCALENDAR";
             if($mail->Send()){
                 foreach($reservations as $key=>$reservation){
                     //Első értesítés ellenőzrése
-                    $maxRange = date("Y-m-d",strtotime("NOW - 7 days"));
+                    $maxRange = date("Y-m-d",strtotime("{$notificationDate} - 7 days"));
                     $firstNptificationCheck = sql_query(
                         "SELECT keres,action FROM webservicelog WHERE tipus=? AND datum > \"".$maxRange."\" AND keres=? AND action=?",
                         array($tipus,$reservation["id"],"first-notification")
                     )->fetchAll(PDO::FETCH_ASSOC);
                     
                     if(!$firstNptificationCheck){
-                        sql_query("INSERT INTO webservicelog SET datum= NOW(), tipus=?, keres=?,action=?",
+                        sql_query("INSERT INTO webservicelog SET datum= \"{$notificationDate}\", tipus=?, keres=?,action=?",
                             array($tipus,$reservation["id"],"first-notification")
                         );
                     }
                     
                     //Második értesítés ellenőrzése
                     $reservationDate = date("Y-m-d",strtotime($reservation["Időpont"]));
-                    if(strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("now + 1 days")))){
-                        sql_query("INSERT INTO webservicelog SET datum= NOW(), tipus=?, keres=?,action=?",
+                    if(strtotime($reservationDate)==strtotime(date("Y-m-d",strtotime("{$notificationDate} + 1 days")))){
+                        sql_query("INSERT INTO webservicelog SET datum= \"{$notificationDate}\", tipus=?, keres=?,action=?",
                             array($tipus,$reservation["id"],"second-notification")
                         );
                     }
