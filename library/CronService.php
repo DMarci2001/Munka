@@ -89,6 +89,7 @@ class CronService {
             $this->_sendReviewMails();
             $this->_sendAlkExcel(); //** régi excel hívást használ, disabled
             $this->_sendAlkExpire();
+            $this->suzukiNotificationCheck();
 
             $this->checkSzabadsagCollisions();
             $this->checkCollisions();
@@ -297,6 +298,16 @@ class CronService {
                     $mail->send();
                 }
             }
+        }
+    }
+
+    /**
+     * Suzuki statisztika kiküldése minden nap 19:00-kor.
+    */
+    private function suzukiNotificationCheck(){
+        if (Booking_Constants::SQL_DB == "hungariamed" && in_array(date("G"), [19])) {
+            $notificationService = new NotificationService();
+            $notificationService->suzukiManagerNotificationList();
         }
     }
 
