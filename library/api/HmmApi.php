@@ -128,6 +128,10 @@ class HmmApi {
             $result = $this->reservationsPut();
         }
 
+        if ($this->apiMethod == "reservation" && $this->requestMethod == "PUT") {
+            $result = $this->reservationPut();
+        }
+
         if ($this->apiMethod == "reservation" && $this->requestMethod == "DELETE") {
             $result = $this->reservationDelete();
         }
@@ -703,6 +707,23 @@ class HmmApi {
         } else {
             $this->apiError(500, "", "");
         }
+        return [];
+    }
+
+    private function reservationPut():array {
+        $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+        $this->_checkReservationBody($body);        
+    
+        if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"],$this->tokenData["username"]]))) 
+        {
+            sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, taj=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=?, aktiv=?, expire=? where id=? and pass=?",
+                [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientTaj"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $body["active"], $body["expiration"], $reservationData["id"], $body["authorizationCode"]]);
+
+            return $this->_reservationArray(sql_fetch_array(sql_query("select * from foglalasok where id=?", [$reservationData["id"]])));
+        } else {
+            $this->apiError(400, "E1003", "Reservation not found.");
+        }
+
         return [];
     }
 
