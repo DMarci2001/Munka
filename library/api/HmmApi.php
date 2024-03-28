@@ -711,7 +711,7 @@ class HmmApi {
         if (!empty($this->apiParam)) {
             $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
 
-            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($this->apiParam), $body["authorizationCode"], $this->tokenData["username"]]))) {
+            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"], $this->tokenData["username"]]))) {
                 $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
                 return [];
             } else {
