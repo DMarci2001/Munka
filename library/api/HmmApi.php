@@ -708,17 +708,13 @@ class HmmApi {
 
     //A hívás segítségével a Szolgáltató rendszerében rögzített foglalás törölhető.
     private function reservationDelete():array {
-        if (!empty($this->apiParam)) {
-            $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+        $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
 
-            if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"], $this->tokenData["username"]]))) {
-                $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
-                return [];
-            } else {
-                $this->apiError(400, "E1003", "Reservation not found.");
-            }
+        if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"],$this->tokenData["username"]]))) {
+            $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
+            return [];
         } else {
-            $this->apiError(500, "", "");
+            $this->apiError(400, "E1003", "Reservation not found.");
         }
         return [];
     }
