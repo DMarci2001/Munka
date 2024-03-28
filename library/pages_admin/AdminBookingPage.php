@@ -1100,9 +1100,9 @@ class AdminBookingPage extends AdminCorePage
     }
 
 
-    private function datePastStyle($nap, $ora)
+    private function datePastStyle($nap, $ora):string
     {
-        return strtotime("now") > strtotime("{$nap} {$ora}") ? "color:#aaa;" : "";
+        return strtotime("now") > strtotime("{$nap} {$ora}") && date("Y-m-d") == $nap ? "color:#aaa;" : "";
     }
 
 

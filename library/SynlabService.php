@@ -40,6 +40,35 @@ class SynlabService
 
     const DEFAULT_BEKULDOKOD = "000000719";
 
+    public array $bekuldoKodMap = [
+        "MMFGSMIS" => "Hungaria Med-M Kft. (FGSZ Zrt. - Miskolc)",
+        "HMMKECSKE" => "Hungaria Med-M Kft. (Kecskemét)",
+        "HMMSUDLGZ" => "Hungaria Med-M Kft. (SUZUKI dolgozói)",
+        "HMMSUMNGR" => "Hungaria Med-M Kft. (SUZUKI manager)",
+        "000 000 719" => "Hungaria Med-M Kft.",
+        "000 000 460" => "Hungaria Med-M Kft. (FCSM)",
+        "000 000 463" => "Hungaria Med-M Kft. (TIGÁZ)",
+        "000 000 907" => "Hungaria Med-M Kft (Gyöngyös Apolló)",
+        "000 001 287" => "Hungaria Med-M Kft. (HungaroControl Zrt. szűrés)",
+        "000 000 982" => "Hungaria Med-M Kit. (Győr)",
+        "000 000 787" => "Hungaria Med-M Kft. (ALDI)",
+        "000 001 079" => "Hungaria Med-M Kft. (Fehérvári út)",
+        "000 000 887" => "Hungaria Mcd-M Kft. (Hungarocontrol)",
+        "000 000 946" => "Hungaria Med-M Kft. (Paks2 Budapest)",
+        "000 000 789" => "Hungaria Med-M Kft. (Paks2)",
+        "HMMFGSZRT" => "Hungaria Med-M Kft. (FGSZ Zrt.)",
+        "HMMFGHJSZ" => "Hungaria Med-M Kft. (FGSZ Zrt. - Hajdúszoboszló)",
+        "HMMPOLGAR" => "Hungaria Med-M Kft. (Polgár)",
+        "HMMSZEGED" => "Hungaria Med-M Kft. (Szeged)",
+        "HMMIDEGEN" => "Hungaria Med-M Kft. (Idegenrendészet)",
+        "HMEDMNKFI" => "Hungaria Med-M Kft. (NKFI)",
+        "HMEDMMKK0" => "Hungaria Med-M Kft. (MKK)",
+        "HMEDTORVSZ" => "Hungaria Med-M Kft. (Törvényszék)",
+        "HMMMMOVAR" => "Hungaria Med-M Kft. (Mosonmagyaróvár)",
+        "HMMKELTEX" => "Hungaria Med-M Kft. (KELTEX HMM)",
+        "HMMKFTBME" => "Hungaria Med-M Kft. (BME)",
+    ];
+
     public function __construct()
     {
         $index = Booking_Constants::SQL_DB;

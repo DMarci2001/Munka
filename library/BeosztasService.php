@@ -33,7 +33,7 @@ class BeosztasService {
             WHERE b.helyszinid=:helyszinid AND (nap=:weekday OR (nap=10 AND beonap=:day)) and tol<>0 and ig<>0 
             AND (b.validfrom='0000-00-00' OR b.validfrom<=:day) AND (b.validto='0000-00-00' OR b.validto>=:day)
             AND (b.hetek=0 OR (WEEK(:day,3)%2=0 AND b.hetek=2) OR (WEEK(:day,3)%2=1 AND b.hetek=1)) and b.aktiv=1 AND t.megnev IS NOT NULL {$this->beosztasCompanyFilter}
-            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by instr(o.nev, 'kiszállásos'), !instr(o.nev, 'szűrés 2023'), !instr(o.nev, 'Egészségnap'), !instr(b.tipusok,'|1|'), !instr(b.tipusok,'|34|'), t.megnev, o.sorrend, o.id, tol, nap", ["helyszinid" => $helyszinId, "weekday" => $wd, "day" => $day]);
+            group by concat(b.orvosid,'_',b.tol,'_',b.ig) order by instr(o.nev, 'kiszállásos'), !instr(o.nev, 'csomag'), !instr(o.nev, 'Egészségnap'), !instr(b.tipusok,'|1|'), !instr(b.tipusok,'|34|'), t.megnev, o.sorrend, o.id, tol, nap", ["helyszinid" => $helyszinId, "weekday" => $wd, "day" => $day]);
 
         return $beoRes->fetchAll(PDO::FETCH_ASSOC);
     }
