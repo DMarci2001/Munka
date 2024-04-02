@@ -921,6 +921,7 @@ class PrintService
         "Dr. Szénási Pál" => 25083,
         "Dr. Tóth-Kovalik Ádám" => 96276,
         "Dr. Váradi Zoltán" => 95840,
+        "Dr. Gergely Melinda" => 77490,
     ];
 
     private function innioErtesites(){
