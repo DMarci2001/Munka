@@ -189,7 +189,7 @@ class AdminChatPage extends AdminCorePage {
 
     public function showPage()
     {
-        if (!$this->adminUser->cegModAccess()) {
+        if (!$this->adminUser->chatAccess()) {
             echo $this->noPermissionMessage();
             return;
         }

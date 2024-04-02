@@ -577,6 +577,9 @@ class BookingService
         $this->betegallomany = $betegallomany;
     }
 
+
+    private bool $debugPack = false;
+
     public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array()):array {
 
         $vanFixError = false;
@@ -1827,17 +1830,17 @@ class BookingService
             if ($reservationData["tudoszuro"] == 1) {
                 $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::TUDOSZURES_ID);
             } else {
-                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::TUDOSZURES_ID);
+                //$this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::TUDOSZURES_ID);
             }
             if ($reservationData["kieg_labor"] == 1) {
                 $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::LABOR_ID);
             } else {
-                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::LABOR_ID);
+                //$this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::LABOR_ID);
             }
             if ($reservationData["kieg_hallas"] == 1) {
                 $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
             } else {
-                $this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
+                //$this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
             }
         }
         return $status;
@@ -2243,10 +2246,16 @@ class BookingService
         $bestTime = [];
         $bestCheck = 1000000;
         $weekDay = date("N", strtotime($reservationData["datum"]));
-        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=? order by !instr(b.bmegj, 'magán')", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"]]);
+        $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=? 
+              AND (b.validfrom='0000-00-00' OR b.validfrom<=?) AND (b.validto='0000-00-00' OR b.validto>=?)                                               
+              order by !instr(b.bmegj, 'magán')", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"], $date, $date]);
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
+
+            if (sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $date, $date]))) {
+                continue;
+            }
 
             $o = 0;
             $startTime = date("Y-m-d H:i:s", strtotime("{$date} {$beoData["tol"]}"));

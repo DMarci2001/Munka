@@ -94,6 +94,15 @@ class AdminAjaxService {
                 sql_query("insert into hmmweb.q9a8m_content set catid=85, title='új tartalom', created=now(), publish_up=now(), state=1");
             }
 
+            if ($_GET["page"] == "munkanaplo") {
+                //error_reporting(E_ALL);
+                //ini_set('display_errors', 1);
+
+                $rn = rand(1000000,9999999);
+                sql_query("insert into munkahigienes_felmeres set created=now(), datum=now(), munkaltato='', orvos=?, pecsetszam=?, rn=?", [$rn, $_SESSION["adminuser"]["nev"], $_SESSION["adminuser"]["pecsetszam"]]);
+                //die;
+            }
+
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
         }

@@ -26,9 +26,11 @@ class PrintService
         "aldibeosetup"       => "aldibeosetup",
         "innioertesites"     => "innioertesites",
         "bfkh_email_kuldes"  => "bfkh_email_kuldes",
+        "munkanaplo"         => "munkanaplo",
+        "munkanaplopdf"         => "munkanaplopdf",
     );
 
-    private $inputs = array(
+    private array $inputs = array(
         "covidkerdoiv" => array(
             "nev", "lakcim", "telefon", "anyjaneve", "szulhely", "taj", "email", "szuldatum", "datum"
         ),
@@ -98,6 +100,14 @@ class PrintService
             $this->printLaborLelet();
             return;
         }
+        if ($this->templateId == "munkanaplo") {
+            $this->printMunkaNaplo();
+            return;
+        }
+        if ($this->templateId == "munkanaplopdf") {
+            $this->printMunkaNaploPDF();
+            return;
+        }
 
         if ($this->templateId == "makdailyreport") {
             $this->printMakDailyReport();
@@ -117,8 +127,6 @@ class PrintService
             $this->bfkh_email_kuldes();
             return;
         }
-
-
 
         if ($this->templateId == "karton") {
             $this->printKartonPDF();
@@ -1205,6 +1213,46 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 ';
 
         die;
+    }
+
+    private function printMunkaNaplo() {
+        header("Content-type: text/html; charset=UTF-8");
+
+        $_POST = sql_fetch_array(sql_query("select * from munkahigienes_felmeres where id=? and rn=?", [$_GET["mid"], $_GET["p"]]));
+        ob_start();
+        include (Booking_Constants::APP_PATH."public/images/felmeres/munkaNaploTemplate.php");
+        $templateTorzs = ob_get_contents();
+        ob_end_clean();
+
+        include (Booking_Constants::APP_PATH."public/images/felmeres/munkaNaploAlairas.php");
+        $templateSign = ob_get_contents();
+        ob_end_clean();
+
+        include (Booking_Constants::APP_PATH."public/images/felmeres/munkaNaploHeader.php");
+        $templateHeader = ob_get_contents();
+        //ob_end_clean();
+
+        echo $templateHeader;
+        echo $templateTorzs;
+        echo $templateSign;
+    }
+
+    private function printMunkaNaploPDF() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $mid = $_GET["mid"];
+        $p = $_GET["p"];
+
+        header("Content-type: text/html; charset=UTF-8");
+
+        $pdfFileName = Booking_Constants::DOCUMENT_PATH . "munkanaplo" . md5(rand(1, 10000)) . ".pdf";
+        $output = `chromium --headless --print-to-pdf="{$pdfFileName}" --no-pdf-header-footer --no-sandbox "https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=munkanaplo&mid={$mid}&p={$p}"`;
+
+        header("Content-Type: application/pdf");
+        header('Content-Disposition: attachment; filename="MunkaNaplo.pdf"');
+        echo file_get_contents($pdfFileName);
+        unlink($pdfFileName);
     }
 
 }

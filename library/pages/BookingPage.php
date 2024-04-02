@@ -1208,7 +1208,13 @@ class BookingPage extends CorePage
             echo "<tr><td></td><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' ".(isset($_POST["simplepay"])?"checked":"")."/> Elfogadom a <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>SimplePay feltételeit.</a></div></td></tr>";
         }
 
-        echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a><span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+        echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'>";
+        //if (session_id() == "dp87gclsmd6pd4rra4r620v39s") {
+            echo "<a id='resbutton' href='#' class='newbutton' onclick='reservationSubmit();return false;'><span id='resbuttonloading' style='display:none;'><i class='fa-solid fa-rotate fa-spin'></i>&nbsp;&nbsp;</span>{$submitButtonText}</a>";
+        //} else {
+        //    echo "<a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a>";
+        //}
+        echo "<span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
 
         echo "</table>";
 
@@ -1524,10 +1530,16 @@ class BookingPage extends CorePage
 
             $html .= "<div style='text-align:center;margin-top:10px;'>";
 
-            $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px;'>{$webText["idopontfoglalas"]}</h2>" . $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
+            $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px 15px 0px;'>{$webText["idopontfoglalas"]}</h2>";
+            if (count(Booking_Constants::DEFAULT_PLACE_IDS) > 1) {
+                $helyszinData = sql_query("select cim from helyszinek where id=?", [$helyszinId])->fetch(PDO::FETCH_ASSOC);
+                $html.= "<div style='font-size: 24px;'>{$helyszinData["cim"]}</div>";
+            }
+            $html .= $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
+
             foreach ($services as $tipusData) {
-                if (($tipusData["megnev"] == "Szemészet" || $tipusData["megnev"] == "Menedzserszűrés") && Booking_Constants::SQL_DB == "hungariamed") {
-                    //szemészet most nincs
+                if (($tipusData["megnev"] == "Szemészet____" || $tipusData["megnev"] == "Menedzserszűrés") && Booking_Constants::SQL_DB == "hungariamed") {
+                    //szemészet most éppen van
                     continue;
                 }
 
