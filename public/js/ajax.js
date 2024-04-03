@@ -319,7 +319,7 @@ function setSzurestipusValaszto(){
 }
 
 function checkWhiteList(taj){
-    if(taj!=null){
+    if(taj!==""){
         $.ajax({
             url: 'index.php',
             type: 'POST',
