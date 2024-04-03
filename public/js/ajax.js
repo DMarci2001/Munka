@@ -259,6 +259,34 @@ function tappenzCheckRefresh() {
     });
 }
 
+function setSzurestipusValasztoV2(){
+    var score = 0;
+    var taj = "";
+    if($("#taj").val().length==9)  score++;
+   
+    
+    if(score==1){
+        taj = $("#taj").val();
+
+        clearIdopontValasztoOnly();
+       
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            dataType:"JSON",
+            data: {setSzurestipusValasztoV2:true,taj},
+            success: function (response) {
+                if(response.notification!=""){
+                    myAlert(response.notification);
+                }
+                $("#szurestipusvalaszto").html(response.szurestipusValaszto);
+                $("#helyszinvalaszto").html(response.helyszinValaszto);
+                showInfoPageText(response.id);
+            }
+        });
+    } 
+}
+
 function setSzurestipusValaszto(){
     var score = neme = 0;
     var szuldatum = "";
@@ -287,21 +315,22 @@ function setSzurestipusValaszto(){
                 showInfoPageText(response.id);
             }
         });
-    }
-    
+    } 
 }
 
 function checkWhiteList(taj){
-    $.ajax({
-        url: 'index.php',
-        type: 'POST',
-        data: {checkwhitelist:true,taj:taj},
-        success: function (response) {
-            if(response!=""){
-                myAlert(response);
+    if(taj!=null){
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            data: {checkwhitelist:true,taj:taj},
+            success: function (response) {
+                if(response!=""){
+                    myAlert(response);
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 function showInfoPageText(szurestipusid){
