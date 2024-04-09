@@ -540,26 +540,25 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<h3>Keresés találatai</h3>";
             $kulcs = addslashes($_SESSION["kereskulcs"]);
             $this->w.="and ( instr(u.nev,'{$kulcs}') or instr(u.taj,'{$kulcs}') or instr(u.torzsszam,'{$kulcs}') or instr(u.szuldatum,'{$kulcs}'))";
-
         }
 
         $query = "SELECT u.*,c.megnev as cegnev FROM felhasznalok u
 			  LEFT JOIN cegek c ON c.id = u.cegid
 			  WHERE TRUE {$this->w}
-			  ORDER BY u.regtime desc";
+			  ORDER BY u.regtime DESC";
 
         //Oldal számolás:
-        $page_counter = sql_query($query);
+        $page_counter = sql_query("SELECT count(*) as hany FROm felhasznalok u WHERE TRUE {$this->w}")->fetch(PDO::FETCH_ASSOC);
 
-        $page_numb = $page_counter->rowCount() / 50;
+        $page_numb = $page_counter["hany"] / 500;
         $page  = array();
-        $range = 50;
+        $range = 500;
         for ($i = 0; $i <= round($page_numb); $i++) {
             if ($page_numb < round($page_numb) && $i == round($page_numb)) {
                 break;
             }
             $start_value = ($i * $range);
-            $page[] = array( "number" => ( $i + 1 ), "limit" => "{$start_value}, 50" );
+            $page[] = array( "number" => ( $i + 1 ), "limit" => "{$start_value}, 500");
         }
 
         //Ha olyan oldal szám szerepel az URL-ben ami irreleváns, akkor átirányít az első oldalra:
@@ -578,11 +577,25 @@ class AdminPatientsPage extends AdminCorePage {
         while ($row = sql_fetch_array($res)) {
             $tc = "tcella";
             if (!isset($first)) {
-                echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+
+                echo "<tr style='font-weight: bold;'>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>Regisztráció ideje</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>Név</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>Cég</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>TAJ</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>Telefon</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'></div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>Email</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'></div></td>";
+                echo "</tr>";
+
+
+                echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first=1;
             }
             if (trim($row["nev"])=="") $row["nev"]="nincs neve";
             echo "<tr>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>{$row["regtime"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["nev"]}</a></div></td>";
             //echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["cegnev"]}</div></td>";
@@ -592,7 +605,7 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["email"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&fszerk={$row["id"]}'>szerk</a>] [<a onclick='return confirm(\"Biztosan törlöd ezt a felhasználót?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
-            echo "<tr><td colspan='7' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
         echo "<tr><td colspan='8' align='center' style = 'padding-top:10px'>";
 
