@@ -930,6 +930,7 @@ class PrintService
         "Dr. Tóth-Kovalik Ádám" => 96276,
         "Dr. Váradi Zoltán" => 95840,
         "Dr. Gergely Melinda" => 77490,
+        "Dr. Szász Angéla Imola" => 63018,
     ];
 
     private function innioErtesites(){
