@@ -36,7 +36,7 @@ h2 {
 }
 
 .pagecontainer {
-    width:1200px;
+    /*width:1200px;*/
     margin:0px auto;
 }
 .headercontainer {
@@ -980,19 +980,19 @@ and (min-width: 0px)
 and (max-width: 1200px) {
 
     .pagecontainer {
-        width:100%;
+        /*width:100%;*/
     }
     .headercontainer {
         margin:20px 0px;
         padding:0px 20px;
-        min-width: 460px;
+        /*min-width: 460px;*/
     }
     .contentcontainer {
         margin:0px;
         min-height:0px;
         background-color:#fff;
         border-radius:0px;
-        min-width: 500px;
+        /*min-width: 500px;*/
     }
     .footercontainer, footercontainer_suzuki {
         border-bottom-left-radius:0px;
@@ -1231,4 +1231,50 @@ strong {
 
 .bmeservicebox:hover {
     /*border:2px solid #888;*/
+}
+
+.btn-hungariamed{
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #b90000;
+    --bs-btn-border-color: #b90000;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #a60000;
+    --bs-btn-hover-border-color: #a60000;
+    --bs-btn-focus-shadow-rgb: 49, 132, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #a60000;
+    --bs-btn-active-border-color: #a60000;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #b90000;
+    --bs-btn-disabled-border-color: #b90000;
+}
+
+form#suzuki-ghc-registration-form label.checkbox{
+    width: 90%;
+    margin-left:5px;
+}
+.form-check-input:checked{
+    background-color: #b90000 !important;
+    border: 0;
+ }
+ .form-check-input:focus, .label::after, label.form-check-label:focus, .form-check-input::after, .form-check-input:not(:disabled):not(.disabled):active:focus {
+    color: black;
+    outline: 0;
+    border: 0;
+    box-shadow: 0 0 0 0.1rem #b90000 !important;
+ }
+
+ .form-color{
+    color: #212529;
+ }
+
+ @font-face {
+    font-family: SuzukiProRegular;
+    src: url(/css/fonts/SuzukiPRORegular.ttf);
+}
+
+@font-face {
+    font-family: SuzukiProBold;
+    src: url(/css/fonts/SuzukiPROBold.ttf);
 }
