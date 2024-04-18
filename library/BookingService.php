@@ -2013,6 +2013,14 @@ class BookingService
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
+        if(CompanyService::isSuzukiGHC()){
+            if(isset($_SESSION["user"])){
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_SESSION["user"]["taj"])))){
+                    $szurestipusid = $result["csomagid"];
+                }
+            }    
+        }
+        
         $data = sql_fetch_array(sql_query("SELECT infopagetext,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusid)));
        
         if(!empty($data["infopagetext"])){
@@ -2042,7 +2050,7 @@ class BookingService
             $text.= "</ul></div>";
         }
 
-        if (CompanyService::isSuzukiTeszt() || companyService::isSuzukiMenedzser()) {
+        if (CompanyService::isSuzukiTeszt() || companyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()) {
 
             //Csomag tartalmának kilistázása
             $pack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
@@ -2767,8 +2775,13 @@ class BookingService
             //Ha más nevet kell használni csak a cégre akkor ide bele kell futnia
             $packData["megnev"] = $this->utils->AlternativSzurestipusNevByCeg($packData["szurestipusid"],$packData["megnev"]);
 
+            
             if(isset($_POST) && !isset($_POST["szurestipus{$packData["szurestipusid"]}"]) && !empty($_POST)){
                 $checked="";
+            }
+
+            if(CompanyService::isSuzukiGHC()){
+                $checked="checked=\"true\"";
             }
 
 
