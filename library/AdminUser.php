@@ -149,6 +149,9 @@ class AdminUser {
         ],
         "jog_suzukistat" => [
             "name" => "Suzuki statisztika láthatja"
+        ],
+        "jog_suzukighclista" => [
+            "name" => "Suzuki GHC regisztrációkat láthatja",
         ]
 
     ];
@@ -578,5 +581,11 @@ class AdminUser {
     public function suzukiStatAccess():bool {
         return $this->checkPermission("jog_suzukistat");
     }
+
+    public function suzukiGHCRegAccess():bool {
+        return $this->checkPermission("jog_suzukighclista");
+    }
+
+    
 
 }
