@@ -354,6 +354,14 @@ class Utils {
             $htmlout.="<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
+        if(CompanyService::isSuzukiGHC()){
+            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking"))){
+                $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
+                $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
+            }
+        }
+        
+
         if (isset($GLOBALS["admin"])) {
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
@@ -377,12 +385,16 @@ class Utils {
             $htmlout .= '<script src="/chat/chatJs.js"></script>';
         }
 
+        //$htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
+        //$htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
+
         $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
         $htmlout.="<link rel='stylesheet' type='text/css' href='css/index.css?v={$v}' />";
 
         if (isset($GLOBALS["css"])) {
             foreach ($GLOBALS["css"] as $css) {
                 $htmlout.="<link rel='stylesheet' type='text/css' href='css/{$css}?v={$v}' />";
+                
             }
         }
         if (isset($GLOBALS["javascript"])) {
@@ -711,6 +723,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         
         if((CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) && $fieldName=="taj"){
             $jsCall = "onfocusout='checkWhiteList($(this).val())'";
+        }
+
+        if(CompanyService::isSuzukiGHC() && $fieldName=="taj"){
+            $jsCall = $customJs;
         }
 
         if (!$hidden || $RequiedForced) {
@@ -1131,6 +1147,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         
         return $megnev;
+    }
+
+    /**
+     * Védelmi funkció Javascript és HTML inject támadások ellen.
+     * @param   array      $array       Vizsgálandó tömb.
+     */
+    public function sanitize_array($array){
+        if(!empty($array)){
+            foreach($array as $key=>$value){
+                $remove = ["<",">","\"","'"];
+                $replace = ["","","",""];
+                $array[$key] = str_replace($remove,$replace,$array[$key]);
+            }
+        }
+        return $array;
     }
 
 }
