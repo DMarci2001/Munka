@@ -31,6 +31,7 @@ require_once(__DIR__ . "/library/pages/ProfilePage.php");
 require_once(__DIR__ . "/library/pages/PasswordSendPage.php");
 require_once(__DIR__ . "/library/pages/ValidateLoginPage.php");
 require_once(__DIR__ . "/library/pages/ValidationSuccessfulPage.php");
+require_once(__DIR__ . "/library/pages/RegistrationSuccessfulPage.php");
 require_once(__DIR__ . "/library/pages/DocumentsPage.php");
 require_once(__DIR__ . "/library/pages/BeutalokPage.php");
 require_once(__DIR__ . "/library/pages/LeletekPage.php");
@@ -123,6 +124,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminDailyStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminMonthlyStatPage.php");
     require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminSuzukiStatPage.php");
+    require_once(__DIR__ . "/library/pages_admin/DailyStat/AdminSuzukiGhcReglistPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminUsersPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPermissionsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminSalaryPage.php");
