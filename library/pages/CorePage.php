@@ -11,7 +11,7 @@ class CorePage {
 
     public $showMainMenu = true;
     public $showLangMenu = true;
-    public $lockInPage = false;
+    public $lockInPage  = false;
 
     public $showSuzukiLogo = false;
     public $customLogo = null;
@@ -45,9 +45,11 @@ class CorePage {
     {
         $webText = $this->lang->webText;
         $img = "";
+        $style = "";
         if ($_SESSION['helyszindata']['id'] == 91) {
             $img = "<img src='images/hungarian_crest.png' height='30' />";
         }
+
         //$GLOBALS["pagetitle"] = "{$_SESSION["helyszindata"]["megnev"]} - {$webText["idopontfoglalas"]}" . ($title != "" ? " - {$title}" : "");
 
         if ($this->isExtendedForm() && !isset($_SESSION["user"])) {
@@ -65,7 +67,14 @@ class CorePage {
             if ($custom) {
                 $text = $title;
             }
-            return "<div class='fejlecdiv'>{$text}</div>";
+
+            if(CompanyService::isSuzukiGHC()){
+                //$img = "<img src=\"https://suzuki.hu/app/webroot/landing_page/img/logo_double_v2.jpg\" height=\"60\"><img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" height=\"60\">";
+                $style="style=\"text-align:center;font-family:SuzukiProRegular !important\"";
+                //$text = trim("{$text}<br><span style=\"display:block;font-size:16px;margin-top:20px;font-family:SuzukiProBold;font-size:16px;\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS</span>");
+            }
+
+            return "<div class='fejlecdiv' {$style}>{$text}</div>";
         }
     }
 

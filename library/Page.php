@@ -60,13 +60,17 @@ class Page
         header("Content-type: text/html; charset=UTF-8");
 
         echo $this->utils->htmlheader($this->page->pageTitle);
-        echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . ">";
-        echo "<div class='pagecontainer'>";
+        echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . "".(CompanyService::isSuzukiGHC() && true?"style=\"font-family:SuzukiProRegular\"":"").">";
+        echo "<div class='pagecontainer' style=\"max-width:1200px\">";
         echo $this->_pageMenu();
-        echo "<div class='contentcontainer'>";
+        echo "<div class='contentcontainer' ".(CompanyService::isSuzukiGHC()?"style=\"min-width:none\"":"").">";
         //echo $this->_pageHead();
         echo "<div style='padding:20px;'>";
         $this->page->showPage();
+        if(CompanyService::isSuzukiGHC()){
+            $this->suzukiGHCLogoContainer();
+        }
+       
         echo "</div>";
         echo $this->_pageFooter();
         echo "</div>";
@@ -145,21 +149,30 @@ class Page
                     $html .= "<a class='toplink' href='index.php?page=covidoltasnaplo'>" . ucfirst($webText["covidoltasnaplo"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'></span>" : "") . " &bull; ";
                 }
                 if ($this->_beutalokMenuPolicy()) {
-                    $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
+                    if(!CompanyService::isSuzukiGHC()){
+                        $html .= "<a class='toplink' href='index.php?page=beutalok'>" . ucfirst($webText["beutalok"]) . "</a>" . ($rowb["hany"] > 0 ? " <span class='ujnumber'>{$rowb["hany"]}</span>" : "") . " &bull; ";
+                    }
+                    
                 }
                 if ($this->_dokumentumokMenuPolicy()) {
-                    $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
+                    if(!CompanyService::isSuzukiGHC()){
+                        $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
+                    }
                 }
                 //leletek oldal határozatlan ideig szüntetel
                 //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
-                $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
+                if(!CompanyService::isSuzukiGHC()){
+                    $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
+                }
                 $html .= "<a class='toplink' href='index.php?logout'>" . ucfirst($webText["kijelentkezes"]) . "</a>";
             } else {
-                $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
-                if ($_SESSION["helyszindata"]["onlyreg"] == 1) {
-                    $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=registration'>" . ucfirst($webText["regisztracio"]) . "</a>";
+                if(!CompanyService::isSuzukiGHC()){
+                    $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
                 }
-                $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
+                if ($_SESSION["helyszindata"]["onlyreg"] == 1) {
+                    $html .= "<a class='toplink' href='index.php?page=registration'>" . ucfirst($webText["regisztracio"]) . "</a> &bull; ";
+                }
+                $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
                 if ($_SESSION["helyszindata"]["web_fogleu"] == 1) {
                     $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=webfogleu'>" . ucfirst($webText["webfogleu"]) . "</a>";
                 }
@@ -167,7 +180,7 @@ class Page
             $html .= "</div>";
         }
 
-        if ($this->page->showLangMenu) {
+        if ($this->page->showLangMenu && !CompanyService::isSuzukiGHC()) {
             $html .= "<div style='display:table-cell;vertical-align:middle;padding-left:10px;text-align:right;'>";
             if (isset($_SERVER["HTTP_HOST"]) && substr_count($_SERVER["HTTP_HOST"], "anmeldung") == 0) {
                 foreach ($this->page->langList as $lang) {
@@ -242,5 +255,24 @@ class Page
                 $_SESSION["referer"] = "sanitas";
             }
         }
+    }
+
+    public function suzukiGHCLogoContainer(){
+        $html = "";
+
+        $html .= "       <div class=\"row\">";
+        //$html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3 text-center\">";
+        $html .= "              <img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/uj_ghc_korlogo_transparent.png\" width=\"150px\" style=\"margin:10px\">";
+        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_horizontal.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        $html .= "              <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS...</div>";
+        $html .= "           </div>";
+        //$html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+
+        echo $html;
+
+        return;
     }
 }
