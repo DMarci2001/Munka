@@ -18,6 +18,17 @@ class BookingPage extends CorePage
     {
         parent::__construct();
 
+        if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
+
+        }
+
+        /**
+         * Erre az oldalra HTML, Javascript inject védelemet raktam be.
+        */
+        $_POST = $this->utils->sanitize_array($_POST);
+        $_GET  = $this->utils->sanitize_array($_GET);
+
+
         //unset($_SESSION["cartTimes"]);
 
         $this->bookingService = new BookingService();
@@ -201,6 +212,26 @@ class BookingPage extends CorePage
                             "id"=>$szurestipusId,
                             "notification"=>$this->setNotificatitonForPackage($szurestipusId)]));
         }
+
+        if(isset($_POST["setSzurestipusValasztoV2"])){
+ 
+            $szurestipusId = "";
+
+            if(isset($_POST["taj"])){
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_POST["taj"])))){
+
+                    $szurestipusId = $result["csomagid"];
+
+                    die(json_encode([
+                        "szurestipusValaszto"=>$this->_szuresTipusValasztoNew($szurestipusId),
+                        "helyszinValaszto"=>$this->_reservationPlaceSelectorNew($szurestipusId),
+                        "id"=>$szurestipusId,
+                        "notification"=>$this->setNotificatitonForPackage($szurestipusId)
+                    ]));
+                } 
+            }
+            
+         }
 
 
         if (isset($_POST["idopontfoglalas"])) {
@@ -775,12 +806,66 @@ class BookingPage extends CorePage
         //auchan esetén ideiglenes üzenet
         $this->setAuchanWarning();
 
-        echo $this->displayFejlec();
-        echo $this->showErrors();
-
         if ($_SESSION["helyszindata"]["onlybeutalo"] == 1) {
             $_SESSION["helyszindata"]["onlyreg"] = 1;
         }
+
+        if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
+            $btext = $webText["mainudvozles"];
+
+            if(CompanyService::isSuzukiGHC()){
+
+                //header("location:index.php?page=login");
+
+                $html = "";
+
+                $html.=  $this->displayFejlec("Suzuki GHC szűrés",true);
+
+                //$html.= $webText["mainudvozles"];
+
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
+                $html .= "      <p>Üdvözöljük, a Suzuki GHC szűrés - online regisztrációs felületén.</p>";
+                $html .= "      <p>Jelentkezését az októberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás szeptembertől indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "</div>";
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "    <div class=\"col-6 mb-3 mt-3\">";
+                $html .= "        <div class=\"row\">";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
+                $html .= "           </div>";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
+                $html .= "           </div>";
+                $html .= "       </div>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "</div>";
+                
+                echo $html;
+
+                return;
+            }
+            
+
+            if ($rowsz = sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'", array($_SESSION["helyszindata"]["id"])))) {
+                $btext = $rowsz["szoveg"];
+            }
+
+            echo "<div style=''>{$btext}</div>";
+
+            echo "<div style='margin-top:20px;'><a href='index.php?page=registration' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
+            return;
+        }
+
+        echo $this->displayFejlec();
+        echo $this->showErrors();
+
+        
 
         if ($_SESSION["helyszindata"]["onlybeutalo"] == 1 && isset($_SESSION["user"]) && !isset($_SESSION["beutaloid"])) {
             echo "<div style=''>{$webText["csakbeutalodesc"]}</div>";
@@ -796,18 +881,7 @@ class BookingPage extends CorePage
             }
         }
 
-        if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
-            $btext = $webText["mainudvozles"];
-
-            if ($rowsz = sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'", array($_SESSION["helyszindata"]["id"])))) {
-                $btext = $rowsz["szoveg"];
-            }
-
-            echo "<div style=''>{$btext}</div>";
-
-            echo "<div style='margin-top:20px;'><a href='index.php?page=registration' class='newbutton'>{$webText["regisztracio"]}</a>&nbsp;&nbsp;<a href='index.php?page=login' class='newbutton'>{$webText["bejelentkezes"]}</a></div>";
-            return;
-        }
+       
 
         if ($this->isExtendedForm()) {
             echo $this->_preSelectForm();
@@ -931,6 +1005,13 @@ class BookingPage extends CorePage
                 echo "<input type=\"hidden\" name=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
             }
 
+            if(CompanyService::isSuzukiGHC()){
+                echo "<h3 style=\"text-align:center\">•	Szűrővizsgálatainkra 2024.09.02-től foglalhat időpontot. Erre e-mailben és SMS-ben is felhívjuk az Ön figyelmét.</h3>";
+                return;
+                $customJs="onkeyup='setSzurestipusValasztoV2()'";
+                echo $this->utils->dataField("taj",true,$customJs);
+            }
+
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
@@ -947,9 +1028,13 @@ class BookingPage extends CorePage
             //if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             //}
+
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
 
+            
+
             if(CompanyService::isFGSZ()){
+                echo $_SESSION["helyszndata"]["domain"];
                 $helyszinek= array(125,132,96);
                 if(in_array($_POST["helyszin"],$helyszinek)){
                     $tipusMegj = "<span><strong>Időpontfoglalás vérvételre:</strong></span><br>";
@@ -978,6 +1063,20 @@ class BookingPage extends CorePage
                 }
 
                 $timeSelector = $this->_reservationTimeSelector($index);
+
+                //Műszak választó
+                if(CompanyService::isSuzukiGHC()){
+
+                    $muszakSelect = "";
+                    $muszakSelect.= "<select name=\"muszak\" id=\"muszak\">";
+                    $muszakSelect.= "   <option>\"A\" műszak</option>";
+                    $muszakSelect.= "   <option>\"B\" műszak</option>";
+                    $muszakSelect.= "   <option>\"D\" műszak</option>";
+                    $muszakSelect.= "   <option>\"O\" műszak</option>";
+                    $muszakSelect.= "</select>";
+
+                    echo "<tr><td>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
+                }
 
                 echo "<tr class='datarow'><td valign='middle'><div style=''>{$numberTexts[$index]}: *</div></td><td>{$timeSelector["html"]}</td></tr>";
                 if (!empty($timeSelector["message"])) {
@@ -1317,8 +1416,18 @@ class BookingPage extends CorePage
         $tipusnevek = [];
         $suzukiDisabled = "";
 
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
             $suzukiDisabled = "disabled=\"true\"";
+        }
+
+        if(CompanyService::isSuzukiGHC()){
+            $suzukiDisabled = "disabled=\"true\"";
+            if(isset($_SESSION["user"])){
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_SESSION["user"]["taj"])))){
+                    $selected = $result["csomagid"];
+                }
+            }
+            
         }
 
         $rest = sql_query("select * from szurestipusok");
@@ -1418,7 +1527,7 @@ class BookingPage extends CorePage
         if($forcedSzurestipusId){
             $szuresTipus = $forcedSzurestipusId;
         }
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
             $disabled = "disabled=\"true\"";
             //$_POST["helyszin"]=1;
         }
@@ -1441,6 +1550,8 @@ class BookingPage extends CorePage
 
         $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;' {$disabled}>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
+
+        
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {
                 if (isset($validPlaces)) {
@@ -1615,7 +1726,7 @@ class BookingPage extends CorePage
         $csomag = sql_fetch_array(sql_query("SELECT megnev,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusId)));
 
 
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
             $notification = "Kiválasztott csomag:<br> <strong>{$csomag["megnev"]}</strong><br>";
             $notification.= "<strong>Várható ellátási idő:</strong> <i>{$csomag["csomagidotartam"]}</i><br>";
             $notification.= "<br>Tartalma:";
