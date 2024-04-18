@@ -1480,4 +1480,63 @@ END:VCALENDAR";
         
         return "Something went wrong.";
     }
+
+    public function suzuki_ghc_reg_confirmation_notification($fid){
+
+        $html= "";
+        $result = sql_query("SELECT felh.*,sz.megnev AS \"szurestipusNev\" FROM felhasznalok felh 
+                            LEFT JOIN ghc_segedtabla ghc ON ghc.taj=felh.taj
+                            LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
+                            WHERE felh.id=?",array($fid))->fetch(PDO::FETCH_ASSOC);
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($result["email"]);
+        $subject = "Suzuki GHC regisztráció visszaigazolása";
+        $html.="<h2>Kedves {$result["nev"]}!</h2>";
+        $html.="Köszönjük, hogy a Magyar Suzuki Zrt. és a Hungária Med-M Kft. által szervezett munkavállalói szűrés (GHC) mellett döntött.<br><br>";
+        $html.="Ezúton tájékoztatjuk, hogy regisztrációja sikeresen megtörtént.<br></br>";
+        $html.="<strong>Vizsgálatok időpontja:</strong> 2024. október 02-tól 2024. október 18-ig.<br><br>";
+        $html.="<strong>Időpontfoglalás:</strong> 2024.09.02-től<br><br>";
+
+        $html.="<strong>Választott szűrőcsomag:</strong>&nbsp;{$result["szurestipusNev"]}<br><br>";
+
+        $html.="<strong>Vizsgálatok helyszíne:</strong><br>";
+        $html.="<ul style=\"margin-left:10px\">";
+        $html.="<li style=\"list-style: disc;\">Suzuki Aréna</li>";
+        $html.="<li style=\"list-style: disc;\">2500 Esztergom, Helischer József út 5.</li>";
+        $html.="</ul>";
+
+        $html.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+        $html.="<ul style=\"margin-left:10px\">";
+
+        $html.=" <li style=\"list-style: disc;\">Regisztrációjáról a Magyar Suzuki Zrt. HR és Társasági támogatások Osztálya tájékoztatást kap.</li>";
+        $html.=" <li style=\"list-style: disc;\">Szűrővizsgálatainkra 2024.09.02-től foglalhat időpontot. Erre e-mailben és SMS-ben is felhívjuk az Ön figyelmét.</li>";
+        $html.=" <li style=\"list-style: disc;\">Az időpontfoglalás a későbbiekben Ön számára küldött link segítségével lesz lehetséges.</li>";
+        $html.="</ul>";
+
+        $html.="<strong>Egészségpénztári tagság:</strong><br>";
+
+        $html.="<ul style=\"margin-left:10px\">";
+        $html.=" <li style=\"list-style: disc;\">A szűrővizsgálatokon való részvételhez OTP Országos Egészség- és Önsegélyező Pénztári tagság szükséges.</li>";
+        $html.=" <li style=\"list-style: disc;\">Amennyiben még nem rendelkezik tagsággal, a szűrővizsgálatokat megelőzően a Magyar Suzuki munkatársai segítséget nyújtanak a belépéshez.</li>";
+        $html.="</ul>";
+
+        $html.= "<div style=\"margin-bottom:50px\"></div>";
+        
+        $html.= "<div style=\"width:100%\">";
+        //$html .= "  <img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        $html .= "  <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_ghc_email_logo_banner_uj.png\" style=\"max-height:180px; margin:10px\">";
+        //$html .= "  <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_horizontal.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        //$html .= "  <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS</div>";
+        $html.= "</div>";
+
+
+        $mail->Subject = $subject;
+        $mail->Body = $html;
+        if($mail->Send()){
+            $this->createNotificationRecord("regisztraciomegerosito", $fid, $result["email"], $subject, $html);
+            return "E-mail sent.";
+        }
+        return;
+    }
 }

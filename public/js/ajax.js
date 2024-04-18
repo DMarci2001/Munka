@@ -25,7 +25,7 @@ function myAlert(szoveg, tipus) {
         title: "",
         text: szoveg,
         confirmButtonColor: "#e34f45",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
     });
 }
 
@@ -1179,7 +1179,7 @@ function initHMMChat() {
 }
 
 function initIrszAutoFill() {
-    $("#irsz").keyup(function () {
+    $("#irsz, #zip-code").keyup(function () {
         let irsz = $(this).val();
         if (irsz.length == 4) {
             $.ajax({
@@ -1189,6 +1189,7 @@ function initIrszAutoFill() {
             }).done(function (msg) {
                 if (msg != "") {
                     $("#varos").val(msg);
+                    $("#city").val(msg);
                 }
             });
         }
@@ -1257,3 +1258,132 @@ function initBmeButtons() {
         }
     });
 }
+
+$(document).on("focusout","#suzuki-ghc-registration-form #taj", function(){
+    var classes = ["birthdate", "zip-code", "city", "address"];
+    $.ajax({
+        url: "index.php?page=registration",
+        type: "POST",
+        dataType:"JSON",
+        data: {checktajdata:$(this).val()},
+        success: function (response){
+            if(response){
+                $.each(classes,function(index, value){
+                    var match = 0;
+                    $.each(response,function(index1,value1){
+                        if(value==value1.id){
+                            match=1;
+                        }
+                    });
+                    if(match==1){
+                        $("#"+value).show();
+                        $("#validation-"+value).show();
+                        $('label[for="'+value+'"]').show();
+                    }else{
+                        $("#"+value).hide();
+                        $("#validation-"+value).hide();
+                        $('label[for="'+value+'"]').hide();
+                    }
+                });
+            }
+        }
+    });
+});
+
+$(document).on("focus", "#suzuki-ghc-registration-form input", function(){
+    var id = $(this).attr("id");
+    var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
+    $(classes).each(function(index1,value){
+        $("#"+id).removeClass(value);
+        $("#validation-"+id).removeClass(value);
+        $("#validation-"+id).html("");
+    });
+})
+
+$(document).on("click", "#suzuki-registration", function () {
+    var data = $("form#suzuki-ghc-registration-form").serialize();
+    var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
+
+    $.ajax({
+        url: "index.php?page=registration",
+        type: "POST",
+        dataType: "json",
+        data: "suzuki_registration=true&"+data,
+        success: function (response) {
+
+            if (typeof response.error !== 'undefined') {
+                myAlert(response.error);
+                return;
+            }
+
+            $(response.status).each(function (index,value){
+                $(classes).each(function(index1,value1){
+                    $("#"+value.id).removeClass(value1);
+                    $("#validation-"+value.id).removeClass(value1);
+                });
+                $("#"+value.id).addClass("is-"+value.class)
+                $("#validation-"+value.id).addClass(value.class+"-feedback");
+                $("#validation-"+value.id).html(value.response);
+            });
+
+            if($(".is-invalid").length==0){
+                console.log("done!");
+                window.location.replace(response.url);
+            }
+        }
+    });
+});
+
+$(document).on("click", "#suzuki-login", function () {
+    var data = $("form#suzuki-ghc-login-form").serialize();
+    $.ajax({
+        url: "index.php?page=login",
+        type: "POST",
+        dataType:"JSON",
+        data: "suzukilogin=true&"+data,
+        success: function (response) {
+            console.table(response);
+            if(response.error!=""){
+                myAlert(response.error);
+                return;
+            }
+            if(response.url!=""){
+                window.location.replace(response.url);
+            }
+        }
+    });
+});
+
+function sendLoginSms(){
+    var data = $("form#suzuki-ghc-login-form").serialize();
+    $.ajax({
+        url: "index.php?page=login",
+        type: "POST",
+        data: "sendsms=true&"+data,
+        success: function (response) {
+            console.log(response);
+            myAlert(response);
+        }
+    });
+}
+
+var disabledReservationButton = false;
+function reservationSubmit() {
+    if (disabledReservationButton) {
+        return false;
+    }
+
+    disabledReservationButton = true;
+    $("#resbuttonloading").show();
+    $("#resbutton").css("background", "#aaa")
+
+    const myTimeout = setTimeout(doResSubmit, 1000);
+
+    return false;
+}
+
+function doResSubmit() {
+    document.iform.submit();
+}
+
+

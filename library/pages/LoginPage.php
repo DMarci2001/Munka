@@ -9,6 +9,9 @@ class LoginPage extends CorePage {
         parent::__construct();
         $webText = $this->lang->webText;
 
+        $_POST = $this->utils->sanitize_array($_POST);
+        $_GET  = $this->utils->sanitize_array($_GET);
+
         if($_SERVER["HTTP_HOST"]=="marciteszt.hungariamed.hu"){
             $this->developMode = true;
         }

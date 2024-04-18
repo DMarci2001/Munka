@@ -352,7 +352,6 @@ class AjaxService {
             }
             die();
         }
-
     }
 
 

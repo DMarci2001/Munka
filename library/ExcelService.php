@@ -76,6 +76,7 @@ class ExcelService {
     private function dataRow($startColumn, $row, $values) {
         $columnId = array_search($startColumn, $this->columnNames);
         foreach ($values as $value) {
+
             $column = $this->columnNames[$columnId];
             $this->sheet->SetCellValue("{$column}{$row}", $value);
             $columnId++;
@@ -1084,7 +1085,7 @@ class ExcelService {
         $this->sheet->getColumnDimension('I')->setWidth(25);
     }
 
-    public function generateXlsxFromArray($array){
+    public function generateXlsxFromArray($array,$startCell=null,$lastCell=null,$forcetoString){
         //outputSpreadSheetFile
         //Oszlopnevek
         $columnNames = array_keys($array[0]);
@@ -1100,7 +1101,20 @@ class ExcelService {
             $this->dataRow("A", $row, $values);
         }
 
+        if(!empty($forcetoString)){
+            for($i=0;$i<count($forcetoString);$i++){
+                $this->sheet->getStyle($forcetoString[$i])->getNumberFormat()
+                ->setFormatCode("strings");
+            }
+           
+        }
+        
+
         $this->setAutoWidth(range('A', 'E'));
+
+        if($startCell && $lastCell){
+            $this->setAutoWidth(range($startCell, $lastCell));
+        }
 
         try {
             $writer = IOFactory::createWriter($spreadSheet, 'Xlsx');
