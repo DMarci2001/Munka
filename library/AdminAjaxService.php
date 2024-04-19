@@ -103,6 +103,10 @@ class AdminAjaxService {
                 //die;
             }
 
+            if($_GET["page"] == "labortetelek"){
+                sql_query("INSERT INTO synlab_labor_csomagok SET appform=1, NAME=\"_új üres csomag\", price=\"-1\", line_through_price=\"0\", items=\"[]\", spektrumitems = \"[]\", categories = \"[]\", gender=\"both\", aktiv=1");
+            }
+
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die();
         }

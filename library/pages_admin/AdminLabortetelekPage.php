@@ -43,7 +43,6 @@ class AdminLabortetelekPage extends AdminCorePage
             $_SESSION["selectedcsomagcompany"] = 0;
         }
 
-
         if (isset($_GET["used"])) {
             $allItems = [];
             $packs = sql_query("select * from synlab_labor_csomagok where aktiv<>0")->fetchAll(PDO::FETCH_ASSOC);
