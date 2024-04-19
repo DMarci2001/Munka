@@ -128,7 +128,7 @@ class LoginPage extends CorePage {
         }
 
         echo "<div id='normallogin'>";
-        echo "<form name='iform' method='post' enctype='multipart/form-data'>";
+        echo "<form name='iform' method='post' autocomplete=\"off\" enctype='multipart/form-data'>";
         echo "<input type='hidden' name='logintry' value='1'/>";
 
         echo "<table>";
