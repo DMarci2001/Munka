@@ -278,8 +278,8 @@ class AdminLabortetelekPage extends AdminCorePage
         //Csomag mentése:
         if (isset($_POST["savePackage"])) {
             sql_query(
-                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=? WHERE id=?",
-                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $this->packageId)
+                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=?, alias=? WHERE id=?",
+                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $_POST["alias"], $this->packageId)
             );
         }
 
@@ -589,6 +589,7 @@ class AdminLabortetelekPage extends AdminCorePage
             echo "<tr><td colspan='2'><input type='submit' name='savePackage' value='Mentés'></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése: </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Alias: </p></td><td><input type=\"textbox\" name=\"alias\" style=\"min-width:300px;height:25px\" value=\"{$packageData["alias"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Áthúzott ár: </p></td><td><input type=\"textbox\" name=\"line-through-price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["line_through_price"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Ár: </p></td><td><input type=\"textbox\" name=\"price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["price"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Nemi beállítás: </p></td><td><input type=\"radio\" " . ($packageData["gender"] == "female" ? "checked" : "") . " name=\"gender\" value=\"female\">Női&nbsp;<input type=\"radio\" " . ($packageData["gender"] == "male" ? "checked" : "") . " name=\"gender\" value=\"male\">Férfi&nbsp;<input type=\"radio\" " . ($packageData["gender"] == "both" ? "checked" : "") . " name=\"gender\" value=\"both\">Mind2</td></tr>";
