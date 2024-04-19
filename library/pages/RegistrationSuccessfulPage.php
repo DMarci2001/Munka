@@ -27,7 +27,7 @@ class RegistrationSuccessfulPage extends CorePage {
         $html.="<strong>Vizsgálatok időpontja:</strong> 2024. október 02. - 2024. október 18.<br><br>";
         $html.="<strong>Időpontfoglalás kezdete:</strong> 2024. szeptember 02.<br><br>";
 
-        $html.="<strong>Választott szűrőcsomag:</strong>&nbsp;{$this->profile["szurestipusNev"]}<br><br>";
+        $html.="<strong>Választott szűrőcsomag:</strong> {$this->profile["szurestipusNev"]}<br><br>";
 
         $html.="<strong>Vizsgálatok helyszíne:</strong><br>";
         $html.="<ul style=\"margin-left:10px\">";
