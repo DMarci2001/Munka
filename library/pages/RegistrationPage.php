@@ -548,7 +548,7 @@ class RegistrationPage extends CorePage
         $notificationService = New NotificationService();
 
 
-        $url = "https://marciteszt.hungariamed.hu/?page=registrationsuccessful&pass={$pass}&id={$id}";
+        $url = "https://{$_SERVER["HTTP_HOST"]}/?page=registrationsuccessful&pass={$pass}&id={$id}";
 
         return $url;
     }
