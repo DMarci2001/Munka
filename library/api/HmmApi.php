@@ -140,6 +140,10 @@ class HmmApi {
             $result = $this->dokirexInsertVizsglapAdatok();
         }
 
+        if ($this->apiMethod == "sendQuery") {
+            $result = $this->sendQuery();
+        }
+
         $this->utils->jsonOut($result);
     }
 
@@ -1039,5 +1043,122 @@ class HmmApi {
         return ["{$this->apiMethod}" => "ok"];
     }
 
+    private function sendQuery():array {
+        $result = [];
+
+        if (!empty($this->postBody)) {
+            $data = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
+
+            if ($data["query"] == "getdaystatuses") {
+                $result = $this->checkCalenderDays($data);
+
+                //$dayStatusDatas = $this->sql_query_remote("getdaystatuses", ["tipusid" => $this->szuresTipusId, "cegid" => $this->cegId, "helyszinid" => $this->helyszinId, "day" => $firstDay]);
+                //$result = "asfsdfsfss".$data["params"]["tipusid"];
+                return ["{$this->apiMethod}" => "ok", "result" => json_encode($result)];
+            }
+
+            if ($data["method"] == "fetch") {
+                $result = sql_query($data["query"], $data["params"])->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $result = sql_query($data["query"], $data["params"])->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            if (substr_count(strtolower($data["query"]), "insert into ")) {
+                $result["id"] = sql_insert_id();
+            }
+
+        } else {
+            $this->apiError(500, "Empty request", "The request was empty");
+        }
+
+        return ["{$this->apiMethod}" => "ok", "result" => json_encode($result)];
+    }
+
+
+    private int $helyszinId;
+    private int $szuresTipusId;
+    private int $cegId;
+    private array $szunnapok;
+    private array $foglaltNapok = [];
+
+    private function checkCalenderDays($data):array {
+        $rows = sql_query("select szunnapok from settings")->fetch(PDO::FETCH_ASSOC);
+        $this->szunnapok = explode(",", $rows["szunnapok"]);
+
+        $result = [];
+        $day = $data["params"]["day"];
+        $this->helyszinId = intval($data["params"]["helyszinid"]);
+        $this->szuresTipusId = intval($data["params"]["tipusid"]);
+        $this->cegId = intval($data["params"]["cegid"]);
+
+        $result["debubg"]["nap"] = $day;
+        $result["debubg"]["cegid"] = $this->cegId;
+        $result["debubg"]["helyszin"] = $this->helyszinId;
+        $result["debubg"]["tipus"] = $this->szuresTipusId;
+
+        for ($i = 0; $i <= 31; $i++) {
+            $checkDay = date("Y-m-d", strtotime("{$day} + {$i} day"));
+            $result["daystatus"][$checkDay] = $this->checkCalendarDayStatus($checkDay);
+        }
+
+        return $result;
+    }
+
+    private function checkCalendarDayStatus($day):array {
+        $status["css"] = "ccnothing";
+
+        $wd   = date("N",strtotime($day));
+        $wn   = date("W",strtotime($day));
+        $dist = "0 hour";
+
+        $beosztasok = sql_query("SELECT b.*, b.tol AS minrendeles, IF(b.potig IS NOT NULL AND b.potig<>'', b.potig, b.ig) AS maxrendeles FROM orvos_beosztas_new b 
+            LEFT JOIN szabadsag sz ON sz.oid=b.orvosid AND datumtol=?
+            WHERE INSTR(b.tipusok, ?) AND INSTR(b.beocegek, ?) AND b.helyszinid=? and (nap=? or (beonap=? and nap=10)) 
+            AND (b.hetek=0 OR (WEEK('{$day}',3)%2=0 AND b.hetek=2) OR (WEEK('{$day}',3)%2=1 AND b.hetek=1)) AND b.aktiv=1
+            AND (b.validfrom='0000-00-00' OR b.validfrom<=?) AND (b.validto='0000-00-00' OR b.validto>=?)
+            AND sz.id IS NULL", [$day, "|{$this->szuresTipusId}|", "|{$this->cegId}|", $this->helyszinId, $wd, $day, $day, $day])->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($beosztasok) == 0 || strtotime("{$day}") < strtotime(date("Y-m-d", strtotime("now")))) {
+            return $status;
+        }
+
+        $status["css"] = "ccrendelesfull";
+
+        foreach ($beosztasok as $beoData) {
+            if (!in_array($day, $this->szunnapok) && !in_array("{$day}", $this->foglaltNapok)) {
+                $binterval = $beoData["binterval"];
+                $beginora  = intval(substr($beoData["minrendeles"],0,2));
+                $beginperc = intval(substr($beoData["minrendeles"],3,2));
+
+                for ($o = 0; $o <= 105; $o++) {
+                    $ora = date("H:i",mktime($beginora,$beginperc+$o*$binterval,0,date("m"),date("d"),date("Y")));
+                    if (strtotime($ora) >= strtotime($beoData["maxrendeles"])) {
+                        break;
+                    }
+
+                    if (strtotime("now + {$dist}")<strtotime("{$day} {$ora}")) {
+                        if (!isset($GLOBALS["foglaltidopontok"]["{$day} {$ora}"][$beoData["orvosid"]])) {
+                            if ($this->slowTimeCheck("{$day} {$ora}", $beoData)) {
+                                $status["css"] = "ccrendelesfree";
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $status;
+    }
+
+    private function slowTimeCheck($time, $beosztas):bool {
+        $nap = date("Y-m-d", strtotime($time));
+        if ($idopontok = sql_query("SELECT datum FROM foglalasok WHERE datum>? and datum<?
+                               AND ((datum<=? AND datum>DATE_SUB(?, INTERVAL IF(rinterval=0, 5, rinterval) MINUTE)) OR (datum>=? AND datum<DATE_ADD(?, INTERVAL rinterval MINUTE))) 
+                               AND orvosassigned=? LIMIT 1", ["{$nap} 00:00:00","{$nap} 23:59:59", $time, $time, $time, $time, $beosztas["orvosid"]])->fetch(PDO::FETCH_ASSOC)) {
+            return false;
+        }
+        return true;
+    }
 
 }

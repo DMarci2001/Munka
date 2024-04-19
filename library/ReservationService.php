@@ -11,11 +11,15 @@ class ReservationService {
     public int $cartRow = 0;
     public int $num = 0;
     public string $startDate = "";
+    public string $endDate = "";
+    public int $companyId = 0;
+    public int $locationId = 0;
 
     public function __construct()
     {
         $this->getToken();
         $this->startDate = date("Y-m-d", strtotime("now +1 day"));
+        $this->companyId = Booking_Constants::DEFAULT_COMPANY_ID;
     }
 
 
@@ -27,7 +31,11 @@ class ReservationService {
     }
 
     public function getSlots() {
-        return $this->_apiCall("/slots?startDate=".$this->startDate."&specializationId=".$this->reservationTypeId);
+        return $this->_apiCall("/slots?startDate=".$this->startDate."&specializationId=".$this->reservationTypeId."&companyId=".$this->companyId);
+    }
+
+    public function getSlotsPlace() {
+        return $this->_apiCall("/slots?startDate=".$this->startDate."&endDate=".$this->endDate."&specializationId=".$this->reservationTypeId."&locationId=".$this->locationId."&companyId=".$this->companyId);
     }
 
 

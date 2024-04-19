@@ -29,6 +29,9 @@ class BookingPage extends CorePage
         $_GET  = $this->utils->sanitize_array($_GET);
 
 
+        $_POST = $this->utils->sanitize_array($_POST);
+        $_GET  = $this->utils->sanitize_array($_GET);
+
         //unset($_SESSION["cartTimes"]);
 
         $this->bookingService = new BookingService();
@@ -70,6 +73,7 @@ class BookingPage extends CorePage
 
         if (isset($_POST["displaySlots"])) {
             $reservationService = new ReservationService();
+            $reservationService->companyId = intval($_POST["companyId"]) ?? Booking_Constants::DEFAULT_COMPANY_ID;
             $reservationService->reservationTypeId = $_POST["reservationTypeId"];
             $reservationService->cartRow = $_POST["cartRow"] ?? 0;
             $reservationService->num = $_POST["num"] ?? 0;
@@ -357,7 +361,31 @@ class BookingPage extends CorePage
                     //$this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
                 }
 
-                $result = $this->bookingService->doBudapestBrandServicesTest();
+                 $result = $this->bookingService->doBudapestBrandServicesTest();
+                 if (!empty($result)) {
+                     $this->errors[] = $result;
+                 }
+            }
+
+            //KRE esetén ellenőrzések
+            if (CompanyService::isKRE()) {
+                $selectedKiegVizsgalat = [];
+                foreach (BookingService::KRE_SZURESEK as $key => $szures) {
+                    if (isset($_POST["kiegoption{$key}"])) {
+                        if (!empty($szures[5]) && empty($_SESSION["cartTimes"][$szures[0]])) {
+                            $this->errors[] = "Válasszon a kiegészítő vizsgálathoz időpontot!";
+                        }
+                        $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
+                    }
+                }
+
+                //Ha nincs vizsgálat nem engedjen foglalni.
+                $selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                if (empty($selectedKiegVizsgalat)) {
+                    //$this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }
+
+                $result = $this->bookingService->doKREServicesTest();
                 if (!empty($result)) {
                     $this->errors[] = $result;
                 }
@@ -496,6 +524,9 @@ class BookingPage extends CorePage
                     }
                     if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "ultrahang") && strtotime($_POST["szuldatum"]) > strtotime("now - 16 year")) {
                         $this->errors[] = "{$webText["uhminimumkorerror"]}";
+                    }
+                    if (substr_count(strtolower($this->bookingService->szuresTipusData["megnev"]), "neuro") && strtotime($_POST["szuldatum"]) > strtotime("now - 16 year")) {
+                        $this->errors[] = "{$webText["neurominimumkorerror"]}";
                     }
 
                     foreach ($this->selectedVizsgalatok as $szurestipusId) {
@@ -796,12 +827,29 @@ class BookingPage extends CorePage
         if (!isset($_POST["neme"])) {
             $_POST["neme"] = "";
         }
-        //rawos marketinghez
-        echo '<!-- Google Tag Manager (noscript) -->
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P89C75S"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-        <!-- End Google Tag Manager (noscript) -->';
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            //rawos marketinghez
+            echo '<!-- Google Tag Manager (noscript) -->
+            <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P89C75S"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+            <!-- End Google Tag Manager (noscript) -->';
+        } else {
+            echo "<script>
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag() { dataLayer.push(arguments); }
+                  gtag('consent', 'default', {
+                    'ad_user_data': 'denied',
+                    'ad_personalization': 'denied',
+                    'ad_storage': 'denied',
+                    'analytics_storage': 'denied',
+                    'wait_for_update': 500,
+                  });
+                  gtag('js', new Date());
+                  gtag('config', 'G-PPW39Z9QSN');
+                </script>";
+        }
 
         //auchan esetén ideiglenes üzenet
         $this->setAuchanWarning();
@@ -1478,6 +1526,9 @@ class BookingPage extends CorePage
 
         if (isset($tipusok)) {
             for ($i = 0; $i < count($tipusok); $i++) {
+                //if (CompanyService::isKRE() && $tipusok[$i] != 1) {
+                //    continue;
+                //}
                 @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
             }
             if (isset($tipusdisplay)) {

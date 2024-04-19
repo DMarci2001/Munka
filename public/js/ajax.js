@@ -1199,13 +1199,14 @@ function initIrszAutoFill() {
 function initSubReservationButtons() {
     $(".subreservationopenbutton").click(function () {
         let reservationTypeId = $(this).data("reservationtypeid");
+        let companyId = $(this).data("reservationcompanyid");
 
         $("#reservationContainer" + reservationTypeId).slideToggle();
 
         $.ajax({
             method: 'POST',
             url: '/index.php',
-            data: "displaySlots=1&reservationTypeId=" + reservationTypeId
+            data: "displaySlots=1&reservationTypeId=" + reservationTypeId + "&companyId=" + companyId
         }).done(function (data) {
             $("#reservationContainer" + reservationTypeId).html(data);
             bindIdopontButtons();
@@ -1237,7 +1238,7 @@ function bindIdopontButtons() {
         $.ajax({
             method:'POST',
             url:'/index.php',
-            data: "selectSubTime=1&reservationTypeId="+reservationTypeId+"&cartRow="+cartRow+"&num="+num+"&doctorId="+doctorId+"&length="+length+"&time="+time+"&mainServiceId="+mainServiceId
+            data: "selectSubTime=1&reservationTypeId="+reservationTypeId+"&cartRow="+cartRow+"&num="+num+"&doctorId="+doctorId+"&length="+length+"&time="+time+"&mainServiceId="+mainServiceId+"&helyszin=0"
         }).done(function(data){
             $("#infopagetext").html(data);
             initSubReservationButtons();
@@ -1257,6 +1258,25 @@ function initBmeButtons() {
             $(this).find("input[type='checkbox']").prop("checked", true);
         }
     });
+}
+
+var disabledReservationButton = false;
+function reservationSubmit() {
+    if (disabledReservationButton) {
+        return false;
+    }
+
+    disabledReservationButton = true;
+    $("#resbuttonloading").show();
+    $("#resbutton").css("background", "#aaa")
+
+    const myTimeout = setTimeout(doResSubmit, 1000);
+
+    return false;
+}
+
+function doResSubmit() {
+    document.iform.submit();
 }
 
 $(document).on("focusout","#suzuki-ghc-registration-form #taj", function(){

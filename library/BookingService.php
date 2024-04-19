@@ -130,6 +130,9 @@ class BookingService
 
 
     private array $kiegIds = [];
+    private array $kiegTimes = [];
+    private array $kiegBeosztas = [];
+
     private function kiegVizsgalatOverrideIfNeeded():void {
         if (!empty($_GET["kiegChecked"])) {
             $this->kiegIds = explode("_", $_GET["kiegChecked"]);
@@ -138,14 +141,29 @@ class BookingService
                 //$_GET["szurestipus"] = $this->kiegIds[0];
             }
         }
+
+        if (CompanyService::isKRE() && count($this->kiegIds) == 1 && $this->kiegIds[0] == 137) {
+            $nap = date("Y-m-d", strtotime("this week monday +{$this->honnan} day"));
+            $napEnd = date("Y-m-d", strtotime("this week monday +".($this->honnan+7)." day"));
+            $reservationService = new ReservationService();
+            $reservationService->startDate = $nap;
+            $reservationService->endDate = $napEnd;
+            $reservationService->companyId = $_SESSION["helyszindata"]["id"];
+            $reservationService->locationId = $this->helyszin;
+            $reservationService->reservationTypeId = $this->kiegIds[0];
+            $this->kiegBeosztas = $reservationService->getSlotsPlace();
+
+            //echo $nap." ".$napEnd;
+
+            //print_r($result);
+        }
+
     }
 
 
     public function showIdoPontValasztoV2() {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
-
-        $this->kiegVizsgalatOverrideIfNeeded();
 
         $html = "";
         if (isset($_GET["helyszin"]) && $_GET["helyszin"] != "undefined") {
@@ -163,6 +181,7 @@ class BookingService
         $this->taj = (!isset($_GET['taj']) ? 0 : $_GET['taj']);
         $cegId = $_SESSION["helyszindata"]["id"];
 
+        $this->kiegVizsgalatOverrideIfNeeded();
         $this->setBetegallomany((!isset($_GET['betegallomany']) ? false : $_GET['betegallomany']));
 
         if (!isset($_GET['javascript'])) {
@@ -389,6 +408,24 @@ class BookingService
                             $sorszam++;
                         }
 
+                        if ($buttonClass == "foglalhatobtn" && CompanyService::isKRE() && !empty($this->kiegBeosztas)) {
+                            //kiegészítő vizsgálatokkal csak együtt szabad időpontok mutatása
+                            $kiegTimefound = false;
+                            foreach ($this->kiegBeosztas as $kiegBeoszta) {
+                                $kiegTime = date("Y-m-d H:i", strtotime($kiegBeoszta["date"]));
+                                if ($kiegTime == "{$nap} {$ora}") {
+                                    $kiegTimefound = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$kiegTimefound) {
+                                $buttonClass = "foglaltbtn";
+                                $buttonJava = "nemfog();return false;";
+                                $btn = "<a class='{$buttonClass}' title='' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                            }
+                        }
+
                         $sectionHTML .= "<div style='text-align:center;'>{$btn}</div>";
                     }
 
@@ -446,10 +483,10 @@ class BookingService
         //ennyi napon belül kell foglalni
 
         if (Booking_Constants::SITE_DOMAIN == "hungariamed.hu") {
-            if ($helyszinId == 1 || $helyszinId == 614 || CompanyService::isFesztivalCompany()) {
+            //if ($helyszinId == 1 || $helyszinId == 614 || CompanyService::isFesztivalCompany()) {
                 //jász utca vagy fesztivál bármikor foglalhat
-                $dist = "-10 hour";
-            }
+                //$dist = "-10 hour";
+            //}
             if (in_array($orvosId, [74])) {
                 //74 - Dr. Kővári Gábor
                 $dist = "24 hour";
@@ -1053,7 +1090,7 @@ class BookingService
             $h .= "</div>";
         }
 
-        if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100) {
+        if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328) {
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
                 $chooseText = $webText["valasszonszolgaltatast"];
@@ -1319,6 +1356,7 @@ class BookingService
         $this->doAuchanExceptions($fid);
         $this->doOIFExceptions($fid);
         $this->doBudapestBrandExceptions($fid);
+        $this->doKREExceptions($fid);
 
         $this->newReservationId=$fid;
 
@@ -2010,6 +2048,10 @@ class BookingService
         //Menedzser csomag neve: Komplex egészségügyi szűrés - BudapestBrand
     ];
 
+    const KRE_SZURESEK = [
+        [137, 0,"Szemészet","",[], 0],
+    ];
+
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
@@ -2162,7 +2204,7 @@ class BookingService
                         $reservationButtonText = "<i class='fa-regular fa-clock'></i> " . $_SESSION["cartTimes"][$tipusId]["time"];
                         $reservationButtonClass = "cartreservationbuttonfilled";
                     }
-                    $options.= "<a class='{$reservationButtonClass} subreservationopenbutton' data-reservationtypeid='{$tipusId}' href='#'>{$reservationButtonText}</a>&nbsp;";
+                    $options.= "<a class='{$reservationButtonClass} subreservationopenbutton' data-reservationcompanyid='{$_SESSION["helyszindata"]["id"]}' data-reservationtypeid='{$tipusId}' href='#'>{$reservationButtonText}</a>&nbsp;";
 
                     $options.= "<div id='reservationContainer{$tipusId}' style='display:none;'><div style='margin:0px 0px 10px 0px;'>Időpontok betöltése folyamatban...</div></div>";
                     $options.= "</div>";
@@ -2170,6 +2212,40 @@ class BookingService
                 $options .= "</div>";
             }
             $text = "<div style='margin:5px 0px;font-weight: bold;'>Kérjük válassza ki az igényelt vizsgálatokat:</div><div style='margin-bottom: 10px;'>{$options}</div>";
+        }
+
+        if (CompanyService::isKRE() && $szurestipusid == 1) {
+            if ((isset($_POST["helyszin"]) && in_array($_POST["helyszin"], [0, 1]))) {
+                $options = "";
+                foreach (self::KRE_SZURESEK as $key => $szures) {
+                    $tipusId = $szures[0];
+                    $onChange = "clearIdopontValasztoOnly();";
+                    if (isset($_SESSION["cartTimes"][$tipusId])) {
+                        $_POST["kiegoption{$key}"] = 1;
+                    }
+                    $options .= "<div style='margin-top:10px;'>";
+                    $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' " . (isset($_POST["kiegoption{$key}"]) ? "checked" : "") . " value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
+                    if (!empty($szures[3])) {
+                        $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$szures[3]}</div>";
+                    }
+                    if (!empty($szures[5])) {
+                        $options .= "<div style='margin-left:25px;'>";
+
+                        $reservationButtonText = "<i class='fa-regular fa-clock'></i> időpont kiválasztása";
+                        $reservationButtonClass = "cartreservationbutton";
+                        if (isset($_SESSION["cartTimes"][$tipusId])) {
+                            $reservationButtonText = "<i class='fa-regular fa-clock'></i> " . $_SESSION["cartTimes"][$tipusId]["time"];
+                            $reservationButtonClass = "cartreservationbuttonfilled";
+                        }
+                        $options .= "<a class='{$reservationButtonClass} subreservationopenbutton' data-reservationcompanyid='{$_SESSION["helyszindata"]["id"]}'  data-reservationtypeid='{$tipusId}' href='#'>{$reservationButtonText}</a>&nbsp;";
+
+                        $options .= "<div id='reservationContainer{$tipusId}' style='display:none;'><div style='margin:0px 0px 10px 0px;'>Időpontok betöltése folyamatban...</div></div>";
+                        $options .= "</div>";
+                    }
+                    $options .= "</div>";
+                }
+                $text = "<div style='margin:5px 0px;font-weight: bold;'>Kérjük válassza ki az igényelt vizsgálatokat:</div><div style='margin-bottom: 10px;'>{$options}</div>";
+            }
         }
 
         return $text;
@@ -2647,6 +2723,44 @@ class BookingService
 
     }
 
+    public function doKREExceptions($reservationId):void {
+        if (!CompanyService::isKRE()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $reservedTipusok = [];
+        foreach (self::KRE_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        $reservedTipusok = $reservationTipusMap = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::KRE_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    if (isset($_SESSION["cartTimes"][$tipusId])) {
+                        $this->replicateReservationToAnotherServiceWithSelectedTime($reservationData, $tipusId, $_SESSION["cartTimes"][$tipusId]);
+                    } else {
+                        $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    }
+                    $reservationTipusMap[$tipusId] = $this->lastSubReservationId;
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+    }
+
     public function doAuchanServicesTest():string {
         if (Booking_Constants::SQL_DB != "keltexmed") {
             return "";
@@ -2718,6 +2832,32 @@ class BookingService
         $reservedTipusok = [];
         $this->replicateDuplicateCheck = false;
         foreach (self::BudapestBrand_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $result = $this->replicateReservationToAnotherService($_POST, $tipusId, true);
+                    if (!empty($result)) {
+                        $results[] = $result;
+                    }
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        return implode("<br/>", $results);
+    }
+
+    public function doKREServicesTest():string {
+        if (!CompanyService::isKRE() || empty($_POST["helyszin"]) || empty($_POST["datum"])) {
+            return "";
+        }
+
+        $_POST["helyszinid"] = $_POST["helyszin"];
+
+        $results = [];
+        $reservedTipusok = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::KRE_SZURESEK as $key => $szures) {
             if (isset($_POST["kiegoption{$key}"])) {
                 $tipusId = $szures[0];
                 if (!in_array($tipusId, $reservedTipusok)) {

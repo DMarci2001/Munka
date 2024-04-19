@@ -157,7 +157,7 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        //$this->readEmailReports();
+        $this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
@@ -176,8 +176,8 @@ class CronService {
 
         //$this->addSyncReservations();
 
-        $service = new SynlabService();
-        $service->synlabProcess();
+        //$service = new SynlabService();
+        //$service->synlabProcess();
 
         //echo $result."\n";
 
@@ -196,23 +196,24 @@ class CronService {
     }
 
     private function readEmailReports() {
-        //error_reporting(E_ALL);
-        //ini_set('display_errors', 1);
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
 
         $validSenders["keltexmed"] = ["ugyfelkapcsolat@keltexmed.hu"];
         $validSenders["hungariamed"] = ["ugyfelkapcsolat@hungariamed.hu", "jnsmobil@gmail.com"];
 
-        $connection = imap_open('{mail.hungariamed.hu/notls}', "reports@hungariamed.hu", "ZohR9jee");
+        $connection = imap_open('{mail.hungariamed.hu/notls}', "reports@hungariamed.hu", "zeetao9U");
 
         $count = imap_num_msg($connection);
 
         echo "count:" . $count . "\n";
 
         for ($i = 0; $i <= 10; $i++) {
-            $msgNum = $count - $i;
-            if ($msgNum <= 0) {
-                break;
-            }
+            $msgNum = $i + 1;
+            //$msgNum = $count - $i;
+            //if ($msgNum <= 0) {
+            //    break;
+            //}
 
             $header = imap_headerinfo($connection, $msgNum);
             $raw_body = imap_body($connection, $msgNum);
@@ -220,23 +221,23 @@ class CronService {
             $from = $header->from[0]->mailbox."@".$header->from[0]->host;
             $structure = imap_fetchstructure($connection, $msgNum);
 
+            //print_r($header->message_id);die;
+            //echo "from: {$from}, subject:{$subject}\n";
             $a = 0;
             foreach ($structure->parts as $part) {
                 if ($part->ifdparameters) {
                     foreach ($part->dparameters as $object) {
-                        echo "attr:{$from} ".strtolower($object->attribute)."\n";
+                        //echo "{$i} attr:{$from} ".strtolower($object->attribute)."\n";
                         if (substr_count(strtolower($object->attribute), "filename")) {
                             //attachment
-                            $extension = "";
+                            $extension = "xls";
                             $fileName  =  $object->value;
                             $encoding  =  strtolower($part->encoding);
                             $subtype   =  strtolower($part->subtype);
 
-                            if ($subtype == "csv" || $subtype == "plain") {
-                                $extension = "xlsx";
-                            }
+                            echo "{$i} attr:{$from} ".$subtype." {$fileName}\n";
 
-                            if (empty($extension)) {
+                            if (substr_count($fileName, ".xls") == 0) {
                                 continue;
                             }
 
@@ -251,22 +252,25 @@ class CronService {
                             }
 
                             if (in_array($from, $validSenders[Booking_Constants::SQL_DB])) {
+
+                                if (sql_query("select id from webservicelog where action='processfile' and tipus=? and keres=? and datum>date_sub(now(), interval 1 month)", [Log::REPORTPROCESS_ID, $header->message_id])->fetch(PDO::FETCH_ASSOC)) {
+                                    //continue;
+                                }
+
                                 //ez egy dokirex által küldött file, megpróbáljuk feldolgozni...
                                 file_put_contents($tempFile, $attachment);
 
                                 $requestText = "Dokirex excel file feldolgozás\nFeladó: {$from}\nTárgy: {$subject}\nCsatolt file: ".$this->rawDecode($fileName)."\n";
 
-                                $logId = Log::store(Log::REPORTPROCESS_ID, "processfile", $requestText, "");
+                                $logId = Log::store(Log::REPORTPROCESS_ID, "processfile", $header->message_id, "");
 
                                 echo $tempFile." ".$this->rawDecode($fileName)."\n";
 
                                 $dailyStatService = new DailyStatService();
-                                $result = $dailyStatService->processFileCsv($tempFile);
+                                $result = $dailyStatService->processFileXlsFromEmail($tempFile);
 
+                                echo "result:{$result}\n";
 
-                                echo $result;
-
-                                //unlink($tempFile);
                             }
 
 
@@ -276,10 +280,11 @@ class CronService {
                 $a++;
             }
 
-
-
-            print_r($header->from[0]->host);die;
+            //die;
+            //print_r($header->from[0]->host);die;
         }
+        die("done\n");
+
     }
 
 
@@ -870,7 +875,7 @@ class CronService {
     private function deleteExpiredReservations()
     {   
         if (Booking_Constants::SQL_DB == "hungariamed") {
-            if($reservations = sql_query("SELECT * FROM foglalasok WHERE expire < NOW() AND expire <> \"0000-00-00 00:00:00\" AND datum > NOW() ")->fetchAll(PDO::FETCH_ASSOC))
+            if($reservations = sql_query("SELECT * FROM foglalasok WHERE expire < NOW() AND expire <> '0000-00-00 00:00:00' AND datum > NOW()")->fetchAll(PDO::FETCH_ASSOC))
             {
                 $bookingService = new BookingService();
                 foreach($reservations as $reservationData){

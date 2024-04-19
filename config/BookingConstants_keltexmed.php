@@ -5,8 +5,8 @@
 class Booking_Constants {
     const IS_DEMO                   = false;
     const SITE_NAME                 = 'KeltexMed időpontfoglalás';
-    const SITE_LOGO                 = 'images/keltexmed_logo.png';
-    const SITE_ADMIN_LOGO           = 'keltexmed_logo.png';
+    const SITE_LOGO                 = 'images/keltexmed_logo_v2.png';
+    const SITE_ADMIN_LOGO           = 'keltexmed_logo_v2.png';
     const SITE_FAVICON              = 'keltexmed_logo.png';
     const SITE_DOMAIN               = 'keltexmed.hu';
     const SITE_PROTOCOL             = 'http';

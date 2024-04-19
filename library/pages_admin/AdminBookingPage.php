@@ -1252,7 +1252,7 @@ class AdminBookingPage extends AdminCorePage
     {
         $html = "";
         $w = date("N", strtotime($setDay));
-        $html .= "<input class='napfilter' id='napfilter' value='{$setDay} {$this->adminUtils->settings->hetnap[$w]}' style='font-size:18px;background-color:#eee;color:#444;margin-right:10px;border:1px solid #ccc;' data-page='{$_GET["page"]}' />";
+        $html .= "<input class='napfilter' id='napfilter' value='{$setDay} {$this->adminUtils->settings->hetnap[$w]}' style='width:220px;font-size:18px;background-color:#eee;color:#444;margin-right:10px;border:1px solid #ccc;' data-page='{$_GET["page"]}' />";
         return $html;
     }
 

@@ -82,7 +82,7 @@ Asszisztens
             $error = "";
             $requestId = intval($_POST["savelaborpaciensdata"]);
 
-            sql_query("update labrequests set nev=?, taj=?, szuldatum=?, email=? where id=?", [trim($_POST["nev"]), trim($_POST["taj"]), trim($_POST["szuldatum"]), trim($_POST["email"]), $requestId]);
+            sql_query("update labrequests set nev=?, taj=?, szuldatum=?, email=?, megj=? where id=?", [trim($_POST["nev"]), trim($_POST["taj"]), trim($_POST["szuldatum"]), trim($_POST["email"]), $_POST["labormegjtext"], $requestId]);
             if ($_POST["laboremailtext"] != "-") {
                 sql_query("update labrequests set emailtext=? where id=?", [$_POST["laboremailtext"], $requestId]);
             }
@@ -212,7 +212,7 @@ Asszisztens
 
         if (isset($_POST["showSendLeletWindow"])) {
             $id = intval($_POST["showSendLeletWindow"]);
-            $request = sql_query("SELECT resultdate, IF(r.resultpdf='', 0, 1) AS result, id, foglalasid, provider, nev, taj, szuldatum, email, emailtext, ertesiteslog FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            $request = sql_query("SELECT resultdate, IF(r.resultpdf='', 0, 1) AS result, id, foglalasid, provider, nev, taj, szuldatum, email, emailtext, ertesiteslog, r.megj FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
 
             $nev = $request["nev"] ?? "Nincs neve!";
 
@@ -242,12 +242,15 @@ Asszisztens
 
             $html.= "<div style='margin-top:10px;'>A kiküldött PDF jelszava a TAJ szám lesz.<br/>Ha a TAJ szám nincs megadva, akkor a jelszó<br/>a születési dátum kötőjelek és pontok nélkül.</div>";
 
+            $html.= "<div style='margin-top:5px;'>Megjegyzés:</div>";
+            $html.= "<div><textarea style='width:300px;height:50px;' id='labormegjtext'>{$request["megj"]}</textarea></div>";
+
             $html.= "</div>";
 
             $html.= "<div style='display:table-cell;vertical-align:top;padding:0px 10px;border-left:1px solid #ccc;'>";
 
             $html.= "<div>Levél szövege:</div>";
-            $html.= "<div><textarea style='width:500px;height: 190px;' id='laboremailtext'>{$request["emailtext"]}</textarea></div>";
+            $html.= "<div><textarea style='width:500px;height: 270px;' id='laboremailtext'>{$request["emailtext"]}</textarea></div>";
             $html.= "<div style='padding-top:5px;'>sablon betöltése: <a href='#' onclick='return loadLaborEmailTemplate(1);'>jó arcoknak</a> &bull; <a href='#' onclick='return loadLaborEmailTemplate(2);'>rossz arcoknak</a></div>";
 
 
@@ -417,12 +420,12 @@ Asszisztens
         $html.= "<div style='display:table;width:100%;'>";
         $html.= "<div style='display:table-row;background:#ccc;font-weight: bold;'>";
         //$html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény időpontja</div>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 0px;width:90px;'>Provider</div>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 0px;width:200px;'>Paciens</div>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 0px;width:100px;'>Szül. idő / TAJ</div>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 0px;width:30px;'>Eredmény</div>";
-        $html.= "<div style='display:table-cell;white-space: nowrap;padding:5px 5px 5px 0px;'>Értesítés</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény időpontja</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:90px;'>Provider</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:200px;'>Paciens</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:80px;'>Szül. idő / TAJ</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:30px;'>Eredmény</div>";
+        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;'>Értesítés</div>";
         $html.= "</div>";
 
         foreach ($requests as $request) {
@@ -482,7 +485,14 @@ Asszisztens
             $html.= "<div style=''><a class='printbutton' target='_blank' href='index.php?print&template=laborlelet1&rid={$request["id"]}&p={$request["pass"]}' style='background: #00aa00;padding:1px 5px;'>Lelet letöltése</a></div>";
         }
         $html.= "</div>";
-        $html.= "<div style='{$cellStyle}'><div id='ertesitesform{$request["id"]}'>".$this->userErtesitesForm($request)."</div></div>";
+        $html.= "<div style='{$cellStyle}'>";
+        $html.= "<div id='ertesitesform{$request["id"]}'>".$this->userErtesitesForm($request)."</div>";
+
+        if (!empty($request["megj"])) {
+            $html.= "<div style='display: inline-block;background:red;color:white;border-radius: 5px;padding:3px 5px;max-width:400px;white-space: normal;'>{$request["megj"]}</div>";
+        }
+
+        $html.= "</div>";
 
         return $html;
     }
@@ -545,7 +555,7 @@ Asszisztens
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica 
+        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN labrequestmessages lm on lm.requestid=r.id
