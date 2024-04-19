@@ -11,6 +11,7 @@ class CompanyService {
     const SUZUKI_ID         = 81;
     const SUZUKI_EGESZSEGUT_ID = 504;
     const BME_ID            = 851;
+    const KRE_ID            = 888;
 
     public static array $makIds = [4,373, 374, 375, 376];
 
@@ -133,6 +134,10 @@ class CompanyService {
     const BudapestBrand_ID = 840; 
     public static function isBudapestBrand($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "budapestbrand" || ($companyId == self::BudapestBrand_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
+    public static function isKRE($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "kre" || ($companyId == self::KRE_ID && Booking_Constants::SQL_DB == "hungariamed");
     }
 
     public static function isBME($companyId = 0):bool {

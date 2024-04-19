@@ -323,7 +323,7 @@ class RegistrationPage extends CorePage
         if (CompanyService::isSuzukiGHC()) {
 
             $html = "";
-            $html .= "<div class=\"container\">";
+            $html .= "<div class=\"container og-bootstrap\" id='og-bootstrap'>";
             $html .= "   <form id='suzuki-ghc-registration-form' method='POST' enctype='multipart/form-data'>";
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";

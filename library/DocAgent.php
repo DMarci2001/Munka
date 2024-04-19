@@ -239,7 +239,7 @@ class DocAgent {
                     $scale = [1600, 1600];
                 }
                 if (in_array($tipus, [self::ASSET_CONTENT_TITLE_IMAGE])) {
-                    //$scale = [1024, 1024];
+                    $scale = [1024, 1024];
                 }
 
                 if ($ysize > $scale[1]) {

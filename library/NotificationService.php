@@ -747,7 +747,7 @@ class NotificationService
                     $packText .= "<br/>Csomag tartalma:<br/>";
                 }
                 $packText .= "{$rowcs["megnev"]}";
-                if (CompanyService::isBudapestBrand($rowcs["cegid"])) {
+                if (CompanyService::isBudapestBrand($rowcs["cegid"]) || CompanyService::isKRE($rowcs["cegid"])) {
                     $packText .= ", időpont: " . date("Y.m.d H:i", strtotime($rowcs["datum"]));
                 }
 

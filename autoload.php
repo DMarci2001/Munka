@@ -4,7 +4,7 @@
 //error_reporting(E_ALL);
 //ini_set('display_errors', 1);
 
-require_once 'vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 require_once(__DIR__ . "/config/BookingConstants_".getConfigFile().".php");
 require_once(__DIR__ . "/library/sql.php");
@@ -149,6 +149,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/NotifySubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/PrintSubPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPreBookingManagementPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminMunkaNaploPage.php");
 }
 
 function getConfigFile() {

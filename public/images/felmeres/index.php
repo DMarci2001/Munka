@@ -1,7 +1,8 @@
 <?php
 
-die("page closed");
 
+echo "Ez az oldal a bejelentkezőbe költözött. Válaszd azon belül a munkanapló menüpontot.";
+die;
 session_start();
 require("../../../autoload.php");
 
@@ -115,7 +116,7 @@ if (isset($_POST["datum"])) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Munkahelyen végzett munkahigiénés felmérés</title>
+    <title>Foglalkozás-Egészségügyi Munkanapló</title>
 
     <!-- CSS -->
     <style>
@@ -208,12 +209,19 @@ if (isset($_GET["szerk"])) {
 
 
 ?>
-<h1 style="border-bottom:1px solid #ccc;color:#444;">Munkahelyen végzett munkahigiénés felmérés</h1>
+
+<div style="float: right;"><img src="https://bejelentkezes.hungariamed.hu/images/hmm_logo_nagy.png" style="width:200px;"/></div>
+<h1 style="border-bottom:1px solid #ccc;color:#444;">Foglalkozás-Egészségügyi Munkanapló</h1>
+<?php
+if (empty($_GET["szerk"])) {
+?>
 <div style="font-size:12px;border-bottom:1px solid #ccc;margin-bottom:20px;padding-bottom:20px;">
     &nbsp;&nbsp;<a href="index.php">Új felmérés</a>
     |&nbsp;&nbsp;<a href="index.php?list">Kitöltött felmérések</a>
 </div>
-
+<?php
+}
+?>
 
 <?php
 
@@ -460,9 +468,55 @@ if (isset($_GET["list"])) {
                     <textarea style='width:100%;' name="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
                 </label>
             </p>
+            <?php
+            if (empty($_GET["szerk"])) {
+            ?>
 
             <p><button onclick="document.myForm.submit();">Adatok mentése</button></p>
+            <?php
+            }
+            ?>
         </form>
+
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+
+        <p>A VIZSGÁLATOT VÉGEZTÉK</p>
+
+        <p>
+            <div style="font-size:12px;">Hungária Med-M Kft.<br/>
+            Foglalkozás-egészségügyi alapellátás<br/>
+            ÁNTSZ.eng.:7452/2008/1/13<br/>
+            001213895<br/>
+            Adószám: 12489477-2-41<br/>
+            </div>
+        </p/>
+
+        <br/>
+        <br/>
+
+        <table>
+            <tr>
+                <td style="text-align: center;vertical-align: top;">
+                    ---------------------------------------------------------<br/>
+                    A Foglalkozás-egészségügyi<br/>szolgálat részéről<br/>
+                    <?= $_SESSION["adminuser"]["nev"] ?><br/>
+                    <?= $_SESSION["adminuser"]["pecsetszam"] ?>
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                <td style="text-align: center;vertical-align: top;">
+                    ----------------------------------------<br/>
+                    Munkáltató részéről
+                    <br/><?= $_POST["jelen1"]?>
+                </td>
+            </tr>
+        </table>
+
+        <p style="padding-top:10px;">A dokumentum elektronikus hitelesítéssel készült, aláírás és pecsét nélkül is érvényes.</p>
+
+
     </div>
 
 <?php } ?>

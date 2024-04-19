@@ -207,6 +207,7 @@ function saveLaborPaciensData(hide) {
     let taj = $("#laborpacienstaj").val();
     let szuldatum = $("#laborpaciensszuldatum").val();
     let email = $("#laborpaciensemail").val();
+    let labormegjtext = $("#labormegjtext").val();
     let laboremailtext = "-";
     if($("#laboremailtext").val()) {
         laboremailtext = $("#laboremailtext").val();
@@ -219,7 +220,7 @@ function saveLaborPaciensData(hide) {
     $.ajax({
         type:"POST",
         url:"index.php?page=labrequests",
-        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext},
+        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext, labormegjtext: labormegjtext},
         success: function(response){
             if (response.error != "") {
                 alert(response.error);
@@ -241,11 +242,12 @@ function sendLeletEmail() {
     let szuldatum = $("#laborpaciensszuldatum").val();
     let email = $("#laborpaciensemail").val();
     let laboremailtext = $("#laboremailtext").val();
+    let labormegjtext = $("#labormegjtext").val();
 
     $.ajax({
         type:"POST",
         url:"index.php?page=labrequests",
-        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext},
+        data: {savelaborpaciensdata:rid, nev:nev, taj:taj, szuldatum:szuldatum, email:email, laboremailtext:laboremailtext, labormegjtext:labormegjtext},
         success: function(response){
             if (response.error != "") {
                 alert(response.error);

@@ -422,7 +422,7 @@ function setSelectedOrvos(oId) {
 function addIdopont(idopont, szt, el) {
     $(".eloj_dialog").hide();
 
-    if (szt.indexOf(',') > -1) {
+    if (szt.indexOf(',') > -1 || szt === "254") {
         $.ajax({
             url: 'index.php',
             type: 'GET',

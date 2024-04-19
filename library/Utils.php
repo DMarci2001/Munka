@@ -325,14 +325,13 @@ class Utils {
         }
 
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery.js"></script>';
+        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-3.7.1.min.js"></script>';
         $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
         $htmlout.='<script type="text/javascript" src="/js/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
         $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
-        
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
             $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
@@ -1151,14 +1150,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     /**
      * Védelmi funkció Javascript és HTML inject támadások ellen.
-     * @param   array      $array       Vizsgálandó tömb.
+     * @param array $array       Vizsgálandó tömb.
      */
-    public function sanitize_array($array){
+    public function sanitize_array(array $array):array{
         if(!empty($array)){
             foreach($array as $key=>$value){
                 $remove = ["<",">","\"","'"];
                 $replace = ["","","",""];
-                $array[$key] = str_replace($remove,$replace,$array[$key]);
+                $array[$key] = str_replace($remove,$replace, $value);
             }
         }
         return $array;

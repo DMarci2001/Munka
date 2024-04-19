@@ -1,5 +1,9 @@
 <?php
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 class DailyStatService {
     private array $months = ["","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december"];
     private array $weekDays = ["","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap"];
@@ -319,6 +323,71 @@ class DailyStatService {
         return "A feltöltött file-t nem sikerült beazonosítani";
     }
 
+    public function processFileXlsFromEmail($tempFile):string {
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($tempFile);
+
+        //zeusz vizsgálatok + dokirex excel
+        $sheet = $spreadsheet->getSheet(0);
+        $days = [];
+
+        if (!empty($sheet)) {
+            $testCell = $sheet->getCell("B1")->getValue();
+            $testCellKieg = $sheet->getCell("I1")->getValue();
+
+            if ($testCell == "PaciensVizsgalat_UtolsoModositasDatuma" || $testCell == "Vizsgalat/FelvetelDatuma") {
+                $rowNr = 2;
+
+                //$result = [];
+                while (true) {
+                    $datum = str_replace(".", "-", $sheet->getCell("B{$rowNr}")->getFormattedValue());
+
+                    if (empty($datum)) {
+                        break;
+                    }
+
+                    $ervenyesseg = str_replace(".", "-", $sheet->getCell("L{$rowNr}")->getFormattedValue());
+                    if (empty($ervenyesseg)) {
+                        $ervenyesseg = "2000-01-01";
+                    }
+
+                    $vizsgalatDatum = str_replace(".", "-", $sheet->getCell("N{$rowNr}")->getFormattedValue());
+                    if (empty($vizsgalatDatum)) {
+                        $vizsgalatDatum = "0000-00-00";
+                    }
+
+                    $row = [
+                        "datum" => date("Y-m-d H:i:s", strtotime($datum)),
+                        "nev" => $sheet->getCell("C{$rowNr}")->getValue(),
+                        "szakrendeles" => $sheet->getCell("D{$rowNr}")->getValue(),
+                        "orvos" => $sheet->getCell("E{$rowNr}")->getValue(),
+                        "paciensid" => $sheet->getCell("F{$rowNr}")->getValue(),
+                        "szuldatum" => $sheet->getCell("G{$rowNr}")->getValue(),
+                        "telephely" => $sheet->getCell("H{$rowNr}")->getValue(),
+                        "munkakor" => $sheet->getCell("I{$rowNr}")->getValue(),
+                        "korlatozas" => $sheet->getCell("J{$rowNr}")->getValue(),
+                        "alkalmassag" => $sheet->getCell("K{$rowNr}")->getValue(),
+                        "ervenyesseg" => $ervenyesseg,
+                        "vizsgalattipus" => $sheet->getCell("M{$rowNr}")->getValue(),
+                        "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum))
+                    ];
+
+                    sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                    sql_query("insert into dokirex_vizsgalatok set 
+                                datum=:datum, moddatum=:datum, nev=:nev,
+                                szakrendeles=:szakrendeles, orvos=:orvos,
+                                paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
+                                korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum", $row);
+
+                    $rowNr++;
+                }
+
+            }
+            return "";
+        }
+
+        return "A feltöltött file-t nem sikerült beazonosítani";
+    }
 
     private function processUploadedFile($uploadedFile) {
         error_reporting(E_ALL);
