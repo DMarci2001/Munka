@@ -26,6 +26,7 @@ $(document).ready(function () {
     initGeneralSearch();
     initDateFilterPicker();
     initQueryDatePicker();
+    initWaitList();
     checkChat();
 
     if (Notification.permission !== "granted") {
@@ -3949,16 +3950,18 @@ function reloadSetupTable(){
     })
 }
 
-$(document).ready(function () {
-    setInterval(function () {
-        if (document.querySelector('.dropdown-toggle.show') !== null) {
-            //console.log("létezik");
-        }else{
-            reloadWaitListTable();
-        }
-        //reloadWaitListTable();
-    }, 5000);
-});
+function initWaitList() {
+    if ($("#waiting-room").length) {
+        setInterval(function () {
+            if (document.querySelector('.dropdown-toggle.show') !== null) {
+                //console.log("létezik");
+            } else {
+                reloadWaitListTable();
+            }
+            //reloadWaitListTable();
+        }, 5000);
+    }
+}
 
 
 
