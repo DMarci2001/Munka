@@ -399,7 +399,15 @@ class BookingService
 
                         //sorszám override aldi esetében
                         if (Booking_Constants::SQL_DB == "hungariamed" && $_SESSION["helyszindata"]["id"] == 90 && $this->szuresTipus == 58) {
+                            //echo $ora."<br>";
                             $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
+
+                            //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
+                            if(!isset($jaratStart)){
+                                $jaratStart = $ora;
+                                $jarat = array_search($ora,$jaratok);
+                            }
+                            
                             if ($sorszam % 6 == 1) {
                                 $sectionHTML .= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
                                 $jarat++;
