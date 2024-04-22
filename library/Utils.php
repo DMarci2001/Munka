@@ -728,6 +728,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             $jsCall = $customJs;
         }
 
+        if(CompanyService::isALDI() && $fieldName=="taj"){
+            $value = $_POST[$field];
+            $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\" maxlength='9'";
+            $extraHTML = "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$inputMode} {$jsCall} style='width:{$width}px;' type='text' name='{$field}' id='{$field}' value='{$value}' /></td></tr>";
+        }
+
+        if(CompanyService::isALDI() && $fieldName=="telefon"){
+            $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\" maxlength='9'";
+        }
+
         if (!$hidden || $RequiedForced) {
             if (empty($extraHTML)) {
                 if(isset($_POST[$field])){

@@ -274,6 +274,10 @@ class BookingPage extends CorePage
                 if (empty($_POST["taj"])) {
                     $this->errors[] = "{$webText["tajkotelezo"]}";
                 }
+
+                if(CompanyService::isALDI() && !empty($_POST["taj"]) && !$this->utils->tajCheck($_POST["taj"])){
+                    $this->errors[] = "{$webText["tajformat"]}";
+                }
             }
 
             if (isset($_POST["szurestipus"])) {
