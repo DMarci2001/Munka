@@ -735,7 +735,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         if(CompanyService::isALDI() && $fieldName=="telefon"){
-            $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
+            $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\" maxlength='11' placeholder='06301234567'";
         }
 
         if (!$hidden || $RequiedForced) {

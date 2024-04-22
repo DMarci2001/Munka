@@ -622,6 +622,13 @@ class BookingPage extends CorePage
                 }
             }
 
+            if (CompanyService::isALDI()){
+                $regex = '/^(\+36|06)(20|30|31|50|70)\d{7}$/';
+                if (!preg_match($regex, $_POST["telefon"])) {
+                    $this->errors[] = "{$webText["telformat"]}";
+                }
+            }
+
             //CSAK AZ UNIQÁNAK ERRE A SZŰRÉSRE
             if (CompanyService::isUniqa()){
                 if($blacklistEmail = sql_fetch_array(sql_query("SELECT * FROM uniqa_blacklist WHERE email=? ",array($_POST["email"])))){
