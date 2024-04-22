@@ -8,6 +8,9 @@ class PasswordSendPage extends CorePage {
 
          $webText = $this->lang->webText;
 
+        $_POST = $this->utils->sanitize_array($_POST);
+        $_GET  = $this->utils->sanitize_array($_GET);
+
         if (isset($_POST["passwordsend"])) {
             if (trim($_POST["email"]) == "") {
                 $this->formError = "{$webText["kerjukadjamegemail2"]}";
