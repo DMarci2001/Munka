@@ -399,7 +399,7 @@ class BookingService
 
                         //sorszám override aldi esetében
                         if (Booking_Constants::SQL_DB == "hungariamed" && $_SESSION["helyszindata"]["id"] == 90 && $this->szuresTipus == 58) {
-                            $jaratok = ["08:30", "10:30", "10:30", "10:30", "10:30", "10:30", "10:30"];
+                            $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
                             if ($sorszam % 6 == 1) {
                                 $sectionHTML .= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
                                 $jarat++;
