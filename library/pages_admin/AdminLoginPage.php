@@ -96,7 +96,7 @@ class AdminLoginPage extends AdminCorePage {
         echo $this->showPlainErrors();
         echo $this->showPlainMessage();
 
-        echo "<form method='post' autocomplete=\"off\">";
+        echo "<form method='post'>";
         echo "<div style='color:#444;text-align:center;'>";
         echo "<div id='loginbox' class='loginbox'>";
         echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} bejelentkező felület</div>";
@@ -123,7 +123,7 @@ class AdminLoginPage extends AdminCorePage {
                 } else {
                     echo "<div style='padding-top:5px;color:#f00;'>Önnek nincs megadva a telefonszáma amire kiküldhetjük a kódot,<br/>kérjük lépjen kapcsolatba a rendszergazdával.</div>";
                 }
-                echo "<div style='padding-top:10px;'><input type='submit' name='give2facode' value='Tovább' /> <input onclick='window.location.href=\"index.php?logoutadmin\"' type='button' name='cancel2facode' value='Mégse' /></div>";
+                echo "<div style='padding-top:10px;'><input type='submit' name='give2facode' autocomplete=\"off\" value='Tovább' /> <input onclick='window.location.href=\"index.php?logoutadmin\"' type='button' name='cancel2facode' value='Mégse' /></div>";
 
                 if (filter_var($this->adminUser->user["email"], FILTER_VALIDATE_EMAIL)) {
                     echo "<div style='margin-top:15px;padding:15px 20px 0px 20px;border-top:1px solid #ccc;'>Ha nem kapta meg a kódot, a lenti gombra kattintva<br/>kiküldheti magának a {$this->adminUser->user["email"]} címre";
@@ -136,8 +136,8 @@ class AdminLoginPage extends AdminCorePage {
 
         } else {
             echo "<div id='loginpart' style='padding:20px;'>";
-            echo "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' type='text' name='loginusername'></div>";
-            echo "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' type='password' placeholder='jelszó' name='loginpassword' /></div>";
+            echo "<div><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' placeholder='felhasználónév' autocomplete=\"off\" type='text' name='loginusername'></div>";
+            echo "<div style='padding-top:10px;'><input style='padding:8px;width:100%;margin-top:2px;box-sizing: border-box;' autocomplete=\"off\" type='password' placeholder='jelszó' name='loginpassword' /></div>";
             echo "<div style='padding-top:10px;'><input style='padding:8px 0px;width:100%;box-sizing: border-box;display: inline-block;' type='submit' name='logintry' value='Belépés' /></div>";
 
             echo "<div style='margin-top:20px;'>";

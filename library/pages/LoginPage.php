@@ -128,12 +128,12 @@ class LoginPage extends CorePage {
         }
 
         echo "<div id='normallogin'>";
-        echo "<form name='iform' method='post' autocomplete=\"off\" enctype='multipart/form-data'>";
+        echo "<form name='iform' method='post'  enctype='multipart/form-data'>";
         echo "<input type='hidden' name='logintry' value='1'/>";
 
         echo "<table>";
-        echo "<tr><td width='100'>{$webText["email"]}:</td><td><input class='inputbox' style='width:200px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
-        echo "<tr><td width='100'>{$webText["jelszo"]}:</td><td><input class='inputbox' style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
+        echo "<tr><td width='100'>{$webText["email"]}:</td><td><input class='inputbox' autocomplete=\"off\" style='width:200px;' type='text' name='email' value='{$_POST["email"]}'></td></tr>";
+        echo "<tr><td width='100'>{$webText["jelszo"]}:</td><td><input class='inputbox' autocomplete=\"off\" style='width:200px;' type='password' autocomplete='off' name='jelszo' value='{$_POST["jelszo"]}'></td></tr>";
         echo "</table>";
 
         echo "<br/><a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$webText["bejelentkezes"]}</a>";
