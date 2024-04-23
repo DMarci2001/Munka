@@ -96,7 +96,7 @@ class AdminLoginPage extends AdminCorePage {
         echo $this->showPlainErrors();
         echo $this->showPlainMessage();
 
-        echo "<form method='post'>";
+        echo "<form method='post' autocomplete=\"off\">";
         echo "<div style='color:#444;text-align:center;'>";
         echo "<div id='loginbox' class='loginbox'>";
         echo "<div class='loginhead'>{$_SESSION["helyszindata"]["megnev"]} bejelentkező felület</div>";
