@@ -58,7 +58,6 @@ class Page
         $webText = $this->lang->webText;
 
         header("Content-type: text/html; charset=UTF-8");
-        header("X-Frame-Options: SAMEORIGIN");
 
         echo $this->utils->htmlheader($this->page->pageTitle);
         echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . "".(CompanyService::isSuzukiGHC() && true?"style=\"font-family:SuzukiProRegular\"":"").">";

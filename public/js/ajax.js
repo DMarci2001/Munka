@@ -1395,7 +1395,7 @@ function reservationSubmit() {
 
     disabledReservationButton = true;
     $("#resbuttonloading").show();
-    $("#resbutton").css("background", "#aaa")
+    $("#resbutton").css("background", "#aaa");
 
     const myTimeout = setTimeout(doResSubmit, 1000);
 
