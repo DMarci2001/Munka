@@ -3,6 +3,8 @@
 
 //error_reporting(E_ALL);
 //ini_set('display_errors', 1);
+header("X-Frame-Options: SAMEORIGIN");
+header("Strict-Transport-Security 'max-age=16070400'");
 
 require_once __DIR__.'/vendor/autoload.php';
 
