@@ -455,7 +455,7 @@ class RegistrationPage extends CorePage
             $html .= "              <div class=\"d-none d-xl-block\">";
             $html .= "                  <input class=\"form-check-input checkbox\" type=\"checkbox\" id=\"aszf\" name=\"aszf\">";
             $html .= "                  <label class=\"form-label checkbox\" for=\"aszf\">";
-            $html .= "                      Az <a target=\"_blank\" data-bs-toggle=\"collapse\" href=\"#multiCollapseExample1\" aria-expanded=\"false\" aria-controls=\"multiCollapseExample1\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
+            $html .= "                      Az <a target=\"_blank\" data-bs-toggle=\"collapse\" href=\"#gdpr-collapse\" aria-expanded=\"false\" aria-controls=\"gdpr-collapse\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
             $html .= "                  </label>";
             $html .= "              </div>";
             $html .= "               <div id=\"validation-aszf\" class=\"valid-feedback\"></div>";
@@ -464,9 +464,9 @@ class RegistrationPage extends CorePage
             $html .= "       </div>";
             $html .= "       <div class=\"row d-none d-xl-block\">";
             $html .= "           <div class=\"col mb-3 text-center\">";
-            $html .= "                  <div class=\"collapse multi-collapse\" id=\"multiCollapseExample1\">";
+            $html .= "                  <div class=\"collapse multi-collapse\" id=\"gdpr-collapse\">";
             $html .= "                      <div class=\"ratio ratio-1x1\">";
-            $html .= "                          <iframe src=\"https://{$_SERVER["HTTP_HOST"]}/images/Hmed_GHC_adatvédelmi_tájékoztató.pdf\" title=\"GDPR - Adatvédelmi tájékoztató\" allowfullscreen></iframe>";
+            $html .= "                          <iframe src=\"https://{$_SERVER["HTTP_HOST"]}/images/HungáriaMed_Adatvédelmi_tájékoztató_GHC.pdf\" title=\"GDPR - Adatvédelmi tájékoztató\" allowfullscreen></iframe>";
             $html .= "                      </div>";
             $html .= "                  </div>";
             $html .= "           </div>";
