@@ -449,7 +449,7 @@ class RegistrationPage extends CorePage
             $html.= "               <div class=\"d-block d-xl-none\">";
             $html .= "                  <input class=\"form-check-input checkbox\" type=\"checkbox\" id=\"aszf\" name=\"aszf\">";
             $html .= "                  <label class=\"form-label checkbox\" for=\"aszf\">";
-            $html .= "                      Az <a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/images/Hmed_GHC_adatvédelmi_tájékoztató.pdf\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
+            $html .= "                      Az <a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/images/HungáriaMed_Adatvédelmi_tájékoztató_GHC.pdf\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
             $html .= "                  </label>";
             $html.= "               </div>";
             $html .= "              <div class=\"d-none d-xl-block\">";
