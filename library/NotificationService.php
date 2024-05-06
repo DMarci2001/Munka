@@ -1493,12 +1493,11 @@ END:VCALENDAR";
         $mail->AddAddress($result["email"]);
         $subject = "Suzuki GHC regisztráció visszaigazolása";
         $html.="<h2>Kedves {$result["nev"]}!</h2>";
-        $html.="Köszönjük, hogy a Magyar Suzuki Zrt. és a Hungária Med-M Kft. által szervezett munkavállalói szűrés (GHC) mellett döntött.<br><br>";
-        $html.="Ezúton tájékoztatjuk, hogy regisztrációja sikeresen megtörtént.<br></br>";
-        $html.="<strong>Vizsgálatok időpontja:</strong> 2024. október 02-tól 2024. október 18-ig.<br><br>";
-        $html.="<strong>Időpontfoglalás:</strong> 2024.09.02-től<br><br>";
+        $html.="Köszönjük, hogy a Magyar Suzuki Zrt. és a Hungária Med-M Kft. által szervezett munkavállalói szűrővizsgálat (GHC) mellett döntött.<br><br>";
+        $html.="<strong>Vizsgálatok időpontja:</strong> 2024. október 02. - 2024. október 18.<br><br>";
+        $html.="<strong>Időpontfoglalás kezdete:</strong> 2024. szeptember 02.<br><br>";
 
-        $html.="<strong>Választott szűrőcsomag:</strong>&nbsp;{$result["szurestipusNev"]}<br><br>";
+        $html.="<strong>Az Ön szűrőcsomagja:</strong> {$result["szurestipusNev"]}<br><br>";
 
         $html.="<strong>Vizsgálatok helyszíne:</strong><br>";
         $html.="<ul style=\"margin-left:10px\">";
@@ -1507,18 +1506,17 @@ END:VCALENDAR";
         $html.="</ul>";
 
         $html.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+        
         $html.="<ul style=\"margin-left:10px\">";
-
-        $html.=" <li style=\"list-style: disc;\">Regisztrációjáról a Magyar Suzuki Zrt. HR és Társasági támogatások Osztálya tájékoztatást kap.</li>";
-        $html.=" <li style=\"list-style: disc;\">Szűrővizsgálatainkra 2024.09.02-től foglalhat időpontot. Erre e-mailben és SMS-ben is felhívjuk az Ön figyelmét.</li>";
-        $html.=" <li style=\"list-style: disc;\">Az időpontfoglalás a későbbiekben Ön számára küldött link segítségével lesz lehetséges.</li>";
+        $html.=" <li style=\"list-style: disc;\">Regisztrációjáról a Magyar Suzuki Zrt. HR és Társasági Támogatások Osztálya tájékoztatást kap.</li>";
+        $html.=" <li style=\"list-style: disc;\">Szűrővizsgálatainkra 2024 szeptember 02-tól foglalhat időpontot, melyre e-mailben és SMS-ben is felhívjuk figyelmét.</li>";
         $html.="</ul>";
 
         $html.="<strong>Egészségpénztári tagság:</strong><br>";
 
         $html.="<ul style=\"margin-left:10px\">";
         $html.=" <li style=\"list-style: disc;\">A szűrővizsgálatokon való részvételhez OTP Országos Egészség- és Önsegélyező Pénztári tagság szükséges.</li>";
-        $html.=" <li style=\"list-style: disc;\">Amennyiben még nem rendelkezik tagsággal, a szűrővizsgálatokat megelőzően a Magyar Suzuki munkatársai segítséget nyújtanak a belépéshez.</li>";
+        $html.=" <li style=\"list-style: disc;\">Amennyiben még nem rendelkezik tagsággal, a szűrővizsgálatokat megelőzően a Magyar Suzuki Zrt. munkatársai segítséget nyújtanak a belépéshez.</li>";
         $html.="</ul>";
 
         $html.= "<div style=\"margin-bottom:50px\"></div>";

@@ -27,7 +27,7 @@ class RegistrationSuccessfulPage extends CorePage {
         $html.="<strong>Vizsgálatok időpontja:</strong> 2024. október 02. - 2024. október 18.<br><br>";
         $html.="<strong>Időpontfoglalás kezdete:</strong> 2024. szeptember 02.<br><br>";
 
-        $html.="<strong>Választott szűrőcsomag:</strong> {$this->profile["szurestipusNev"]}<br><br>";
+        $html.="<strong>Az Ön szűrőcsomagja:</strong> {$this->profile["szurestipusNev"]}<br><br>";
 
         $html.="<strong>Vizsgálatok helyszíne:</strong><br>";
         $html.="<ul style=\"margin-left:10px\">";
@@ -46,7 +46,7 @@ class RegistrationSuccessfulPage extends CorePage {
 
         $html.="<ul style=\"margin-left:10px\">";
         $html.=" <li style=\"list-style: disc;\">A szűrővizsgálatokon való részvételhez OTP Országos Egészség- és Önsegélyező Pénztári tagság szükséges.</li>";
-        $html.=" <li style=\"list-style: disc;\">Amennyiben még nem rendelkezik tagsággal, a szűrővizsgálatokat megelőzően a Magyar Suzuki munkatársai segítséget nyújtanak a belépéshez.</li>";
+        $html.=" <li style=\"list-style: disc;\">Amennyiben még nem rendelkezik tagsággal, a szűrővizsgálatokat megelőzően a Magyar Suzuki Zrt. munkatársai segítséget nyújtanak a belépéshez.</li>";
         $html.="</ul>";
 
         $html.= "<div style=\"margin-bottom:50px\"></div>";

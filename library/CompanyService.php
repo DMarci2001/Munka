@@ -35,7 +35,10 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="ghc";
+            $d="mak-fehervariut";
+        }
+        if($d=="mak-fehervariut"){
+            header("Location:https://mak-bercsenyiut.hungariamed.hu");
         }
 
         if (!$_SESSION["helyszindata"] = sql_fetch_array(sql_query("select * from cegek where (CONCAT(',',RTRIM(domain),',') LIKE CONCAT('%,',?,',%') or tesztdomain=?) and aktiv=1",array($d,$d)))) {
