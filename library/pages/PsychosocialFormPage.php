@@ -17,14 +17,14 @@ class PsychosocialFormPage extends CorePage {
         $this->lang = new Lang();
         $this->notificationService = new NotificationService();
 
-        if(isset($_GET["pass"])){
-            if($existspsyhosoc=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=?",array($_GET["pass"])))){
+        if(isset($_GET["pass"]) && $_GET["fid"]){
+            if($existspsyhosoc=sql_fetch_array(sql_query("SELECT * FROM psychosoc_eredmenyek WHERE pass=? AND foglid=?",array($_GET["pass"],$_GET["fid"])))){
                 $this->psyhosocData = $existspsyhosoc;
             }
             $this->foglalasData=sql_fetch_array(sql_query("SELECT fogl.*,fogl.id as foglid,h.cim,sz.*,sz.id as szurestipusid FROM foglalasok fogl
                                                            LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
                                                            LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
-                                                           WHERE fogl.pass=?",array($_GET["pass"])));
+                                                           WHERE fogl.pass=? AND fogl.id=?",array($_GET["pass"],$_GET["fid"])));
 
             if ($_COOKIE["lang"] != "hu" && trim($this->foglalasData["megnev_{$_COOKIE["lang"]}"]) != "") {
                 $this->foglalasData["megnev"] = $this->foglalasData["megnev_{$_COOKIE["lang"]}"];
@@ -92,7 +92,7 @@ class PsychosocialFormPage extends CorePage {
 
             sql_query("UPDATE foglalasok SET aktiv=1 WHERE id=?",array($this->foglalasData["foglid"]));
 
-            header("location:index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=success");
+            header("location:index.php?page=psychosocialform&fid={$this->foglalasData["foglid"]}&pass={$this->foglalasData["pass"]}&status=success");
             die();
         }
 
@@ -130,7 +130,7 @@ class PsychosocialFormPage extends CorePage {
         $newText = array(
                     date("Y.m.d H:i",
                     strtotime($this->foglalasData["datum"])),$this->foglalasData["cim"],$this->foglalasData["megnev"],
-                    "index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=modify\""
+                    "index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=modify"
                 );
 
         $html.= $webText["pszihosoc_success"];
