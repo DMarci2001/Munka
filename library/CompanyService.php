@@ -13,7 +13,7 @@ class CompanyService {
     const BME_ID            = 851;
     const KRE_ID            = 888;
 
-    public static array $makIds = [4,373, 374, 375, 376];
+    public static array $makIds = [4,373, 374, 375, 376,933];
 
     public function __construct()
     {
