@@ -305,7 +305,9 @@ class BookingService
                         $buttonJava = "nemfog();return false;";
                         $buttonStyle = "";
                         $beoData = [];
+                        $jaratStart = "";
                         $step++;
+
 
                         if (strtotime($ora) >= strtotime($rowmax["maxrendeles"])) {
                             break;
@@ -403,7 +405,8 @@ class BookingService
                             $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
 
                             //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
-                            if(!isset($jaratStart)){
+                            if(empty($jaratStart)){
+                               
                                 $jaratStart = $ora;
                                 $jarat = array_search($ora,$jaratok);
                             }
@@ -1014,7 +1017,7 @@ class BookingService
                 //manadzserek cég jelölés, hogy oda csak menedzserek foglalhassanak
                 $wcegSecondary = "92";
             }
-            $wceg = "AND ((INSTR(b.beocegek, '|{$cegId}|') OR INSTR(b.beocegek, '|{$wcegSecondary}|')) OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR)<NOW()))";
+            $wceg = "AND ((INSTR(b.beocegek, '|{$cegId}|') OR INSTR(b.beocegek, '|{$wcegSecondary}|')) OR (b.nap=10 AND b.open_beo_for_all_company=1 AND DATE_SUB(CONCAT(b.beonap, ' ', b.tol), INTERVAL ROUND(b.release_beo_before_expire_time) HOUR) < NOW()))";
         }
 
         //időpontra beosztott orvosok kiolvasása
