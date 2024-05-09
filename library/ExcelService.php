@@ -18,7 +18,7 @@ class ExcelService {
     private string $extraFilter = "";
 
     public function __construct() {
-        if (session_id() == "aaef7lf4a1nvn9393dkmjn0njh") {
+        if (session_id() == "rhbcoc4imqr5qodse3u0vnblu5") {
             $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
         }
     }

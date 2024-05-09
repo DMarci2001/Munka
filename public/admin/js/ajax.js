@@ -15,6 +15,8 @@ $(document).ready(function () {
         selector: '.mce',
         plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code',
         toolbar: 'bold italic underline strikethrough | blocks | link image | align | numlist bullist indent outdent',
+        promotion: false,
+        license_key: 'gpl',
     });
 
     self.setInterval("searchTimer()",1000);

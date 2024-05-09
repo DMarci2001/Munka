@@ -612,7 +612,12 @@ class AdminLabortetelekPage extends AdminCorePage
 
             echo "</table>";
 
-            echo $this->showItemsNew($packageData["id"]);
+            if (session_id() == "itkg8ofu1tafbb21t9kfuqb6hh") {
+                echo $this->showItemChecker($packageData["id"]);
+            } else {
+                echo $this->showItemsNew($packageData["id"]);
+            }
+
             echo "</form>";
         }
     }
@@ -853,7 +858,7 @@ class AdminLabortetelekPage extends AdminCorePage
 
             $rq = sql_query("SELECT slt.* FROM synlab_labor_tetelek slt 
                          WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
-                         ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC");
+                         ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 
             $html .= "<div style='display:table-cell;width:20px;vertical-align:top;'></div>";
@@ -864,18 +869,25 @@ class AdminLabortetelekPage extends AdminCorePage
             $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>SpektrumLab tételek</td>";
             $html .= "</tr>";
 
-            $html .= "<tbody id='item-content'>";
-            while ($resq = sql_fetch_array($rq)) {
-                $html .= "<tr>";
-                $html .= "<td valign='top'><div class='tcella' style=''>";
-                $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
-                $html .= mb_substr($resq["name"], 0, 50);
-                $html .= "</div></td>";
+            if (session_id() == "itkg8ofu1tafbb21t9kfuqb6hh_") {
+                $html .= "<div id='item-content-spektrumlab'>";
+                $html .= $this->showItemChecker();
+                $html .= "</div>";
 
-                //Kérőlap megnevezés:
-                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kod"]}</div></td>";
+            } else {
+                $html .= "<tbody id='item-content'>";
+                foreach ($rq as $resq) {
+                    $html .= "<tr>";
+                    $html .= "<td valign='top'><div class='tcella' style=''>";
+                    $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+                    $html .= mb_substr($resq["name"], 0, 50);
+                    $html .= "</div></td>";
 
-                $html .= "</tr>";
+                    //Kérőlap megnevezés:
+                    $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kod"]}</div></td>";
+
+                    $html .= "</tr>";
+                }
             }
 
             $html .= "</tbody>";
@@ -887,4 +899,73 @@ class AdminLabortetelekPage extends AdminCorePage
         return $html;
     }
 
+
+    private function showItemChecker($packageId):string {
+        $html = "";
+
+        $packageInstall = $packageInstallSpektrum = [];
+        $strPackageItems = $strPackageItemsSpektrum = "";
+        $packageData = sql_query("select * from synlab_labor_csomagok cs where cs.id=?", [$packageId])->fetch(PDO::FETCH_ASSOC);
+        if (!empty($packageData["items"])) {
+            $packageInstall = json_decode($packageData["items"]);
+            $packageInstallSpektrum = json_decode($packageData["spektrumitems"]);
+            $strPackageItems = "FIELD(slt.id," . implode(",", $packageInstall) . ") DESC,";
+            $strPackageItemsSpektrum = "slt.id in (" . implode(",", $packageInstallSpektrum) . ") DESC,";
+        }
+
+        //Le kell kérdeznem a tételeket:
+        $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap, t2.name AS spname FROM synlab_labor_tetelek slt
+                         LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
+                         LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
+                         LEFT JOIN synlab_labor_tetelek t2 ON t2.id=slt.spid
+                         WHERE slt.provider='synlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
+                         ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
+
+
+        $html .= "<div style='display:table-cell;vertical-align:top;'>";
+        $html .= "<div style='font-size: 18px;font-weight: bold;margin-bottom: 10px;'>Synlab tételek (".count($packageInstall)." tétel)</div>";
+
+        $html .= "<div id='item-content-synlab'>";
+        while ($resq = sql_fetch_array($rq)) {
+            $name = mb_substr($resq["name"], 0, 50);
+            $class = (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "serviceselected" : "servicenotselected");
+            $html.= "<a data-provider='synlab' data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' title='' class='{$class} csitemcheckbox2' style='' href='#'>{$name}</a> ";
+
+            //$html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+            //$html .= mb_substr($resq["name"], 0, 50);
+        }
+
+        $html .= "</div>";
+        $html .= "</div>";
+
+        $rq = sql_query("SELECT slt.* FROM synlab_labor_tetelek slt 
+                         WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
+                         ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+
+        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;'></div>";
+        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;border-left:1px solid #ccc;'></div>";
+
+        $html .= "<div style='display:table-cell;vertical-align:top;'>";
+        $html .= "<div style='font-size: 18px;font-weight: bold;margin-bottom: 10px;'>Spektrumlab tételek (".count($packageInstallSpektrum)." tétel)</div>";
+
+        $html .= "<div id='item-content-spektrumlab'>";
+        foreach ($rq as $resq) {
+            $name = mb_substr($resq["name"], 0, 50);
+            $class = (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "serviceselected" : "servicenotselected");
+            $html.= "<a data-provider='spektrumlab' data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' title='' class='{$class} csitemcheckbox2' style='' href='#'>{$name}</a> ";
+
+            //$html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
+            //$html .= mb_substr($resq["name"], 0, 50);
+        }
+
+        $html .= "</div>";
+        $html .= "</table>";
+        $html .= "</div>";
+
+
+
+
+        return $html;
+    }
 }

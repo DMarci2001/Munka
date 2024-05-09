@@ -720,8 +720,10 @@ class HmmApi {
     
         if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"],$this->tokenData["username"]]))) 
         {
-            sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, taj=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=?, aktiv=?, expire=? where id=? and pass=?",
-                [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientTaj"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $body["active"], $body["expiration"], $reservationData["id"], $body["authorizationCode"]]);
+            sql_query("update foglalasok set helyszinid=?, szurestipusid=?, orvosassigned=?, nev=?, taj=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=?, aktiv=?, expire=?, neme=?, irsz=?, varos=?, utca=? where id=? and pass=?",
+                [$body["locationId"], $body["specializationId"], $body["doctorId"], $body["patientName"], $body["patientTaj"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $body["active"], $body["expiration"],
+                    $body["patientGender"], $body["patientPostcode"], $body["patientCity"], $body["patientAddress"],
+                    $reservationData["id"], $body["authorizationCode"]]);
 
             return $this->_reservationArray(sql_fetch_array(sql_query("select * from foglalasok where id=?", [$reservationData["id"]])));
         } else {

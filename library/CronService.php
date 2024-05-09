@@ -109,7 +109,8 @@ class CronService {
 
         if ($this->interval == "napi") {
             //napi cronok
-            $this->dokirexPaciensDump();
+            //$this->dokirexPaciensDump();
+            $this->readEmailReports();
         }
 
         if ($this->interval == "teszt") {
@@ -157,7 +158,7 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        $this->readEmailReports();
+        //$this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
         //print_r($result);
@@ -176,8 +177,8 @@ class CronService {
 
         //$this->addSyncReservations();
 
-        //$service = new SynlabService();
-        //$service->synlabProcess();
+        $service = new SynlabService();
+        $service->synlabProcess();
 
         //echo $result."\n";
 
@@ -209,13 +210,16 @@ class CronService {
         echo "count:" . $count . "\n";
 
         for ($i = 0; $i <= 10; $i++) {
-            $msgNum = $i + 1;
-            //$msgNum = $count - $i;
-            //if ($msgNum <= 0) {
-            //    break;
-            //}
+            //$msgNum = $i + 1;
+            $msgNum = $count - $i;
+            if ($msgNum <= 0) {
+                break;
+            }
 
             $header = imap_headerinfo($connection, $msgNum);
+
+            //print_r($header);
+
             $raw_body = imap_body($connection, $msgNum);
             $subject = $this->rawDecode($header->subject);
             $from = $header->from[0]->mailbox."@".$header->from[0]->host;

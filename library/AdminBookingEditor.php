@@ -78,7 +78,7 @@ class AdminBookingEditor {
 
         if (isset($_POST["foglalasmentesnaptar2"]) || isset($_POST["foglalasmentesnaptaresertesites2"]) && $this->user->authenticated()) {
             $fid = intval($_POST["fid"]);
-            $reservationData = sql_query("select datum from foglalasok where id=?", [$fid])->fetch(PDO::FETCH_ASSOC);
+            $reservationData = sql_query("select datum, taj, szuldatum from foglalasok where id=?", [$fid])->fetch(PDO::FETCH_ASSOC);
             if (!isset($_POST["szuldatum"])) {
                 if (isset($_POST["szuldatumev"])) {
                     $_POST["szuldatum"] = $_POST["szuldatumev"] . "-" . substr("00" . $_POST["szuldatumho"], -2) . "-" . substr("00" . $_POST["szuldatumnap"], -2);
@@ -208,6 +208,17 @@ class AdminBookingEditor {
             //}
 
             if (!empty($_POST["paciensid"])) {
+                //páciens adatok tárolása, taj és születési dátum változás esetén paciensid törlése
+                if (session_id() == "olkknm28hi3q7gj63jach71071") {
+                    if ($reservationData["taj"] != $_POST["taj"] || $reservationData["szuldatum"] != $_POST["szuldatum"]) {
+                        $_POST["paciensid"] = 0;
+                        sql_query("update foglalasok set paciensid=0 where id=?", [$fid]);
+                    } else {
+                        sql_query("update felhasznalok set nev=?, telefon=?, szulhely=?, anyjaneve=?, telefon=?, email=?, neme=?, irsz=?, varos=?, utca=?, munkakor=?, torzsszam=? where id=? limit 1"
+                            , [$_POST["nev"], $_POST["telefon"], $_POST["szulhely"], $_POST["anyjaneve"], $_POST["telefon"], $_POST["email"], $_POST["neme"], $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["munkakor"], $_POST["torzsszam"], $_POST["paciensid"]]
+                        );
+                    }
+                }
                 sql_query("update foglalasok set paciensid=? where id=? and paciensid=0", [$_POST["paciensid"], $fid]);
             }
 

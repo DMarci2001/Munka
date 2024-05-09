@@ -712,21 +712,46 @@ class LaborKeroService
 
 
     public function storeLaborKeroFromLabShopData():void {
-        $labShopReservations = sql_query("SELECT l.id AS laborid, l.cart_content,l.status, l.payment_method, f.* FROM labshop_vasarlasok l
-            LEFT JOIN foglalasok f ON f.id=l.reservationid
+        $labShopReservations = sql_query("SELECT l.id AS laborid, l.cart_content,l.status, l.payment_method, f.* FROM cart_item c
+		LEFT JOIN labshop_vasarlasok l ON l.id = c.session_id
+            LEFT JOIN foglalasok f ON f.id=c.reservation_id
             LEFT JOIN labrequests r ON r.foglalasid=f.id
-            WHERE reservationid<>0 AND f.datum>NOW() AND r.id is null 
-            ORDER BY f.datum limit 100")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE f.id IS NOT NULL AND f.datum>NOW() AND r.id IS NULL
+            ORDER BY f.datum LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($labShopReservations as $labShopReservation) {
+        foreach ($labShopReservations as $key => $labShopReservation) {
+            echo "{$key}\n";
+
             if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "done" && $labShopReservation["status"] != "FINISHED") {
+                echo "nincs fizetve\n";
                 continue;
             }
 
             if (sql_query("select id from labrequests where foglalasid=? limit 1", [$labShopReservation["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                echo "van már laborkérő\n";
                 continue;
             }
 
+            $items = $packs = [];
+
+            $orderedPackages = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='package'", [$labShopReservation["laborid"]])->fetchAll(PDO::FETCH_ASSOC);
+            echo "csomagok: ".count($orderedPackages)."\n";
+
+            foreach ($orderedPackages as $orderedPackage) {
+                echo "itt3 {$orderedPackage["product_id"]}\n";
+                if ($packData = sql_query("select cs.id, cs.name, cs.spektrumitems as items from synlab_labor_csomagok cs where cs.id=?", [$orderedPackage["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $packItems = json_decode($packData["items"]);
+                    $packs[] = $packData["id"];
+                    echo "{$labShopReservation["nev"]} - pack: {$packData["name"]} ".count($packItems)."\n";
+                    foreach ($packItems as $packItem) {
+                        if (!in_array($packItem, $items)) {
+                            $items[] = $packItem;
+                        }
+                    }
+                }
+            }
+
+            /*
             $cartDatas = json_decode($labShopReservation["cart_content"], JSON_OBJECT_AS_ARRAY);
             $onlyPackages = true;
             foreach ($cartDatas as $cartData) {
@@ -759,6 +784,7 @@ class LaborKeroService
                     }
                 }
             }
+            */
 
             $items = array_unique($items);
 

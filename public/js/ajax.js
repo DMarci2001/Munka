@@ -1260,21 +1260,6 @@ function initBmeButtons() {
     });
 }
 
-var disabledReservationButton = false;
-function reservationSubmit() {
-    if (disabledReservationButton) {
-        return false;
-    }
-
-    disabledReservationButton = true;
-    $("#resbuttonloading").show();
-    $("#resbutton").css("background", "#aaa")
-
-    const myTimeout = setTimeout(doResSubmit, 1000);
-
-    return false;
-}
-
 function doResSubmit() {
     document.iform.submit();
 }
