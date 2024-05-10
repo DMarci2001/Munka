@@ -419,6 +419,13 @@ class BookingService
                             $sorszam++;
                         }
 
+                        //bme és dr lászló larissza esetén minden időpont legyen foglalt
+                        if ($buttonClass == "foglalhatobtn" && CompanyService::isBME() && $orvosId == 841) {
+                            $buttonClass = "foglaltbtn";
+                            $buttonJava = "nemfog();return false;";
+                            $btn = "<a class='{$buttonClass}' title='' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                        }
+
                         if ($buttonClass == "foglalhatobtn" && CompanyService::isKRE() && !empty($this->kiegBeosztas)) {
                             //kiegészítő vizsgálatokkal csak együtt szabad időpontok mutatása
                             $kiegTimefound = false;
@@ -1101,7 +1108,7 @@ class BookingService
             $h .= "</div>";
         }
 
-        if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328) {
+        if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328 || $helyszinId == 644) {
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             if (sql_num_rows($res) > 0) {
                 $chooseText = $webText["valasszonszolgaltatast"];
@@ -1112,7 +1119,7 @@ class BookingService
                 if (CompanyService::isBME()) {
                     $priceDisplay = true;
                     $tileMode = session_id() == "gtefskm5mqb91q928dabh4lqg9";
-                    $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül";
+                    $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül. BME dolgozókank 10% kedvezmény.";
                     //$hidden = "display:none;";
                     //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
                 }
@@ -1120,15 +1127,33 @@ class BookingService
                 $h .= "<div id='kiegdiv' style='margin:10px 0px;{$hidden}'>";
                 $h .= "<div style='font-weight:bold;margin-bottom:5px;'>{$chooseText}:</div>";
                 while ($row = sql_fetch_array($res)) {
+                    $price = $akcioPrice = $row["price"];
+                    if ($helyszinId == 644 && $row["megnev"] == "Tüdőszűrés") {
+                        continue;
+                    }
+
+                    if (CompanyService::isBME()) {
+                        $akcioPrice = $price * 0.9;
+                    }
+
+
                     //$lengthText = empty($row["plusminute"]) ? "" : " ({$row["plusminute"]} perc)";
                     $lengthText = "";
                     $priceText = $priceTextBox = "";
                     if ($priceDisplay) {
                         if (substr_count($row["megnev"], "Labor")) {
-                            $priceText = " (" . number_format($row["price"], 0, " ", "&nbsp;") . " Ft-tól)";
+                            if ($akcioPrice == $price) {
+                                $priceText = " (" . number_format($row["price"], 0, " ", "&nbsp;") . " Ft-tól)";
+                            } else {
+                                $priceText = " (<span style='text-decoration: line-through'>" . number_format($price, 0, " ", "&nbsp;") . "</span> " . number_format($akcioPrice, 0, " ", "&nbsp;") . " Ft-tól)";
+                            }
                             $priceTextBox = number_format($row["price"], 0, " ", "&nbsp;") . " Ft-tól";
                         } else {
-                            $priceText = " (" . number_format($row["price"], 0, " ", "&nbsp;") . " Ft)";
+                            if ($akcioPrice == $price) {
+                                $priceText = " (" . number_format($price, 0, " ", "&nbsp;") . " Ft)";
+                            } else {
+                                $priceText = " (<span style='text-decoration: line-through'>" . number_format($price, 0, " ", "&nbsp;") . "</span> " . number_format($akcioPrice, 0, " ", "&nbsp;") . " Ft)";
+                            }
                             $priceTextBox = number_format($row["price"], 0, " ", "&nbsp;") . " Ft";
                         }
                     }
@@ -2344,6 +2369,9 @@ class BookingService
         $beoRes = sql_query("SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, ?) AND (b.nap=? or (b.nap=10 and b.beonap=?)) and aktiv=1 and helyszinid=? 
               AND (b.validfrom='0000-00-00' OR b.validfrom<=?) AND (b.validto='0000-00-00' OR b.validto>=?)                                               
               order by !instr(b.bmegj, 'magán')", ["|{$tipusId}|", $weekDay, $date, $reservationData["helyszinid"], $date, $date]);
+
+        $checkTimesDebug = ["0"];
+
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
@@ -2363,6 +2391,8 @@ class BookingService
                     break;
                 }
 
+                $checkTimesDebug[] = "{$orvosId}:{$checkTime}";
+
                 $diff = abs(strtotime($reservationData["datum"]) - strtotime($checkTime));
                 if ($diff < $bestCheck) {
                     //itt csak letárolom a legjobb időt, ez csak akkor kell, ha elfogyott minden hely
@@ -2370,7 +2400,7 @@ class BookingService
                     $bestTime = $checkTime;
                 }
 
-                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=?", [$checkTime, $tipusId, $reservationData["helyszinid"]]))) {
+                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=? and orvosassigned=?", [$checkTime, $tipusId, $reservationData["helyszinid"], $orvosId]))) {
                     $foundTimes[] = ["time" => $checkTime, "binterval" => $binterval, "orvosId" => $orvosId];
                     if ($this->replicateToFirstAvailableTime) {
                         break;
@@ -2384,6 +2414,10 @@ class BookingService
         if ($testOnly) {
             if (empty($foundTimes)) {
                 return "{$tipusData["megnev"]} szolgáltatásra már elfogytak erre a napra az időpontok, kérjük próbáljon egy másik napra foglalni.";
+                //return "{$tipusData["megnev"]} szolgáltatásra már elfogytak erre a napra az időpontok, kérjük próbáljon egy másik napra foglalni.
+                //SELECT tol, ig, orvosid, binterval FROM orvos_beosztas_new b WHERE INSTR(b.tipusok, '|{$tipusId}|') AND (b.nap='{$weekDay}' or (b.nap=10 and b.beonap='{$date}')) and aktiv=1 and helyszinid='{$reservationData["helyszinid"]}'
+                //  AND (b.validfrom='0000-00-00' OR b.validfrom<='{$date}'') AND (b.validto='0000-00-00' OR b.validto>='{$date}')
+                //  ORDER BY !INSTR(b.bmegj, 'magán')";
             } else {
                 return "";
             }

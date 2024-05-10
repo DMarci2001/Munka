@@ -166,9 +166,9 @@ class Page
                 }
                 $html .= "<a class='toplink' href='index.php?logout'>" . ucfirst($webText["kijelentkezes"]) . "</a>";
             } else {
-                if(!CompanyService::isSuzukiGHC()){
-                    $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
-                }
+                //if(!CompanyService::isSuzukiGHC()){
+                //    $html .= "<a class='toplink' href='index.php?page=booking'>" . ucfirst($webText["fooldal"]) . "</a>";
+                //}
                 if ($_SESSION["helyszindata"]["onlyreg"] == 1) {
                     $html .= "<a class='toplink' href='index.php?page=registration'>" . ucfirst($webText["regisztracio"]) . "</a> &bull; ";
                 }
@@ -260,7 +260,7 @@ class Page
     public function suzukiGHCLogoContainer(){
         $html = "";
 
-        $html .= "       <div class=\"row\">";
+        $html .= "       <div class=\"row og-bootstrap\">";
         //$html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3 text-center\">";
         $html .= "              <img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";

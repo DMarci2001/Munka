@@ -373,8 +373,9 @@ class Utils {
 
             $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
             $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
-            $htmlout .= '<script src="https://cdn.tiny.cloud/1/6gy62135dsr0pjrg1jx08egwhvjyuhbo8a463re02bmikbzj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>';
+            //$htmlout .= '<script src="https://cdn.tiny.cloud/1/6gy62135dsr0pjrg1jx08egwhvjyuhbo8a463re02bmikbzj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>';
 
+            $htmlout .= '<script src="/admin/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>';
             $htmlout .= '<script src="/admin/js/BrowserPrint-3.1.250.min.js"></script>';
 
             $htmlout .= '<link href="/admin/js/cropperjs-main/dist/cropper.css" rel="stylesheet">';

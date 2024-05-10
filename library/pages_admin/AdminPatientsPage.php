@@ -452,50 +452,6 @@ class AdminPatientsPage extends AdminCorePage {
 
 
 
-            if ($this->adminUser->leletAccess()) {
-                $patient_id = $_GET["szerk"];
-                $medic_id = $this->adminUser->user["orvosid"];
-                $_SESSION['medic_id'] = $medic_id;
-                $_SESSION['patient_id'] = $patient_id;
-
-                $patient = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id=?",array($patient_id)));
-                $medic = sql_fetch_array(sql_query("SELECT * FROM orvosok WHERE id=?",array($medic_id)));
-
-
-                echo "<link rel='stylesheet' href='style.css' type='text/css' media='screen'/>";
-                echo '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">';
-                echo '<style type="text/css" media="print">
-                    @page {
-                        size: auto;   /* auto is the initial value */
-                        margin: 0;  /* this affects the margin in the printer settings */
-                    }
-                </style>';
-                echo '<script src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=o1cu94vbzwo8v2c7vzdtftzo83ed6q45vcqa8rarux0e6r20"></script>';
-                echo "<script>
-                    tinymce.init({
-                        mode : 'specific_textareas',
-                        editor_selector : 'myTextEditor',
-                        height: 842,
-                        width: 595,
-                        content_style: 'body{ color:#000; font-family: Calibri }',
-                        theme: 'modern',
-                        plugins: 'print preview fullpage searchreplace autolink directionality visualblocks visualchars fullscreen image link media code template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists textcolor wordcount imagetools contextmenu colorpicker textpattern help',
-                        toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | removeformat'
-                    });
-                </script>";
-
-                echo "<div class='successful-message'><span>Loading...</span></div>";
-                echo "<div class='tdsepdiv' style = 'margin-top:20px;'>Leletek</div>";
-                echo "<div id='lelet-lista' style='color:#aaa'>".$this->adminUtils->leletService->leletLista($patient_id, $_GET['page'], $_GET['szerk'])."</div>";
-                echo "<div id='leletform' style='color:#000' class='option-box'></div>";
-                echo "<div id='zaroform' style='color:#000' class='option-box'></div>";
-                echo "<div id='leletbutton' style='margin-top:10px;'>";
-                if ($this->adminUser->leletAccess()) {
-                    echo "<input value='+ Lelet készítése' id='add-lelet' name='uj_lelet' type='button'/>";
-                }
-                echo "</div>";
-
-            }
             return;
         }
 

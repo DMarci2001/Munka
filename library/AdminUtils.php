@@ -6,14 +6,10 @@ use PHPMailer\PHPMailer\Exception;
 class AdminUtils
 {
     public $settings;
-    public $leletService;
-    public $protocolService;
 
     public function __construct()
     {
         $this->settings = new Booking_Settings();
-        $this->leletService = new AdminLeletService();
-        $this->protocolService = new AdminProtocolService();
     }
 
     public function showCegListSzT($raw, $sor)

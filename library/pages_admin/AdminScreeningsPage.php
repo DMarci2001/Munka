@@ -133,7 +133,18 @@ class AdminScreeningsPage extends AdminCorePage
 			if (!isset($_POST['disablefileupload'])) $_POST['disablefileupload']=0;
 			$questionArr=array();
 			//Post catcher
-			
+
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $prices = sql_query("select * from keltexmedweb.products")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($prices as $price) {
+                    if (isset($_POST["webprice{$price["id"]}"])) {
+                        //echo "update keltexmedweb.products set price={$_POST["webprice{$price["id"]}"]} where id={$price["id"]}<br>";
+                        sql_query("update keltexmedweb.products set price=? where id=?", [$_POST["webprice{$price["id"]}"], $price["id"]]);
+                    }
+                }
+                //die;
+            }
+
 			if(isset($_POST['kerdes-0'])){
 				$sor=0;
 				do{
@@ -365,6 +376,24 @@ class AdminScreeningsPage extends AdminCorePage
             echo "</div></td></tr>";
 
 
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                echo "<tr><td colspan='2'><div class='tdsepdiv'>WebShop árak</div></td></tr>";
+
+                echo "<tr><td colspan='2'>";
+                echo "<table cellpadding='0' cellspacing='0'>";
+
+                $prices = sql_query("select * from keltexmedweb.products WHERE reservationTypeId=? order by productname", [$_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($prices as $price) {
+                    echo "<tr>";
+                    echo "<td>{$price["productname"]}</td>";
+                    echo "<td><input type='text' name='webprice{$price["id"]}' value='{$price["price"]}' style='width:50px;margin:2px 0px 2px 10px;' placeholder='ár'/>&nbsp;HUF</td>";
+                    echo "</tr>";
+                }
+
+                echo "</table>";
+                echo "</td></tr>";
+            }
+
             echo "</table>";
 
             echo "<br><input type='submit' name='szurestipusmentes' value='Mentés'> ";
@@ -470,6 +499,13 @@ class AdminScreeningsPage extends AdminCorePage
 
         }
 
+        $webShopItems = [];
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $items = sql_query("select distinct reservationTypeId from keltexmedweb.products");
+            foreach ($items as $item) {
+                $webShopItems[] = $item["reservationTypeId"];
+            }
+        }
 
         echo "<table cellpadding='0' cellspacing='0' border='0'>";
         echo "<tr><td colspan='8' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px;'>Szűrések</td></tr>";
@@ -488,6 +524,11 @@ class AdminScreeningsPage extends AdminCorePage
             if ($row["ispack"] == 1) {
                 echo "&nbsp;&nbsp;<span class='pack_badge'>CSOMAG</span>";
             }
+
+            if (in_array($row["id"], $webShopItems)) {
+                echo "&nbsp;&nbsp;<span class='pack_badge'>WEBSHOP</span>";
+            }
+
             $resa = sql_query("select a.*,c.megnev as cegnev from arak a left join cegek c on c.id=a.cegid where tipusid='{$row["id"]}' and price<>0 and a.csomag=0");
             $arak = "";
             while ($rowa = sql_fetch_array($resa)) {

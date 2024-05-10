@@ -147,7 +147,7 @@ class AdminBeoEditor {
             $html.= "<option value='2'" . ($beo["hetek"] == 2 ? " selected" : "") . ">Páros hetek</option>";
             $html.= "</select> ";
 
-            $html.= "<input onchange='beoSave({$doctorId},{$beoId});' id='beonap' name='beonap' type='text' value='{$beo["beonap"]}' style='width:102px;" . ($beo["nap"] == 10 ? "" : "display:none;") . "' placeholder='éééé-hh-nn' /> ";
+            $html.= "<input onchange='beoSave({$doctorId},{$beoId});' id='beonap' name='beonap' type='text' value='{$beo["beonap"]}' style='width:110px;" . ($beo["nap"] == 10 ? "" : "display:none;") . "' placeholder='éééé-hh-nn' /> ";
 
             if (!isset($_SESSION["orvos_helyszinid"]) && $beo["helyszinid"] != 0) {
                 $_SESSION["orvos_helyszinid"] = $beo["helyszinid"];

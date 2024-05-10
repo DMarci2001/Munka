@@ -257,6 +257,8 @@ class BookingPage extends CorePage
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
             if (!isset($_POST["tudoszuroelf"])) $_POST["tudoszuroelf"] = 0;
 
+            $_POST["email"] = trim($_POST["email"]);
+
             $laborszoveg = $this->bookingService->getLaborSzoveg();
             $_POST = $companyService->fillMAKPaciensData($_POST);
             if (!empty($_POST["error"])) {
@@ -950,7 +952,7 @@ class BookingPage extends CorePage
 
         if (CompanyService::isBME()) {
             echo "<ul>";
-            echo "<li style='list-style: circle;'><strong>1117 Budapest, Fehérvári út 44. 1.em</strong> Foglalkozás-egészségügyi vizsgálat, Egyéni térítéses szakvizsgálatok</li>";
+            echo "<li style='list-style: circle;'><strong>1117 Budapest, Bercsényi utca. 24.</strong> Foglalkozás-egészségügyi vizsgálat, Egyéni térítéses szakvizsgálatok <span style='color:red;'>*új helyszínen</span></li>";
             echo "<li style='list-style: circle;'><strong>1116 Budapest, Albertfalva u. 3.</strong> Foglalkozás-egészségügyi vizsgálat</li>";
             echo "<li style='list-style: circle;'><strong>1135 Budapest, Jász utca 33-35.</strong> Egyéni térítéses vizsgálatok</li>";
             echo "</ul>";

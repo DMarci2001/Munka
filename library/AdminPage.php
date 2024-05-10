@@ -117,7 +117,7 @@ class AdminPage {
         if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
             echo "<td valign='top' class='menuoszlop'>";
             echo $this->_menuColumn();
-            echo "<div id='loggedusers' style='border-top:1px solid #888;color:#888;padding:10px;width:160px;overflow:hidden;font-size: 11px;'></div>";
+            echo "<div id='loggedusers' style='border-top:1px solid #888;color:#888;padding:10px;width:180px;overflow:hidden;font-size: 11px;'></div>";
             echo "</td>";
         }
 
