@@ -67,9 +67,10 @@ Asszisztens
 
         if (isset($_REQUEST["getlaboremailtemplate"])) {
             $id = intval($_REQUEST["getlaboremailtemplate"]);
-            $template = $this->messageTemplates[$id];
-            $template = str_replace("#felhasznalo#", $this->adminUser->user["nev"], $template);
-            echo $template;
+            $template = sql_query("SELECT szoveg FROM labor_szoveg_sablonok WHERE id=?",array($id))->fetch(PDO::FETCH_ASSOC);
+            //$template["szoveg"] = $this->messageTemplates[$id];
+            $template["szoveg"] = str_replace("#felhasznalo#", $this->adminUser->user["nev"], $template["szoveg"]);
+            echo $template["szoveg"];
 
             die;
         }
