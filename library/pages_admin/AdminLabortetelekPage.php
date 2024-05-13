@@ -277,8 +277,8 @@ class AdminLabortetelekPage extends AdminCorePage
         //Csomag mentése:
         if (isset($_POST["savePackage"])) {
             sql_query(
-                "UPDATE synlab_labor_csomagok SET name=?, price=?,line_through_price=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=?, alias=? WHERE id=?",
-                array($_POST["name"], $_POST["price"], $_POST["line-through-price"], $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $_POST["alias"], $this->packageId)
+                "UPDATE synlab_labor_csomagok SET name=?, hmm_name=?, price=?,line_through_price=?, gender=?,categories=?, description=?, aktiv=?, kiemelt=?, alias=? WHERE id=?",
+                array($_POST["name"], $_POST["hmm_name"], $_POST["price"], $_POST["line-through-price"], $_POST["gender"], $this->setCategories(), $_POST["description"], $_POST["aktiv"], $_POST["kiemelt"] ?? 0, $_POST["alias"], $this->packageId)
             );
         }
 
@@ -586,7 +586,8 @@ class AdminLabortetelekPage extends AdminCorePage
             //Alap adatok megadása:
             echo "<table>";
             echo "<tr><td colspan='2'><input type='submit' name='savePackage' value='Mentés'></td></tr>";
-            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése: </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése (public): </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
+            echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése (házon belül): </p></td><td><input type=\"textbox\" name=\"hmm_name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["hmm_name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Alias: </p></td><td><input type=\"textbox\" name=\"alias\" style=\"min-width:300px;height:25px\" value=\"{$packageData["alias"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Áthúzott ár: </p></td><td><input type=\"textbox\" name=\"line-through-price\" style=\"min-width:300px;height:25px\" value=\"{$packageData["line_through_price"]}\"></td></tr>";
@@ -722,7 +723,7 @@ class AdminLabortetelekPage extends AdminCorePage
 
             //Link a szerkesztéshez:
             $html.= "<td valign=\"top\"><div class=\"tcella\">";
-            $html.= "<a style=\"#00f;\" href=\"index.php?page=labortetelek&szerk={$resq["id"]}\">{$resq["name"]}&nbsp;(" . count($items) . ")</a>";
+            $html.= "<a style=\"#00f;\" href=\"index.php?page=labortetelek&szerk={$resq["id"]}\">".(!empty($resq["hmm_name"])?$resq["hmm_name"]:$resq["name"])."&nbsp;(" . count($items) . ")</a>";
             $html.= "</div></td>";
 
             //Kérőlap megnevezés:
