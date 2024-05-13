@@ -175,7 +175,7 @@ class AdminScreeningsPage extends AdminCorePage
 
                 $sor = 1;
                 while (isset($_POST["arid{$sor}"])) {
-                    sql_query("update arak set megnev=?, price=?, plusminute=?, paciens=? where id=?", [$_POST["megnev{$sor}"], $_POST["price{$sor}"], $_POST["plusminute{$sor}"], isset($_POST["paciens{$sor}"])?1:0, $_POST["arid{$sor}"]]);
+                    sql_query("update arak set megnev=?, price=?, alias=?, plusminute=?, paciens=? where id=?", [$_POST["megnev{$sor}"], $_POST["price{$sor}"], $_POST["alias{$sor}"], $_POST["plusminute{$sor}"], isset($_POST["paciens{$sor}"])?1:0, $_POST["arid{$sor}"]]);
                     $sor++;
                 }
 				
@@ -354,6 +354,7 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "</td>";
                 echo "<td><input type='checkbox' title='paciens által is kiválasztható' name='paciens{$sor}' value='1' ".($price["paciens"] == 1 ? "checked":"")."/></td>";
                 echo "<td><input type='text' name='megnev{$sor}' value='{$price["megnev"]}' style='width:350px;margin:2px 0px 2px 10px;' placeholder='megnevezés' /></td>";
+                echo "<td><input type='text' name='alias{$sor}' value='{$price["alias"]}' style='width:350px;margin:2px 0px 2px 10px;' placeholder='webshop alias' /></td>";
                 echo "<td><input type='text' name='plusminute{$sor}' value='{$price["plusminute"]}' style='width:14px;margin:2px 0px 2px 10px;' placeholder='időtartam' title='időtartam módosító'/> </td>";
                 echo "<td><input type='text' name='price{$sor}' value='{$price["price"]}' style='width:50px;margin:2px 0px 2px 10px;' placeholder='ár'/>&nbsp;HUF</td>";
                 echo "<td style='font-size: 14px;'>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deltipar={$price["id"]}' onclick='return confirm(\"Biztos törlöd ezt az árat?\")'><i class='fas fa-trash'></i></a><br/></td>";
