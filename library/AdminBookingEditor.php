@@ -283,6 +283,8 @@ class AdminBookingEditor {
                 $updatedokirexjson = false;
             }
 
+            if(in_array($_POST["cegid"],[61,11])) $updatedokirexjson = false;
+
             $status = "";
 
             //kiegészítő vizsgálatok másolása

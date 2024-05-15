@@ -612,6 +612,7 @@ class AdminCompaniesPage extends AdminCorePage
         }
 
         if(isset($_POST["dxidtocid"])){
+            if(in_array($_POST["cid"],[61,11])) die();
             $this->adminUtils->add_DokirexCegid_to_BejelentkezoCeg($_POST["dokirexcegid"],$_POST["cid"]);
             if($_POST["res"]){
                 echo $this->cegBubbles($_POST["cid"]);
