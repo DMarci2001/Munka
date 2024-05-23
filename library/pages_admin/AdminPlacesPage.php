@@ -71,8 +71,9 @@ class AdminPlacesPage extends AdminCorePage {
                 aktiv=?,
                 autoirsz=?,
                 autovaros=?,
-                autoutca=?
-            where id=?",[$_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $json, $_POST["halozat"], $_POST["aktiv"], $_POST["autoirsz"], $_POST["autovaros"], $_POST["autoutca"], $_GET["szerk"]]);
+                autoutca=?,
+                alias=?
+            where id=?",[$_POST["cegid"], $_POST["cim"], $_POST["cim_de"], $_POST["cim_en"], $ceglink, $json, $_POST["halozat"], $_POST["aktiv"], $_POST["autoirsz"], $_POST["autovaros"], $_POST["autoutca"],$_POST["alias"], $_GET["szerk"]]);
 
             logActivity("helyszin",$_GET["szerk"],"{$_POST["cim"]} adatlap",print_r($_POST,true));
 
@@ -106,6 +107,7 @@ class AdminPlacesPage extends AdminCorePage {
             echo "<tr><td width='100'>Cím:</td><td><input class='inputbox' style='width:400px;' type='text' name='cim' value='{$_POST["cim"]}'></td></tr>";
             echo "<tr><td>Cím (en):</td><td><input class='inputbox' style='width:400px;' type='text' name='cim_en' value='{$_POST["cim_en"]}'></td></tr>";
             echo "<tr><td>Cím (de):</td><td><input class='inputbox' style='width:400px;' type='text' name='cim_de' value='{$_POST["cim_de"]}'></td></tr>";
+            echo "<tr><td>Alias:</td><td><input class='inputbox' style='width:400px;' type='text' name='alias' value='{$_POST["alias"]}'></td></tr>";
 
             $geoResult = print_r($addressInfo, true);
             if (empty($addressInfo["lat"])) {
