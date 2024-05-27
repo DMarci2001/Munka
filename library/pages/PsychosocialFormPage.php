@@ -100,6 +100,12 @@ class PsychosocialFormPage extends CorePage {
     }
 
     public function showPage() {
+
+        if(!isset($_GET["pass"]) || !isset($_GET["fid"])){
+            echo "Váratlan hiba történt az oldal betöltésekor.";
+            die();
+        }
+
         //Ha nincsen bejegyezve a pass érték által egyetlen foglalás se dobjon vissza a start oldalra
         /*if( empty($this->psyhosocData)){
             header("location:index.php");
@@ -115,7 +121,6 @@ class PsychosocialFormPage extends CorePage {
             echo $this->psyhosocForm();
         }
         
-        
     }
 
     private function successPsyhosocNotification(){
@@ -130,7 +135,7 @@ class PsychosocialFormPage extends CorePage {
         $newText = array(
                     date("Y.m.d H:i",
                     strtotime($this->foglalasData["datum"])),$this->foglalasData["cim"],$this->foglalasData["megnev"],
-                    "index.php?page=psychosocialform&pass={$this->psyhosocData["pass"]}&status=modify"
+                    "index.php?page=psychosocialform&fid={$this->foglalasData["foglid"]}&pass={$this->psyhosocData["pass"]}&status=modify"
                 );
 
         $html.= $webText["pszihosoc_success"];

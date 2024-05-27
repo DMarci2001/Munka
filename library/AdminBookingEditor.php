@@ -646,7 +646,7 @@ class AdminBookingEditor {
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Alkalmassági</a>&nbsp;&nbsp;";
                 if (Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()) {
-                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&fid={$row["id"]}&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
                 }
 
                 //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
