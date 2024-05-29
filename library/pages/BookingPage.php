@@ -911,6 +911,44 @@ class BookingPage extends CorePage
 
                 return;
             }
+
+            if(CompanyService::isFiFi()){
+
+                //header("location:index.php?page=login");
+
+                $html = "";
+
+                $html.=  $this->displayFejlec("ALDI FiFi szűrés",true);
+
+                //$html.= $webText["mainudvozles"];
+
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
+                $html .= "      <p>Üdvözöljük, az ALDI FiFi szűrés - online regisztrációs felületén.</p>";
+                $html .= "      <p>Jelentkezését az októberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás a webshopon szeptembertől indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "</div>";
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "    <div class=\"col-6 mb-3 mt-3\">";
+                $html .= "        <div class=\"row\">";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
+                $html .= "           </div>";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SESSION["helyszindata"]["webshop_alias"]}.hungariamed.hu'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Webshop</button>";
+                $html .= "           </div>";
+                $html .= "       </div>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "</div>";
+                
+                echo $html;
+
+                return;
+            }
             
 
             if ($rowsz = sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'", array($_SESSION["helyszindata"]["id"])))) {
@@ -1095,7 +1133,7 @@ class BookingPage extends CorePage
             
 
             if(CompanyService::isFGSZ()){
-                echo $_SESSION["helyszndata"]["domain"];
+                //echo $_SESSION["helyszndata"]["domain"];
                 $helyszinek= array(125,132,96);
                 if(in_array($_POST["helyszin"],$helyszinek)){
                     $tipusMegj = "<span><strong>Időpontfoglalás vérvételre:</strong></span><br>";

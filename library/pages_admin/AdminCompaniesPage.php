@@ -611,6 +611,8 @@ class AdminCompaniesPage extends AdminCorePage
             die;
         }
 
+        gnupg_addecryptkey();
+
         if(isset($_POST["dxidtocid"])){
             if(in_array($_POST["cid"],[61,11])) die();
             $this->adminUtils->add_DokirexCegid_to_BejelentkezoCeg($_POST["dokirexcegid"],$_POST["cid"]);

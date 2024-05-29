@@ -1339,6 +1339,39 @@ $(document).on("click", "#suzuki-registration", function () {
     });
 });
 
+$(document).on("click", "#aldi-fifi-registration", function () {
+    var data = $("form#aldi-fifi-registration-form").serialize();
+    var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
+
+    $.ajax({
+        url: "index.php?page=registration",
+        type: "POST",
+        dataType: "json",
+        data: "aldi_fifi_registration=true&"+data,
+        success: function (response) {
+            if (typeof response.error !== 'undefined') {
+                myAlert(response.error);
+                return;
+            }
+
+            $(response.status).each(function (index,value){
+                $(classes).each(function(index1,value1){
+                    $("#"+value.id).removeClass(value1);
+                    $("#validation-"+value.id).removeClass(value1);
+                });
+                $("#"+value.id).addClass("is-"+value.class)
+                $("#validation-"+value.id).addClass(value.class+"-feedback");
+                $("#validation-"+value.id).html(value.response);
+            });
+
+            if($(".is-invalid").length==0){
+                console.log("done!");
+                window.location.replace(response.url);
+            }
+        }
+    });
+});
+
 $(document).on("click", "#suzuki-login", function () {
     var data = $("form#suzuki-ghc-login-form").serialize();
     $.ajax({
@@ -1390,5 +1423,24 @@ function reservationSubmit() {
 function doResSubmit() {
     document.iform.submit();
 }
+
+$(document).on("click", ".scrollToTopButton",function(){
+    $("html, body").animate({ scrollTop: 0 }, "fast");
+});
+
+$(document).on("change",".questionaries",function(){
+    $(".questionaries").each(function(index){
+        var textarea = $("#"+$(this).attr("id")+"-text");
+        var container = textarea.parent();
+
+        if($(this).prop("checked")==true){
+            if(textarea.length>0){
+                container.removeClass("d-none");
+            }
+        }else{
+            container.addClass("d-none");
+        }
+    })
+});
 
 

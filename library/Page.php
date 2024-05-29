@@ -70,6 +70,9 @@ class Page
         if(CompanyService::isSuzukiGHC()){
             $this->suzukiGHCLogoContainer();
         }
+        if(CompanyService::isFiFi()){
+            $this->FiFiLogoContainer();
+        }
        
         echo "</div>";
         echo $this->_pageFooter();
@@ -155,13 +158,13 @@ class Page
                     
                 }
                 if ($this->_dokumentumokMenuPolicy()) {
-                    if(!CompanyService::isSuzukiGHC()){
+                    if(!CompanyService::isSuzukiGHC() || !CompanyService::isFiFi()){
                         $html .= "<a class='toplink' href='index.php?page=documents'>" . ucfirst($webText["dokumentumok"]) . "</a>" . ($rowd["hany"] > 0 ? " <span class='ujnumber'>{$rowd["hany"]}</span>" : "") . " &bull; ";
                     }
                 }
                 //leletek oldal határozatlan ideig szüntetel
                 //$html.= "<a class='toplink' href='index.php?page=leletek'>".ucfirst($this->lang->getText("leletek","leletek"))."</a> &bull; ";
-                if(!CompanyService::isSuzukiGHC()){
+                if(!CompanyService::isSuzukiGHC() || !CompanyService::isFiFi()){
                     $html .= "<a class='toplink' href='index.php?page=profile'>" . ucfirst($webText["adatmodositas"]) . "</a> &bull; ";
                 }
                 $html .= "<a class='toplink' href='index.php?logout'>" . ucfirst($webText["kijelentkezes"]) . "</a>";
@@ -172,7 +175,12 @@ class Page
                 if ($_SESSION["helyszindata"]["onlyreg"] == 1) {
                     $html .= "<a class='toplink' href='index.php?page=registration'>" . ucfirst($webText["regisztracio"]) . "</a> &bull; ";
                 }
-                $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
+                if(CompanyService::isFiFi()){
+                    $html .= "<a class='toplink' href='https://{$_SESSION["helyszindata"]["webshop_alias"]}.hungariamed.hu'>Webshop</a>";
+                }else{
+                    $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
+                }
+                
                 if ($_SESSION["helyszindata"]["web_fogleu"] == 1) {
                     $html .= "&nbsp;&bull;&nbsp;<a class='toplink' href='index.php?page=webfogleu'>" . ucfirst($webText["webfogleu"]) . "</a>";
                 }
@@ -269,6 +277,21 @@ class Page
         $html .= "              <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS...</div>";
         $html .= "           </div>";
         //$html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+
+        echo $html;
+
+        return;
+    }
+    public function FiFiLogoContainer(){
+        $html = "";
+
+        $html .= "       <div class=\"row og-bootstrap\">";
+        $html .= "           <div class=\"col mb-3 text-center\">";
+        $html .= "              <img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-inline\" style=\"margin:10px\">";
+        $html .= "              <img src=\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSPeGV2EsmR45vBDtgiYLe14ZvUsR99NgOFfHGBj3M4b1Baq4sMUi3kUsh0RyY50aSp2Dc&usqp=CAU\" width=\"150px\" class=\"d-inline\" style=\"margin:10px\">";
+        //$html .= "              <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS...</div>";
+        $html .= "           </div>";
         $html .= "       </div>";
 
         echo $html;
