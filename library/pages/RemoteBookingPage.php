@@ -220,11 +220,11 @@ class RemoteBookingPage extends CorePage{
 			$html.= "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
 			$html.= "<h3 align='center' style='color:#FFF'>Figyelem!</h3>";
 			$html.= "<p style=' text-align:center;font-size:16px;color:#FFF'>";
-			$html.= "A <strong>WEB-Recept szolgáltatás</strong> vagyis az orvosi vény felírása <strong>kizárólag Ön célra, visszatérő</strong>, korábban már a Hungária Med-M szolgáltatását igénybe <strong>vevő ügyfelek részére lehetséges ezen a felületen</strong>.";
+			$html.= "A <strong>WEB-Recept szolgáltatás</strong> vagyis az orvosi vény felírása <strong>kizárólag Ön célra, vehető igénybe.</strong> Korábban már a Hungária Med-M szolgáltatását igénybe <strong>vevő ügyfelek részére lehetséges ezen a felületen</strong>.";
 			$html.= "</p>";
-			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
-			$html.= "Amennyiben Ön korábban még nem vette igénybe szolgáltatásainkat, kérjük, olvassa el az erre vonatkozó információkat a honlap WEB-Recept felületén.";
-			$html.= "</p>";
+			//$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
+			//$html.= "Amennyiben Ön korábban még nem vette igénybe szolgáltatásainkat, kérjük, olvassa el az erre vonatkozó információkat a honlap WEB-Recept felületén.";
+			//$html.= "</p>";
 			$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
 			$html.= "<strong>Köszönjük.</strong>";
 			$html.= "</p></div>";
