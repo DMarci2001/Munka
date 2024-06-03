@@ -238,9 +238,7 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<td nowrap><div class='{$tc}'>{$machineName}</div></td>";
             $html.= "<td nowrap><div class='{$tc}'>";
 
-            //if ($this->adminUser->) {
-                $html.= "<span style='' id='cegid{$row["patientID"]}'>".$this->showCompanySelector($row["patientID"], $row)."</span>";
-            //}
+            $html.= "<span style='' id='cegid{$row["patientID"]}'>".$this->showCompanySelector($row["patientID"], $row)."</span>";
 
             $html.= "</div></td>";
             if (!empty($patientData)) {

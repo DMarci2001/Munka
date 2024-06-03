@@ -73,6 +73,9 @@ function logActivity($tipus, $id=0, $megnev="", $query="") {
     $adminId = $_SESSION["adminuser"]["id"] ?? 0;
     $orvosId = $_SESSION["adminuser"]["orvosid"] ?? 0;
     $pid = 0;
+
+    $megnev.= isset($GLOBALS["extraloginfo"]) ? " ({$GLOBALS["extraloginfo"]})" : "";
+
     sql_query("insert into activitylog set datum=now(),userid=?,orvoslogin=?,tipus=?,mid=?,pid=?,megnev=?,query=?", [$adminId, $orvosId, $tipus, $id, $pid, $megnev, $query]);
 }
 

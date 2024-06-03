@@ -354,6 +354,8 @@ class DailyStatService {
                     $vizsgalatDatum = str_replace(".", "-", $sheet->getCell("N{$rowNr}")->getFormattedValue());
                     if (empty($vizsgalatDatum)) {
                         $vizsgalatDatum = "0000-00-00";
+                    } else {
+                        $vizsgalatDatum = date("Y-m-d H:i:s", strtotime($vizsgalatDatum));
                     }
 
                     $row = [
@@ -362,14 +364,14 @@ class DailyStatService {
                         "szakrendeles" => $sheet->getCell("D{$rowNr}")->getValue(),
                         "orvos" => $sheet->getCell("E{$rowNr}")->getValue(),
                         "paciensid" => $sheet->getCell("F{$rowNr}")->getValue(),
-                        "szuldatum" => $sheet->getCell("G{$rowNr}")->getValue(),
+                        "szuldatum" => date("Y-m-d", strtotime($sheet->getCell("G{$rowNr}")->getFormattedValue())),
                         "telephely" => $sheet->getCell("H{$rowNr}")->getValue(),
                         "munkakor" => $sheet->getCell("I{$rowNr}")->getValue(),
                         "korlatozas" => $sheet->getCell("J{$rowNr}")->getValue(),
                         "alkalmassag" => $sheet->getCell("K{$rowNr}")->getValue(),
-                        "ervenyesseg" => $ervenyesseg,
+                        "ervenyesseg" => date("Y-m-d", strtotime($ervenyesseg)),
                         "vizsgalattipus" => $sheet->getCell("M{$rowNr}")->getValue(),
-                        "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum))
+                        "vizsgalatdatum" => $vizsgalatDatum
                     ];
 
                     sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);

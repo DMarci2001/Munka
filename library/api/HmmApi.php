@@ -738,6 +738,7 @@ class HmmApi {
         $body = json_decode($this->postBody, JSON_OBJECT_AS_ARRAY);
 
         if ($reservationData = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and foglalta=?", [intval($body["id"]), $body["authorizationCode"],$this->tokenData["username"]]))) {
+            $GLOBALS["extraloginfo"] = "api törlés";
             $this->bookingService->deleteReservation($reservationData["id"], $reservationData["pass"]);
             return [];
         } else {
@@ -777,6 +778,7 @@ class HmmApi {
         $paid               = $body["paid"] ?? 0;
         $expiration         = $body["expiration"] ?? "0000-00-00 00:00:00";
         $active             = $body["active"] ?? 1;
+        $paciensId          = 0;
 
         if (empty($body["patientDateOfBirth"])) {
             $patientDateOfBirth = "0000-00-00";
@@ -797,12 +799,14 @@ class HmmApi {
             $this->apiError(400, "E1002", "The slot is already taken.");
         }
 
-        if ($paciensData = sql_fetch_array(sql_query("select id from felhasznalok where createdby=? and email=? and nev=? limit 1", [$this->tokenData["username"], $patientEmail, $patientName]))) {
-            $paciensId = $paciensData["id"];
-        } else {
-            sql_query("insert into felhasznalok set createdby=?, cegid=?, regtime=now(), nev=?, email=?, telefon=?, szuldatum=?, anyjaneve=?, taj=?, flang=?, rkod=?, validated=1",
-                [$this->tokenData["username"], $cegId, $patientName, $patientEmail, $patientPhone, $patientDateOfBirth, $patientMothersName, $taj, "hu", rand(11000, 98000)]);
-            $paciensId = sql_insert_id();
+        if (!empty($patientEmail) && !empty($taj) && !empty($patientDateOfBirth) && !empty($patientName)) {
+            if ($paciensData = sql_fetch_array(sql_query("select id from felhasznalok where createdby=? and email=? and nev=? limit 1", [$this->tokenData["username"], $patientEmail, $patientName]))) {
+                $paciensId = $paciensData["id"];
+            } else {
+                sql_query("insert into felhasznalok set createdby=?, cegid=?, regtime=now(), nev=?, email=?, telefon=?, szuldatum=?, anyjaneve=?, taj=?, flang=?, rkod=?, validated=1",
+                    [$this->tokenData["username"], $cegId, $patientName, $patientEmail, $patientPhone, $patientDateOfBirth, $patientMothersName, $taj, "hu", rand(11000, 98000)]);
+                $paciensId = sql_insert_id();
+            }
         }
 
         $data = [

@@ -28,7 +28,7 @@ class AdminAlkalmassagiPage extends AdminCorePage
            left join cegek c on c.id = f.cegid
            where c.id in (".implode(",", $this->companyIds).") and f.aktiv=1 and f.cegid<>0 and f.cegid is not null and f.datum>'2022-01-01 00:00:00' AND f.alkalmassag<>'' AND f.alkalmassag<>'0' ORDER BY datum DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-        echo "<h1>{$cegData["megnev"]}</h1>";
+        //echo "<h1>{$cegData["megnev"]}</h1>";
 
         echo "<table cellpadding='0' cellspacing='0' border='0'>";
 

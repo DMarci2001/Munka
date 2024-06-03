@@ -1073,7 +1073,7 @@ class SynlabService
     }
 
     private function writeRequests($key, $folder):void {
-        $requests = sql_query("select * from labrequests where provider='synlab' and status='waiting' and created>DATE_SUB(NOW(), INTERVAL 1 DAY) and !INSTR(synlabstatus, '{$key}_') order by created limit 10")->fetchAll(PDO::FETCH_ASSOC);
+        $requests = sql_query("select * from labrequests where provider='synlab' and status='waiting' and created>DATE_SUB(NOW(), INTERVAL 2 DAY) and !INSTR(synlabstatus, '{$key}_') order by created limit 10")->fetchAll(PDO::FETCH_ASSOC);
         if (!empty($requests)) {
             if ($this->connectSFTP($folder)) {
                 if (!$this->sftp->file_exists("MedOut/" . strtoupper($folder) . ".msg")) {

@@ -440,6 +440,7 @@ function toggleCheckBox(id) {
 }
 
 var varolista = 0;
+var selectedJarat = "";
 
 function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
     if (orvos === undefined) orvos = 0;
@@ -452,7 +453,7 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
     $.ajax({
         method: "POST",
         url: "index.php",
-        data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), neme:neme, szurestipusid: szurestipusid, orvos: orvos }
+        data: { checkrendeles: "1", idopont: idopont, helyszin: helyszin, taj: $("#tajszam").val(), neme:neme, szurestipusid: szurestipusid, orvos: orvos, selectedJarat:selectedJarat }
     }).done(function (msg) {
         if (msg == "ok") {
             $("#datumText"+datumIndex).css("background-image", "");
@@ -460,7 +461,11 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
             if (varolista == 1) {
                 $("#datumText"+datumIndex).val("Várólista");
             } else {
-                $("#datumText"+datumIndex).val(idopont);
+                var datumText = idopont;
+                if (selectedJarat !== "") {
+                    datumText = idopont.substring(0, 10) + " " + selectedJarat;
+                }
+                $("#datumText"+datumIndex).val(datumText);
             }
 
             $("#datum"+datumIndex).val(idopont);
@@ -1217,6 +1222,9 @@ function initSubReservationButtons() {
 }
 
 
+function setJarat(jarat) {
+    selectedJarat = jarat;
+}
 function bindIdopontButtons() {
     $(".freesubidopontbutton").click(function() {
         let cartRow = $(this).data("cartrow");

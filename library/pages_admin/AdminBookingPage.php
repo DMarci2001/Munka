@@ -38,6 +38,25 @@ class AdminBookingPage extends AdminCorePage
             die();
         }
 
+
+        if (isset($_GET["deletedreservations"])) {
+            $service = new NotificationService();
+            //$service->deleteUserMessage(615695);
+            $service->logProcess();
+            die();
+        }
+
+        if (isset($_GET["printbeoreservations"])) {
+            echo $this->printBeoReservations();
+            die;
+        }
+
+        if (isset($_GET["printbeopdf"])) {
+            $printService = new PrintService();
+            echo $printService->printBeoPdf($_GET["printbeopdf"], $_GET["nap"]);
+            die;
+        }
+
         if (isset($_GET["szabira"])) {
             sql_query("insert into szabadsag set oid=?,datumtol=?,datumig=?", array($_GET["orvosid"], $_GET["szabira"], $_GET["szabira"]));
 
@@ -402,6 +421,7 @@ class AdminBookingPage extends AdminCorePage
                 }
 
                 if (!empty($results)) {
+                    $GLOBALS["extraloginfo"] = "sikertelen csomag foglalás utáni törlés";
                     $this->bookingService->deleteReservation($packReservationId, $packReservationData["pass"], true);
                     Utils::jsonOut(["error" => implode("\n", $results), "message" => "", "html" => ""]);
                 }
@@ -799,8 +819,10 @@ class AdminBookingPage extends AdminCorePage
             $szabi              = sql_fetch_array(sql_query("select * from szabadsag where datumtol<=? and datumig>=? and oid=?", [$nap, $nap, $beosztas["orvosid"]]));
             $szabiURL           = $szabi ? "szabadságon" : "<a onclick='return confirm(\"Biztos beállítod szabadságra erre a napra?\");' href='{$_SERVER['PHP_SELF']}?page={$_GET["page"]}&szabira={$nap}&orvosid={$orvosId}'>szabadságra</a>";
             $helyettesites = sql_fetch_array(sql_query("select h.*, o.nev as helyettesitoorvos from helyettesites h left join orvosok o on o.id = h.helyettesitoorvosid where h.nap=? and h.oid=? and h.beoid=?", [$nap, $beosztas["orvosid"], $beoId]));
-            $helyettesitesLink  = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}_{$beoId}').slideDown();return false;\" href='#'>helyettesítés</a>";
-            $szemelyzetLink = "<a class='orvosbutton' onclick=\"$('#szemelyzetdiv{$beoId}').slideDown();return false;\" href='#'>Személyzet</a>";
+            $helyettesitesLink  = "<a class='orvosbutton' onclick=\"$('#helyettesitesdiv{$orvosId}_{$beoId}').slideDown();return false;\" href='#'>Helyettesítés</a>";
+            $szemelyzetLink     = "<a class='orvosbutton' onclick=\"$('#szemelyzetdiv{$beoId}').slideDown();return false;\" href='#'>Személyzet</a>";
+            $printBeoLink       = "<a class='orvosbutton' target='_blank' href='index.php?page={$_GET["page"]}&printbeoreservations={$beoId}&nap={$nap}'>Nyomtatás</a>";
+            $printBeoPdfLink       = "<a class='orvosbutton' target='_blank' href='index.php?page={$_GET["page"]}&printbeopdf={$beoId}&nap={$nap}'>Adatlapok</a>";
             $addDoctorLink      = "";
 
             foreach ($this->orvosTipusok as $tipusId) {
@@ -854,7 +876,11 @@ class AdminBookingPage extends AdminCorePage
 
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$szuresTipus["id"]});\"><i id='tablenyito{$orvosId}_{$szuresTipus["id"]}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
-                $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink}</div>";
+                $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
+                if (in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690])) {
+                    $htmlout.= " {$printBeoPdfLink}";
+                }
+                $htmlout .= "</div>";
                 $htmlout .= "<div>#foglalt{$orvosId}_{$szuresTipus["id"]}# #szabad{$orvosId}_{$szuresTipus["id"]}#</div>";
                 $htmlout .= "<div>{$beosztas["description"]}</div>";
 
@@ -1363,4 +1389,62 @@ class AdminBookingPage extends AdminCorePage
 
         return $icon;
     }
+
+
+    public function printBeoReservations():string {
+        $beoId = $_GET["printbeoreservations"];
+        $nap = $_GET["nap"];
+        $timeFrom = "{$nap} 00:00:00";
+        $timeTo = "{$nap} 23:59:59";
+
+        $html = "";
+
+        if (!$beoData = sql_query("select * from orvos_beosztas_new where id=?", [$beoId])->fetch(PDO::FETCH_ASSOC)) {
+            die("beo not found");
+        }
+
+        if (!isset($_SESSION["adminuser"])) {
+            die("error 401");
+        }
+
+        $orvosId = $beoData["orvosid"];
+
+        $reservations = sql_query("SELECT f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f
+                        LEFT JOIN cegek c on c.id=f.cegid
+                        LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
+                        LEFT JOIN orvosok o on o.id=f.orvosassigned
+                        LEFT JOIN dokumentumok d on d.foglalasid=f.id
+                        LEFT JOIN cegvars v on v.id=f.telephelyid
+                        WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.orvosassigned in (0, ?) and f.nev<>'nincs név'
+                        GROUP BY f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId])->fetchAll(PDO::FETCH_ASSOC);
+
+        echo "<style> .dobozok {border:1px solid #888;padding:3px;} </style>";
+
+        echo "<table style='border-collapse: collapse;font-size:12px;'>";
+        echo "<tr style='font-weight: bold;background:#ccc;'>";
+        echo "<td class='dobozok'>Név</td>";
+        echo "<td class='dobozok'>TAJ</td>";
+        echo "<td class='dobozok'>Anyja neve</td>";
+        echo "<td class='dobozok'>Születési hely</td>";
+        echo "<td class='dobozok'>Születési idő</td>";
+        echo "<td class='dobozok'>Lakcím</td>";
+        echo "</tr>";
+        foreach ($reservations as $reservation) {
+            echo "<tr>";
+            echo "<td class='dobozok'>{$reservation["nev"]}</td>";
+            echo "<td class='dobozok'>{$reservation["taj"]}</td>";
+            echo "<td class='dobozok'>{$reservation["anyjaneve"]}</td>";
+            echo "<td class='dobozok'>{$reservation["szulhely"]}</td>";
+            echo "<td class='dobozok'>{$reservation["szuldatum"]}</td>";
+            echo "<td class='dobozok'>{$reservation["irsz"]} {$reservation["varos"]} {$reservation["utca"]}</td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+
+        //$html.= "<pre>".print_r($reservations, true)."</pre>";
+
+        return $html;
+    }
+
+
 }

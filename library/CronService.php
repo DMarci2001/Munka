@@ -209,7 +209,7 @@ class CronService {
 
         echo "count:" . $count . "\n";
 
-        for ($i = 0; $i <= 10; $i++) {
+        for ($i = 0; $i <= 50; $i++) {
             //$msgNum = $i + 1;
             $msgNum = $count - $i;
             if ($msgNum <= 0) {
@@ -558,6 +558,7 @@ class CronService {
         $res = sql_query("select * from foglalasok where regdatum<date_sub(now(),interval 1 hour) AND regdatum>DATE_SUB(NOW(),INTERVAL 2 HOUR) and aktiv=0 and externalid=''");
         while ($row = sql_fetch_array($res)) {
             $service->sendNotConfirmedReservationMessages($row["id"]);
+            $GLOBALS["extraloginfo"] = "automatikus törlés - nem aktivált foglalás";
             $this->bookingService->deleteReservation($row["id"], $row["rkod"], true);
         }
     }
@@ -582,6 +583,10 @@ class CronService {
                 sql_query("update foglalasok set smssent=1 where id='{$row["id"]}'");
                 if ($skip) {
                     continue;
+                }
+
+                if (!empty($row["jarat"])) {
+                    $row["datum"] = substr($row["datum"], 0, 10)." ".$row["jarat"];
                 }
 
                 $szoveg = Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása van: ".substr($row["datum"],11,5)." {$row["cim"]}";
@@ -883,6 +888,7 @@ class CronService {
             {
                 $bookingService = new BookingService();
                 foreach($reservations as $reservationData){
+                    $GLOBALS["extraloginfo"] = "lejárt foglalás automatikus törlése - cron";
                     $this->bookingService->deleteReservation($reservationData["id"],$reservationData["pass"]);
                 }
             }
