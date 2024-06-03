@@ -414,7 +414,7 @@ class BookingService
                                 $sectionHTML .= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
                                 $jarat++;
                             }
-                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='setJarat(\"{$jaratok[$jarat]}\");{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
+                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}'  onclick='setJarat(\"{$jaratok[$jarat]}\");{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
                             $sorszam++;
                         }
 
