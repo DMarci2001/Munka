@@ -38,6 +38,7 @@ class AdminPatientsPage extends AdminCorePage {
             $id = $_GET["deletefoglalas"];
             if ($row = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=? and eljott=0",array($id, $_GET["p"])))) {
                 $bookingService = new BookingService();
+                $GLOBALS["extraloginfo"] = "admin törölte a paciens oldalon";
                 $bookingService->deleteReservation($row["id"], $row["rkod"]);
             }
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");

@@ -400,13 +400,12 @@ class BookingService
                         }
 
                         //sorszám override aldi esetében
-                        if (Booking_Constants::SQL_DB == "hungariamed" && $_SESSION["helyszindata"]["id"] == 90 && $this->szuresTipus == 58) {
+                        if (Booking_Constants::SQL_DB == "hungariamed" && CompanyService::isALDI() && $this->szuresTipus == Booking_Constants::TUDOSZURES_ID) {
                             //echo $ora."<br>";
                             $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
 
                             //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
-                            if(empty($jaratStart)){
-                               
+                            if (empty($jaratStart)) {
                                 $jaratStart = $ora;
                                 $jarat = array_search($ora,$jaratok);
                             }
@@ -415,7 +414,7 @@ class BookingService
                                 $sectionHTML .= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
                                 $jarat++;
                             }
-                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
+                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='setJarat(\"{$jaratok[$jarat]}\");{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
                             $sorszam++;
                         }
 
@@ -1330,9 +1329,9 @@ class BookingService
         }
 
         if ($force) {
-            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?)", array($id, $code, $code));
+            $res = sql_query("select * from foglalasok WHERE id=? and (pass=? or rkod=?)", array($id, $code, $code));
         } else {
-            $res = sql_query("select id, orvosassigned, helyszinid, pass from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
+            $res = sql_query("select * from foglalasok WHERE id=? and (pass=? or rkod=?) and (datum>now() or aktiv=0) and eljott=0", array($id, $code, $code));
         }
         if ($row = sql_fetch_array($res)) {
             $foService = new FoglaljOrvostService();
@@ -1342,7 +1341,10 @@ class BookingService
             $api->deleteReservation($row);
 
             $notificationService = new NotificationService();
-            $notificationService->deleteMessage($row["id"]);
+            $notificationService->deleteDoctorMessage($row["id"]);
+
+            $logSubject = "{$row["nev"]} foglalás törlése {$row["datum"]}";
+            logActivity("foglalastorles", $row["id"], $logSubject, json_encode($row, JSON_PRETTY_PRINT));
 
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
@@ -1361,11 +1363,11 @@ class BookingService
         $rn = rand(1000000, 9999999);
 
         $paciensId = 0;
-        if (isset($data["taj"])) {
+        if (!empty($data["taj"])) {
             if (isset($_SESSION["user"]["id"])) {
                 $paciensId = intval($_SESSION["user"]["id"]);
             } else {
-                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE (taj = ? OR email = ?) and cegid=?", array($data['taj'], $data['email'], $cegId)))) {
+                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj = ? AND email = ? AND cegid=?", array($data['taj'], $data['email'], $cegId)))) {
                     $paciensId = $userInfo['id'];
                 } else {
                     sql_query("INSERT INTO felhasznalok SET validated=1, cegid=?, regtime=now(), taj = ?, email = ?, nev = ?, telefon = ?, munkakor = ?, irsz = ?, varos = ?, utca = ?, szulhely = ?, anyjaneve = ?, szuldatum = ? ", array($cegId, $data['taj'], $data['email'], $data['nev'], $data['telefon'], $data['munkakor'], $data['irsz'], $data['varos'], $data['utca'], $data['szulhely'], $data['anyjaneve'], $data['szuldatum']));
@@ -1613,6 +1615,11 @@ class BookingService
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
         if (!isset($data["cegid"])) $data["cegid"] = 0;
         if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"],$data);
+        if (!isset($data["jarat"])) $data["jarat"] = "";
+
+        if (!empty($_SESSION["selectedJarat"])) {
+            $data["jarat"] = $_SESSION["selectedJarat"];
+        }
 
         sql_query(
             "insert into foglalasok set 
@@ -1658,6 +1665,7 @@ class BookingService
 			paid=?,
 			expire=?,
 			pass=?,
+            jarat=?,
             dokirexcegid=?",
             array(
                 $data["parentid"],
@@ -1701,6 +1709,7 @@ class BookingService
                 $data["paid"],
                 $data["expire"],
                 $data["pass"],
+                $data["jarat"],
                 $data["dokirexcegid"]
             )
         );
@@ -1977,15 +1986,14 @@ class BookingService
         }
     }
 
-    public function removeIdopont($id, $code)
-    {
+    public function removeIdopont($id, $code) {
         if ($rowf = sql_fetch_array(sql_query("select * from foglalasok where id=? and pass=?", array($id, $code)))) {
             //tüdőszűrés törlése
             if (Booking_Constants::SQL_DB == "keltexmed" && $rowf["szurestipusid"] == 1) {
                 sql_query("delete from foglalasok where taj=? and taj<>'' and date(datum)=? and szurestipusid=? limit 1", [$rowf["taj"], date("Y-m-d", strtotime($rowf["datum"])), Booking_Constants::TUDOSZURES_ID]);
             }
 
-            logActivity("foglalas", $rowf["id"], "{$rowf["nev"]} foglalás törlése {$rowf["datum"]}", json_encode($rowf, JSON_PRETTY_PRINT));
+            $GLOBALS["extraloginfo"] = "admin törlés";
             $this->deleteReservation($id, $code);
         }
     }
@@ -2310,12 +2318,6 @@ class BookingService
         return sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$tipusId]));
     }
 
-
-    public function deleteKiegeszitoVizsgalat($reservationData, $tipusId) {
-        if ($oldReservation = sql_fetch_array(sql_query("select * from foglalasok where taj=? and datum>? and datum<? and szurestipusid=? and taj<>''", [$reservationData["taj"], date("Y-m-d 00:00:00", strtotime($reservationData["datum"])), date("Y-m-d 23:59:59", strtotime($reservationData["datum"])), $tipusId]))) {
-            $this->deleteReservation($oldReservation["id"], $oldReservation["pass"]);
-        }
-    }
 
     private int $lastSubReservationId = 0;
     public bool $replicateDuplicateCheck = true;

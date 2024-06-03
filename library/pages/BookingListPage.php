@@ -9,6 +9,7 @@ class BookingListPage extends CorePage {
 
         if (isset($_GET["dodeletereservation"])) {
             $bookingService = new BookingService();
+            $GLOBALS["extraloginfo"] = "felhasználó adatlapján törölte";
             $bookingService->deleteReservation($_GET["id"], $_GET["rk"]);
             header("location:index.php?page=bookingdeletesuccessful");
             die();

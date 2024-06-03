@@ -67,9 +67,7 @@ class NotificationService
         return sql_query("select * from notifications where tipus=? and objectid=? order by datum desc", [$tipus, $objectid])->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function sendUserReservationNotification($id, $force = false)
-    {
-
+    public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
         $res = sql_query("SELECT " . $this->utils->cimLangQuery("helyszin") . ",sz.megnev AS szurestipus, sz.megnev_en AS szurestipus_en, sz.megnev_de AS szurestipus_de, sz.custompatientemail_option, sz.custompatientemail_text, f.*, c.megnev as cegnev, c.email as cegemail, c.foglalasemail, c.domain, o.nev as orvosnev,o.tel as orvostelefon, csomagidotartam 
@@ -81,13 +79,16 @@ class NotificationService
         WHERE f.id=?",  [$id]);
 
         if ($row = sql_fetch_array($res)) {
-
             if (self::hasNotification("usernotification", $id) && !isset($_GET["mailtest"]) && !$force) {
                 return;
             }
 
             if ($row["fgroupid"] != "0") {
                 return;
+            }
+
+            if (!empty($row["jarat"])) {
+                $row["datum"] = substr($row["datum"], 0, 10)." ".$row["jarat"];
             }
 
             if ($row["rlang"] == "en" && $row["szurestipus_en"] != "") $row["szurestipus"] = $row["szurestipus_en"];
@@ -118,7 +119,7 @@ class NotificationService
             }
 
             $mail->Subject = $mailTemplate["subject"];
-            $mail->Body = $mailTemplate["body"];
+            $mail->Body = $this->setMailTemplate($mailTemplate["body"], $mailTemplate["subject"]);
             //$mail->AddAttachment("");
 
             if ($row["noreservation"] == 0 && !$this->isVarolista($row)) {
@@ -385,7 +386,7 @@ class NotificationService
 
     public function reservationReminder($data)
     {
-        $deleteURL = "http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$data["id"]}&rk={$data["rkod"]}&setlang={$data["rlang"]}";
+        $deleteURL = "http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$data["id"]}&rk={$data["rkod"]}&setlang={$data["rlang"]}&dodeletereservation";
 
         $mail = $this->getDefaultMailer();
         $mail->AddAddress($data["email"]);
@@ -558,8 +559,7 @@ class NotificationService
     }
 
 
-    private function userMailTemplate($row)
-    {
+    private function userMailTemplate($row) {
         $lang = new Lang();
         $webTextLocal = $lang->getWebTexts($row["rlang"]);
         $packText = $this->_getPackText($row);
@@ -576,7 +576,7 @@ class NotificationService
         }
 
         $mbody = "";
-        $mbody .= "<h1>" . date("Y.m.d. H:i", strtotime($row["datum"])) . " - {$row["helyszin"]}</h1>";
+        $mbody .= "<strong>" . date("Y.m.d. H:i", strtotime($row["datum"])) . " - {$row["helyszin"]}</strong><br/><br/>";
 
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         if (!empty($row["telefon"])) {
@@ -626,9 +626,13 @@ class NotificationService
 
         $mbody .= "<hr>";
 
-        if ($row["rlang"] != "de" && $row["rlang"] != "en") {
+        $deleteLink = "https://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}";
+        if ($row["szurestipusid"] != 1) {
+            //$deleteLink.= "&dodeletereservation";
+        }
 
-            if (CompanyService::isBP($row["cegid"]) && true) {
+        if ($row["rlang"] != "de" && $row["rlang"] != "en") {
+            if (CompanyService::isBP($row["cegid"])) {
                 $mbody .= "A pszihoszociális kérdőívet az alábbi linken tudja megtekinteni és kitölteni:<br>";
                 $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$row["pass"]}\">Pszihoszociális kérdőív link</a><br><br>";
             }
@@ -638,19 +642,19 @@ class NotificationService
                 $mbody .= "<hr>";
             }
 
-            $mbody .= "Ha le szeretné mondani ezt a foglalását, kérjük kattintson a következő linkre: <a href='https://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>időpont foglalás törlése</a><br>";
+            $mbody .= "Ha le szeretné mondani ezt a foglalását, kérjük kattintson a következő linkre: <a href='{$deleteLink}&setlang={$row["rlang"]}'>időpont foglalás lemodása</a><br>";
             $mbody .= "Amennyiben módosítani szeretné a foglalását, abban az esetben először törölje a régi időpontját a fenti linken, utána pedig regisztrálja újra.<br>{$extraMsg}";
             $mbody .= "<br/>";
             $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
         }
         if ($row["rlang"] == "de") {
-            $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
+            $mbody .= "Wenn Sie möchten Diese Termin Reservierung Canceln, bitte drücken Sie an Ihre Brief <a href='{$deleteLink}&setlang={$row["rlang"]}'>Die Termin Registration Canceln</a> LINK.<br>";
             $mbody .= "Wenn Sie möchten Ihre Reservierung Verändern ,bitte Streichen Sie aus den anderen Zeitpunkt, dannach registrieren bitte nochmal.<br>";
             $mbody .= "<br/>";
             $mbody .= "Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME;
         }
         if ($row["rlang"] == "en") {
-            $mbody .= "If you wish to cancel this appointment, please click on link: <a href='http://{$_SERVER["HTTP_HOST"]}/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
+            $mbody .= "If you wish to cancel this appointment, please click on link: <a href='{$deleteLink}&setlang={$row["rlang"]}'>Cancellation of confirmed appointment</a><br>";
             $mbody .= "If you would like to modify your appointment, first cancel your old appointment then register it again.<br>";
             $mbody .= "<br/>";
             $mbody .= "Regards:<br>" . Booking_Constants::COMPANY_NAME;
@@ -703,7 +707,7 @@ class NotificationService
 
         $cegInfo = sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?", array($row["cegid"])));
 
-        $deleteLink = "http://{$cegInfo["megnev"]}.hungariamed.hu/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}";
+        $deleteLink = "http://{$cegInfo["megnev"]}.hungariamed.hu/index.php?page=bookingdelete&id={$row["id"]}&rk={$row["rkod"]}&setlang={$row["rlang"]}&dodeletereservation";
 
         $mbody = "<p><span style=\"font-size: 14pt;\">Köszönjük, hogy időpontfoglaló rendszerünkben jelezte foglalási szándékát!</span></p>
         <p>Technikai okok miatt a megadott rendelőben jelenleg nem működik az online foglaló rendszer, ezért elnézését kérjük.</p>
@@ -1113,8 +1117,7 @@ END:VCALENDAR";
         $mail->send();
     }
 
-    function deleteMessage($reservationId)
-    {
+    public function deleteDoctorMessage($reservationId) {
         $res = sql_query("SELECT o.email as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN cegek c on c.id=f.cegid
@@ -1154,6 +1157,51 @@ END:VCALENDAR";
                 }
             }
         }
+    }
+
+    public function deleteUserMessage($reservationId) {
+        $res = sql_query("SELECT o.email as orvosemail, o.nev as orvosnev, h.cim AS helyszin,sz.megnev AS szurestipus,f.*,c.megnev as cegnev,c.email as cegemail,c.foglalasemail FROM foglalasok f
+        LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+        LEFT JOIN cegek c on c.id=f.cegid
+        LEFT JOIN orvosok o on o.id=f.orvosassigned
+        LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+        WHERE f.id=? and f.aktiv=1 and f.nev<>'nincs név'", [$reservationId]);
+
+        if ($row = sql_fetch_array($res)) {
+            if (filter_var($row["email"], FILTER_VALIDATE_EMAIL)) {
+                $mail = self::getDefaultMailer();
+                $mail->addAddress($row["email"]);
+
+                $subject = "Foglalás lemondva: {$row["szurestipus"]}";
+
+                $mbody = "";
+                $mbody .= "<b>A lemondott foglalás adatai</b><br/><br/>";
+                $mbody .= "Név: {$row["nev"]}<br/>";
+                $mbody .= "Telefon: {$row["telefon"]}<br/>";
+                $mbody .= "Email: {$row["email"]}<br/>";
+                $mbody .= "<b>Időpont: ".date("Y.m.d H:i", strtotime($row["datum"]))."</b><br/>";
+                $mbody .= "Szolgáltatás: {$row["szurestipus"]}<br/>";
+                $mbody .= "Helyszín: {$row["helyszin"]}<br/>";
+                $mbody .= "<br/>";
+
+                $mail->Subject = $subject;
+                $mail->Body = $this->setMailTemplate($mbody, "Foglalás lemondva");
+                $mail->Send();
+
+                $this->createNotificationRecord("deleteuserreservation", $row["id"], $row["email"], $subject, $mbody);
+            }
+        }
+    }
+
+    private function setMailTemplate($body, $title = "") {
+        $templateFile = "/var/www/onlinebejelentkezes_keltexmed/public/zebrateszt/userOrderMailTemplate_".Booking_Constants::SQL_DB.".html";
+        if (is_file($templateFile)) {
+            $template = file_get_contents($templateFile);
+            $template = str_replace("#body#", $body, $template);
+            $template = str_replace("#title#", $title, $template);
+            $body = $template;
+        }
+        return $body;
     }
 
     public function sendLabShopMail($labShopData)
@@ -1337,7 +1385,7 @@ END:VCALENDAR";
         <br/>";
         $mbody .= "<br/>Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . " Csapata!<br/><br/>";
 
-        $mail->Subject = "Hungariamed belépési kód";
+        $mail->Subject = Booking_Constants::COMPANY_NAME." belépési kód";
         $mail->Body = $mbody;
         $mail->Send();
     }

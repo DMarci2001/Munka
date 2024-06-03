@@ -25,6 +25,8 @@ class AdminBeoEditor {
             $potig = $_POST["potig"];
             $nyitasmindencegnek = isset($_POST["open_beo_for_all_company"])?1:0;
             $nyitaslejaratennyivel = $_POST["release_beo_before_expire_time"];
+            $saveType = $_POST["saveType"] ?? "";
+            $orvosData = sql_query("select nev from orvosok where id=?", [$_GET["szerk"]])->fetch(PDO::FETCH_ASSOC);
 
             if (!preg_match("/(2[0-3]|[01][0-9]):([0-5][0-9])/", $potig)) {
                 $potig = "";
@@ -36,10 +38,36 @@ class AdminBeoEditor {
                 $_POST["validto"] = "0000-00-00";
             }
 
+            logActivity("beosztas", intval($_GET["szerk"]), "Beosztás mentés {$orvosData["nev"]} ({$saveType})", json_encode($_POST, JSON_PRETTY_PRINT));
+
             $params = [$nap, $_POST["binterval"], $_POST["beonap"], $_POST["hetek"], $_POST["helyszinid"], $sorban, $aktiv, $_POST["tol"], $_POST["ig"], $potig, $noreservation, $_POST["validfrom"], $_POST["validto"], $_POST["bmegj"], $nopack, $nyitasmindencegnek, $nyitaslejaratennyivel, $_POST["beosztasid"]];
             sql_query("update orvos_beosztas_new set nap=?, binterval=?, beonap=?, hetek=?, helyszinid=?, csaksorban=?, aktiv=?, tol=?, ig=?, potig=?, noreservation=?, validfrom=?, validto=?, bmegj=?, nopack=?, open_beo_for_all_company=?, release_beo_before_expire_time=? where id=?", $params);
 
             die("ok");
+        }
+
+        if (isset($_POST["showhelyszinselect"])) {
+            if (!$this->adminUser->doctorsAccess()) {
+                die;
+            }
+
+            if (!$beo = sql_query("select * from orvos_beosztas_new b where b.id=?", [$_POST["showhelyszinselect"]])->fetch()) {
+                die;
+            }
+
+            $doctorId = $beo["orvosid"];
+            $beoId = $beo["id"];
+
+            echo "<select onchange='beoSave({$doctorId},{$beoId}, \"helyszinid\");' id='helyszinid' name='helyszinid' style='width:200px;'>";
+
+            $helyszinek = sql_query("select * from helyszinek where true order by cim")->fetchAll();
+            echo  "<option value='0'>Válassz helyszínt!</option>";
+            foreach ($helyszinek as $rowh) {
+                echo "<option value='{$rowh["id"]}'" . ($beo["helyszinid"] == $rowh["id"] ? " selected" : "") . ">{$rowh["cim"]}</option>";
+            }
+            echo "</select> ";
+
+            die;
         }
     }
 
@@ -131,9 +159,9 @@ class AdminBeoEditor {
 
             $html.= "<input type='hidden' name='beosztasid' value='{$beoId}'/>";
 
-            $html.= "<input onchange='beoSave({$doctorId},{$beoId});' title='aktív?' type='checkbox' name='aktiv' value='1' " . ($beo["aktiv"] == 1 ? " checked" : "") . "/> ";
+            $html.= "<input onchange='beoSave({$doctorId},{$beoId},\"aktiv\");' title='aktív?' type='checkbox' name='aktiv' value='1' " . ($beo["aktiv"] == 1 ? " checked" : "") . "/> ";
 
-            $html.= "<select name='weekday' onchange=\"beoSave({$doctorId},{$beoId});if (this.value!=10) { $(this).parent().find('#hetek').show(); $(this).parent().find('#beonap').hide(); } else { $(this).parent().find('#hetek').hide(); $(this).parent().find('#beonap').show(); }\">";
+            $html.= "<select name='weekday' onchange=\"beoSave({$doctorId},{$beoId},'weekday');if (this.value!=10) { $(this).parent().find('#hetek').show(); $(this).parent().find('#beonap').hide(); } else { $(this).parent().find('#hetek').hide(); $(this).parent().find('#beonap').show(); }\">";
             $html.= "<option value='0'>Válassz napot!</option>";
             for ($n = 1; $n <= 7; $n++) {
                 $html.= "<option value='{$n}'" . ($beo["nap"] == $n ? " selected" : "") . ">{$GLOBALS["hetnap"][$n]}</option>";
@@ -141,7 +169,7 @@ class AdminBeoEditor {
             $html.= "<option value='10'" . ($beo["nap"] == 10 ? " selected" : "") . ">Egy dátum</option>";
             $html.= "</select> ";
 
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' id='hetek' name='hetek' style='width:110px;background:{$hetBackgrounds[$beo["hetek"]]};" . ($beo["nap"] == 10 ? "display:none;" : "") . "'>";
+            $html.= "<select onchange='beoSave({$doctorId},{$beoId},\"hetek\");' id='hetek' name='hetek' style='width:110px;background:{$hetBackgrounds[$beo["hetek"]]};" . ($beo["nap"] == 10 ? "display:none;" : "") . "'>";
             $html.= "<option value='0'" . ($beo["hetek"] == 0 ? " selected" : "") . ">Minden hét</option>";
             $html.= "<option value='1'" . ($beo["hetek"] == 1 ? " selected" : "") . ">Páratlan hetek</option>";
             $html.= "<option value='2'" . ($beo["hetek"] == 2 ? " selected" : "") . ">Páros hetek</option>";
@@ -156,31 +184,17 @@ class AdminBeoEditor {
                 $_SESSION["orvos_cegid"] = $beo["cegid"];
             }
 
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' id='helyszinid' name='helyszinid' style='width:200px;'>";
+            $html.= "<span style='' id='beohedit{$beoId}'>".$this->showPlaceSelector($doctorId, $beo)."</span>";
 
-            if ($beo["helyszinid"] == 0 && isset($_SESSION["orvos_helyszinid"])) {
-                $beo["helyszinid"] = $_SESSION["orvos_helyszinid"];
-            }
-            if ($beo["cegid"] == 0 && isset($_SESSION["orvos_cegid"])) {
-                $beo["cegid"] = $_SESSION["orvos_cegid"];
-            }
-
-            $resh = sql_query("select * from helyszinek where true order by cim");
-            $html.= "<option value='0'>Válassz helyszínt!</option>";
-            while ($rowh = sql_fetch_array($resh)) {
-                $html.= "<option value='{$rowh["id"]}'" . ($beo["helyszinid"] == $rowh["id"] ? " selected" : "") . ">{$rowh["cim"]}</option>";
-            }
-            $html.= "</select> ";
-
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' name='tol'>";
-            $html.= "<option value='0'>Kezdés?</option>";
+            $html .= "<select onchange='beoSave({$doctorId},{$beoId},\"tol\");' name='tol'>";
+            $html .= "<option value='0'>Kezdés?</option>";
             for ($n = 0; $n <= 1125; $n += 5) {
                 $t = date("H:i", mktime(5, 0 + $n, 0, 1, 1, 2015));
-                $html.= "<option value='{$t}'" . ($beo["tol"] == $t ? " selected" : "") . ">{$t}</option>";
+                $html .= "<option value='{$t}'" . ($beo["tol"] == $t ? " selected" : "") . ">{$t}</option>";
             }
-            $html.= "</select> ";
+            $html .= "</select> ";
 
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' name='ig'>";
+            $html.= "<select onchange='beoSave({$doctorId},{$beoId},\"ig\");' name='ig'>";
             $html.= "<option value='0'>Vége?</option>";
             for ($n = 0; $n <= 1065; $n += 5) {
                 $t = date("H:i", mktime(6, 0 + $n, 0, 1, 1, 2015));
@@ -188,7 +202,7 @@ class AdminBeoEditor {
             }
             $html.= "</select> ";
 
-            $html.= "<input onchange='beoSave({$doctorId},{$beoId});' placeholder='pótidőpontok' title='Pótidőpontok eddig adhatók. Hagyd üresen ha nem akarsz pótidőpontokat.'  type='text' name='potig' style='width:37px;' value='{$beo["potig"]}' /> ";
+            $html.= "<input onchange='beoSave({$doctorId},{$beoId},\"potig\");' placeholder='pótidőpontok' title='Pótidőpontok eddig adhatók. Hagyd üresen ha nem akarsz pótidőpontokat.'  type='text' name='potig' style='width:37px;' value='{$beo["potig"]}' /> ";
 
             $html.= "<input type='hidden' name='tipusidk' id='tipusidk' value='{$beo["tipusok"]}' />";
 
@@ -210,7 +224,7 @@ class AdminBeoEditor {
                 $titl = $rowtt["megnevek"];
             }
 
-            $html.= "<select onchange='beoSave({$doctorId},{$beoId});' title='egy kezelés időtartama' id='intervalchooser{$beo["id"]}' name='binterval'>";
+            $html.= "<select onchange='beoSave({$doctorId},{$beoId},\"binterval\");' title='egy kezelés időtartama' id='intervalchooser{$beo["id"]}' name='binterval'>";
             foreach ($this->adminUtils->settings->validIntervals as $interval) {
                 $html.= "<option value='{$interval}'" . ($beo["binterval"] == $interval ? " selected" : "") . ">{$interval} perc</option>";
             }
@@ -218,10 +232,10 @@ class AdminBeoEditor {
 
             $html.= "<span id='tipusstatus{$beo["id"]}'><a href='#' class='tlink' title='{$titl}' onclick='showTipusValaszto({$beo["id"]});return false;'>{$num} tipus</a></span> ";
 
-            $html.= "<span title='Csak sorban foglalható időpontok'><input onchange='beoSave({$doctorId},{$beoId});' onclick='cssClick(1);' type='checkbox' value='1' id='csaksorban' name='csaksorban'" . ($beo["csaksorban"] == 1 ? " checked" : "") . ">&darr;</span> ";
-            $html.= "<span title='Csak fordított sorrendben foglalható időpontok'><input onchange='beoSave({$doctorId},{$beoId});' onclick='cssClick(2);' type='checkbox' value='2' id='csakvsorban' name='csakvsorban'" . ($beo["csaksorban"] == 2 ? " checked" : "") . ">&uarr;</span> ";
+            $html.= "<span title='Csak sorban foglalható időpontok'><input onchange='beoSave({$doctorId},{$beoId},\"csaksorban\");' onclick='cssClick(1);' type='checkbox' value='1' id='csaksorban' name='csaksorban'" . ($beo["csaksorban"] == 1 ? " checked" : "") . ">&darr;</span> ";
+            $html.= "<span title='Csak fordított sorrendben foglalható időpontok'><input onchange='beoSave({$doctorId},{$beoId},\"csakvsorban\");' onclick='cssClick(2);' type='checkbox' value='2' id='csakvsorban' name='csakvsorban'" . ($beo["csaksorban"] == 2 ? " checked" : "") . ">&uarr;</span> ";
 
-            $html.= "<span title='Nincs időpontfoglalás'><input onchange='beoSave({$doctorId},{$beoId});' value='1' type='checkbox' id='noreservation' name='noreservation'" . ($beo["noreservation"] == 1 ? " checked" : "") . ">Nincs időpontfoglalás&nbsp;</span> ";
+            $html.= "<span title='Nincs időpontfoglalás'><input onchange='beoSave({$doctorId},{$beoId},\"noreservation\");' value='1' type='checkbox' id='noreservation' name='noreservation'" . ($beo["noreservation"] == 1 ? " checked" : "") . ">Nincs időpontfoglalás&nbsp;</span> ";
 
             $html.= "<a href='#' title='Sor törlése' onclick='delBeoRow({$doctorId},{$beo["id"]});return false;'><i class='fas fa-trash-alt'></i></a> ";
             $html.= "<a href='#' title='Extra adatok' onclick='$(\"#extradata{$beo["id"]}\").toggle();return false;'><i class='fas fa-bars'></i></a>";
@@ -232,10 +246,10 @@ class AdminBeoEditor {
 
 
             $html.= "<div id='extradata{$beo["id"]}' style='padding:2px 0px 2px 25px;".($this->isExtraData($beo)?"":"display:none;")."'>";
-            $html.= "Érvényesség: <input onchange='beoSave({$doctorId},{$beoId});' id='validfrom' name='validfrom' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input onchange='beoSave({$doctorId},{$beoId});' id='validto' name='validto' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
-            $html.= "Megjegyzés: <input onchange='beoSave({$doctorId},{$beoId});' id='bmegj' name='bmegj' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
-            $html.= "<input onchange='beoSave({$doctorId},{$beoId});'  value='1' type='checkbox' id='nopack' name='nopack'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
-            $html.= "<br>Nyitás minden cégnek: <input type=\"checkbox\" onchange='beoSave({$doctorId},{$beoId});' name=\"open_beo_for_all_company\" " . ($beo["open_beo_for_all_company"] == 1 ? " checked" : "") . " value=\"1\"> lejárat előtt ennyivel:&nbsp;<input type=\"text\" style=\"width:80px\" onchange='beoSave({$doctorId},{$beoId});' placeholder=\"óra\" name=\"release_beo_before_expire_time\" value=\"".$beo["release_beo_before_expire_time"]."\">";
+            $html.= "Érvényesség: <input onchange='beoSave({$doctorId},{$beoId},\"validfrom\");' id='validfrom' name='validfrom' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input onchange='beoSave({$doctorId},{$beoId},\"validto\");' id='validto' name='validto' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
+            $html.= "Megjegyzés: <input onchange='beoSave({$doctorId},{$beoId},\"bmegj\");' id='bmegj' name='bmegj' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
+            $html.= "<input onchange='beoSave({$doctorId},{$beoId},\"nopack\");'  value='1' type='checkbox' id='nopack' name='nopack'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
+            $html.= "<br>Nyitás minden cégnek: <input type=\"checkbox\" onchange='beoSave({$doctorId},{$beoId},\"openforallcompany\");' name=\"open_beo_for_all_company\" " . ($beo["open_beo_for_all_company"] == 1 ? " checked" : "") . " value=\"1\"> lejárat előtt ennyivel:&nbsp;<input type=\"text\" style=\"width:80px\" onchange='beoSave({$doctorId},{$beoId});' placeholder=\"óra\" name=\"release_beo_before_expire_time\" value=\"".$beo["release_beo_before_expire_time"]."\">";
             $html.= "</div>";
 
             $html.= "<div id='tipusvalaszto{$beo["id"]}'></div>";
@@ -281,5 +295,17 @@ class AdminBeoEditor {
         $html .= "</div>";
         return $html;
     }
+
+    private function showPlaceSelector($orvosId, $beoData):string {
+        $helyszinId = $beoData["helyszinid"];
+        if (!$helyszinData = sql_query("select cim from helyszinek where id=?", [$helyszinId])->fetch(PDO::FETCH_ASSOC)) {
+            $helyszinData["cim"] = "helyszín?";
+        }
+
+        $html = "<div onclick='showHelyszinSelect(\"{$beoData["id"]}\", \"{$helyszinId}\");' style='display:inline-block;vertical-align:top;border:1px solid #ccc;padding:2px 5px;cursor:pointer;width:200px;overflow: hidden;white-space: nowrap;'>".$helyszinData["cim"]."</div>&nbsp;";
+        $html.= "<input type='hidden' id='helyszinid' name='helyszinid' value='{$helyszinId}' />";
+        return $html;
+    }
+
 
 }

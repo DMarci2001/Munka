@@ -27,7 +27,7 @@ class PrintService
         "innioertesites"     => "innioertesites",
         "bfkh_email_kuldes"  => "bfkh_email_kuldes",
         "munkanaplo"         => "munkanaplo",
-        "munkanaplopdf"         => "munkanaplopdf",
+        "munkanaplopdf"      => "munkanaplopdf",
     );
 
     private array $inputs = array(
@@ -1256,4 +1256,110 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         unlink($pdfFileName);
     }
 
+
+    public function printBeoPdf($beoId, $nap):string {
+        //$beoId = $_GET["printbeopdf"];
+        //$nap = $_GET["nap"];
+        $timeFrom = "{$nap} 00:00:00";
+        $timeTo = "{$nap} 23:59:59";
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        if (!$beoData = sql_query("select * from orvos_beosztas_new where id=?", [$beoId])->fetch(PDO::FETCH_ASSOC)) {
+            die("beo not found");
+        }
+
+        if (!isset($_SESSION["adminuser"])) {
+            die("error 401");
+        }
+
+        $orvosId = $beoData["orvosid"];
+        $helyszinId = $beoData["helyszinid"];
+        $pdfLocation = "templates/szurovizsgalat_form.pdf";
+        if ($helyszinId == 681) {
+            $pdfLocation = "templates/szurovizsgalat_form_szugy.pdf";
+        }
+        if ($helyszinId == 682) {
+            $pdfLocation = "templates/szurovizsgalat_form_nograd.pdf";
+        }
+
+        //csak a beosztás
+        /*
+        $reservations = sql_query("SELECT f.*, h.cim as helyszin, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f
+                        LEFT JOIN cegek c on c.id=f.cegid
+                        LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
+                        LEFT JOIN orvosok o on o.id=f.orvosassigned
+                        LEFT JOIN helyszinek h on h.id=f.helyszinid                
+                        LEFT JOIN dokumentumok d on d.foglalasid=f.id
+                        LEFT JOIN cegvars v on v.id=f.telephelyid
+                        WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.orvosassigned in (0, ?) and f.nev<>'nincs név'
+                        GROUP BY f.id order by f.datum", [$timeFrom, $timeTo, $helyszinId, $orvosId])->fetchAll(PDO::FETCH_ASSOC);
+        */
+
+        //egész nap abc sorrendben
+        $reservations = sql_query("SELECT f.*, h.cim as helyszin, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f
+                        LEFT JOIN cegek c on c.id=f.cegid
+                        LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
+                        LEFT JOIN orvosok o on o.id=f.orvosassigned
+                        LEFT JOIN helyszinek h on h.id=f.helyszinid                
+                        LEFT JOIN dokumentumok d on d.foglalasid=f.id
+                        LEFT JOIN cegvars v on v.id=f.telephelyid
+                        WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.nev<>'nincs név'
+                        GROUP BY f.id order by f.nev", [$timeFrom, $timeTo, $helyszinId])->fetchAll(PDO::FETCH_ASSOC);
+
+        $savedPdfs = [];
+        $reservation = [];
+        foreach ($reservations as $key => $reservation) {
+            $saveName = "templates/".session_id()."_{$key}.pdf";
+            $savedPdfs[] = $saveName;
+
+            $neme = "";
+            if ($reservation["neme"] == 1) {
+                $neme = "Férfi";
+            }
+            if ($reservation["neme"] == 2) {
+                $neme = "Nő";
+            }
+
+            $tz = new DateTimeZone("Europe/Brussels");
+            $age = DateTime::createFromFormat("Y-m-d", $reservation["szuldatum"], $tz)->diff(new DateTime('now', $tz))->y;
+
+            $input = [
+                "datum" => date("Y.m.d", strtotime($reservation["datum"])),
+                "datum2" => date("y.m.d", strtotime($reservation["datum"])),
+                "helyszin" => $this->pdfChars($reservation["helyszin"]),
+                "helyszin2" => $this->pdfChars($reservation["helyszin"]),
+                "nev" => $this->pdfChars($reservation["nev"]),
+                "cim" => $this->pdfChars($reservation["irsz"]." ".$reservation["varos"].", ".$reservation["utca"]),
+                "anyjaneve" => $this->pdfChars($reservation["anyjaneve"]),
+                "szuldatum" => date("Y.m.d", strtotime($reservation["szuldatum"])),
+                "eletkor" => $age,
+                "neme" => $this->pdfChars($neme),
+                "szurestipus" => $this->pdfChars($reservation["szurestipusnev"]),
+            ];
+            $pdf = new Pdf($pdfLocation);
+            $pdf->fillForm($input)->needAppearances()->flatten()->saveAs($saveName);
+        }
+
+        $multiPagePdf = new Pdf($savedPdfs);
+
+        $fileName = $reservation["helyszin"]." - ".date("Y-m-d", strtotime($reservation["datum"])).".pdf";
+        $raw = $multiPagePdf->toString();
+
+        header("Pragma: no-cache");
+        header("Cache-Control: no-store, no-cache");
+        header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+        header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+        header("Cache-Control: must-revalidate");
+        header('Content-transfer-encoding: binary');
+        header("Content-Type: application/octet-stream");
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        //header("Content-Type: application/pdf");
+        echo $raw;
+        die;
+    }
+
+
 }
+

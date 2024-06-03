@@ -409,7 +409,7 @@ class LaborKeroService
         $html = "";
         $html.= "<select style='width:260px;height:27px;' id='laborkercsomagcombo'>";
         $html.= "<option value='0'>Válassz csomagot, vagy jelölj ki tételeket!</option>";
-        $packs = sql_query("select id, name, {$itemsField} as items from synlab_labor_csomagok WHERE {$itemsField}<>'[]' AND aktiv=1 order by name")->fetchAll(PDO::FETCH_ASSOC);
+        $packs = sql_query("select id, IF(hmm_name='' or hmm_name is null, name, hmm_name) as name, {$itemsField} as items from synlab_labor_csomagok WHERE {$itemsField}<>'[]' AND aktiv=1 order by name")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($packs as $pack) {
             $items = json_decode($pack["items"], JSON_OBJECT_AS_ARRAY);
             $items = array_unique($items);
@@ -452,7 +452,7 @@ class LaborKeroService
         if (empty($requestPacks)) {
             $html .= "Nem választottál még csomagot";
         } else {
-            $rPacks = sql_query("select id, name, price from synlab_labor_csomagok where id in (" . implode(",", $requestPacks) . ")")->fetchAll(PDO::FETCH_ASSOC);
+            $rPacks = sql_query("select id, IF(hmm_name='' or hmm_name is null, name, hmm_name) as name, price from synlab_labor_csomagok where id in (" . implode(",", $requestPacks) . ")")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rPacks as $rPack) {
                 $html .= "<a class='printbutton' onclick='removePackFromLaborRequest({$rPack["id"]});return false;' href='#' style='background: #ccc;' title='{$rPack["name"]}'>" . mb_substr($rPack["name"], 0, 15) . " <i class='fa-solid fa-xmark'></i></a> ";
             }

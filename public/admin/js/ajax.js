@@ -3639,11 +3639,11 @@ function checkAllPermissionEditor(key, checked) {
 }
 
 
-function beoSave(oid, beoId) {
+function beoSave(oid, beoId, saveType) {
     $.ajax({
         type: "POST",
         url: "index.php?page=doctors&szerk="+oid,
-        data: "savebeorow=1&"+$("#beorow"+beoId).serialize(),
+        data: "savebeorow=1&"+$("#beorow"+beoId).serialize()+"&saveType="+saveType,
         success: function (data) {
             $.toast({
                 text: "Beosztás mentve",
@@ -4742,3 +4742,30 @@ function selectTelephelySzurestipus(telephelyid,szurestipusid){
     })
 }
 
+function showHelyszinSelect(beoId, helyszinId) {
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: { page:"doctors", showhelyszinselect:beoId, helyszinid:helyszinId }
+    }).done(function (msg) {
+        $("#beohedit"+beoId).html(msg);
+    });
+}
+
+function restoreDeletedReservation(id) {
+    if (!confirm("Biztos visszaállítod a törölt foglalást?")) {
+       return;
+    }
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=log",
+        data: { restoreDeletedReservation:id },
+        success: function(response){
+            $.toast({
+                text: response,
+                icon: 'success'
+            });
+        }
+    })
+}

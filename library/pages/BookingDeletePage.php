@@ -14,11 +14,14 @@ class BookingDeletePage extends CorePage {
         }
 
         if (isset($_GET["dodeletereservation"])) {
+            $service = new NotificationService();
+            $service->deleteUserMessage($_GET["id"]);
+
+            $GLOBALS["extraloginfo"] = "felhasználó törölte a levél linkre kattintva";
             $this->bookingService->deleteReservation($_GET["id"], $_GET["rk"]);
             header("location:index.php?page=bookingdeletesuccessful");
             die();
         }
-
     }
 
     public function showPage() {
@@ -40,13 +43,10 @@ class BookingDeletePage extends CorePage {
                 $idopont = substr($row["datum"],0,16);
             }
 
-           
-
             echo "{$webText["kedves"]} {$row["nev"]}!<br>
             <br>
             {$webText["torleskezd"]}:<br/>
             <br/>
-            
             
             {$webText["nev"]}: {$row["nev"]}<br>
             {$webText["telefon"]}: {$row["telefon"]}<br>

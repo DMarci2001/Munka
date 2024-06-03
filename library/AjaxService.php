@@ -44,6 +44,11 @@ class AjaxService {
                 $bookingService->setNeme(intval($_POST["neme"]));
             }
 
+            $_SESSION["selectedJarat"] = "";
+            if (!empty($_POST["selectedJarat"])) {
+                $_SESSION["selectedJarat"] = $_POST["selectedJarat"];
+            }
+
             if (!$odata = $bookingService->selectOrvosForIdopont($_POST["idopont"], $_POST["orvos"])) {
                 die("Ezt az időpontot időközben lefoglalták!");
             }
@@ -134,6 +139,10 @@ class AjaxService {
             die;
         }
 
+        if (isset($_GET["address"])) {
+            setcookie("lockedhelyszin", $_GET["address"], time() + 60 * 60 * 24 * 365, "/");
+            $_COOKIE["lockedhelyszin"] = $_GET["address"];
+        }
 
         if (isset($_GET["showfoto"])) {
             $service = new DocAgent();
@@ -162,6 +171,7 @@ class AjaxService {
                             $bookingService->notificationService->sendToCegAndOrvos($reservation["id"]);
                             $bookingService->notificationService->sendUserReservationNotification($reservation["id"]);
                         } else {
+                            $GLOBALS["extraloginfo"] = "orvos nem erősítette meg";
                             $bookingService->deleteReservation($reservation["id"], $reservation["pass"]);
                         }
                     }

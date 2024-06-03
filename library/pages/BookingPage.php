@@ -1576,11 +1576,16 @@ class BookingPage extends CorePage
         $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
 
         if (isset($tipusok)) {
-            for ($i = 0; $i < count($tipusok); $i++) {
+            foreach ($tipusok as $tipus) {
+            //for ($i = 0; $i < count($tipusok); $i++) {
                 //if (CompanyService::isKRE() && $tipusok[$i] != 1) {
                 //    continue;
                 //}
-                @$tipusdisplay[$tipusok[$i]] = $tipusnevek[$tipusok[$i]];
+
+                if (CompanyService::isBudapestBrand() && $tipus == 15) {
+                    continue;
+                }
+                @$tipusdisplay[$tipus] = $tipusnevek[$tipus];
             }
             if (isset($tipusdisplay)) {
                 asort($tipusdisplay);
@@ -1656,6 +1661,15 @@ class BookingPage extends CorePage
         
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {
+                if (!empty($_COOKIE["lockedhelyszin"])) {
+                    if ($hdata = sql_query("select id from helyszinek where alias=?", [$_COOKIE["lockedhelyszin"]])->fetch(PDO::FETCH_ASSOC)) {
+                        $_POST["helyszin"] = $hdata["id"];
+                    }
+                    if ($_COOKIE["lockedhelyszin"] != $rowt["alias"]) {
+                        continue;
+                    }
+                }
+
                 if (isset($validPlaces)) {
                     if (!in_array($rowt["id"], $validPlaces)) {
                         continue;
