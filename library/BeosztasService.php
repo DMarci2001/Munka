@@ -79,6 +79,7 @@ class BeosztasService {
             GROUP BY h.id ORDER BY cim", ["|{$cegId}|", "|{$szuresTipusId}|", $szuresTipusId])->fetchAll();
 
             if(CompanyService::isFGSZ()){
+                //Ezt majd ki kell vezetni, ha a többi vidéki helyszín is kell :P
                 $helyszinek = array();
                 $helyszinek[] = ["id" => 1, "cim" => "Budapest (1135) Jász utca 33-35."];
                 $helyszinek[] = ["id" => 644, "cim" => "Budapest (1117)  Bercsényi utca 24. KELTEXMED"];
