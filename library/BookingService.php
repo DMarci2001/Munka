@@ -286,6 +286,8 @@ class BookingService
                     $binterval = $napiBeo["binterval"];
                     $sorszam = 1;
                     $jarat = 0;
+                    $jaratStart = "";
+                    
 
                     if ($orvosData["pecsetszam"] == "temp") {
                         continue;
@@ -305,7 +307,7 @@ class BookingService
                         $buttonJava = "nemfog();return false;";
                         $buttonStyle = "";
                         $beoData = [];
-                        $jaratStart = "";
+
                         $step++;
 
 
@@ -406,16 +408,23 @@ class BookingService
 
                             //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
                             if (empty($jaratStart)) {
+                                
                                 $jaratStart = $ora;
                                 $jarat = array_search($ora,$jaratok);
+                                $aktualisJarat = $jaratok[$jarat];
                             }
-                            
+
                             if ($sorszam % 6 == 1) {
+                                $aktualisJarat = $jaratok[$jarat];
                                 $sectionHTML .= "<div style='margin-top:10px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;padding: 5px 0px;'>{$jaratok[$jarat]}-as járat</div>";
                                 $jarat++;
                             }
-                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}'  onclick='setJarat(\"{$jaratok[$jarat]}\");{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
+
+                            $btn = "<a class='{$buttonClass}' title='{$buttonTitle}'  onclick='setJarat(\"{$aktualisJarat}\");{$buttonJava}' href='#' style='min-width: 40px;'>{$sorszam}.</a><br/>";
                             $sorszam++;
+                           
+                           
+
                         }
 
                         //bme és dr lászló larissza esetén minden időpont legyen foglalt
