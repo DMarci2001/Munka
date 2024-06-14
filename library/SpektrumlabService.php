@@ -51,11 +51,12 @@ class SpektrumlabService {
     const BEKOLDO_KOD_MAP = [
         "000000370" => "Hungaria Med-M Kft.",
         "000000477" => "Hungária Med-M Kft. (TESCO)",
-        "000000479" => "Hungária Med-M Kft. (Suzuki egészségút)",
+        "000000478" => "Hungária Med-M Kft. (Suzuki egészségút)",
         "000000480" => "Hungária Med-M Kft. (Suzuki dolgozói)",
         "000000481" => "Hungária Med-M Kft. (MÁESZ)",
         "000000482" => "Hungária Med-M Kft. (Külső szűrés)",
         "000000483" => "Hungária Med-M Kft. (Hazai pálya)",
+        "000000479" => "Hungária Med-M Kft. (Suzuki menedzser)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -187,7 +188,7 @@ class SpektrumlabService {
             $paciensGender = "X";
         }
 
-        if ($paciensId == 0) {
+        if ($paciensId == 0 || strlen($paciensTAJ) > 7) {
             $paciensId = "f{$paciensTAJ}";
         }
 
