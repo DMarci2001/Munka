@@ -2108,6 +2108,10 @@ class BookingService
     public function getInfoPageText($szurestipusid, $inputData = null){
         $checkboxes = ["kisrutin", "nagyrutin", "pajzsmirigy", "noi-tumormarker", "ferfi-tumormarker", "egyeb-labor"];
 
+        if (CompanyService::isALDI()) {
+            return "";
+        }
+
         if(CompanyService::isSuzukiGHC()){
             if(isset($_SESSION["user"])){
                 if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_SESSION["user"]["taj"])))){

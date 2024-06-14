@@ -670,7 +670,7 @@ class SynlabService
 
         $emailConfigs["hungariamed"] = [
             ["email" => "tigazszures@hungariamed.hu", "password" => "Ree8ceix", "emailToCheck" => 100],
-            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 100],
+            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 200],
             ["email" => "mak@hungariamed.hu", "password" => "Kohju8cu", "emailToCheck" => 100],
             ["email" => "torvenyszek@hungariamed.hu", "password" => "xae2aiLu", "emailToCheck" => 100],
             ["email" => "hmmszures@hungariamed.hu", "password" => "4L8PtsbJJB", "emailToCheck" => 200],
@@ -772,7 +772,7 @@ class SynlabService
 
                                     $parsedPatientData = $this->parsePatientDataFromPDF($tempFileDecoded);
 
-                                    sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?, folyamatban=?, bekuldokod=?", [
+                                    sql_query("insert into labrequests set megj='',createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?, folyamatban=?, bekuldokod=?", [
                                         $mailDate,
                                         $parsedPatientData["nev"],
                                         $parsedPatientData["taj"],
@@ -826,7 +826,7 @@ class SynlabService
                                                     continue;
                                                 }
 
-                                                sql_query("insert into labrequests set createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
+                                                sql_query("insert into labrequests set megj='', createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
                                                     $mailDate,
                                                     $emailConfig["email"],
                                                     $fileName,

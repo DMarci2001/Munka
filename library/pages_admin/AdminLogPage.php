@@ -120,7 +120,7 @@ class AdminLogPage extends AdminCorePage {
 
         $logRows = sql_query("select l.*,u.nev as usernev from activitylog l
         left join users u on u.id=l.userid
-        where true {$w} order by l.datum desc limit 1000")->fetchAll(PDO::FETCH_ASSOC);
+        where true {$w} order by l.datum desc limit 10000")->fetchAll(PDO::FETCH_ASSOC);
 
         echo "<table style='min-width:930px;'>";
         echo "<tr style='background-color:#888;color:#fff;'>";
