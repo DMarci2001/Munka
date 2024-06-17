@@ -559,7 +559,7 @@ class VaroteremService
         $q = sql_query("SELECT v.*,fogl.nev,fogl.id as fid,fogl.pass,o.colorcode FROM varoterem v
                         LEFT JOIN foglalasok fogl ON fogl.id=v.fid
                         LEFT JOIN orvosok o ON o.id=v.orvos_pref
-                        WHERE v.szurestipusid={$tipus} AND fogl.datum LIKE \"%" . $_SESSION["setday"] . "%\" AND v.statusz=\"varakozik\" ");
+                        WHERE v.szurestipusid={$tipus} AND fogl.datum LIKE \"%" . $_SESSION["setday"] . "%\" AND fogl.helyszinid={$_SESSION["helyszin"]} AND v.statusz=\"varakozik\" ");
 
 
         while ($r = sql_fetch_array($q)) {
