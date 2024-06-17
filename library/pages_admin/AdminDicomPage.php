@@ -4,13 +4,15 @@ class AdminDicomPage extends AdminCorePage
 {
 
     private DicomService $dicomService;
-    private bool $teszt = false;
 
     public function __construct()
     {
         parent::__construct();
 
-        $this->teszt = session_id() == "kchtqtfhq8tj3502rs4upbas80";
+        if (DicomService::tesztMode()) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+        }
 
         $this->dicomService = new DicomService();
 
@@ -58,6 +60,43 @@ class AdminDicomPage extends AdminCorePage
         if (isset($_POST["showimagelist"])) {
             $patients = $this->dicomService->getPatients(["byid" => $_POST["showimagelist"]]);
             echo $this->showImageList($patients[0]["patientID"]);
+            die;
+        }
+
+        if (isset($_GET["deletedicomfile"])) {
+            if (!in_array($this->adminUser->user["username"], ["jns", "Marci94"])) {
+                die("nincs jogosultságod!");
+            }
+
+            $dicomData = $this->dicomService->getDicomEntry($_GET["deletedicomfile"]);
+
+            if (empty($dicomData["id"])) {
+                die("hiba 4419");
+            }
+
+            $fileName = $dicomData["fileName"];
+
+            if (!empty($fileName) && !is_file($fileName)) {
+                die("hiba 4420");
+            }
+
+            if (is_dir($fileName)) {
+                die("hiba 4421");
+            }
+
+            //file törlése
+            unlink($fileName);
+
+            //ellenőrzés, hogy tényleg letörlődött a file mielőtt az adatbázisból is törlésre kerül
+            if (is_file($fileName)) {
+                die("hiba 4422");
+            }
+
+            $this->dicomService->deleteDicomEntry($dicomData["id"]);
+
+            $_SESSION["dicommessage"] = "{$dicomData["patientName"]} ({$fileName}) törölve!";
+
+            header("location:index.php?page={$_GET["page"]}");
             die;
         }
 
@@ -172,6 +211,10 @@ class AdminDicomPage extends AdminCorePage
 
         echo "</div>";
 
+        if (isset($_SESSION["dicommessage"])) {
+            echo "<div style='padding:10px;background:forestgreen;color:white;margin-bottom:20px;'>{$_SESSION["dicommessage"]}</div>";
+            unset($_SESSION["dicommessage"]);
+        }
 
         echo "<div id='dicomlist'>";
         echo $this->listDicomEntries();
@@ -375,6 +418,11 @@ class AdminDicomPage extends AdminCorePage
         $images = $this->dicomService->getImages($patientId);
 
         foreach ($images as $row) {
+            if (strtotime($row["contentDate"]) < strtotime("now - 1 week") && !isset($oldSign)) {
+                $html.= "<br clear='all'>";
+                $html.= "<div style='font-weight: bold;font-size: 16px;margin-bottom: 10px;'>Régebbi képek</div>";
+                $oldSign = true;
+            }
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
             $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
 
@@ -387,7 +435,8 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<div style='text-align: center;padding-top: 5px;'>".date("Y-m-d H:i", strtotime($row["contentDate"]))."</div>";
             $html.= "<div style='text-align: center;padding-top: 5px;font-size: 16px;'>";
             //$html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><i class='fas fa-eye'></i></a>&nbsp;";
-            $html.= "<a title='DICOM file letöltése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'><i class='fas fa-cloud-download-alt'></i></a>";
+            $html.= "<a title='DICOM file letöltése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'><i class='fas fa-cloud-download-alt'></i></a>&nbsp;";
+            $html.= "<a title='DICOM file törlése' style='' target='_blank' onclick='return confirm(\"Biztos törlöd ezt a képet?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&deletedicomfile={$row["uid"]}'><i class='fas fa-trash-can'></i></a>";
             $html.= "</div>";
             $html.= "</div>";
         }

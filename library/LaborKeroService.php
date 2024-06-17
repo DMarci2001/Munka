@@ -520,6 +520,9 @@ class LaborKeroService
             if ($laborRequestData["matricacode"] != "") {
                 $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>Matrica megérkezett</div>";
                 $html.= "<div style='margin: 10px 0px;'><a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$reservationData["id"]}\", \"{$reservationData["pass"]}\");return false;' href='#' style='background: #00aa00'>Vonalkódos matrica nyomtatása</a></div>";
+                if ($this->laborProvider == SELF::LABOR_PROVIDER_SYNLAB) {
+                    $html.= "<div style='color:red;font-weight: bold;'>A vonalkódos matrica egyelőre csak a SpektrumLab laborkérés esetén működik</div>";
+                }
             }
 
             foreach ($messages as $message) {
@@ -738,7 +741,7 @@ class LaborKeroService
             echo "csomagok: ".count($orderedPackages)."\n";
 
             foreach ($orderedPackages as $orderedPackage) {
-                echo "itt3 {$orderedPackage["product_id"]}\n";
+                echo "processing pack {$orderedPackage["product_id"]}\n";
                 if ($packData = sql_query("select cs.id, cs.name, cs.spektrumitems as items from synlab_labor_csomagok cs where cs.id=?", [$orderedPackage["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
                     $packItems = json_decode($packData["items"]);
                     $packs[] = $packData["id"];
@@ -751,40 +754,19 @@ class LaborKeroService
                 }
             }
 
-            /*
-            $cartDatas = json_decode($labShopReservation["cart_content"], JSON_OBJECT_AS_ARRAY);
-            $onlyPackages = true;
-            foreach ($cartDatas as $cartData) {
-                if (isset($cartData["type"]) && $cartData["type"] != "package") {
-                    //nem csak csomag van benne, így skippeljük
-                    $onlyPackages = false;
-                }
-            }
 
-            if (!$onlyPackages) {
-                echo "{$labShopReservation["nev"]} nem csak csomagok {$labShopReservation["laborid"]}\n";
-                continue;
-            }
+            $orderedItems = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='item'", [$labShopReservation["laborid"]])->fetchAll(PDO::FETCH_ASSOC);
+            echo "items: ".count($orderedItems)."\n";
 
-            echo "{$labShopReservation["nev"]} only packs {$labShopReservation["laborid"]}\n";
-
-            $items = $packs = [];
-
-            foreach ($cartDatas as $cartData) {
-                if (isset($cartData["type"]) && $cartData["type"] == "package") {
-                    if ($packData = sql_query("select cs.id, cs.name, cs.spektrumitems as items from synlab_labor_csomagok cs where cs.id=?", [$cartData["id"]])->fetch(PDO::FETCH_ASSOC)) {
-                        $packItems = json_decode($packData["items"]);
-                        $packs[] = $packData["id"];
-                        echo "pack: {$packData["name"]} ".count($packItems)."\n";
-                        foreach ($packItems as $packItem) {
-                            if (!in_array($packItem, $items)) {
-                                $items[] = $packItem;
-                            }
-                        }
+            foreach ($orderedItems as $orderedItem) {
+                echo "processing item {$orderedItem["product_id"]}\n";
+                if ($itemData = sql_query("select t.id, t.name, t.commazo, t.spid from synlab_labor_tetelek t where t.id=? and t.spid<>0", [$orderedItem["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
+                    if (!in_array($itemData["spid"], $items)) {
+                        $items[] = $itemData["spid"];
                     }
                 }
             }
-            */
+
 
             $items = array_unique($items);
 

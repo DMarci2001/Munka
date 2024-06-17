@@ -13,6 +13,10 @@ class DicomService {
 
     }
 
+    public static function tesztMode():bool {
+        return session_id() == "q9tcjuhgv7c72a861ldi7pvg3h";
+    }
+
     public function teszt() {
         //$this->processEntries();
         $this->rescanDicomEntries();
@@ -187,6 +191,8 @@ class DicomService {
     public function getPatients($params = []) {
         $queryParams = [];
         $w = "";
+        $wDateRestrict = "AND d.contentDate>DATE_SUB(NOW(), INTERVAL 7 DAY)";
+
         if (!$this->adminUser->allDicomAccess()) {
             $w.= $this->adminUser->cegSQLFilter("d.cegid");
         }
@@ -199,16 +205,19 @@ class DicomService {
         if (!empty($params["search"])) {
             $w .= " and instr(concat(patientName,patientBirthDate,patientOtherIDs), ?)";
             $queryParams[] = $params["search"];
+            $wDateRestrict = "";
         }
 
         if (!empty($params["byuid"])) {
             $w .= " and uid=?";
             $queryParams[] = $params["byuid"];
+            $wDateRestrict = "";
         }
 
         if (!empty($params["byid"])) {
             $w .= " and d.patientID=?";
             $queryParams[] = $params["byid"];
+            $wDateRestrict = "";
         }
 
         if (!empty($this->getSelectedCompany())) {
@@ -221,7 +230,7 @@ class DicomService {
             $queryParams[] = $this->getSelectedModel();
         }
 
-        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where true {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
@@ -235,6 +244,10 @@ class DicomService {
         } else {
             return ["patientName" => "403 nincs jogosultságod"];
         }
+    }
+
+    public function deleteDicomEntry($id) {
+        sql_query_common("delete from dicom where id=? limit 1", [$id]);
     }
 
     public function getRawDicomFile($id) {
@@ -296,12 +309,26 @@ class DicomService {
         return imagecreatefromstring(`convert {$dir}/skeleton{$num}.png {$param} png:-`);
     }
 
-    public function getCompanies() {
-        return sql_query_common("select institutionName from dicom group by institutionName")->fetchAll(PDO::FETCH_ASSOC);
+    public function getCompanies($cache = false):array {
+        $cacheFileName = Booking_Constants::DOCUMENT_PATH."dicomCompanyCache.txt";
+
+        if ($cache || !is_file($cacheFileName)) {
+            $arr = sql_query_common("select institutionName from dicom group by institutionName")->fetchAll(PDO::FETCH_ASSOC);
+            file_put_contents($cacheFileName, json_encode($arr, JSON_PRETTY_PRINT));
+        }
+
+        return json_decode(file_get_contents($cacheFileName), JSON_OBJECT_AS_ARRAY);
     }
 
-    public function getModels() {
-        return sql_query_common("select concat(manufacturerModelName,' ',manufacturer) as name, manufacturer from dicom group by manufacturer")->fetchAll(PDO::FETCH_ASSOC);
+    public function getModels($cache = false):array {
+        $cacheFileName = Booking_Constants::DOCUMENT_PATH."dicomModelCache.txt";
+
+        if ($cache || !is_file($cacheFileName)) {
+            $arr = sql_query_common("select concat(manufacturerModelName,' ',manufacturer) as name, manufacturer from dicom group by manufacturer")->fetchAll(PDO::FETCH_ASSOC);
+            file_put_contents($cacheFileName, json_encode($arr, JSON_PRETTY_PRINT));
+        }
+
+        return json_decode(file_get_contents($cacheFileName), JSON_OBJECT_AS_ARRAY);
     }
 
     public function getSelectedCompany():string {

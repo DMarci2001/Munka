@@ -344,7 +344,7 @@ class PrintService
 
     private function pdfChars($text)
     {
-        $text = str_replace("ő", "ö", $text);
+        $text = str_replace("ő", "ô", $text);
         $text = str_replace("ű", "ü", $text);
         $text = str_replace("í", "i", $text);
         $text = str_replace("Ő", "Ö", $text);
@@ -1274,14 +1274,25 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             die("error 401");
         }
 
+        $pdfHelyszinMap = [
+            681 => "templates/szurovizsgalat_form_szugy.pdf",
+            682 => "templates/szurovizsgalat_form_nograd.pdf",
+            693 => "templates/szurovizsgalat_form_egyhazasgerge.pdf",
+            685 => "templates/szurovizsgalat_form_endrefalva.pdf",
+            684 => "templates/szurovizsgalat_form_szirak.pdf",
+            687 => "templates/szurovizsgalat_form_varsany.pdf",
+            690 => "templates/szurovizsgalat_form_nogradkovesd.pdf",
+            689 => "templates/szurovizsgalat_form_dejtar.pdf",
+            688 => "templates/szurovizsgalat_form_karancslapujto.pdf",
+            686 => "templates/szurovizsgalat_form_bercel.pdf",
+        ];
+
         $orvosId = $beoData["orvosid"];
         $helyszinId = $beoData["helyszinid"];
         $pdfLocation = "templates/szurovizsgalat_form.pdf";
-        if ($helyszinId == 681) {
-            $pdfLocation = "templates/szurovizsgalat_form_szugy.pdf";
-        }
-        if ($helyszinId == 682) {
-            $pdfLocation = "templates/szurovizsgalat_form_nograd.pdf";
+
+        if (isset($pdfHelyszinMap[$helyszinId])) {
+            $pdfLocation = $pdfHelyszinMap[$helyszinId];
         }
 
         //csak a beosztás
@@ -1290,7 +1301,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                         LEFT JOIN cegek c on c.id=f.cegid
                         LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
                         LEFT JOIN orvosok o on o.id=f.orvosassigned
-                        LEFT JOIN helyszinek h on h.id=f.helyszinid                
+                        LEFT JOIN helyszinek h on h.id=f.helyszinid
                         LEFT JOIN dokumentumok d on d.foglalasid=f.id
                         LEFT JOIN cegvars v on v.id=f.telephelyid
                         WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.orvosassigned in (0, ?) and f.nev<>'nincs név'

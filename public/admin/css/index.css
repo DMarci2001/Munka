@@ -1532,7 +1532,6 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 .searchrowcell {
-	display:table-cell;
 	padding: 2px 5px 2px 0px;
 }
 
