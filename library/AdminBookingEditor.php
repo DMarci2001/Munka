@@ -101,10 +101,8 @@ class AdminBookingEditor {
                 $eljottIdopont = date("Y-m-d", strtotime($reservationData["datum"]))." ".$_POST["eljottidopont"].":00";
             }
 
-            if (!isset($_POST["alkalmassaguserid"])) $_POST["alkalmassaguserid"]=0;
+            
             if (!isset($_POST["voltnalunk"])) $_POST["voltnalunk"]=0;
-            if (!isset($_POST["alkalmassag"])) $_POST["alkalmassag"]=0;
-            if (!isset($_POST["alkalmassagido"])) $_POST["alkalmassagido"]=0;
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
             if (!isset($_POST["kieg_labor"])) $_POST["kieg_labor"]=0;
             if (!isset($_POST["kieg_hallas"])) $_POST["kieg_hallas"]=0;
@@ -118,8 +116,6 @@ class AdminBookingEditor {
             if (!isset($_POST["dokirexmunkakorid"])) $_POST["dokirexmunkakorid"]=0;
             if (!isset($_POST["dokirexcegid"])) $_POST["dokirexcegid"]=0;
             if (!isset($_POST["telephelyid"])) $_POST["telephelyid"]=0;
-            if (!isset($_POST["alkalmassagikhet"])) $_POST["alkalmassagikhet"]=0;
-            if (!isset($_POST["alkalmassagkorl"])) $_POST["alkalmassagkorl"]=0;
             
 
             if ($_POST["nev"]=="") $_POST["nev"]="nincs név";
@@ -155,28 +151,24 @@ class AdminBookingEditor {
                 varos=?,
                 utca=?,
                 voltnalunk=?,
-                alkalmassag=?,
-                alkalmassagido=?,
-                alkalmassagikhet=?,
-                alkalmassagkorl=?,
                 tudoszuroervenyesseg=?,
                 tudoszuro=?,
                 kieg_labor=?,
                 kieg_hallas=?,
                 vernyomas=?,
                 orvosszoveg=?,
-                alkalmassaguserid=?,
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
             where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), intval($_POST["telephelyid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["alkalmassag"], $_POST["alkalmassagido"], $_POST["alkalmassagikhet"], $_POST["alkalmassagkorl"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
-                $_POST["alkalmassaguserid"], $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
+                $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
 
 
             $day = date("Y-m-d", strtotime($reservationData["datum"]));
 
+            //Kiegészítő vizsgálatok adatainak módosítása hogy szinkronban legyen a parent foglalással
             sql_query("update foglalasok set
                 modifiedby=?,
                 modifiedtime=now(),
