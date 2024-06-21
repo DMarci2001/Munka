@@ -106,8 +106,6 @@ class AdminBookingEditor {
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
             if (!isset($_POST["kieg_labor"])) $_POST["kieg_labor"]=0;
             if (!isset($_POST["kieg_hallas"])) $_POST["kieg_hallas"]=0;
-            if (!isset($_POST["vernyomas"])) $_POST["vernyomas"] = "";
-            if (!isset($_POST["orvosszoveg"])) $_POST["orvosszoveg"] = "";
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
             if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
             if (!isset($_POST["neme"])) $_POST["neme"]=0;
@@ -155,13 +153,11 @@ class AdminBookingEditor {
                 tudoszuro=?,
                 kieg_labor=?,
                 kieg_hallas=?,
-                vernyomas=?,
-                orvosszoveg=?,
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
             where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), intval($_POST["telephelyid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["vernyomas"], $_POST["orvosszoveg"], 
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],
                 $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
 
