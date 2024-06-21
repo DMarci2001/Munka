@@ -4060,7 +4060,7 @@ function removeFromWaitList(fid){
         dataType:"JSON",
         data: {removeFromWaitList:fid},
         success: function(response){
-            console.table(response);
+
             $("#waitlist-table").html(response.html);
             if(response.status=="ok"){
                 $.toast({
@@ -4272,6 +4272,7 @@ function saveAlkalmassagiWin(fid){
                 text: "Alkalmassági adatok rögzítve.",
                 icon: 'success'
             });
+            $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable");
             hideGeneralPopup();
         }
     })
