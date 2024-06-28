@@ -82,6 +82,9 @@ class DokirexService
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
         $response = curl_exec($ch);
+        if($response==false){
+            $response = json_encode(array("message"=> "Nem sikerült kommunikálni a dokirex szerverével!"));
+        }
         $this->log($action, json_encode($params), $response);
 
         curl_close($ch);

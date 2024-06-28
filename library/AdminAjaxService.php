@@ -206,6 +206,22 @@ class AdminAjaxService {
                     $dokirexServiceKeltexMed = new DokirexService();
                     $responseKeltexMed = $dokirexServiceKeltexMed->insertPaciensIntoDokirex($params);
                 }
+                if(isset($response["message"]) && $response["message"]!="OK"){
+                    $html .= "<div style='color:#444;text-align:center;'>";
+                    $html .= "<div id='loginbox' class='loginbox'>";
+                    $html .= "<div class='loginhead'>Dokirex adatfeltöltés</div>";
+
+                    $html .= "<div style='padding:20px;text-align:center;'>";
+                    
+                    $html .= "<div style='text-align:left'>{$response["message"]}</div>";
+
+                    $html .= "<div style='padding-top:10px;'><input onclick='hideGeneralPopup();return false;' type='button' id='simplerefundclosebutton' value='Bezárás' /></div>";
+                    $html .= "</div>";
+
+                    $html .= "</div>";
+                    $html .= "</div>";
+                    die($html);
+                }
             }
 
             $p = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($_POST["pid"])));
@@ -1098,7 +1114,6 @@ class AdminAjaxService {
             die();
         }
 
-
         new LaborKeroService();
         new InvoiceService();
     }
@@ -1132,6 +1147,84 @@ class AdminAjaxService {
         header('Content-Type: application/json');
         echo json_encode($data);
         die();
+    }
+
+    private function sanyistatija(){
+
+        $csomagStat = array();
+
+        $result = sql_query("SELECT fogl.datum,fogl.nev,fogl.taj,fogl.szuldatum,fogl.megj,lq.createdby,REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\") AS rawids,
+                            (SELECT GROUP_CONCAT(slc1.name) FROM synlab_labor_csomagok slc1 WHERE slc1.id IN(REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\"))) AS csomagok
+                            FROM foglalasok fogl
+                            LEFT JOIN labrequests lq ON lq.foglalasid=fogl.id
+                            LEFT JOIN synlab_labor_csomagok slc ON slc.id IN(REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\"))
+                            WHERE fogl.helyszinid IN(669,282) AND fogl.datum BETWEEN \"2024-06-17%\" AND \"2024-06-21%\"
+                            GROUP BY fogl.id;")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($result as $key =>$data){
+            if(!empty($data["rawids"])){
+                $csomagok = sql_query("SELECT SUBSTR(GROUP_CONCAT(\" \",slc1.name),2) as csomagok 
+                FROM synlab_labor_csomagok slc1 
+                WHERE slc1.id IN({$data["rawids"]});")->fetchAll(PDO::FETCH_ASSOC);
+
+                if(isset($csomagok[0])){
+                    $result[$key]["csomagok"] = $csomagok[0]["csomagok"];
+                }
+
+                $csomagokArray = sql_query("SELECT name FROM synlab_labor_csomagok slc WHERE slc.id IN({$data["rawids"]});")->fetchAll(PDO::FETCH_ASSOC);
+                foreach($csomagokArray as $each){
+                    if(!empty($each["name"])){
+                        $match = array_search($each["name"],array_column($csomagStat,"nev"));
+                        if($match!==false){
+                            $csomagStat[$match]["db"] = $csomagStat[$match]["db"]+1;
+                        }else{
+                            $csomagStat[] = array("nev"=>$each["name"],"db"=>1);
+                        }
+                    }
+                }
+            }
+        }
+
+        echo "<table>";
+        echo "  <tr>";
+        echo "      <td>csomag</td>";
+        echo "      <td>db</td>";
+        echo "  </tr>";
+        foreach($csomagStat as $each){
+            echo "  <tr>";
+            echo "      <td>{$each["nev"]}</td>";
+            echo "      <td>{$each["db"]}</td>";
+            echo "  </tr>";
+        }
+        echo "  </tr>";
+        echo "</table>";
+        return;
+
+        echo "<table>";
+        echo "  <tr>";
+        echo "      <td>datum</td>";
+        echo "      <td>nev</td>";
+        echo "      <td>taj</td>";
+        echo "      <td>szuldatum</td>";
+        echo "      <td>megj</td>";
+        echo "      <td>createdby</td>";
+        echo "      <td>csomagok</td>";
+        echo "  </tr>";
+        foreach($result as $data){
+            echo "  <tr>";
+            echo "      <td>{$data["datum"]}</td>";
+            echo "      <td>{$data["nev"]}</td>";
+            echo "      <td>{$data["taj"]}</td>";
+            echo "      <td>{$data["szuldatum"]}</td>";
+            echo "      <td>{$data["megj"]}</td>";
+            echo "      <td>{$data["createdby"]}</td>";
+            echo "      <td>{$data["csomagok"]}</td>";
+            echo "  </tr>";
+        }
+       
+        echo "</table>";
+
+        return;
     }
 
 }
