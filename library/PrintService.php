@@ -465,7 +465,7 @@ class PrintService
             $this->sheet = $spreadSheet->getActiveSheet();
             $this->sheet->setTitle("Vizsgálatok");
 
-            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND telephely IN ('Magyar Államkincstár', 'Magyar Államkincstár - Vidék','Magyar Államkincstár - Budapest')", [$datum])->fetchAll(PDO::FETCH_ASSOC);
+            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND instr(telephely,'Államkincstár')", [$datum])->fetchAll(PDO::FETCH_ASSOC);
 
             $sor = 1;
             $this->headingRow("A", $sor, ["Egyedi/Vizsgálat dátuma", "Vizsgálat/FelvetelDatuma", "Paciens/Nev", "Paciens/Azonosító", "Paciens/SzuletesiDatum", "Egyedi/Telephely", "Egyedi/Munkakor", "Egyedi/Vizsgálat típusa", "Egyedi/Korlátozás", "Egyedi/Alkalmasság", "Egyedi/Érvényesség", "Felhasználó"]);
@@ -490,7 +490,7 @@ class PrintService
             $this->sheet = $spreadSheet->getActiveSheet();
             $this->sheet->setTitle("Előzetesek");
 
-            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND telephely IN ('Magyar Államkincstár', 'Magyar Államkincstár - Vidék','Magyar Államkincstár - Budapest') AND (INSTR(vizsgalattipus, 'előzetes') OR INSTR(vizsgalattipus, 'soron'))", [$datum])->fetchAll(PDO::FETCH_ASSOC);
+            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND instr(telephely,'Államkincstár') AND (INSTR(vizsgalattipus, 'előzetes') OR INSTR(vizsgalattipus, 'soron'))", [$datum])->fetchAll(PDO::FETCH_ASSOC);
 
             $sor = 1;
             $this->headingRow("A", $sor, ["Egyedi/Vizsgálat dátuma", "Vizsgálat/FelvetelDatuma", "Paciens/Nev", "Paciens/Azonosító", "Paciens/SzuletesiDatum", "Egyedi/Telephely", "Egyedi/Munkakor", "Egyedi/Vizsgálat típusa", "Egyedi/Korlátozás", "Egyedi/Alkalmasság", "Egyedi/Érvényesség", "Felhasználó"]);
@@ -636,7 +636,7 @@ class PrintService
         $templateContent = file_get_contents("templates/makDailyReport.html");
         $contentPages = [];
 
-        $vizsgalatok = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND telephely IN ('Magyar Államkincstár', 'Magyar Államkincstár - Vidék') AND (INSTR(vizsgalattipus, 'előzetes') OR INSTR(vizsgalattipus, 'soron'))", [$datum])->fetchAll(PDO::FETCH_ASSOC);
+        $vizsgalatok = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND instr(telephely,'Államkincstár') AND (INSTR(vizsgalattipus, 'előzetes') OR INSTR(vizsgalattipus, 'soron'))", [$datum])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($vizsgalatok as $vizsgalat) {
             $page = file_get_contents("templates/makDailyReportContent.html");
 
