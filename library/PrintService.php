@@ -465,7 +465,7 @@ class PrintService
             $this->sheet = $spreadSheet->getActiveSheet();
             $this->sheet->setTitle("Vizsgálatok");
 
-            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND telephely IN ('Magyar Államkincstár', 'Magyar Államkincstár - Vidék')", [$datum])->fetchAll(PDO::FETCH_ASSOC);
+            $data = sql_query("SELECT * FROM dokirex_vizsgalatok v WHERE DATE(v.vizsgalatdatum)=? AND telephely IN ('Magyar Államkincstár', 'Magyar Államkincstár - Vidék','Magyar Államkincstár - Budapest')", [$datum])->fetchAll(PDO::FETCH_ASSOC);
 
             $sor = 1;
             $this->headingRow("A", $sor, ["Egyedi/Vizsgálat dátuma", "Vizsgálat/FelvetelDatuma", "Paciens/Nev", "Paciens/Azonosító", "Paciens/SzuletesiDatum", "Egyedi/Telephely", "Egyedi/Munkakor", "Egyedi/Vizsgálat típusa", "Egyedi/Korlátozás", "Egyedi/Alkalmasság", "Egyedi/Érvényesség", "Felhasználó"]);
