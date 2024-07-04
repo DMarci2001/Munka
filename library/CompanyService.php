@@ -35,7 +35,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="aldi";
+            $d="hazaipalya";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
