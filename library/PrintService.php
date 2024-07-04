@@ -931,6 +931,7 @@ class PrintService
         "Dr. Váradi Zoltán" => 95840,
         "Dr. Gergely Melinda" => 77490,
         "Dr. Szász Angéla Imola" => 63018,
+        "Dr. Hollandi Erzsébet" =>60694,
     ];
 
     private function innioErtesites(){
