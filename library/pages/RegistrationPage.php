@@ -118,10 +118,10 @@ class RegistrationPage extends CorePage
             $status = [];
             $minimalRequirement = false;
 
-            if($_POST["taj"]!="" && !$invited=sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_POST["taj"]))->fetch(PDO::FETCH_ASSOC)){
+            /*if($_POST["taj"]!="" && !$invited=sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_POST["taj"]))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Sajnálatos módon Ön nem jogosult a Suzuki GHC szűrésre.<br><br> Kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
-            }
+            }*/
             
             if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],904))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Ön már regisztrálva van a Suzuki GHC szűrésre.<br><br> Kérem, jelentkezzen be a \"Bejelentkezés\" menüpont alatt a TAJ számával.<br>";
@@ -178,6 +178,14 @@ class RegistrationPage extends CorePage
                 }
             } else {
                 $status[] = array("id" => "taj", "response" => "Adja meg a TAJ számát!", "class" => "invalid");
+                $error++;
+            }
+
+             //Törzsszám
+             if (isset($_POST["torzsszam"]) && !empty($_POST["torzsszam"])) {
+                $status[] = array("id" => "torzsszam", "response" => "Helyes!", "class" => "valid");
+            } else {
+                $status[] = array("id" => "torzsszam", "response" => "Adja meg a törzsszámát!", "class" => "invalid");
                 $error++;
             }
 
@@ -330,6 +338,7 @@ class RegistrationPage extends CorePage
                 $status[] = array("id" => "taj", "response" => "Adja meg a TAJ számát!", "class" => "invalid");
                 $error++;
             }
+
 
             //Név ellenőrzése
             if (isset($_POST["name"]) && !empty($_POST["name"])) {
@@ -533,10 +542,10 @@ class RegistrationPage extends CorePage
         $pass=md5(date("Y-m-d H:is").$data["name"]."ghc");
         
         $q = sql_query("INSERT INTO felhasznalok 
-        SET cegid=?,nev=?,szuldatum=?,email=?,telefon=?,taj=?,regtime=?,irsz=?,varos=?,utca=?,validated=?,szallitas=?,otp_penztar=?,pass=?
+        SET cegid=?,nev=?,szuldatum=?,email=?,telefon=?,taj=?,regtime=?,irsz=?,varos=?,utca=?,validated=?,szallitas=?,otp_penztar=?,pass=?,torzsszam=?
         ", array(
             904, $data["name"], $data["birthdate"], $data["email"], $data["phone"], $data["taj"], date("Y-m-d H:i:s"), $data["zip-code"],
-            $data["city"], $data["address"], 1, $data["transportation"], $data["otp-healthfund"],$pass
+            $data["city"], $data["address"], 1, $data["transportation"], $data["otp-healthfund"],$pass,$data["torzsszam"]
         ));
 
         $id = sql_insert_id();
@@ -612,6 +621,15 @@ class RegistrationPage extends CorePage
             $html = "";
             $html .= "<div class=\"container og-bootstrap\" id='og-bootstrap'>";
             $html .= "   <form id='suzuki-ghc-registration-form' method='POST' enctype='multipart/form-data'>";
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "               <label for=\"torzsszam\" class=\"form-label\">Törzsszám:</label>";
+            $html .= "               <input type=\"text\" class=\"form-control\" id=\"torzsszam\" name=\"torzsszam\" value=\"\">";
+            $html .= "               <div id=\"validation-torzsszam\" class=\"valid-feedback\"></div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";

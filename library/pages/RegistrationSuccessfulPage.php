@@ -52,7 +52,7 @@ class RegistrationSuccessfulPage extends CorePage {
             echo $html;
 
             $notificaitonService= new NotificationService();
-            $notificaitonService->suzuki_ghc_reg_confirmation_notification($this->profile["id"]);
+            //$notificaitonService->suzuki_ghc_reg_confirmation_notification($this->profile["id"]);
         }
         
         if(CompanyService::isFiFi()){
