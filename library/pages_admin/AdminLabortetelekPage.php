@@ -797,7 +797,7 @@ class AdminLabortetelekPage extends AdminCorePage
                          LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
                          LEFT JOIN synlab_labor_tetelek t2 ON t2.id=slt.spid
-                         WHERE slt.provider='synlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
+                         WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
                          ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
         if ($listView) {
