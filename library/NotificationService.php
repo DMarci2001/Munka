@@ -1533,7 +1533,7 @@ END:VCALENDAR";
 
         $html= "";
         $result = sql_query("SELECT felh.*,sz.megnev AS \"szurestipusNev\" FROM felhasznalok felh 
-                            LEFT JOIN ghc_segedtabla ghc ON ghc.taj=felh.taj
+                            LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
                             WHERE felh.id=?",array($fid))->fetch(PDO::FETCH_ASSOC);
 
