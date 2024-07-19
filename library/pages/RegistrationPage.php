@@ -118,10 +118,10 @@ class RegistrationPage extends CorePage
             $status = [];
             $minimalRequirement = false;
 
-            /*if($_POST["taj"]!="" && !$invited=sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_POST["taj"]))->fetch(PDO::FETCH_ASSOC)){
+            if($_POST["taj"]!="" && !$invited=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",array($_POST["torzsszam"]))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Sajnálatos módon Ön nem jogosult a Suzuki GHC szűrésre.<br><br> Kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
-            }*/
+            }
             
             if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],904))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Ön már regisztrálva van a Suzuki GHC szűrésre.<br><br> Kérem, jelentkezzen be a \"Bejelentkezés\" menüpont alatt a TAJ számával.<br>";

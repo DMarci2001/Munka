@@ -9,7 +9,7 @@ class RegistrationSuccessfulPage extends CorePage {
         parent::__construct();
 
         $this->profile = sql_query("SELECT felh.*,sz.megnev AS \"szurestipusNev\" FROM felhasznalok felh 
-                                    LEFT JOIN ghc_segedtabla ghc ON ghc.taj=felh.taj
+                                    LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam
                                     LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
                                     WHERE felh.id=? AND felh.pass=?
                                    ",array($_GET["id"],$_GET["pass"]))->fetch(PDO::FETCH_ASSOC);
@@ -52,7 +52,7 @@ class RegistrationSuccessfulPage extends CorePage {
             echo $html;
 
             $notificaitonService= new NotificationService();
-            //$notificaitonService->suzuki_ghc_reg_confirmation_notification($this->profile["id"]);
+            $notificaitonService->suzuki_ghc_reg_confirmation_notification($this->profile["id"]);
         }
         
         if(CompanyService::isFiFi()){

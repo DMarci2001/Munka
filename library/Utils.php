@@ -354,7 +354,7 @@ class Utils {
         }
 
         if(CompanyService::isSuzukiGHC() || CompanyService::isFiFi()){
-            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking"))){
+            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking","registrationsuccessful"))){
                 $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
                 $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
             }
