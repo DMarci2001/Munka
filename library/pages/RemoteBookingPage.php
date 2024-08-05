@@ -114,6 +114,15 @@ class RemoteBookingPage extends CorePage{
 			die();*/
 			//Kérdések ellenőrzése:
 			$questionArr=json_decode($q['questions'],true);
+
+			//Eltérő szűréstípushoz tartozó kérdések kiszűrése
+			foreach($questionArr as $index=>$question){
+				if($question["servicetype"]!=$_POST["szurestipus"]){
+					unset($questionArr[$index]);
+				}
+			}
+			$questionArr = array_values($questionArr);
+
 			$questions = "";
 			$sor=0;
 			do{
