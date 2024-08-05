@@ -46,14 +46,14 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
 
     private function fetch_suzuki_ghc_registrations()
     {
-        $array = sql_query("SELECT felh.nev as \"Teljesnév\",ghc.taj as \"TAJ\",sz.megnev as \"Csomag\",
+        $array = sql_query("SELECT felh.nev as \"Teljesnév\",felh.taj as \"TAJ\",sz.megnev as \"Csomag\",
                                    felh.email as \"E-mail\",felh.telefon as \"Telefonszám\",REPLACE(felh.szuldatum,\"-\",\".\") as \"Szül. dátum\",
                                    CONCAT(felh.irsz,\" \",felh.varos,\", \",felh.utca) as \"Lakcím\",
                                    REPLACE(felh.regtime,\"-\",\".\") as \"Regisztráció\",
                                    if(felh.szallitas=1,\"Kér szállítást\",\"Nem kér szállítást\") as \"Szállítás\",
                                    if(felh.otp_penztar=1,\"Van\",\"Nincs\") as \"OTP egészségpénztár\"
                             FROM felhasznalok felh
-                            LEFT JOIN ghc_segedtabla ghc ON ghc.taj=felh.taj 
+                            LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
                             WHERE felh.cegid in(904)
                             ORDER BY nev ASC")->fetchAll(PDO::FETCH_ASSOC);
