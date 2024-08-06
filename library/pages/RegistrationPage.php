@@ -123,7 +123,7 @@ class RegistrationPage extends CorePage
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
             }
             
-            if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],904))->fetch(PDO::FETCH_ASSOC)){
+            if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE torzsszam=? AND cegid=?",array($_POST["torzsszam"],904))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Ön már regisztrálva van a Suzuki GHC szűrésre.<br><br> Kérem, jelentkezzen be a \"Bejelentkezés\" menüpont alatt a TAJ számával.<br>";
                 $error.= "<a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=login\">Bejelentkezésez kattintson ide!</a>";
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
@@ -224,10 +224,11 @@ class RegistrationPage extends CorePage
             if (isset($_POST["phone"]) && !empty($_POST["phone"])) {
                 $regex = '/^(\+36|06)(20|30|31|50|70)\d{7}$/';
                 if (preg_match($regex, $_POST["phone"])) {
-                    $status[] = array("id" => "phone", "response" => "Helyes!", "class" => "valid");
+                    $status[] = array("id" => "phone", "response" => "", "class" => "valid");
                 } else {
-                    $status[] = array("id" => "phone", "response" => "Helytelen telefonszám!", "class" => "invalid");
-                    $error++;
+                    $status[] = array("id" => "phone", "response" => "", "class" => "valid");
+                    //$status[] = array("id" => "phone", "response" => "Helytelen telefonszám!", "class" => "invalid");
+                    //$error++;
                 }
             } else {
                 $status[] = array("id" => "phone", "response" => "Adja meg a telefonszámát!", "class" => "invalid");
