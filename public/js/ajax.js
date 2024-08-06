@@ -1272,7 +1272,7 @@ function doResSubmit() {
     document.iform.submit();
 }
 
-$(document).on("focusout","#suzuki-ghc-registration-form #taj", function(){
+/*$(document).on("focusout","#suzuki-ghc-registration-form #taj", function(){
     var classes = ["birthdate", "zip-code", "city", "address"];
     $.ajax({
         url: "index.php?page=registration",
@@ -1301,7 +1301,7 @@ $(document).on("focusout","#suzuki-ghc-registration-form #taj", function(){
             }
         }
     });
-});
+});*/
 
 $(document).on("focus", "#suzuki-ghc-registration-form input", function(){
     var id = $(this).attr("id");
