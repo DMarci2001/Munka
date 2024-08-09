@@ -488,7 +488,7 @@ class TeladocApi {
                     if (isset($szabadsagData[$orvosId][$nap])) {
                         continue;
                     }
-                    if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+                    if (in_array($nap, $settings->getMunkaszunetiNapok($locationId))) {
                         continue;
                     }
 

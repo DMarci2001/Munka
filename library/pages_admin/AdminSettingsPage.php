@@ -49,7 +49,7 @@ class AdminSettingsPage extends AdminCorePage
         echo "</form></div>";
         echo "<div id = 'upload-result'>";*/
 
-        echo "</div>";
+        //echo "</div>";
     }
 
     private function dokirexExportData($file)

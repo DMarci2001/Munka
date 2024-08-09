@@ -376,7 +376,7 @@ class VaroteremService
                 $onclick = "onClick=\"callInToVisit({$data["vid"]},{$r["id"]})\"";
             }
 
-            $docLi .= "<li><a class=\"dropdown-item\" {$onclick}  href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
+            $docLi .= "<li><a class=\"dropdown-item marcidobozai\" style='text-decoration: none;' {$onclick}  href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
         }
 
         if($supervisor){
@@ -387,7 +387,7 @@ class VaroteremService
         $html .= "       <span  class=\"dropdown-toggle\" style=\"{$spanCSS}\" href=\"#\" role=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\" style=\"background-color:#0a0\">Érkeztetés</span>";
         $html .= "       <ul class=\"dropdown-menu\">";
         $html .=               $docLi;
-        $html .= "             <li><a class=\"dropdown-item\" onClick='addToWaitList({$data["id"]},0);return false' href=\"#\"><i class=\"fa-solid fa-user-doctor\"></i>&nbsp;Bármelyik</a></li>";
+        $html .= "             <li class=''><a class=\"dropdown-item marcidobozai\" onClick='addToWaitList({$data["id"]},0);return false' href=\"#\"><i class=\"fa-solid fa-user-doctor\"></i>&nbsp;Bármelyik</a></li>";
         
         //$html .= "           <li><a class=\"dropdown-item\" href=\"#\"><i class=\"fa-sharp fa-solid fa-pen-to-square\"></i>&nbsp;Adatok szerkesztése</a></li>";
         //$html .= "           <li><a class=\"dropdown-item\" href=\"#\"><i class=\"fa-solid fa-rotate-left\"></i>&nbsp;Vissza a váróterembe</a></li>";

@@ -192,6 +192,41 @@ class AdminLabortetelekPage extends AdminCorePage
 
         */
 
+
+        if (isset($_POST["showcategoryselect"])) {
+            //if (!$this->adminUser->allCegJog()) {
+            //    die;
+            //}
+            $lastLaborCategory = $_SESSION["lastlaborcategory"] ?? 0;
+            $lastCategories = sql_query("select id, trim(name) as name from synlab_labor_tetel_kategoriak where id=?", [$lastLaborCategory])->fetchAll(PDO::FETCH_ASSOC);
+            $categories = sql_query_common("select id, trim(name) as name from hungariamed.synlab_labor_tetel_kategoriak where trim(name)<>'' order by trim(name)")->fetchAll(PDO::FETCH_ASSOC);
+
+            echo "<select onchange='saveLaborCategory(\"{$_POST["showcategoryselect"]}\", this.value)' style='width:120px;font-size:12px;padding:1px 4px;'>";
+            echo "<option value='0'>Válassz kategóriát!</option>";
+            foreach ($lastCategories as $category) {
+                $selected = $category["id"] == $_POST["category"] ? "selected":"";
+                echo "<option value='{$category["id"]}' {$selected}>{$category["name"]}</option>";
+            }
+            foreach ($categories as $category) {
+                $selected = $category["id"] == $_POST["category"] ? "selected":"";
+                echo "<option value='{$category["id"]}' {$selected}>{$category["name"]}</option>";
+            }
+            echo "</select>";
+
+            die;
+        }
+
+        if (isset($_POST["setcategoryid"])) {
+            //if (!$this->adminUser->allCegJog()) {
+            //    die;
+            //}
+            sql_query("update synlab_labor_tetelek t set t.category=? where id=?", [$_POST["category"], $_POST["id"]]);
+            $_SESSION["lastlaborcategory"] = $_POST["category"];
+
+            echo $this->showCategorySelector($_POST["id"], ["cegid" => $_POST["cegid"]]);
+            die;
+        }
+
         //Keresés tétel név szerint:
         if (isset($_POST["searchbyitem"])) {
 
@@ -801,28 +836,38 @@ class AdminLabortetelekPage extends AdminCorePage
                          ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
         if ($listView) {
-            $html .= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
-            $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek</td>";
-            $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (munkanap)</td>";
-            $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
+            $lastCategory = "null";
 
-            $html .= "</tr>";
+            $html .= "<table cellpadding='0' cellspacing='0' border='0' style='' id='LaborItems'>";
 
             $html .= "<tbody id='item-content'>";
             while ($resq = sql_fetch_array($rq)) {
+                if (empty($resq["category_name"])) {
+                    $resq["category_name"] = "Nem kategorizált vizsgálatok";
+                }
+
+                if ($lastCategory != $resq["category_name"]) {
+                    $lastCategory = $resq["category_name"];
+
+                    $html .= "<tr><td colspan='10' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:22px;text-align: center;'>{$resq["category_name"]}</td></tr>";
+                    $html .= "<tr><td colspan='3' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>Tételek</td>";
+                    $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Elkészülés (munkanap)</td>";
+                    $html .= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak</td>";
+                    $html .= "</tr>";
+                }
                 $html .= "<tr>";
                 $html .= "<td valign='top'><div class='tcella' style=''>";
                 if (!$listView) {
                     $html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstall) && in_array($resq["id"], $packageInstall) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
                 }
-                $html .= "{$resq["name"]}".(empty($resq["spname"]) ? "":"<br/><span style='font-size: 12px;color:#888;'>{$resq["spname"]}</span>");
+                $html .= "<span title='{$resq["name"]}'>".mb_substr($resq["name"], 0, 50)."</span>".(empty($resq["spname"]) ? "":"<br/><span style='font-size: 12px;color:#888;'>{$resq["spname"]}</span>");
                 $html .= "</div></td>";
 
                 //Kérőlap megnevezés:
-                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
+                //$html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["kerolap"]}</div></td>";
 
                 //Kategória megnevezés:
-                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>{$resq["category_name"]}</div></td>";
+                $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px' id='categoryid{$resq["id"]}'>".$this->showCategorySelector($resq["id"], $resq)."</div></td>";
 
                 //Minta vételi cső:
                 $html .= "<td nowrap valign='top'><div class='tcella' style='min-width:10px'>" . (!empty($resq["sample_tube"]) ? $this->tubes[$resq["sample_tube"]]["title"] : "") . "</div></td>";
@@ -969,4 +1014,13 @@ class AdminLabortetelekPage extends AdminCorePage
 
         return $html;
     }
+
+    private function showCategorySelector($id, $data):string {
+        if (!$categoryData = sql_query_common("select name from synlab_labor_tetel_kategoriak where id=?", [$data["category"]])->fetch(PDO::FETCH_ASSOC)) {
+            $categoryData["name"] = "Nem kategorizált vizsgálatok";
+        }
+
+        return "<span onclick='showLaborCategorySelect(\"{$id}\", \"{$data["category"]}\");' style='border:1px solid #ccc;padding:2px 4px;cursor:pointer;'>{$categoryData["name"]}</span>";
+    }
+
 }

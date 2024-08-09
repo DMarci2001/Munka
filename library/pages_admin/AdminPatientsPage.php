@@ -152,7 +152,17 @@ class AdminPatientsPage extends AdminCorePage {
             }
         }
 
-
+        if (isset($_GET["ghcreglist"])) {
+            if (in_array(CompanyService::SUZUKI_GHC_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) {
+                $excelService = new ExcelService();
+                $excelService->suzukiGHCRegistrationList();
+                $excelService->setFileName("Suzuki GHC regisztrációk " . date("Y-m-d") . ".xlsx");
+                $excelService->outputSpreadSheet();
+            } else {
+                echo "nincs jogosultsága!";
+            }
+            die;
+        }
 
 
     }
@@ -525,7 +535,11 @@ class AdminPatientsPage extends AdminCorePage {
             //die;
         }
 
-        echo "<a href='index.php?page={$_GET["page"]}&fszerk=0'>+ új felhasználó rögzitése</a>";
+        echo "[<a href='index.php?page={$_GET["page"]}&fszerk=0'>+ új felhasználó rögzitése</a>] ";
+
+        if (in_array(CompanyService::SUZUKI_GHC_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) {
+            echo "[<a href='index.php?page={$_GET["page"]}&ghcreglist'>Suzuki GHC regisztrációk letöltése</a>] ";
+        }
 
         $res = sql_query( $query." LIMIT {$page[($_GET['scroll']-1)]['limit']}" );
 

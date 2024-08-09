@@ -191,10 +191,16 @@ class DicomService {
     public function getPatients($params = []) {
         $queryParams = [];
         $w = "";
-        $wDateRestrict = "AND d.contentDate>DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $wDateRestrict = "AND d.contentDate>DATE_SUB(NOW(), INTERVAL 14 DAY)";
 
         if (!$this->adminUser->allDicomAccess()) {
-            $w.= $this->adminUser->cegSQLFilter("d.cegid");
+            $companyFilter = $this->adminUser->cegSQLFilter("d.cegid");
+            $w.= $companyFilter;
+
+            if (!empty($companyFilter)) {
+                $this->setSelectedCompany("");
+                $wDateRestrict = "";
+            }
         }
 
         /*if (in_array($this->adminUser->user["username"], ["drkizman", "kizman", "drosvai@t-online.hu"])) {
@@ -228,7 +234,13 @@ class DicomService {
         if (!empty($this->getSelectedModel())) {
             $w .= " and d.manufacturer=?";
             $queryParams[] = $this->getSelectedModel();
+            $wDateRestrict = "AND d.contentDate>DATE_SUB(NOW(), INTERVAL 1 YEAR)";
         }
+
+        //$wDateRestrict = "";
+
+        //echo "{$wDateRestrict} {$w} ";
+        //echo print_r($queryParams, true);
 
         return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -282,6 +294,21 @@ class DicomService {
             if (!$this->dicomPermission()) {
                 $content["imageData"] = $this->notAvailableImage($param);
             } else {
+                if (isset($_GET["embedinfo"])) {
+                    $image = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
+
+                    $black = imagecolorallocate($image, 0, 0, 0);
+                    $white = imagecolorallocate($image, 255, 255, 255);
+                    $fontPath = Booking_Constants::APP_PATH."public/images/webfonts/roboto_regular_hungarian/Roboto-Regular-webfont.ttf";
+                    $text = "Ide jön a paciens neve!";
+
+                    imagettftext($image, 45, 0, 76, 126, $black, $fontPath, $text);
+                    imagettftext($image, 45, 0, 75, 125, $white, $fontPath, $text);
+
+                    $content["imageData"] = $image;
+                    return $content;
+                }
+
                 if (isset($_GET["thumb"])) {
                     $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
                     if (!is_file($thumbLocation)) {
@@ -353,7 +380,7 @@ class DicomService {
         sql_query_common("update dicom set cegid=? where patientID=? limit 10", [$companyId, $id]);
     }
 
-    public static function setSelectedCompany($company) {
+    public function setSelectedCompany($company) {
         $exp = time() + 60 * 60 * 24 * 365;
         if ($company == "" || sql_query_common("select id from dicom where institutionName=? limit 1", [$company])->fetchAll(PDO::FETCH_ASSOC)) {
             setcookie("dcegfilter", $company, $exp, "/");
@@ -388,6 +415,16 @@ class DicomService {
         return $institutionNames;
     }
 
+
+    private function checkArchive($filePath):bool {
+        if (!is_file($filePath)) {
+            //a fájl archiválva lett, megpróbáljuk lehúzni az arhívumból
+            $fileName = basename($filePath);
+            `scp -P 2223 root@81.183.233.8:/mnt/sdd/rtg/{$fileName} /var/rtg`;
+        }
+
+        return is_file($filePath);
+    }
 
     public function workListFileFormat($data):string {
         $companyId      = Booking_Constants::SQL_DB;

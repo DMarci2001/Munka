@@ -10,6 +10,7 @@ class CompanyService {
     const ASTOTEC_ID        = 664;
     const SUZUKI_ID         = 81;
     const SUZUKI_EGESZSEGUT_ID = 504;
+    const SUZUKI_GHC_ID     = 904;
     const BME_ID            = 851;
     const KRE_ID            = 888;
 

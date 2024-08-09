@@ -403,12 +403,10 @@ class BookingService
 
                         //sorszám override aldi esetében
                         if (Booking_Constants::SQL_DB == "hungariamed" && CompanyService::isALDI() && $this->szuresTipus == Booking_Constants::TUDOSZURES_ID) {
-                            //echo $ora."<br>";
                             $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
 
                             //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
                             if (empty($jaratStart)) {
-                                
                                 $jaratStart = $ora;
                                 $jarat = array_search($ora,$jaratok);
                                 $aktualisJarat = $jaratok[$jarat];
@@ -1127,7 +1125,7 @@ class BookingService
                 if (CompanyService::isBME()) {
                     $priceDisplay = true;
                     $tileMode = session_id() == "gtefskm5mqb91q928dabh4lqg9";
-                    $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül. BME dolgozókank 10% kedvezmény.";
+                    $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül. BME dolgozókank 20% kedvezmény.";
                     //$hidden = "display:none;";
                     //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
                 }
@@ -1141,7 +1139,7 @@ class BookingService
                     }
 
                     if (CompanyService::isBME()) {
-                        $akcioPrice = $price * 0.9;
+                        $akcioPrice = $price * 0.8;
                     }
 
 
@@ -2480,8 +2478,8 @@ class BookingService
             $this->replicatedTimes[] = $optimalTime;
 
             //Foglaljorvost.hu-nak átküldés
-            //$foService = new FoglaljOrvostService();
-            //$foService->newReservation($newReservationId);
+            $foService = new FoglaljOrvostService();
+            $foService->newReservation($this->lastSubReservationId);
 
             //$api = new BookingSyncApi();
             //$api->newReservation($newReservationId);

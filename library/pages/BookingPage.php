@@ -712,7 +712,7 @@ class BookingPage extends CorePage
             if (!isset($_SESSION["user"])) {
                 $captchaError = $this->utils->checkCaptcha();
                 if (!empty($captchaError) && empty($this->errors)) {
-                    $this->errors[] = $captchaError;
+                    //$this->errors[] = $captchaError;
                 }
             }
 
@@ -1385,7 +1385,7 @@ class BookingPage extends CorePage
         }
 
         if (!isset($_SESSION["user"])) {
-            echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG' style='width:200px;'></div></td></tr>";
+            //echo "<tr class='datarow'><td></td><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG' style='width:200px;'></div></td></tr>";
             if (CompanyService::isAuchan()) {
                 echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> Az <a href='https://keltexmed.hu/site/images/ADATVEDELMI_TAJEKOZTATO_keltexmed_v.pdf' target='_blank' >Adatvédelmi tájékoztatót</a> és az <a target='_blank' href='https://www.keltexmed.hu/site/images/keltexmed_aszf.pdf'>ÁSZF</a>-et elolvastam, a fenti adatkezeléshez hozzájárulok.</div></td></tr>";
             } else {
@@ -1661,6 +1661,7 @@ class BookingPage extends CorePage
         
         if (!empty($szuresTipus)) {
             foreach ($helyszinek as $rowt) {
+                /*
                 if (!empty($_COOKIE["lockedhelyszin"])) {
                     if ($hdata = sql_query("select id from helyszinek where alias=?", [$_COOKIE["lockedhelyszin"]])->fetch(PDO::FETCH_ASSOC)) {
                         $_POST["helyszin"] = $hdata["id"];
@@ -1669,6 +1670,7 @@ class BookingPage extends CorePage
                         continue;
                     }
                 }
+                */
 
                 if (isset($validPlaces)) {
                     if (!in_array($rowt["id"], $validPlaces)) {

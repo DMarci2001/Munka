@@ -144,6 +144,10 @@ class HmmApi {
             $result = $this->sendQuery();
         }
 
+        if ($this->apiMethod == "laboritems" && $this->requestMethod == "GET") {
+            $result = $this->getLaborItems();
+        }
+
         $this->utils->jsonOut($result);
     }
 
@@ -959,7 +963,7 @@ class HmmApi {
                     if (isset($szabadsagData[$orvosId][$nap])) {
                         continue;
                     }
-                    if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+                    if (in_array($nap, $settings->getMunkaszunetiNapok($locationId))) {
                         continue;
                     }
 
@@ -1165,6 +1169,13 @@ class HmmApi {
             return false;
         }
         return true;
+    }
+
+    private function getLaborItems():array {
+        return sql_query("SELECT t.id, t.commazo, t.name, t.price, IF(k.name is null, 'Egyéb vizsgálatok', k.name) AS categoryname, t.category, t.visibility 
+            FROM synlab_labor_tetelek t LEFT JOIN synlab_labor_tetel_kategoriak k ON k.id=t.category 
+            WHERE provider='spektrumlab' and t.visibility=1 and t.price<>0 
+            ORDER BY k.id IS NULL, k.id, t.name")->fetchAll(PDO::FETCH_ASSOC);
     }
 
 }

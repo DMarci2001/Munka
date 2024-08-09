@@ -46,8 +46,32 @@ class AdminWebServicesPage extends AdminCorePage
                     $sor++;
                 }
 
-                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seokeywords=?, seodescription=? where id=?",
-                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seokeywords"], $_POST["seodescription"], $_GET["szerk"]]);
+                $webOptions = [];
+                foreach ($_POST as $key => $val) {
+                    if (substr_count($key, "weboptions_")) {
+                        $index = str_replace("weboptions_", "", $key);
+                        $webOptions[$index] = $val;
+                    }
+                }
+
+                $managerOptions = [];
+                foreach ($_POST as $key => $val) {
+                    if (substr_count($key, "manager_")) {
+                        $index = str_replace("manager_", "", $key);
+                        $managerOptions[$index] = $val;
+                    }
+                }
+
+                $managerItems = [];
+                foreach ($_POST as $key => $val) {
+                    if (substr_count($key, "manageritem_")) {
+                        $managerItems[] = $val;
+                    }
+                }
+                $managerOptions["items"] = $managerItems;
+
+                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seokeywords=?, seodescription=?, weboptions=?, packcontents=? where id=?",
+                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seokeywords"], $_POST["seodescription"], json_encode($webOptions), json_encode($managerOptions), $_GET["szerk"]]);
 
                 logActivity("wwwservice",$_GET["szerk"],"{$_POST["megnev"]} adatlap", print_r($_POST,true));
             }
@@ -96,6 +120,7 @@ class AdminWebServicesPage extends AdminCorePage
                 foreach ($pack["items"] as $key => $item) {
                     if (isset($_POST["itemdescription{$key}"])) {
                         $itemName = $item[0];
+                        $pack["items"][$key][0] = $itemName;
                         $packs["descriptions"][$itemName] = $_POST["itemdescription{$key}"];
                         //echo $itemName." ".$_POST["packdescription{$key}"];die;
                     }
@@ -278,6 +303,35 @@ class AdminWebServicesPage extends AdminCorePage
             echo "<tr><td>SEO keywords:</td><td><input class='inputbox' style='width:800px;' type='text' name='seokeywords' value='{$service["seokeywords"]}'  /></td></tr>";
             echo "<tr><td>SEO description:</td><td><input class='inputbox' style='width:800px;' type='text' name='seodescription' value='{$service["seodescription"]}'  /></td></tr>";
 
+            echo "<tr><td></td><td>";
+
+            $webOptions = json_decode($service["weboptions"], true);
+
+            echo "<div><input type='checkbox' value='1' name='weboptions_prices'" . (isset($webOptions["prices"]) && $webOptions["prices"] == 1 ? " checked" : "") . "> Árlista</div>";
+            echo "<div><input type='checkbox' value='1' name='weboptions_blog'" . (isset($webOptions["blog"]) && $webOptions["blog"] == 1 ? " checked" : "") . "> Blog kivonat</div>";
+            echo "<div><input type='checkbox' value='1' name='weboptions_doctorlist'" . (isset($webOptions["doctorlist"]) && $webOptions["doctorlist"] == 1 ? " checked" : "") . "> Orvosok</div>";
+            echo "<div><input type='checkbox' value='1' name='weboptions_reservation'" . (isset($webOptions["reservation"]) && $webOptions["reservation"] == 1 ? " checked" : "") . "> Időpontfoglalás gomb</div>";
+            echo "<div><input type='checkbox' value='1' name='weboptions_ajanlatform'" . (isset($webOptions["ajanlatform"]) && $webOptions["ajanlatform"] == 1 ? " checked" : "") . "> Ajánlatkérő form</div>";
+            echo "</td></tr>";
+
+            if ($service["ismanagerpack"] == 1) {
+                $managerOptions = json_decode($service["packcontents"], true);
+                if (!isset($managerOptions["backgroundcolor"])) {
+                    $managerOptions["backgroundcolor"] = "";
+                }
+                echo "<tr><td>&nbsp;</td></tr>";
+                echo "<tr><td>Háttérszín:</td><td><input class='inputbox' style='width:200px;' type='text' name='manager_backgroundcolor' value='{$managerOptions["backgroundcolor"]}' /></td></tr>";
+
+                echo "<tr><td>&nbsp;</td><td><strong>Csomag tartalma (weboldalra)</strong></td></tr>";
+                echo "<tr><td></td><td>";
+                foreach (sql_query("select * from sitedata where tipus='manageritems' order by value1")->fetchAll() as $sitedata) {
+                    echo "<div><input type='checkbox' value='{$sitedata["id"]}' name='manageritem_{$sitedata["id"]}'" . (isset($managerOptions["items"]) && in_array($sitedata["id"], $managerOptions["items"]) ? " checked" : "") . "> {$sitedata["value1"]}</div>";
+                }
+                echo "</td></tr>";
+
+
+            }
+
             echo "</table>";
 
             echo "<br><input type='submit' name='szurestipusmentes' value='Mentés'> ";
@@ -297,7 +351,7 @@ class AdminWebServicesPage extends AdminCorePage
         ORDER BY !instr(megnev,'Új tétel'),megnev")->fetchAll(PDO::FETCH_ASSOC);
 
 
-        $kiemeltServicesHTML = $otherServicesHTML = "";
+        $kiemeltServicesHTML = $otherServicesHTML = $managerServicesHTML = "";
 
         foreach ($services as $service) {
             $kiemelt = false;
@@ -345,19 +399,28 @@ class AdminWebServicesPage extends AdminCorePage
 
             $html.= "</div>";
 
-            if ($kiemelt) {
-                $kiemeltServicesHTML.= $html;
+            if ($service["ismanagerpack"] == 1) {
+                $managerServicesHTML .= $html;
             } else {
-                $otherServicesHTML.= $html;
+                if ($kiemelt) {
+                    $kiemeltServicesHTML .= $html;
+                } else {
+                    $otherServicesHTML .= $html;
+                }
             }
 
         }
 
 
-        echo "<h2>A weboldalon megjelenő szolgáltatások</h2>";
-        echo "<div style='margin:20px 0px;'>" . $this->packDataEditor() . "</div>";
+        echo "<h2>Menedzser csomagok</h2>";
+        echo $managerServicesHTML;
+        echo "<hr style='margin:0px 0px 20px 0px;'>";
+
+        echo "<h2>Kiemelt szolgáltatások</h2>";
+        //echo "<div style='margin:20px 0px;'>" . $this->packDataEditor() . "</div>";
         echo $kiemeltServicesHTML;
         echo "<hr style='margin:0px 0px 20px 0px;'>";
+
         echo "<h2>Egyéb, a weboldalon nem használt szolgáltatások</h2>";
         echo $otherServicesHTML;
     }

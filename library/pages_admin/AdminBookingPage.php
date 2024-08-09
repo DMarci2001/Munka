@@ -780,7 +780,7 @@ class AdminBookingPage extends AdminCorePage
         $wd            = date("N", strtotime($setDay));
         $tipusok       = $this->bookingService->tipusExtract($this->bookingService->beosztasService->getTipusByHelyszin($helyszin));
         $foglalasok    = $this->bookingService->getAllReservationForDayByDoctor($nap, $helyszin);
-        $isHoliday     = in_array($nap, $settings->getMunkaszunetiNapok());
+        $isHoliday     = in_array($nap, $settings->getMunkaszunetiNapok($helyszin));
         $maxOrvosId    = sql_query("select max(id)+1 from orvosok")->fetchColumn();
         $orvosList     = sql_query("select id, nev from orvosok where aktiv=1 order by nev")->fetchAll(PDO::FETCH_ASSOC);
         $existingOrvosTimes = [];
@@ -804,7 +804,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout .= "<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cimFilterHTML}</div>";
         $htmlout .= "<div style='display:table-cell;vertical-align:middle;padding-left:20px;'>{$cegFilterHTML} {$cegSearchLink}</div>";
 
-        if (in_array($nap, $settings->getMunkaszunetiNapok())) {
+        if (in_array($nap, $settings->getMunkaszunetiNapok($helyszin))) {
             $htmlout .= "<div style='margin-top:10px;padding:5px 10px;background: #f00;color:#fff;font-size:18px;display:inline-block;'>Munkaszüneti nap!</div>";
         }
 
@@ -928,7 +928,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688])) {
+                if (in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";
@@ -1205,9 +1205,10 @@ class AdminBookingPage extends AdminCorePage
         //$ora = date("H:i", strtotime($rowf["datum"]));
 
         $htmlout = "";
+        $eljottText = "";
 
         if ($reservationData["eljott"] == 0 && !empty($reservationData["nev"]) && $reservationData["nev"] != "nincs név" && strtotime("now - 10 minute") > strtotime($reservationData["datum"])) {
-            $reservationData["megj"] = "<span style='color:red;border:1px solid red;padding:0px 2px;'>nem jött el</span> " . $reservationData["megj"];
+            $eljottText = "<span style='color:red;border:1px solid red;padding:0px 2px;'>nem jött el</span> ";
         }
 
         if ($munkakorVizsgalat = $this->bookingService->munkakorVizsgalatok->getMunkakorVizsgalat($reservationData["munkakor"])) {
@@ -1319,9 +1320,11 @@ class AdminBookingPage extends AdminCorePage
             $htmlout .= "<div id='fiz_szolglist{$reservationData["id"]}'>" . $this->adminUtils->showFizSzolg($reservationData["id"], 1) . "</div>";
             $htmlout .= "</td>";
 
+            $htmlout .= "<td valign='top' nowrap>{$eljottText}";
             if ($this->adminUser->paciensMegjegyzesAccess()) {
-                $htmlout .= "<td valign='top' nowrap>{$extraInfo} {$reservationData["megj"]}</td>";
+                $htmlout .= "{$extraInfo} {$reservationData["megj"]}";
             }
+            $htmlout .= "</td>";
         } else {
             $htmlout .= "<td colspan='2' valign='top'><span style='color:#aaa;'>Másik cég foglalása</span>&nbsp;&nbsp;</td>";
         }

@@ -12,13 +12,13 @@ class ExcelService {
     private $columnNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X", "Y", "Z"];
 
     private string $esztergomFilter = "f.helyszinid=532 and ";
-    private string $jaszSuzukiFilter = "f.helyszinid=1 AND f.cegid IN (81, 123, 504, 99, 473) and ";
-    private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532) AND f.cegid IN (123, 504, 99, 473) and ";
+    private string $jaszSuzukiFilter = "f.cegid IN (504) and ";
+    private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532) AND f.cegid IN (504) and ";
     private string $korosiUtcaFilter = "f.helyszinid in (600) and ";
     private string $extraFilter = "";
 
     public function __construct() {
-        if (session_id() == "rhbcoc4imqr5qodse3u0vnblu5") {
+        if (session_id() == "71pb0mbmb9vdblbq8lvmkj8hf8") {
             $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
         }
     }
@@ -902,6 +902,12 @@ class ExcelService {
             $totalHours += $hoursPontos;
 
             $month = date("Y-m", strtotime($rowData["datum"]));
+            if (!isset($monthStat[$month]["hours"])) {
+                $monthStat[$month]["hours"] = 0;
+            }
+            if (!isset($monthStat[$month]["paciensek"])) {
+                $monthStat[$month]["paciensek"] = 0;
+            }
             $monthStat[$month]["hours"] += $hoursPontos;
             $monthStat[$month]["paciensek"] += $rowData["paciensek"];
 
@@ -1127,5 +1133,32 @@ class ExcelService {
 
     }
 
+
+    public function suzukiGHCRegistrationList() {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Regisztrációk");
+        $this->titleRow("A1", "Suzuki GHC Regisztrációk");
+
+        $sor = 3;
+
+        $registrations = sql_query("SELECT regtime, nev, taj, torzsszam, otp_penztar, szallitas FROM felhasznalok f WHERE f.cegid=? order by regtime desc", [CompanyService::SUZUKI_GHC_ID])->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->headingRow("A", $sor, ["Regisztráció ideje", "", "Név", "Törzsszám", "TAJ", "OTP Egészségpénztár", "Szállítás"]);
+        $sor++;
+
+        foreach ($registrations as $registration) {
+            $this->dataRow("A", $sor, [date("Y-m-d", strtotime($registration["regtime"])), date("H:i", strtotime($registration["regtime"])), $registration["nev"], $registration["torzsszam"], $registration["taj"], $registration["otp_penztar"]==1?"igen":"", $registration["szallitas"]==1?"igen":""]);
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','L'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
 
 }

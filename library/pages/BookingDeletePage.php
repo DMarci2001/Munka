@@ -36,6 +36,7 @@ class BookingDeletePage extends CorePage {
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
         WHERE f.id=? and (f.rkod=? or f.pass=?)",array($id, $rk, $rk)))) {
+            $row = $this->aldiTimeOverride($row);
 
             if($row["datum"]=="1900-01-01 00:00:01"){
                 $idopont = "Egyeztetés alatt";
@@ -68,6 +69,24 @@ class BookingDeletePage extends CorePage {
             <a href='/'>{$webText["visszafooldal"]}</a>";
         }
 
+    }
+
+
+    private function aldiTimeOverride($data) {
+        if (Booking_Constants::SQL_DB == "hungariamed" && CompanyService::isALDI() && $data["szurestipusid"] == Booking_Constants::TUDOSZURES_ID) {
+            $jaratok = ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30"];
+            $datum = date("Y-m-d", strtotime($data["datum"]));
+            $actualJarat = $jaratok[0];
+
+            foreach ($jaratok as $jarat) {
+                if (strtotime("{$datum} {$jarat}:00") <= strtotime($data["datum"])) {
+                    $actualJarat = "{$datum} {$jarat}:00";
+                }
+            }
+            $data["datum"] = $actualJarat;
+        }
+
+        return $data;
     }
 }
 
