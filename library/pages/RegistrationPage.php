@@ -478,12 +478,12 @@ class RegistrationPage extends CorePage
             }
 
             //Születési dátum ellenőrzése
-            /*if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
+            if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
                 $status[] = array("id" => "birthdate", "response" => "Helyes!", "class" => "valid");
             } else {
                 $status[] = array("id" => "birthdate", "response" => "Adja meg a születési dátumát!", "class" => "invalid");
                 $error++;
-            }*/
+            }
             
             
 
@@ -703,9 +703,9 @@ class RegistrationPage extends CorePage
         $pass=md5(date("Y-m-d H:is").$data["name"]."astotec");
         
         $q = sql_query("INSERT INTO felhasznalok 
-        SET cegid=?,nev=?,email=?,taj=?,regtime=?,validated=?,pass=?
+        SET cegid=?,nev=?,szuldatum=?,email=?,taj=?,regtime=?,validated=?,pass=?
         ", array(
-            664, $data["name"], $data["email"], $data["taj"], date("Y-m-d H:i:s"), 1, $pass
+            664, $data["name"], $data["birthdate"],$data["email"], $data["taj"], date("Y-m-d H:i:s"), 1, $pass
         ));
 
         $id = sql_insert_id();
@@ -805,7 +805,7 @@ class RegistrationPage extends CorePage
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "       </div>";
         
-        /*$html .= "       <div class=\"row\">";
+        $html .= "       <div class=\"row\">";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3\">";
         $html .= "               <label for=\"birthdate\" class=\"form-label\">Születési dátum:</label>";
@@ -813,7 +813,7 @@ class RegistrationPage extends CorePage
         $html .= "               <div id=\"validation-birthdate\" class=\"valid-feedback\"></div>";
         $html .= "           </div>";
         $html .= "           <div class=\"col-md\"></div>";
-        $html .= "       </div>";*/
+        $html .= "       </div>";
         $html .= "       <div class=\"row\">";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3\">";
