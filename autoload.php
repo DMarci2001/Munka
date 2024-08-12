@@ -150,6 +150,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/PrintSubPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPreBookingManagementPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminMunkaNaploPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminPatientDataPage.php");
+    
 }
 
 function getConfigFile() {
