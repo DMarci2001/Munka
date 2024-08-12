@@ -1395,9 +1395,9 @@ END:VCALENDAR";
         $user = sql_query("SELECT * FROM felhasznalok WHERE id=?",array($fid))->fetch(PDO::FETCH_ASSOC);
 
         $mail = self::getDefaultMailer();
-        //$mail->AddAddress($user["email"]);
+        $mail->AddAddress($user["email"]);
         //$mail->AddBCC("jnsmobil@gmail.com");
-        $mail->AddAddress("marton.gergely@hungariamed.hu");
+        //$mail->AddAddress("marton.gergely@hungariamed.hu");
 
         //Ellenőrzöm, hogy van-e kód generálva, vagy frissíteni kell-e
         /*if (sql_query("SELECT * FROM felhasznalok WHERE logincodetime<DATE_SUB(NOW(),INTERVAL 1 HOUR) and id=?", array($user["id"]))->fetch(PDO::FETCH_ASSOC)) {

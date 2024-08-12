@@ -65,7 +65,11 @@ class LoginPage extends CorePage {
             if($this->developMode){
                 die("Rosszak a megadott adatok!");
             }
-            die("A kód ki lett küldve a TAJ számhoz tartozó e-mail címre.");
+
+            if(empty($_POST["taj"])){
+                die("Töltse ki a TAJ szám mezőt!");
+            }
+            die();
         }
 
         if(isset($_POST["suzukilogin"])){
