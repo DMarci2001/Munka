@@ -16,11 +16,148 @@ class AdminSettingsPage extends AdminCorePage
             die();
         }
 
+        //$data = sql_query("SELECT * FROM tesco_2024_segedtabla")->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+        //Tól-ig
+        /*foreach($data as $index=>$value){
+            $value["ido"] = explode("-",$value["ido"]);
+
+            if(!isset($value["ido"][1])){
+                echo $value["id"]." - ".$value["uzletszam"]."<br>";
+            }
+
+            sql_query("UPDATE tesco_2024_segedtabla SET tol=?, ig=? WHERE id=?",array($value["ido"][0],$value["ido"][1],$value["id"]));
+        }*/
+
+        //Tól-ig értékek korrigálása
+        /*foreach ($data as $index => $value) {
+            echo $value["tol"]." - ".date("H:i",strtotime($value["tol"]))."<br>";
+            sql_query("UPDATE tesco_2024_segedtabla SET tol=?,ig=? WHERE id=?",array(date("H:i",strtotime($value["tol"])),date("H:i",strtotime($value["ig"])),$value["id"]));
+        }*/
+
+        //Rinterval kalkulálása
+        /*foreach($data as $index=>$value){
+            $start = strtotime($value["tol"]);
+            $end = strtotime($value["ig"]);
+            $elapsed = $end - $start;
+            $rinterval = floor((($elapsed/60)/$value["letszam"]));
+            echo $elapsed."s<br>";
+            echo $value["tol"]." - ".$value["ig"]." ";
+            echo "Köztes idő: ".($elapsed/60)." perc ";
+            echo "rinterval: {$rinterval} perc / fő ({$value["letszam"]})";
+            if(($rinterval*$value["letszam"])>($elapsed/60)){
+                echo "<span style=\"color:red;font-weight:bold\">Túl lépi a rendelkezésre álló időt!</span>";
+            }
+            echo "<br>";
+            sql_query("UPDATE tesco_2024_segedtabla SET rinterval=? WHERE id=?",array($rinterval,$value["id"]));
+
+        }*/
+
+        //Helyszinek átírása
+        /*$maps = new maps();
+        foreach($data as $index=>$value){
+            echo $value["cim"]."<br>";
+            if(!is_numeric(substr($value["cim"],0,4))){
+                echo "<span style=\"color:red;font-weight:bold\">Nem rendelkezik irányítószámmal!</span><br>";
+                $mapData = json_decode($maps->geoCoding($value["cim"]),true);
+                $key = $this->getKeyByNestedValue($mapData["results"][0]["address_components"],"types","postal_code");
+                $uzletszam = explode("-",$value["uzletszam"]);
+                $cimArray = explode(" ",$value["cim"]);
+                $irsz = $mapData["results"][0]["address_components"][$key]["long_name"];
+                //$irsz = 1234;
+                $varos = $cimArray[0];
+                unset($cimArray[0]);
+                $ujCim1 = $varos." ({$irsz}), ".implode(" ",$cimArray);
+                $ujCim2 = $varos." ({$irsz}), ".implode(" ",$cimArray)." - {$uzletszam[1]}. Üzlet";
+                $ujCim3 = "{$uzletszam[1]}. Üzlet - ".$varos." ({$irsz}), ".implode(" ",$cimArray);
+                echo "Új cím (Ver. 1.): {$ujCim1}<br>";
+                echo "Új cím (Ver. 2.): {$ujCim2}<br>";
+                echo "Új cím (Ver. 3.): {$ujCim3}<br>";
+                sql_query("UPDATE tesco_2024_segedtabla SET helyszin1=?, helyszin2=?,helyszin3=? WHERE id=?",array($ujCim1,$ujCim2,$ujCim3,$value["id"]));
+                
+            }else{
+                $uzletszam = explode("-",$value["uzletszam"]);
+                $cimArray = explode(" ",$value["cim"]);
+                $irsz = $cimArray[0];
+                unset($cimArray[0]);
+                
+                $varos = $cimArray[1];
+                unset($cimArray[1]);
+                $ujCim1 = $varos." ({$irsz}), ".implode(" ",$cimArray);
+                $ujCim2 = $varos." ({$irsz}), ".implode(" ",$cimArray)." - {$uzletszam[1]}. Üzlet";
+                $ujCim3 = "{$uzletszam[1]}. Üzlet - ".$varos." ({$irsz}), ".implode(" ",$cimArray);
+                if(!isset($uzletszam[1])){
+                    echo $value["uzletszam"]." - ".$value["id"]."<br>";
+                }
+                echo "<span style=\"color:green;font-weight:bold\">Rendelkezik irányítószámmal!</span><br>";
+                echo "Új cím (Ver. 1.): {$ujCim1}<br>";
+                echo "Új cím (Ver. 2.): {$ujCim2}<br>";
+                echo "Új cím (Ver. 3.): {$ujCim3}<br>";
+                sql_query("UPDATE tesco_2024_segedtabla SET helyszin1=?, helyszin2=?,helyszin3=? WHERE id=?",array($ujCim1,$ujCim2,$ujCim3,$value["id"]));
+            }
+            echo "<br>";
+        }*/
+
+        //Helyszinek importálása
+        /*foreach($data as $index=>$value){
+            sql_query("INSERT INTO helyszinek SET cim=?,aktiv=1, datum=?",array($value["helyszin3"],date("Y-m-d H:i:s")));
+            $helyszinData = sql_query("SELECT * FROM helyszinek WHERE INSTR(cim,'{$value["helyszin3"]}')")->fetch(PDO::FETCH_ASSOC);
+            $helyszinid = $helyszinData["id"];
+            sql_query("UPDATE tesco_2024_segedtabla SET helyszinid=? WHERE id=?",array($helyszinid, $value["id"]));
+            echo "Új helyszín rögzítve!({$value["helyszin3"]})(ID: {$helyszinid})<br>";
+        }*/
+
+        
+
+        //Egyéb paraméterek rögzítése
+        /*foreach ($data as $index => $value) {
+            if (strpos($value["uzletszam"], "AIIS") === false) {
+                //sql_query("UPDATE tesco_2024_segedtabla SET cegid=?,groupid=?,tipusid=?,orvosid=? WHERE id=?",array(682,14534,48,1396,$value["id"]));
+
+                sql_query(
+                    "INSERT INTO orvos_beosztas_new SET orvosid=?,helyszinid=?,nap=10,beonap=?,tol=?,ig=?,binterval=?,tipusok=?,aktiv=1,groupid=?,beocegek=?",
+                    array(
+                        $value["orvosid"], $value["helyszinid"], $value["datum"], $value["tol"], $value["ig"],
+                        $value["rinterval"], "|" . $value["tipusid"] . "|", $value["groupid"], "|" . $value["cegid"] . "|"
+                    )
+                );
+                $beoid=sql_insert_id();
+                sql_query("UPDATE tesco_2024_segedtabla SET beoid=? WHERE id=?",array($beoid,$value["id"]));
+                echo "Beosztás létrehozva! ({$beoid}.)<br>";
+            }
+        }*/
+
+        /*foreach($mapData["results"][0]["address_components"] as $index=>$component){
+            $key = array_search("postal_code",$component["types"]);
+            if($key!==false){
+                return $index;
+            }
+            //echo $key."<br>";
+        }
+        echo "itt a kulcs:".$key;*/
+
+
+
+        //die();
+
         /*if (isset($_POST["uploadDokirexExport"])) {
             if (isset($_FILES)) {
                 $this->dokirexExportData($_FILES["file"]["tmp_name"]);
             }
         }*/
+    }
+
+    public function getKeyByNestedValue($dictionary, $arrayName, $value)
+    {
+        foreach ($dictionary as $index => $component) {
+            $key = array_search($value, $component[$arrayName]);
+            if ($key !== false) {
+                return $index;
+            }
+        }
+        return false;
     }
 
     public function showPage()
