@@ -982,7 +982,7 @@ class BookingPage extends CorePage
                 $html .= "       </div>";
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-3\"></div>";
-                $html .= "</div>";
+                //$html .= "</div>";
                 
                 echo $html;
 
