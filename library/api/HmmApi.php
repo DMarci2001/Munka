@@ -1015,10 +1015,17 @@ class HmmApi {
                                 "specializationId" => (string)$tipusId,
                                 "doctorId"         => (string)$orvosId,
                                 "date"             => date("c", strtotime("{$nap} {$ora}")),
-                                "length"           => (string)$binterval
+                                "length"           => (string)$binterval,
+                                "available"        => 1
                             ];
 
+                            if (isset($existingTimesByDay[$nap]) && $beosztas["csaksorban"] == 1) {
+                                $slot["available"] = 0;
+                            }
+
                             $slots[] = $slot;
+
+                            $existingTimesByDay[$nap] = 1;
                         }
                     }
                 }
