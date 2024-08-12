@@ -353,7 +353,7 @@ class Utils {
             $htmlout.="<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
-        if(CompanyService::isSuzukiGHC() || CompanyService::isFiFi()){
+        if(CompanyService::isSuzukiGHC() || CompanyService::isFiFi() || CompanyService::isAstostecCompany()){
             if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking","registrationsuccessful"))){
                 $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
                 $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";

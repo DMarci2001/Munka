@@ -51,6 +51,23 @@ class LoginPage extends CorePage {
             die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra.");
         }
 
+        if(isset($_POST["sendemailcode"])){
+            if($result = sql_fetch_array(sql_query("SELECT *,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"])))){
+                
+               //kód generálása és kiküldése:
+               $rn = rand(11000, 98000);
+               sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));
+               $notificationService = new NotificationService();
+               $notificationService->sendCustomerSMSCode($result["id"]);
+
+               die("A kód ki lett küldve a TAJ számhoz tartozó e-mail címre.");
+            }
+            if($this->developMode){
+                die("Rosszak a megadott adatok!");
+            }
+            die("A kód ki lett küldve a TAJ számhoz tartozó e-mail címre.");
+        }
+
         if(isset($_POST["suzukilogin"])){
             if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE rkod=? AND taj=? and cegid=?",array($_POST["sms-code"],$_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 if (strtotime("now") - strtotime($result["rkoddatum"]) > 600) {
@@ -110,6 +127,55 @@ class LoginPage extends CorePage {
             $html .= "           <div class=\"col mb-3 text-center\">";
             $html .= "              <div><a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=registration\">Még nem regisztrált?</a></div>";
             $html.= "               <div><a href=\"#\" onClick=\"alert(\"SMS kiküldése e-mailben.\")\">SMS kód küldése e-mail címre</a></div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+            $html .= "  </form";
+            $html .= "</div>";
+
+            echo $html;
+            return;
+        }
+
+        if(CompanyService::isAstostecCompany()){
+
+            $html = "";
+            $html = $this->displayFejlec("Astotec Automotive szűrés",true);
+            $html .= "<div class=\"container\">";
+            $html .= "   <form id='suzuki-ghc-login-form' method='POST' enctype='multipart/form-data'>";
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "               <label for=\"taj\" class=\"form-label\">TAJ szám:</label>";
+            $html .= "               <input type=\"text\" class=\"form-control\" id=\"taj\" name=\"taj\" value=\"\">";
+            $html .= "               <div id=\"validation-taj\" class=\"valid-feedback\"></div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+            $html .= "       <div class=\"row\">";
+            $html .= "          <div class=\"col-md\"></div>";
+            $html .= "          <div class=\"col mb-3\">";
+            $html .= "              <div class=\"input-group mb-3\">";
+            $html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"Hitelesítő kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
+            $html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginEmailCode()\" type=\"button\" id=\"send-sms\">Kód küldés e-mail címre</button>";
+            $html .= "              </div>";
+            $html .= "          </div>";
+            $html .= "          <div class=\"col-md\"></div>";
+            $html .= "          </div>";
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "               <div class=\"d-grid gap-2\">";
+            $html .= "                   <button class=\"btn btn-hungariamed\" id=\"suzuki-login\" type=\"button\">Időpontfoglalás</button>";
+            $html .= "               </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3 text-center\">";
+            $html .= "              <div><a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=registration\">Még nem regisztrált?</a></div>";
+            //$html.= "               <div><a href=\"#\" onClick=\"alert(\"Kód kiküldése e-mailben.\")\">Kód küldése e-mail címre</a></div>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";

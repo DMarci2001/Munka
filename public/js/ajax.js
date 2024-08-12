@@ -1313,6 +1313,16 @@ $(document).on("focus", "#suzuki-ghc-registration-form input", function(){
     });
 })
 
+$(document).on("focus", "#astotec-registration-form input", function(){
+    var id = $(this).attr("id");
+    var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
+    $(classes).each(function(index1,value){
+        $("#"+id).removeClass(value);
+        $("#validation-"+id).removeClass(value);
+        $("#validation-"+id).html("");
+    });
+})
+
 $(document).on("click", "#suzuki-registration", function () {
     var data = $("form#suzuki-ghc-registration-form").serialize();
     var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
@@ -1322,6 +1332,40 @@ $(document).on("click", "#suzuki-registration", function () {
         type: "POST",
         dataType: "json",
         data: "suzuki_registration=true&"+data,
+        success: function (response) {
+
+            if (typeof response.error !== 'undefined') {
+                myAlert(response.error);
+                return;
+            }
+
+            $(response.status).each(function (index,value){
+                $(classes).each(function(index1,value1){
+                    $("#"+value.id).removeClass(value1);
+                    $("#validation-"+value.id).removeClass(value1);
+                });
+                $("#"+value.id).addClass("is-"+value.class)
+                $("#validation-"+value.id).addClass(value.class+"-feedback");
+                $("#validation-"+value.id).html(value.response);
+            });
+
+            if($(".is-invalid").length==0){
+                console.log("done!");
+                window.location.replace(response.url);
+            }
+        }
+    });
+});
+
+$(document).on("click", "#astotec-registration", function () {
+    var data = $("form#astotec-registration-form").serialize();
+    var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
+
+    $.ajax({
+        url: "index.php?page=registration",
+        type: "POST",
+        dataType: "json",
+        data: "astotec_registration=true&"+data,
         success: function (response) {
 
             if (typeof response.error !== 'undefined') {
@@ -1406,6 +1450,19 @@ function sendLoginSms(){
         url: "index.php?page=login",
         type: "POST",
         data: "sendsms=true&"+data,
+        success: function (response) {
+            console.log(response);
+            myAlert(response);
+        }
+    });
+}
+
+function sendLoginEmailCode(){
+    var data = $("form#suzuki-ghc-login-form").serialize();
+    $.ajax({
+        url: "index.php?page=login",
+        type: "POST",
+        data: "sendemailcode=true&"+data,
         success: function (response) {
             console.log(response);
             myAlert(response);

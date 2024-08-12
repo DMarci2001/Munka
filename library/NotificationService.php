@@ -1390,6 +1390,34 @@ END:VCALENDAR";
         $mail->Send();
     }
 
+    public function sendCustomerSMSCode($fid)
+    {
+        $user = sql_query("SELECT * FROM felhasznalok WHERE id=?",array($fid))->fetch(PDO::FETCH_ASSOC);
+
+        $mail = self::getDefaultMailer();
+        //$mail->AddAddress($user["email"]);
+        //$mail->AddBCC("jnsmobil@gmail.com");
+        $mail->AddAddress("marton.gergely@hungariamed.hu");
+
+        //Ellenőrzöm, hogy van-e kód generálva, vagy frissíteni kell-e
+        /*if (sql_query("SELECT * FROM felhasznalok WHERE logincodetime<DATE_SUB(NOW(),INTERVAL 1 HOUR) and id=?", array($user["id"]))->fetch(PDO::FETCH_ASSOC)) {
+            $code = rand(10000,99999);
+            sql_query("UPATE felhasznalok SET logincode=?,logincodetime=now() WHERE id=?", array($user["id"]));
+            $user["logincode"] = $code;
+        }*/
+
+        $mbody = "Kedves {$user["nev"]}!<br><br/>";
+        $mbody .= "A bejelentkezéshez a kód a következő:<br/>
+        <br/>
+        <span style='font-size: 24px;font-weight: bold;'>{$user["rkod"]}</span>
+        <br/>";
+        $mbody .= "<br/>Üdvözlettel:<br>" . Booking_Constants::COMPANY_NAME . " Csapata!<br/><br/>";
+
+        $mail->Subject = Booking_Constants::COMPANY_NAME." belépési kód";
+        $mail->Body = $mbody;
+        $mail->Send();
+    }
+
     /**
      * Suzuki menedzser foglalásokról értesíti a megjelölt e-mail címeket.
      * @param   string      $notificationDate       Értesítési nap meghatározása.
@@ -1574,6 +1602,47 @@ END:VCALENDAR";
         $html .= "  <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_ghc_email_logo_banner_uj.png\" style=\"max-height:180px; margin:10px\">";
         //$html .= "  <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_horizontal.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
         //$html .= "  <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS</div>";
+        $html.= "</div>";
+
+
+        $mail->Subject = $subject;
+        $mail->Body = $html;
+        if($mail->Send()){
+            $this->createNotificationRecord("regisztraciomegerosito", $fid, $result["email"], $subject, $html);
+            return "E-mail sent.";
+        }
+        return;
+    }
+
+    public function astotec_reg_confirmation_notification($fid){
+
+        $html= "";
+        $result = sql_query("SELECT felh.*,sz.megnev AS \"szurestipusNev\" FROM felhasznalok felh 
+                            LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam
+                            LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
+                            WHERE felh.id=?",array($fid))->fetch(PDO::FETCH_ASSOC);
+
+        $mail = self::getDefaultMailer();
+        $mail->AddAddress($result["email"]);
+        $subject = "Astotec szűrés regisztráció visszaigazolása";
+        $html.="<h2>Kedves {$result["nev"]}!</h2>";
+        $html.="Köszönjük, hogy a Astotec Automotive HU Bt. és a Hungária Med-M Kft. által szervezett munkavállalói szűrővizsgálat mellett döntött.<br><br>";
+        $html.="<strong>Vizsgálatok időpontja:</strong> 2024. szeptember 03. - 2024. szeptember 06.<br><br>";
+        //$html.="<strong>Időpontfoglalás kezdete:</strong> 2024. szeptember 02.<br><br>";
+
+        $html.="<strong>Vizsgálatok helyszíne:</strong><br>";
+        $html.="<ul style=\"margin-left:10px\">";
+        $html.="<li style=\"list-style: disc;\">Pápa, Astotec parkoló</li>";
+        //$html.="<li style=\"list-style: disc;\">Pápa, Astotec parkoló</li>";
+        $html.="</ul>";
+
+        $html.= "<p>Az Időpontfoglaláshoz <a href=\"https://astotec.hungariamed.hu/index.php?page=login\" target=\"_blank\" style=\"color:#a00\">kattintson ide!</a></p>";
+
+        $html.= "<div style=\"margin-bottom:50px\"></div>";
+        
+        $html.= "<div style=\"width:100%\">";
+        $html .= "  <a href=\"https://www.hungariamed.hu\" target=\"_blank\"><img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\"></a>";
+        //$html .= "  <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_ghc_email_logo_banner_uj.png\" style=\"max-height:180px; margin:10px\">";
         $html.= "</div>";
 
 

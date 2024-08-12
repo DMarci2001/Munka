@@ -1258,6 +1258,10 @@ form#aldi-fifi-registration-form label.checkbox{
     width: 90%;
     margin-left:5px;
 }
+form#astotec-registration-form label.checkbox{
+    width: 90%;
+    margin-left:5px;
+}
 .form-check-input:checked{
     background-color: #b90000 !important;
     border: 0;

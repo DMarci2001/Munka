@@ -949,6 +949,45 @@ class BookingPage extends CorePage
 
                 return;
             }
+
+            if(CompanyService::isAstostecCompany()){
+
+                //header("location:index.php?page=login");
+
+                $html = "";
+
+                $html.=  $this->displayFejlec("Astotec Automotive szűrés",true);
+
+                //$html.= $webText["mainudvozles"];
+
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
+                $html .= "      <p>Üdvözöljük, az Astotec Automotive szűrés - online regisztrációs felületén.</p>";
+                $html .= "      <p>Jelentkezését a szűrésre a \"Regisztráció\" gombra kattintva adhatja le.</p>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "</div>";
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "    <div class=\"col-6 mb-3 mt-3\">";
+                $html .= "        <div class=\"row\">";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
+                $html .= "           </div>";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
+                $html .= "           </div>";
+                $html .= "           </div>";
+                $html .= "       </div>";
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-3\"></div>";
+                $html .= "</div>";
+                
+                echo $html;
+
+                return;
+            }
             
 
             if ($rowsz = sql_fetch_array(sql_query("select * from szovegek where cegid=? and tipus='welcome'", array($_SESSION["helyszindata"]["id"])))) {

@@ -441,6 +441,134 @@ class RegistrationPage extends CorePage
             
             die(json_encode(array("status" => $status, "url"=> $url)));
         }
+
+        if(isset($_POST["astotec_registration"])){
+
+            $error = 0;
+            $url = "";
+            $status = [];
+            $minimalRequirement = false;
+            
+            if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],664))->fetch(PDO::FETCH_ASSOC)){
+                $error = "Ön már regisztrálva van az Astotec Automotive szűrésre.<br><br> Kérem, jelentkezzen be a \"Bejelentkezés\" menüpont alatt a TAJ számával.<br>";
+                $error.= "<a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=login\">Bejelentkezésez kattintson ide!</a>";
+                die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
+            }
+
+            //TAJ ellenőrzése
+            if (isset($_POST["taj"]) && !empty($_POST["taj"])) {
+                if ($this->utils->tajCheck($_POST["taj"]) || true) {
+                    $status[] = array("id" => "taj", "response" => "Helyes!", "class" => "valid");
+                } else {
+                    $status[] = array("id" => "taj", "response" => "Helytelen TAJ szám!", "class" => "invalid");
+                    $error++;
+                }
+            } else {
+                $status[] = array("id" => "taj", "response" => "Adja meg a TAJ számát!", "class" => "invalid");
+                $error++;
+            }
+
+
+            //Név ellenőrzése
+            if (isset($_POST["name"]) && !empty($_POST["name"])) {
+                $status[] = array("id" => "name", "response" => "Helyes!", "class" => "valid");
+            } else {
+                $status[] = array("id" => "name", "response" => "Adja meg a nevét!", "class" => "invalid");
+                $error++;
+            }
+
+            //Születési dátum ellenőrzése
+            /*if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
+                $status[] = array("id" => "birthdate", "response" => "Helyes!", "class" => "valid");
+            } else {
+                $status[] = array("id" => "birthdate", "response" => "Adja meg a születési dátumát!", "class" => "invalid");
+                $error++;
+            }*/
+            
+            
+
+            //Email ellenőrzése
+            if (isset($_POST["email"]) && !empty($_POST["email"])) {
+                if (!filter_var($_POST["email"], FILTER_VALIDATE_EMAIL)) {
+                    $status[] = array("id" => "email", "response" => "Adjon meg egy helyes e-mail címet!", "class" => "invalid");
+                    $error++;
+                } else {
+                    $status[] = array("id" => "email", "response" => "Helyes e-mail cím!", "class" => "valid");
+                }
+            } else {
+                $status[] = array("id" => "email", "response" => "Adjon meg egy helyes e-mail címet!", "class" => "invalid");
+                $error++;
+            }
+
+            //Telefonszám ellenőrzése
+            /*if (isset($_POST["phone"]) && !empty($_POST["phone"])) {
+                $regex = '/^(\+36|06)(20|30|31|50|70)\d{7}$/';
+                if (preg_match($regex, $_POST["phone"])) {
+                    $status[] = array("id" => "phone", "response" => "Helyes!", "class" => "valid");
+                } else {
+                    $status[] = array("id" => "phone", "response" => "Helytelen telefonszám!", "class" => "invalid");
+                    $error++;
+                }
+            } else {
+                $status[] = array("id" => "phone", "response" => "Adja meg a telefonszámát!", "class" => "invalid");
+                $error++;
+            }*/
+
+            //Irányítószám ellenőrzése
+            /*if (isset($_POST["zip-code"]) && !empty($_POST["zip-code"])) {
+                if (isset($_POST["zip-code"]) && !empty($_POST["zip-code"])) {
+                    $status[] = array("id" => "zip-code", "response" => "Helyes!", "class" => "valid");
+                } else {
+                    $status[] = array("id" => "zip-code", "response" => "Adja meg a irányítószámát!", "class" => "invalid");
+                    $error++;
+                }
+            }else {
+                $status[] = array("id" => "zip-code", "response" => "Adja meg a irányítószámát!", "class" => "invalid");
+                $error++;
+            }*/
+
+            //Város ellenőrzése
+            /*if (isset($_POST["city"]) && !empty($_POST["city"])) {
+                if (isset($_POST["city"]) && !empty($_POST["city"])) {
+                    $status[] = array("id" => "city", "response" => "Helyes!", "class" => "valid");
+                } else {
+                    $status[] = array("id" => "city", "response" => "Adja meg a Városa nevét!", "class" => "invalid");
+                    $error++;
+                }
+            }else {
+                $status[] = array("id" => "city", "response" => "Adja meg a Városa nevét!", "class" => "invalid");
+                $error++;
+            }*/
+
+            //Lakcím ellenőrzése
+            /*if (isset($_POST["address"]) && !empty($_POST["address"])) {
+                if (isset($_POST["address"]) && !empty($_POST["address"])) {
+                    $status[] = array("id" => "address", "response" => "Helyes!", "class" => "valid");
+                } else {
+                    $status[] = array("id" => "address", "response" => "Adja meg a pontos címét!", "class" => "invalid");
+                    $error++;
+                }
+            }else {
+                $status[] = array("id" => "address", "response" => "Adja meg a pontos címét!", "class" => "invalid");
+                $error++;
+            }*/
+
+            //ÁSZF ellenőrzése
+            if (isset($_POST["aszf"]) && $_POST["aszf"] == "on") {
+                $status[] = array("id" => "aszf", "response" => "", "class" => "form-color");
+            } else {
+                $status[] = array("id" => "aszf", "response" => "A fogalaláshoz el kell fogadja az ASZF-et!", "class" => "invalid");
+                $error++;
+            }
+
+            if($error==0){
+                $url = $this->registerASTPatient($_POST);
+                //$url = $this->registerGHCPatient($_POST);
+            }
+
+            
+            die(json_encode(array("status" => $status, "url"=> $url)));
+        }
     }
 
     public function showPage()
@@ -466,6 +594,17 @@ class RegistrationPage extends CorePage
             //Suzuki
             $html = $this->suzukiRegTemplate();
             
+            echo $fejlec;
+            echo $error;
+            echo $html;
+            return;
+        }
+
+        if(CompanyService::isAstostecCompany()){
+
+            $fejlec = $this->displayFejlec("Astotec Automotive HU - Regisztráció", true);
+            $error  = $this->showFormErrors();
+            $html = $this->AstotectRegTemplate();
             echo $fejlec;
             echo $error;
             echo $html;
@@ -559,6 +698,26 @@ class RegistrationPage extends CorePage
         return $url;
     }
 
+    public function registerASTPatient($data)
+    {
+        $pass=md5(date("Y-m-d H:is").$data["name"]."astotec");
+        
+        $q = sql_query("INSERT INTO felhasznalok 
+        SET cegid=?,nev=?,email=?,taj=?,regtime=?,validated=?,pass=?
+        ", array(
+            664, $data["name"], $data["email"], $data["taj"], date("Y-m-d H:i:s"), 1, $pass
+        ));
+
+        $id = sql_insert_id();
+
+        //$notificationService = New NotificationService();
+
+
+        $url = "https://{$_SERVER["HTTP_HOST"]}/?page=registrationsuccessful&pass={$pass}&id={$id}";
+
+        return $url;
+    }
+
     public function registerFiFiPatient($data)
     {
         $pass=md5(date("Y-m-d H:is").$data["name"]."fifi");
@@ -613,7 +772,142 @@ class RegistrationPage extends CorePage
         return $url;
     }
 
+    public function AstotectRegTemplate(){
+        $maxBirthDate = date("Y-m-d",strtotime("Now - 18 years"));
+        $html = "";
+        $html .= "<div class=\"container og-bootstrap\" id='og-bootstrap'>";
+        $html .= "   <form id='astotec-registration-form' method='POST' enctype='multipart/form-data'>";
+        /*$html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"torzsszam\" class=\"form-label\">Törzsszám:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"torzsszam\" name=\"torzsszam\" value=\"\">";
+        $html .= "               <div id=\"validation-torzsszam\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";*/
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"name\" class=\"form-label\">Teljes név:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"name\" name=\"name\" value=\"\">";
+        $html .= "               <div id=\"validation-name\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"taj\" class=\"form-label\">TAJ szám:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"taj\" name=\"taj\" value=\"\">";
+        $html .= "               <div id=\"validation-taj\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        
+        /*$html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"birthdate\" class=\"form-label\">Születési dátum:</label>";
+        $html .= "               <input type=\"date\" class=\"form-control\" id=\"birthdate\" max=\"{$maxBirthDate}\" name=\"birthdate\" value=\"\">";
+        $html .= "               <div id=\"validation-birthdate\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";*/
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"email\" class=\"form-label\">E-mail:</label>";
+        $html .= "               <div class=\"input-group\">";
+        $html .= "               <span class=\"input-group-text\" id=\"emailPrepend\"><i class=\"fa-solid fa-at\"></i></span>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"email\" name=\"email\" aria-describedby=\"\">";
+        $html .= "               <div id=\"validation-email\" class=\"valid-feedback\"></div>";
+        $html .= "               </div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        /*$html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"phone\" class=\"form-label\">Telefonszám:</label>";
+        $html .= "               <div class=\"input-group\">";
+        $html .= "               <span class=\"input-group-text\" id=\"phonePrepend\"><i class=\"fa-solid fa-phone\"></i></span>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"phone\" name=\"phone\" value=\"+36\" aria-describedby=\"\">";
+        $html .= "               <div id=\"validation-phone\" class=\"valid-feedback\"></div>";
+        $html .= "               </div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"zip-code\" class=\"form-label\">Irányítószám:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"zip-code\" name=\"zip-code\">";
+        $html .= "               <div id=\"validation-zip-code\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"city\" class=\"form-label\">Város:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"city\" name=\"city\">";
+        $html .= "               <div id=\"validation-city\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <label for=\"address\" class=\"form-label\">Utca, házszám:</label>";
+        $html .= "               <input type=\"text\" class=\"form-control\" id=\"address\" name=\"address\">";
+        $html .= "               <div id=\"validation-address\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";*/
 
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html.= "               <div class=\"d-block d-xl-none\">";
+        $html .= "                  <input class=\"form-check-input checkbox\" type=\"checkbox\" id=\"aszf\" name=\"aszf\">";
+        $html .= "                  <label class=\"form-label checkbox\" for=\"aszf\">";
+        $html .= "                      Az <a target=\"_blank\" href=\"https://hungariamed.hu/images/adatkezeles.pdf\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
+        $html .= "                  </label>";
+        $html.= "               </div>";
+        $html .= "              <div class=\"d-none d-xl-block\">";
+        $html .= "                  <input class=\"form-check-input checkbox\" type=\"checkbox\" id=\"aszf\" name=\"aszf\">";
+        $html .= "                  <label class=\"form-label checkbox\" for=\"aszf\">";
+        $html .= "                      Az <a target=\"_blank\" data-bs-toggle=\"collapse\" href=\"#gdpr-collapse\" aria-expanded=\"false\" aria-controls=\"gdpr-collapse\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
+        $html .= "                  </label>";
+        $html .= "              </div>";
+        $html .= "               <div id=\"validation-aszf\" class=\"valid-feedback\"></div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row d-none d-xl-block\">";
+        $html .= "           <div class=\"col mb-3 text-center\">";
+        $html .= "                  <div class=\"collapse multi-collapse\" id=\"gdpr-collapse\">";
+        $html .= "                      <div class=\"ratio ratio-1x1\">";
+        $html .= "                          <iframe src=\"https://hungariamed.hu/images/adatkezeles.pdf\" title=\"GDPR - Adatvédelmi tájékoztató\" allowfullscreen></iframe>";
+        $html .= "                      </div>";
+        $html .= "                  </div>";
+        $html .= "           </div>";
+        $html .= "       </div>";
+        $html .= "       <div class=\"row\">";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "           <div class=\"col mb-3\">";
+        $html .= "               <div class=\"d-grid gap-2\">";
+        $html .= "                   <button class=\"btn btn-hungariamed\" id=\"astotec-registration\" type=\"button\">Regisztráció</button>";
+        $html .= "               </div>";
+        $html .= "           </div>";
+        $html .= "           <div class=\"col-md\"></div>";
+        $html .= "       </div>";
+        $html .= "   </form>";
+        $html .= "</div>";
+
+        return $html;
+    }
 
     public function suzukiRegTemplate(){
 
