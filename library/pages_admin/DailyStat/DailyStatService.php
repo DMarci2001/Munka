@@ -290,6 +290,11 @@ class DailyStatService {
                             $vizsgalatDatum = "0000-00-00";
                         }
 
+                        $felvetelDatum = str_replace(".", "-", $sheet->getCell("N{$rowNr}")->getFormattedValue());
+                        if (empty($felvetelDatum)) {
+                            $felvetelDatum = "0000-00-00";
+                        }
+
                         $row = [
                             "datum" => date("Y-m-d H:i:s", strtotime($datum)),
                             "nev" => $sheet->getCell("B{$rowNr}")->getValue(),
@@ -303,7 +308,8 @@ class DailyStatService {
                             "alkalmassag" => $sheet->getCell("J{$rowNr}")->getValue(),
                             "ervenyesseg" => $ervenyesseg,
                             "vizsgalattipus" => $sheet->getCell("L{$rowNr}")->getValue(),
-                            "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum))
+                            "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum)),
+                            "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum))
                         ];
 
                         sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
@@ -311,7 +317,7 @@ class DailyStatService {
                                     datum=:datum, moddatum=:datum, nev=:nev,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
                                     paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
-                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum", $row);
+                                    korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum, felveteldatum=:felveteldatum", $row);
 
                         $rowNr++;
                     }
@@ -358,6 +364,19 @@ class DailyStatService {
                         $vizsgalatDatum = date("Y-m-d H:i:s", strtotime($vizsgalatDatum));
                     }
 
+                    $felvetelDatum = str_replace(".", "-", $sheet->getCell("O{$rowNr}")->getFormattedValue());
+                    if (empty($felvetelDatum)) {
+                        $felvetelDatum = "0000-00-00";
+                    }
+
+                    //echo "datum: {$datum} ".date("Y-m-d H:i:s", strtotime($datum))." ".date("Y-m-d", strtotime($sheet->getCell("G{$rowNr}")->getFormattedValue()));
+                    //echo "\n";
+                    //die;
+
+                    //ini_set('display_errors', 1);
+                    //ini_set('display_startup_errors', 1);
+                    //error_reporting(E_ALL);
+
                     $row = [
                         "datum" => date("Y-m-d H:i:s", strtotime($datum)),
                         "nev" => $sheet->getCell("C{$rowNr}")->getValue(),
@@ -371,16 +390,20 @@ class DailyStatService {
                         "alkalmassag" => $sheet->getCell("K{$rowNr}")->getValue(),
                         "ervenyesseg" => date("Y-m-d", strtotime($ervenyesseg)),
                         "vizsgalattipus" => $sheet->getCell("M{$rowNr}")->getValue(),
-                        "vizsgalatdatum" => $vizsgalatDatum
+                        "vizsgalatdatum" => $vizsgalatDatum,
+                        "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum))
                     ];
+
+                    //print_r($row);
 
                     sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
                     sql_query("insert into dokirex_vizsgalatok set 
                                 datum=:datum, moddatum=:datum, nev=:nev,
                                 szakrendeles=:szakrendeles, orvos=:orvos,
                                 paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
-                                korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum", $row);
+                                korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum, felveteldatum=:felveteldatum", $row);
 
+                    //die("end\n");
                     $rowNr++;
                 }
 

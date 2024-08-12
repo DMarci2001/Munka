@@ -523,6 +523,11 @@ class LaborKeroService
                 if ($this->laborProvider == SELF::LABOR_PROVIDER_SYNLAB) {
                     $html.= "<div style='color:red;font-weight: bold;'>A vonalkódos matrica egyelőre csak a SpektrumLab laborkérés esetén működik</div>";
                 }
+            } else {
+                if (!empty($laborRequestData["errormsg"])) {
+                    $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>Üzenet a spektrumlabtól</div>";
+                    $html.= "<div style='margin: 10px 0px;'>{$laborRequestData["errormsg"]}</div>";
+                }
             }
 
             foreach ($messages as $message) {
@@ -714,30 +719,32 @@ class LaborKeroService
     }
 
 
+
     public function storeLaborKeroFromLabShopData():void {
-        $labShopReservations = sql_query("SELECT l.id AS laborid, l.cart_content,l.status, l.payment_method, f.* FROM cart_item c
-		LEFT JOIN labshop_vasarlasok l ON l.id = c.session_id
-            LEFT JOIN foglalasok f ON f.id=c.reservation_id
-            LEFT JOIN labrequests r ON r.foglalasid=f.id
-            WHERE f.id IS NOT NULL AND f.datum>NOW() AND r.id IS NULL
-            ORDER BY f.datum LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+        $cartItems = sql_query("SELECT c.created_at, c.session_id, c.reservation_id, GROUP_CONCAT(TYPE,'_',c.product_id,'_',c.id) AS itemscode, v.`payment_method`, v.`status`, v.`name`
+            FROM cart_item c
+            LEFT JOIN labshop_vasarlasok v ON v.id=c.session_id
+            WHERE c.created_at>DATE_SUB(NOW(), INTERVAL 1 WEEK) AND c.reservation_id<>0 AND v.laborkero=0 AND TYPE IN ('package', 'item') 
+            GROUP BY c.reservation_id")->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($labShopReservations as $key => $labShopReservation) {
-            echo "{$key}\n";
+        foreach ($cartItems as $key => $cartItem) {
+            echo "{$cartItem["session_id"]} {$cartItem["reservation_id"]}\n";
 
-            if ($labShopReservation["payment_method"] == "simplepay" && $labShopReservation["status"] != "done" && $labShopReservation["status"] != "FINISHED") {
+            if ($cartItem["payment_method"] == "simplepay" && $cartItem["status"] != "done" && $cartItem["status"] != "FINISHED") {
                 echo "nincs fizetve\n";
                 continue;
             }
 
-            if (sql_query("select id from labrequests where foglalasid=? limit 1", [$labShopReservation["id"]])->fetch(PDO::FETCH_ASSOC)) {
+            if (sql_query("select id from labrequests where foglalasid=? limit 1", [$cartItem["reservation_id"]])->fetch(PDO::FETCH_ASSOC)) {
                 echo "van már laborkérő\n";
                 continue;
             }
 
+            sql_query("UPDATE labshop_vasarlasok SET laborkero=1 WHERE id=?", [$cartItem["session_id"]]);
+
             $items = $packs = [];
 
-            $orderedPackages = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='package'", [$labShopReservation["laborid"]])->fetchAll(PDO::FETCH_ASSOC);
+            $orderedPackages = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='package'", [$cartItem["session_id"]])->fetchAll(PDO::FETCH_ASSOC);
             echo "csomagok: ".count($orderedPackages)."\n";
 
             foreach ($orderedPackages as $orderedPackage) {
@@ -745,34 +752,34 @@ class LaborKeroService
                 if ($packData = sql_query("select cs.id, cs.name, cs.spektrumitems as items from synlab_labor_csomagok cs where cs.id=?", [$orderedPackage["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
                     $packItems = json_decode($packData["items"]);
                     $packs[] = $packData["id"];
-                    echo "{$labShopReservation["nev"]} - pack: {$packData["name"]} ".count($packItems)."\n";
+                    //echo "{$cartItem["name"]} - pack: {$packData["name"]} ".count($packItems)."\n";
                     foreach ($packItems as $packItem) {
                         if (!in_array($packItem, $items)) {
+                            echo "processing item {$packItem}\n";
                             $items[] = $packItem;
                         }
                     }
                 }
             }
 
-
-            $orderedItems = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='item'", [$labShopReservation["laborid"]])->fetchAll(PDO::FETCH_ASSOC);
+            $orderedItems = sql_query("SELECT * FROM cart_item WHERE session_id=? AND TYPE='item'", [$cartItem["session_id"]])->fetchAll(PDO::FETCH_ASSOC);
             echo "items: ".count($orderedItems)."\n";
 
             foreach ($orderedItems as $orderedItem) {
                 echo "processing item {$orderedItem["product_id"]}\n";
-                if ($itemData = sql_query("select t.id, t.name, t.commazo, t.spid from synlab_labor_tetelek t where t.id=? and t.spid<>0", [$orderedItem["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
-                    if (!in_array($itemData["spid"], $items)) {
-                        $items[] = $itemData["spid"];
-                    }
-                }
+                //if ($itemData = sql_query("select t.id, t.name, t.commazo, t.spid from synlab_labor_tetelek t where t.id=? and t.spid<>0", [$orderedItem["product_id"]])->fetch(PDO::FETCH_ASSOC)) {
+                //    if (!in_array($itemData["spid"], $items)) {
+                //        $items[] = $itemData["spid"];
+                //    }
+                //}
+                $items[] = $orderedItem["product_id"];
             }
-
 
             $items = array_unique($items);
 
             if (!empty($items)) {
-                $laborRequestData = $this->getLaborRequestData($labShopReservation["id"]);
-                sql_query("update labrequests set created=?, resultdate=?, laborpacks=?, laboritems=?, status='temp' where id=?", [$labShopReservation["datum"], $labShopReservation["datum"], json_encode($packs), json_encode($items), $laborRequestData["id"]]);
+                $laborRequestData = $this->getLaborRequestData($cartItem["reservation_id"]);
+                sql_query("update labrequests set created=?, resultdate=?, laborpacks=?, laboritems=?, status='temp' where id=?", [$cartItem["created_at"], $cartItem["created_at"], json_encode($packs), json_encode($items), $laborRequestData["id"]]);
                 foreach ($items as $item) {
                     if (!sql_query("select requestid from labrequestitems where requestid=? and itemid=?", [$laborRequestData["id"], $item])->fetch(PDO::FETCH_ASSOC)) {
                         sql_query("insert into labrequestitems set requestid=?, itemid=?", [$laborRequestData["id"], $item]);

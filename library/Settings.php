@@ -2,12 +2,12 @@
 
 class Booking_Settings
 {
-    private $munkaszunetiNapok      = [];
+    private array $munkaszunetiNapok      = [];
 
-    public $honaptext               = array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
-    public $hetnap                  = array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
+    public array $honaptext               = array("","január","február","március","április","május","június","július","augusztus","szeptember","október","november","december");
+    public array $hetnap                  = array("","hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap");
 
-    public $alkalmassagvariaciok    = array (
+    public array $alkalmassagvariaciok    = array (
             "I" => "alkalmas",
             "N" => "alkalmatlan",
             "IN" => "ideiglenesen nem alkalmas",
@@ -23,7 +23,7 @@ class Booking_Settings
 
         $munkaszunetiNapok = explode(",",$rows["szunnapok"]);
         foreach ($munkaszunetiNapok as $nap) {
-            if (isset($_SESSION["helyszindata"]) && $_SESSION["helyszindata"]["id"] == 114) {
+            if (Booking_Constants::SQL_DB == "hungariamed" && isset($_SESSION["helyszindata"]) && $_SESSION["helyszindata"]["id"] == 114) {
                 continue;
             }
             $this->munkaszunetiNapok[] = $nap;
@@ -33,13 +33,18 @@ class Booking_Settings
         $GLOBALS["hetnap"] = $this->hetnap;
     }
 
-    public $validIntervals = [1,2,3,4,5,6,8,10,12,15,20,30,40,45,60];
+    public array $validIntervals = [1,2,3,4,5,6,8,10,12,15,20,30,40,45,60];
 
-    public function getMunkaszunetiNapok() {
+    public function getMunkaszunetiNapok($locationId = 0):array {
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            if ($locationId == 1 && in_array("2024-07-01", $this->munkaszunetiNapok)) {
+                $this->munkaszunetiNapok = array_diff($this->munkaszunetiNapok, ["2024-07-01"]);
+            }
+        }
         return $this->munkaszunetiNapok;
     }
 
     public function setChatStatus($status) {
-        sql_query("update settings set chat=?", [intval($status)]);
+        sql_query("update settings set chat=? where id=1", [intval($status)]);
     }
 }

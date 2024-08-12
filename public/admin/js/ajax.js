@@ -2677,8 +2677,6 @@ function toggleElojegyzesTableNaptar(oid, tid) {
             data: {closebeotable:closed, oid:oid, tid:tid}
         });
     });
-
-
 }
 
 function setSynlabStatus() {
@@ -4769,4 +4767,29 @@ function restoreDeletedReservation(id) {
             });
         }
     })
+}
+
+function showLaborCategorySelect(id, category) {
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: {page:"labortetelek", showcategoryselect:id, category:category}
+    }).done(function (msg) {
+        $("#categoryid"+id).html(msg);
+    });
+}
+
+function saveLaborCategory(id, category) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {page:"labortetelek", setcategoryid:1, id:id, category:category},
+        success: function (response) {
+            $("#cegid"+id).html(response);
+            $.toast({
+                text: "Kategória mentve",
+                icon: "success"
+            });
+        }
+    });
 }

@@ -76,6 +76,9 @@ class CronService {
             $spektrumLabService->processPdfFromMessages();
 
             if (Booking_Constants::SQL_DB == "hungariamed") {
+                $laborKeroService = new LaborKeroService();
+                $laborKeroService->storeLaborKeroFromLabShopData();
+
                 //synlab feldolgozás
                 $service = new SynlabService();
                 $service->synlabProcess();
@@ -97,8 +100,8 @@ class CronService {
             $this->seemeBalanceCheck();
             $this->sendManagerStatusEmail();
 
-            $laborKeroService = new LaborKeroService();
-            $laborKeroService->storeLaborKeroFromLabShopData();
+            //$laborKeroService = new LaborKeroService();
+            //$laborKeroService->storeLaborKeroFromLabShopData();
 
             //$spektrumLabService = new SpektrumlabService();
             //$spektrumLabService->sendAutomaticRequests();
@@ -169,16 +172,19 @@ class CronService {
         //$service = new SynlabService();
         //$service->pdfTeszt();
 
-        //$laborKeroService = new LaborKeroService();
-        //$laborKeroService->storeLaborKeroFromLabShopData();
+        $laborKeroService = new LaborKeroService();
+        $laborKeroService->storeLaborKeroFromLabShopData();
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
 
         //$this->addSyncReservations();
 
-        $service = new SynlabService();
-        $service->synlabProcess();
+        //$service = new SynlabService();
+        //$service->synlabProcess();
+
+        //$service = new SynlabService();
+        //$service->downloadSynlabEmails();
 
         //echo $result."\n";
 
@@ -589,7 +595,7 @@ class CronService {
                     $row["datum"] = substr($row["datum"], 0, 10)." ".$row["jarat"];
                 }
 
-                $szoveg = Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása van: ".substr($row["datum"],11,5)." {$row["cim"]}";
+                $szoveg = Booking_Constants::COMPANY_NAME_SHORT." időpont foglalása van: ".date("Y.m.d H:i", strtotime($row["datum"]))." {$row["cim"]}";
                 if ($row["rlang"] == "en") {
                     $szoveg = Booking_Constants::COMPANY_NAME_SHORT.": You have an appointment - ".substr($row["datum"],11,5)." {$row["cim"]}";
                 }

@@ -10,6 +10,19 @@ class AdminMunkaNaploPage extends AdminCorePage
         //error_reporting(E_ALL);
         //ini_set('display_errors', 1);
 
+        if (isset($_POST["munkanaploautofill"])) {
+            $munkaltato = $_POST["munkanaploautofill"];
+
+            if ($result = sql_query("select * from munkahigienes_felmeres where munkaltato=? and munkaltato<>'' order by datum desc limit 1", [$munkaltato])->fetch(PDO::FETCH_ASSOC)) {
+                $result["error"] = "";
+            } else {
+                $result["error"] = "Munkáltató nem található";
+            }
+
+            echo Utils::jsonOut($result);
+            die;
+        }
+
         if (isset($_POST["datum"])) {
             $id=0;
             $error = "";

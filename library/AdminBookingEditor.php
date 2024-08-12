@@ -855,7 +855,7 @@ class AdminBookingEditor {
         $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
         $items = [];
-        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>2 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
+        foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>1 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
             $items[] = "'".trim(str_replace("'", "", $munkakor["munkakor"]))."'";
         }
 

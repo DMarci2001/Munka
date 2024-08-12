@@ -57,6 +57,7 @@ class SpektrumlabService {
         "000000482" => "Hungária Med-M Kft. (Külső szűrés)",
         "000000483" => "Hungária Med-M Kft. (Hazai pálya)",
         "000000479" => "Hungária Med-M Kft. (Suzuki menedzser)",
+        "000000519" => "Hungária Med-M Kft. (Apollo Tyres)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -261,6 +262,16 @@ class SpektrumlabService {
         unlink($this->params["inDir"].self::SEMAFOR_FILE);
     }
 
+    /*
+    MSH|^~\&|klab||hungariamedm||202406201409||ORR^O02|00527267|P|2.3|||NE|AL|
+    MSA|AA|23926|
+    ORC|OK|23926^hungariamedm|^klab||IP|
+    ZPO|Ck4KUjAsMApCMjcxLDM0LDAsMiwyLDYsNjksQiwiMzAxOTAwNjIwMDAzIgpBNjA5LDcsMSw1LDEsMSxOLCIzMDE5MCIKQTIyNSwyLDAsMiwxLDEsTiwiZHhoODAwLGR4aDkwMC0xLGR4aDkwMC0yLHIiCkEzMjMsMTgsMCwyLDEsMSxOLCIzMDE5MC8wNi4yMC4iCkEyMjUsMTI4LDAsMywxLDEsTiwiRURUQSIKQTIyNSwxNDksMCwyLDEsMSxOLCJMgnZhaSBJbXJlLzE5NjcuMDYuMTAuIgpBMjI1LDE2NiwwLDIsMSwxLE4sIkh1bmegcmlhIE1lZC1NIEtmdC4oS4Fsc5MgIgpQMQoKTgpSMCwwCkIyNzEsMzQsMCwyLDIsNiw2OSxCLCIzMDE5MDA2MjAwMDEiCkE2MDksNywxLDUsMSwxLE4sIjMwMTkwIgpBMjI1LDIsMCwyLDEsMSxOLCJhdTU4MDAtMV8xLGF1NTgwMC0yXzEsY2VudCIKQTMyMywxOCwwLDIsMSwxLE4sIjMwMTkwLzA2LjIwLiIKQTIyNSwxMjgsMCwzLDEsMSxOLCJTRVJVTSIKQTIyNSwxNDksMCwyLDEsMSxOLCJMgnZhaSBJbXJlLzE5NjcuMDYuMTAuIgpBMjI1LDE2NiwwLDIsMSwxLE4sIkh1bmegcmlhIE1lZC1NIEtmdC4oS4Fsc5MgIgpQMQoKTgpSMCwwCkIyNzEsMzQsMCwyLDIsNiw2OSxCLCIzMDE5MDA2MjAwMDIiCkE2MDksNywxLDUsMSwxLE4sIjMwMTkwIgpBMjI1LDIsMCwyLDEsMSxOLCJhdTU4MDAtMV8xLGF1NTgwMC0yXzEscmVtaSIKQTMyMywxOCwwLDIsMSwxLE4sIjMwMTkwLzA2LjIwLiIKQTIyNSwxMjgsMCwzLDEsMSxOLCJOQUYgMCIKQTIyNSwxNDksMCwyLDEsMSxOLCJMgnZhaSBJbXJlLzE5NjcuMDYuMTAuIgpBMjI1LDE2NiwwLDIsMSwxLE4sIkh1bmegcmlhIE1lZC1NIEtmdC4oS4Fsc5MgIgpQMQoKTgpSMCwwCkIyNzEsMzQsMCwyLDIsNiw2OSxCLCIzMDE5MDA2MjAwMDYiCkE2MDksNywxLDUsMSwxLE4sIjMwMTkwIgpBMjI1LDIsMCwyLDEsMSxOLCJ1YXM4MDAsdWFzODAwLTIiCkEzMjMsMTgsMCwyLDEsMSxOLCIzMDE5MC8wNi4yMC4iCkEyMjUsMTI4LDAsMywxLDEsTiwiVklaRUxFVCIKQTIyNSwxNDksMCwyLDEsMSxOLCJMgnZhaSBJbXJlLzE5NjcuMDYuMTAuIgpBMjI1LDE2NiwwLDIsMSwxLE4sIkh1bmegcmlhIE1lZC1NIEtmdC4oS4Fsc5MgIgpQMQo=||
+
+    MSH|^~\&|klab||hungariamedm||202406200938||ORR^O02|00526818|P|2.3|||NE|AL|
+    MSA|AR|23845|[REQNO: 23845] Sikertelen fogadás
+    */
+
     public function processPdfFromMessages($smallOnly = false):void {
         $tempPdf = "/var/pdfwork/spekTemp.pdf";
         $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
@@ -276,6 +287,7 @@ class SpektrumlabService {
                 }
                 if (trim($fields[0]) == "MSA") {
                     $lastRequestId = intval($fields[2]);
+                    sql_query("update labrequests set errormsg=? where id=?", [$row, $lastRequestId]);
                 }
                 if (trim($fields[0]) == "ZPO" && !empty($lastRequestId)) {
                     sql_query("update labrequests set matricacode=? where id=?", [$fields[1], $lastRequestId]);

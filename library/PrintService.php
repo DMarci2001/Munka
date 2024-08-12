@@ -1234,6 +1234,8 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         $templateHeader = ob_get_contents();
         //ob_end_clean();
 
+        $templateTorzs = str_replace("#buttonhide#", "display:none;", $templateTorzs);
+
         echo $templateHeader;
         echo $templateTorzs;
         echo $templateSign;
@@ -1286,6 +1288,9 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             689 => "templates/szurovizsgalat_form_dejtar.pdf",
             688 => "templates/szurovizsgalat_form_karancslapujto.pdf",
             686 => "templates/szurovizsgalat_form_bercel.pdf",
+            696 => "templates/szurovizsgalat_form_kisecset.pdf",
+            701 => "templates/szurovizsgalat_form_diosjeno.pdf",
+            697 => "templates/szurovizsgalat_form_szecsenyfelfalu.pdf",
         ];
 
         $orvosId = $beoData["orvosid"];
@@ -1294,6 +1299,15 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 
         if (isset($pdfHelyszinMap[$helyszinId])) {
             $pdfLocation = $pdfHelyszinMap[$helyszinId];
+        }
+        if ($helyszinId == 693) {
+            $pdfLocation = "templates/szurovizsgalat_form_egyhazasgerge.pdf";
+        }
+        if ($helyszinId == 685) {
+            $pdfLocation = "templates/szurovizsgalat_form_endrefalva.pdf";
+        }
+        if ($helyszinId == 684) {
+            $pdfLocation = "templates/szurovizsgalat_form_szirak.pdf";
         }
 
         //csak a beosztás
@@ -1335,7 +1349,12 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             }
 
             $tz = new DateTimeZone("Europe/Brussels");
-            $age = DateTime::createFromFormat("Y-m-d", $reservation["szuldatum"], $tz)->diff(new DateTime('now', $tz))->y;
+            try {
+                $age = DateTime::createFromFormat("Y-m-d", $reservation["szuldatum"], $tz)->diff(new DateTime('now', $tz))->y;
+            } catch (Error $e) {
+                echo "Hibás születési dátum: {$reservation["nev"]}";
+                die;
+            }
 
             $input = [
                 "datum" => date("Y.m.d", strtotime($reservation["datum"])),

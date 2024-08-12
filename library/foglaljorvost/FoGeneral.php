@@ -75,6 +75,18 @@ class FoGeneral {
         if ($beo["nap"] == 5) $beo["startTime"] = date("Y-m-d", strtotime("this week friday"));
         if ($beo["nap"] == 6) $beo["startTime"] = date("Y-m-d", strtotime("this week saturday"));
         if ($beo["nap"] == 7) $beo["startTime"] = date("Y-m-d", strtotime("this week sunday"));
+
+        if ($beo["hetek"] != 0) {
+            $beo["week"] = 2;
+            if ($beo["nap"] == 1) $beo["startTime"] = date("Y-m-d", strtotime("this week monday"));
+            if ($beo["nap"] == 2) $beo["startTime"] = date("Y-m-d", strtotime("this week tuesday"));
+            if ($beo["nap"] == 3) $beo["startTime"] = date("Y-m-d", strtotime("this week wednesday"));
+            if ($beo["nap"] == 4) $beo["startTime"] = date("Y-m-d", strtotime("this week thursday"));
+            if ($beo["nap"] == 5) $beo["startTime"] = date("Y-m-d", strtotime("this week friday"));
+            if ($beo["nap"] == 6) $beo["startTime"] = date("Y-m-d", strtotime("this week saturday"));
+            if ($beo["nap"] == 7) $beo["startTime"] = date("Y-m-d", strtotime("this week sunday"));
+        }
+
         $beo["startDate"] = $beo["startTime"];
         $beo["endTime"] = $beo["startTime"];
         $beo["startTime"].=" ".$beo["tol"].":00";
@@ -86,6 +98,8 @@ class FoGeneral {
             $beo["startTime"] = $beo["beonap"]." ".$beo["tol"].":00";
             $beo["endTime"] = $beo["beonap"]." ".$beo["ig"].":00";
         }
+
+
         return $beo;
     }
 
@@ -97,9 +111,9 @@ class FoGeneral {
         //“L”: lemondta. A beteg lemondta az előjegyzését.
 
         $status = "E";
-        if ($reservationData["eljott"] == 1) {
-            $status = "J";
-        }
+        //if ($reservationData["eljott"] == 1) {
+        //    $status = "J";
+        //}
         return $status;
     }
 

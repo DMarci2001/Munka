@@ -95,7 +95,7 @@
 
         <p>
             <label>Munkáltató neve<br/>
-                <input type="text" name="munkaltato" value="<?= $_POST["munkaltato"]?>">
+                <input type="text" name="munkaltato" value="<?= $_POST["munkaltato"]?>"> <a style="#buttonhide#" href="javascript:munkaNaploAutoFill()">adatok kitöltése</a>
             </label>
         </p>
 
@@ -106,7 +106,7 @@
         </p>
 
         <p>
-            <label>Mukáltató telefonszáma<br/>
+            <label>Munkáltató telefonszáma<br/>
                 <input type="text" name="munkaltatotel" value="<?= $_POST["munkaltatotel"]?>">
             </label>
         </p>
@@ -154,7 +154,7 @@
 
         <h2>Munkavállalók által végzett fő tevékenységek (munkakörök)</h2>
         <p>
-                <textarea style='width:100%;' name="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
+                <textarea style='width:100%;' name="tevekenysegek" id="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
         </p>
 
         <p>
@@ -279,17 +279,17 @@
 
         <h2>Elsősegélynyújtás személyi és tárgyi feltételei/elérhetősége</h2>
         <p>
-                <textarea style='width:100%;' name="elsosegely"><?= $_POST["elsosegely"]?></textarea>
+                <textarea style='width:100%;' name="elsosegely" id="elsosegely"><?= $_POST["elsosegely"]?></textarea>
         </p>
 
         <h2>Kockázatértékelés</h2>
         <p>
-                <textarea style='width:100%;' name="kockazat"><?= $_POST["kockazat"]?></textarea>
+                <textarea style='width:100%;' name="kockazat" id="kockazat"><?= $_POST["kockazat"]?></textarea>
         </p>
 
         <h2>Munkaegészségügyi hiányosságok, észrevételek, javaslatok</h2>
         <p>
-                <textarea style='width:100%;' name="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
+                <textarea style='width:100%;' name="eszrevetelek" id="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
         </p>
         <?php
         if (!empty($_GET["szerk"])) {
