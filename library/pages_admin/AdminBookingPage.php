@@ -541,6 +541,7 @@ class AdminBookingPage extends AdminCorePage
     {
         echo "<div id='webshoplist'>" . $this->webShopService->showOrdersList() . "</div>";
 
+
         /*$x = 0;
         $data = sql_query("SELECT fogl.id,fogl.nev AS paciensNev,fogl.datum,h.cim,c.megnev,o.nev AS orvosNev,o.email 
                            FROM foglalasok fogl 
@@ -591,14 +592,14 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2024-06-14 08:00:00"));
-        $orvosid=1389;
-        $helyszinid=533;
-        $rinterval=8;
+        $datum = date("Y-m-d H:i:s", strtotime("2024-08-28 09:00:00"));
+        $orvosid=1181;
+        $helyszinid=632;
+        $rinterval=10;
         $szurestipusid=48;
-        $cegId=146;*/
-        //while ($r = sql_fetch_array($q)) {
-            /*if(isset($r["datum"])&&!empty($r["datum"])){
+        $cegId=146;
+        while ($r = sql_fetch_array($q)) {
+            if(isset($r["datum"])&&!empty($r["datum"])){
                 $datum=$r["datum"];
             }
             if(isset($r["szurestipusid"])&&!empty($r["szurestipusid"])){
@@ -609,7 +610,14 @@ class AdminBookingPage extends AdminCorePage
             }
             if(isset($r["orvosid"])&&!empty($r["orvosid"])){
                 $orvosid=$r["orvosid"];
+            }
+            if(isset($r["helyszinid"])&&!empty($r["helyszinid"])){
+                $helyszinid=$r["helyszinid"];
+            }
+            if(isset($r["rinterval"])&&!empty($r["rinterval"])){
+                $rinterval=$r["rinterval"];
             }*/
+            
 
         /*echo "INSERT INTO foglalasok SET cegid={$cegId},regdatum=NOW(),datum=\"{$datum}\",rinterval={$rinterval},helyszinid={$helyszinid},szurestipusid={$szurestipusid},nev=\"{$r["nev"]}\",email=\"\",telefon=\"\",
                                                   szuldatum=\"{$r["szuldatum"]}\",szulhely=\"{$r["szulhely"]}\",anyjaneve=\"{$r["anyjaneve"]}\",taj=\"{$r["taj"]}\",irsz=\"{$r["Iranyitoszam"]}\",varos=\"{$r["Telepules"]}\",utca=\"{$r["Cim"]}\",munkakor=\"{$r["munkakor"]}\",aktiv=1,ertesitve=1,
@@ -668,11 +676,11 @@ class AdminBookingPage extends AdminCorePage
         /*sql_query(
                 "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
                                                   szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
-                                                  smssent=1,orvosassigned=?,checked=1,dokirexmunkakorid=?,dokirexcegid=?",
+                                                  smssent=1,orvosassigned=?,checked=1,megj=?,dokirexmunkakorid=?,dokirexcegid=?",
                 array(
                     $cegId,$r["fid"], date("Y-m-d H:i:s"), $datum, $rinterval, $helyszinid, $szurestipusid, $r["nev"], $r["email"], $r["telefon"],
                     $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],$orvosid,
-                    $r["MunkakorID"],$r["TelephelyID"]
+                    $r["megj"],$r["MunkakorID"],$r["TelephelyID"]
                 )
             );
             $foglid= sql_insert_id();
