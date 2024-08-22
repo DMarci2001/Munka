@@ -618,11 +618,11 @@ class BookingPage extends CorePage
                 }
             }
 
-            if (CompanyService::isAstostecCompany()) {
+            /*if (CompanyService::isAstostecCompany()) {
                 if ($_POST["tudoszuroelf"]==0) {
                     $this->errors[] = "{$webText["tudoszurokotelezo"]}";
                 }
-            }
+            }*/
 
             if (CompanyService::isALDI()){
                 $regex = '/^(\+36|06)(20|30|31|50|70)\d{7}$/';
@@ -1432,9 +1432,9 @@ class BookingPage extends CorePage
             }
         }
 
-        if (CompanyService::isAstostecCompany()) {
+        /*if (CompanyService::isAstostecCompany()) {
             echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='tudoszuroelf' value='1' " . (!empty($_POST["tudoszuroelf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>";
-        }
+        }*/
 
         //$submitButtonText = $webText["idopontfoglalasa"];
         $submitButtonText = $this->lang->getText("foglalasveglegesitese", "Foglalás véglegesítése");

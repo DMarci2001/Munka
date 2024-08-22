@@ -458,7 +458,7 @@ class RegistrationPage extends CorePage
             //TAJ ellenőrzése
             if (isset($_POST["taj"]) && !empty($_POST["taj"])) {
                 if ($this->utils->tajCheck($_POST["taj"]) || true) {
-                    $status[] = array("id" => "taj", "response" => "Helyes!", "class" => "valid");
+                    $status[] = array("id" => "taj", "response" => "", "class" => "valid");
                 } else {
                     $status[] = array("id" => "taj", "response" => "Helytelen TAJ szám!", "class" => "invalid");
                     $error++;
@@ -471,7 +471,7 @@ class RegistrationPage extends CorePage
 
             //Név ellenőrzése
             if (isset($_POST["name"]) && !empty($_POST["name"])) {
-                $status[] = array("id" => "name", "response" => "Helyes!", "class" => "valid");
+                $status[] = array("id" => "name", "response" => "", "class" => "valid");
             } else {
                 $status[] = array("id" => "name", "response" => "Adja meg a nevét!", "class" => "invalid");
                 $error++;
@@ -479,7 +479,7 @@ class RegistrationPage extends CorePage
 
             //Születési dátum ellenőrzése
             if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
-                $status[] = array("id" => "birthdate", "response" => "Helyes!", "class" => "valid");
+                $status[] = array("id" => "birthdate", "response" => "", "class" => "valid");
             } else {
                 $status[] = array("id" => "birthdate", "response" => "Adja meg a születési dátumát!", "class" => "invalid");
                 $error++;
@@ -493,7 +493,7 @@ class RegistrationPage extends CorePage
                     $status[] = array("id" => "email", "response" => "Adjon meg egy helyes e-mail címet!", "class" => "invalid");
                     $error++;
                 } else {
-                    $status[] = array("id" => "email", "response" => "Helyes e-mail cím!", "class" => "valid");
+                    $status[] = array("id" => "email", "response" => "", "class" => "valid");
                 }
             } else {
                 $status[] = array("id" => "email", "response" => "Adjon meg egy helyes e-mail címet!", "class" => "invalid");
@@ -501,10 +501,10 @@ class RegistrationPage extends CorePage
             }
 
             //Telefonszám ellenőrzése
-            /*if (isset($_POST["phone"]) && !empty($_POST["phone"])) {
+            if (isset($_POST["phone"]) && !empty($_POST["phone"])) {
                 $regex = '/^(\+36|06)(20|30|31|50|70)\d{7}$/';
                 if (preg_match($regex, $_POST["phone"])) {
-                    $status[] = array("id" => "phone", "response" => "Helyes!", "class" => "valid");
+                    $status[] = array("id" => "phone", "response" => "", "class" => "valid");
                 } else {
                     $status[] = array("id" => "phone", "response" => "Helytelen telefonszám!", "class" => "invalid");
                     $error++;
@@ -512,7 +512,7 @@ class RegistrationPage extends CorePage
             } else {
                 $status[] = array("id" => "phone", "response" => "Adja meg a telefonszámát!", "class" => "invalid");
                 $error++;
-            }*/
+            }
 
             //Irányítószám ellenőrzése
             /*if (isset($_POST["zip-code"]) && !empty($_POST["zip-code"])) {
@@ -826,7 +826,7 @@ class RegistrationPage extends CorePage
         $html .= "           </div>";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "       </div>";
-        /*$html .= "       <div class=\"row\">";
+        $html .= "       <div class=\"row\">";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3\">";
         $html .= "               <label for=\"phone\" class=\"form-label\">Telefonszám:</label>";
@@ -838,7 +838,7 @@ class RegistrationPage extends CorePage
         $html .= "           </div>";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "       </div>";
-        $html .= "       <div class=\"row\">";
+        /*$html .= "       <div class=\"row\">";
         $html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3\">";
         $html .= "               <label for=\"zip-code\" class=\"form-label\">Irányítószám:</label>";
