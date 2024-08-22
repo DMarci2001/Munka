@@ -38,6 +38,7 @@ class LoginPage extends CorePage {
                     //kód generálása és kiküldése:
                     $rn = rand(11000, 98000);
                     sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));
+                    $result = sql_query("SELECT *,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"]))->fetch(PDO::FETCH_ASSOC);
                     $this->utils->sendLoginSMSKod($result["id"]);
                     if($this->developMode){
                         die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra. a kód: {$result["rkod"]})");
@@ -160,8 +161,10 @@ class LoginPage extends CorePage {
             $html .= "          <div class=\"col-md\"></div>";
             $html .= "          <div class=\"col mb-3\">";
             $html .= "              <div class=\"input-group mb-3\">";
-            $html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"Hitelesítő kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
-            $html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginEmailCode()\" type=\"button\" id=\"send-sms\">Kód küldés e-mail címre</button>";
+            $html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"SMS kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
+            $html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginSms()\" type=\"button\" id=\"send-sms\">SMS kód küldés</button>";
+            //$html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"Hitelesítő kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
+            //$html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginEmailCode()\" type=\"button\" id=\"send-sms\">Kód küldés e-mail címre</button>";
             $html .= "              </div>";
             $html .= "          </div>";
             $html .= "          <div class=\"col-md\"></div>";
@@ -179,7 +182,7 @@ class LoginPage extends CorePage {
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3 text-center\">";
             $html .= "              <div><a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=registration\">Még nem regisztrált?</a></div>";
-            //$html.= "               <div><a href=\"#\" onClick=\"alert(\"Kód kiküldése e-mailben.\")\">Kód küldése e-mail címre</a></div>";
+            $html.= "               <div><a href=\"#\" onClick=\"sendLoginEmailCode()\">Kód küldése e-mail címre</a></div>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";
