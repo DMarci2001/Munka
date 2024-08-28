@@ -344,6 +344,11 @@ class AdminLabortetelekPage extends AdminCorePage
             $tid = intval($_POST["tid"]);
 
             sql_query("update synlab_labor_tetelek set elkeszules=? where id=?", [$value, $tid]);
+
+            //Synlab páros esetén írja felül annak az értékét is!
+            if($synlab = sql_query("SELECT * FROM synlab_labor_tetelek WHERE spid=?",[$tid])->fetch(PDO::FETCH_ASSOC)){
+                sql_query("UPDATE synlab_labor_tetelek SET elkeszules=? WHERE id=?",[$value,$synlab["id"]]);
+            }
             die;
         }
 
