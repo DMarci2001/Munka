@@ -65,7 +65,7 @@ class Page
         echo $this->_pageMenu();
         echo "<div class='contentcontainer' ".(CompanyService::isSuzukiGHC()?"style=\"min-width:none\"":"").">";
         //echo $this->_pageHead();
-        echo "<div style='padding:20px;'>";
+        echo "<div style='padding:20px;overflow:scroll'>";
         $this->page->showPage();
         if(CompanyService::isSuzukiGHC()){
             $this->suzukiGHCLogoContainer();
@@ -141,7 +141,7 @@ class Page
             if (isset($_SESSION["user"])) {
                 $rowb = sql_fetch_array(sql_query("select count(*) as hany from beutalok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and foglalasid=0"));
                 $rowd = sql_fetch_array(sql_query("select count(*) as hany from dokumentumok where userid='{$_SESSION["user"]["id"]}' and userid<>0 and megnezve is null"));
-                $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now()"));
+                $rowf = sql_fetch_array(sql_query("select count(*) as hany from foglalasok where paciensid='{$_SESSION["user"]["id"]}' and datum>now() and IF(parentid<>0,false,true)"));
 
                 $html .= "<div>{$webText["udvozlunk"]} {$_SESSION["user"]["nev"]}!</div>";
                 if ($this->_idopontfoglalasMenuPolicy()) {
@@ -252,8 +252,9 @@ class Page
 
         $html .= "&copy; " . date("Y") . " " . Booking_Constants::FOOTER_COPYRIGHT;
         if(!CompanyService::isSuzukiGHC()){
-            $html .= " ".session_id();
+            $html .= " ".session_id()."";
         }
+        $html .= " <span style=\"display:none\">".session_id()."</span>";
         
         $html .= "</div>";
         return $html;

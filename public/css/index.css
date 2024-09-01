@@ -1001,6 +1001,13 @@ and (max-width: 1200px) {
 
 }
 
+@media screen and (min-width: 0px) and (max-width:567px){
+    #idopontvalasztodiv{
+        width: 320px;
+        overflow: scroll;
+    }
+}
+
 .vizsgalatdoboz_hungariamed {
     position: relative;
     border-radius: 5px;

@@ -354,7 +354,7 @@ class Utils {
         }
 
         if(CompanyService::isSuzukiGHC() || CompanyService::isFiFi() || CompanyService::isAstostecCompany()){
-            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking","registrationsuccessful"))){
+            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking","registrationsuccessful","bookinglist","documents","profile","bookingsuccessful","bookingvalidate"))){
                 $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
                 $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
             }
@@ -593,6 +593,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {
                     $extraRow = "<tr class='datarow'><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
                 }
+                if(CompanyService::isSuzukiGHC()){
+                    
+                    $extraRow  = "<tr class='datarow'>";
+                    $extraRow .= "   <td></td>";
+                    $extraRow .= "   <td>Kérjük ügyeljen arra, hogy e-mail címét és telefonszámát helyesen adja meg, ";
+                    $extraRow .= "mert a foglalásról a visszaigazolást az Ön által megadott email címre ";
+                    $extraRow .= "fogjuk elküldeni!</td>";
+                    $extraRow .= "</tr>";
+                }
                 break;
             case "nev":
                 break;
@@ -725,9 +734,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             $jsCall = "onfocusout='checkWhiteList($(this).val())'";
         }
 
-        if(CompanyService::isSuzukiGHC() && $fieldName=="taj"){
+        /*if(CompanyService::isSuzukiGHC() && $fieldName=="taj"){
             $jsCall = $customJs;
-        }
+        }*/
 
         if(CompanyService::isALDI() && $fieldName=="taj"){
             $value = $_POST[$field];
