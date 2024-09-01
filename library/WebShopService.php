@@ -24,7 +24,7 @@ class WebShopService {
         if (!empty($orders )) {
             $cellStyle = "display:table-cell;padding-right: 10px;";
             $html.= "<div style='margin-bottom: 10px;'>";
-            $html.= "<div style='font-weight: bold'>Friss Webshop vásárolások</div>";
+            $html.= "<div style='font-weight: bold'>Friss Webshop vásárlások</div>";
             $html.= "<table cellpadding='0' cellspacing='0' style='margin-top: 0px;'>";
             $html.= "<tr><td colspan='6'><div style='margin-bottom: 5px;padding-bottom:5px;border-bottom: 1px solid #ccc;'></div></td></tr>";
             foreach ($orders as $order) {

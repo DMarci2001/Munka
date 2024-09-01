@@ -536,7 +536,6 @@ class HmmApi {
         //if (!isset($this->postParams["username"])) {
         //    print_r($_POST);
         //    echo "aaa".$this->postBody;die;
-
         //}
 
         if (isset($this->postParams["userName"])) {
@@ -555,22 +554,30 @@ class HmmApi {
             $this->apiError(500, "wrong grant_type", "The grant type value is invalid.");
         }
 
-        if (!$tokenData = sql_fetch_array(sql_query("select * from tokens where username=? and password=md5(?)", [$this->postParams["username"], $this->postParams["password"]]))) {
+        if (!$tokenUser = sql_fetch_array(sql_query("select * from tokens where username=? and password=md5(?)", [$this->postParams["username"], $this->postParams["password"]]))) {
             $this->apiError(400, "invalid user", "The user name or password is incorrect.");
         }
 
-        $token = bin2hex(openssl_random_pseudo_bytes(32));
-        $now = strtotime("now");
-        $expires = strtotime("now + 1 day");
-        $expiresIn = $expires-$now;
-
-        sql_query("update tokens set token=?, created=?, expires=? where id=?", [$token, date("Y-m-d H:i:s", $now), date("Y-m-d H:i:s", $expires), $tokenData["id"]]);
+        if ($tokenData = sql_fetch_array(sql_query("select * from tokens where username=? and password=md5(?) and expires>now()", [$this->postParams["username"], $this->postParams["password"]]))) {
+            $token = $tokenData["token"];
+            $now = strtotime($tokenData["created"]);
+            $expires = strtotime($tokenData["expires"]);
+            $expiresIn = $expires - $now;
+            sql_query("update tokens set used=used+1 where id=?", [$tokenData["id"]]);
+        } else {
+            //token megújítása
+            $token = bin2hex(openssl_random_pseudo_bytes(32));
+            $now = strtotime("now");
+            $expires = strtotime("now + 1 day");
+            $expiresIn = $expires - $now;
+            sql_query("insert into tokens set token=?, created=?, expires=?, username=?, password=?, used=1", [$token, date("Y-m-d H:i:s", $now), date("Y-m-d H:i:s", $expires), $tokenUser["username"], $tokenUser["password"]]);
+        }
 
         return [
             "access_token" => $token,
             "token_type" => "bearer",
             "expires_in" => $expiresIn,
-            "userName" => $tokenData["username"],
+            "userName" => $tokenUser["username"],
             ".issued" => date("r", $now),
             ".expires" => date("r", $expires)
         ];
@@ -584,7 +591,7 @@ class HmmApi {
         foreach (getallheaders() as $value) {
             if (substr_count($value, "Bearer ")) {
                 $bearer = str_replace("Bearer ", "", $value);
-                if ($this->tokenData = sql_fetch_array(sql_query("select * from tokens where token=? and expires>=now()", [$bearer]))) {
+                if ($this->tokenData = sql_fetch_array(sql_query("select * from tokens where token=? and expires>=date_sub(now(), interval 1 minute)", [$bearer]))) {
                     return true;
                 }
             }

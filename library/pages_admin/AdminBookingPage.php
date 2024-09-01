@@ -870,6 +870,7 @@ class AdminBookingPage extends AdminCorePage
             $this->orvosTipusok = $this->_extractTipusok($beosztas["alltipus"]);
             $orvosNev           = empty(trim($beosztas["orvosnev"])) ? " Név nélküli orvos" : $beosztas["orvosnev"];
             $orvosTipusNevek    = [];
+            $lastTipusNev       = "";
             $rendeloOrvosLink   = "<a target='_blank' href='{$_SERVER['PHP_SELF']}?page=doctors&szerk={$orvosId}'>{$orvosNev}</a>";
             //$addDoctorLink      = "<a class='orvosbutton' onclick=\"$('#adddoctordiv{$orvosId}').slideDown();return false;\" href='#'>+ orvos</a>";
             $szabi              = sql_fetch_array(sql_query("select * from szabadsag where datumtol<=? and datumig>=? and oid=?", [$nap, $nap, $beosztas["orvosid"]]));
@@ -884,6 +885,7 @@ class AdminBookingPage extends AdminCorePage
             foreach ($this->orvosTipusok as $tipusId) {
                 if (isset($tipusNevek[$tipusId])) {
                     $orvosTipusNevek[] = $tipusNevek[$tipusId];
+                    $lastTipusNev = $tipusNevek[$tipusId];
                 }
             }
 
@@ -1035,6 +1037,11 @@ class AdminBookingPage extends AdminCorePage
                     $timeFrom = "{$nap} {$ora}:00";
                     $timeTo = date("Y-m-d H:i:s", strtotime("{$timeFrom} + {$binterval} minute"));
 
+                    //1405 1406;
+                    if (substr_count(strtolower($lastTipusNev), "csomag")) {
+                        $this->orvosTipusok[] = 0;
+                    }
+
                     $this->addIdopontJavaScript = "setSelectedOrvos({$beosztas["orvosid"]});setSelectedInterval({$binterval});addIdopont(\"{$nap} {$ora}\", \"" . implode(",", $this->orvosTipusok) . "\", this);return false;";
                     if ($isHoliday) {
                         $this->addIdopontJavaScript = "if (confirm(\"Ez munkaszüneti nap, biztos foglalsz?\")) { {$this->addIdopontJavaScript} } return false;";
@@ -1089,11 +1096,8 @@ class AdminBookingPage extends AdminCorePage
                 if (!isset($tipusLinks[$tipusId])) {
                     $tipusLinks[$tipusId]["url"] = "javascript:scrollTo(\"{$sectionName}\");";
                     $tipusLinks[$tipusId]["nev"] = $tipusNevek[$tipusId];
-                    if (!isset($tipusLinks[$tipusId]["free"])) {
-                        $tipusLinks[$tipusId]["free"] = 0;
-                    }
                 }
-                $tipusLinks[$tipusId]["free"] += $freeCounter;
+                $tipusLinks[$tipusId]["freepart"][$orvosId] = $freeCounter;
             }
 
             $htmlout .= "</td>";
@@ -1101,7 +1105,7 @@ class AdminBookingPage extends AdminCorePage
 
             //beosztás variálás miatt esetleg nem megjelenő foglalások
             if (isset($beosztasok[($beoKey + 1)]["orvosid"]) && $beosztasok[($beoKey + 1)]["orvosid"] != $orvosId) {
-                if (isset($foglalasok[$orvosId]) && !empty($foglalasok[$orvosId])) {
+                if (!empty($foglalasok[$orvosId])) {
                     $htmlout .= "<tr>";
                     $htmlout .= "<td>";
                     $htmlout .= "<div style='padding:4px 0px;'>Beosztáson kívüli foglalások:</div>";
@@ -1149,8 +1153,14 @@ class AdminBookingPage extends AdminCorePage
         if (count($tipusLinks) > 1) {
             $links = [];
             foreach ($tipusLinks as $link) {
-                $tlink = "<a class='tipuslink' href='{$link["url"]}'>{$link["nev"]} <span style='" . (isset($link["free"]) && $link["free"] == 0 ? "font-weight:bold;border-radius:20px;background:#888;color:#fff;opacity:.3;" : "font-weight:bold;border-radius:20px;background:#0a0;color:#fff;") . "'>" . (isset($link["free"]) ? "&nbsp;{$link["free"]}&nbsp;" : "") . "</span></a>";
-                $links[] = $tlink;
+                $free = 0;
+                if (!empty($link["freepart"])) {
+                    foreach ($link["freepart"] as $freePart) {
+                        $free += $freePart;
+                    }
+                }
+
+                $links[] = "<a class='tipuslink' href='{$link["url"]}'>{$link["nev"]} <span style='" . ($free == 0 ? "font-weight:bold;border-radius:20px;background:#888;color:#fff;opacity:.3;" : "font-weight:bold;border-radius:20px;background:#0a0;color:#fff;") . "'>" . ($free != 0 ? "&nbsp;{$free}&nbsp;" : "") . "</span></a>";
             }
 
             //Extra gyors gombok beillesztése:

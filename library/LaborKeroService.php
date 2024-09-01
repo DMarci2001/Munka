@@ -84,6 +84,9 @@ class LaborKeroService
             if (empty(trim($reservation["neme"]))) {
                 $error = "A paciens nemének megadása kötelező!";
             }
+            if (empty(trim($reservation["taj"]))) {
+                $error = "A paciens TAJ számának megadása kötelező!";
+            }
 
             if (empty($error)) {
                 $requestWindow = $this->laborKeroWindow($reservationId);
@@ -223,30 +226,7 @@ class LaborKeroService
             }
 
             if (empty($error)) {
-                if ($requestData = sql_query("select id, laborpacks, status from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
-                    if ($requestData["status"] == "temp") {
-                        $packs = json_decode($requestData["laborpacks"]);
-                        if (in_array($packId, $packs)) {
-                            $error = "Ezt a csomagot már hozzáadtad a laborkéréshez!";
-                        } else {
-                            $packs[] = $packId;
-                            sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
-
-                            $items = $this->getLaborRequestItems($requestData["id"]);
-                            if ($packData = sql_query("select spektrumitems as items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
-                                $packItems = json_decode($packData["items"]);
-                                foreach ($packItems as $packItem) {
-                                    if (!in_array($packItem, $items)) {
-                                        $items[] = $packItem;
-                                    }
-                                }
-                                $this->putLaborRequestItems($requestData["id"], $items);
-                            }
-                        }
-                    } else {
-                        $error = "Lezárt laborkérő, már nem változtatható!";
-                    }
-                }
+                $error = $this->addPackToLaborRequest($reservationId, $packId);
             }
 
             Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
@@ -316,7 +296,10 @@ class LaborKeroService
                 sql_query("insert into labrequestitems set requestid=?, itemid=?", [$newRequestId, self::SPEKTRUMLAB_VERKEP_ID]);
             }
         }
+
         self::updateLaborKeroData($reservationId);
+        $this->addAldiDefaultPack($reservationId);
+
         $result = sql_query("select * from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
         $result["items"] = sql_query("select * from labrequestitems where id=?", [$reservationId])->fetchAll(PDO::FETCH_ASSOC);
         $result["itemarray"] = [];
@@ -815,5 +798,42 @@ class LaborKeroService
         return $itemsWithoutPack;
     }
 
+
+    public function addPackToLaborRequest($reservationId, $packId):string {
+        $error = "";
+        if ($requestData = sql_query("select id, laborpacks, status from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+            if ($requestData["status"] == "temp") {
+                $packs = json_decode($requestData["laborpacks"]);
+                if (in_array($packId, $packs)) {
+                    $error = "Ezt a csomagot már hozzáadtad a laborkéréshez!";
+                } else {
+                    $packs[] = $packId;
+                    sql_query("update labrequests set laborpacks=? where id=?", [json_encode(array_values($packs)), $requestData["id"]]);
+
+                    $items = $this->getLaborRequestItems($requestData["id"]);
+                    if ($packData = sql_query("select spektrumitems as items from synlab_labor_csomagok where id=?", [$packId])->fetch(PDO::FETCH_ASSOC)) {
+                        $packItems = json_decode($packData["items"]);
+                        foreach ($packItems as $packItem) {
+                            if (!in_array($packItem, $items)) {
+                                $items[] = $packItem;
+                            }
+                        }
+                        $this->putLaborRequestItems($requestData["id"], $items);
+                    }
+                }
+            } else {
+                $error = "Lezárt laborkérő, már nem változtatható!";
+            }
+
+        }
+        return $error;
+    }
+
+
+    public function addAldiDefaultPack($reservationId) {
+        if (sql_query("select id, cegid from foglalasok where id=? and cegid in (340,347,348)", [$reservationId])->fetch(PDO::FETCH_ASSOC) && Booking_Constants::SQL_DB == "hungariamed") {
+            $this->addPackToLaborRequest($reservationId, 72);
+        }
+    }
 
 }
