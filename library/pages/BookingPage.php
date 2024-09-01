@@ -221,8 +221,8 @@ class BookingPage extends CorePage
  
             $szurestipusId = "";
 
-            if(isset($_POST["taj"])){
-                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_POST["taj"])))){
+            if(isset($_POST["torzsszam"])){
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",array($_POST["torzsszam"])))){
 
                     $szurestipusId = $result["csomagid"];
 
@@ -784,6 +784,80 @@ class BookingPage extends CorePage
                 $this->errors = [];
             }
         }
+
+        if(isset($_POST["selectmuszak"])){
+            /**
+            *A műszakon kívül figyelembe kell venni a hetet is
+            *A vagy B hét van?
+            *2024-10-02->2024-10-04 "B" hét 
+            *2024-10-07->2024-10-11 "A" hét
+            *2024-10-14->2024-10-18 "B" hét
+
+            *Első érték:     Hét, 
+            *Második érték:  Műszak (Tól-ig hossza a no-no szakasz, azon túl kell lehetőséget biztosítani a vizsgálatokra)
+            *Harmadik érték: A csomag, itt is külön sávok vannak mikor melyik elérhető, szerencsére fixek szval nem lesz gond a kalkulációkkal
+             */
+
+            $shifts = array(
+                "A-A-SE"=>array(
+                    "Hétfő"=>array("start"=>null,"end"=>null),
+                    "Kedd"=>array("start"=>null,"end"=>null),
+                    "Szerda"=>array("start"=>null,"end"=>null),
+                    "Csütörtök"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Péntek"=>array("start"=>null,"end"=>null),
+                ),
+                "A-A-ST"=>array(
+                    "Hétfő"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Kedd"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Szerda"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Csütörtök"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Péntek"=>array("start"=>"15:0","end"=>"18:0"),
+                ),
+                "A-B-SE"=>array(
+                    "Hétfő"=>array("start"=>"7:0","end"=>"12:0"),
+                    "Kedd"=>array("start"=>"7:0","end"=>"12:0"),
+                    "Szerda"=>array("start"=>"7:0","end"=>"12:0"),
+                    "Csütörtök"=>array("start"=>"7:0","end"=>"12:0"),
+                    "Péntek"=>array("start"=>"7:0","end"=>"12:0"),
+                ),
+                "A-B-ST"=>array(
+                    "Hétfő"=>array("start"=>null,"end"=>null),
+                    "Kedd"=>array("start"=>null,"end"=>null),
+                    "Szerda"=>array("start"=>null,"end"=>null),
+                    "Csütörtök"=>array("start"=>null,"end"=>null),
+                    "Péntek"=>array("start"=>null,"end"=>null),
+                ),
+                "B-A-SE"=>array(
+                    "Hétfő"=>array("start"=>"07:0","end"=>"12:0"),
+                    "Kedd"=>array("start"=>"07:0","end"=>"12:0"),
+                    "Szerda"=>array("start"=>"07:0","end"=>"12:0"),
+                    "Csütörtök"=>array("start"=>"07:0","end"=>"12:0"),
+                    "Péntek"=>array("start"=>"07:0","end"=>"12:0"),
+                ),
+                "B-A-ST"=>array(
+                    "Hétfő"=>array("start"=>null,"end"=>null),
+                    "Kedd"=>array("start"=>null,"end"=>null),
+                    "Szerda"=>array("start"=>null,"end"=>null),
+                    "Csütörtök"=>array("start"=>null,"end"=>null),
+                    "Péntek"=>array("start"=>null,"end"=>null),
+                ),
+                "B-B-SE"=>array(
+                    "Hétfő"=>array("start"=>null,"end"=>null),
+                    "Kedd"=>array("start"=>null,"end"=>null),
+                    "Szerda"=>array("start"=>null,"end"=>null),
+                    "Csütörtök"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Péntek"=>array("start"=>null,"end"=>null),
+                ),
+                "A-B-ST"=>array(
+                    "Hétfő"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Kedd"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Szerda"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Csütörtök"=>array("start"=>"15:0","end"=>"18:0"),
+                    "Péntek"=>array("start"=>"15:0","end"=>"18:0"),
+                ),
+            );
+            die();
+        }
     }
 
     private function getReferer():string {
@@ -1144,11 +1218,21 @@ class BookingPage extends CorePage
             }
 
             if(CompanyService::isSuzukiGHC()){
+                echo "<input type=\"hidden\" name=\"cid\" id=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
+            }
+
+            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357");
+
+            if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
                 echo "<h3 style=\"text-align:center\">•	Szűrővizsgálatainkra 2024.09.02-től foglalhat időpontot. Erre e-mailben és SMS-ben is felhívjuk az Ön figyelmét.</h3>";
                 return;
-                $customJs="onkeyup='setSzurestipusValasztoV2()'";
-                echo $this->utils->dataField("taj",true,$customJs);
+                //$customJs="onkeyup='setSzurestipusValasztoV2()'";
+                //echo $this->utils->dataField("taj",true,$customJs);
             }
+            /*if(CompanyService::isSuzukiGHC()){
+                $pre_szurestipus = sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC);
+                $_POST["szurestipus"] = $pre_szurestipus["csomagid"];
+            }*/
 
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
@@ -1162,6 +1246,21 @@ class BookingPage extends CorePage
                 echo "<tr><td>{$telephelySelectText}: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
                 echo "<tr><td></td><td></td></tr>";
             }
+
+            //Műszak választó
+            if(CompanyService::isSuzukiGHC()){
+                $muszakSelect = "";
+                $muszakSelect.= "<select name=\"muszak\" id=\"muszak\" onchange=\"clearIdopontValasztoOnly()\">";
+                $muszakSelect.= "   <option value=\"\">Válassz műszakot!</option>";
+                $muszakSelect.= "   <option value=\"A\">\"A\" műszak</option>";
+                $muszakSelect.= "   <option value=\"B\">\"B\" műszak</option>";
+                $muszakSelect.= "   <option value=\"D\">\"D\" műszak</option>";
+                $muszakSelect.= "   <option value=\"O\">\"O\" műszak</option>";
+                $muszakSelect.= "</select>";
+
+                echo "<tr><td>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
+            }
+
             echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
             //if (!empty($infoPageText)) {
                 echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
@@ -1200,21 +1299,8 @@ class BookingPage extends CorePage
                     $index = $i;
                 }
 
+
                 $timeSelector = $this->_reservationTimeSelector($index);
-
-                //Műszak választó
-                if(CompanyService::isSuzukiGHC()){
-
-                    $muszakSelect = "";
-                    $muszakSelect.= "<select name=\"muszak\" id=\"muszak\">";
-                    $muszakSelect.= "   <option>\"A\" műszak</option>";
-                    $muszakSelect.= "   <option>\"B\" műszak</option>";
-                    $muszakSelect.= "   <option>\"D\" műszak</option>";
-                    $muszakSelect.= "   <option>\"O\" műszak</option>";
-                    $muszakSelect.= "</select>";
-
-                    echo "<tr><td>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
-                }
 
                 echo "<tr class='datarow'><td valign='middle'><div style=''>{$numberTexts[$index]}: *</div></td><td>{$timeSelector["html"]}</td></tr>";
                 if (!empty($timeSelector["message"])) {
@@ -1451,7 +1537,10 @@ class BookingPage extends CorePage
         //} else {
         //    echo "<a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a>";
         //}
-        echo "<span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+        if(!CompanyService::isSuzukiGHC()){
+            echo "<span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+        }
+        
 
         echo "</table>";
 
@@ -1531,9 +1620,14 @@ class BookingPage extends CorePage
         $html .= "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_POST["orvosselected{$index}"]}'/>";
         $html .= "<input type='hidden' name='rinterval{$index}' id='rinterval{$index}' value='{$_POST["rinterval{$index}"]}' />";
         $html .= "<input type='hidden' name='datum{$index}' id='datum{$index}' value='{$dateVal}' />";
-        $html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' />";
+        //$html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' />";
+        $html .= "<div class=\"input-group mb-3\" style=\"min-width: 280px;overflow:auto !important\";>";
+        $html .= "<input type=\"text\" style=\"font-family: SuzukiProRegular !important;\" class=\"form-control\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
+        $html .= "<button class=\"btn btn-hungariamed\" style=\"font-family: SuzukiProRegular !important;\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
         $html .= "</div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
+        
+        $html .= "</div>";
+        //$html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner{$index}' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";
@@ -1561,7 +1655,7 @@ class BookingPage extends CorePage
         if(CompanyService::isSuzukiGHC()){
             $suzukiDisabled = "disabled=\"true\"";
             if(isset($_SESSION["user"])){
-                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_SESSION["user"]["taj"])))){
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",array($_SESSION["user"]["torzsszam"])))){
                     $selected = $result["csomagid"];
                 }
             }
@@ -1674,7 +1768,7 @@ class BookingPage extends CorePage
             $szuresTipus = $forcedSzurestipusId;
         }
         if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
-            $disabled = "disabled=\"true\"";
+            //$disabled = "disabled=\"true\"";
             //$_POST["helyszin"]=1;
         }
 
