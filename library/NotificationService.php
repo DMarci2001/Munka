@@ -660,6 +660,48 @@ class NotificationService
             $mbody .= "Regards:<br>" . Booking_Constants::COMPANY_NAME;
         }
 
+        if(CompanyService::isSuzukiGHC()){
+            $datumOra = explode(" ",$row["datum"]);
+            $ora = date("H:00",strtotime($datumOra[1]));
+
+            $mbody ="<h3 style=\"text-align:center\">Kedves ".$row["nev"]."!</h3><br>";
+            $mbody.="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
+            $mbody.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
+
+            $mbody.="<h3>Vizsgálat időpontja: ".date("Y.m.d H:00",strtotime($row["datum"]))."</h3><br>";
+            
+            $mbody.="Kérjük, a vizsgálat előtt legalább félórával hamarabb érkezzen meg, azaz <strong>".date("H:i",strtotime($ora." - 30 minutes"))."-kor várjuk Önt a Suzuki Arénában!</strong><br></br>";
+            $mbody.="Az időpontja előtt a HR ügyfélszolgálatán kérhet vizeletes csövet.<br></br>";
+
+            if($_SESSION["user"]["szallitas"]==1){
+                $mbody.="<strong>Szállítással kapcsolatos információ:</strong><br>";
+                $mbody.="<ul style=\"margin-left:10px\">";
+                $mbody.=" <li style=\"list-style: disc;\">A szűrésre való szállítással kapcsolatban a Hungária Med kollégái fogják a szűrés előtti napokban megkeresni Önt. A pontos időpont és felszálló hely részleteivel.</li>";
+                $mbody.="</ul>";
+            }
+            //$successText.="<strong>Várható ellátási idő:</strong> <i>{$this->foglalasData["csomagidotartam"]}</i><br><br>";
+            $mbody.="<strong>Vizsgálatok helyszíne:</strong><br>";
+            $mbody.="<ul style=\"margin-left:10px\">";
+            $mbody.="<li style=\"list-style: disc;\">Suzuki Aréna</li>";
+            $mbody.="<li style=\"list-style: disc;\">2500 Esztergom, Helischer József út 5.</li>";
+            //$successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
+            $mbody.="</ul>";
+
+            $mbody.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+            $mbody.="<ul style=\"margin-left:10px\">";
+            $mbody.=" <li style=\"list-style: disc;\">24 órával a vizsgálat előtt SMS értesítést küldünk, és telefonon is keressük Önt.</li>";
+            $mbody.="</ul>";
+
+            $mbody.="<strong>Választott szűrőcsomag:</strong> {$row["szurestipus"]}<br>";
+            $mbody.="<i>Szűrőcsomag tartalma:</i><br>";
+            $mbody.="<ul style=\"margin-left:10px\">";
+            $tartalom = sql_query("SELECT f.id, f.datum, f.cegid, f.megj, sz.* FROM foglalasok f LEFT JOIN szurestipusok sz ON sz.id=f.szurestipusid WHERE parentid=? order by datum", array($row["id"]));
+            while($vizsgalat = sql_fetch_array($tartalom)){
+                $mbody.="<li style=\"list-style: disc;\">{$vizsgalat["megnev"]}</li>";
+            }
+            $mbody.="</ul>";
+        }
+
         $template["subject"] = "{$webTextLocal["sikeresidopontreg"]}";
         $template["body"] = $mbody;
         return $template;
@@ -1194,7 +1236,11 @@ END:VCALENDAR";
     }
 
     private function setMailTemplate($body, $title = "") {
+        
         $templateFile = "/var/www/onlinebejelentkezes_keltexmed/public/zebrateszt/userOrderMailTemplate_".Booking_Constants::SQL_DB.".html";
+        if(CompanyService::isSuzukiGHC()){
+            $templateFile = "/var/www/marci/onlinebejelentkezes/public/zebrateszt/ghc_email_template.html"; 
+        }
         if (is_file($templateFile)) {
             $template = file_get_contents($templateFile);
             $template = str_replace("#body#", $body, $template);

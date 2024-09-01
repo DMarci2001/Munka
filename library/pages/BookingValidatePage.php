@@ -102,7 +102,7 @@ class BookingValidatePage extends CorePage {
 
                     $successText.="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
                     $successText.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
-                    $successText.="<strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($this->foglalasData["datum"]))."<br>";
+                    $successText.="<h4><strong>Vizsgálat időpontja:</strong> ".date("Y.m.d H:i",strtotime($this->foglalasData["datum"]))."</h4><br>";
                     $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br>";
                     $successText.="<strong>Várható ellátási idő:</strong> <i>{$this->foglalasData["csomagidotartam"]}</i><br><br>";
                     $successText.="<strong>Vizsgálatok helyszíne:</strong><br>";
@@ -119,6 +119,40 @@ class BookingValidatePage extends CorePage {
                     $successText.=" <li style=\"list-style: disc;\">A bejelentkezést követően a foglalásról egy megerősítő e-mailt küld a rendszer, mely tartalmazza a foglalással és a vizsgálatokkal kapcsolatos információkat.</li>";
                     $successText.=" <li style=\"list-style: disc;\">24 órával a vizsgálat előtt SMS értesítést küldünk Önnek.</li>";
 
+                    $successText.="</ul>";
+                }
+
+                if(CompanyService::isSuzukiGHC()){
+                    $successText = "";
+                    $datumOra = explode(" ",$this->foglalasData["datum"]);
+                    $ora = date("H:00",strtotime($datumOra[1]));
+                    $successText.="Köszönjük, hogy a Hungária Med-M Kft. szolgáltatását választotta.<br><br>";
+                    $successText.="Ezúton tájékoztatjuk, hogy időpontfoglalása sikeresen megtörtént.<br></br>";
+                    $successText.="<h4>Vizsgálat időpontja: ".date("Y.m.d H:00",strtotime($this->foglalasData["datum"]))."</h4><br>";
+                    $successText.="Kérjük, a vizsgálat előtt legalább félórával hamarabb érkezzen meg, azaz <strong>".date("H:i",strtotime($ora." - 30 minutes"))."-kor várjuk Önt a Suzuki Arénában!</strong><br></br>";
+                    $successText.="Az időpontja előtt a HR ügyfélszolgálatán kérhet vizeletes csövet.<br></br>";
+                    
+                    $successText.="<strong>Választott szűrőcsomag:</strong> {$this->foglalasData["szurestipus"]}<br>";
+                    //$successText.="<strong>Várható ellátási idő:</strong> <i>{$this->foglalasData["csomagidotartam"]}</i><br><br>";
+                    $successText.="<strong>Vizsgálatok helyszíne:</strong><br>";
+                    $successText.="<ul style=\"margin-left:10px\">";
+                    $successText.="<li style=\"list-style: disc;\">Suzuki Aréna</li>";
+                    $successText.="<li style=\"list-style: disc;\">2500 Esztergom, Helischer József út 5.</li>";
+                    //$successText.="<li style=\"list-style: disc;\">Parkolás a rendelő udvarában korlátozott számban lehetséges.</li>";
+                    $successText.="</ul>";
+
+                    if($_SESSION["user"]["szallitas"]==1){
+                        $successText.="<strong>Szállítással kapcsolatos információ:</strong><br>";
+                        $successText.="<ul style=\"margin-left:10px\">";
+                        $successText.=" <li style=\"list-style: disc; text-align: justify;\">A szűrésre való szállítással kapcsolatban a Hungária Med kollégái fogják a szűrés előtti napokban megkeresni Önt. A pontos időpont és felszálló hely részleteivel.</li>";
+                        $successText.="</ul>";
+                    }
+
+
+                    $successText.="<strong>Vizsgálatokkal kapcsolatos értesítések:</strong><br>";
+                    $successText.="<ul style=\"margin-left:10px\">";
+                    $successText.=" <li style=\"list-style: disc;\">A bejelentkezést követően a foglalásról egy megerősítő e-mailt küld a rendszer, mely tartalmazza a foglalással és a vizsgálatokkal kapcsolatos információkat.</li>";
+                    $successText.=" <li style=\"list-style: disc;\">24 órával a vizsgálat előtt SMS értesítést küldünk, és telefonon is keressük Önt.</li>";
                     $successText.="</ul>";
                 }
 
@@ -154,7 +188,7 @@ class BookingValidatePage extends CorePage {
                     <br/>
                     ";
                 }
-                echo "<h2>{$webText["sikeresidopontreg"]}</h2>";
+                echo "<h2 style=\"text-align:center\">{$webText["sikeresidopontreg"]}</h2>";
                 echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>
                 <br>
                 {$successText}
