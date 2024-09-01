@@ -141,6 +141,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     var extraData = getSpecialManagerRequiedData();
     var data = [];
+    var muszak = "";
 
     if (orvosid === undefined) {
         orvosid = 0;
@@ -159,6 +160,21 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             return;
         }
     }
+
+    if($("#cid").length){
+        if($("#cid").val()==904 && $("#muszak option:selected").val()!==""){
+            console.log($("#muszak option:selected").val());
+            console.log("minden fasza");
+            muszak = $("#muszak option:selected").val();
+        }
+        if($("#muszak option:selected").val()==""){
+            myAlert("Kérjük, válassza ki a műszakját!");
+            return;
+        }
+    }else{
+        console.log("no cid");
+    }
+
     
     var data = {
         showidopontvalasztov2: "1",
@@ -171,7 +187,8 @@ function showIdoPontValasztoV2(honnan, orvosid) {
         betegallomany: $("#betegallomanynyilatkozat").prop("checked"),
         laborOption:laborOption,
         checkedServices:getCheckedServices(),
-        kiegChecked:getKiegVizsgalatIds()
+        kiegChecked:getKiegVizsgalatIds(),
+        muszak:muszak
     };
 
     data = $.extend(data,extraData);
@@ -501,7 +518,10 @@ function animateIdoPontValaszto() {
                         backgroundColor: '#fff',
                         color: '#555'
                     }, 100, function () {
-                        $("#datumText"+datumIndex).css("background-image", "url(images/check.png)");
+                        if($("#cid")==="undefined"){
+                            $("#datumText"+datumIndex).css("background-image", "url(images/check.png)");
+                        }
+                       
                     });
                 });
             });
@@ -1507,5 +1527,16 @@ $(document).on("change",".questionaries",function(){
         }
     })
 });
+
+function selectmuszak(value){
+
+    $.ajax({
+        url:"index.php",
+        type:"POST",
+        data:{selectmuszak:value},
+        success: function(response){
+        }
+    })
+}
 
 

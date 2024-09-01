@@ -208,6 +208,14 @@ class BookingService
             $checkedServices = explode("_", $_GET["checkedServices"]);
         }
 
+        //Valahogy sikerült elcsesznem a foglalható időpont keresést, szval bedrótozom a ghc-t okt 2.-i héttel :P
+        if(CompanyService::isSuzukiGHC()){
+            if($this->honnan<35){
+                $this->honnan=35;
+            }
+           
+        }
+
         $html .= "<div style='margin:10px 0px 10px 0px;'>";
         $html .= "<div>{$webText["valasszidopontot"]}:</div>";
         $html .= "<table style='margin-top:5px;width:100%;'><tr><td><a href='javascript:{$_GET['javascript']}(" . ($this->honnan - 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["elo7"]}</a></td><td align='right'><a href='javascript:{$_GET['javascript']}(" . ($this->honnan + 7) . ($_GET['javascript'] == "showIdoPontValasztoV3" ? ",{$_GET['selectoid']},{$_GET['szurestipus']},{$_GET['helyszin']}" : "") . ")'>{$webText["kov7"]}</a></td></tr></table>";
@@ -219,6 +227,167 @@ class BookingService
             $wd        = date("N", strtotime($nap));
             $this->waitListProcess($nap);
             $orvosList = $this->getOrvosListForIdopontValaszto($nap);
+
+
+            /**
+             * Itt tárolom le a paramétereket a műszakokhoz.
+            */
+            if(CompanyService::isSuzukiGHC()){
+                $shifts = array(
+                    "A-A-SE"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "A-A-ST"=>array(
+                        1=>array("start"=>"15:0","end"=>"18:0"),
+                        2=>array("start"=>"15:0","end"=>"18:0"),
+                        3=>array("start"=>"15:0","end"=>"18:0"),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>"15:0","end"=>"18:0"),
+                    ),
+                    "A-B-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "A-B-ST"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>null,"end"=>null),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "A-O-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "A-O-ST"=>array(
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
+                    ),
+                    "A-D-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"18:0"),
+                        2=>array("start"=>"7:0","end"=>"18:0"),
+                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"18:0"),
+                    ),
+                    "A-D-ST"=>array(
+                        1=>array("start"=>"7:0","end"=>"18:0"),
+                        2=>array("start"=>"7:0","end"=>"18:0"),
+                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"18:0"),
+                    ),
+                    "B-A-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "B-A-ST"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>null,"end"=>null),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "B-B-SE"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "B-B-ST"=>array(
+                        1=>array("start"=>"15:0","end"=>"18:0"),
+                        2=>array("start"=>"15:0","end"=>"18:0"),
+                        3=>array("start"=>"15:0","end"=>"18:0"),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>"15:0","end"=>"18:0"),
+                    ),
+                    "B-O-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "B-O-ST"=>array(
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
+                    ),
+                    "B-D-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"18:0"),
+                        2=>array("start"=>"7:0","end"=>"18:0"),
+                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"18:0"),
+                    ),
+                    "B-D-ST"=>array(
+                        1=>array("start"=>"7:0","end"=>"18:0"),
+                        2=>array("start"=>"7:0","end"=>"18:0"),
+                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"18:0"),
+                    ),
+                );
+
+                //Default paraméterek
+                $week = null;
+                $pre_beginHour = "";
+                $_prebeginMinute = "";
+
+                //Hétválasztás (A hét, B hét)
+                if(in_array(date("W",strtotime($nap)),[41])){
+                    $week = "A";
+                }
+                if(in_array(date("W",strtotime($nap)),[40,42])){
+                    $week = "B";
+                }
+
+                //Csomag definíció
+                if($this->szuresTipus==217) $csomag = "SE";
+                if($this->szuresTipus==216) $csomag = "ST";
+
+                //Ha minden együtt áll, megekeresem a szükséges műszak beosztást a fenti tömbből
+                if(!empty($week) && in_array(date("w",strtotime($nap)),[1,2,3,4,5]) && isset($_GET["muszak"])){
+                    //echo $beginHour." - ".$beginMinute."<br>";
+                    $startIdo = explode(":",$shifts["{$week}-{$_GET["muszak"]}-{$csomag}"][date("w",strtotime($nap))]["start"]);
+                    $endIdo   = explode(":",$shifts["{$week}-{$_GET["muszak"]}-{$csomag}"][date("w",strtotime($nap))]["end"]);
+                    
+
+                    //Definiálom a kezdő és vég idő értékeket (kezdő nullákat levágom, nehogy furán viselkedjen az mktime fügvény)
+                    if(count($startIdo)>1){
+                        $pre_beginHour = $startIdo[0];
+                        $_prebeginMinute = $startIdo[1];
+                    }
+
+                    if(count($endIdo)>1){
+                        $pre_EndHour = $endIdo[0];
+                        $pre_EndMinute = $endIdo[1];
+                    }
+                    
+                    //echo $pre_beginHour." - ".$_prebeginMinute."<br>";
+                    //echo $week."-{$_GET["muszak"]}-{$csomag}<br>";
+                }
+                
+           }
             
             if (($wd == 6 || $wd == 7) && empty($orvosList)) {
                 continue;
@@ -287,6 +456,20 @@ class BookingService
                     $sorszam = 1;
                     $jarat = 0;
                     $jaratStart = "";
+
+                    //Megvizsgálom lett-e predefiniált beosztás kiválasztva ha igen, felül írom a kezdő értékeket vele
+                    if(CompanyService::isSuzukiGHC()){
+                        if($pre_beginHour!="" && $_prebeginMinute!=""){
+                            if($beginHour<$pre_beginHour){
+                                $beginHour = $pre_beginHour;
+                                $beginMinute = $_prebeginMinute;
+                            }
+                        }else{
+                            continue;
+                        }
+                        
+                        //echo $pre_beginHour." - ".$_prebeginMinute."<br>";
+                    }
                     
 
                     if ($orvosData["pecsetszam"] == "temp") {
@@ -308,6 +491,18 @@ class BookingService
                         $buttonStyle = "";
                         $beoData = [];
 
+                        if($pre_EndHour!="" && $pre_EndMinute!=""){
+                            $pre_EndHour = $endIdo[0];
+                            $pre_EndMinute = $endIdo[1];
+                            $overtime = strtotime($pre_EndHour.":".$pre_EndMinute);
+                            //echo "Current: {$ora}(".strtotime($ora)."<br>";
+                            //echo "End: ".$overtime."(".strtotime($pre_EndHour.":".$pre_EndMinute).")<br><br>";
+                            if($overtime<=strtotime($ora)){
+                                break;
+                            }
+                        }
+
+
                         $step++;
 
 
@@ -318,6 +513,14 @@ class BookingService
                         if ($this->laborOptionBreak($ora)) {
                             continue;
                         }
+
+                        //Óránként csak 1 időpontot rakok ki ezzel a pár sorral megoldva
+                        if(CompanyService::isSuzukiGHC()){
+                            if(isset($currentora) && $currentora==date("H",strtotime($ora))){
+                                continue;
+                            }
+                        }
+                        
 
                         //beosztások beolvasása
                         if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) {
@@ -390,7 +593,11 @@ class BookingService
                         //új managerfoglalás módszer
                         if (!empty($this->packContentTypes)) {
                             if (!isset($availableData[$nap])) {
-                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET);
+                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET,$beginHour);
+
+                                /*echo "<pre>";
+                                print_r($availableData);
+                                echo "</pre>";*/
                             }
                             if (!empty($availableData[$nap]["error"])) {
                                 $buttonTitle = "";
@@ -450,7 +657,22 @@ class BookingService
                             }
                         }
 
+                        //A foglalt időpontokat le rejtem, nincs szükség a megjelenítésükre, plusz be zavar az óránként 1 időpont kipakolásba
+                        if(CompanyService::isSuzukiGHC()){
+                            if($buttonClass == "foglaltbtn"){
+                                continue;
+                            }
+                            if(!isset($dayError) && $buttonClass=="foglalhatobtn"){
+                                $currentora = date("H",strtotime($ora));
+                                $btn = "<a class='{$buttonClass}' title='' onclick='setJarat(\"{$currentora}:00\");{$buttonJava}' href='#'>{$currentora}:00</a><br/>";
+                            }
+                            
+                        }
+
                         $sectionHTML .= "<div style='text-align:center;'>{$btn}</div>";
+
+
+                        
                     }
 
                     if (isset($dayError)) {
@@ -641,7 +863,7 @@ class BookingService
 
     private bool $debugPack = false;
 
-    public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array()):array {
+    public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array(),$forcdeBeginHour=null):array {
 
         $vanFixError = false;
         $error = "";
@@ -666,7 +888,7 @@ class BookingService
             }
 
             //Ha foglaló kivette a kötelező elemek közül a vizsgálatot akkor kihagyjuk a loopból ezt a szűréstípust.
-            if(!isset($data["szurestipus{$packTypeId}"]) && (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser())){
+            if(!isset($data["szurestipus{$packTypeId}"]) && (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC())){
                 continue;
             }
 
@@ -698,6 +920,11 @@ class BookingService
                     $beoMinMax   = $this->getMinMax($this->getBeosztasok($day, $this->helyszin, $packTypeId, $orvosId, true));
                     $beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
                     $beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
+
+                    //Ha van küldött kezdési óra, akkor onnan kezdődik a szabad időpont keresés
+                    if(!empty($forcdeBeginHour)){
+                        $beginHour = $forcdeBeginHour;
+                    }
 
                     while (true) {
                         if ($beoData["nap"] == 10 & $day != $beoData["beonap"]) {
@@ -1522,7 +1749,8 @@ class BookingService
     public function addSubReservation($data, $parentId)
     {
         if ($this->szuresTipusData["ispack"] == 1) {
-            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])),true,$data);
+
+            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])),true,$data,(CompanyService::isSuzukiGHC())?date("H:i",strtotime($data["datum"])):null);
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
             $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
@@ -2112,8 +2340,8 @@ class BookingService
 
         if(CompanyService::isSuzukiGHC()){
             if(isset($_SESSION["user"])){
-                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE taj=?",array($_SESSION["user"]["taj"])))){
-                    $szurestipusid = $result["csomagid"];
+                if($result = sql_fetch_array(sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",array($_SESSION["user"]["torzsszam"])))){
+                    $szurestipusid = $_POST["szurestipus"] =$result["csomagid"];
                 }
             }    
         }
@@ -2985,7 +3213,7 @@ class BookingService
 
             $onclick = "onClick='$(\"#descriptonForSzurestipus{$packData["szurestipusid"]}\").toggle(\"fast\").toggleClass(\"show-dscriptionForSzurestipus\")'";
             $onChange = "onChange='clearIdopontValasztoOnly()'";
-            $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /><label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]}&nbsp;<i class=\"fa-solid fa-chevron-down\"></i></label></div>";
+            $text .= "<div><input {$onChange} name=\"szurestipus{$packData["szurestipusid"]}\" type=\"checkbox\" {$checked} /> <label style=\"cursor:pointer\" {$onclick} for=\"\">{$packData["megnev"]} <i class=\"fa-solid fa-chevron-down\"></i></label></div>";
 
             $text .= "<div class=\"\" id=\"descriptonForSzurestipus{$packData["szurestipusid"]}\">";
             /*$text .= "  <div style='padding-left:25px;font-size:12px;'>";
