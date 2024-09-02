@@ -208,10 +208,11 @@ class BookingService
             $checkedServices = explode("_", $_GET["checkedServices"]);
         }
 
+        //echo "hét: {$this->honnan}<br>";
         //Valahogy sikerült elcsesznem a foglalható időpont keresést, szval bedrótozom a ghc-t okt 2.-i héttel :P
         if(CompanyService::isSuzukiGHC()){
-            if($this->honnan<35){
-                $this->honnan=35;
+            if($this->honnan<28){
+                $this->honnan=28;
             }
            
         }
@@ -235,32 +236,32 @@ class BookingService
             if(CompanyService::isSuzukiGHC()){
                 $shifts = array(
                     "A-A-SE"=>array(
-                        1=>array("start"=>null,"end"=>null),
-                        2=>array("start"=>null,"end"=>null),
-                        3=>array("start"=>null,"end"=>null),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>null,"end"=>null),
-                    ),
-                    "A-A-ST"=>array(
-                        1=>array("start"=>"15:0","end"=>"18:0"),
-                        2=>array("start"=>"15:0","end"=>"18:0"),
-                        3=>array("start"=>"15:0","end"=>"18:0"),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>"15:0","end"=>"18:0"),
-                    ),
-                    "A-B-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
                         2=>array("start"=>"7:0","end"=>"12:0"),
                         3=>array("start"=>"7:0","end"=>"12:0"),
                         4=>array("start"=>"7:0","end"=>"12:0"),
                         5=>array("start"=>"7:0","end"=>"12:0"),
                     ),
-                    "A-B-ST"=>array(
+                    "A-A-ST"=>array(
                         1=>array("start"=>null,"end"=>null),
                         2=>array("start"=>null,"end"=>null),
                         3=>array("start"=>null,"end"=>null),
                         4=>array("start"=>null,"end"=>null),
                         5=>array("start"=>null,"end"=>null),
+                    ),
+                    "A-B-SE"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "A-B-ST"=>array(
+                        1=>array("start"=>"15:0","end"=>"18:0"),
+                        2=>array("start"=>"15:0","end"=>"18:0"),
+                        3=>array("start"=>"15:0","end"=>"18:0"),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>"15:0","end"=>"18:0"),
                     ),
                     "A-O-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
@@ -291,38 +292,38 @@ class BookingService
                         5=>array("start"=>"7:0","end"=>"18:0"),
                     ),
                     "B-A-SE"=>array(
-                        1=>array("start"=>"7:0","end"=>"12:0"),
-                        2=>array("start"=>"7:0","end"=>"12:0"),
-                        3=>array("start"=>"7:0","end"=>"12:0"),
-                        4=>array("start"=>"7:0","end"=>"12:0"),
-                        5=>array("start"=>"7:0","end"=>"12:0"),
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>null,"end"=>null),
                     ),
                     "B-A-ST"=>array(
-                        1=>array("start"=>null,"end"=>null),
-                        2=>array("start"=>null,"end"=>null),
-                        3=>array("start"=>null,"end"=>null),
-                        4=>array("start"=>null,"end"=>null),
-                        5=>array("start"=>null,"end"=>null),
-                    ),
-                    "B-B-SE"=>array(
-                        1=>array("start"=>null,"end"=>null),
-                        2=>array("start"=>null,"end"=>null),
-                        3=>array("start"=>null,"end"=>null),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>null,"end"=>null),
-                    ),
-                    "B-B-ST"=>array(
                         1=>array("start"=>"15:0","end"=>"18:0"),
                         2=>array("start"=>"15:0","end"=>"18:0"),
                         3=>array("start"=>"15:0","end"=>"18:0"),
                         4=>array("start"=>"15:0","end"=>"18:0"),
                         5=>array("start"=>"15:0","end"=>"18:0"),
                     ),
+                    "B-B-SE"=>array(
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "B-B-ST"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>null,"end"=>null),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
                     "B-O-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
                         2=>array("start"=>"7:0","end"=>"12:0"),
                         3=>array("start"=>"7:0","end"=>"12:0"),
-                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
                         5=>array("start"=>"7:0","end"=>"12:0"),
                     ),
                     "B-O-ST"=>array(

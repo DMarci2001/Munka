@@ -1221,14 +1221,14 @@ class BookingPage extends CorePage
                 echo "<input type=\"hidden\" name=\"cid\" id=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
             }
 
-            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357");
+            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357","u7p82ik3pr96msns1tud07sqa2");
 
-            if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
+            /*if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
                 echo "<h3 style=\"text-align:center\">•	Rendszerhiba merült fel, dolgozunk a megoldáson, amint lehetséges a foglalás e-mail értesítőt küldünk!</h3>";
                 return;
                 //$customJs="onkeyup='setSzurestipusValasztoV2()'";
                 //echo $this->utils->dataField("taj",true,$customJs);
-            }
+            }*/
             /*if(CompanyService::isSuzukiGHC()){
                 $pre_szurestipus = sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC);
                 $_POST["szurestipus"] = $pre_szurestipus["csomagid"];
@@ -1254,8 +1254,8 @@ class BookingPage extends CorePage
                 $muszakSelect.= "   <option value=\"\">Válassz műszakot!</option>";
                 $muszakSelect.= "   <option value=\"A\">\"A\" műszak</option>";
                 $muszakSelect.= "   <option value=\"B\">\"B\" műszak</option>";
-                $muszakSelect.= "   <option value=\"D\">\"D\" műszak</option>";
-                $muszakSelect.= "   <option value=\"O\">\"O\" műszak</option>";
+                $muszakSelect.= "   <option value=\"D\">Karbantartó műszak</option>";
+                $muszakSelect.= "   <option value=\"O\">Irodai műszak</option>";
                 $muszakSelect.= "</select>";
 
                 echo "<tr><td>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
