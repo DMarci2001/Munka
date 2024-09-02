@@ -1223,12 +1223,12 @@ class BookingPage extends CorePage
 
             $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357");
 
-            /*if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
-                echo "<h3 style=\"text-align:center\">•	Szűrővizsgálatainkra 2024.09.02-től foglalhat időpontot. Erre e-mailben és SMS-ben is felhívjuk az Ön figyelmét.</h3>";
+            if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
+                echo "<h3 style=\"text-align:center\">•	Rendszerhiba merült fel, dolgozunk a megoldáson, amint lehetséges a foglalás e-mail értesítőt küldünk!</h3>";
                 return;
                 //$customJs="onkeyup='setSzurestipusValasztoV2()'";
                 //echo $this->utils->dataField("taj",true,$customJs);
-            }*/
+            }
             /*if(CompanyService::isSuzukiGHC()){
                 $pre_szurestipus = sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC);
                 $_POST["szurestipus"] = $pre_szurestipus["csomagid"];
