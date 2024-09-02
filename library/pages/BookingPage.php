@@ -1221,7 +1221,7 @@ class BookingPage extends CorePage
                 echo "<input type=\"hidden\" name=\"cid\" id=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
             }
 
-            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2356");
+            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357");
 
             if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
                 echo "<h3 style=\"text-align:center\">•	Rendszerhiba merült fel, dolgozunk a megoldáson, amint lehetséges a foglalás e-mail értesítőt küldünk!</h3>";
