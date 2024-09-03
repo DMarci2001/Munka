@@ -614,7 +614,7 @@ class BookingService
 
                         //sorszám override aldi esetében
                         if (Booking_Constants::SQL_DB == "hungariamed" && CompanyService::isALDI() && $this->szuresTipus == Booking_Constants::TUDOSZURES_ID) {
-                            $jaratok = ["08:30", "09:30","10:00", "10:30", "11:30", "12:30", "13:30", "14:00", "14:30"];
+                            $jaratok = ["08:30", "09:30","10:00", "10:30","11:15", "11:30", "12:30", "13:30", "14:00", "14:30"];
 
                             //Ha az első járat ne ma 08:30-as, ezzel betudom állítani a megfelelő járatot első kiíráshoz.
                             if (empty($jaratStart)) {
