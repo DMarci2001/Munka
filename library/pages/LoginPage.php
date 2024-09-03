@@ -29,27 +29,30 @@ class LoginPage extends CorePage {
         if(isset($_POST["sendsms"])){
             if($result = sql_fetch_array(sql_query("SELECT *,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 
+
+                //kód generálása és kiküldése:
+                $rn = rand(11000, 98000);
+                sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));
+                $notificationService = new NotificationService();
+                //Email
+                $notificationService->sendCustomerSMSCode($result["id"]);
+
+                //sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));
                 if ($result["rkodsec"] < 600 && $result["rkodsec"] != NULL) {
-                    if($this->developMode){
-                        die("Az SMS kód ki let küldve! ({$result["rkodsec"]} sec a kód: {$result["rkod"]})");
-                    }
-                    die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra.");
+                    die("A kód ki lett küldve e-mailben.");
+                    /*if($this->developMode){
+                        //die("Az SMS ki lett küldve a TAJ számhoz tartozó e-mail cím és  telefonszámra. a kód: {$result["rkod"]})");
+                    }*/
                 }else{
-                    //kód generálása és kiküldése:
-                    $rn = rand(11000, 98000);
-                    sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));
-                    $result = sql_query("SELECT *,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"]))->fetch(PDO::FETCH_ASSOC);
                     $this->utils->sendLoginSMSKod($result["id"]);
-                    if($this->developMode){
-                        die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra. a kód: {$result["rkod"]})");
-                    }
-                    die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra.");
                 }
+                die("Az SMS ki lett küldve a TAJ számhoz tartozó mail cím és  telefonszámra.");
             }
             if($this->developMode){
                 die("Rosszak a megadott adatok!");
             }
-            die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra.");
+            die("Rosszak a megadott adatok!");
+            //die("Az SMS ki lett küldve a TAJ számhoz tartozó telefonszámra.");
         }
 
         if(isset($_POST["sendemailcode"])){
@@ -73,6 +76,14 @@ class LoginPage extends CorePage {
             die();
         }
 
+        /*if(isset($_POST["suzukilogin"])){
+            if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"])))){
+                $_SESSION["loggeduser"] = $result["id"];
+                die(json_encode(array("error"=>"","url"=>"https://{$_SERVER["HTTP_HOST"]}/?page=booking")));
+            }
+            die(json_encode(array("error"=>"A megadott törzsszám helytelen!")));
+        }*/
+
         if(isset($_POST["suzukilogin"])){
             if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE rkod=? AND taj=? and cegid=?",array($_POST["sms-code"],$_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 if (strtotime("now") - strtotime($result["rkoddatum"]) > 600) {
@@ -84,6 +95,39 @@ class LoginPage extends CorePage {
             die(json_encode(array("error"=>"A megadott TAJ szám, vagy kód nem megfelelő!")));
         }
 
+        /*if(isset($_POST["suzuki-login"])){
+            $captchaError = $this->utils->checkCaptcha();
+            if (!empty($captchaError) && empty($this->errors)) {
+                $this->errors[] = $captchaError;
+            }
+            if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE torzsszam=? AND cegid=?",array($_POST["torzsszam"],$_SESSION["helyszindata"]["id"])))){
+                if (!empty($captchaError) && empty($this->errors)) {
+                    $this->errors[] = $captchaError;
+                    $_SESSION["loggeduser"] = $result["id"];
+                    header("location: https://{$_SERVER["HTTP_HOST"]}/?page=booking");
+                    //die(json_encode(array("error"=>"","url"=>"https://{$_SERVER["HTTP_HOST"]}/?page=booking")));
+                }else{
+                    $this->errors[] = $captchaError;
+                }
+            }else{
+                $this->errors[] = "A megadott törzsszám helytelen!";
+            }
+            //die(json_encode(array("error"=>"A megadott rörzsszám helytelen!")));
+            echo "<pre>";
+            print_r($_POST);
+            echo "</pre>";
+        }*/
+        /*if(isset($_POST["suzukilogin"])){
+            if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE rkod=? AND taj=? and cegid=?",array($_POST["sms-code"],$_POST["taj"],$_SESSION["helyszindata"]["id"])))){
+                if (strtotime("now") - strtotime($result["rkoddatum"]) > 600) {
+                    die(json_encode(array("error"=>"A megadott TAJ szám, vagy kód nem megfelelő!")));
+                }
+                $_SESSION["loggeduser"] = $result["id"];
+                die(json_encode(array("error"=>"","url"=>"https://{$_SERVER["HTTP_HOST"]}/?page=booking")));
+            }
+            die(json_encode(array("error"=>"A megadott TAJ szám, vagy kód nem megfelelő!")));
+        }*/
+
     }
 
     public function showPage() {
@@ -92,6 +136,8 @@ class LoginPage extends CorePage {
         if (!isset($_POST["email"])) {
             $_POST["taj"]=$_POST["email"]=$_POST["jelszo"]="";
         }
+
+        echo $this->showErrors();
 
         if(CompanyService::isSuzukiGHC()){
 
@@ -110,11 +156,12 @@ class LoginPage extends CorePage {
             $html .= "       </div>";
             $html .= "       <div class=\"row\">";
             $html .= "          <div class=\"col-md\"></div>";
-            $html .= "          <div class=\"col mb-3\">";
+            $html .= "          <div class=\"col mb-3 text-center\">";
             $html .= "              <div class=\"input-group mb-3\">";
-            $html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"SMS kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
-            $html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginSms()\" type=\"button\" id=\"send-sms\">SMS kód küldés</button>";
+            $html .= "                  <input type=\"text\" class=\"form-control\" placeholder=\"Kapott kód\" id=\"sms-code\" name=\"sms-code\" aria-label=\"SMS kód\" aria-describedby=\"send-sms\">";
+            $html .= "                  <button class=\"btn btn-hungariamed\" onClick=\"sendLoginSms()\" type=\"button\" id=\"send-sms\">Kód küldés</button>";
             $html .= "              </div>";
+            $html .= "              <label for=\"taj\" class=\"form-label\">*A kódot sms-ben és e-mailben is kiküldjük.</label>";
             $html .= "          </div>";
             $html .= "          <div class=\"col-md\"></div>";
             $html .= "          </div>";
@@ -131,7 +178,7 @@ class LoginPage extends CorePage {
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3 text-center\">";
             $html .= "              <div><a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=registration\">Még nem regisztrált?</a></div>";
-            $html.= "               <div><a href=\"#\" onClick=\"alert(\"SMS kiküldése e-mailben.\")\">SMS kód küldése e-mail címre</a></div>";
+            $html.= "               <div><a href=\"#\" onClick=\"sendLoginEmailCode()\">Kód küldése e-mail címre</a></div>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";
