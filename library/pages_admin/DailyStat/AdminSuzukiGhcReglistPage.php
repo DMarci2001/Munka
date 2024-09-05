@@ -19,7 +19,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
             $data = $this->fetch_suzuki_ghc_registrations();
 
             $excelService = new ExcelService();
-            $filename = $excelService->generateXlsxFromArray($data,"A","M",array("B"));
+            $filename = $excelService->generateXlsxFromArray($data,"A","N",array("B"));
             header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             header("Content-Disposition: attachment;filename=\"suzuki_ghc_".date("Ymdhis").".xlsx\"");
             header("Cache-Control: max-age=0");
@@ -51,12 +51,15 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
                                    CONCAT(felh.irsz,\" \",felh.varos,\", \",felh.utca) as \"Lakcím\",
                                    REPLACE(felh.regtime,\"-\",\".\") as \"Regisztráció\",
                                    if(felh.szallitas=1,\"Kér szállítást\",\"Nem kér szállítást\") as \"Szállítás\",
-                                   if(felh.otp_penztar=1,\"Van\",\"Nincs\") as \"OTP egészségpénztár\"
+                                   if(felh.otp_penztar=1,\"Van\",\"Nincs\") as \"OTP egészségpénztár\",
+                                   GROUP_CONCAT(REPLACE(fogl.datum,\"-\",\".\")) AS \"Időpont\"
                             FROM felhasznalok felh
                             LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
+                            LEFT JOIN foglalasok fogl ON fogl.paciensid=felh.id AND fogl.szurestipusid=ghc.csomagid AND INSTR(fogl.datum,\"2024\")
                             WHERE felh.cegid in(904) AND felh.id NOT IN(119511,119822)
-                            ORDER BY nev ASC")->fetchAll(PDO::FETCH_ASSOC);
+                            GROUP BY felh.id
+                            ORDER BY felh.nev ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         return $array;
     }
@@ -79,6 +82,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html.= "       <th class=\"text-center\" scope=\"col\">Szállítás</th>";
         $html.= "       <th class=\"text-center\" scope=\"col\">Csomag</th>";
         $html.= "       <th class=\"text-center\" scope=\"col\">Regisztráció</th>";
+        $html.= "       <th class=\"text-center\" scope=\"col\">Időpont</th>";
         $html.= "       </tr>";
         $html.= "   </thead>";
         $html.= "   <tbody>";
@@ -96,6 +100,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
             $html.= "<td class=\"text-center\">{$value["Szállítás"]}</td>";
             $html.= "<td class=\"text-center\">{$value["Csomag"]}</td>";
             $html.= "<td class=\"text-center\">{$value["Regisztráció"]}</td>";
+            $html.= "<td class=\"text-center\">{$value["Időpont"]}</td>";
             $html.= "</tr>";
         }
         $html.= "   </tbody>";
