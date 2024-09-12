@@ -555,6 +555,7 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "<td nowrap valign='top'><div class='{$tc}'>Cég</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>TAJ</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>Telefon</div></td>";
+                echo "<td nowrap valign='top'><div class='{$tc}'>SMS kód</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'></div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>Email</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'></div></td>";
@@ -572,6 +573,7 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["cegnev"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>TAJ: {$row["taj"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>Tel: {$row["telefon"]}</div></td>";
+            echo "<td nowrap valign='top'><div class='{$tc}'>{$row["rkod"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>".($row["validated"]==1?"<img width='12' src='images/check.png' title='Aktiválva' alt=''/>":"<span style='border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód'>{$row["rkod"]}</span>")."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["email"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&fszerk={$row["id"]}'>szerk</a>] [<a onclick='return confirm(\"Biztosan törlöd ezt a felhasználót?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
