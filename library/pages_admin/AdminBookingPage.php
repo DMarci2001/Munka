@@ -592,15 +592,16 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2024-08-28 09:00:00"));
-        $orvosid=1181;
-        $helyszinid=632;
-        $rinterval=10;
+        $datum = date("Y-m-d H:i:s", strtotime("2024-09-11 08:00:00"));
+        $orvosid=1407;
+        $helyszinid=935;
+        $rinterval=5;
         $szurestipusid=48;
-        $cegId=146;
+        $cegId=230;
         while ($r = sql_fetch_array($q)) {
+
             if(isset($r["datum"])&&!empty($r["datum"])){
-                $datum=$r["datum"];
+                //$datum=$r["datum"];
             }
             if(isset($r["szurestipusid"])&&!empty($r["szurestipusid"])){
                 $szurestipusid=$r["szurestipusid"];
@@ -615,7 +616,7 @@ class AdminBookingPage extends AdminCorePage
                 $helyszinid=$r["helyszinid"];
             }
             if(isset($r["rinterval"])&&!empty($r["rinterval"])){
-                $rinterval=$r["rinterval"];
+                //$rinterval=$r["rinterval"];
             }*/
             
 
@@ -768,9 +769,9 @@ class AdminBookingPage extends AdminCorePage
     private function getAllPaymentData(): array
     {
         $result = [];
-        $payments      = sql_query("SELECT foglalasid, osszeg FROM banktransactions WHERE merchant=? AND datum>DATE_SUB(NOW(), INTERVAL 1 YEAR) AND result IN ('finished')", [Booking_Constants::SIMPLEPAY_MERCHANT_ID])->fetchAll(PDO::FETCH_ASSOC);
+        $payments      = sql_query("SELECT foglalasid, osszeg, orderid, result FROM banktransactions WHERE merchant=? AND datum>DATE_SUB(NOW(), INTERVAL 1 YEAR) AND result IN ('finished','done')", [Booking_Constants::SIMPLEPAY_MERCHANT_ID])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($payments as $payment) {
-            $result[$payment["foglalasid"]] = $payment;
+            $result[$payment["orderid"]] = $payment;
         }
         return $result;
     }
@@ -1052,7 +1053,7 @@ class AdminBookingPage extends AdminCorePage
                         left join szurestipusok sz on sz.id=f.szurestipusid
                         left join orvosok o on o.id=f.orvosassigned
                         left join dokumentumok d on d.foglalasid=f.id
-                        left join cegvars v on v.id=f.telephelyid                             
+                        left join cegvars v on v.id=f.telephelyid                     
                         where f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.orvosassigned in (0, ?) 
                         group by f.id order by f.datum", [$timeFrom, $timeTo, $_SESSION["helyszin"], $orvosId])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1276,23 +1277,14 @@ class AdminBookingPage extends AdminCorePage
 
             $extraInfo = "";
 
-            if (isset($this->paymentData[$reservationData["id"]]) || $reservationData["paid"] == 1) {
-
-
-                if ($reservationData["paid"] == 1) {
-                    if ($r = sql_query("SELECT fullprice FROM labshop_vasarlasok WHERE cart_content LIKE '%\"reservationId\": \"" . $reservationData["id"] . "\"%'")->fetch(PDO::FETCH_ASSOC)) {
-                        $osszeg = $r["fullprice"];
-                    }
-                } else {
-                    $osszeg = $this->paymentData[$reservationData["id"]]["osszeg"];
-                }
-
-                $extraInfo = "<span style='color:darkgreen;font-weight: bold;'>FIZETVE! (" . $osszeg . " Ft)</span> ";
+            if (isset($this->paymentData[$reservationData["bankorderid"]]) && $reservationData["bankorderid"]!=null) {
+                $osszeg = number_format($this->paymentData[$reservationData["bankorderid"]]["osszeg"]);
+                $extraInfo .= "<span class='externalmark' style='background-color:#0a0'>FIZETVE! (" . $osszeg . " Ft)</span> ";
             }
 
             if (!empty($reservationData["szuldatum"]) && strtotime("now") - strtotime($reservationData["szuldatum"]) < 567648000 && strtolower($reservationData["nev"]) != "szünet") {
                 $kidSign = " <i class='fas fa-child' title='Fiatalkorú (18 év alatti)'></i>";
-                $extraInfo = "(18 év alatti!) ";
+                $extraInfo .= "(18 év alatti!) ";
             }
 
             if (!empty($reservationData["alkalmassag"])) {
@@ -1488,7 +1480,7 @@ class AdminBookingPage extends AdminCorePage
 
         $orvosId = $beoData["orvosid"];
 
-        $reservations = sql_query("SELECT f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f
+        $reservations = sql_query("SELECT f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely,ci.bankorderid from foglalasok f
                         LEFT JOIN cegek c on c.id=f.cegid
                         LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
                         LEFT JOIN orvosok o on o.id=f.orvosassigned
