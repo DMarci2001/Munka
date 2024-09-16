@@ -1480,7 +1480,7 @@ class AdminBookingPage extends AdminCorePage
 
         $orvosId = $beoData["orvosid"];
 
-        $reservations = sql_query("SELECT f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely,ci.bankorderid from foglalasok f
+        $reservations = sql_query("SELECT f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f
                         LEFT JOIN cegek c on c.id=f.cegid
                         LEFT JOIN szurestipusok sz on sz.id=f.szurestipusid
                         LEFT JOIN orvosok o on o.id=f.orvosassigned
