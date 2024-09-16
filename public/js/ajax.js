@@ -163,8 +163,6 @@ function showIdoPontValasztoV2(honnan, orvosid) {
 
     if($("#cid").length){
         if($("#cid").val()==904 && $("#muszak option:selected").val()!==""){
-            console.log($("#muszak option:selected").val());
-            console.log("minden fasza");
             muszak = $("#muszak option:selected").val();
         }
         if($("#muszak option:selected").val()==""){
