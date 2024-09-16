@@ -211,8 +211,13 @@ class BookingService
         //echo "hét: {$this->honnan}<br>";
         //Valahogy sikerült elcsesznem a foglalható időpont keresést, szval bedrótozom a ghc-t okt 2.-i héttel :P
         if(CompanyService::isSuzukiGHC()){
-            if($this->honnan<28){
-                $this->honnan=28;
+            $thisMonday = strtotime("this week monday");
+            $targetMonday = strtotime("2024-09-30");
+            $diffvalue = ($targetMonday-$thisMonday);
+            $diffdays = ($diffvalue/86400);
+
+            if($this->honnan<$diffdays){
+                $this->honnan=$diffdays; 
             }
            
         }
@@ -535,6 +540,7 @@ class BookingService
                                     if (!($beoData["ispotig"] == 1 && $freeTimes != 0)) {
                                         $freeTimes++;
                                         $buttonClass = "foglalhatobtn";
+                                        
                                         $varolista = 0;
                                         if ($beoData["csaksorban"] == 1 && strpos($beoData["orvosnev"], "Várólista") !== false) {
                                             $varolista = 1;
@@ -604,6 +610,7 @@ class BookingService
                                 echo "</pre>";*/
                             }
                             if (!empty($availableData[$nap]["error"])) {
+                                
                                 $buttonTitle = "";
                                 $buttonClass = "foglaltbtn";
                                 $buttonJava = "nemfog();return false;";
@@ -664,6 +671,7 @@ class BookingService
                         //A foglalt időpontokat le rejtem, nincs szükség a megjelenítésükre, plusz be zavar az óránként 1 időpont kipakolásba
                         if(CompanyService::isSuzukiGHC()){
                             if($buttonClass == "foglaltbtn"){
+                                //echo $ora."<br>";
                                 continue;
                             }
                             if(!isset($dayError) && $buttonClass=="foglalhatobtn"){
@@ -867,7 +875,7 @@ class BookingService
 
     private bool $debugPack = false;
 
-    public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array(),$forcdeBeginHour=null):array {
+    public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array(),$forcedBeginHour=null):array {
 
         $vanFixError = false;
         $error = "";
@@ -926,9 +934,9 @@ class BookingService
                     $beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
 
                     //Ha van küldött kezdési óra, akkor onnan kezdődik a szabad időpont keresés
-                    if(!empty($forcdeBeginHour)){
-                        $beginHour = $forcdeBeginHour;
-                    }
+                    /*if(!empty($forcedBeginHour)){
+                        $beginHour = $forcedBeginHour;
+                    }*/
 
                     while (true) {
                         if ($beoData["nap"] == 10 & $day != $beoData["beonap"]) {
@@ -958,6 +966,10 @@ class BookingService
                 $error = "Erre a napra elfogytak az időpontok!";
                 $vanFixError = true;
             }
+
+            /*if (User::debugUser()) {
+                $error.= print_r($timeTableForPackage[$packTypeId],true);
+            }*/
 
             if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
                 if (User::debugUser()) {
@@ -1754,7 +1766,7 @@ class BookingService
     {
         if ($this->szuresTipusData["ispack"] == 1) {
 
-            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])),true,$data,(CompanyService::isSuzukiGHC())?date("H:i",strtotime($data["datum"])):null);
+            $map = $this->getPackageAvailabilityForDay(date("Y-m-d", strtotime($data["datum"])),false,$data,(CompanyService::isSuzukiGHC())?date("H:i",strtotime($data["datum"])):null);
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
             $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
