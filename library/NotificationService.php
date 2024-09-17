@@ -67,6 +67,65 @@ class NotificationService
         return sql_query("select * from notifications where tipus=? and objectid=? order by datum desc", [$tipus, $objectid])->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function ghc_notification($data){
+
+        $mail = $this->getDefaultMailer();
+        $mail->AddAddress($data["email"]);
+        //$mail->AddAddress("marton.gergely@hungariamed.hu");
+        if (!empty(Booking_Constants::USER_BCC_MAIL)) {
+            $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
+        }
+
+        $subject = "Suzuki GHC szűrés időpontfoglalás újraindult!";
+        $mail->Subject = $subject;
+
+        $text  = "<h3>Tisztelt {$data["nev"]}!</h3>";
+
+        $text .= "<p>Elnézést kérünk a kellemetlenségért, az időpontfoglaló rendszer újra elérhető mostmár, ha korábbi időpontfoglalása nem megfelelő az Ön számára, kérem, keresse fel a korábban megjelölt Munkatársainkat az időpontja áthelyezésével kapcsolatban!</p>";
+        /*$text .= "<p style=\"font-size:14px;\">Köszönjük jelentkezését a 2024 évi munkavállalói szűrésre!</p><br>";
+        $text .= "<p style=\"font-size:14px;\">Időpontot az alábbi linkre kattintva foglalhat:</p>";
+        $text .= "<p style=\"font-size:14px;\"><a style=\"color:#a00\" target=\"_blank\" href=\"https://ghc.hungariamed.hu/?page=login\">https://ghc.hungariamed.hu/?page=login</a></p><br><br>";
+        $text .= "<p style=\"font-size:14px;\"><strong>Az Ön szűrőcsomagja:</strong> {$data["csomag"]}.</p><br><br>";
+        $text .= "<p style=\"font-size:14px;\">Az időpontfoglaláshoz szüksége lesz a TAJ számára. A tovább lépéshez SMS kódot küldünk.</p><br>";
+        $text .= "<p style=\"font-size:14px;\">A szűrés időpontja: <strong><span style=\"font-size:16px;\">2024.10.02-től 2024.10.18-ig</span></strong> tart.</p><br>";
+
+        if($data["csomag"]=="Senior GHC csomag"){
+            $text .= "<p style=\"font-size:14px;\">Senior szűrést 7:00-tól 12:00-ig végezzük. Két műszakos kollegák esetében a délutános műszak előtti délelőttön.</p><br>";
+
+            $text .= "VAGY<br><br>";
+        }else{
+            $text .= "<p style=\"font-size:14px;\">Standard szűrést 13:00-tól 17:00-ig végezzük. Két műszakos kollegák esetében délelőttös műszak utáni délutánon.</p><br>";
+        }
+
+        $text .= "<p style=\"font-size:14px;\">Az időpontfoglaláskor meg kell adnia műszakját. Ezután a fent leírtak szerint tud időpontot foglalni. Ha Ön nem tud választani a felkínált időpontok között, kérje munkatársaink segítségét!</p><br>";
+        $text .="<p style=\"font-size:14px;\"><strong>Munkatársaink elérhetőségei:</strong></p>";
+        $text .="<ul style=\"margin-left:10px;font-size:14px;\">";
+        $text .="<li style=\"list-style: disc;\">Magyar Suzuki - Teberi Andrea:  <a style=\"color:#a00\" href=\"tel:+36303553523\">+36 20/355-3523</a></li>";
+        $text .="<li style=\"list-style: disc;\">Magyar Suzuki - Balogh Miklós:  <a style=\"color:#a00\" href=\"tel:+36205878696\">+36 20/417-4128</a></li><br>";
+        $text .="<li style=\"list-style: disc;\">Hungária Med-M Kft. - Szabó Melinda: <a style=\"color:#a00\" href=\"tel:+36707799485\">+36 70/779-9485</a></li>";
+        $text .="</ul>";
+
+        $text .= "<p style=\"font-size:14px;\"><strong>Vizsgálat helyszíne:</strong></p>";
+        $text .="<ul style=\"margin-left:10px;font-size:14px;\">";
+        $text .="<li style=\"list-style: disc;\">Suzuki Aréna</li>";
+        $text .="<li style=\"list-style: disc;\">2500 Esztergom, Helischer József út 5.</li>";
+        $text .= "</ul>";*/
+
+        $text= $this->setMailTemplate($text, "Suzuki GHC szűrés időpontfoglalás újraindult!", "ghc");
+        $mail->Body = $text;
+
+        $smsSzoveg  = "Tisztelt GHC jelentkező! A szűrésre időpontot foglalhat a mai naptól, ";
+        $smsSzoveg .= "2024.09.02 12:00-tól, az alábbi linken: https://ghc.hungariamed.hu/?page=login Bővebb tájékoztatást e-mailben olvashat.";
+
+        //$this->utils->sendSMS($data["telefon"],$smsSzoveg);
+
+        $this->createNotificationRecord("ghc_idopont_nyitas_restart",$data["id"],$data["email"], $subject, $text);
+
+        //die($text);
+
+        $mail->Send();
+    }
+
     public function sendUserReservationNotification($id, $force = false) {
         //visszaigazoló levél a foglalás sikerességéről a felhasználónak
 
@@ -1235,16 +1294,22 @@ END:VCALENDAR";
         }
     }
 
-    private function setMailTemplate($body, $title = "") {
+    private function setMailTemplate($body, $title = "",$forced = null) {
         
         $templateFile = "/var/www/onlinebejelentkezes_keltexmed/public/zebrateszt/userOrderMailTemplate_".Booking_Constants::SQL_DB.".html";
-        if(CompanyService::isSuzukiGHC()){
-            $templateFile = "/var/www/marci/onlinebejelentkezes/public/zebrateszt/ghc_email_template.html"; 
+        if(CompanyService::isSuzukiGHC() || $forced=="ghc"){
+            $templateFile = "/var/www/marci/onlinebejelentkezes/public/zebrateszt/ghc_email_template.html";
         }
+
         if (is_file($templateFile)) {
             $template = file_get_contents($templateFile);
             $template = str_replace("#body#", $body, $template);
             $template = str_replace("#title#", $title, $template);
+            if(CompanyService::isBME()){
+                $template = str_replace("#footer#","<strong><a href='https://www.hungariamed.hu' target='_blank'>www.hungariamed.hu</a></strong>",$template);
+            }else{
+                $template = str_replace("#footer#","<strong>Tel: +36 1 / 800 9333, Cím: 1135 Budapest, Jász u. 33-35.</strong>",$template);
+            }
             $body = $template;
         }
         return $body;
