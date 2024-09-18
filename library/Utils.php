@@ -1183,4 +1183,45 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return $array;
     }
 
+    public function ghc_notification_send(){
+        $cegid = 904;
+        $data = sql_query("SELECT fogl.*,sz.megnev as csomag FROM felhasznalok fogl 
+                           LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=fogl.torzsszam 
+                           LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
+                           WHERE cegid=904")->fetchAll(PDO::FETCH_ASSOC);
+
+        /*
+        0,100
+        100,100
+        200,100
+        300,100
+        400,100
+        500,100
+        600,100
+        700,100
+        800,100
+        */
+
+        $notificationService = New NotificationService();
+
+        echo "Lista mérete: ".count($data)."<br><br>";
+        $count = 0;
+        //$emailek = array("marton.gergely@hungariamed.hu");
+        //$telefonok = array("+36306406922");
+
+        foreach($data as $each){
+            
+            $index = ($count);
+            //$each["email"] = $emailek[$index];
+            //$each["telefon"] = $telefonok[$index];
+            echo "#{$count} - ".$each["id"]."-".$each["nev"]." - ".$each["email"]." - ".$each["telefon"]."<br><br>";
+            $count++;
+            //$notificationService->ghc_notification($each);
+            
+            //if($count==1) break;
+        }
+
+        die();
+    }
+
 }

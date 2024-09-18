@@ -4197,6 +4197,25 @@ function showAlkalmassagiWin(fid) {
     })
 }
 
+function showQuestionaries(fid,pass) {
+    console.log("itt vagyok");
+
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {showquestionaries:true,fid:fid,pass:pass},
+        success: function(response){
+            console.log(response);
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
 function showSzamlazasWin(fid){
     $.ajax({
         type:"POST",
