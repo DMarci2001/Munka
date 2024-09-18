@@ -415,6 +415,7 @@ class AdminBookingPage extends AdminCorePage
 
                 $results = [];
                 //időpontok tesztelése
+                $this->bookingService->replicateToFirstAvailableTime = true;
                 foreach ($packContentIds as $tipusId) {
                     $result = $this->bookingService->replicateReservationToAnotherService($packReservationData, $tipusId, true);
                     if (!empty($result)) {
@@ -430,6 +431,7 @@ class AdminBookingPage extends AdminCorePage
 
                 //időpontok lefoglalása
                 $lefoglalva = 0;
+                $this->bookingService->replicateToFirstAvailableTime = false;
                 foreach ($packContentIds as $tipusId) {
                     $this->bookingService->replicateReservationToAnotherService($packReservationData, $tipusId);
                     $lefoglalva++;

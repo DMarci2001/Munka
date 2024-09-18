@@ -1391,7 +1391,7 @@ END:VCALENDAR";
             $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH . "laborenc" . md5($id . rand(1, 10000)) . ".pdf";
             $outFileName = $requestData["nev"] . " laborlelet.pdf";
             $userPassword = trim($requestData["taj"]);
-            if (empty($userPassword)) {
+            if (empty($userPassword) || !ctype_digit($userPassword)) {
                 $userPassword = str_replace(".", "", str_replace("-", "", $requestData["szuldatum"]));
             }
             $ownerPassword = self::OWNER_PASSWORD;

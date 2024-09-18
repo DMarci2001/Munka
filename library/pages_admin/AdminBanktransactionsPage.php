@@ -65,7 +65,7 @@ class AdminBanktransactionsPage extends AdminCorePage {
         $request = [];
 
         if ($this->paymentSource == "bejelentkezo") {
-            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.merchant,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result, trans.orderid FROM banktransactions trans
+            $request = sql_query("SELECT fogl.id AS foglid,o.nev as orvosnev,trans.merchant,trans.id,fogl.nev,trans.datum,trans.transid,fogl.telefon,fogl.email,sz.megnev as vizsgalat,trans.osszeg,trans.result, trans.orderid, trans.ack, trans.customer_name FROM banktransactions trans
 							LEFT JOIN foglalasok fogl ON fogl.id=trans.foglalasid
 							LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
 							LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
@@ -101,7 +101,14 @@ class AdminBanktransactionsPage extends AdminCorePage {
                             $cartItems[] = "<span style='background:lightslategray;color:#fff;padding:2px 5px;white-space: nowrap;'>{$itemData["megnev"]} {$cartContent["price"]} Ft</span>";
                         }
                     }
+                }
+            }
 
+            if (empty($result["nev"]) && Booking_Constants::SQL_DB == "hungariamed") {
+                $result["nev"] = $result["customer_name"];
+                $ackData = json_decode($result["ack"], JSON_OBJECT_AS_ARRAY);
+                if (substr_count($ackData["orderRef"], "labshop") != 0) {
+                    $signs.= "<span style='background:lightblue;color:#fff;padding:2px 5px;'>LABSHOP</span> ";
                 }
             }
 
@@ -109,15 +116,17 @@ class AdminBanktransactionsPage extends AdminCorePage {
 
 			$resultCSS="style='font-weight:bold'";
             $border="style='border-top:1px solid black'";
+
 			$rows.="<tr>";
 			$rows.="<td {$border}>{$result['transid']}</td>";
 			$rows.="<td {$border}>{$result['datum']}</td>";
-            $rows.="<td {$border}'>{$signs}{$result['nev']}</td>";
-            $rows.="<td {$border} >{$result['telefon']}</td>";
-            $rows.="<td {$border} >{$result['email']}</td>";
+            $rows.="<td {$border}>{$signs}{$result['nev']}</td>";
+            $rows.="<td {$border}>{$result['telefon']}</td>";
+            $rows.="<td {$border}>{$result['email']}</td>";
+
             if (empty($cartItems)) {
-                $rows .= "<td {$border} >{$result['vizsgalat']}</td>";
-                $rows .= "<td {$border} >{$result['orvosnev']}</td>";
+                $rows .= "<td {$border}>{$result['vizsgalat']}</td>";
+                $rows .= "<td {$border}>{$result['orvosnev']}</td>";
             } else {
                 $rows .= "<td colspan='2' {$border} >".implode(" ", $cartItems)."</td>";
             }

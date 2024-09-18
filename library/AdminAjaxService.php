@@ -1133,10 +1133,47 @@ class AdminAjaxService {
             if (!empty($html)) {
                 $html = "<div style='font-weight: bold;margin-bottom: 5px;'>Bejelentkezve:</div></b>{$html}";
             }
+
+
+            if ($adminUser->beallitasWebAdatokAccess()) {
+
+                $html.="<div style='margin-top:5px;font-weight: bold;'>WEB szerver</div>";
+
+                $html.= "<div style='display:table;width:100%;'>";
+                $html.= $this->statusDataRow("CPU:", "", "76%");
+                $html.= $this->statusDataRow("SSD:", "500G", "76%");
+                $html.= $this->statusDataRow("HDD:", "2000G", "56%");
+                $html.= "</div>";
+
+                $html.="<div style='margin-top:5px;font-weight: bold;'>Mail szerver</div>";
+
+                $html.= "<div style='display:table;width:100%;'>";
+                $html.= $this->statusDataRow("CPU:", "", "10%");
+                $html.= $this->statusDataRow("SSD:", "200G", "64%");
+                $html.= $this->statusDataRow("SSD:", "500G", "66%");
+                $html.= $this->statusDataRow("HDD:", "500G", "95%");
+                $html.= "</div>";
+
+                $html.="<div style='margin-top:5px;font-weight: bold;'>Backup</div>";
+
+                $html.= "<div style='display:table;width:100%;'>";
+                $html.= $this->statusDataRow("CPU:", "", "2%");
+                $html.= $this->statusDataRow("HDD1:", "200G", "64%");
+                $html.= $this->statusDataRow("HDD2:", "1000G", "66%");
+                $html.= $this->statusDataRow("HDD3:", "2000G", "40%");
+                $html.= "</div>";
+
+            }
+
         }
 
         return $html;
     }
+
+    private function statusDataRow($title, $data1, $data2):string {
+        return "<div style='display:table-row;'><div style='display:table-cell;'>{$title}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data1}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data2}</div></div>";
+    }
+
 
     private function validateDate($date, $format="Y-m-d H:i:s"):bool {
         $d = DateTime::createFromFormat($format, $date);

@@ -387,6 +387,38 @@ class AjaxService {
             echo "<pre>".print_r($container, true)."</pre>";
             die;
         }
+
+        if (isset($_GET["spektrumduplicatelist"])) {
+            $container = [];
+            $requests = sql_query("SELECT * FROM labrequestmessages m WHERE m.tipus='out' AND laborprovider='spektrumlab' AND datum>'2024-06-10 00:00:00' ORDER BY datum")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($requests as $request) {
+                $hl7 = $request["content"];
+
+
+                foreach (explode("\n", $hl7) as $line) {
+                    if (substr_count($line, "PID|")) {
+                        $data = explode("|", $line);
+                        $id = $data[3];
+                        $nev = $data[5];
+                        $taj = $data[19];
+                        $szuldatum = date("Y-m-d", strtotime($data[7]));
+                        echo "{$id}-{$nev}-{$szuldatum} {$line}<br>";
+                        $container[$id][] = "{$request["datum"]}: {$nev}, taj:{$taj} szülidő: {$szuldatum}";
+                    }
+                }
+
+
+            }
+            echo "<pre>".print_r($container, true)."</pre>";
+            die;
+        }
+
+        if (isset($_GET["seemebalance"])) {
+            $result = json_decode(file_get_contents("https://seeme.hu/gateway?key=" . Booking_Constants::SEEME_API_KEY . "&method=balance&format=json"), JSON_OBJECT_AS_ARRAY);
+            echo "<pre>".print_r($result, true)."</pre>";
+            die;
+        }
+
     }
 
 

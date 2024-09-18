@@ -94,6 +94,7 @@ class CronService {
             $this->_sendAlkExcel(); //** régi excel hívást használ, disabled
             $this->_sendAlkExpire();
             $this->suzukiNotificationCheck();
+            $this->scanLaborPDF();
 
             $this->checkSzabadsagCollisions();
             $this->checkCollisions();
@@ -161,6 +162,9 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
+        $this->scanLaborPDF();
+        //$this->fillLabMessageDatas();
+
         //$this->readEmailReports();
         //$service = new FoglaljOrvostService();
         //$result = $service->deleteOneSpecificConsultation();
@@ -172,8 +176,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->pdfTeszt();
 
-        $laborKeroService = new LaborKeroService();
-        $laborKeroService->storeLaborKeroFromLabShopData();
+        //$laborKeroService = new LaborKeroService();
+        //$laborKeroService->storeLaborKeroFromLabShopData();
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
@@ -190,6 +194,69 @@ class CronService {
 
         echo "teszt\n";
         die();
+    }
+
+    private function fillLabMessageDatas() {
+        $orders = sql_query("SELECT c.`reservation_id`, v.name, b.* FROM banktransactions b 
+            LEFT JOIN labshop_vasarlasok v ON v.`bankorderid`=b.`orderid`
+            LEFT JOIN cart_item c ON c.session_id=v.id
+            WHERE INSTR(ack, 'labshop') AND result='finished' AND c.`reservation_id` IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($orders as $order) {
+            echo "{$order["reservation_id"]} {$order["orderid"]}\n";
+            sql_query("update foglalasok set bankorderid=? where id=?", array($order["orderid"], $order["reservation_id"]));
+        }
+
+        die;
+
+
+        $messages = sql_query("select * from labrequestmessages m where m.tipus='out' and taj='' order by datum desc limit 1000")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($messages as $message) {
+            $messageRows = explode("\n", $message["content"]);
+            foreach ($messageRows as $messageRow) {
+                if (substr($messageRow, 0, 3) == "PID") {
+                    $fields = explode("|", $messageRow);
+
+                    $pid = $fields[3];
+                    $szulido = $fields[7];
+                    $taj = $fields[19];
+
+                    sql_query("update labrequestmessages set pid=?, taj=?, szuldatum=? where id=?", [$pid, $taj, $szulido, $message["id"]]);
+
+                    echo "{$pid} {$szulido} {$taj}\n";
+                }
+            }
+        }
+    }
+
+    private function scanLaborPDF()
+    {
+        $requests = sql_query("select id, nev, resultpdf from labrequests where resultdate>date_sub(now(), interval 30 day) and resultpdf<>'' and scanresult='' order by resultdate desc")->fetchAll(PDO::FETCH_ASSOC) ;
+        foreach ($requests as $request) {
+            echo "{$request["nev"]} ";
+
+            $fileName = Booking_Constants::DOCUMENT_PATH . "/scanteszt.pdf";
+            file_put_contents($fileName, base64_decode($request["resultpdf"]));
+
+            $config = new \Smalot\PdfParser\Config();
+            $config->setHorizontalOffset('');
+            $parser = new \Smalot\PdfParser\Parser([], $config);
+            $pdf = $parser->parseFile($fileName);
+            $text = $pdf->getText();
+
+            $scanItems = [];
+            if (substr_count(strtolower($text),"hemolitikus")) {
+                $scanItems[] = "hemolitikus";
+            }
+
+            if (substr_count(strtolower($text),"lipémiás")) {
+                $scanItems[] = "lipemias";
+            }
+
+            sql_query("update labrequests set scanresult=? where id=?", [json_encode($scanItems), $request["id"]]);
+            echo json_encode($scanItems);
+
+            echo "\n";
+        }
     }
 
     private function addSyncReservations() {
