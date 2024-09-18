@@ -44,11 +44,14 @@ class Booking_Constants {
 
     const SOAP_API_NAMESPACE        = "https://bejelentkezes.keltexmed.hu/foApi.php";
     const SOAP_API_PASSWORD         = "KMa7PnbLPkl9KRTp";
+    const SOAP_API_PASSWORD2        = "25rDE89ojTRD7u";
 
     const FO_CONNECTION_ENABLED     = true;
     const FO_API_PASSWORD           = "KMa7PnbLPkl9KRTp";
+    const FO_API_PASSWORD_BERCSENYI = "25rDE89ojTRD7u";
     const FO_API_TEST_PASSWORD      = "KMa7PnbLPkl9KRTp";
     const FO_IFC_NAME               = "KELTEX_MED";
+    const FO_IFC_NAME_BERCSENYI     = "KELTEX_MED_BERCSENYI";
 
     const DokiRex_Email             = "admin@keltexmed.hu";
 	const DokiRex_Password          = "KELTEXadmin123.";

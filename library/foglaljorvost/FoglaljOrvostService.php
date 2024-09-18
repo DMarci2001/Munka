@@ -7,12 +7,11 @@ class FoglaljOrvostService extends FoGeneral {
     const PROVIDER_NAME = "foglaljorvost";
     const LOG_ID        = 11;
 
-    private $bookingService;
-    private $currentAction;
+    private int $placeId = 0;
+    private string $currentAction;
 
     public function __construct()
     {
-        $this->bookingService = new BookingService();
         $this->currentAction = "";
     }
 
@@ -48,6 +47,25 @@ class FoglaljOrvostService extends FoGeneral {
         }
     }
 
+
+    public array $bercsenyiDoctorIds = [461, 454, 468, 463, 458];
+
+    private function setPlaceByDoctorId($doctorId):void {
+        //bercsényi előkészítése
+        if (Booking_Constants::SQL_DB == "keltexmed" && in_array($doctorId, $this->bercsenyiDoctorIds)) {
+            $this->placeId = Booking_Constants::DEFAULT_PLACE_IDS[1];
+        }
+    }
+
+    private function setPlaceByReservationId($reservationId):void {
+        //bercsényi előkészítése
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            if ($reservationData = sql_query("select helyszinid from foglalasok where id=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+                $this->placeId = $reservationData["helyszinid"];
+            }
+        }
+    }
+
     /*
     Előjegyzés adatainak közlése
     Amennyiben a Partner klinikai rendszerében egy előjegyzést hoznak létre, akkor a klinikai rendszer egy “APPOINTMENT” üzenetet küld a FO rendszer felé. A FO rendszere az üzenetben található időpontot foglaltként tudja regisztrálni.
@@ -73,6 +91,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function newReservation($fid) {
+        $this->setPlaceByReservationId($fid);
         $this->currentAction = "APPOINTMENT_NEW";
         $results = [];
         $res = sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where (f.id=? or f.parentid=?) and o.foid<>0", [$fid, $fid]);
@@ -109,6 +128,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function modifyReservation($fid) {
+        $this->setPlaceByReservationId($fid);
         $this->currentAction = "APPOINTMENT_MOD";
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0 and f.fofid<>0", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -135,6 +155,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function deleteReservation($fid) {
+        $this->setPlaceByReservationId($fid);
         $this->currentAction = "APPOINTMENT_DEL";
         if ($reservationData = sql_fetch_array(sql_query("select f.*,o.foid as orvosfoid from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=? and o.foid<>0 and f.fofid<>0", [$fid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -190,6 +211,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function getFieldsByDoctor($oid) {
+        $this->setPlaceByDoctorId($oid);
         $this->currentAction = "FIELDSBYDOCTOR_GET";
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -220,6 +242,7 @@ class FoglaljOrvostService extends FoGeneral {
     */
 
     public function sendDoctor($oid) {
+        $this->setPlaceByDoctorId($oid);
         $this->currentAction = "DOCTOR_NEW";
         if ($orvosData = sql_fetch_array(sql_query("select * from orvosok where id=?", [$oid]))) {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -286,6 +309,8 @@ class FoglaljOrvostService extends FoGeneral {
 
     public function newConsultation($beoId) {
         $beo = $this->getBeosztasData($beoId);
+        $this->setPlaceByDoctorId($beo["orvosid"]);
+
         if (isset($beo["error"])) {
             return $beo["error"];
         }
@@ -314,6 +339,8 @@ class FoglaljOrvostService extends FoGeneral {
 
     public function modifyConsultation($beoId) {
         $beo = $this->getBeosztasData($beoId);
+        $this->setPlaceByDoctorId($beo["orvosid"]);
+
         if (isset($beo["error"])) {
             return $beo["error"];
         }
@@ -342,6 +369,8 @@ class FoglaljOrvostService extends FoGeneral {
 
     public function deleteConsultation($beoId) {
         $beo = $this->getBeosztasData($beoId);
+        $this->setPlaceByDoctorId($beo["orvosid"]);
+
         if (isset($beo["error"])) {
             return $beo["error"];
         }
@@ -367,6 +396,9 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function deleteOneSpecificConsultation() {
+        $doctorId = 67;
+        $this->setPlaceByDoctorId($doctorId);
+
         $this->currentAction = "CONSULTATION_DEL";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -376,7 +408,7 @@ class FoglaljOrvostService extends FoGeneral {
                     ACTION="DEL"
                     ROTATE_HASH="#rotatehash#" />
                 <DOCTOR
-                    OWN_ID="67"
+                    OWN_ID="'.$doctorId.'"
                     OUTERSYS_ID="8232" />
                 <CONSULTATION
                     OWN_ID="30558"
@@ -392,11 +424,13 @@ class FoglaljOrvostService extends FoGeneral {
             return false;
         }
 
-        $xml = str_replace("#rotatehash#", $this->generateRotateHash(), $xml);
-        $xml = str_replace("#ifcname#", Booking_Constants::FO_IFC_NAME, $xml);
+        $ifc = $this->getIfcName($this->placeId);
 
-        $userAgent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : "";
-        $remoteAddr = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "";
+        $xml = str_replace("#rotatehash#", $this->generateRotateHash($this->placeId), $xml);
+        $xml = str_replace("#ifcname#", $ifc, $xml);
+
+        $userAgent = $_SERVER["HTTP_USER_AGENT"] ?? "";
+        $remoteAddr = $_SERVER["REMOTE_ADDR"] ?? "";
         if (empty($logId)) {
             sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID, $xml, $remoteAddr, $userAgent, $this->currentAction));
             $logId = sql_insert_id();
@@ -404,7 +438,7 @@ class FoglaljOrvostService extends FoGeneral {
 
         try {
             $client = new SoapClient($this->getApiURL());
-            $result = $client->EnqueueMessage($xml, Booking_Constants::FO_IFC_NAME);
+            $result = $client->EnqueueMessage($xml, $ifc);
             sql_query("update webservicelog set response=?, exception='' where id=?", [$result, $logId]);
             return $result;
         } catch (SoapFault $exception) {
@@ -414,10 +448,10 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
     public function retryFailedMessages() {
-        $res = sql_query("select * from webservicelog l where l.exception<>'' and datum>date_sub(now(), interval 2 hour) and tipus=? limit 10", [self::LOG_ID]);
-        while ($data = sql_fetch_array($res)) {
-            $this->sendMessageToFoglaljOrvost($data["keres"], $data["id"]);
-        }
+        //$res = sql_query("select * from webservicelog l where l.exception<>'' and datum>date_sub(now(), interval 2 hour) and tipus=? limit 10", [self::LOG_ID]);
+        //while ($data = sql_fetch_array($res)) {
+        //    $this->sendMessageToFoglaljOrvost($data["keres"], $data["id"]);
+        //}
     }
 
     public function sendSzabadsag($szabadsagGroupId = 0) {
@@ -432,6 +466,8 @@ class FoglaljOrvostService extends FoGeneral {
         LEFT JOIN orvosok o ON o.id = sz.`oid`
         WHERE o.`foid` <> 0 and sz.datumtol > date(now()) ".($szabadsagGroupId!=0?" and sz.groupid='{$szabadsagGroupId}'":"")." ORDER BY sz.datumig DESC");
         while ($szabadsagData = sql_fetch_array($res)) {
+            $this->setPlaceByDoctorId($szabadsagData["oid"]);
+
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
@@ -473,6 +509,8 @@ class FoglaljOrvostService extends FoGeneral {
         $this->currentAction = "APPOINTMENT_DEL";
         $res = sql_query("select * from szabadsag where groupid=? and foid<>0", [$szabadsagGroupId]);
         while ($szabadsagData = sql_fetch_array($res)) {
+            $this->setPlaceByDoctorId($szabadsagData["orvosid"]);
+
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO

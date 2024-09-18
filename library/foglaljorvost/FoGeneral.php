@@ -4,28 +4,6 @@ class FoGeneral {
 
     protected function description($reservationData) {
         return "";
-        /*
-        $description = "";
-
-        if (trim($reservationData["nev"]) != "") {
-            $description.= "név: {$reservationData["nev"]}\n";
-        }
-
-        if (trim($reservationData["telefon"]) != "") {
-            $description.= "telefon: {$reservationData["telefon"]}\n";
-        }
-
-        if (trim($reservationData["megj"]) != "") {
-            $description.= "megjegyzés: {$reservationData["megj"]}\n";
-        }
-
-        $description = str_replace("&", "&amp;", $description);
-        $description = str_replace("\"", "'", $description);
-        $description = strip_tags($description);
-        $description = str_replace("<", "", $description);
-        $description = str_replace(">", "", $description);
-        return trim($description);
-        */
     }
 
     protected function getApiURL() {
@@ -36,16 +14,25 @@ class FoGeneral {
         return $url;
     }
 
-    protected function getApiPassword() {
+    protected function getIfcName($placeId = 0):string {
+        $ifc = Booking_Constants::FO_IFC_NAME;
+        if (Booking_Constants::SQL_DB == "keltexmed" && $placeId == Booking_Constants::DEFAULT_PLACE_IDS[1]) {
+            $ifc = Booking_Constants::FO_IFC_NAME_BERCSENYI;
+        }
+        return $ifc;
+    }
+
+    protected function generateRotateHash($placeId = 0):string {
         $password = Booking_Constants::FO_API_PASSWORD;
+        if (Booking_Constants::SQL_DB == "keltexmed" && $placeId == Booking_Constants::DEFAULT_PLACE_IDS[1]) {
+            $password = Booking_Constants::FO_API_PASSWORD_BERCSENYI;
+        }
+
         if (Booking_Constants::IS_DEMO) {
             $password = Booking_Constants::FO_API_TEST_PASSWORD;
         }
-        return $password;
-    }
 
-    protected function generateRotateHash() {
-        return md5(sha1("fo|".$this->getApiPassword()."|".date("Y.m.d"."$")));
+        return md5(sha1("fo|{$password}|".date("Y.m.d"."$")));
     }
 
     protected function getBeosztasData($beoId) {
