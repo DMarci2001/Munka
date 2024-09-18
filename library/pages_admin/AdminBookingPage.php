@@ -1225,8 +1225,8 @@ class AdminBookingPage extends AdminCorePage
 
         $htmlout = "";
         $eljottText = "";
-
-        if ($reservationData["eljott"] == 0 && !empty($reservationData["nev"]) && $reservationData["nev"] != "nincs név" && strtotime("now - 10 minute") > strtotime($reservationData["datum"])) {
+                                                                                                                                                                                                        /*Magyarállamkincstárosok nem látják hogy nem jött el :P*/
+        if ($reservationData["eljott"] == 0 && !empty($reservationData["nev"]) && $reservationData["nev"] != "nincs név" && strtotime("now - 10 minute") > strtotime($reservationData["datum"]) && strpos($_SESSION["adminuser"]["email"],"@allamkincstar.gov.hu")===false) {
             $eljottText = "<span style='color:red;border:1px solid red;padding:0px 2px;'>nem jött el</span> ";
         }
 
