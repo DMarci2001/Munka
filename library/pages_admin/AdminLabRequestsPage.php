@@ -54,7 +54,17 @@ Asszisztens
             $_SESSION["labcegfilter"] = $_GET["setlabcegfilter"];
         }
 
+        if (!isset($_SESSION["labrequestsearchbekuldokod"])) {
+            $_SESSION["labrequestsearchbekuldokod"] = "";
+        }
+
         if (isset($_REQUEST["generalsearch"])) {
+            echo $this->listLabRequests();
+            die;
+        }
+
+        if (isset($_REQUEST["bekuldokodfilter"])) {
+            $_SESSION["labrequestsearchbekuldokod"] = $_REQUEST["bekuldokodfilter"];
             echo $this->listLabRequests();
             die;
         }
@@ -367,6 +377,19 @@ Asszisztens
         $GLOBALS["subtitle"] = "Labor eredmények";
 
         echo "<div style='margin-bottom:20px;'>";
+
+        $bekuldoKodok = SpektrumlabService::BEKOLDO_KOD_MAP;
+        $bekuldoKodok["000000719"] = "SYNLAB Hungaria Med-M Kft.";
+
+        echo "<div style='display:table-cell;vertical-align: middle;'>";
+        echo "<select name='reqlaborbekuldokodfilter' id='reqlaborbekuldokodfilter' onchange='labReuestPageFilter(this.value);' style='width:210px;background:#ffc;' title='Szűrés beküldőkódra'>";
+        echo "<option value=''>Összes beküldőkód</option>";
+        foreach ($bekuldoKodok as $bekuldoKod => $bekuldoKodName) {
+            echo "<option value='{$bekuldoKod}'" . ($bekuldoKod == $_SESSION["labrequestsearchbekuldokod"] ? " selected" : "") . ">{$bekuldoKod} - {$bekuldoKodName}</option>";
+        }
+        echo "</select>&nbsp;&nbsp;";
+        echo "</div>";
+
         echo "<div style='display:table-cell;vertical-align: middle;'>";
         echo "<input data-page='labrequests' data-resultdiv='labrequestlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;&nbsp;&nbsp;&nbsp;";
         //echo "<input type='checkbox' id='futurefiltercheckbox' value='1' ".($_SESSION["labfuturefilter"] == 1 ?"checked":"")." /> jövőbeniek is&nbsp;&nbsp;&nbsp;&nbsp;";
@@ -466,7 +489,17 @@ Asszisztens
         }
 
         if ($request["folyamatban"] == 1) {
-            $resultDate.= "<div style=''><span style='display:inline-block;background:red;color:#fff;padding:2px 4px;border-radius: 4px;'>folyamatban</span></div>";
+            $resultDate.= "<div style=''><span style='display:inline-block;background:red;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>folyamatban</span></div>";
+        }
+
+        if (!empty($request["scanresult"])) {
+            $scanResult = json_decode($request["scanresult"], JSON_OBJECT_AS_ARRAY);
+            if (in_array("hemolitikus", $scanResult)) {
+                $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>hemolitikus</span></div>";
+            }
+            if (in_array("lipemias", $scanResult)) {
+                $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>lipémiás</span></div>";
+            }
         }
 
         if ($request["printmatrica"] == 1) {
@@ -552,11 +585,16 @@ Asszisztens
             $queryParams[] = $params["id"];
         }
 
+        if ($_SESSION["labrequestsearchbekuldokod"] != "") {
+            $w.= " and r.bekuldokod = ?";
+            $queryParams[] = $_SESSION["labrequestsearchbekuldokod"];
+        }
+
         //if ($_SESSION["labfuturefilter"] == 0) {
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj 
+        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN labrequestmessages lm on lm.requestid=r.id

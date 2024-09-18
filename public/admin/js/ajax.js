@@ -585,43 +585,6 @@ function refreshNaptar(idopont) {
 }
 
 
-
-function addIdopontNaptar(idopont, szt) {
-    $("#naptarloading").show();
-
-    if (foglalasSelected != 0) {
-        if (confirm("Biztos áthelyezed ide a kijelölt foglalást: " + idopont + "?")) {
-
-            $("#foglalasnaptaridopont").load("index.php?page=calendar&szt=" + encodeURIComponent(szt) + "&moveidopont=" + encodeURIComponent(idopont) + "&fid=" + encodeURIComponent(foglalasSelected), null,
-                function (responseText) {
-                    showIdopontEditor('bnaptar', foglalasSelectedPass, foglalasSelected);
-                    cancelFoglalasMove();
-                    refreshNaptar(idopont);
-                    $("#naptarloading").hide();
-                }
-            );
-        }
-        return;
-    }
-
-    $.ajax({
-        url: 'index.php',
-        type: 'GET',
-        data: { page: 'calendar', szt: szt, addidopont: idopont, rinterval: selectedInterval },
-        success: function (data) {
-            if (data.substring(0, 5) == 'error') {
-                alert(data.substring(5));
-            } else {
-                $("#foglalasnaptar").html(data);
-                //refreshNaptar(idopont);
-            }
-            $("#naptarloading").hide();
-        }
-    });
-}
-
-
-
 function removeIdopont(id, p, page, el) {
     if (!confirm("Biztos törlöd ezt az időpontot?")) {
         return;
@@ -4812,3 +4775,15 @@ function saveLaborCategory(id, category) {
         }
     });
 }
+
+function labReuestPageFilter(value) {
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {page:"labrequests", bekuldokodfilter:value},
+        success: function (response) {
+            $("#labrequestlist").html(response);
+        }
+    });
+}
+

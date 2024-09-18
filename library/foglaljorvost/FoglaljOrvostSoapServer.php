@@ -233,6 +233,11 @@ class FoglaljOrvostSoapServer {
         if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD."|".date("Y.m.d")."$")) == $hash) {
             return true;
         }
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            if (md5(sha1("fo|".Booking_Constants::SOAP_API_PASSWORD2."|".date("Y.m.d")."$")) == $hash) {
+                return true;
+            }
+        }
         return false;
     }
 

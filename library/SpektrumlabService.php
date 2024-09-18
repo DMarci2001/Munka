@@ -58,6 +58,7 @@ class SpektrumlabService {
         "000000483" => "Hungária Med-M Kft. (Hazai pálya)",
         "000000479" => "Hungária Med-M Kft. (Suzuki menedzser)",
         "000000519" => "Hungária Med-M Kft. (Apollo Tyres)",
+        "000000524" => "Hungária Med-M Kft. (Aldi)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -191,6 +192,10 @@ class SpektrumlabService {
 
         if ($paciensId == 0 || strlen($paciensTAJ) > 7) {
             $paciensId = "f{$paciensTAJ}";
+        }
+
+        if ($pidData = sql_query("SELECT id, pid FROM labrequestmessages m WHERE m.taj=? AND INSTR(m.content, 'SPEKTRUMLAB') AND !INSTR(pid, 'f') AND taj<>'' ORDER BY id DESC", [$paciensTAJ])->fetch(PDO::FETCH_ASSOC)) {
+            $paciensId = $pidData["pid"];
         }
 
         if ($this->orvosNemFontos) {

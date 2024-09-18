@@ -158,7 +158,7 @@ class LaborKeroService
 
                 if ($this->laborProvider == self::LABOR_PROVIDER_SPEKTRUMLAB) {
                     $service = new SpektrumlabService();
-                    sql_query("update labrequests set status='pending', bekuldokod=?, laboritems=?, createdby=? where id=?", [$this->bekuldoKodSpektrumLab, json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
+                    sql_query("update labrequests set created=now(), resultdate=now(), status='pending', bekuldokod=?, laboritems=?, createdby=? where id=?", [$this->bekuldoKodSpektrumLab, json_encode($this->getItemsWithoutPack($requestId)), $_SESSION["adminuser"]["username"], $requestId]);
                     $error = $service->writeNextRequest($requestId);
                     if (!empty($error)) {
                         sql_query("update labrequests set status='temp' where id=?", [$requestId]);
@@ -520,7 +520,7 @@ class LaborKeroService
                     continue;
                 }
                 if ($message["tipus"] == "out") {
-                    $messageHead = "Kimenő üzenet a ".$this->laborNames[$laborRequestData["provider"]]." felé {$message["datum"]}";
+                    $messageHead = "Kimenő üzenet a ".$this->laborNames[$laborRequestData["provider"]]." felé {$message["datum"]} (laborkérés létrehozva: {$laborRequestData["created"]})";
                 }
                 $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>{$messageHead}</div>";
                 $html.= "<div style='margin: 5px 0px 5px 0px;'>".nl2br($message["content"])."</div>";
@@ -718,12 +718,13 @@ class LaborKeroService
                 continue;
             }
 
+            sql_query("UPDATE labshop_vasarlasok SET laborkero=1 WHERE id=?", [$cartItem["session_id"]]);
+
             if (sql_query("select id from labrequests where foglalasid=? limit 1", [$cartItem["reservation_id"]])->fetch(PDO::FETCH_ASSOC)) {
                 echo "van már laborkérő\n";
                 continue;
             }
 
-            sql_query("UPDATE labshop_vasarlasok SET laborkero=1 WHERE id=?", [$cartItem["session_id"]]);
 
             $items = $packs = [];
 

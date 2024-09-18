@@ -461,6 +461,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         $num = str_replace(")","",$num);
         $num = str_replace("+","",$num);
 
+        /*
         if (!$raw) {
             if (substr($num, 0, 2) == "06") {
                 $num = "36" . substr($num, 2);
@@ -469,6 +470,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $num = "36" . $num;
             }
         }
+        */
+
+        if (substr($num, 0, 4) == "0620") {
+            $num = "3620". substr($num, 4);
+        }
+        if (substr($num, 0, 4) == "0630") {
+            $num = "3630". substr($num, 4);
+        }
+        if (substr($num, 0, 4) == "0670") {
+            $num = "3670". substr($num, 4);
+        }
+        if (substr($num, 0, 4) == "0651") {
+            $num = "3651". substr($num, 4);
+        }
+
 
         $SeeMe = new SeeMeGateway(Booking_Constants::SEEME_API_KEY);
 
