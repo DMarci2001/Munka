@@ -434,6 +434,17 @@ class AdminBookingEditor {
             die(json_encode(array("html"=>$this->_alkalmassagFolder_new($row),"error"=>"")));
         }
 
+        if(isset($_POST["showquestionaries"])){
+
+            $questionaryData = sql_query("SELECT kuv.*,fogl.* FROM foglalasok fogl 
+                                          LEFT JOIN felhasznalok felh ON felh.taj=fogl.taj AND felh.cegid=fogl.cegid
+                                          LEFT JOIN kerdoiv_ugyfel_valaszok kuv ON kuv.fid=felh.id
+                                          WHERE fogl.id=? AND fogl.pass=? ",[$_POST["fid"],$_POST["pass"]])->fetchAll(PDO::FETCH_ASSOC);
+    
+            //$row = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",[$_POST["showalkalmassagiwin"]]));
+            die(json_encode(array("html"=>$this->questionaryWindow($questionaryData),"error"=>"")));
+        }
+
         if(isset($_POST["saveAlkalmassagiBox"])){
             $error = "";
             if(isset($_POST["fid"])){
@@ -602,6 +613,7 @@ class AdminBookingEditor {
             $html .= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
             $html .= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
             $html .= "<a class='middlebutton' href='#' onClick='autoFill(false);return false;'>mezők kitöltése</a> ";
+            $html .= "<a class='middlebutton' href='#' onClick='showQuestionaries({$row["id"]},\"{$row["pass"]}\");return false;'>kérdések/válaszok</a> ";
             if ($this->user->user["username"] == "jns") {
                 $html .= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
             }
@@ -974,6 +986,33 @@ class AdminBookingEditor {
         $html .= "</div>";
         return $html;
     }
+
+    private function questionaryWindow($row){
+        $html = "";
+        $counter = 0;
+        $html .= "<div style='width:500x;background:white;'>";
+        $html .= "  <form id=\"alkalmassgibox\">";
+        $html .= "  <div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html .= "      <div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class=\"fa-solid fa-award\"></i>&nbsp;&nbsp;{$row[0]["nev"]} - {$row[0]["szuldatum"]} - {$row[0]["taj"]}</div>";
+        $html .= "      <div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+        $html .= "  </div>";
+
+        $html .= "  <div style='padding:10px;max-height:500px;overflow-y:scroll' id=answers-{$row[0]["id"]} contentEditable='true'>";
+        foreach($row as $each){
+            $counter++;
+            $html .= "      <p style='font-weight:bold'>{$counter}. {$each["kerdes_szoveg"]}</p>";
+            $html .= "      <p style='margin-left:20px'>{$each["valasz_szoveg"]}</p>";
+        }
+        
+        $html .= "  </div>";
+        $html .= "  <div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+        //$html .= "      <a class='printbutton' style='padding: 7px 5px 7px 5px !important' onclick='copyToClipboard(\"answers-{$row[0]["id"]}\")';return false;' href='#' style='background: #00aa00'>Másolás vágólapra</a>";
+        $html .= "  </div>";
+        $html .= "  </form>";
+        $html .= "</div>";
+        return $html;
+    }
+
     private function _alkalmassagFolder($row):string {
         $html = "";
         $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
