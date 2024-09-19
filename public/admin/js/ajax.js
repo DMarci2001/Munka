@@ -1524,6 +1524,7 @@ function checkSzabiData() {
         data: 'page=doctors&checkSzabiData=1&start=' + $('input[name="szabadsagtol"]').val() + '&end=' + $('input[name="szabadsagig"]').val() + '&orvosid=' + $('input[name="orvosid"]').val(),
         success: function (data) {
             if (data != '') {
+                /*
                 var result = '';
                 var analysis = data.split('|');
                 for (var i = 0; i < analysis.length; i++) {
@@ -1532,6 +1533,7 @@ function checkSzabiData() {
                 }
                 alert('Az alábbi foglalások a szabadságra esnek: \n' + result);
                 return false;
+                */
             }
             $('<input />').attr('type', 'hidden').attr('name', 'addszabadsag').attr('value', '1').appendTo('#iform');
             $('#iform').submit();
