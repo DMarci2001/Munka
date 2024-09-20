@@ -14,31 +14,27 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
             return;
         }
 
-        if(isset($_GET["download-excel"])){
-
+        if (isset($_GET["download-excel"])) {
             $data = $this->fetch_suzuki_ghc_registrations();
 
             $excelService = new ExcelService();
-            $filename = $excelService->generateXlsxFromArray($data,"A","N",array("B"));
-            header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            header("Content-Disposition: attachment;filename=\"suzuki_ghc_".date("Ymdhis").".xlsx\"");
-            header("Cache-Control: max-age=0");
-            echo file_get_contents($filename);
-
-            die();
+            $excelService->generateXlsxFromArray($data, "A", "N", array("B","C","F"));
+            $excelService->setFileName("suzuki_ghc_" . date("Ymdhis") . ".xlsx");
+            $excelService->outputSpreadSheet();
         }
     }
 
     public function showPage()
-    {   
+    {
         $html = "";
-        
+
         $data = $this->fetch_suzuki_ghc_registrations();
-        $html.= $this->show_table($data);
+        $html .= $this->show_table($data);
         echo $html;
     }
 
-    private function fetch_array($array){
+    private function fetch_array($array)
+    {
         echo "<pre>";
         print_r($array);
         echo "</pre>";
@@ -46,7 +42,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
 
     private function fetch_suzuki_ghc_registrations()
     {
-        $array = sql_query("SELECT felh.nev as \"Teljesnév\",felh.taj as \"TAJ\",sz.megnev as \"Csomag\",
+        $array = sql_query("SELECT felh.nev as \"Teljesnév\",felh.taj as \"TAJ\",felh.torzsszam as \"Törzszám\",sz.megnev as \"Csomag\",
                                    felh.email as \"E-mail\",felh.telefon as \"Telefonszám\",REPLACE(felh.szuldatum,\"-\",\".\") as \"Szül. dátum\",
                                    CONCAT(felh.irsz,\" \",felh.varos,\", \",felh.utca) as \"Lakcím\",
                                    REPLACE(felh.regtime,\"-\",\".\") as \"Regisztráció\",
@@ -64,47 +60,64 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         return $array;
     }
 
-    private function show_table($data){
-        
-        $html = "";
-        $html.= "<div><a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/admin/?page=suzukighcreglist&download-excel\"><img style=\"cursor:pointer\"  title=\"Excel fájl letöltése\" src=\"https://{$_SERVER["HTTP_HOST"]}/admin/images/excel_icon.png\" height=\"40\"></a></div>";
-        $html.= "<table class=\"table table-striped\">";
-        $html.= "   <thead>";
-        $html.= "       <tr class=\"h5\">";
-        $html.= "       <th class=\"text-center\" scope=\"col\">#</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Teljesnév</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Szül. dátum</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">TAJ</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">E-mail</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Telefonszám</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Lakcím</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">OTP egészségpénztár</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Szállítás</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Csomag</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Regisztráció</th>";
-        $html.= "       <th class=\"text-center\" scope=\"col\">Időpont</th>";
-        $html.= "       </tr>";
-        $html.= "   </thead>";
-        $html.= "   <tbody>";
+    private function getAllRegistrations($data){
+        $count = 0;
         foreach($data as $key=>$value){
-
-            $html.= "<tr style=\"font-size:14px\">";
-            $html.= "<th class=\"text-center\" scope=\"row\">".($key+1).".</th>";
-            $html.= "<td class=\"text-center\">{$value["Teljesnév"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Szül. dátum"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["TAJ"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["E-mail"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Telefonszám"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Lakcím"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["OTP egészségpénztár"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Szállítás"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Csomag"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Regisztráció"]}</td>";
-            $html.= "<td class=\"text-center\">{$value["Időpont"]}</td>";
-            $html.= "</tr>";
+            if(!empty($value["Időpont"])){
+                $count++;
+            }
         }
-        $html.= "   </tbody>";
-        $html.= "</table>";
+        return $count;
+    }
+
+    private function show_table($data)
+    {
+
+        $data = array_replace($data,array_fill_keys(array_keys($data, null),''));
+        $registrationsNumb = count($data);
+        $reservationNumb = $this->getAllRegistrations($data);
+        $html = "";
+        $html .= "<div>";
+        $html .= "  <a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/admin/?page=suzukighcreglist&download-excel\"><img style=\"cursor:pointer\"  title=\"Excel fájl letöltése\" src=\"https://{$_SERVER["HTTP_HOST"]}/admin/images/excel_icon.png\" height=\"40\"></a>";
+        $html .= "  <span style=\"font-size:16px;\"><i>Regisztráció/foglalás arány:</i> <strong>{$registrationsNumb} / {$reservationNumb} (".(round(($reservationNumb/$registrationsNumb)*100))."%)</strong></span>";
+        $html .= "</div>";
+        $html .= "<table class=\"table table-striped\">";
+        $html .= "   <thead>";
+        $html .= "       <tr class=\"h5\">";
+        $html .= "       <th class=\"text-center\" scope=\"col\">#</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Teljesnév</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Szül. dátum</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">TAJ</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">E-mail</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Telefonszám</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Lakcím</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">OTP egészségpénztár</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Szállítás</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Csomag</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Regisztráció</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Időpont</th>";
+        $html .= "       </tr>";
+        $html .= "   </thead>";
+        $html .= "   <tbody>";
+        foreach ($data as $key => $value) {
+
+            $html .= "<tr style=\"font-size:14px\">";
+            $html .= "<th class=\"text-center\" scope=\"row\">" . ($key + 1) . ".</th>";
+            $html .= "<td class=\"text-center\">{$value["Teljesnév"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Szül. dátum"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["TAJ"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["E-mail"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Telefonszám"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Lakcím"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["OTP egészségpénztár"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Szállítás"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Csomag"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Regisztráció"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Időpont"]}</td>";
+            $html .= "</tr>";
+        }
+        $html .= "   </tbody>";
+        $html .= "</table>";
 
         return $html;
     }
