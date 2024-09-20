@@ -1091,46 +1091,35 @@ class ExcelService {
         $this->sheet->getColumnDimension('I')->setWidth(25);
     }
 
-    public function generateXlsxFromArray($array,$startCell=null,$lastCell=null,$forcetoString){
-        //outputSpreadSheetFile
-        //Oszlopnevek
+    public function generateXlsxFromArray($array,$startCell=null,$lastCell=null,$setAlignLeft=[]){
+        //Declare variables and utilites
         $columnNames = array_keys($array[0]);
         $row = 1;
-        $filename = Booking_Constants::DOCUMENT_PATH."/Értesítendő Suzuki lista.xlsx";
-        $spreadSheet = new Spreadsheet();
-        $this->sheet = $spreadSheet->getActiveSheet();
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $this->sheet = $this->spreadSheet->getActiveSheet();
         $this->headingRow("A", $row, $columnNames);
-       
+
+        //Generate data rows
         for($i=0;$row<=count($array);$i++){
             $row++;
             $values = array_values($array[$i]);
             $this->dataRow("A", $row, $values);
-        }
 
-        if(!empty($forcetoString)){
-            for($i=0;$i<count($forcetoString);$i++){
-                $this->sheet->getStyle($forcetoString[$i])->getNumberFormat()
-                ->setFormatCode("strings");
+            if(!empty($setAlignLeft)){
+                foreach($setAlignLeft as $col){
+                    $this->sheet->getStyle($col.$row)->getAlignment()->setHorizontal("left");
+                }
             }
-           
         }
-        
-
-        $this->setAutoWidth(range('A', 'E'));
 
         if($startCell && $lastCell){
             $this->setAutoWidth(range($startCell, $lastCell));
+        }else{
+            $this->setAutoWidth(range('A', 'E'));
         }
 
-        try {
-            $writer = IOFactory::createWriter($spreadSheet, 'Xlsx');
-            $writer->save($filename);
-        } catch (\PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
-            return false;
-        }
-
-        return $filename;
-
+        //END
+        $this->spreadSheet->setActiveSheetIndex(0);
     }
 
 
