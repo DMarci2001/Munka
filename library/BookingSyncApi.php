@@ -6,8 +6,8 @@ class BookingSyncApi {
     private $utils;
 
     private array $placeSyncMap = [
-        "hungariamed" => [100, 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
-        "keltexmed"   => [292, 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
+        "hungariamed" => [[100, 644], 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
+        "keltexmed"   => [[292, 328], 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
     ];
 
     public function __construct() {
@@ -273,12 +273,12 @@ class BookingSyncApi {
 
     public function newReservation($reservationId) {
         $clinic           = Booking_Constants::SQL_DB;
-        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $destinationPlace = $this->placeSyncMap[$clinic][1];
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if ($reservation["helyszinid"] == $sourcePlace) {
+        if (in_array($reservation["helyszinid"], $sourcePlaces)) {
             $data = [
                 "source" => $clinic,
                 "action" => "storenewreservation",
@@ -293,12 +293,12 @@ class BookingSyncApi {
 
     public function modifyReservation($reservationId) {
         $clinic           = Booking_Constants::SQL_DB;
-        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $destinationPlace = $this->placeSyncMap[$clinic][1];
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if ($reservation["helyszinid"] == $sourcePlace) {
+        if (in_array($reservation["helyszinid"], $sourcePlaces)) {
             $data = [
                 "source" => $clinic,
                 "action" => "modifyremotereservation",
@@ -313,11 +313,11 @@ class BookingSyncApi {
 
     public function deleteReservation($reservationData) {
         $clinic           = Booking_Constants::SQL_DB;
-        $sourcePlace      = $this->placeSyncMap[$clinic][0];
+        $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $orvosData        = sql_query("SELECT id, pecsetszam FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC);
 
-        if ($reservationData["helyszinid"] == $sourcePlace) {
+        if (in_array($reservationData["helyszinid"], $sourcePlaces)) {
             $data = [
                 "source"          => Booking_Constants::SQL_DB,
                 "action"          => "deleteremotereservation",

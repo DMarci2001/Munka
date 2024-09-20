@@ -956,17 +956,14 @@ class CronService {
     */
     private function deleteExpiredReservations()
     {   
-        if (Booking_Constants::SQL_DB == "hungariamed") {
-            if($reservations = sql_query("SELECT * FROM foglalasok WHERE expire < NOW() AND expire <> '0000-00-00 00:00:00' AND datum > NOW()")->fetchAll(PDO::FETCH_ASSOC))
-            {
-                $bookingService = new BookingService();
-                foreach($reservations as $reservationData){
-                    $GLOBALS["extraloginfo"] = "lejárt foglalás automatikus törlése - cron";
-                    $this->bookingService->deleteReservation($reservationData["id"],$reservationData["pass"]);
-                }
+        if($reservations = sql_query("SELECT * FROM foglalasok WHERE expire < NOW() AND expire <> '0000-00-00 00:00:00' AND datum > NOW() and foglalta='labshop'")->fetchAll(PDO::FETCH_ASSOC)) {
+            $bookingService = new BookingService();
+            foreach($reservations as $reservationData){
+                $GLOBALS["extraloginfo"] = "lejárt foglalás automatikus törlése - cron";
+                $this->bookingService->deleteReservation($reservationData["id"],$reservationData["pass"]);
             }
-
-            return "Finished process.";
         }
+
+        return "Finished process.";
     }
 }
