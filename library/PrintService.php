@@ -1309,6 +1309,9 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         if ($helyszinId == 684) {
             $pdfLocation = "templates/szurovizsgalat_form_szirak.pdf";
         }
+        if ($helyszinId == 702) {
+            $pdfLocation = "templates/szurovizsgalat_form_varsany.pdf";
+        }
 
         //csak a beosztás
         /*

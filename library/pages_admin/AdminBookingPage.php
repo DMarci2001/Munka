@@ -941,7 +941,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701])) {
+                if (in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";
