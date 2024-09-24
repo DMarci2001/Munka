@@ -494,6 +494,27 @@ input:not([type]), input[type="text"] , input[type="password"]{
     color:#fff;
 }
 
+.chooseReservationButton{
+    background: #b90000;
+    font-weight:bold;
+    text-transform:uppercase;
+    color:#fff;
+    cursor:pointer;
+    padding:8px 15px;
+    -moz-border-radius:3px;
+    border-radius:3px;
+    text-decoration:none;
+    border-color:#b90000;
+    outline: inherit;
+    border:none;
+}
+
+.chooseReservationButton:hover {
+    text-decoration:none;
+    background:#a90000;
+    color:#fff;
+}
+
 .newbuttongray {
     display:inline-block;
     /* background:#3786be; */

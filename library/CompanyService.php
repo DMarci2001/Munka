@@ -36,7 +36,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="astotec";
+            $d="apollo";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -178,6 +178,10 @@ class CompanyService {
 
     public static function isFiFi($companyId = 0):bool{
         return $_SESSION["helyszindata"]["domain"] == "aldi-fifi" && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isApollo($companyId = 0):bool{
+        return $_SESSION["helyszindata"]["domain"] == "apollo" && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

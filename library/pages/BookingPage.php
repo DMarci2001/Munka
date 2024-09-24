@@ -257,7 +257,7 @@ class BookingPage extends CorePage
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
             if (!isset($_POST["tudoszuroelf"])) $_POST["tudoszuroelf"] = 0;
 
-            $_POST["email"] = trim($_POST["email"]);
+            if(isset($_POST["email"])) $_POST["email"] = trim($_POST["email"]);
 
             $laborszoveg = $this->bookingService->getLaborSzoveg();
             $_POST = $companyService->fillMAKPaciensData($_POST);
@@ -766,6 +766,11 @@ class BookingPage extends CorePage
                 if(!empty($_SESSION["labshopMegjegyzes"])){
                     $_POST["megj"].=" ".$_SESSION["labshopMegjegyzes"];
                 }
+
+                if(CompanyService::isApollo() && isset($_SESSION["vizsgalati-ok"])){
+                    $_POST["megj"].= implode(",",$_SESSION["vizsgalati-ok"]);
+                }
+
                 $forwardURL = $this->bookingService->addReservation($_POST);
                 $fid = $this->bookingService->newReservationId;
 
@@ -858,6 +863,16 @@ class BookingPage extends CorePage
             );
             die();
         }
+
+        if(isset($_POST["selectvizsgok"])){
+            if(isset($_POST["values"])){
+                $_SESSION["vizsgalati-ok"] = $_POST["values"];
+            }else{
+                unset($_SESSION["vizsgalati-ok"]);
+            }
+           
+           die();
+        }
     }
 
     private function getReferer():string {
@@ -866,6 +881,8 @@ class BookingPage extends CorePage
 
     public function showPage()
     {
+
+        echo $this->bookingService->orvosIdopontIsFree("2024-10-07 13:56:00",1405,4);
         $webText = $this->lang->webText;
 
         if (!isset($_POST["helyszin"])) {
@@ -1482,23 +1499,30 @@ class BookingPage extends CorePage
 
 
         if (!isset($beutalodata)) {
-            echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
-            echo "<textarea class='inputbox' style='height:100px;width:100%;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             //apollo tyres kivétel
-            if ($_SESSION["helyszindata"]["id"] == 43) {
-                echo "<div>";
+            if (CompanyService::isApollo()) {
+                echo "<tr class='datarow'>";
+                echo "<td>{$webText["vizsgalati-ok"]}:</td>";
+                echo "<td>";
                 //Indiába menő, előzetes, soron kívüli, Indiából hazatérő. Illetve: Hollandiába menő, előzetes, soron kívüli, Hollandiából hazatérő
-                echo "<span class='addmegjlink'>Indiába menő</span> &bull; ";
-                echo "<span class='addmegjlink'>Előzetes</span> &bull; ";
-                echo "<span class='addmegjlink'>Soron kívüli</span> &bull; ";
-                echo "<span class='addmegjlink'>Indiából hazatérő</span><br/>";
-                echo "<span class='addmegjlink'>Hollandiába menő</span> &bull; ";
-                echo "<span class='addmegjlink'>Előzetes</span> &bull; ";
-                echo "<span class='addmegjlink'>Soron kívüli</span> &bull; ";
-                echo "<span class='addmegjlink'>Hollandiából hazatérő</span>";
-                echo "</div>";
+
+                $vizsgOkArray = array("(Munkába lépés előtti)","(Időszakos)","(Munkakör változás miatt)","(Záró alkalmassági)","(Egyéb)","(Nincs további)",
+                                      "(30 napon túli keresőképtelenség)","(Vissza kell mennie)","(Konzultáció)","(Szemüveg)","(Időszakos/Emelőgép időszakos)",
+                                      "(Emelőgép tanfolyam)","(Hegesztő tanfolyamhoz)","(Időszakos + Párizs 20)","(Párizs 20)","(Póni)",
+                                    );
+
+                echo "<select id=\"vizsglati-ok-list\" style=\"width:100%\" placeholder=\"Többet is választhatsz\" readonly=\"true\" onChange='selectVizsgOk()' multiple>";
+                //echo "  <option ".(isset($_SESSION["vizsgalati-ok"]) && in_array("(Munkába lépés előtti)",$_SESSION["vizsgalati-ok"])?"selected=\"true\"":"")." value=\"(Munkába lépés előtti)\">Munkába lépés előtti</option>";
+                foreach($vizsgOkArray as $reason){
+                    echo "<option ".(isset($_SESSION["vizsgalati-ok"]) && in_array($reason,$_SESSION["vizsgalati-ok"])?"selected=\"true\"":"")." value=\"{$reason}\">".$webText[$reason]."</option>";
+                }
+                echo "</select>";
             }
+            echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
+            echo "<textarea class='inputbox' style='height:100px;width:100%;box-sizing:border-box;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             echo "</td></tr>";
+            
+           
         }
 
         if (CompanyService::isUniqa()) {
@@ -1622,8 +1646,16 @@ class BookingPage extends CorePage
         $html .= "<input type='hidden' name='datum{$index}' id='datum{$index}' value='{$dateVal}' />";
         //$html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' />";
         $html .= "<div class=\"input-group mb-3\" style=\"min-width: 280px;overflow:auto !important\";>";
-        $html .= "<input type=\"text\" style=\"font-family: SuzukiProRegular !important;\" class=\"form-control\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
-        $html .= "<button class=\"btn btn-hungariamed\" style=\"font-family: SuzukiProRegular !important;\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
+       
+        
+        if(CompanyService::isSuzukiGHC()){
+            $html .= "<input type=\"text\" style=\"font-family: SuzukiProRegular !important;\" class=\"form-control\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
+            $html .= "<button class=\"btn btn-hungariamed\" style=\"font-family: SuzukiProRegular !important;\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
+        }else{
+            $html .= "<input type=\"text\" style=\"margin-right:5px\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
+            $html .= "<button class=\"chooseReservationButton\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
+        }
+        
         $html .= "</div>";
         
         $html .= "</div>";

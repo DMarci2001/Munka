@@ -13,6 +13,7 @@ $(document).ready(function () {
     initIrszAutoFill();
     initSubReservationButtons();
     initBmeButtons();
+    initSelect2();
 });
 
 
@@ -170,7 +171,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
             return;
         }
     }else{
-        console.log("no cid");
+        //console.log("no cid");
     }
 
     
@@ -1533,6 +1534,42 @@ function selectmuszak(value){
         type:"POST",
         data:{selectmuszak:value},
         success: function(response){
+        }
+    })
+}
+
+function initSelect2(){
+
+    var placeholder = "Többet is választhatsz";
+
+    if ($(location).attr("href").indexOf("slang=en") >= 0){
+        var placeholder="You can choose more"
+    }
+
+    if ($(location).attr("href").indexOf("slang=de") >= 0){
+        var placeholder="Sie können mehr wählen";
+    }
+
+    $('#vizsglati-ok-list').select2({
+        placeholder: placeholder,
+        //allowClear: true,
+        maximumSelectionLength: 5
+      });
+}
+
+function selectVizsgOk(){
+    var values = [0];
+
+    if($("#vizsglati-ok-list").val()){
+        values = $("#vizsglati-ok-list").val();
+    }
+
+    $.ajax({
+        url:"index.php",
+        type:"POST",
+        data:{selectvizsgok:true,values:values},
+        success: function(response){
+            console.log(response);
         }
     })
 }

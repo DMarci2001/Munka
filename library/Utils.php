@@ -331,6 +331,8 @@ class Utils {
         $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
+        $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
+        $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
         $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
@@ -362,8 +364,8 @@ class Utils {
         
 
         if (isset($GLOBALS["admin"])) {
-            $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
-            $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
+            //$htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
+            //$htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 
             $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
             $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
