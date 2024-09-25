@@ -87,6 +87,7 @@ function reservedTimeInvalidate() {
     $("#datum").val("");
     $("#datumText").val("");
     $("#datumText").css("background-image", "");
+    $("#resbutton").html($("#resbutton").data("defaulttitle"));
     silentBookingPost();
 }
 
@@ -482,6 +483,7 @@ function chooseIdoPont(idopont, rinterval, orvos, helyszin, szurestipusid) {
                     datumText = idopont.substring(0, 10) + " " + selectedJarat;
                 }
                 $("#datumText"+datumIndex).val(datumText);
+                $("#resbutton"+datumIndex).html(datumText + "&nbsp;&nbsp;<i class='fa-solid fa-circle-check'></i>");
             }
 
             $("#datum"+datumIndex).val(idopont);

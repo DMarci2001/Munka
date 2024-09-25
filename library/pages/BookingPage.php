@@ -879,10 +879,7 @@ class BookingPage extends CorePage
         return !empty($_SESSION["referer"]) ? $_SESSION["referer"] : "";
     }
 
-    public function showPage()
-    {
-
-        echo $this->bookingService->orvosIdopontIsFree("2024-10-07 13:56:00",1405,4);
+    public function showPage() {
         $webText = $this->lang->webText;
 
         if (!isset($_POST["helyszin"])) {
@@ -1187,7 +1184,13 @@ class BookingPage extends CorePage
 
 
 
-        echo "<table cellpadding='3' cellspacing='0'>";
+        $firstColumnWidth = 130;
+
+        //if (session_id() == "qk3om7q88ai3550oqhc631jceb") {
+            echo "<table cellpadding='3' cellspacing='0' style='width:100%;table-layout: fixed;'>";
+        //} else {
+        //    echo "<table cellpadding='3' cellspacing='0' style='width:100%;'>";
+        //}
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
@@ -1204,7 +1207,7 @@ class BookingPage extends CorePage
         }
 
         if (isset($_SESSION["helyszindata"]["beutaloszoveg"]) && $_SESSION["helyszindata"]["beutaloszoveg"] != "" && !$this->bookingService->isOnlineTipus($_POST["szurestipus"])) {
-            echo "<tr><td></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div><td></tr>";
+            echo "<tr><td style='width:{$firstColumnWidth}px;'></td><td><div style='font-weight:bold;padding:5px 0px;'>{$_SESSION["helyszindata"]["beutaloszoveg"]}</div></td></tr>";
         }
 
         if (isset($beutalodata)) {
@@ -1275,17 +1278,12 @@ class BookingPage extends CorePage
                 $muszakSelect.= "   <option value=\"O\">Irodai műszak</option>";
                 $muszakSelect.= "</select>";
 
-                echo "<tr><td>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
+                echo "<tr><td style='width:{$firstColumnWidth}px;'>Műszak: *</td><td><div id='muszakContainer'>{$muszakSelect}</div></td></tr>";
             }
 
-            echo "<tr><td nowrap>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
-            //if (!empty($infoPageText)) {
-                echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
-            //}
-
+            echo "<tr><td nowrap style='width: {$firstColumnWidth}px;'>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
+            echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
-
-            
 
             if(CompanyService::isFGSZ()){
                 //echo $_SESSION["helyszndata"]["domain"];
@@ -1324,14 +1322,13 @@ class BookingPage extends CorePage
                     echo "<tr class='datarow'><td valign='middle'></td><td><div style='display:inline-block;padding:5px;color:white;background:red;'>{$timeSelector["message"]}</div></td></tr>";
                 }
             }
-            echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
+            echo "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;width:100%;overflow: auto;'></div></td></tr>";
         } else {
             echo "<tr class='datarow'><td></td><td>{$nofoglalasText}</td></tr>";
         }
 
         //ezentúl csak üzemorvosi vizsgálatnál lesz doksi feltöltés mező
         if (!$this->utils->getFieldHidden("doksi") && $_POST["szurestipus"] == 1) {
-            echo "<tr class='datarow'><td></td><td>&nbsp;</td></tr>";
             echo "<tr class='datarow'><td></td><td>";
             echo "<div class='datarow'>{$webText["dokfelinfo"]}</div>";
             echo "<div class='upload-btn-wrapper'><a href='#' class='upbtn newbutton'>{$webText["dokumentumfeltoltese"]}</a><input type='file' id='paciensfile' name='paciensfile[]' multiple /></div><img id='paciensloader' style='display:none;opacity:.5;height:30px;margin-left:10px;' src='/images/loading.svg' />";
@@ -1556,15 +1553,14 @@ class BookingPage extends CorePage
         }
 
         echo "<tr class='datarow'><td></td><td><div style='margin-top:20px;'>";
-        //if (session_id() == "dp87gclsmd6pd4rra4r620v39s") {
-            echo "<a id='resbutton' href='#' class='newbutton' onclick='reservationSubmit();return false;'><span id='resbuttonloading' style='display:none;'><i class='fa-solid fa-rotate fa-spin'></i>&nbsp;&nbsp;</span>{$submitButtonText}</a>";
-        //} else {
-        //    echo "<a href='#' class='newbutton' onclick='document.iform.submit();return false;'>{$submitButtonText}</a>";
-        //}
+        echo "<a id='resbutton' href='#' class='newbutton' onclick='reservationSubmit();return false;'><span id='resbuttonloading' style='display:none;'><i class='fa-solid fa-rotate fa-spin'></i>&nbsp;&nbsp;</span>{$submitButtonText}</a>";
+
+
         if(!CompanyService::isSuzukiGHC()){
-            echo "<span id='warnidopontpress' style='display:none;color:#41b6c6;margin-left:5px;'>&#9664;<span class='warnidopontpress'>{$webText["idopontfoglalasawarn"]}</span></span><div></td></tr>";
+            echo "<div id='warnidopontpress' style='display:none;color:#a00;margin:10px 0px 0px 5px;'><i class='fa-solid fa-hand-point-up fa-bounce'></i>&nbsp;&nbsp;{$webText["idopontfoglalasawarn"]}</div>";
         }
-        
+
+        echo "<div></td></tr>";
 
         echo "</table>";
 
@@ -1644,7 +1640,6 @@ class BookingPage extends CorePage
         $html .= "<input type='hidden' name='orvosselected' id='orvosselected' value='{$_POST["orvosselected{$index}"]}'/>";
         $html .= "<input type='hidden' name='rinterval{$index}' id='rinterval{$index}' value='{$_POST["rinterval{$index}"]}' />";
         $html .= "<input type='hidden' name='datum{$index}' id='datum{$index}' value='{$dateVal}' />";
-        //$html .= "<input placeholder='{$webText["kattintsagombra"]}' readonly='true' class='inputbox' style='{$dateStyle}' type='text' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' />";
         $html .= "<div class=\"input-group mb-3\" style=\"min-width: 280px;overflow:auto !important\";>";
        
         
@@ -1652,15 +1647,18 @@ class BookingPage extends CorePage
             $html .= "<input type=\"text\" style=\"font-family: SuzukiProRegular !important;\" class=\"form-control\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
             $html .= "<button class=\"btn btn-hungariamed\" style=\"font-family: SuzukiProRegular !important;\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
         }else{
-            $html .= "<input type=\"text\" style=\"margin-right:5px\" placeholder=\"{$webText["kattintsagombra"]}\" readonly='true' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}' aria-label=\"{$webText["kattintsagombra"]}\" aria-describedby=\"datumText{$index}\">";
-            $html .= "<button class=\"chooseReservationButton\" onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' type=\"button\">{$webText["idopontvalasztas"]}</button>";
+            $deaultResButtonTitle = $resButtonTitle = "<i class='fa-solid fa-calendar-days'></i>&nbsp;&nbsp;{$webText["idopontvalasztas"]}";
+            if (!empty($_POST["datumText{$index}"])) {
+                $resButtonTitle = "{$_POST["datumText{$index}"]}&nbsp;&nbsp;<i class='fa-solid fa-circle-check'></i>";
+            }
+
+            $html .= "<input type='hidden' name='datumText{$index}' id='datumText{$index}' value='{$_POST["datumText{$index}"]}'>";
+            $html .= "<a class='newbutton' onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;'><span data-defaulttitle{$index}=\"{$deaultResButtonTitle}\" id='resbutton{$index}'>{$resButtonTitle}</span><span id='loadingspinner{$index}' style='margin-left:5px;display:none;'>&nbsp;<i class='fa-solid fa-spinner fa-spin'></i></span></a>";
         }
         
         $html .= "</div>";
         
         $html .= "</div>";
-        //$html .= "<div style='display:table-cell;vertical-align: middle;'><a href='#' onclick='setDatumIndex(\"{$index}\");showIdoPontValasztoV2({$firstFreeDay});return false;' style='margin:0px;' class='newbutton'>{$webText["idopontvalasztas"]}</a></div>";
-        $html .= "<div style='display:table-cell;vertical-align: middle;'><img id='loadingspinner{$index}' style='margin-left:5px;height:25px;display:none;' src='/images/loading.svg' /></div>";
         $html .= "</div>";
         $html .= "</div>";
 
@@ -1674,8 +1672,7 @@ class BookingPage extends CorePage
         return ["html" => $html, "message" => $message];
     }
 
-    private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0)
-    {
+    private function _szuresTipusValasztoNew($selected = 0, $onlyselected = 0):string {
         $tipusok = [];
         $tipusnevek = [];
         $suzukiDisabled = "";
@@ -1737,7 +1734,7 @@ class BookingPage extends CorePage
         if($suzukiDisabled){
             $htmlout .= "<input type=\"hidden\" id=\"szurestipushidden\" name=\"szurestipus\" value=\"".(isset($_REQUEST["szurestipus"])?$_REQUEST["szurestipus"]:$selected)."\">";
         }
-        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='silentBookingPost();' style='width:100%;' {$suzukiDisabled}>";
+        $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='reservedTimeInvalidate();' style='width:100%;' {$suzukiDisabled}>";
         $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
 
         if (isset($tipusok)) {
@@ -1780,15 +1777,11 @@ class BookingPage extends CorePage
         }
 
         $htmlout .= "</select>";
-        //if ($_SESSION["helyszindata"]["id"] != 82) {
-        //    $htmlout .= "<div id='borgyogystuff' style='display: inline-block; visibility: hidden;margin-left:10px;padding:3px;background-color:#e13030;color:white;font-weight:bold'>Eltávoltításra is szükség van <input type='checkbox' style='' onChange='$(\"#foglmegj\").text(\"Eltávolításra is szükség van, VISSZAHÍVÁST KÉREK!\")' name = 'eltavolitas' value = 'szukseges'/></div>";
-        //}
 
         return $htmlout;
     }
 
-    private function _reservationPlaceSelectorNew($forcedSzurestipusId=null)
-    {
+    private function _reservationPlaceSelectorNew($forcedSzurestipusId=null):string {
         $html        = "";
         $szuresTipus = $_POST["szurestipus"] ?? $forcedSzurestipusId;
         $webText     = $this->lang->webText;
@@ -1820,7 +1813,7 @@ class BookingPage extends CorePage
             }
         }
 
-        $html .= "<select name='helyszin' id='helyszin' onchange='silentBookingPost();' style='width:100%;' {$disabled}>";
+        $html .= "<select name='helyszin' id='helyszin' onchange='reservedTimeInvalidate();' style='width:100%;' {$disabled}>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
 
         
