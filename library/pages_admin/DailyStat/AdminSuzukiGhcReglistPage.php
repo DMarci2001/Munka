@@ -81,6 +81,10 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html .= "  <a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/admin/?page=suzukighcreglist&download-excel\"><img style=\"cursor:pointer\"  title=\"Excel fájl letöltése\" src=\"https://{$_SERVER["HTTP_HOST"]}/admin/images/excel_icon.png\" height=\"40\"></a>";
         $html .= "  <span style=\"font-size:16px;\"><i>Regisztráció/foglalás arány:</i> <strong>{$registrationsNumb} / {$reservationNumb} (".(round(($reservationNumb/$registrationsNumb)*100))."%)</strong></span>";
         $html .= "</div>";
+        
+        //Itt kéne az összes napot kipakolni vhogy
+        $html .= $this->showDailyStatus();
+        
         $html .= "<table class=\"table table-striped\">";
         $html .= "   <thead>";
         $html .= "       <tr class=\"h5\">";
@@ -120,5 +124,100 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html .= "</table>";
 
         return $html;
+    }
+
+    private function showDailyStatus(){
+        $html = "";
+
+        
+
+        $html.= "<table class=\"table\">";
+        $html.= "    <thead class=\"text-center\">";
+        $html.= "        <tr>";
+        $html.= "        <th scope=\"col\"></th>";
+        $html.= "        <th scope=\"col\">2024.10.02<br>(Szerda)</th>";
+        //$html.= "        <th scope=\"col\">2024.10.03<br>(Csütörtök)</th>";
+        $html.= "        <th scope=\"col\">2024.10.04<br>(Péntek)</th>";
+
+        $html.= "        <th scope=\"col\">2024.10.07<br>(Hétfő)</th>";
+        $html.= "        <th scope=\"col\">2024.10.08<br>(Kedd)</th>";
+        $html.= "        <th scope=\"col\">2024.10.09<br>(Szerda)</th>";
+        //$html.= "        <th scope=\"col\">2024.10.10<br>(Csütörtök)</th>";
+        $html.= "        <th scope=\"col\">2024.10.11<br>(Péntek)</th>";
+
+        $html.= "        <th scope=\"col\">2024.10.14<br>(Hétfő)</th>";
+        $html.= "        <th scope=\"col\">2024.10.15<br>(Kedd)</th>";
+        $html.= "        <th scope=\"col\">2024.10.16<br>(Szerda)</th>";
+        //$html.= "        <th scope=\"col\">2024.10.17<br>(Csütörtök)</th>";
+        $html.= "        <th scope=\"col\">2024.10.18<br>(Péntek)</th>";
+        $html.= "        </tr>";
+        $html.= "    </thead>";
+        $html.= "    <tbody class=\"text-center\">";
+        $html.= "        <tr>";
+        $html.= "           <td class=\"text-center fw-bold\">Senior</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-02",217)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-03",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-04",217)."</td>";
+
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-07",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-08",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-09",217)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-10",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-11",217)."</td>";
+
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-14",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-15",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-16",217)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-17",217)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-18",217)."</td>";
+        $html.= "        </tr>";
+        $html.= "        <tr>";
+        $html.= "           <td class=\"text-center fw-bold\">Standard</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-02",216)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-03",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-04",216)."</td>";
+
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-07",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-08",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-09",216)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-10",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-11",216)."</td>";
+
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-14",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-15",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-16",216)."</td>";
+        //$html.= "           <td>".$this->calcDailyBookingRate("2024-10-17",216)."</td>";
+        $html.= "           <td>".$this->calcDailyBookingRate("2024-10-18",216)."</td>";
+        $html.= "        </tr>";
+        $html.= "    </tbody>";
+        $html.= "</table>";
+
+        return $html;
+    }
+
+    /**
+     * Ki kalkulálom az adott napra foglalható csomagok számát és a foglalási adatok alapján visszadok egy foglalási arányt.
+     * 216-os csomagid a Standard és a 217-es a Senior.
+     * @param   date    $date       Vizsgálandó dátum.
+     * @param   int     $package    Válaszottt csomag azonosító.
+    */
+    private function calcDailyBookingRate($date,$package):string{
+
+        $beosztas = sql_query("SELECT * FROM orvos_beosztas_new 
+                               WHERE beonap=? AND INSTR(beocegek,'|904|') AND INSTR(tipusok,?)",[$date,"|".$package."|"])->fetch(PDO::FETCH_ASSOC);
+
+        $foglalasok = sql_query("SELECT count(id) as foglalasok FROM foglalasok 
+                                     WHERE helyszinid=? AND szurestipusid = ?
+                                     AND datum > \"{$beosztas["beonap"]} 00:00:00\" 
+                                     AND datum < \"{$beosztas["beonap"]} 23:59:59\"",array($beosztas["helyszinid"],$package))->fetch(PDO::FETCH_ASSOC);
+
+        //Kalkulációk
+        $start = strtotime($beosztas["tol"]);
+        $end = strtotime($beosztas["ig"]);
+        $mins = ($end - $start) / 60;
+        $idopontok = round(($mins/$beosztas["binterval"]));
+        $percent = round((($foglalasok["foglalasok"]/$idopontok)*100));
+
+        return "{$idopontok} / {$foglalasok["foglalasok"]} ({$percent}%)";
     }
 }
