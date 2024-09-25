@@ -2,40 +2,6 @@
 
 class AdminLabRequestsPage extends AdminCorePage {
 
-    private array $messageTemplates = [
-        "",
-        "Tisztelt Páciensünk!
-
-Mellékelten küldöm laboratóriumi leletét.
-
-A lelet jelszóval védett, megnyitásához szükséges <b>jelszó az Ön TAJ száma</b>, kötőjelek és szóközök nélkül.
-
-Kérjük, hogy leletét lehetőség szerint ne telefonról, hanem számítógépről nyissa meg.
-
-A vizsgálatot követő egy héten belül kiértékelést küldünk. 
-
-Tisztelettel,
-#felhasznalo#
-Asszisztens
-",
-        "Tisztelt Páciensünk!
-
-Mellékelten küldöm laboratóriumi leletét.
-
-A lelet jelszóval védett, megnyitásához szükséges <b>jelszó az Ön TAJ száma</b>, kötőjelek és szóközök nélkül.
-
-Kérjük, hogy leletét lehetőség szerint ne telefonról, hanem számítógépről nyissa meg.
-
-A vizsgálatot követő egy héten belül kiértékelést küldünk.
-
-A folyamatban lévő értékeket, az eredmények beérkezés után küldjük meg.
-
-Tisztelettel,
-#felhasznalo#
-Asszisztens
-"
-    ];
-
     public function __construct()
     {
         parent::__construct();
@@ -391,7 +357,7 @@ Asszisztens
         echo "</div>";
 
         echo "<div style='display:table-cell;vertical-align: middle;'>";
-        echo "<input data-page='labrequests' data-resultdiv='labrequestlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;&nbsp;&nbsp;&nbsp;";
+        echo "<input data-page='labrequests' data-resultdiv='labrequestlist' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;<a onclick='doGeneralSearch($(\"#generalsearch\"));return false;' href='#' class='ujbutton' style='padding:1px 10px;'>Keresés<span id='generalsearchprogress' style='display: none;'>&nbsp;&nbsp;<i class='fa-solid fa-spinner fa-spin'></i></span></a>&nbsp;&nbsp;&nbsp;";
         //echo "<input type='checkbox' id='futurefiltercheckbox' value='1' ".($_SESSION["labfuturefilter"] == 1 ?"checked":"")." /> jövőbeniek is&nbsp;&nbsp;&nbsp;&nbsp;";
         echo "</div>";
 
@@ -430,27 +396,33 @@ Asszisztens
     }
 
     private function listLabRequests():string {
+        $html = "";
+
         $requests = [];
         if (isset($_REQUEST["generalsearch"]) && isset($_REQUEST["term"])) {
             $requests = $this->getLabRequests(["search" => $_REQUEST["term"]]);
+            if (empty($requests)) {
+                $html.= "<div style='margin:20px 0px;'>A keresés nem hozott eredmény!</div>";
+                //$requests = $this->getLabRequests();
+            }
         }
 
-        if (empty($requests)) {
+        if (empty($requests) && empty($_REQUEST["term"])) {
             $requests = $this->getLabRequests();
         }
 
-        $html = "";
-
-        $html.= "<div style='display:table;width:100%;'>";
-        $html.= "<div style='display:table-row;background:#ccc;font-weight: bold;'>";
-        //$html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény időpontja</div>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:90px;'>Provider</div>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:200px;'>Paciens</div>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:80px;'>Szül. idő / TAJ</div>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:30px;'>Eredmény</div>";
-        $html.= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;'>Értesítés</div>";
-        $html.= "</div>";
+        if (!empty($requests)) {
+            $html .= "<div style='display:table;width:100%;'>";
+            $html .= "<div style='display:table-row;background:#ccc;font-weight: bold;'>";
+            //$html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény időpontja</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:90px;'>Provider</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:200px;'>Paciens</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:80px;'>Szül. idő / TAJ</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:30px;'>Eredmény</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;'>Értesítés</div>";
+            $html .= "</div>";
+        }
 
         foreach ($requests as $request) {
             $bg = "#fff";
@@ -499,6 +471,9 @@ Asszisztens
             }
             if (in_array("lipemias", $scanResult)) {
                 $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>lipémiás</span></div>";
+            }
+            if (in_array("alvadekos", $scanResult)) {
+                $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>alvadékos</span></div>";
             }
         }
 

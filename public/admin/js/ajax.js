@@ -2587,26 +2587,32 @@ function initDateInput() {
 
 function initGeneralSearch() {
     $("#generalsearch").keypress(function (e) {
-        if (e.which == 13) {
-            let term = $(this).val();
-            let page = $(this).data("page");
-            let resultDiv = $(this).data("resultdiv");
-
-            if (term.length < 3 && term.length != 0) {
-                alert("A keresési érték minimum 3 karakter!");
-                return;
-            }
-
-            $.ajax({
-                method: "POST",
-                url: "index.php",
-                data: { page: page, generalsearch: 1, term: term }
-            }).done(function (msg) {
-                $("#" + resultDiv).html(msg);
-            });
+        if (e.which === 13) {
+            doGeneralSearch(this);
         }
     });
+}
 
+function doGeneralSearch(el) {
+    let term = $(el).val();
+    let page = $(el).data("page");
+    let resultDiv = $(el).data("resultdiv");
+
+    if (term.length < 3 && term.length !== 0) {
+        alert("A keresési érték minimum 3 karakter!");
+        return;
+    }
+
+    $("#generalsearchprogress").show();
+
+    $.ajax({
+        method: "POST",
+        url: "index.php",
+        data: { page: page, generalsearch: 1, term: term }
+    }).done(function (msg) {
+        $("#" + resultDiv).html(msg);
+        $("#generalsearchprogress").hide();
+    });
 }
 
 function toggleSubMenu(id) {
