@@ -196,7 +196,7 @@ class BookingValidatePage extends CorePage {
                 <a href='/'>{$webText["visszafooldal"]}</a>";
 
                 $bookingService->notificationService->sendToCegAndOrvos($this->id);
-                $bookingService->notificationService->sendUserReservationNotification($this->id,true);
+                $bookingService->notificationService->sendUserReservationNotification($this->id);
             }
 
             //módosítás sync ha kell

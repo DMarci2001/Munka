@@ -483,9 +483,9 @@ Asszisztens
         $resultDate = date("Y-m-d H:i", strtotime($request["resultdate"]));
         if ($request["resultdate"] == $request["created"]) {
             $resultDate = "Elküldve..<br/>".date("Y-m-d H:i", strtotime($request["created"]));
-            if ($request["spelkuldve"] == 0 && $request["provider"] == LaborKeroService::LABOR_PROVIDER_SPEKTRUMLAB) {
-                $resultDate = "<span style='color:red;'>Nincs elküldve</span><br/>".date("Y-m-d H:i", strtotime($request["created"]));
-            }
+            //if ($request["spelkuldve"] == 0 && $request["provider"] == LaborKeroService::LABOR_PROVIDER_SPEKTRUMLAB) {
+            //    $resultDate = "<span style='color:red;'>Nincs elküldve</span><br/>".date("Y-m-d H:i", strtotime($request["created"]));
+            //}
         }
 
         if ($request["folyamatban"] == 1) {
@@ -594,10 +594,9 @@ Asszisztens
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT IF(lm.id is null, 0, 1) as spelkuldve, r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
-            LEFT JOIN labrequestmessages lm on lm.requestid=r.id
             LEFT JOIN cegek c ON c.id=f.cegid
             WHERE r.status<>'temp' {$w} 
             GROUP BY r.id
