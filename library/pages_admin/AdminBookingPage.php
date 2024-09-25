@@ -1378,7 +1378,13 @@ class AdminBookingPage extends AdminCorePage
     {
         $html = "<select class='s2 addressselector2' name='helyszin' style='width:300px;' onchange='setHelyszin2(this.value);'>";
         $html .= "<option value='0'>Válassz helyszínt!</option>";
-        $res = sql_query("SELECT h.* FROM helyszinek h WHERE true ORDER BY trim(h.cim)");
+
+        $order = "h.id not in (1), h.id not in (100, 644), trim(h.cim)";
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $order = "h.id not in (292, 328), trim(h.cim)";
+        }
+
+        $res = sql_query("SELECT h.* FROM helyszinek h WHERE true ORDER BY {$order}");
         while ($placeData = sql_fetch_array($res)) {
             if (!$this->adminUser->allCegJog()) {
                 $cegidk = $this->adminUser->getCegListArray();

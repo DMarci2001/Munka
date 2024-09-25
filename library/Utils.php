@@ -364,8 +364,8 @@ class Utils {
         
 
         if (isset($GLOBALS["admin"])) {
-            //$htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
-            //$htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
+            $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
+            $htmlout .= '<script src="/admin/js/jquery.toast/jquery.toast.min.js"></script>';
 
             $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
             $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
@@ -373,8 +373,8 @@ class Utils {
             $htmlout .= '<link href="/admin/js/confirm/jquery-confirm.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/admin/js/confirm/jquery-confirm.js"></script>';
 
-            $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
-            $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
+            //$htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
+            //$htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
             //$htmlout .= '<script src="https://cdn.tiny.cloud/1/6gy62135dsr0pjrg1jx08egwhvjyuhbo8a463re02bmikbzj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>';
 
             $htmlout .= '<script src="/admin/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>';
