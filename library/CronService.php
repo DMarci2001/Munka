@@ -75,10 +75,10 @@ class CronService {
             //$spektrumLabService->fillMissingMessageRequestIds();
             $spektrumLabService->processPdfFromMessages();
 
-            if (Booking_Constants::SQL_DB == "hungariamed") {
-                $laborKeroService = new LaborKeroService();
-                $laborKeroService->storeLaborKeroFromLabShopData();
+            $laborKeroService = new LaborKeroService();
+            $laborKeroService->storeLaborKeroFromLabShopData();
 
+            if (Booking_Constants::SQL_DB == "hungariamed") {
                 //synlab feldolgozás
                 $service = new SynlabService();
                 $service->synlabProcess();
@@ -162,7 +162,7 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        $this->scanLaborPDF();
+        //$this->scanLaborPDF();
         //$this->fillLabMessageDatas();
 
         //$this->readEmailReports();
@@ -176,8 +176,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->pdfTeszt();
 
-        //$laborKeroService = new LaborKeroService();
-        //$laborKeroService->storeLaborKeroFromLabShopData();
+        $laborKeroService = new LaborKeroService();
+        $laborKeroService->storeLaborKeroFromLabShopData();
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();

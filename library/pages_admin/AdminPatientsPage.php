@@ -164,6 +164,18 @@ class AdminPatientsPage extends AdminCorePage {
             die;
         }
 
+        if (isset($_GET["auchanreservationstat"])) {
+            if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
+                $excelService = new ExcelService();
+                $excelService->auchanReservationStat();
+                $excelService->setFileName("Auchan foglalások " . date("Y-m-d") . ".xlsx");
+                $excelService->outputSpreadSheet();
+            } else {
+                echo "nincs jogosultsága!";
+            }
+            die;
+        }
+
 
     }
 
@@ -537,8 +549,12 @@ class AdminPatientsPage extends AdminCorePage {
 
         echo "[<a href='index.php?page={$_GET["page"]}&fszerk=0'>+ új felhasználó rögzitése</a>] ";
 
-        if (in_array(CompanyService::SUZUKI_GHC_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) {
+        if ((in_array(CompanyService::SUZUKI_GHC_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "hungariamed") {
             echo "[<a href='index.php?page={$_GET["page"]}&ghcreglist'>Suzuki GHC regisztrációk letöltése</a>] ";
+        }
+
+        if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
+            echo "[<a href='index.php?page={$_GET["page"]}&auchanreservationstat'>Auchan foglalások stat</a>] ";
         }
 
         $res = sql_query( $query." LIMIT {$page[($_GET['scroll']-1)]['limit']}" );
@@ -562,7 +578,7 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "</tr>";
 
 
-                echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+                echo "<tr><td colspan='9' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
                 $first=1;
             }
             if (trim($row["nev"])=="") $row["nev"]="nincs neve";
@@ -578,9 +594,9 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["email"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&fszerk={$row["id"]}'>szerk</a>] [<a onclick='return confirm(\"Biztosan törlöd ezt a felhasználót?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";
             echo "</tr>";
-            echo "<tr><td colspan='8' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
+            echo "<tr><td colspan='9' style='border-top:1px solid #ccc;height:1px;'></td></tr>";
         }
-        echo "<tr><td colspan='8' align='center' style = 'padding-top:10px'>";
+        echo "<tr><td colspan='9' align='center' style = 'padding-top:10px'>";
 
         $pageout = "";
         $preHide = 0;
