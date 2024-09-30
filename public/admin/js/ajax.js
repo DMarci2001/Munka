@@ -4163,7 +4163,6 @@ function showAlkalmassagiWin(fid) {
 }
 
 function showQuestionaries(fid,pass) {
-    console.log("itt vagyok");
 
     $.ajax({
         type:"POST",
@@ -4171,7 +4170,6 @@ function showQuestionaries(fid,pass) {
         dataType: "json",
         data: {showquestionaries:true,fid:fid,pass:pass},
         success: function(response){
-            console.log(response);
             if (response.error != "") {
                 alert(response.error);
                 return;
