@@ -15,6 +15,10 @@ class LaborKeroService
 
     public function __construct()
     {
+        //default érték, ideiglenes laborprovider választás kikapcsolva
+        $_SESSION["laborprovider"] = self::LABOR_PROVIDER_SPEKTRUMLAB;
+        $_SESSION["providerselected"] = 1;
+
         if (!isset($_SESSION["laborprovider"])) {
             $_SESSION["laborprovider"] = self::LABOR_PROVIDER_SPEKTRUMLAB;
         }
@@ -707,7 +711,7 @@ class LaborKeroService
         $cartItems = sql_query("SELECT c.created_at, c.session_id, c.reservation_id, GROUP_CONCAT(TYPE,'_',c.product_id,'_',c.id) AS itemscode, v.`payment_method`, v.`status`, v.`name`
             FROM cart_item c
             LEFT JOIN labshop_vasarlasok v ON v.id=c.session_id
-            WHERE c.created_at>DATE_SUB(NOW(), INTERVAL 1 WEEK) AND c.reservation_id<>0 AND v.laborkero=0 AND TYPE IN ('package', 'item') 
+            WHERE c.created_at>DATE_SUB(NOW(), INTERVAL 1 MONTH) AND c.reservation_id<>0 AND v.laborkero=0 AND TYPE IN ('package', 'item') 
             GROUP BY c.reservation_id")->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($cartItems as $key => $cartItem) {

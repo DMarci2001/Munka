@@ -65,7 +65,7 @@ class Page
         echo $this->_pageMenu();
         echo "<div class='contentcontainer' ".(CompanyService::isSuzukiGHC()?"style=\"min-width:none\"":"").">";
         //echo $this->_pageHead();
-        echo "<div style='padding:20px;overflow:scroll'>";
+        echo "<div style='padding:20px;'>";
         $this->page->showPage();
         if(CompanyService::isSuzukiGHC()){
             $this->suzukiGHCLogoContainer();

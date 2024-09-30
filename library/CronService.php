@@ -75,10 +75,10 @@ class CronService {
             //$spektrumLabService->fillMissingMessageRequestIds();
             $spektrumLabService->processPdfFromMessages();
 
-            if (Booking_Constants::SQL_DB == "hungariamed") {
-                $laborKeroService = new LaborKeroService();
-                $laborKeroService->storeLaborKeroFromLabShopData();
+            $laborKeroService = new LaborKeroService();
+            $laborKeroService->storeLaborKeroFromLabShopData();
 
+            if (Booking_Constants::SQL_DB == "hungariamed") {
                 //synlab feldolgozás
                 $service = new SynlabService();
                 $service->synlabProcess();
@@ -162,7 +162,7 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
-        $this->scanLaborPDF();
+        //$this->scanLaborPDF();
         //$this->fillLabMessageDatas();
 
         //$this->readEmailReports();
@@ -176,8 +176,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->pdfTeszt();
 
-        //$laborKeroService = new LaborKeroService();
-        //$laborKeroService->storeLaborKeroFromLabShopData();
+        $laborKeroService = new LaborKeroService();
+        $laborKeroService->storeLaborKeroFromLabShopData();
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
@@ -250,6 +250,10 @@ class CronService {
 
             if (substr_count(strtolower($text),"lipémiás")) {
                 $scanItems[] = "lipemias";
+            }
+
+            if (substr_count(strtolower($text),"alvadékos")) {
+                $scanItems[] = "alvadekos";
             }
 
             sql_query("update labrequests set scanresult=? where id=?", [json_encode($scanItems), $request["id"]]);

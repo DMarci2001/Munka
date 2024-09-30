@@ -736,9 +736,9 @@ class SynlabService
                                 $encoding  =  strtolower($part->encoding);
                                 $subtype   =  strtolower($part->subtype);
 
-                                if (sql_query("select id from labrequests where synlabfilename=? and folyamatban=0 limit 1", [$fileName])->fetch(PDO::FETCH_ASSOC)) {
+                                //if (sql_query("select id from labrequests where synlabfilename=? and folyamatban=0 limit 1", [$fileName])->fetch(PDO::FETCH_ASSOC)) {
                                     //continue;
-                                }
+                                //}
 
                                 echo "{$encoding} {$subtype} {$fileName}\n";
 

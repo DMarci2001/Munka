@@ -23,6 +23,17 @@ class AdminAjaxService {
             die;
         }
 
+        if (isset($_GET["keltexsync"])) {
+            $service = new BookingSyncApi();
+
+            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned='418' AND datum>NOW() AND megj IN ('EBÉD', 'SZÜNET')")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($reservations as $reservation) {
+                echo $reservation["megj"]." ";
+                $service->newReservation($reservation["id"]);
+            }
+            die;
+        }
+
         if (isset($_GET["delassets22222222222222"])) {
             $docAgent = new DocAgent();
             $images = sql_query("SELECT * FROM dokumentumok WHERE assetid IN ('covidpassimage', 'covidegsimage') order by id desc limit 1000")->fetchAll(PDO::FETCH_ASSOC);
