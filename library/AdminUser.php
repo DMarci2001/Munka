@@ -199,9 +199,13 @@ class AdminUser {
         if (empty(trim($userName)) || empty(trim($password))) {
             return "Adja meg a belépési adatait!";
         }
-       
 
-        $resq = sql_query("SELECT * FROM users WHERE username = ? and (password = md5(?) or 'univpass33' = ?)", array($userName, $password, $password));
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $resq = sql_query("SELECT * FROM users WHERE username=? and password=md5(?) and auth2fac=1", [$userName, $password]);
+        } else {
+            $resq = sql_query("SELECT * FROM users WHERE username=? and password=md5(?)", [$userName, $password]);
+        }
+
         if ($userData = sql_fetch_array($resq)) {
             if ($userData["localeaccess"]==1 && substr_count($userData["localeip"], $_SERVER["REMOTE_ADDR"]) == 0) {
                 return "Ennek a fióknak a használata csak lokálisan van engedélyezve.</div>";
@@ -270,7 +274,7 @@ class AdminUser {
         }
 
         if ($this->userIsOrvos()) {
-            $result = "<span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>orvos</span>";
+            $result = "<span style='color:#fff;background:#aaa;padding:2px 5px;border-radius:2px;text-transform: uppercase;'>asszisztens</span>";
         }
 
         if (!$box) {

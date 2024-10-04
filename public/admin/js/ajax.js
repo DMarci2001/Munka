@@ -2215,11 +2215,21 @@ function warningAck(wid) {
     });
 }
 
-function toggleWarnWindow() {
-    if ($("#adminwarnwindow").css("right") == "20px") {
-        $("#adminwarnwindow").css("right", -600);
+function toggleUsersWindow() {
+    let el = "#adminuserswindow";
+    if ($(el).is(":visible")) {
+        $(el).slideUp("fast");
     } else {
-        $("#adminwarnwindow").css("right", 20);
+        $(el).slideDown("fast");
+    }
+}
+
+function toggleWarnWindow() {
+    let el = "#adminwarnwindow";
+    if ($(el).is(":visible")) {
+        $(el).slideUp("fast");
+    } else {
+        $(el).slideDown("fast");
     }
 }
 
@@ -3557,6 +3567,8 @@ function checkChat() {
         data: { checkChat:1 },
         success: function (response) {
             $("#loggedusers").html(response.users);
+            $("#usersbuttoncontainer").html(response.usersbutton);
+            $("#adminuserswindow").html(response.usershtml);
             $("#chatbuttoncontainer").html(response.button);
             if (response.number != 0) {
                 $.toast({

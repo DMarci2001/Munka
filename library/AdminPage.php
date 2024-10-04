@@ -153,20 +153,24 @@ class AdminPage {
         return $pageContent;
     }
 
-    private function _statusRow() {
+    private function _statusRow():string {
         $html = "";
 
         $html.= "<div id='adminwarnwindow'></div>";
-        $html.= "<div class='szamlalo' style='display:table;float: right'>";
-        $html.= "<div style='display: table-cell;padding-right: 10px;' id='chatbuttoncontainer'></div>";
-        $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
-        $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($this->adminUser->user, true)."&nbsp;&nbsp;</div>";
-        $html.= "<div style='display: table-cell;'>Felhasználó: <a style='color:#44f;' href='index.php?page=users&szerk=self'>".$this->adminUser->user["nev"]."</a> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
+        $html.= "<div id='adminuserswindow' onclick='toggleUsersWindow();'></div>";
+
+        $html.= "<div style='padding:15px;'>";
+        $html.= "<div style='display: table-cell;width:100%;'></div>";
+        $html.= "<div style='display: table-cell;padding-right: 5px;white-space: nowrap;' id='chatbuttoncontainer'></div>";
+        $html.= "<div style='display: table-cell;padding-right: 5px;white-space: nowrap;' id='warnbuttoncontainer'></div>";
+        $html.= "<div style='display: table-cell;padding-right: 5px;white-space: nowrap;' id='usersbuttoncontainer'></div>";
+        $html.= "<div style='display: table-cell;padding-right: 0px;'>" . $this->adminUser->getAdminLevel($this->adminUser->user, true) . "&nbsp;&nbsp;</div>";
+        $html.= "<div style='display: table-cell;white-space: nowrap;padding-right: 5px;'><a style='color:#44f;' href='index.php?page=users&szerk=self'>" . mb_substr($this->adminUser->user["nev"], 0, 20) . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a title='kijelentkezés' href='index.php?logoutadmin'><i class='fa-solid fa-right-from-bracket fa-lg'></i></a></div>";
         $html.= "</div>";
         return $html;
     }
 
-    private function _menuColumn() {
+    private function _menuColumn():string {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
@@ -213,9 +217,9 @@ class AdminPage {
             }
 
             $html.= $subMenuHtml;
-
-
         }
+
+        $html.= "</div>";
 
         return $html;
     }

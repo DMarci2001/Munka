@@ -1165,7 +1165,7 @@ class ExcelService {
             WHERE f.foglalta='labshop' AND f.nev<>'nincs név' AND f.cegid=? 
             GROUP BY f.helyszinid ORDER BY cim", [CompanyService::AUCHAN_ID])->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->headingRow("A", $sor, ["Helyszín", "Fő", "", "Vásárlások"]);
+        $this->headingRow("A", $sor, ["Helyszín", "Foglalások", "", "Vásárlások"]);
         $sor++;
 
         $allServiceTotals = [];
@@ -1173,8 +1173,7 @@ class ExcelService {
         foreach ($registrations as $registration) {
             $serviceTotals = [];
 
-
-            $cartItems = sql_query("SELECT f.id, f.nev, i.product_id, IF(i.type='package', cs.name, IF(i.type='exam', a.megnev, IF(i.type='item', t.name, ''))) AS productname, i.price FROM foglalasok f 
+            $cartItems = sql_query("SELECT f.id, f.nev, i.product_id, IF(i.type='package', cs.name, IF(i.type='exam', a.megnev, IF(i.type='item', t.name, ''))) AS productname, i.type, i.price FROM foglalasok f 
                 LEFT JOIN cart_item i ON i.`reservation_id`=f.id
                 LEFT JOIN synlab_labor_csomagok cs ON cs.id=i.product_id
                 LEFT JOIN synlab_labor_tetelek t ON t.id=i.product_id
@@ -1225,12 +1224,12 @@ class ExcelService {
 
         $totalPrice = $totalServices = 0;
         foreach ($allServiceTotals as $service => $value) {
-            $this->dataRow("A", $sor, [$service, $value[0]." Ft", $value[1]]);
+            $this->dataRow("A", $sor, [$service, $value[0] . " Ft", $value[1]]);
             $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
             //$this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
             $sor++;
-            $totalPrice+= $value[0] * $value[1];
-            $totalServices+= $value[1];
+            $totalPrice += $value[0] * $value[1];
+            $totalServices += $value[1];
         }
 
         $this->dataRow("A", $sor, ["Összesen", $totalPrice." Ft", $totalServices]);
@@ -1242,6 +1241,65 @@ class ExcelService {
 
         $sor++;
 
+
+        $this->setAutoWidth(range('A','L'));
+        //$this->sheet->getColumnDimension('A')->setWidth(20);
+
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
+
+    public function auchanReservationStatForAuchan() {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Helyszin bontás");
+        $this->titleRow("A1", "Auchan foglalások");
+
+        $sor = 3;
+
+        $registrations = sql_query("SELECT f.cegid, f.helyszinid, h.cim, COUNT(*) AS hany, MIN(DATE(regdatum)) AS mindate, MAX(DATE(regdatum)) AS maxdate FROM foglalasok f 
+            LEFT JOIN helyszinek h ON h.id=f.helyszinid
+            WHERE f.foglalta='labshop' AND f.nev<>'nincs név' AND f.cegid=? 
+            GROUP BY f.helyszinid ORDER BY cim", [CompanyService::AUCHAN_ID])->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->headingRow("A", $sor, ["Helyszín", "Nagylabor vizsgálatra foglalt időpontok száma", "EKG vizsgálatra foglalt időpontok száma", "Összes foglalás"]);
+        $sor++;
+
+        $allLabor = $allEKG = $totalReservation = 0;
+
+        foreach ($registrations as $registration) {
+            $locationLabor = $locationEKG = 0;
+
+            $cartItems = sql_query("SELECT f.id, f.nev, i.product_id, IF(i.type='package', cs.name, IF(i.type='exam', a.megnev, IF(i.type='item', t.name, ''))) AS productname, i.type, i.price FROM foglalasok f 
+                LEFT JOIN cart_item i ON i.`reservation_id`=f.id
+                LEFT JOIN synlab_labor_csomagok cs ON cs.id=i.product_id
+                LEFT JOIN synlab_labor_tetelek t ON t.id=i.product_id
+                LEFT JOIN arak a ON a.id=i.product_id
+                WHERE f.foglalta='labshop' AND f.nev<>'nincs név' AND f.cegid=? AND helyszinid=?
+                ORDER BY CONCAT(i.product_id,i.type)<>'113package', CONCAT(i.product_id,i.type)<>'13exam'", [$registration["cegid"], $registration["helyszinid"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($cartItems as $cartItem) {
+                if ($cartItem["type"] == "exam" && $cartItem["product_id"] == 13) {
+                    $allEKG++;
+                    $locationEKG++;
+                }
+                if ($cartItem["type"] == "package" && $cartItem["product_id"] == 113) {
+                    $allLabor++;
+                    $locationLabor++;
+                }
+            }
+
+            $this->dataRow("A", $sor, [$registration["cim"], $locationLabor, $locationEKG, $registration["hany"]]);
+            //$this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            //$this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+            $totalReservation+= $registration["hany"];
+            $sor++;
+        }
+        $this->dataRow("A", $sor, ["Összesen", $allLabor, $allEKG, $totalReservation]);
+        $this->sheet->getStyle("A{$sor}")->getFont()->setBold(true);
+        $this->sheet->getStyle("B{$sor}")->getFont()->setBold(true);
+        $this->sheet->getStyle("C{$sor}")->getFont()->setBold(true);
+        $this->sheet->getStyle("D{$sor}")->getFont()->setBold(true);
 
         $this->setAutoWidth(range('A','L'));
         //$this->sheet->getColumnDimension('A')->setWidth(20);
