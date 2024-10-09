@@ -220,17 +220,19 @@ class AdminUtils
         return;
     }
 
-    public function setDefaultDokirexCegId($cid){
+    public function setDefaultDokirexCegId($cid) {
         if ($cid ==  Booking_Constants::DEFAULT_COMPANY_ID) {
-            return;
+            return 0;
         }
 
         $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
         if(!empty($q["dokirexcegid_json"])){
             $dokirexServices = new DokirexService();
             $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
-            if(isset($data[0]["id"])) return $data[0]["id"];
+            if(isset($data[0]["id"])) {
+                return $data[0]["id"];
+            }
         }
-        return;
+        return 0;
     }
 }

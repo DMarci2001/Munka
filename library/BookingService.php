@@ -736,7 +736,11 @@ class BookingService
 
 
     private function preReservationProtocol($cegId, $helyszinId, $orvosId) {
-        $dist = "6 hour";
+        $dist = "24 hour";
+        if (Booking_Constants::DEFAULT_PLACE_IDS[0] == $helyszinId) {
+            $dist = "6 hour";
+        }
+
         $distFullDay = "0 day";
         //ennyi napon belül kell foglalni
 
@@ -745,11 +749,6 @@ class BookingService
                 //jász utca vagy fesztivál bármikor foglalhat
                 //$dist = "-10 hour";
             //}
-            if (in_array($orvosId, [74])) {
-                //74 - Dr. Kővári Gábor
-                $dist = "24 hour";
-            }
-
             //BFKH - Buda / Pest / VIP
             if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
                 //cib
@@ -823,6 +822,11 @@ class BookingService
             //0 óra foglalási idő ha a Magyar Államkincstár orvosra akar foglalni :P
             if(in_array($orvosId,[1089,841])){
                 $dist = "0 hour";
+            }
+
+            if (in_array($orvosId, [74, 25])) {
+                //74 - Dr. Kővári Gábor 25 - Dr. Tiba Sándor
+                $dist = "24 hour";
             }
         }
 

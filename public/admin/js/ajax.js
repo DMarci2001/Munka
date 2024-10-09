@@ -29,6 +29,7 @@ $(document).ready(function () {
     initDateFilterPicker();
     initQueryDatePicker();
     initWaitList();
+    initHamburgerIcon();
     checkChat();
 
     if (Notification.permission !== "granted") {
@@ -4805,3 +4806,23 @@ function labReuestPageFilter(value) {
     });
 }
 
+function initHamburgerIcon() {
+    $("#hamburgericon").click(function() {
+        let width = "0px";
+        if ($("#mainmenucolumn").width() === 0) {
+            width = "180px";
+        }
+        $("#mainmenucolumn").css("width", width);
+
+        $.ajax({
+            type: "POST",
+            url: "index.php",
+            data: {page:"booking", storemainmenuwidth:width},
+        });
+
+        $(this).addClass("pulse");
+        setTimeout(function() {
+            $('#hamburgericon').removeClass("pulse");
+        }, 800);
+    });
+}

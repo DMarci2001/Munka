@@ -620,7 +620,7 @@ class AdminCompaniesPage extends AdminCorePage
             die();
         }
 
-        if(isset($_POST["setDefaultDokirexCegId"]) && $_POST["setDefaultDokirexCegId"]==true){
+        if(isset($_POST["setDefaultDokirexCegId"])) {
             die($this->adminUtils->setDefaultDokirexCegId($_POST["cegid"]));
         }
 
