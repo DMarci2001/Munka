@@ -35,6 +35,11 @@ $(document).ready(function () {
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }
+
+    $(window).resize(function() {
+        repositionThings();
+    });
+
 });
 
 
@@ -760,7 +765,9 @@ function showIdopontEditor(page, p, id) {
         success: function (data) {
             $("#idoponteditor").html(data);
             foglalasDisplayed = id;
-            $("#idoponteditor").slideDown();
+            //$("#idoponteditor").slideDown();
+            repositionIdopontEditor();
+
             $("#naptarloading").hide();
             initIrszAutoFill();
             initTabOrder();
@@ -769,6 +776,28 @@ function showIdopontEditor(page, p, id) {
         }
     });
 }
+
+function repositionIdopontEditor() {
+    let el = $("#idoponteditor");
+    if ($(window).width() < 768) {
+        el.css("top", $(window).scrollTop());
+        el.css("left", "0px");
+        el.css("bottom", "auto");
+        el.css("right", "auto");
+        el.css("width", "100%");
+        el.css("position", "absolute");
+        el.show();
+    } else {
+        el.css("top", "auto");
+        el.css("left", "auto");
+        el.css("bottom", "0");
+        el.css("right", "0");
+        el.css("width", "auto");
+        el.css("position", "fixed");
+        el.slideDown();
+    }
+}
+
 
 var lastTaj = "";
 function initTajEditor() {
@@ -1404,15 +1433,6 @@ function save_iFrame(patient, medic, textarea) {
     }
 
 }
-/*$(function(){
-    $('input[name="intval-start"], input[name="intval-end"]').datepicker({
-    dateFormat: 'yy-mm-dd',
-    changeMonth: true,
-    changeYear: true,
-    yearRange: '-100y:c+nn',
-    maxDate: '+2y'
-    });
-});*/
 
 function selectFolder(e) {
     var theFiles = e.target.files;
@@ -1421,29 +1441,6 @@ function selectFolder(e) {
     //alert(folder[0]);
 }
 
-/*function load_uj_lelet(){
-    $('#leletform').load('index.php?uj_lelet');
-    //tinymce.get('uj-lelet-page').setContent('');
-    //var iframe = document.getElementById(FrameId);
-    //iframe.src = iframe.src;
-}*/
-
-function syncFoglalasDataToUser(fogl, pass) {
-    var data = $("#iform").serialize() + "&syncFoglalasDataToUser=1";
-    $.ajax({
-        url: 'index.php',
-        type: 'POST',
-        data: data,
-        success: function (data) {
-            if (data.error != "") {
-                alert(data.error);
-            } else {
-                showIdopontEditor("booking", pass, fogl);
-                //$('input[name="paciensid"]').val(data.userId);
-            }
-        }
-    });
-}
 
 $(function () {
     $('input[name="intval-start"], input[name="intval-end"]').datepicker({
@@ -2102,6 +2099,10 @@ function startSimpleRefund(id, osszeg, source) {
 
 $(window).resize(function () {
     popUpPosition();
+
+    if ($("#idoponteditor").is(":visible")) {
+        repositionIdopontEditor();
+    }
 });
 
 function showGeneralPopup(html) {

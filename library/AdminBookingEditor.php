@@ -283,98 +283,6 @@ class AdminBookingEditor {
         }
 
 
-        if (isset($_REQUEST["syncFoglalasDataToUser"]) && $this->user->authenticated()) {
-            /* Nincs még kész, ahogy a javascript hívás párja se!!! */
-
-            $error = "";
-            if (empty($_REQUEST["taj"])) {
-                $error .= "A TAJ szám megadása kötelező!\n";
-            }
-            //if (empty($_REQUEST["torzsszam"])) {
-            //    $error .= "A törzsszám megadása kötelező!\n";
-            //}
-            if (empty($_REQUEST["nev"])) {
-                $error .= "A név megadása kötelező!\n";
-            }
-            //if (empty($_REQUEST["email"])) {
-            //    $error .= "Az email cím megadása kötelező!\n";
-            //}
-            if (empty($_REQUEST["munkakor"])) {
-                $error .= "A munkakör megadása kötelező!\n";
-            }
-            if (empty($_REQUEST["szuldatum"])) {
-                $error .= "A születési dátum megadása kötelező!\n";
-            }
-
-            $userId = 0;
-            if (!isset($_REQUEST["torzsszam"])) {
-                $_REQUEST["torzsszam"] = "";
-            }
-
-            if (empty($error)) {
-                $_REQUEST["szuldatum"] = str_replace(".", "-", $_REQUEST["szuldatum"]);
-
-                if ($userInfo = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE taj=? OR szuldatum=?", array($_REQUEST['taj'], $_REQUEST['szuldatum'])))) {
-                    sql_query("UPDATE felhasznalok set taj=?, cegid=?, email=?, nev=?, telefon=?, munkakor=?, irsz=?, varos=?, utca=?, szulhely=?, anyjaneve = ?, szuldatum=?, torzsszam=? WHERE  id=?",
-                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['telefon'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam'], $userInfo['id']));
-                    $userId = $userInfo["id"];
-                } else {
-                    sql_query("INSERT INTO felhasznalok SET taj=?, cegid=?, email=?, nev=?, telefon=?, munkakor=?, irsz=?, varos=?, utca=?, szulhely=?, anyjaneve=?, szuldatum=?, torzsszam=?, validated=1",
-                        array($_REQUEST['taj'], $_REQUEST['cegid'], $_REQUEST['email'], $_REQUEST['nev'], $_REQUEST['telefon'], $_REQUEST['munkakor'], $_REQUEST['irsz'], $_REQUEST['varos'], $_REQUEST['utca'], $_REQUEST['szulhely'], $_REQUEST['anyjaneve'], $_REQUEST['szuldatum'], $_REQUEST['torzsszam']));
-                    $userId = sql_insert_id();
-                }
-                sql_query("UPDATE foglalasok SET paciensid=? WHERE id=?", array($userId, $_REQUEST['fid']));
-
-                //Cég neve:
-                $cegNev = "";
-                if (isset($_REQUEST['cegid'])) {
-                    if ($ceg = sql_fetch_array(sql_query("SELECT megnev FROM cegek WHERE id=?", array($_REQUEST['cegid'])))) {
-                        $cegNev = $ceg['megnev'];
-                    }
-                }
-
-                //Orvos neve:
-                $orvosNev = "";
-                if (isset($_REQUEST['orvosassigned'])) {
-                    if ($orvos = sql_fetch_array(sql_query("SELECT nev FROM orvosok WHERE id=? ", array($_REQUEST['orvosassigned'])))) {
-                        $orvosNev = $orvos['nev'];
-                    }
-                }
-
-                /*
-                $wsdl_url = 'http://89.134.90.181:3334/HMMService/Service1.svc?wsdl';
-                $client = new SOAPClient($wsdl_url);
-                $params = array(
-                    'nev' => $_REQUEST['nev'],
-                    'taj' => $_REQUEST['taj'],
-                    'szuldatum' => $_REQUEST['szuldatum'],
-                    'szulhely' => $_REQUEST['szulhely'],
-                    'anyjaneve' => $_REQUEST['anyjaneve'],
-                    'nem' => "",
-                    'ceg' => $cegNev,
-                    'munkakor' => $_REQUEST['munkakor'],
-                    'orvos' => $orvosNev,
-                    'email' => $_REQUEST['email'],
-                    'telefon' => $_REQUEST['tel'],
-                    'irszam' => $_REQUEST['irsz'],
-                    'telepules' => $_REQUEST['varos'],
-                    'utca' => $_REQUEST['utca'],
-                    'naploszam' => 'naplószáma',
-                    'megjegyzes' => $_REQUEST['megj'],
-                    'token' => '3YFgyUfWRM5SmiCgMc3SFWb15WXAzAQ5'
-                );
-                if ($result = $client->InsertUpdatePaciens($params)) {
-                    //echo "<pre>";
-                    //echo print_r($params, true);
-                    //echo "</pre>";
-                }
-                */
-            }
-
-            $this->utils->jsonOut(["error" => $error, "userId" => $userId]);
-        }
-
-
         if (isset($_REQUEST['AFForm'])) {
             if (!$this->user->authenticated()) {
                 $this->utils->jsonOut(["error" => "error"]);
@@ -552,141 +460,119 @@ class AdminBookingEditor {
         return $html;
     }
 
-    private function _showBookingEditor($id, $p):string {
-        if (!$this->user->authenticated()) {
-            return "Error 500 - Not authenticated!";
+
+    private function heading($row):string {
+        $html = "";
+        $html .= "<div style='padding:10px;background:#555;color:#fff;'>";
+        $html .= "<span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>" . $this->adminUtils->magyarDatum($row["datum"])."";
+        $html .= " - {$row["rinterval"]} perc <a style='color:yellow;' onclick='startTimeEditor({$row["id"]},\"{$row["pass"]}\");return false;' href='#'><i title='időpont és időtartam átírása' class='fa-solid fa-pen-to-square'></i></a>";
+        $html .= " - {$row["sztipus"]}</span>";
+        $html .= "<div style='display: table-row;'>";
+        if ($row["foglalta"] != "") {
+            $html .= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
+        }
+        if ($row["modifiedby"] != "") {
+            $html .= "<div class='tdm'>Módosította: <span title='{$row["modifiedtime"]}'>{$row["modifiedby"]}</span>&nbsp;&nbsp;</div>";
         }
 
+        $html .= "</div>";
+
+        $html .= "<div style='margin-top:4px;'>";
+        $html .= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
+        $html .= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
+        $html .= "<a class='middlebutton' href='#' onClick='showQuestionaries({$row["id"]},\"{$row["pass"]}\");return false;'>kérdések/válaszok</a> ";
+        if ($this->user->user["username"] == "jns") {
+            $html .= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
+        }
+        $html .= "</div>";
+
+        $html .= "</div>";
+        $html .= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+        $html .= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
+        $html .= "<div id='timeedit' style='display:none;background:#ff8;color:#555;padding:10px;'>";
+        $html .= "Ez a rész az időpont egy napon belüli kisebb áthelyezésére és az időtartam átírására szolgál.<br/>";
+        $html .= "Időpont: <input class='inputbox' style='width:40px;' type='text' name='modtime' id='modtime' value='".date("H:i", strtotime($row["datum"]))."'> ";
+        $html .= "Időtartam: <input class='inputbox' style='width:20px;' type='text' name='modinterval' id='modinterval' value='{$row["rinterval"]}'> perc";
+        $html .= "<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='saveTimeEdit();return false;'>mentés</a> <a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div>";
+        $html .= "</div>";
+        return $html;
+    }
+
+    private function printButtons($row):string {
         $html = "";
-        $id = intval($id);
-        if(!isset($_GET["page"])) $_GET["page"] = "booking";
+        if ($row["nev"] != "" && $row["nev"] != "nincs név") {
+            $html .= "<div style='margin-bottom:5px;'>";
+            //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
+            $html .= "<a title='Alkalmassági' class='printbutton' target='_blank' onclick='showAlkalmassagiWin({$row["id"]});return false;' href='#'>&nbsp;<i class='fa-solid fa-award'></i>&nbsp;</a>&nbsp;&nbsp;";
 
-        if ($row = sql_fetch_array(sql_query("select f.*,t.megnev as sztipus,c.megnev as cegnev,o.nev as orvosnev from foglalasok f
-                left join szurestipusok t on t.id=f.szurestipusid
-                left join orvosok o on o.id=f.orvosassigned
-                left join cegek c on c.id=f.cegid
-                where f.id=? and f.pass=?",array($id, $p)))) {
-            $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
-            $html .= "<div style=\"position: absolute;left: -38px;top: 100px;background-color: #e0e0e0;\"><img title='alkalmasság' onclick='showAlkalmassagiWin({$row["id"]});' src='https://bejelentkezes.hungariamed.hu/admin/images/achievement.webp' style='width:38px;cursor:pointer;' /></div>";
-            
-           if($this->user->szamlakeszitesAccess()) $html .= "<div style=\"position: absolute;left: -38px;top: 138px;background-color: #e0e0e0;width:38px;height:38px\"><i style=\"font-size:30px;position:absolute;left:8px;cursor:pointer\" title=\"Számlázás\" onClick='showSzamlazasWin({$row["id"]})' class=\"fa-solid fa-file-invoice-dollar\"></i></div>";
-            //$html .= $this->_alkalmassagFolder($row);
-            //$html .= $this->_szamlafolder($row);
-
-  
-
-            //if (!empty($this->user->user["pecsetszam"])) {
-            //    $html .= "<script>$( document ).ready(function() { toggleAlkalmassagBox(); });</script>";
-            //}
-
-
-
-            $html .= "</div>";
-            $html .= "</div>";
-            $html .= "</div>";
-
-
-            $html .= "<div style='position:relative;background:#e0e0e0;'>";
-            $html .= "<div style='padding:10px;background:#555;color:#fff;'>";
-            $html .= "<span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>" . $this->adminUtils->magyarDatum($row["datum"])."";
-            $html .= " - {$row["rinterval"]} perc <a style='color:yellow;' onclick='startTimeEditor({$row["id"]},\"{$row["pass"]}\");return false;' href='#'><i title='időpont és időtartam átírása' class='fa-solid fa-pen-to-square'></a></i>";
-            $html .= " - {$row["sztipus"]}</span>";
-            $html .= "<div style='display: table-row;'>";
-            if ($row["foglalta"] != "") {
-                $html .= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
-            }
-            if ($row["modifiedby"] != "") {
-                $html .= "<div class='tdm'>Módosította: <span title='{$row["modifiedtime"]}'>{$row["modifiedby"]}</span>&nbsp;&nbsp;</div>";
-            }
-            /*
-            if (Booking_Constants::FO_CONNECTION_ENABLED) {
-                $foColor = "lightgreen";
-                if ($row["fofid"] == 0) {
-                    $foColor = "red";
-                }
-                $html .= "<div class='tdm' style='padding:2px 0px;'><a onclick='foReservationInfo({$row["id"]},\"{$row["pass"]}\");return false;' href='#' style='color:{$foColor};'>Foglaljorvost info</a></div>";
-            }
-            */
-            $html .= "</div>";
-
-            $html .= "<div style='margin-top:4px;'>";
-            $html .= "<a class='middlebutton' href='#' onclick='startFoglalasMove({$row["id"]},\"{$row["pass"]}\");return false;'>áthelyezés</a> ";
-            $html .= "<a class='middlebutton' href='#' onclick='startFoglalasCopy({$row["id"]},\"{$row["pass"]}\");return false;'>másolás</a> ";
-            $html .= "<a class='middlebutton' href='#' onClick='autoFill(false);return false;'>mezők kitöltése</a> ";
-            $html .= "<a class='middlebutton' href='#' onClick='showQuestionaries({$row["id"]},\"{$row["pass"]}\");return false;'>kérdések/válaszok</a> ";
-            if ($this->user->user["username"] == "jns") {
-                $html .= "<a class='middlebutton' href='#' onClick='duplicateReservation({$row["id"]},\"{$row["pass"]}\");return false;'>foglalás ismétlése</a> ";
+            if ($this->user->szamlakeszitesAccess()) {
+                $html .= "<a title='Számlázás' class='printbutton' target='_blank' onclick='showSzamlazasWin({$row["id"]});return false;' href='#'>&nbsp;<i class='fa-solid fa-file-invoice-dollar'></i>&nbsp;</a>&nbsp;&nbsp;";
+                //$html .= "<div style=\"position: absolute;left: -38px;top: 138px;background-color: #e0e0e0;width:38px;height:38px\"><i style=\"font-size:30px;position:absolute;left:8px;cursor:pointer\" title=\"Számlázás\" onClick='showSzamlazasWin({$row["id"]})' class=\"fa-solid fa-file-invoice-dollar\"></i></div>";
             }
 
-            if (!empty(trim($row["taj"])) && !empty($row["szuldatum"])) {
-                $btext = "paciens létrehozása";
-                $bstyle = "";
-                if ($row["paciensid"] != 0) {
-                    $btext = "paciens szinkronizálása";
-                    $bstyle = "background:#0a0;";
-                }
-                $html .= "<a class='middlebutton' style='{$bstyle}' href='#' onClick='syncFoglalasDataToUser({$row['id']},\"{$row["pass"]}\");return false;'>{$btext}</a> ";
+
+            if (Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()) {
+                $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&fid={$row["id"]}&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
             }
 
-            $html .= "</div>";
-            $html .= "</div>";
-            $html .= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
-            $html .= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
-            $html .= "<div id='timeedit' style='display:none;background:#ff8;color:#555;padding:10px;'>";
-            $html .= "Ez a rész az időpont egy napon belüli kisebb áthelyezésére és az időtartam átírására szolgál.<br/>";
-            $html .= "Időpont: <input class='inputbox' style='width:40px;' type='text' name='modtime' id='modtime' value='".date("H:i", strtotime($row["datum"]))."'> ";
-            $html .= "Időtartam: <input class='inputbox' style='width:20px;' type='text' name='modinterval' id='modinterval' value='{$row["rinterval"]}'> perc";
-            $html .= "<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='saveTimeEdit();return false;'>mentés</a> <a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div>";
-            $html .= "</div>";
+            //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
+            //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
+            //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
+            //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
+            //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Menedzser sétálólap</a>&nbsp;&nbsp;";
 
-            $html .= "<div style='padding:10px;'>";
-
-            if ($row["nev"] != "" && $row["nev"] != "nincs név") {
-                $html .= "<div style='margin-bottom:5px;'>";
-                //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Alkalmassági</a>&nbsp;&nbsp;";
-                if (Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()) {
-                    $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&fid={$row["id"]}&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
-                }
-
-                //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=idoszakos&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (I)</a>&nbsp;&nbsp;";
-                //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vizsgalatilap&tipus=soronkivuli&fid={$row["id"]}&p={$row["pass"]}'>vizsgálati lap (S)</a>&nbsp;&nbsp;";
-                //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=karton&fid={$row["id"]}&p={$row["pass"]}'>karton</a>&nbsp;&nbsp;";
-                //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
-                //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Menedzser sétálólap</a>&nbsp;&nbsp;";
-
-                if ($row["cegid"] == CompanyService::SUZUKI_GHC_ID && Booking_Constants::SQL_DB == "hungariamed") {
-                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcsenior&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC SEN</a>&nbsp;&nbsp;";
-                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcstandard&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC STA</a>&nbsp;&nbsp;";
-                }
-
-                //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
-                //if (Booking_Constants::SQL_DB == "hungariamed") {
-                $resultArrived = false;
-                if (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC)) {
-                    $resultArrived = true;
-                }
-                $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . ($resultArrived ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
-                //if (session_id() == "41crg5phek9bkdvamrqb111aee") {
-                //$html .= "<a class='printbutton' target='_blank' onclick='showSpektrumLabMatricaWin({$row["id"]});return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> Sp</a>&nbsp;&nbsp;";
-                $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
-                //}
-                //}
-                $html .= "</div>";
+            if ($row["cegid"] == CompanyService::SUZUKI_GHC_ID && Booking_Constants::SQL_DB == "hungariamed") {
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcsenior&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC SEN</a>&nbsp;&nbsp;";
+                $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcstandard&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC STA</a>&nbsp;&nbsp;";
             }
 
-            $allowNewCompany = $this->user->allCegJog() ? 1:0;
-            $mustChooseCompany  = $this->user->allCegJog() ? 0:1;
+            //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
+            $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
+            $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
+            $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC) ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
+            $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
+            $html .= "</div>";
+        }
+        return $html;
+    }
 
-            $html .= "<input type='hidden' name='currentPage' id='currentPage' value='{$_GET["page"]}'/>";
-            $html .= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
-            $html .= "<input type='hidden' name='paciensid' id='paciensId' value='{$row["paciensid"]}'/>";
-            $html .= "<input type='hidden' id='idopontmarker' value='" . substr($row["datum"], 0, 16) . "'/>";
-            $html .= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
-            $html .= "<input type='hidden' name='mustChooseCompany' id='mustChooseCompany' value='{$mustChooseCompany}'/>";
-            $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
+
+    private function companyBlock($row):string {
+        $html = "";
+
+        if (session_id() == "387e9hc92tesfsc7bq2mk3498c") {
+
+            $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
+            $html.= "<div class='becell'>";
+
+            $html.= "<div style='display:table;width:100%;'>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</div><div class='tdm' style='padding:1px 0;'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Cég:</div><div class='tdm' style='padding:1px 0;'>" . $this->companySelector($row["cegid"]) . "</div>";
+            $html.= "</div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+
+            $html.= "<div class='becell'>";
+
+            $html.= "<div style='display:table;width:100%;'>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</div><div class='tdm' style='padding:1px 0;'>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Orvos:</div><div class='tdm' style='padding:1px 0;'>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></div>";
+            $html.= "</div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+            $html .= "</div>";
+
+        } else {
             $html .= "<table style='font-size:12px;'>";
 
             $html .= "<tr>";
@@ -704,47 +590,109 @@ class AdminBookingEditor {
             $html .= "<td width='64'>Orvos:</td><td>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
             $html .= "</tr>";
 
-            if ($row["nev"] == "nincs név") {
-                $row["nev"] = "";
-            }
+            $html .= "</table>";
+        }
+        return $html;
+    }
 
-            //$couponCode = "";
-            //if ($result = sql_fetch_array(sql_query("SELECT * FROM kupon_lista WHERE foglalasid={$row["id"]}"))) {
-                //$couponCode = $result["kuponkod"];
-            //}
+    private function patientNotFoundBlock($row):string {
+        $html = "";
 
-            if ($row["paciensid"] == 0) {
-                $html .= "<tr><td colspan='4' valign='top'>";
-                $html .= "<div style='border-top:1px solid #888;border-bottom:1px solid #888;padding:10px 0px;margin:4px 0px 2px 0px;'>";
-                $html .= "Ehhez a foglaláshoz nem tartozik paciens adatlap! Válassz a meglévő adatlapok közül, vagy hozz létre újat.";
-                $html .= "<div style='margin-top: 3px;'>";
-                $html .= "<a class='middlebutton' style='background:#f00;' href='#' onClick='prepareUserDataSearch();return false;'>paciens adatlap keresése</a>&nbsp;&nbsp;";
-                $html .= "<a class='middlebutton' style='' href='#' onClick='newUserDataFromReservation();return false;'>új paciens adatlap létrehozása</a> ";
-                $html .= "</div>";
+        if ($row["paciensid"] == 0) {
+            $html .= "<div style='border-top:1px solid #888;border-bottom:1px solid #888;padding:10px 0px;margin:4px 0px 2px 0px;'>";
+            $html .= "Ehhez a foglaláshoz nem tartozik paciens adatlap! Válassz a meglévő adatlapok közül, vagy hozz létre újat.";
+            $html .= "<div style='margin-top: 3px;'>";
+            $html .= "<a class='middlebutton' style='background:#f00;' href='#' onClick='prepareUserDataSearch();return false;'>paciens adatlap keresése</a>&nbsp;&nbsp;";
+            $html .= "<a class='middlebutton' style='' href='#' onClick='newUserDataFromReservation();return false;'>új paciens adatlap létrehozása</a> ";
+            $html .= "</div>";
+            $html .= "</div>";
 
-                $html .= "</div>";
-                $html .= "</td></tr>";
-            }
-
-            $html .= "<tr id='pdatasearchrow' style='display:none;'><td colspan='4' valign='top'>";
-            $html .= "<div style='background:#eee;padding:10px 10px 10px 10px;margin:0px 0px 0px 0px;width:558px;height:167px;overflow: hidden;'>";
+            $html .= "<div id='pdatasearchrow' style='display:none;'>";
+            $html .= "<div style='background:#eee;padding:10px 10px 10px 10px;margin:0px;width:100%;height:267px;overflow: hidden;'>";
             $html .= "<div><input id='pdatasearchinput' type='text' value='' placeholder='kereshetsz névre, taj számra, telefonszámra, email címre...' style='width:100%;box-sizing: border-box;'/></div>";
             $html .= "<div id='searchpaciensresult'></div>";
             $html .= "</div>";
-            $html .= "</td></tr>";
+            $html .= "</div>";
+        }
 
-            $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
-            $userNotificationMark = sql_query("select id from notifications where tipus='usernotification' and objectid=? and destination=?", [$id, $row["email"]])->fetch(PDO::FETCH_ASSOC) ? " <i style='color:#08a;' title='Visszaigazoló email kiment erre a címre' class='fa-solid fa-circle-check'></i>" : "";
+        return $html;
+    }
 
-            $tajCheck = "";
-            if (!empty($row["taj"])) {
-                if (Utils::tajCheck($row["taj"])) {
-                    $tajCheck = " <i style='color:#08a;' title='TAJ szám helyes' class='fa-solid fa-circle-check'></i>";
-                } else {
-                    $tajCheck = " <i style='color:#f00;' title='Helytelen TAJ szám' class='fa-solid fa-circle-xmark'></i>";
-                }
+    private function patientDataBlock($row):string {
+        $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
+        $userNotificationMark = sql_query("select id from notifications where tipus='usernotification' and objectid=? and destination=?", [$row["id"], $row["email"]])->fetch(PDO::FETCH_ASSOC) ? " <i style='color:#08a;' title='Visszaigazoló email kiment erre a címre' class='fa-solid fa-circle-check'></i>" : "";
+
+        $tajCheck = "";
+        if (!empty($row["taj"])) {
+            if (Utils::tajCheck($row["taj"])) {
+                $tajCheck = " <i style='color:#08a;' title='TAJ szám helyes' class='fa-solid fa-circle-check'></i>";
+            } else {
+                $tajCheck = " <i style='color:#f00;' title='Helytelen TAJ szám' class='fa-solid fa-circle-xmark'></i>";
             }
+        }
 
+        $html = "";
+
+        if (session_id() == "387e9hc92tesfsc7bq2mk3498c") {
+            $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
+            $html.= "<div class='becell'>";
+
+            $html.= "<div style='display:table;width:100%;'>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'><span>Taj szám:{$tajCheck}</span></div><div class='tdm'><input data-taborder='1' class='inputbox ui-taborder editortaj2 fipad' style='width:80%;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Név:</div><div class='tdm'><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder fipad' placeholder='Ide csak nevet írj' style='width:100%;' type='text' name='nev' value='{$row["nev"]}'></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Munkakör:</div><div class='tdm'>" . $this->munkakorInput($row) . "</div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Szül. dátum:</div><div class='tdm'><input data-taborder='4'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Szül. hely:</div><div class='tdm'><input data-taborder='5'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szulhely' value='{$row["szulhely"]}'></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Anyja neve:</div><div class='tdm'><input data-taborder='6'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></div>";
+            $html.= "</div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+
+            $html.= "<div class='becell'>";
+
+            $html.= "<div style='display:table;width:100%;'>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>E-mail:{$userNotificationMark}</div><div class='tdm'><input data-taborder='7' class='inputbox ui-taborder fipad' style='width:80%;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Telefon:</div><div class='tdm'><input data-taborder='8' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='telefon' value='{$row["telefon"]}'></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Irsz:</div><div class='tdm'><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder fipad' style='width:25%;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:70%;' type='text' name='varos' id='varos' value='{$row["varos"]}'></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Utca:</div><div class='tdm'><input data-taborder='11' class='inputbox ui-taborder fipad' style='width:100%' type='text' name='utca' value='{$row["utca"]}'/></div>";
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            if (!empty($row["adoszam"])) {
+                $html.= "<div class='tdm'>Adószám:</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='adoszam' value='{$row["adoszam"]}'></div>";
+            } else {
+                $html.= "<div class='tdm'>Törzsszám:&nbsp;</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></div>";
+            }
+            $html.= "</div>";
+            $html.= "<div style='display:table-row'>";
+            $html.= "<div class='tdm'>Neme:&nbsp;</div><div class='tdm' style='padding:3px 0px;'><input type='radio' name='neme' " . ($row["neme"] == 1 ? "checked" : "") . " value='1' class='fipad'/>&nbsp;Férfi&nbsp;<input type='radio' name='neme' " . ($row["neme"] == 2 ? "checked" : "") . " value='2' class='fipad'>&nbsp;Nő</div>";
+            $html.= "</div>";
+            $html.= "</div>";
+
+            $html.= "</div>";
+
+            $html .= "</div>";
+        } else {
+            $html .= "<table style='font-size:12px;width:100%;'>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'><span>Taj szám:{$tajCheck}</span></td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
             $html .= "<td width='60'>E-mail:{$userNotificationMark}</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
@@ -754,7 +702,7 @@ class AdminBookingEditor {
             $html .= "<td width='60'>Telefon:</td><td><input data-taborder='8' class='inputbox ui-taborder' style='width:200px;' type='text' name='telefon' value='{$row["telefon"]}'></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Munkakör:</td><td>".$this->munkakorInput($row)."</td><td width='60'>Irsz:</td>";
+            $html .= "<td width='60'>Munkakör:</td><td>" . $this->munkakorInput($row) . "</td><td width='60'>Irsz:</td>";
             $html .= "<td><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder' style='width:40px;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:150px;' type='text' name='varos' id='varos' value='{$row["varos"]}'></td>";
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
@@ -771,94 +719,167 @@ class AdminBookingEditor {
             $html .= "</tr>";
             $html .= "<tr class='pdatarow'>";
             $html .= "<td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td>";
-            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" ".($row["neme"]==1?"checked=\"true\"":"")." value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" ".($row["neme"]==2?"checked=\"true\"":"")." value=\"2\">&nbsp;Nő</td>";
-
-            //$html .= "<td width='60'>Kupon:</td><td><input data-taborder='13' type = 'text' style='width:140px' class='inputbox ui-taborder' name='kuponkod' value='{$couponCode}' id='kuponkod' />&nbsp;<input type = 'button' value = 'Check' onClick = '$(\"#coupondesc\").empty();$(\"#coupondiscount\").empty();kuponCheck($(\"#kuponkod\").val(),2,\"" . date("Y-m-d", strtotime($row["datum"])) . "\",{$row['szurestipusid']});return false'/></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'><a onclick='showEljottLog({$id});return false;' href=''>log</a></td><td><span id='eljottchk'>".$this->eljottCheckbox($row)."</span></td>";
-
-            if (Booking_Constants::SQL_DB == "hungariamed") {
-                $html .= "<td colspan='2'>";
-                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==1?"checked='true'":"")." value='1' />&nbsp;Vékony&nbsp;";
-                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==2?"checked='true'":"")." value='2' />&nbsp;Normál&nbsp;";
-                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==3?"checked='true'":"")." value='3' />&nbsp;Túlsúlyos&nbsp;";
-                $html .= "<input type='radio' name='testalkat' ".($row["testalkat"]==4?"checked='true'":"")." value='4' />&nbsp;Extrém&nbsp;";
-                $html .= "</td>";
-            }
-
-            $html .= "</td>";
-            $html .= "</tr>";
-
-            $html .= "<tr>";
-            if ($this->user->paciensMegjegyzesAccess()) {
-                $html .= "<td colspan='2'><textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
-                if (Booking_Constants::SQL_DB == "keltexmed") {
-                    $html .= "<div>";
-                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(előzetes) '+$('#reservationinfo').val());return false;\">előzetes</a> | ";
-                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(időszakos) '+$('#reservationinfo').val());return false;\">időszakos</a> | ";
-                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(soron kívüli) '+$('#reservationinfo').val());return false;\">soron kívüli</a> | ";
-                    $html .= "<a href='#' onclick=\"$('#reservationinfo').val('(záró) '+$('#reservationinfo').val());return false;\">záró</a> | ";
-                    $html .= "<div>";
-                }
-                $html .= "</td>";
-            }
-            $html .= "<td colspan='2' valign='top'>".$this->_filesFolderNew($row)."</td>";
-            $html .= "</tr>";
-
-            $html .= "<tr><td colspan='4' valign='top'><div style='background:#ccc;padding:5px;'>Egyéb</div>";
-
-
-            $html .= "<div>Tüdőszűrő dátuma: <input type='text' style='width:80px;' name='tudoszuroervenyesseg' value='{$row["tudoszuroervenyesseg"]}' />&nbsp;&nbsp;";
-
-            $html .= "<div style='display:inline-block;" . ($row["tudoszuro"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='tudoszuro' value='1' " . ($row["tudoszuro"] == 1 ? "checked" : "") . " /> tüdőszűrés kell&nbsp;&nbsp;</div>";
-            $html .= "<div style='display:inline-block;" . ($row["kieg_labor"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_labor' value='1' " . ($row["kieg_labor"] == 1 ? "checked" : "") . " /> labor&nbsp;&nbsp;</div>";
-            $html .= "<div style='display:inline-block;" . ($row["kieg_hallas"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_hallas' value='1' " . ($row["kieg_hallas"] == 1 ? "checked" : "") . " /> hallás vizsgálat</div>";
-
-            $html .= "</td>";
-
-            /*
-            $html.= "<td valign='top' style=''>";
-            $html.= "<div style='width:200px;overflow:hidden;'><div style='width:1000px;'>".($row['noreservation']!=1?$this->adminUtils->showPaciensFiles($row["id"]):"")."</div></div>";
-
-            if ($rowa = sql_fetch_array(sql_query("select * from arak WHERE INSTR(cegid,?) AND tipusid=? and csomag=0",array("|{$row["cegid"]}|",$row["szurestipusid"])))) {
-                $html.= "<div><a href='#' onclick='showFizSzolg({$row["id"]});return false;'>+ szolgáltatás hozzáadása</a><div>";
-            }
-            $html.= "<div id='fizszolglist{$row["id"]}'>".$this->adminUtils->showFizSzolg($row["id"])."</div>";
-
-            $html.= "</td>";
-            */
+            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" " . ($row["neme"] == 1 ? "checked=\"true\"" : "") . " value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" " . ($row["neme"] == 2 ? "checked=\"true\"" : "") . " value=\"2\">&nbsp;Nő</td>";
 
             $html .= "</tr>";
             $html .= "</table>";
+        }
 
-            if (isset($_POST["page"])) {
-                $_GET["page"] = $_POST["page"];
+        return $html;
+    }
+
+
+    private function eljottBlock($row):string {
+        $html = "";
+
+        $html .= "<div class='pdatarow' style='padding-top:5px;margin-top: 5px;border-top:1px solid #888;'>";
+        $html .= "<a onclick='showEljottLog({$row["id"]});return false;' href=''>log</a>&nbsp;&nbsp;<span id='eljottchk'>" . $this->eljottCheckbox($row) . "</span>&nbsp;&nbsp;";
+
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            /*
+            $html .= "<input type='radio' name='testalkat' " . ($row["testalkat"] == 1 ? "checked='true'" : "") . " value='1' />&nbsp;Vékony&nbsp;";
+            $html .= "<input type='radio' name='testalkat' " . ($row["testalkat"] == 2 ? "checked='true'" : "") . " value='2' />&nbsp;Normál&nbsp;";
+            $html .= "<input type='radio' name='testalkat' " . ($row["testalkat"] == 3 ? "checked='true'" : "") . " value='3' />&nbsp;Túlsúlyos&nbsp;";
+            $html .= "<input type='radio' name='testalkat' " . ($row["testalkat"] == 4 ? "checked='true'" : "") . " value='4' />&nbsp;Extrém&nbsp;";
+            */
+        }
+
+        $html .= "</div>";
+
+        return $html;
+    }
+
+    private function commentBlock($row):string {
+        $html = "";
+
+        $html.= "<div class='pdatarow' style='padding-top:5px;margin-top: 5px;border-top:1px solid #888;'>";
+        $html.= "<div style='display:table;width:100%;'>";
+
+        $html.= "<div class='becell'>";
+        $html.= "<textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
+        $html.= "</div>";
+
+        $html.= "<div class='becell'>";
+        $html .= $this->_filesFolderNew($row);
+        $html.= "</div>";
+
+        $html.= "</div>";
+        $html.= "</div>";
+
+        return $html;
+    }
+
+    private function extraServiceBlock($row):string {
+        $html = "";
+
+        $html .= "<div style='padding-top:5px;border-top:1px solid #888;'>";
+        $html .= "Tüdőszűrő dátuma: <input type='text' style='width:80px;' name='tudoszuroervenyesseg' value='{$row["tudoszuroervenyesseg"]}' />&nbsp;&nbsp;";
+        $html .= "<div style='display:inline-block;" . ($row["tudoszuro"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='tudoszuro' value='1' " . ($row["tudoszuro"] == 1 ? "checked" : "") . " /> tüdőszűrés kell&nbsp;&nbsp;</div>";
+        $html .= "<div style='display:inline-block;" . ($row["kieg_labor"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_labor' value='1' " . ($row["kieg_labor"] == 1 ? "checked" : "") . " /> labor&nbsp;&nbsp;</div>";
+        $html .= "<div style='display:inline-block;" . ($row["kieg_hallas"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_hallas' value='1' " . ($row["kieg_hallas"] == 1 ? "checked" : "") . " /> hallás vizsgálat</div>";
+        $html .= "</div>";
+
+        /*
+        $html.= "<td valign='top' style=''>";
+        $html.= "<div style='width:200px;overflow:hidden;'><div style='width:1000px;'>".($row['noreservation']!=1?$this->adminUtils->showPaciensFiles($row["id"]):"")."</div></div>";
+
+        if ($rowa = sql_fetch_array(sql_query("select * from arak WHERE INSTR(cegid,?) AND tipusid=? and csomag=0",array("|{$row["cegid"]}|",$row["szurestipusid"])))) {
+            $html.= "<div><a href='#' onclick='showFizSzolg({$row["id"]});return false;'>+ szolgáltatás hozzáadása</a><div>";
+        }
+        $html.= "<div id='fizszolglist{$row["id"]}'>".$this->adminUtils->showFizSzolg($row["id"])."</div>";
+
+        $html.= "</td>";
+        */
+
+
+        return $html;
+    }
+
+    private function footerButtons($row):string {
+        $allowNewCompany = $this->user->allCegJog() ? 1 : 0;
+
+        $html = "";
+
+        if (isset($_POST["page"])) {
+            $_GET["page"] = $_POST["page"];
+        }
+
+        $html .= "<div style='padding-top:10px;margin-top:5px;border-top:1px solid #888;'>";
+        $html .= "<input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});' value='Mentés'/>&nbsp;&nbsp;";
+        $html .= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
+        $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\", 0);' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
+
+        if (Booking_Constants::COMPANY_NAME_SHORT == "Keltexmed") {
+            $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex Keltexmed' style='background:#5ed5e3'>&nbsp;&nbsp;";
+            $html .= "<input onClick='insertPaciensIntoDokirexHMM({$row["id"]})' type='button' value='Dokirex HMM' style='background:#9d0202'>&nbsp;&nbsp;";
+        } else {
+            $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex" . (empty($row["dokirex_userid"]) ? "" : " uid:{$row["dokirex_userid"]}") . "' style='background:#008080'>&nbsp;&nbsp;";
+        }
+
+        if ($this->user->varoteremuiAccess()) {
+            $html .= $this->varoteremService->doc_choose_button($row);
+        }
+        $html .= "</div>";
+
+        return $html;
+    }
+
+
+
+
+    private function getReservation($id, $p) {
+        if ($row = sql_fetch_array(sql_query("select f.*,t.megnev as sztipus,c.megnev as cegnev,o.nev as orvosnev from foglalasok f
+                left join szurestipusok t on t.id=f.szurestipusid
+                left join orvosok o on o.id=f.orvosassigned
+                left join cegek c on c.id=f.cegid
+                where f.id=? and f.pass=?",array($id, $p)))) {
+
+            if ($row["nev"] == "nincs név") {
+                $row["nev"] = "";
             }
 
-            $html .= "<br><input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});' value='Mentés'/>&nbsp;&nbsp;";
-            //$html.= "<input onclick='foglalasOrvosErtesites();' type='button' value='Orvos értesítése'/>&nbsp;&nbsp;";
-            $html .= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
+            return $row;
+        }
+        return false;
+    }
 
-            $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\", 0);' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
-            //$html .= "<input onClick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\")' type='button' value='Értesítés küldése' style='background:#ffa500'>&nbsp;&nbsp;";
+    private function _showBookingEditor($id, $p):string {
+        if (!$this->user->authenticated()) {
+            return "Error 500 - Not authenticated!";
+        }
 
-            if (Booking_Constants::COMPANY_NAME_SHORT == "Keltexmed") {
-                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex Keltexmed' style='background:#5ed5e3'>&nbsp;&nbsp;";
-                $html .= "<input onClick='insertPaciensIntoDokirexHMM({$row["id"]})' type='button' value='Dokirex HMM' style='background:#9d0202'>&nbsp;&nbsp;";
-            } else {
-                $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex".(empty($row["dokirex_userid"])?"":" uid:{$row["dokirex_userid"]}")."' style='background:#008080'>&nbsp;&nbsp;";
-            }
-            //onClick='addToWaitList({$row["id"]})'
-            if ($this->user->varoteremuiAccess()) {
-                $html .= $this->varoteremService->doc_choose_button($row);
-            }
+        $html = "";
+        $id = intval($id);
+        if(!isset($_GET["page"])) $_GET["page"] = "booking";
 
-            //$html .= $addtoWaitList; 
-            //$html .= "<input onClick='addToWaitList({$row["id"]})' type=\"button\" style=\"background-color:#0a0\" value=\"Érkeztetés\">";
+        if ($row = $this->getReservation($id, $p)) {
+            $html .= "<form id='iform' name='iform' method='post' enctype='multipart/form-data'>";
+            $allowNewCompany = $this->user->allCegJog() ? 1 : 0;
+            $mustChooseCompany = $this->user->allCegJog() ? 0 : 1;
 
-            $html.= "</div>";
-            $html.= "</div>";
+            $html .= "<input type='hidden' name='currentPage' id='currentPage' value='{$_GET["page"]}'/>";
+            $html .= "<input type='hidden' name='fid' id='reservationId' value='{$row["id"]}'/>";
+            $html .= "<input type='hidden' name='paciensid' id='paciensId' value='{$row["paciensid"]}'/>";
+            $html .= "<input type='hidden' name='p' id='reservationToken' value='{$row["pass"]}'/>";
+            $html .= "<input type='hidden' name='mustChooseCompany' id='mustChooseCompany' value='{$mustChooseCompany}'/>";
+            $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
+
+            $html .= "<div style='position:relative;background:#e0e0e0;'>";
+
+            $html .= $this->heading($row);
+
+            $html .= "<div style='padding:10px;'>";
+            $html .= $this->printButtons($row);
+            $html .= $this->companyBlock($row);
+            $html .= $this->patientNotFoundBlock($row);
+            $html .= $this->patientDataBlock($row);
+            $html .= $this->eljottBlock($row);
+            $html .= $this->commentBlock($row);
+            $html .= $this->extraServiceBlock($row);
+            $html .= $this->footerButtons($row);
+            $html .= "</div>";
+
+            $html .= "</div>";
             $html.= "</form>";
         } else {
             $html.= "Az időpont adatok lekérdezése közben hiba történt! {$_GET["p"]}";
@@ -867,10 +888,8 @@ class AdminBookingEditor {
         return $html;
     }
 
-    private function munkakorInput($row) {
-        $html = "";
-
-        $html .= "<input data-taborder='3'  class='inputbox ui-taborder' style='width:200px;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
+    private function munkakorInput($row):string {
+        $html = "<input data-taborder='3'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
         $items = [];
         foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>1 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
@@ -894,11 +913,11 @@ class AdminBookingEditor {
 
         $html = "<a data-id='{$reservationData["id"]}' href='#' onclick='eljottButtonProtocol(this, 0);return false;' style='font-size: 16px;'>{$icon}</a> eljött";
         if ($reservationData["eljott"] == 1) {
-            $html.= " <input style='width:35px;' name='eljottidopont' type='text' title='eljött időpont' value='".date("H:i", strtotime($reservationData["eljottidopont"]))."' />";
+            $html.= " <input style='width:45px;' name='eljottidopont' type='text' title='eljött időpont' value='".date("H:i", strtotime($reservationData["eljottidopont"]))."' />";
 
             $html.= "&nbsp;&nbsp;<a data-id='{$reservationData["id"]}' href='#' onclick='behivvaButtonProtocol(this);return false;' style='font-size: 16px;'>{$behivvaIcon}</a> behívva";
             if ($reservationData["behivva"] == 1) {
-                $html.= " <input style='width:35px;' name='behivvaidopont' type='text' title='behívás időpontja' value='" . date("H:i", strtotime($reservationData["behivvaidopont"])) . "' />";
+                $html.= " <input style='width:45px;' name='behivvaidopont' type='text' title='behívás időpontja' value='" . date("H:i", strtotime($reservationData["behivvaidopont"])) . "' />";
             }
         }
 
@@ -908,16 +927,15 @@ class AdminBookingEditor {
     private function _filesFolderNew($row):string {
         $html = "";
         $files = $this->adminUtils->showPaciensFiles($row["id"]);
-        $html .= "<div style='padding:0px;width:275px;height:70px;overflow-y:auto;overflow-x: hidden;'><div style='width:1000px;'>{$files}</div>";
-        $html .= "</div></div>";
+        $html .= "<div style='padding:0px;width:275px;height:70px;overflow-y:auto;overflow-x: hidden;'><div style='width:1000px;'>{$files}</div></div>";
         return $html;
     }
 
-    private function _alkalmassagFolder_new($row){
+    private function _alkalmassagFolder_new($row):string {
         $html = "";
 
-        $html .= "<div style='width:500x;background:#eee;'>";
-        $html .= "<form id=\"alkalmassgibox\">";
+        $html .= "<div style='width:100%;max-width:500px;background:#eee;'>";
+        $html .= "<form id='alkalmassgibox'>";
         $html .= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
         $html .= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class=\"fa-solid fa-award\"></i>&nbsp;&nbsp;{$row["nev"]} - {$row["szuldatum"]} - {$row["taj"]}</div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
@@ -926,16 +944,10 @@ class AdminBookingEditor {
         $html .= "<div style='padding:10px;'>";
 
         if (CompanyService::isFesztivalCompany($row["cegid"]) || ($row["helyszinid"] == 536 && Booking_Constants::SQL_DB == "hungariamed")) {
-            if (true || session_id() == "ou0p3m9hvs3iofkdr1cnjoiorh") {
-                $html.= "<div id='alkquestions'>";
-                $html.= $this->showQuestionButtons($row["id"], $row["questions"]);
-                $html.= "</div>";
-            } else {
-                $text = nl2br($row["questions"]);
-                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
-                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
-                $html .= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
-            }
+            $html.= "<div id='alkquestions'>";
+            $html.= $this->showQuestionButtons($row["id"], $row["questions"]);
+            $html.= "</div>";
+
             if (empty($row["orvosszoveg"])) {
                 $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
             }
@@ -963,21 +975,23 @@ class AdminBookingEditor {
                 $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
             }
             if ($key == "K") {
-                $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
+                $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:100%;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
             }
             $html .= "</div>";
         }
 
-        $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
+        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
+        $html .= "<div style='padding:0px 0px 0px 0px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
+        $html .= "</div>";
 
         $html .= "</div>";
 
         $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
 
-        $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
+        $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:100%;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
         $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
         $html .= "</div>";
-        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
+        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
         $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
         $html .= "<option value='0'>Válasszon!</option>";
         foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
@@ -985,8 +999,10 @@ class AdminBookingEditor {
         }
         $html .= "</select>";
         $html .= "</div>";
-        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
-        $html .= "  <a class='printbutton' onclick='saveAlkalmassagiWin({$row["id"]});return false;' href='#' style='background: #00aa00'>Mentés</a>";
+        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:10px;'>";
+        $html .= "<a class='printbutton' onclick='saveAlkalmassagiWin({$row["id"]});return false;' href='#' style='background: #00aa00'>Mentés</a>&nbsp;";
+        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=alkalmassagipdf&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Nyomtatás</a>&nbsp;&nbsp;";
+
         $html .= "</div>";
         $html .= "</form>";
         $html .= "</div>";
@@ -1019,89 +1035,6 @@ class AdminBookingEditor {
         return $html;
     }
 
-    private function _alkalmassagFolder($row):string {
-        $html = "";
-        $html .= "<div id='alkalmassagfolder' style='position:absolute;margin-top:120px;margin-left:-45px;z-index:-1;transition: all .1s linear;'>";
-        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;'><img title='alkalmasság' onclick='toggleAlkalmassagBox();' src='https://bejelentkezes.hungariamed.hu/admin/images/achievement.webp' style='width:38px;cursor:pointer;' /></div></div>";
-        $html .= "<div style='display:table-cell;vertical-align: top;'><div style='padding:8px;background:#ddd;'>";
-
-        if (CompanyService::isFesztivalCompany($row["cegid"]) || ($row["helyszinid"] == 536 && Booking_Constants::SQL_DB == "hungariamed")) {
-            if (true || session_id() == "ou0p3m9hvs3iofkdr1cnjoiorh") {
-                $html.= "<div id='alkquestions'>";
-                $html.= $this->showQuestionButtons($row["id"], $row["questions"]);
-                $html.= "</div>";
-            } else {
-                $text = nl2br($row["questions"]);
-                $text = str_replace("IGEN", "<span style='color:#a00;'>IGEN</span>", $text);
-                $text = str_replace("NEM", "<span style='color:#0a0;'>NEM</span>", $text);
-                $html .= "<div style='margin:3px 5px;font-weight: bold;'>{$text}</div>";
-            }
-            if (empty($row["orvosszoveg"])) {
-                $row["orvosszoveg"] = CompanyService::FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT;
-            }
-        }
-
-        $html.= "<div class='mainalkform'>";
-        foreach ($this->adminUtils->settings->alkalmassagvariaciok as $key => $value) {
-            $oc = "";
-            $sb = "";
-            if ($key != "I") {
-                $oc = "onclick=\"$('input[name=alkalmassagido]').attr('checked',false);\"";
-                $sb = "border-top:1px solid #999;margin-top:3px;padding-top:3px;";
-            }
-            $html .= "<div style='{$sb}'><input " . ($row["alkalmassag"] == $key ? "checked" : "") . " {$oc} type='radio' name='alkalmassag' value='{$key}' /> {$value}";
-            if ($key == "I") {
-                $html.= "<div style='padding:0px 0px 0px 25px;'>";
-                $html.= "<input " . ($row["alkalmassagido"] == 3 ? "checked" : "") . " type='radio' name='alkalmassagido' value='3' />3 hó ";
-                $html.= "<input " . ($row["alkalmassagido"] == 6 ? "checked" : "") . " type='radio' name='alkalmassagido' value='6' />6 hó ";
-                $html.= "<input " . ($row["alkalmassagido"] == 12 ? "checked" : "") . " type='radio' name='alkalmassagido' value='12' />1 év ";
-                $html.= "<input " . ($row["alkalmassagido"] == 24 ? "checked" : "") . " type='radio' name='alkalmassagido' value='24' />2 év ";
-                $html.= "<input " . ($row["alkalmassagido"] == 36 ? "checked" : "") . " type='radio' name='alkalmassagido' value='36' />3 év ";
-                $html.= "</div>";
-            }
-            if ($key == "IN") {
-                $html .= "<div style='padding:0px 0px 0px 25px;'>köv. vizsgálat: <input type='text' style='width:40px;' name='alkalmassagikhet' value='{$row["alkalmassagikhet"]}' /> hét</div>";
-            }
-            if ($key == "K") {
-                $html .= "<div style='padding:3px 0px 0px 25px;'><textarea placeholder='korlátozás szövege' style='width:240px;height:40px;' name='alkalmassagkorl'>{$row["alkalmassagkorl"]}</textarea></div>";
-            }
-            $html .= "</div>";
-        }
-
-        $html .= "<div style='padding:0px 0px 0px 25px;'>vérnyomás: <input type='text' style='width:70px;' name='vernyomas' value='{$row["vernyomas"]}' /></div>";
-
-        $html .= "</div>";
-
-        $html .= "<div style='border-top:1px solid #999;margin-top:5px;padding-top:5px;'>";
-
-        $html .= "<div style=''><textarea onclick='orvosVelemenyEnter();' placeholder='orvos vélemény...' style='width:265px;height:40px;' name='orvosszoveg' id='orvosszoveg'>{$row["orvosszoveg"]}</textarea></div>";
-        $html .= "<div class='ovsubmit' style='padding:5px 0px 5px 0px;text-align:center;display:none;'><input type='button' style='padding-left:20px;padding-right:20px;' onclick='orvosVelemenyExit();' value='OK'/></div>";
-        $html .= "</div>";
-        $html .= "<div style='padding:0px 0px 0px 0px;border-top:1px solid #999;margin-top:5px;padding-top:5px;'>Kitöltötte: ";
-        $html .= "<select name='alkalmassaguserid' style='width:170px;".($this->user->jogosultsagAccess()?"":"pointer-events: none;touch-action: none;")."'>";
-        $html .= "<option value='0'>Válasszon!</option>";
-        foreach (sql_query("select id, nev from users where pecsetszam<>'' order by nev")->fetchAll(PDO::FETCH_ASSOC) as $orvos) {
-            $html .= "<option value='{$orvos["id"]}' ".($row["alkalmassaguserid"] == $orvos["id"] || ($row["alkalmassaguserid"] == 0 && $this->user->user["id"] == $orvos["id"]) ? " selected":"").">{$orvos["nev"]}</option>";
-        }
-        $html .= "</select>";
-        $html .= "</div>";
-        return $html;
-    }
-
-    private function _szamlafolder($row):string{
-        $html = "";
-        $html.="<div id=\"szamlafolder\" style=\"position: absolute; margin-top: 160px; margin-left: -45px; z-index: -1; transition: all 0.1s linear 0s;\">";
-        $html.="    <div style=\"display:table-cell;vertical-align: top;\">";
-        $html.="        <div style=\"padding:4px;background:#ddd;border-bottom-left-radius: 5px;border-top-left-radius: 5px;\"></div>";
-        $html.="    </div>";
-        $html.="    <div style=\"display:table-cell;vertical-align: top;\">";
-        $html.="        <div style=\"padding:8px;background:#ddd;\">";
-        $html.="        </div>";
-        $html.="    </div>";
-        $html.="</div>";
-
-        return $html;
-    }
 
     public function showQuestionButtons($fid, $questions):string {
         $text = "";

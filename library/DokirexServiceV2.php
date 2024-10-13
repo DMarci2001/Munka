@@ -396,7 +396,7 @@ class DokirexService
         return $array;
     }
 
-    public function process_dokirexcegid_json($json):array {
+    public static function process_dokirexcegid_json($json):array {
         $array = array();
         $ids = implode(",",json_decode($json,true));
         if(empty($ids)) {

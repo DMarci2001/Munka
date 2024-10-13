@@ -113,7 +113,7 @@ class AdminUtils
     public function munkakorlista($dokirexmunkakorid=null,$event=null)
     {
         $button = "";
-        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"munkakorlista_update_started\",\"munkakorlista_update_finished\") ORDER BY datum DESC LIMIT 1");
+        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN('munkakorlista_update_started','munkakorlista_update_finished') AND datum>DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY datum DESC LIMIT 1");
         $updateStatusz = sql_fetch_array($q);
         if (isset($updateStatusz["tipus"]) && $updateStatusz["tipus"] == "munkakorlista_update_started") {
             $button = "<button type=\"button\" title=\"Munkakör lista manuális frissítés jelenleg fut\" style=\"background-color:#FF4040;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fa-solid fa-lock\"></i></button>";
@@ -130,7 +130,7 @@ class AdminUtils
         $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
         $html .=        "<select class=\"s2 munkakorlist\" name=\"dokirexmunkakorid\" {$event} style=\"width:180px;\">";
 
-        if(isset($dokirexMunkakor)){
+        if (isset($dokirexMunkakor)){
             $html .=         "<option selected=\"true\" value=\"{$dokirexmunkakorid}\">{$dokirexMunkakor["Nev"]}</option>";
         }
        
@@ -147,7 +147,7 @@ class AdminUtils
     public function ceglista($dokirexcegid=null,$cid=null,$event="")
     {
         $button = "";
-        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"ceglista_update_started\",\"ceglista_update_finished\") ORDER BY datum DESC LIMIT 1");
+        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN('ceglista_update_started','ceglista_update_finished') AND datum>DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY datum DESC LIMIT 1");
         $updateStatusz = sql_fetch_array($q);
         if (isset($updateStatusz["tipus"]) && $updateStatusz["tipus"] == "ceglista_update_started") {
             $button = "<button type=\"button\" title=\"Cég lista manuális frissítés jelenleg fut\" style=\"background-color:#FF4040;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fa-solid fa-lock\"></i></button>";
@@ -167,7 +167,7 @@ class AdminUtils
     
         $html = "";
         $html .= "<div>";
-        $html.=
+        //$html.=
         $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
         $html .=        "<select class=\"s2 ceglist\" name=\"dokirexcegid\" {$event} style=\"width:180px;\">";
         if(isset($dokirexCeg) && $dokirexCeg!=""){
@@ -227,8 +227,8 @@ class AdminUtils
 
         $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
         if(!empty($q["dokirexcegid_json"])){
-            $dokirexServices = new DokirexService();
-            $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
+            //$dokirexServices = new DokirexService();
+            $data = DokirexService::process_dokirexcegid_json($q["dokirexcegid_json"]);
             if(isset($data[0]["id"])) {
                 return $data[0]["id"];
             }

@@ -1241,19 +1241,6 @@ class BookingPage extends CorePage
                 echo "<input type=\"hidden\" name=\"cid\" id=\"cid\" value=\"{$_SESSION["helyszindata"]["id"]}\">";
             }
 
-            $phpsessids = array("eqmnsn2pa3d8fc8g5c0u2sgp6s","gl9o2dn4cbgd1n37pbaub1anqb","vem1l1biikf7n2bcq9kfhc2357","u7p82ik3pr96msns1tud07sqa2");
-
-            /*if(CompanyService::isSuzukiGHC() && !in_array($_COOKIE["PHPSESSID"],$phpsessids)){
-                echo "<h3 style=\"text-align:center\">•	Rendszerhiba merült fel, dolgozunk a megoldáson, amint lehetséges a foglalás e-mail értesítőt küldünk!</h3>";
-                return;
-                //$customJs="onkeyup='setSzurestipusValasztoV2()'";
-                //echo $this->utils->dataField("taj",true,$customJs);
-            }*/
-            /*if(CompanyService::isSuzukiGHC()){
-                $pre_szurestipus = sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=?",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC);
-                $_POST["szurestipus"] = $pre_szurestipus["csomagid"];
-            }*/
-
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
             $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
@@ -1732,18 +1719,13 @@ class BookingPage extends CorePage
 
         $htmlout = "";
         if($suzukiDisabled){
-            $htmlout .= "<input type=\"hidden\" id=\"szurestipushidden\" name=\"szurestipus\" value=\"".(isset($_REQUEST["szurestipus"])?$_REQUEST["szurestipus"]:$selected)."\">";
+            $htmlout .= "<input type=\"hidden\" id=\"szurestipushidden\" name=\"szurestipus\" value=\"".($_REQUEST["szurestipus"] ?? $selected)."\">";
         }
         $htmlout .= "<select name='szurestipus' id='szurestipus' onchange='reservedTimeInvalidate();' style='width:100%;' {$suzukiDisabled}>";
         $htmlout .= "<option {$disabled} value='0'>{$valasszon}!</option>";
 
         if (isset($tipusok)) {
             foreach ($tipusok as $tipus) {
-            //for ($i = 0; $i < count($tipusok); $i++) {
-                //if (CompanyService::isKRE() && $tipusok[$i] != 1) {
-                //    continue;
-                //}
-
                 if (CompanyService::isBudapestBrand() && $tipus == 15) {
                     continue;
                 }
@@ -1788,6 +1770,7 @@ class BookingPage extends CorePage
         $helyszinek  = $this->bookingService->beosztasService->getReservationPlaces($_SESSION["helyszindata"]["id"], $szuresTipus);
         $numOfH      = count($helyszinek);
         $disabled    = "";
+        $validPlaces = [];
 
         if($forcedSzurestipusId){
             $szuresTipus = $forcedSzurestipusId;
@@ -1816,21 +1799,16 @@ class BookingPage extends CorePage
         $html .= "<select name='helyszin' id='helyszin' onchange='reservedTimeInvalidate();' style='width:100%;' {$disabled}>";
         $html .= "<option value='0'>{$webText["valasszhelyszint"]}</option>";
 
-        
         if (!empty($szuresTipus)) {
-            foreach ($helyszinek as $rowt) {
-                /*
-                if (!empty($_COOKIE["lockedhelyszin"])) {
-                    if ($hdata = sql_query("select id from helyszinek where alias=?", [$_COOKIE["lockedhelyszin"]])->fetch(PDO::FETCH_ASSOC)) {
-                        $_POST["helyszin"] = $hdata["id"];
-                    }
-                    if ($_COOKIE["lockedhelyszin"] != $rowt["alias"]) {
-                        continue;
-                    }
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                //tüdőszűrés esetén csak fehérvári út legyen választható
+                if ($_POST["tudoszuro"] ?? 0 == 1) {
+                    $validPlaces[] = Booking_Constants::DEFAULT_PLACE_IDS[0];
                 }
-                */
+            }
 
-                if (isset($validPlaces)) {
+            foreach ($helyszinek as $rowt) {
+                if (!empty($validPlaces)) {
                     if (!in_array($rowt["id"], $validPlaces)) {
                         continue;
                     }

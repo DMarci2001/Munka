@@ -242,7 +242,7 @@ class DicomService {
         //echo "{$wDateRestrict} {$w} ";
         //echo print_r($queryParams, true);
 
-        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 1500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 

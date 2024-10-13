@@ -201,7 +201,7 @@ class AdminUser {
         }
 
         if (Booking_Constants::SQL_DB == "keltexmed") {
-            $resq = sql_query("SELECT * FROM users WHERE username=? and password=md5(?) and auth2fac=1", [$userName, $password]);
+            $resq = sql_query("SELECT * FROM users WHERE username=? and password=md5(?)", [$userName, $password]);
         } else {
             $resq = sql_query("SELECT * FROM users WHERE username=? and password=md5(?)", [$userName, $password]);
         }

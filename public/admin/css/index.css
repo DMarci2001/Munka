@@ -1288,6 +1288,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	z-index:9999;
 }
 
+@media screen and (min-width: 0px) and (max-width:700px){
+	#idoponteditor {
+		position:absolute;
+		width: 100%;
+		right:auto;
+		bottom:0px;
+		top:auto;
+	}
+}
+
 .tdm {
 	display: table-cell;
 	vertical-align: middle;
@@ -1809,3 +1819,18 @@ form {
 		box-shadow: 0 0 0 0 rgba(255, 79, 93, 0);
 	}
 }
+
+.becell {
+	display:table-cell;
+	width:250px;
+	vertical-align: top;
+}
+
+.becell:first-child {
+	padding-right: 10px;
+}
+
+.fipad {
+	margin:1px 0;
+}
+
