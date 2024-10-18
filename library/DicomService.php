@@ -290,41 +290,48 @@ class DicomService {
             $param.= " -negate";
         }
 
-        if ($content = sql_query_common("select * from dicom where uid=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
-            if (!$this->dicomPermission()) {
-                $content["imageData"] = $this->notAvailableImage($param);
-            } else {
-                if (isset($_GET["embedinfo"])) {
-                    $image = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
-
-                    $black = imagecolorallocate($image, 0, 0, 0);
-                    $white = imagecolorallocate($image, 255, 255, 255);
-                    $fontPath = Booking_Constants::APP_PATH."public/images/webfonts/roboto_regular_hungarian/Roboto-Regular-webfont.ttf";
-                    $text = "Ide jön a paciens neve!";
-
-                    imagettftext($image, 45, 0, 76, 126, $black, $fontPath, $text);
-                    imagettftext($image, 45, 0, 75, 125, $white, $fontPath, $text);
-
-                    $content["imageData"] = $image;
-                    return $content;
-                }
-
-                if (isset($_GET["thumb"])) {
-                    $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
-                    if (!is_file($thumbLocation)) {
-                        `dcmj2pnm --write-png --min-max-window {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
-                    }
-                    $content["imageData"] = imagecreatefromstring(file_get_contents($thumbLocation));
-                } else {
-                    if (!empty($param)) {
-                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
-                    } else {
-                        $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
-                    }
-                }
-            }
-        } else {
+        if (!$content = sql_query_common("select * from dicom where uid=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
             $content["imageData"] = $this->notAvailableImage($param);
+            return $content;
+        }
+
+        if (!$this->dicomPermission()) {
+            $content["imageData"] = $this->notAvailableImage($param);
+            return $content;
+        }
+
+        if (!$this->checkArchive($content["fileName"])) {
+            $content["imageData"] = $this->notAvailableImage($param);
+            return $content;
+        }
+
+        if (isset($_GET["embedinfo"])) {
+            $image = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
+
+            $black = imagecolorallocate($image, 0, 0, 0);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $fontPath = Booking_Constants::APP_PATH."public/images/webfonts/roboto_regular_hungarian/Roboto-Regular-webfont.ttf";
+            $text = "Ide jön a paciens neve!";
+
+            imagettftext($image, 45, 0, 76, 126, $black, $fontPath, $text);
+            imagettftext($image, 45, 0, 75, 125, $white, $fontPath, $text);
+
+            $content["imageData"] = $image;
+            return $content;
+        }
+
+        if (isset($_GET["thumb"])) {
+            $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
+            if (!is_file($thumbLocation)) {
+                `dcmj2pnm --write-png --min-max-window {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
+            }
+            $content["imageData"] = imagecreatefromstring(file_get_contents($thumbLocation));
+        } else {
+            if (!empty($param)) {
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+            } else {
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
+            }
         }
 
         return $content;
@@ -332,8 +339,9 @@ class DicomService {
 
     private function notAvailableImage($param) {
         $num = rand(1,12);
-        $dir = self::STORAGE_DIR;
-        return imagecreatefromstring(`convert {$dir}/skeleton{$num}.png {$param} png:-`);
+        $placeholderImage = Booking_Constants::APP_PATH."public/admin/images/skeleton{$num}.png";
+
+        return imagecreatefromstring(`convert {$placeholderImage} {$param} png:-`);
     }
 
     public function getCompanies($cache = false):array {
