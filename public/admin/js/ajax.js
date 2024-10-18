@@ -766,7 +766,7 @@ function showIdopontEditor(page, p, id) {
             $("#idoponteditor").html(data);
             foglalasDisplayed = id;
             //$("#idoponteditor").slideDown();
-            repositionIdopontEditor();
+            repositionIdopontEditor(id);
 
             $("#naptarloading").hide();
             initIrszAutoFill();
@@ -777,10 +777,16 @@ function showIdopontEditor(page, p, id) {
     });
 }
 
-function repositionIdopontEditor() {
+function repositionIdopontEditor(id) {
     let el = $("#idoponteditor");
-    if ($(window).width() < 768) {
-        el.css("top", $(window).scrollTop());
+    let topPos = $(document).scrollTop();
+    if ($(window).width() < 600) {
+        if (id != 0) {
+            //topPos = $("#det"+id).offset().top;
+            topPos = Math.round($(document).scrollTop());
+            console.log("top: " + topPos);
+            el.css("top", topPos);
+        }
         el.css("left", "0px");
         el.css("bottom", "auto");
         el.css("right", "auto");
@@ -2101,7 +2107,7 @@ $(window).resize(function () {
     popUpPosition();
 
     if ($("#idoponteditor").is(":visible")) {
-        repositionIdopontEditor();
+        repositionIdopontEditor(0);
     }
 });
 

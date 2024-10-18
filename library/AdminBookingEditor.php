@@ -387,8 +387,8 @@ class AdminBookingEditor {
     }
 
     private function companySelector($selectedCompanyId):string {
-        $html = "";
-        $html .= "<select class='bookingeditorcegselector2' onChange='setDefaultDokirexCegId($(this).val())' name='cegid' id='cegid' style='width:200px;'>";
+        $html = "<div style='width:100%;'>";
+        $html .= "<select class='bookingeditorcegselector2' onChange='setDefaultDokirexCegId($(this).val())' name='cegid' id='cegid' style='width:100%;'>";
         $html .= "<option value='0'>Nincs céghez kötve</option>";
 
         $cegFilter = "";
@@ -400,6 +400,7 @@ class AdminBookingEditor {
             $html .= "<option value='{$company["id"]}'" . ($selectedCompanyId == $company["id"] ? " selected" : "") . ">{$company["megnev"]}</option>";
         }
         $html .= "</select>";
+        $html .= "</div>";
         return $html;
     }
 
@@ -440,7 +441,7 @@ class AdminBookingEditor {
         $wora = "AND TIME(b.tol)<=TIME('{$ora}') AND TIME(b.ig)>TIME('{$ora}')";
 
         $html .= "<input type='hidden' name='regiorvos' value='{$reservationData["orvosassigned"]}' />";
-        $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:180px;'>";
+        $html .= "<select class='bookingeditorselector2' name='orvosassigned' style='width:calc(100% - 30px);'>";
         $html .= "<option value='0'>Nincs orvoshoz kötve</option>";
         $resh = sql_query("SELECT o.*, SUM((b.nap=WEEKDAY('{$nap}')+1 or b.beonap='{$nap}') {$wora} AND (b.hetek=0 OR (WEEK('{$nap}',3)%2=0 AND b.hetek=2) OR (WEEK('{$nap}',3)%2=1 AND b.hetek=1)) and b.aktiv=1) as beovan
                   FROM orvos_beosztas_new b 
@@ -467,14 +468,14 @@ class AdminBookingEditor {
         $html .= "<span style='font-size:16px;font-weight:bold;' title='Foglalás ideje:{$row['regdatum']}'>" . $this->adminUtils->magyarDatum($row["datum"])."";
         $html .= " - {$row["rinterval"]} perc <a style='color:yellow;' onclick='startTimeEditor({$row["id"]},\"{$row["pass"]}\");return false;' href='#'><i title='időpont és időtartam átírása' class='fa-solid fa-pen-to-square'></i></a>";
         $html .= " - {$row["sztipus"]}</span>";
-        $html .= "<div style='display: table-row;'>";
+
+        $html .= "<div>";
         if ($row["foglalta"] != "") {
-            $html .= "<div class='tdm'>Foglalta: {$row["foglalta"]}&nbsp;&nbsp;</div>";
+            $html .= "Foglalta: {$row["foglalta"]}&nbsp;&nbsp;";
         }
         if ($row["modifiedby"] != "") {
-            $html .= "<div class='tdm'>Módosította: <span title='{$row["modifiedtime"]}'>{$row["modifiedby"]}</span>&nbsp;&nbsp;</div>";
+            $html .= "Módosította: <span title='{$row["modifiedtime"]}'>{$row["modifiedby"]}</span>&nbsp;&nbsp;";
         }
-
         $html .= "</div>";
 
         $html .= "<div style='margin-top:4px;'>";
@@ -487,6 +488,7 @@ class AdminBookingEditor {
         $html .= "</div>";
 
         $html .= "</div>";
+
         $html .= "<div id='moveinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod helyezni a foglalást.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
         $html .= "<div id='copyinfo' style='display:none;background:#ff8;color:#555;padding:10px;'>Kattints arra az időpont melletti \"+\" gombra, ahova át akarod <b>másolni</b> a foglalást.<br/>Több időponthoz is másolhatsz, ha befejezted kattints a mégse gombra.<div style='margin:3px 0px;'><a class='middlebutton' href='#' onclick='cancelFoglalasMove();return false;'>mégse</a></div></div>";
         $html .= "<div id='timeedit' style='display:none;background:#ff8;color:#555;padding:10px;'>";
@@ -536,62 +538,40 @@ class AdminBookingEditor {
         return $html;
     }
 
+    private string $textCellWidth = "80px";
 
     private function companyBlock($row):string {
         $html = "";
 
-        if (session_id() == "387e9hc92tesfsc7bq2mk3498c") {
+        $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
+        $html.= "<div class='becell'>";
 
-            $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
-            $html.= "<div class='becell'>";
+        $html.= "<div style='display:table;width:100%;'>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm' style='width:{$this->textCellWidth};'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</div><div class='tdm' style='padding:1px 0;'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Cég:</div><div class='tdm' style='padding:1px 0;'>" . $this->companySelector($row["cegid"]) . "</div>";
+        $html.= "</div>";
+        $html.= "</div>";
 
-            $html.= "<div style='display:table;width:100%;'>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</div><div class='tdm' style='padding:1px 0;'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Cég:</div><div class='tdm' style='padding:1px 0;'>" . $this->companySelector($row["cegid"]) . "</div>";
-            $html.= "</div>";
-            $html.= "</div>";
+        $html.= "</div>";
 
-            $html.= "</div>";
+        $html.= "<div class='becell'>";
 
+        $html.= "<div style='display:table;width:100%;'>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm' style='width:{$this->textCellWidth};'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</div><div class='tdm' style='padding:1px 0;'>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Orvos:</div><div class='tdm' style='padding:1px 0;'>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope fa-lg'></i></a></div>";
+        $html.= "</div>";
+        $html.= "</div>";
 
-            $html.= "<div class='becell'>";
+        $html.= "</div>";
 
-            $html.= "<div style='display:table;width:100%;'>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</div><div class='tdm' style='padding:1px 0;'>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Orvos:</div><div class='tdm' style='padding:1px 0;'>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></div>";
-            $html.= "</div>";
-            $html.= "</div>";
+        $html .= "</div>";
 
-            $html.= "</div>";
-
-            $html .= "</div>";
-
-        } else {
-            $html .= "<table style='font-size:12px;'>";
-
-            $html .= "<tr>";
-            $html .= "<td width='60' style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</td>";
-            $html .= "<td width='226'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</td>";
-            $html .= "<td  style='white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex munkakör' />&nbsp;Munkakör:</td>";
-            $html .= "<td>{$this->adminUtils->munkakorlista($row["dokirexmunkakorid"],"onChange='setMunkakorText($(this).val())'")}</td>";
-            $html .= "</tr>";
-
-            $html .= "<tr>";
-            $html .= "<td width='64'>Cég:</td><td width='226'>";
-            $html .= "<div>" . $this->companySelector($row["cegid"]) . "</div>";
-            $html .= "<div id='bookingeditortelephely'>" . $this->telephelySelector($row["cegid"], $row["telephelyid"]) . "</div>";
-            $html .= "</td>";
-            $html .= "<td width='64'>Orvos:</td><td>" . $this->doctorSelector($row) . "&nbsp;&nbsp;<a href='#' onclick='foglalasOrvosErtesites();return false;' title='Orvos értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
-            $html .= "</tr>";
-
-            $html .= "</table>";
-        }
         return $html;
     }
 
@@ -599,7 +579,7 @@ class AdminBookingEditor {
         $html = "";
 
         if ($row["paciensid"] == 0) {
-            $html .= "<div style='border-top:1px solid #888;border-bottom:1px solid #888;padding:10px 0px;margin:4px 0px 2px 0px;'>";
+            $html .= "<div style='border-top:1px solid #888;padding:5px 0px;margin:5px 0px 2px 0px;'>";
             $html .= "Ehhez a foglaláshoz nem tartozik paciens adatlap! Válassz a meglévő adatlapok közül, vagy hozz létre újat.";
             $html .= "<div style='margin-top: 3px;'>";
             $html .= "<a class='middlebutton' style='background:#f00;' href='#' onClick='prepareUserDataSearch();return false;'>paciens adatlap keresése</a>&nbsp;&nbsp;";
@@ -619,7 +599,7 @@ class AdminBookingEditor {
     }
 
     private function patientDataBlock($row):string {
-        $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search'></i></a>";
+        $tajButton = "<a onClick='autoFill(false);return false;' href='#'><i class='fas fa-search fa-lg'></i></a>";
         $userNotificationMark = sql_query("select id from notifications where tipus='usernotification' and objectid=? and destination=?", [$row["id"], $row["email"]])->fetch(PDO::FETCH_ASSOC) ? " <i style='color:#08a;' title='Visszaigazoló email kiment erre a címre' class='fa-solid fa-circle-check'></i>" : "";
 
         $tajCheck = "";
@@ -633,97 +613,65 @@ class AdminBookingEditor {
 
         $html = "";
 
-        if (session_id() == "387e9hc92tesfsc7bq2mk3498c") {
-            $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
-            $html.= "<div class='becell'>";
+        $html.= "<div style='border-top:1px solid #888;padding-top:5px;margin-top:5px;'>";
+        $html.= "<div class='pdatarow' style='display:table;width:100%;'>";
+        $html.= "<div class='becell'>";
 
-            $html.= "<div style='display:table;width:100%;'>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'><span>Taj szám:{$tajCheck}</span></div><div class='tdm'><input data-taborder='1' class='inputbox ui-taborder editortaj2 fipad' style='width:80%;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Név:</div><div class='tdm'><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder fipad' placeholder='Ide csak nevet írj' style='width:100%;' type='text' name='nev' value='{$row["nev"]}'></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Munkakör:</div><div class='tdm'>" . $this->munkakorInput($row) . "</div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Szül. dátum:</div><div class='tdm'><input data-taborder='4'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Szül. hely:</div><div class='tdm'><input data-taborder='5'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szulhely' value='{$row["szulhely"]}'></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Anyja neve:</div><div class='tdm'><input data-taborder='6'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></div>";
-            $html.= "</div>";
-            $html.= "</div>";
+        $html.= "<div style='display:table;width:100%;'>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm' style='width:{$this->textCellWidth};'><span>Taj szám:{$tajCheck}</span></div><div class='tdm'><input data-taborder='1' class='inputbox ui-taborder editortaj2 fipad' style='width:calc(100% - 30px);' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Név:</div><div class='tdm'><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder fipad' placeholder='Ide csak nevet írj' style='width:100%;' type='text' name='nev' value='{$row["nev"]}'></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Munkakör:</div><div class='tdm'>" . $this->munkakorInput($row) . "</div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Szül. dátum:</div><div class='tdm'><input data-taborder='4'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Szül. hely:</div><div class='tdm'><input data-taborder='5'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='szulhely' value='{$row["szulhely"]}'></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Anyja neve:</div><div class='tdm'><input data-taborder='6'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></div>";
+        $html.= "</div>";
+        $html.= "</div>";
 
-            $html.= "</div>";
+        $html.= "</div>";
 
 
-            $html.= "<div class='becell'>";
+        $html.= "<div class='becell'>";
 
-            $html.= "<div style='display:table;width:100%;'>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>E-mail:{$userNotificationMark}</div><div class='tdm'><input data-taborder='7' class='inputbox ui-taborder fipad' style='width:80%;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Telefon:</div><div class='tdm'><input data-taborder='8' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='telefon' value='{$row["telefon"]}'></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Irsz:</div><div class='tdm'><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder fipad' style='width:25%;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:70%;' type='text' name='varos' id='varos' value='{$row["varos"]}'></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Utca:</div><div class='tdm'><input data-taborder='11' class='inputbox ui-taborder fipad' style='width:100%' type='text' name='utca' value='{$row["utca"]}'/></div>";
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            if (!empty($row["adoszam"])) {
-                $html.= "<div class='tdm'>Adószám:</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='adoszam' value='{$row["adoszam"]}'></div>";
-            } else {
-                $html.= "<div class='tdm'>Törzsszám:&nbsp;</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></div>";
-            }
-            $html.= "</div>";
-            $html.= "<div style='display:table-row'>";
-            $html.= "<div class='tdm'>Neme:&nbsp;</div><div class='tdm' style='padding:3px 0px;'><input type='radio' name='neme' " . ($row["neme"] == 1 ? "checked" : "") . " value='1' class='fipad'/>&nbsp;Férfi&nbsp;<input type='radio' name='neme' " . ($row["neme"] == 2 ? "checked" : "") . " value='2' class='fipad'>&nbsp;Nő</div>";
-            $html.= "</div>";
-            $html.= "</div>";
-
-            $html.= "</div>";
-
-            $html .= "</div>";
+        $html.= "<div style='display:table;width:100%;'>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm' style='width:{$this->textCellWidth};'>E-mail:{$userNotificationMark}</div><div class='tdm'><input data-taborder='7' class='inputbox ui-taborder fipad' style='width:calc(100% - 30px);' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope fa-lg'></i></a></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Telefon:</div><div class='tdm'><input data-taborder='8' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='telefon' value='{$row["telefon"]}'></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Irsz:</div><div class='tdm'><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder fipad' style='width:25%;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:70%;' type='text' name='varos' id='varos' value='{$row["varos"]}'></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Utca:</div><div class='tdm'><input data-taborder='11' class='inputbox ui-taborder fipad' style='width:100%' type='text' name='utca' value='{$row["utca"]}'/></div>";
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        if (!empty($row["adoszam"])) {
+            $html.= "<div class='tdm'>Adószám:</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='adoszam' value='{$row["adoszam"]}'></div>";
         } else {
-            $html .= "<table style='font-size:12px;width:100%;'>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'><span>Taj szám:{$tajCheck}</span></td><td><input data-taborder='1' class='inputbox ui-taborder editortaj2' style='width:180px;' type='text' id='editortaj' name='taj' value='{$row["taj"]}'> {$tajButton}</td>";
-            $html .= "<td width='60'>E-mail:{$userNotificationMark}</td><td><input data-taborder='7' class='inputbox ui-taborder' style='width:172px;' type='text' name='email' value='{$row["email"]}'>&nbsp;&nbsp;<a href='#' onclick='manualNotificationSend({$row["id"]},\"{$row["pass"]}\");return false;' title='Paciens értesítése' style='font-size: 16px;'><i class='fas fa-envelope'></i></a></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Név:</td><td><input data-taborder='2' onclick='return false;' class='inputbox ui-taborder' placeholder='Ide csak nevet írj' style='width:200px;' type='text' name='nev' value='{$row["nev"]}'></td>";
-            $html .= "<td width='60'>Telefon:</td><td><input data-taborder='8' class='inputbox ui-taborder' style='width:200px;' type='text' name='telefon' value='{$row["telefon"]}'></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Munkakör:</td><td>" . $this->munkakorInput($row) . "</td><td width='60'>Irsz:</td>";
-            $html .= "<td><input data-taborder='9' placeholder='Irsz' class='inputbox ui-taborder' style='width:40px;' type='text' name='irsz' id='irsz' value='{$row["irsz"]}'> <input data-taborder='10' placeholder='Város' class='inputbox ui-taborder' style='width:150px;' type='text' name='varos' id='varos' value='{$row["varos"]}'></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='70'>Szül. dátum:</td><td><input data-taborder='4'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szuldatum' id='editorszuldatum' value='{$row["szuldatum"]}' placeholder='éééé-hh-nn'/></td>";
-            $html .= "<td width='60'>Utca:</td><td><input data-taborder='11' class='inputbox ui-taborder' style='width:200px;' type='text' name='utca' value='{$row["utca"]}'/></td>";
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Szül. hely:</td><td><input data-taborder='5'  class='inputbox ui-taborder' style='width:200px;' type='text' name='szulhely' value='{$row["szulhely"]}'></td>";
-            if (!empty($row["adoszam"])) {
-                $html .= "<td width='60'>Adószám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='adoszam' value='{$row["adoszam"]}'></td>";
-            } else {
-                $html .= "<td width='60'>Törzsszám:</td><td><input data-taborder='13' class='inputbox ui-taborder' style='width:200px;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></td>";
-            }
-            $html .= "</tr>";
-            $html .= "<tr class='pdatarow'>";
-            $html .= "<td width='60'>Anyja neve:</td><td><input data-taborder='6'  class='inputbox ui-taborder' style='width:200px;' type='text' name='anyjaneve' value='{$row["anyjaneve"]}'></td>";
-            $html .= "<td>Neme:&nbsp;</td><td><input type=\"radio\" name=\"neme\" " . ($row["neme"] == 1 ? "checked=\"true\"" : "") . " value=\"1\"/>&nbsp;Férfi&nbsp;<input type=\"radio\" name=\"neme\" " . ($row["neme"] == 2 ? "checked=\"true\"" : "") . " value=\"2\">&nbsp;Nő</td>";
-
-            $html .= "</tr>";
-            $html .= "</table>";
+            $html.= "<div class='tdm'>Törzsszám:&nbsp;</div><div class='tdm'><input data-taborder='13' class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='torzsszam' value='{$row["torzsszam"]}'></div>";
         }
+        $html.= "</div>";
+        $html.= "<div style='display:table-row'>";
+        $html.= "<div class='tdm'>Neme:&nbsp;</div><div class='tdm' style='padding:3px 0px;'><input type='radio' name='neme' " . ($row["neme"] == 1 ? "checked" : "") . " value='1' class='fipad'/>&nbsp;Férfi&nbsp;<input type='radio' name='neme' " . ($row["neme"] == 2 ? "checked" : "") . " value='2' class='fipad'>&nbsp;Nő</div>";
+        $html.= "</div>";
+        $html.= "</div>";
+
+        $html.= "</div>";
+
+        $html .= "</div>";
+        $html .= "</div>";
 
         return $html;
     }
@@ -756,7 +704,17 @@ class AdminBookingEditor {
         $html.= "<div style='display:table;width:100%;'>";
 
         $html.= "<div class='becell'>";
-        $html.= "<textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:273px;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
+        $html.= "<textarea data-taborder='14' class='ui-taborder' placeholder='Megjegyzés...' style='width:100%;height:60px;' id='reservationinfo' name='megj'>{$row["megj"]}</textarea>";
+
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $html.= "<div>";
+            $html.= "<a href='#' onclick=\"$('#reservationinfo').val('(előzetes) '+$('#reservationinfo').val());return false;\">előzetes</a> | ";
+            $html.= "<a href='#' onclick=\"$('#reservationinfo').val('(időszakos) '+$('#reservationinfo').val());return false;\">időszakos</a> | ";
+            $html.= "<a href='#' onclick=\"$('#reservationinfo').val('(soron kívüli) '+$('#reservationinfo').val());return false;\">soron kívüli</a> | ";
+            $html.= "<a href='#' onclick=\"$('#reservationinfo').val('(záró) '+$('#reservationinfo').val());return false;\">záró</a>";
+            $html.= "</div>";
+        }
+
         $html.= "</div>";
 
         $html.= "<div class='becell'>";
@@ -1012,7 +970,7 @@ class AdminBookingEditor {
     private function questionaryWindow($row){
         $html = "";
         $counter = 0;
-        $html .= "<div style='width:500x;background:white;'>";
+        $html .= "<div style='width:500px;background:white;'>";
         $html .= "  <form id=\"alkalmassgibox\">";
         $html .= "  <div style='display:table;width:100%;background:#8792ae;color:white;'>";
         $html .= "      <div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class=\"fa-solid fa-award\"></i>&nbsp;&nbsp;{$row[0]["nev"]} - {$row[0]["szuldatum"]} - {$row[0]["taj"]}</div>";
