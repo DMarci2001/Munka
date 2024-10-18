@@ -38,6 +38,11 @@ class AdminBookingPage extends AdminCorePage
             die();
         }
 
+        if (isset($_GET["sethelyszin3"])) {
+            $s = explode("-", $_GET["sethelyszin3"]);
+            $_SESSION["helyszin"]    = $s[0];
+            $_SESSION["helyszinceg"] = $s[1];
+        }
 
         if (isset($_GET["deletedreservations"])) {
             $service = new NotificationService();
@@ -780,6 +785,7 @@ class AdminBookingPage extends AdminCorePage
 
     public function showElojegyzesTableNew($setDay)
     {
+        $startTime     = microtime(true);
         $settings      = new Booking_Settings();
         $htmlout       = "";
         $cimFilterHTML = $this->cimFilter();
@@ -1131,20 +1137,26 @@ class AdminBookingPage extends AdminCorePage
             $this->showDoctorName = true;
 
             //beosztásban nem szereplő orvosok esetleges foglalásai
-            $htmlout .= "<tr>";
-            $htmlout .= "<td>";
-            $htmlout .= "<div style='border-top:1px solid #888;margin-top:10px;padding:10px 0px 10px 0px;font-weight: bold;;'>Egyéb foglalások:</div>";
 
+            $otherHtml = "";
+            $exists = false;
             foreach ($foglalasok as $orvosFoglalasok) {
-                $htmlout .= "<table cellpadding='0' cellspacing='0'>";
+                $otherHtml .= "<table cellpadding='0' cellspacing='0'>";
                 foreach ($orvosFoglalasok as $foglalas) {
-                    $htmlout .= $this->elojegyzesTableRow($foglalas, date("H:i", strtotime($foglalas["datum"])), 0, true);
+                    $exists = true;
+                    $otherHtml .= $this->elojegyzesTableRow($foglalas, date("H:i", strtotime($foglalas["datum"])), 0, true);
                 }
-                $htmlout .= "</table>";
+                $otherHtml .= "</table>";
             }
 
-            $htmlout .= "</td>";
-            $htmlout .= "</tr>";
+            if ($exists) {
+                $htmlout .= "<tr>";
+                $htmlout .= "<td>";
+                $htmlout .= "<div style='border-top:1px solid #888;margin-top:10px;padding:10px 0px 10px 0px;font-weight: bold;;'>Egyéb foglalások:</div>";
+                $htmlout .= $otherHtml;
+                $htmlout .= "</td>";
+                $htmlout .= "</tr>";
+            }
         }
 
         $htmlout .= "</table>";
@@ -1188,6 +1200,11 @@ class AdminBookingPage extends AdminCorePage
             $htmlout = str_replace("#szabad{$section}#", "{$counter["szabad"]} szabad", $htmlout);
         }
 
+        $endTime = microtime(true);
+
+        if (session_id() == "ap6r6hpvulo6ot76oh7non71o9") {
+            $htmlout.= "<div style='margin-top:10px;padding:10px;background:#eee;'>Exection time: " . round($endTime - $startTime, 2) . " sec</div>";
+        }
 
         return $htmlout;
     }
@@ -1307,7 +1324,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "</td><td valign='top' nowrap>";
             }
 
-            $htmlout .= "<a onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>{$kidSign}{$tudoszuroSign}{$hallasSign}{$laborSign}{$docSign}&nbsp;&nbsp;";
+            $htmlout .= "<a id='det{$reservationData["id"]}' onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>{$kidSign}{$tudoszuroSign}{$hallasSign}{$laborSign}{$docSign}&nbsp;&nbsp;";
 
             if (!empty($reservationData["externalid"])) {
                 $htmlout .= "<span class='externalmark' title='foglalás forrása'>" . str_replace("hungariamed", "hmm", preg_replace('/[0-9]+/', '', $reservationData["externalid"])) . "</span>&nbsp;&nbsp;";

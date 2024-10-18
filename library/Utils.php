@@ -311,7 +311,7 @@ class Utils {
         }
 
         $htmlout='<!DOCTYPE html>';
-        $htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
+        $htmlout.='<html>';
         $htmlout.='<head>';
 
         $v = "version".date("YmdHi");

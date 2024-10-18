@@ -35,11 +35,6 @@ $(document).ready(function () {
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }
-
-    $(window).resize(function() {
-        repositionThings();
-    });
-
 });
 
 
@@ -59,7 +54,18 @@ function setHelyszin(h) {
 }
 
 function setHelyszin2(h) {
-    window.location.href = 'index.php?page=booking&sethelyszin2=' + h;
+    //window.location.href = 'index.php?page=booking&sethelyszin2=' + h;
+
+    $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
+    $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&sethelyszin3="+encodeURIComponent(h),null,
+        function(responseText){
+            afterElojegyzesTableInit();
+            $("#napfilter").css("background-image","url('/images/empty-128.png')");
+            reloadWaitList();
+        }
+    );
+
+
 }
 
 function setNaptarSzuresTipus(t) {
@@ -389,8 +395,6 @@ function removeFizSzolg(fid, id) {
 
 
 function setListDay(day) {
-    //$("#querystatus").html("lekérdezés folyamatban...");
-
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
