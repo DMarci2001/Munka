@@ -984,6 +984,7 @@ class PrintService
         "Dr. Szász Angéla Imola" => 63018,
         "Dr. Hollandi Erzsébet" =>60694,
         "Dr. Balogh Zsuzsanna" => 81137,
+        "Dr. Nemecz Zsuzsanna" => 37220,
     ];
 
     private function innioErtesites(){
