@@ -63,6 +63,7 @@ class SpektrumlabService {
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
         "000000390" => "Keltexmed Kft.",
+        "000000533" => "Keltexmed Kft. (Auchan)",
     ];
 
     const DEFAULT_BEKULDOKOD = "000000370";

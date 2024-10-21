@@ -304,14 +304,14 @@ class Utils {
         return "";
     }
 
-    public function htmlheader($pageTitle = "Online bejelentkezés") {
+    public function htmlheader($pageTitle = "Online bejelentkezés"):string {
         $subdomain = $_SESSION["helyszindata"]["domain"];
         if (isset($GLOBALS["subtitle"]) && !empty($GLOBALS["subtitle"])) {
             $pageTitle = "{$GLOBALS["subtitle"]} - $pageTitle";
         }
 
-        $htmlout='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-        $htmlout.='<html xmlns="http://www.w3.org/1999/xhtml">';
+        $htmlout='<!DOCTYPE html>';
+        $htmlout.='<html>';
         $htmlout.='<head>';
 
         $v = "version".date("YmdHi");
@@ -331,8 +331,8 @@ class Utils {
         $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
-        $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
-        $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
+        $htmlout.='<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
+        $htmlout.='<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
         $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
@@ -920,6 +920,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return true;
     }
 
+    public static function getBetween($content, $start, $end):array {
+        $n = explode($start, $content);
+        $result = [];
+        foreach ($n as $val) {
+            $pos = strpos($val, $end);
+            if ($pos !== false) {
+                $result[] = substr($val, 0, $pos);
+            }
+        }
+        return $result;
+    }
 
     public static function convertAccentsAndSpecialToNormal($string):string {
         $table = array(

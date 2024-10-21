@@ -28,6 +28,8 @@ class PrintService
         "bfkh_email_kuldes"  => "bfkh_email_kuldes",
         "munkanaplo"         => "munkanaplo",
         "munkanaplopdf"      => "munkanaplopdf",
+        "ghcsenior"          => "ghc-szures-2024-senior.pdf",
+        "ghcstandard"        => "ghc-szures-2024-standard.pdf",
     );
 
     private array $inputs = array(
@@ -147,6 +149,11 @@ class PrintService
             return;
         }
 
+        if ($this->templateId == "ghcsenior" || $this->templateId == "ghcstandard") {
+            $this->printGHCPdf();
+            return;
+        }
+
         //HTML alapú dokumentumok:
         if (strpos($this->templateFileName, ".html") !== false) {
             header("Content-type: text/html; charset=UTF-8");
@@ -227,6 +234,50 @@ class PrintService
 
         $pdf = new Pdf("templates/{$this->templateFileName}");
 
+
+        $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($raw === false) {
+            $error = $pdf->getError();
+            var_dump($error);
+        } else {
+            header("Pragma: no-cache");
+            header("Cache-Control: no-store, no-cache");
+            header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must-revalidate");
+            header('Content-transfer-encoding: binary');
+            header("Content-Type: application/octet-stream");
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            //header("Content-Type: application/pdf");
+            echo $raw;
+        }
+    }
+
+
+    private function printGHCPdf() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $cim  = $this->reservationData["irsz"]. " ". $this->reservationData["varos"].", ".$this->reservationData["utca"];
+
+        $input = [
+            "nev" => $this->pdfChars($this->reservationData["nev"]),
+            "szuldatum" => date("Y. m. d.", strtotime($this->reservationData["szuldatum"])),
+            "taj" => $this->pdfChars($this->reservationData["taj"]),
+            "cim" => $this->pdfChars($cim),
+            "levelezesicim" => $this->pdfChars($cim),
+            "telefon" => $this->pdfChars($this->reservationData["telefon"]),
+            "email" => $this->pdfChars($this->reservationData["email"]),
+        ];
+
+        $fileName = "ghc_senior_" . date("Y_m_d", strtotime($this->reservationData["datum"])) . "_{$this->reservationData["nev"]}.pdf";
+
+        if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
+            $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
+        }
+
+        $pdf = new Pdf("templates/{$this->templateFileName}");
 
         $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
 

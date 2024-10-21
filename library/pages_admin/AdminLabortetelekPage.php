@@ -2,14 +2,8 @@
 
 class AdminLabortetelekPage extends AdminCorePage
 {
-    //Tétel kategória filter:
-    private $cFilter;
-    //Kérőlap filter:
-    private $formFilter;
     //Tétel árak módosításának jelölés változója:
     private $setItemPrices;
-    //Csomag árak módosításának jelölés változója:
-    private $setPackagePrices;
     //Csomag azonosító:
     private int $packageId;
     private array $packageItems = [];
@@ -66,40 +60,6 @@ class AdminLabortetelekPage extends AdminCorePage
            }
         }
 
-        //Ha van csomagazonosító, akkor állítcsa be sessionbe az értéket:
-        /*
-        if (isset($_GET["szerk"])) {
-            if (!empty($_GET["szerk"]) && $_GET["szerk"] != "*") {
-                $_SESSION["packageId"] = $_GET["szerk"];
-            } else {
-                unset($_SESSION["packageId"]);
-            }
-        }
-
-        //Ha van csomag azonosító session, tegybe be class változóba is:
-        if (isset($_SESSION["packageId"])) {
-            $this->packageId = $_SESSION["packageId"];
-        } else {
-            $this->packageId = null;
-        }
-
-        //Ha létezik a kiválaszott csomag json értéke, akkor azt helyezze el a class változóban is:
-        if (isset($_SESSION["packageItems"])) {
-            $this->packageItems = $_SESSION["packageItems"];
-        } else {
-            $this->packageItems = null;
-        }
-
-        if (!isset($_REQUEST["szerk"])) {
-            unset($_SESSION["packageId"]);
-            unset($_SESSION["packageItems"]);
-        }
-
-        if (!isset($_SESSION["selectedcsomagcompany"])) {
-            $_SESSION["selectedcsomagcompany"] = 0;
-        }
-        */
-
         //Csomagok aktiválása/deaktiválása:
         if (isset($_GET["packaktivetoggle"])) {
 
@@ -114,84 +74,6 @@ class AdminLabortetelekPage extends AdminCorePage
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
             die;
         }
-
-        /*
-        //Kategórai szerinti szűrés session beállítása:
-        if (isset($_POST["filterbycategory"])) {
-            if (!empty($_POST["cFilter"]) && $_POST["cFilter"] != "*") {
-                $_SESSION["cFilter"] = $_POST["cFilter"];
-            } else {
-                unset($_SESSION["cFilter"]);
-            }
-        }
-        //Kategória szerinti szűrés class változó beállítása:
-        if (isset($_SESSION["cFilter"])) {
-            $this->cFilter = $_SESSION["cFilter"];
-        } else {
-            $this->cFilter = null;
-        }
-
-        //Kérőlap szerinti szűrés beállítása
-        if (isset($_POST["filterbyform"])) {
-            if (!empty($_POST["formFilter"]) && $_POST["formFilter"] != "*") {
-                $_SESSION["formFilter"] = $_POST["formFilter"];
-            } else {
-                unset($_SESSION["formFilter"]);
-                unset($_SESSION["cFilter"]);
-            }
-        }
-
-        //Kérőlap szerinti szűrés class változó beállítása:
-        if (isset($_SESSION["formFilter"])) {
-            $this->formFilter = $_SESSION["formFilter"];
-        } else {
-            $this->formFilter = null;
-        }
-
-        //Tétel árak módosításának toggle kezelője:
-        if (isset($_POST["setItemPrices"])) {
-            if ($_POST["setItemPrices"] == "true") {
-                $this->setItemPrices = true;
-            } else {
-                $this->setItemPrices = false;
-            }
-        }
-
-        //Csomag árak módosításának toggle kezelője:
-        if (isset($_POST["setPackagePrices"])) {
-            if ($_POST["setPackagePrices"] == "true") {
-                $this->setPackagePrices = true;
-            } else {
-                $this->setPackagePrices = false;
-            }
-        }
-
-        //Tétel árak mentése:
-        if (isset($_POST["saveItemPrices"]) && $_POST["saveItemPrices"] == true) {
-            foreach ($_POST as $index => $value) {
-                if (strpos($index, "item-") !== false) {
-                    $index = explode("-", $index);
-                    $id = $index[1];
-
-                    sql_query("UPDATE synlab_labor_tetelek SET price=? WHERE id=?", array($value, $id));
-                }
-            }
-        }
-
-        //Csomag árak mentése:
-        if (isset($_POST["savePackagePrices"])) {
-            foreach ($_POST as $index => $value) {
-                if (strpos($index, "package-") !== false) {
-                    $index = explode("-", $index);
-                    $id = $index[1];
-
-                    sql_query("UPDATE synlab_labor_csomagok SET price=? WHERE id=?", array($value, $id));
-                }
-            }
-        }
-
-        */
-
 
         if (isset($_POST["showcategoryselect"])) {
             //if (!$this->adminUser->allCegJog()) {
@@ -243,7 +125,7 @@ class AdminLabortetelekPage extends AdminCorePage
             $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap FROM synlab_labor_tetelek slt
                              LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
                              LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
-                             WHERE TRUE " . (!empty($this->cFilter) ? "AND category = {$this->cFilter}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . " " . (!empty($_POST["keyword"]) ? "AND slt.name LIKE '%" . $_POST["keyword"] . "%' " : "") . "
+                             WHERE TRUE " . (!empty($_POST["keyword"]) ? "AND slt.name LIKE '%" . $_POST["keyword"] . "%' " : "") . "
                              ORDER BY " . (!empty($packageInstall) ? $strPackageItems : "") . " sltk.name, slt.name ASC");
 
 
@@ -308,6 +190,42 @@ class AdminLabortetelekPage extends AdminCorePage
             sql_query("update synlab_labor_csomagok set {$fieldName}=? where id=?", [json_encode($newItems), $csomagId]);
             die();
         }
+
+
+        //Tétel kijelölése/kijelölés megszüntetése:
+        if (isset($_POST["selectItemForPackage2"])) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+
+            $csomagId = $_POST["csomagId"];
+            $itemId = $_POST["selectItemForPackage2"];
+            $fieldName = "items";
+
+            $itemData = sql_query("select provider from synlab_labor_tetelek where id=?", [$itemId])->fetch(PDO::FETCH_ASSOC);
+            if ($itemData["provider"] == "spektrumlab") {
+                $fieldName = "spektrumitems";
+            }
+
+            if ($packageData = sql_query("select items, spektrumitems from synlab_labor_csomagok where id=?", [$csomagId])->fetch(PDO::FETCH_ASSOC)) {
+                $this->packageItems = json_decode($packageData["{$fieldName}"]);
+            }
+
+            $newItems = [];
+            foreach ($this->packageItems as $item) {
+                if ($item != $itemId) {
+                    $newItems[] = $item;
+                }
+            }
+            if ($_POST["checked"] == 1) {
+                $newItems[] = $itemId;
+            }
+
+            sql_query("update synlab_labor_csomagok set {$fieldName}=? where id=?", [json_encode($newItems), $csomagId]);
+
+            echo $this->showItemChecker($csomagId);
+            die();
+        }
+
 
         //Csomag mentése:
         if (isset($_POST["savePackage"])) {
@@ -653,11 +571,13 @@ class AdminLabortetelekPage extends AdminCorePage
 
             echo "</table>";
 
-            if (session_id() == "itkg8ofu1tafbb21t9kfuqb6hh") {
+            echo "<div id='itemeditordiv' style='min-height:1000px;'>";
+            if (Booking_Constants::SQL_DB == "keltexmed") {
                 echo $this->showItemChecker($packageData["id"]);
             } else {
                 echo $this->showItemsNew($packageData["id"]);
             }
+            echo "</div>";
 
             echo "</form>";
         }
@@ -920,7 +840,7 @@ class AdminLabortetelekPage extends AdminCorePage
             $html .= "<tr><td colspan='4' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:16px'>SpektrumLab tételek</td>";
             $html .= "</tr>";
 
-            if (session_id() == "itkg8ofu1tafbb21t9kfuqb6hh_") {
+            if (Booking_Constants::SQL_DB == "keltexmed__") {
                 $html .= "<div id='item-content-spektrumlab'>";
                 $html .= $this->showItemChecker();
                 $html .= "</div>";
@@ -964,7 +884,8 @@ class AdminLabortetelekPage extends AdminCorePage
             $strPackageItemsSpektrum = "slt.id in (" . implode(",", $packageInstallSpektrum) . ") DESC,";
         }
 
-        //Le kell kérdeznem a tételeket:
+        //synlab items
+        /*
         $rq = sql_query("SELECT slt.*,sltk.name AS category_name,slk.name AS kerolap, t2.name AS spname FROM synlab_labor_tetelek slt
                          LEFT JOIN synlab_labor_tetel_kategoriak sltk ON sltk.id=slt.category
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slt.appform
@@ -989,16 +910,18 @@ class AdminLabortetelekPage extends AdminCorePage
         $html .= "</div>";
         $html .= "</div>";
 
+        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;'></div>";
+        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;border-left:1px solid #ccc;'></div>";
+        */
+
         $rq = sql_query("SELECT slt.* FROM synlab_labor_tetelek slt 
                          WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
                          ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-
-        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;'></div>";
-        $html .= "<div style='display:table-cell;width:20px;vertical-align:top;border-left:1px solid #ccc;'></div>";
-
         $html .= "<div style='display:table-cell;vertical-align:top;'>";
         $html .= "<div style='font-size: 18px;font-weight: bold;margin-bottom: 10px;'>Spektrumlab tételek (".count($packageInstallSpektrum)." tétel)</div>";
+
+        $html.= "<div style='margin-bottom: 10px;'><input id='csomagVizsgalatFilterText' type='text' placeholder='keresés..' /></div>";
 
         $html .= "<div id='item-content-spektrumlab'>";
         foreach ($rq as $resq) {
@@ -1013,9 +936,6 @@ class AdminLabortetelekPage extends AdminCorePage
         $html .= "</div>";
         $html .= "</table>";
         $html .= "</div>";
-
-
-
 
         return $html;
     }

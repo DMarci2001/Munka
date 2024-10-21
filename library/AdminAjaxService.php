@@ -26,11 +26,17 @@ class AdminAjaxService {
         if (isset($_GET["keltexsync"])) {
             $service = new BookingSyncApi();
 
-            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned='418' AND datum>NOW() AND megj IN ('EBÉD', 'SZÜNET')")->fetchAll(PDO::FETCH_ASSOC);
+            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned='406' AND datum>NOW()")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($reservations as $reservation) {
-                echo $reservation["megj"]." ";
+                echo $reservation["nev"]." ";
                 $service->newReservation($reservation["id"]);
             }
+            die;
+        }
+
+        if (isset($_POST["storemainmenuwidth"])) {
+            $width = intval($_POST["storemainmenuwidth"])."px";
+            $_SESSION["mainmenuwidth"] = $width;
             die;
         }
 
@@ -115,7 +121,7 @@ class AdminAjaxService {
             }
 
             if($_GET["page"] == "labortetelek"){
-                sql_query("INSERT INTO synlab_labor_csomagok SET appform=1, NAME=\"_új üres csomag\", price=\"-1\", line_through_price=\"0\", items=\"[]\", spektrumitems = \"[]\", categories = \"[]\", gender=\"both\", aktiv=1");
+                sql_query("INSERT INTO synlab_labor_csomagok SET appform=1, NAME='_új üres csomag', price='-1', line_through_price='0', items='[]', spektrumitems = '[]', categories = '[]', gender='both', aktiv=1");
             }
 
             header("location:{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}");
@@ -384,7 +390,7 @@ class AdminAjaxService {
                 $numberOfWarnings = count($warnings);
                 $return["number"] = $numberOfWarnings;
                 if ($numberOfWarnings > 0) {
-                    $return["button"] = "<span style='color:#fff;background:#f00;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='toggleWarnWindow();'>{$numberOfWarnings} figyelmeztetés!</span>";
+                    $return["button"] = "<span style='color:#fff;background:#f00;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='toggleWarnWindow();'>{$numberOfWarnings} <i class='fa-solid fa-triangle-exclamation'></i></span>";
 
                     $html = "";
                     foreach ($warnings as $warning) {
@@ -750,7 +756,7 @@ class AdminAjaxService {
             }
 
             if($f["cegid"]==220){
-                $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,\" \",fogl.varos,\", \",fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes FROM foglalasok fogl
+                $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes FROM foglalasok fogl
                 LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                 LEFT JOIN felhasznalok felh ON felh.taj=fogl.taj
                 WHERE fogl.id=?",array($_POST["fid"]));
@@ -768,7 +774,9 @@ class AdminAjaxService {
         if (isset($_POST["checkChat"])) {
             $number = 0;
             $button = "";
-            $users  = "";
+            $usersButton = "";
+            $usersData = ["html" => ""];
+
             if (!empty($adminUser->user)) {
                 if ($adminUser->chatAccess()) {
                     $color = "#33cc33";
@@ -788,9 +796,12 @@ class AdminAjaxService {
                         $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i></span>";
                     }
                 }
-                $users = $this->getActiveUsers($adminUser);
+                $usersData = $this->getActiveUsers($adminUser);
+                if (!empty($usersData["html"])) {
+                    $usersButton = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='toggleUsersWindow();' title='Bejelentkezés adatok'> {$usersData["count"]}&nbsp;<i class='fa-solid fa-user'></i></span>";
+                }
             }
-            $this->jsonOut(["number" => $number, "button" => $button, "users" => $users]);
+            $this->jsonOut(["number" => $number, "button" => $button, "users" => "", "usersbutton" => $usersButton, "usershtml" => $usersData["html"]]);
         }
 
         if (isset($_POST["showeljottlog"])) {
@@ -1129,7 +1140,8 @@ class AdminAjaxService {
         new InvoiceService();
     }
 
-    private function getActiveUsers(AdminUser $adminUser):string {
+    private function getActiveUsers(AdminUser $adminUser):array {
+        $result = ["count" => 0];
         $html = "";
 
         if (!empty($adminUser->user)) {
@@ -1139,50 +1151,46 @@ class AdminAjaxService {
 
                 foreach ($users as $user) {
                     $html .= "<div>{$user["username"]}</div>";
+                    $result["count"]++;
                 }
             }
             if (!empty($html)) {
                 $html = "<div style='font-weight: bold;margin-bottom: 5px;'>Bejelentkezve:</div></b>{$html}";
             }
 
-
             if ($adminUser->beallitasWebAdatokAccess()) {
+                $data = sql_query_common("select valuetext from sitedata where tipus='serverdata' order by datum desc limit 1")->fetch();
+                $serverData = json_decode($data["valuetext"], true);
 
-                $html.="<div style='margin-top:5px;font-weight: bold;'>WEB szerver</div>";
+                foreach ($serverData as $server) {
+                    $html.="<div style='border-top:1px dashed white;padding-top:10px;margin-top:10px;font-weight: bold;'>{$server["name"]}</div>";
 
-                $html.= "<div style='display:table;width:100%;'>";
-                $html.= $this->statusDataRow("CPU:", "", "76%");
-                $html.= $this->statusDataRow("SSD:", "500G", "76%");
-                $html.= $this->statusDataRow("HDD:", "2000G", "56%");
-                $html.= "</div>";
+                    $load = Utils::getBetween($server["proc"], "average:", ",");
 
-                $html.="<div style='margin-top:5px;font-weight: bold;'>Mail szerver</div>";
+                    $html.= "<div style='display:table;width:100%;'>";
+                    $html.= $this->statusDataRow("Server load:", "", "", trim($load[1]));
 
-                $html.= "<div style='display:table;width:100%;'>";
-                $html.= $this->statusDataRow("CPU:", "", "10%");
-                $html.= $this->statusDataRow("SSD:", "200G", "64%");
-                $html.= $this->statusDataRow("SSD:", "500G", "66%");
-                $html.= $this->statusDataRow("HDD:", "500G", "95%");
-                $html.= "</div>";
+                    foreach (explode("\n", $server["hdd"]) as $hddRow) {
+                        $hddRow = preg_replace('!\s+!', ' ', $hddRow);
+                        $hddParts = explode(" ", $hddRow);
+                        if (substr_count($hddParts[0], "/dev")) {
+                            $html.= $this->statusDataRow($hddParts[0], $hddParts[1], $hddParts[3], $hddParts[4]);
+                        }
+                    }
 
-                $html.="<div style='margin-top:5px;font-weight: bold;'>Backup</div>";
-
-                $html.= "<div style='display:table;width:100%;'>";
-                $html.= $this->statusDataRow("CPU:", "", "2%");
-                $html.= $this->statusDataRow("HDD1:", "200G", "64%");
-                $html.= $this->statusDataRow("HDD2:", "1000G", "66%");
-                $html.= $this->statusDataRow("HDD3:", "2000G", "40%");
-                $html.= "</div>";
-
+                    $html.= "</div>";
+                }
             }
 
         }
 
-        return $html;
+        $result["html"] = $html;
+
+        return $result;
     }
 
-    private function statusDataRow($title, $data1, $data2):string {
-        return "<div style='display:table-row;'><div style='display:table-cell;'>{$title}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data1}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data2}</div></div>";
+    private function statusDataRow($title, $data1, $data2, $data3):string {
+        return "<div style='display:table-row;'><div style='display:table-cell;'>{$title}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data1}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data2}</div><div style='display:table-cell;text-align: right;'>&nbsp;&nbsp;{$data3}</div></div>";
     }
 
 
@@ -1197,82 +1205,6 @@ class AdminAjaxService {
         die();
     }
 
-    private function sanyistatija(){
 
-        $csomagStat = array();
-
-        $result = sql_query("SELECT fogl.datum,fogl.nev,fogl.taj,fogl.szuldatum,fogl.megj,lq.createdby,REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\") AS rawids,
-                            (SELECT GROUP_CONCAT(slc1.name) FROM synlab_labor_csomagok slc1 WHERE slc1.id IN(REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\"))) AS csomagok
-                            FROM foglalasok fogl
-                            LEFT JOIN labrequests lq ON lq.foglalasid=fogl.id
-                            LEFT JOIN synlab_labor_csomagok slc ON slc.id IN(REPLACE(REPLACE(lq.laborpacks,\"[\",\"\"),\"]\",\"\"))
-                            WHERE fogl.helyszinid IN(669,282) AND fogl.datum BETWEEN \"2024-06-17%\" AND \"2024-06-21%\"
-                            GROUP BY fogl.id;")->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach($result as $key =>$data){
-            if(!empty($data["rawids"])){
-                $csomagok = sql_query("SELECT SUBSTR(GROUP_CONCAT(\" \",slc1.name),2) as csomagok 
-                FROM synlab_labor_csomagok slc1 
-                WHERE slc1.id IN({$data["rawids"]});")->fetchAll(PDO::FETCH_ASSOC);
-
-                if(isset($csomagok[0])){
-                    $result[$key]["csomagok"] = $csomagok[0]["csomagok"];
-                }
-
-                $csomagokArray = sql_query("SELECT name FROM synlab_labor_csomagok slc WHERE slc.id IN({$data["rawids"]});")->fetchAll(PDO::FETCH_ASSOC);
-                foreach($csomagokArray as $each){
-                    if(!empty($each["name"])){
-                        $match = array_search($each["name"],array_column($csomagStat,"nev"));
-                        if($match!==false){
-                            $csomagStat[$match]["db"] = $csomagStat[$match]["db"]+1;
-                        }else{
-                            $csomagStat[] = array("nev"=>$each["name"],"db"=>1);
-                        }
-                    }
-                }
-            }
-        }
-
-        echo "<table>";
-        echo "  <tr>";
-        echo "      <td>csomag</td>";
-        echo "      <td>db</td>";
-        echo "  </tr>";
-        foreach($csomagStat as $each){
-            echo "  <tr>";
-            echo "      <td>{$each["nev"]}</td>";
-            echo "      <td>{$each["db"]}</td>";
-            echo "  </tr>";
-        }
-        echo "  </tr>";
-        echo "</table>";
-        return;
-
-        echo "<table>";
-        echo "  <tr>";
-        echo "      <td>datum</td>";
-        echo "      <td>nev</td>";
-        echo "      <td>taj</td>";
-        echo "      <td>szuldatum</td>";
-        echo "      <td>megj</td>";
-        echo "      <td>createdby</td>";
-        echo "      <td>csomagok</td>";
-        echo "  </tr>";
-        foreach($result as $data){
-            echo "  <tr>";
-            echo "      <td>{$data["datum"]}</td>";
-            echo "      <td>{$data["nev"]}</td>";
-            echo "      <td>{$data["taj"]}</td>";
-            echo "      <td>{$data["szuldatum"]}</td>";
-            echo "      <td>{$data["megj"]}</td>";
-            echo "      <td>{$data["createdby"]}</td>";
-            echo "      <td>{$data["csomagok"]}</td>";
-            echo "  </tr>";
-        }
-       
-        echo "</table>";
-
-        return;
-    }
 
 }

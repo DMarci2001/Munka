@@ -620,7 +620,7 @@ class AdminCompaniesPage extends AdminCorePage
             die();
         }
 
-        if(isset($_POST["setDefaultDokirexCegId"]) && $_POST["setDefaultDokirexCegId"]==true){
+        if(isset($_POST["setDefaultDokirexCegId"])) {
             die($this->adminUtils->setDefaultDokirexCegId($_POST["cegid"]));
         }
 
@@ -1045,8 +1045,7 @@ class AdminCompaniesPage extends AdminCorePage
         $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
 
         if(!empty($q["dokirexcegid_json"])){
-            $dokirexServices = new DokirexService();
-            $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
+            $data = DokirexService::process_dokirexcegid_json($q["dokirexcegid_json"]);
         }else{
             return;
         }

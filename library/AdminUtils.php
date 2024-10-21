@@ -113,33 +113,25 @@ class AdminUtils
     public function munkakorlista($dokirexmunkakorid=null,$event=null)
     {
         $button = "";
-        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"munkakorlista_update_started\",\"munkakorlista_update_finished\") ORDER BY datum DESC LIMIT 1");
+        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN('munkakorlista_update_started','munkakorlista_update_finished') AND datum>DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY datum DESC LIMIT 1");
         $updateStatusz = sql_fetch_array($q);
         if (isset($updateStatusz["tipus"]) && $updateStatusz["tipus"] == "munkakorlista_update_started") {
-            $button = "<button type=\"button\" title=\"Munkakör lista manuális frissítés jelenleg fut\" style=\"background-color:#FF4040;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fa-solid fa-lock\"></i></button>";
+            $button = "<a title='Munkakör lista manuális frissítés jelenleg fut'><i style='color:#FF4040' class='fa-solid fa-lock'></i></a>";
         }else{
-            $button = "<button onclick=\"refreshMunkakorlista(this)\" type=\"button\" title=\"Munkakör lista manuális frissítése\" style=\"background-color:#3ac63d;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fas fa-sync\"></i></button>";
+            $button = "<a href='#' onclick='refreshMunkakorlista(this);return false;' type='button' title='Munkakör lista manuális frissítése'><i style='color:#3ac63d' class='fas fa-sync fa-lg'></i></abutton>";
         }
 
         if($dokirexmunkakorid){
             $dokirexMunkakor = sql_fetch_array(sql_query("SELECT Nev FROM dokirex_munkakorok_new WHERE MunkakorID=?", array($dokirexmunkakorid)));
         }
 
-        $html = "";
-        $html .= "<div>";
-        $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        "<select class=\"s2 munkakorlist\" name=\"dokirexmunkakorid\" {$event} style=\"width:180px;\">";
-
-        if(isset($dokirexMunkakor)){
-            $html .=         "<option selected=\"true\" value=\"{$dokirexmunkakorid}\">{$dokirexMunkakor["Nev"]}</option>";
+        $html = "<div style='width:100%;'>";
+        $html .= "<select class='s2 munkakorlist' name='dokirexmunkakorid' {$event} style='width:calc(100% - 30px);'>";
+        if (isset($dokirexMunkakor)){
+            $html .= "<option selected='true' value='{$dokirexmunkakorid}'>{$dokirexMunkakor["Nev"]}</option>";
         }
-       
-        $html .=        "</select>";
-        $html .=    "</div>";
-
-        $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        $button;
-        $html .=    "</div>";
+        $html .= "</select>&nbsp;&nbsp;";
+        $html .= $button;
         $html .= "</div>";
         return $html;
     }
@@ -147,12 +139,12 @@ class AdminUtils
     public function ceglista($dokirexcegid=null,$cid=null,$event="")
     {
         $button = "";
-        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN(\"ceglista_update_started\",\"ceglista_update_finished\") ORDER BY datum DESC LIMIT 1");
+        $q = sql_query("SELECT * FROM activitylog WHERE tipus IN('ceglista_update_started','ceglista_update_finished') AND datum>DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY datum DESC LIMIT 1");
         $updateStatusz = sql_fetch_array($q);
         if (isset($updateStatusz["tipus"]) && $updateStatusz["tipus"] == "ceglista_update_started") {
-            $button = "<button type=\"button\" title=\"Cég lista manuális frissítés jelenleg fut\" style=\"background-color:#FF4040;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fa-solid fa-lock\"></i></button>";
+            $button = "<a href='#' onclick='return false;' title='Cég lista manuális frissítés jelenleg fut'><i style='color:#FF4040;' class='fa-solid fa-lock'></i></a>";
         }else{
-            $button = "<button onclick=\"refreshCeglista(this)\" type=\"button\" title=\"Ceg lista manuális frissítése\" style=\"background-color:#3ac63d;color:white;border:none;cursor:pointer;border-radius:6px;height:24px;margin-left:2px\"><i class=\"fas fa-sync\"></i></button>";
+            $button = "<a href='#' onclick='refreshCeglista(this);return false;' title='Ceg lista manuális frissítése' ><i style='color:#3ac63d;' class='fas fa-sync fa-lg'></i></a>";
         }
         
         if($cid && !$dokirexcegid){
@@ -165,26 +157,20 @@ class AdminUtils
             
         }
     
-        $html = "";
-        $html .= "<div>";
-        $html.=
-        $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        "<select class=\"s2 ceglist\" name=\"dokirexcegid\" {$event} style=\"width:180px;\">";
-        if(isset($dokirexCeg) && $dokirexCeg!=""){
+        $html = "<div style='width:100%;'>";
+        $html .= "<select class='s2 ceglist' name='dokirexcegid' {$event} style='width:calc(100% - 30px);'>";
+        if (isset($dokirexCeg) && $dokirexCeg != "") {
             if(strpos($dokirexCeg["TelephelyNev"],$dokirexCeg["CegNev"])!==false){
-                    $megnev = $dokirexCeg["TelephelyNev"];
-                }else{
-                    $megnev = $dokirexCeg["CegNev"]." - ".$dokirexCeg["TelephelyNev"];
-                }
-            $html .=         "<option selected=\"true\" value=\"{$dokirexcegid}\">{$megnev}</option>";
+                $megnev = $dokirexCeg["TelephelyNev"];
+            } else {
+                $megnev = $dokirexCeg["CegNev"]." - ".$dokirexCeg["TelephelyNev"];
+            }
+            $html .= "<option selected='true' value='{$dokirexcegid}'>{$megnev}</option>";
         }
         
-        $html .=        "</select>";
-        $html .=    "</div>";
+        $html .= "</select>";
 
-        $html .=    "<div style=\"display:table-cell;vertical-align:middle;\">";
-        $html .=        $button;
-        $html .=    "</div>";
+        $html .= "&nbsp;&nbsp;{$button}";
         $html .= "</div>";
         return $html;
     }
@@ -220,17 +206,19 @@ class AdminUtils
         return;
     }
 
-    public function setDefaultDokirexCegId($cid){
+    public function setDefaultDokirexCegId($cid) {
         if ($cid ==  Booking_Constants::DEFAULT_COMPANY_ID) {
-            return;
+            return 0;
         }
 
         $q=sql_fetch_array(sql_query("SELECT * FROM cegek WHERE id=?",array($cid)));
         if(!empty($q["dokirexcegid_json"])){
-            $dokirexServices = new DokirexService();
-            $data = $dokirexServices->process_dokirexcegid_json($q["dokirexcegid_json"]);
-            if(isset($data[0]["id"])) return $data[0]["id"];
+            //$dokirexServices = new DokirexService();
+            $data = DokirexService::process_dokirexcegid_json($q["dokirexcegid_json"]);
+            if(isset($data[0]["id"])) {
+                return $data[0]["id"];
+            }
         }
-        return;
+        return 0;
     }
 }

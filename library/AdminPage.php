@@ -98,6 +98,10 @@ class AdminPage {
     public function showPage() {
         $pageContent = $this->_getPageContent();
 
+        if (!isset($_SESSION["mainmenuwidth"])) {
+            $_SESSION["mainmenuwidth"] = "180px";
+        }
+
         header("Content-type: text/html; charset=UTF-8");
 
         echo $this->utils->htmlheader("{$_SESSION["helyszindata"]["megnev"]} bejelentkező felület");
@@ -116,8 +120,9 @@ class AdminPage {
 
         if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
             echo "<td valign='top' class='menuoszlop'>";
+            echo "<div id='mainmenucolumn' style='width:{$_SESSION["mainmenuwidth"]};overflow: hidden;transition: all 0.3s ease 0s;'>";
             echo $this->_menuColumn();
-            echo "<div id='loggedusers' style='border-top:1px solid #888;color:#888;padding:10px;width:180px;overflow:hidden;font-size: 11px;'></div>";
+            echo "</div>";
             echo "</td>";
         }
 
@@ -153,27 +158,32 @@ class AdminPage {
         return $pageContent;
     }
 
-    private function _statusRow() {
+    private function _statusRow():string {
         $html = "";
 
         $html.= "<div id='adminwarnwindow'></div>";
-        $html.= "<div class='szamlalo' style='display:table;float: right'>";
-        $html.= "<div style='display: table-cell;padding-right: 10px;' id='chatbuttoncontainer'></div>";
-        $html.= "<div style='display: table-cell;padding-right: 10px;' id='warnbuttoncontainer'></div>";
-        $html.= "<div style='display: table-cell;'>".$this->adminUser->getAdminLevel($this->adminUser->user, true)."&nbsp;&nbsp;</div>";
-        $html.= "<div style='display: table-cell;'>Felhasználó: <a style='color:#44f;' href='index.php?page=users&szerk=self'>".$this->adminUser->user["nev"]."</a> - <a href='index.php?logoutadmin'>kijelentkezés</a></div>";
+        $html.= "<div id='adminuserswindow' onclick='toggleUsersWindow();'></div>";
+
+        $html.= "<div style='padding:15px;'>";
+        $html.= "<div class='tdm' style='font-size: 22px;'><i id='hamburgericon' style='cursor:pointer;' class='fa-solid fa-bars'></i></div>";
+        $html.= "<div class='tdm' style='width:100%;'></div>";
+        $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='chatbuttoncontainer'></div>";
+        $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='warnbuttoncontainer'></div>";
+        $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='usersbuttoncontainer'></div>";
+        $html.= "<div class='tdm' style='padding-right: 0px;'>" . $this->adminUser->getAdminLevel($this->adminUser->user, true) . "&nbsp;&nbsp;</div>";
+        $html.= "<div class='tdm' style='white-space: nowrap;padding-right: 5px;'><a style='color:#44f;' href='index.php?page=users&szerk=self'>" . mb_substr($this->adminUser->user["nev"], 0, 20) . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a title='kijelentkezés' href='index.php?logoutadmin'><i class='fa-solid fa-right-from-bracket fa-lg'></i></a></div>";
         $html.= "</div>";
         return $html;
     }
 
-    private function _menuColumn() {
+    private function _menuColumn():string {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div align='center' style='margin:-20px 0px 20px 0px;padding-right:5px;'><a href='index.php'><img width='120' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
-        if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
-            $html.= "<div align='center' style='padding-right:5px;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
-        }
+        $html.= "<div style='margin:10px 0px 10px 0px;padding-right:5px;text-align: center;'><a href='index.php'><img width='120' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
+        //if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
+        //    $html.= "<div style='padding-right:5px;text-align: center;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
+        //}
 
         $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;'>";
 
@@ -208,14 +218,14 @@ class AdminPage {
                     }
                     $html .= "<div><a class='mainmenuitem".($_GET["page"]=="hirek"?"_aktiv":"")."' href='index.php?page=hirek'><i class='fas fa-rss'></i> Faliújság {$newSign}</a></div>";
                 } else {
-                    $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}</a></div>";
+                    $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}".(empty($subMenuHtml)?"":" <i class='fa-solid fa-angle-down'></i>")."</a></div>";
                 }
             }
 
             $html.= $subMenuHtml;
-
-
         }
+
+        $html.= "</div>";
 
         return $html;
     }

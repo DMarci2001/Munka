@@ -109,6 +109,10 @@ class CronService {
 
             $service = new SynlabService();
             $service->downloadSynlabEmails();
+
+            if (Booking_Constants::SQL_DB == "hungariamed") {
+                $this->getServerData();
+            }
         }
 
         if ($this->interval == "napi") {
@@ -176,8 +180,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->pdfTeszt();
 
-        $laborKeroService = new LaborKeroService();
-        $laborKeroService->storeLaborKeroFromLabShopData();
+        //$laborKeroService = new LaborKeroService();
+        //$laborKeroService->storeLaborKeroFromLabShopData();
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
@@ -191,6 +195,8 @@ class CronService {
         //$service->downloadSynlabEmails();
 
         //echo $result."\n";
+
+        $this->getServerData();
 
         echo "teszt\n";
         die();
@@ -970,4 +976,27 @@ class CronService {
 
         return "Finished process.";
     }
+
+    private function getServerData() {
+        $serverData["mail"] = [
+            "name" => "Levelező szerver",
+            "hdd" => `ssh root@mail.hungariamed.hu 'df -h'`,
+            "proc" => `ssh root@mail.hungariamed.hu 'w'`,
+        ];
+        $serverData["backup"] = [
+            "name" => "Backup szerver",
+            "hdd" => `ssh -p 2223 root@81.183.233.8 'df -h'`,
+            "proc" => `ssh -p 2223 root@81.183.233.8 'w'`,
+        ];
+        $serverData["bejelentkezo"] = [
+            "name" => "Bejelentkező szerver",
+            "hdd" => `df -h`,
+            "proc" => `w`,
+        ];
+
+        sql_query("insert into sitedata set datum=now(), tipus='serverdata', valuetext=?", [json_encode($serverData, JSON_PRETTY_PRINT)]);
+        //echo "serverdata{$result}";
+    }
+
+
 }

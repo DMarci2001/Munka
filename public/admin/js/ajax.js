@@ -29,6 +29,7 @@ $(document).ready(function () {
     initDateFilterPicker();
     initQueryDatePicker();
     initWaitList();
+    initHamburgerIcon();
     checkChat();
 
     if (Notification.permission !== "granted") {
@@ -53,7 +54,18 @@ function setHelyszin(h) {
 }
 
 function setHelyszin2(h) {
-    window.location.href = 'index.php?page=booking&sethelyszin2=' + h;
+    //window.location.href = 'index.php?page=booking&sethelyszin2=' + h;
+
+    $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
+    $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&sethelyszin3="+encodeURIComponent(h),null,
+        function(responseText){
+            afterElojegyzesTableInit();
+            $("#napfilter").css("background-image","url('/images/empty-128.png')");
+            reloadWaitList();
+        }
+    );
+
+
 }
 
 function setNaptarSzuresTipus(t) {
@@ -383,8 +395,6 @@ function removeFizSzolg(fid, id) {
 
 
 function setListDay(day) {
-    //$("#querystatus").html("lekérdezés folyamatban...");
-
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
     $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
         function(responseText){
@@ -759,7 +769,9 @@ function showIdopontEditor(page, p, id) {
         success: function (data) {
             $("#idoponteditor").html(data);
             foglalasDisplayed = id;
-            $("#idoponteditor").slideDown();
+            //$("#idoponteditor").slideDown();
+            repositionIdopontEditor(id);
+
             $("#naptarloading").hide();
             initIrszAutoFill();
             initTabOrder();
@@ -768,6 +780,34 @@ function showIdopontEditor(page, p, id) {
         }
     });
 }
+
+function repositionIdopontEditor(id) {
+    let el = $("#idoponteditor");
+    let topPos = $(document).scrollTop();
+    if ($(window).width() < 600) {
+        if (id != 0) {
+            //topPos = $("#det"+id).offset().top;
+            topPos = Math.round($(document).scrollTop());
+            console.log("top: " + topPos);
+            el.css("top", topPos);
+        }
+        el.css("left", "0px");
+        el.css("bottom", "auto");
+        el.css("right", "auto");
+        el.css("width", "100%");
+        el.css("position", "absolute");
+        el.show();
+    } else {
+        el.css("top", "auto");
+        el.css("left", "auto");
+        el.css("bottom", "0");
+        el.css("right", "0");
+        el.css("width", "auto");
+        el.css("position", "fixed");
+        el.slideDown();
+    }
+}
+
 
 var lastTaj = "";
 function initTajEditor() {
@@ -1403,15 +1443,6 @@ function save_iFrame(patient, medic, textarea) {
     }
 
 }
-/*$(function(){
-    $('input[name="intval-start"], input[name="intval-end"]').datepicker({
-    dateFormat: 'yy-mm-dd',
-    changeMonth: true,
-    changeYear: true,
-    yearRange: '-100y:c+nn',
-    maxDate: '+2y'
-    });
-});*/
 
 function selectFolder(e) {
     var theFiles = e.target.files;
@@ -1420,29 +1451,6 @@ function selectFolder(e) {
     //alert(folder[0]);
 }
 
-/*function load_uj_lelet(){
-    $('#leletform').load('index.php?uj_lelet');
-    //tinymce.get('uj-lelet-page').setContent('');
-    //var iframe = document.getElementById(FrameId);
-    //iframe.src = iframe.src;
-}*/
-
-function syncFoglalasDataToUser(fogl, pass) {
-    var data = $("#iform").serialize() + "&syncFoglalasDataToUser=1";
-    $.ajax({
-        url: 'index.php',
-        type: 'POST',
-        data: data,
-        success: function (data) {
-            if (data.error != "") {
-                alert(data.error);
-            } else {
-                showIdopontEditor("booking", pass, fogl);
-                //$('input[name="paciensid"]').val(data.userId);
-            }
-        }
-    });
-}
 
 $(function () {
     $('input[name="intval-start"], input[name="intval-end"]').datepicker({
@@ -2101,6 +2109,10 @@ function startSimpleRefund(id, osszeg, source) {
 
 $(window).resize(function () {
     popUpPosition();
+
+    if ($("#idoponteditor").is(":visible")) {
+        repositionIdopontEditor(0);
+    }
 });
 
 function showGeneralPopup(html) {
@@ -2215,11 +2227,21 @@ function warningAck(wid) {
     });
 }
 
-function toggleWarnWindow() {
-    if ($("#adminwarnwindow").css("right") == "20px") {
-        $("#adminwarnwindow").css("right", -600);
+function toggleUsersWindow() {
+    let el = "#adminuserswindow";
+    if ($(el).is(":visible")) {
+        $(el).slideUp("fast");
     } else {
-        $("#adminwarnwindow").css("right", 20);
+        $(el).slideDown("fast");
+    }
+}
+
+function toggleWarnWindow() {
+    let el = "#adminwarnwindow";
+    if ($(el).is(":visible")) {
+        $(el).slideUp("fast");
+    } else {
+        $(el).slideDown("fast");
     }
 }
 
@@ -3557,6 +3579,8 @@ function checkChat() {
         data: { checkChat:1 },
         success: function (response) {
             $("#loggedusers").html(response.users);
+            $("#usersbuttoncontainer").html(response.usersbutton);
+            $("#adminuserswindow").html(response.usershtml);
             $("#chatbuttoncontainer").html(response.button);
             if (response.number != 0) {
                 $.toast({
@@ -4793,3 +4817,23 @@ function labReuestPageFilter(value) {
     });
 }
 
+function initHamburgerIcon() {
+    $("#hamburgericon").click(function() {
+        let width = "0px";
+        if ($("#mainmenucolumn").width() === 0) {
+            width = "180px";
+        }
+        $("#mainmenucolumn").css("width", width);
+
+        $.ajax({
+            type: "POST",
+            url: "index.php",
+            data: {page:"booking", storemainmenuwidth:width},
+        });
+
+        $(this).addClass("pulse");
+        setTimeout(function() {
+            $('#hamburgericon').removeClass("pulse");
+        }, 800);
+    });
+}

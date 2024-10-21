@@ -140,6 +140,54 @@ function initLaborEditor() {
             }
         })
     });
+
+    initItemCheckboxes();
+}
+
+
+function initItemCheckboxes() {
+    $(".csitemcheckbox2").click(function() {
+        let csomagId = $(this).data("csomagid");
+        let itemId = $(this).data("itemid");
+        let checked = 0;
+        let message = "eltávolítva";
+        if (!$(this).hasClass("serviceselected")) {
+            checked = 1;
+            message = "hozzáadva";
+        }
+
+        $.ajax({
+            type:"POST",
+            url:"index.php?page=labortetelek",
+            data: {selectItemForPackage2:itemId, csomagId:csomagId, checked:checked},
+            success: function(response){
+                $("#itemeditordiv").html(response);
+                initItemCheckboxes();
+                $.toast({
+                    text: "Vizsgálat "+message,
+                    icon: 'success'
+                });
+            }
+        });
+
+        return false;
+    });
+
+    $("#csomagVizsgalatFilterText").keyup(function () {
+        let filter = $(this).val();
+
+        if (filter.length >= 2) {
+            $(".csitemcheckbox2").hide();
+            $('.csitemcheckbox2').each(function (i, obj) {
+                let vizsgalat = $(this).html();
+                if (vizsgalat.toLowerCase().includes(filter.toLowerCase())) {
+                    $(this).show();
+                }
+            });
+        } else {
+            $(".csitemcheckbox2").show();
+        }
+    });
 }
 
 function changeLaborCsomagCompanyShow(id){
@@ -292,3 +340,5 @@ function loadLaborEmailTemplate(id) {
     })
     return false;
 }
+
+

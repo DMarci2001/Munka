@@ -157,8 +157,8 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .menuoszlop {
 	box-sizing: border-box;
 	min-height:500px;
-	width:150px !important;
-	min-width: 150px;
+	width:0px;
+	/*min-width: 150px;*/
 	background-color:#eee;
 }
 
@@ -1288,6 +1288,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	z-index:9999;
 }
 
+@media screen and (min-width: 0px) and (max-width:700px){
+	#idoponteditor {
+		position:absolute;
+		width: 100%;
+		right:auto;
+		bottom:0px;
+		top:auto;
+	}
+}
+
 .tdm {
 	display: table-cell;
 	vertical-align: middle;
@@ -1350,15 +1360,35 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 }
 
 #adminwarnwindow {
-	width:500px;
+	display:none;
+	width:auto;
+	min-width: 250px;
 	background:#f00;
 	color:#fff;
-	position: fixed;
-	top:40px;
-	right:-600px;
+	position: absolute;
+	top:45px;
+	right:10px;
 	box-shadow: 2px 2px 2px rgba(0,0,0,.1);
 	padding:15px;
 	transition: all .1s linear;
+	z-index:10000;
+}
+
+#adminuserswindow {
+	/*font-family: "Lucida Console", "Menlo", "Monaco", "Courier", monospace;*/
+	display:none;
+	cursor:pointer;
+	width:auto;
+	min-width: 250px;
+	background:#0a0;
+	color:#fff;
+	position: absolute;
+	top:45px;
+	right:10px;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.1);
+	padding:15px;
+	transition: all .1s linear;
+	z-index:10000;
 }
 
 .bercella {
@@ -1765,3 +1795,53 @@ form {
 	transform: translate(103px, 0px);
 }
 
+
+#hamburgericon {
+	transition: all 0.1s;
+	&.pulse {
+		animation: pulse 1s forwards ease-out;
+		box-shadow: 0px 15px 28px -11px rgba(255, 79, 93, 0.9);
+	}
+}
+
+
+@keyframes pulse {
+	0% {
+		-moz-box-shadow: 0 0 0 0 rgba(255, 79, 93, 0.4);
+		box-shadow: 0 0 0 0 rgba(255, 79, 93, 0.4);
+	}
+	70% {
+		-moz-box-shadow: 0 0 0 10px rgba(255, 79, 93, 0);
+		box-shadow: 0 0 0 10px rgba(255, 79, 93, 0);
+	}
+	100% {
+		-moz-box-shadow: 0 0 0 0 rgba(255, 79, 93, 0);
+		box-shadow: 0 0 0 0 rgba(255, 79, 93, 0);
+	}
+}
+
+.becell {
+	display:table-cell;
+	width:250px;
+	vertical-align: top;
+}
+
+.becell:first-child {
+	padding-right: 10px;
+}
+
+.fipad {
+	margin:1px 0;
+}
+
+@media only screen
+and (min-width: 0px)
+and (max-width: 500px) {
+	.becell {
+		display:inline;
+		width:100%;
+	}
+	.becell:first-child {
+		padding-right: 0px;
+	}
+}

@@ -167,8 +167,20 @@ class AdminPatientsPage extends AdminCorePage {
         if (isset($_GET["auchanreservationstat"])) {
             if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
                 $excelService = new ExcelService();
-                $excelService->auchanReservationStat();
+                $excelService->auchanReservationStatForAuchan();
                 $excelService->setFileName("Auchan foglalások " . date("Y-m-d") . ".xlsx");
+                $excelService->outputSpreadSheet();
+            } else {
+                echo "nincs jogosultsága!";
+            }
+            die;
+        }
+
+        if (isset($_GET["auchanreservationstatall"])) {
+            if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
+                $excelService = new ExcelService();
+                $excelService->auchanReservationStat();
+                $excelService->setFileName("Auchan foglalások összes " . date("Y-m-d") . ".xlsx");
                 $excelService->outputSpreadSheet();
             } else {
                 echo "nincs jogosultsága!";
@@ -555,6 +567,7 @@ class AdminPatientsPage extends AdminCorePage {
 
         if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
             echo "[<a href='index.php?page={$_GET["page"]}&auchanreservationstat'>Auchan foglalások stat</a>] ";
+            echo "[<a href='index.php?page={$_GET["page"]}&auchanreservationstatall'>Auchan foglalások stat (összes)</a>] ";
         }
 
         $res = sql_query( $query." LIMIT {$page[($_GET['scroll']-1)]['limit']}" );

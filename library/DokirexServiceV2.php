@@ -396,12 +396,16 @@ class DokirexService
         return $array;
     }
 
-    public function process_dokirexcegid_json($json){
+    public static function process_dokirexcegid_json($json):array {
         $array = array();
         $ids = implode(",",json_decode($json,true));
-        if(empty($ids)) return $array;
-        $q = sql_query("SELECT TelephelyID as id,TelephelyNev as nev FROM dokirex_telephelyek WHERE TelephelyID IN({$ids})");
-        while($result=sql_fetch_array($q)) $array[] = $result;
+        if(empty($ids)) {
+            return $array;
+        }
+        $q = sql_query("SELECT TelephelyID as id,TelephelyNev as nev FROM dokirex_telephelyek WHERE TelephelyID IN ({$ids})");
+        while ($result=sql_fetch_array($q)) {
+            $array[] = $result;
+        }
         return $array;
     }
 

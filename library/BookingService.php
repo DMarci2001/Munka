@@ -736,7 +736,11 @@ class BookingService
 
 
     private function preReservationProtocol($cegId, $helyszinId, $orvosId) {
-        $dist = "6 hour";
+        $dist = "24 hour";
+        if (Booking_Constants::DEFAULT_PLACE_IDS[0] == $helyszinId) {
+            $dist = "6 hour";
+        }
+
         $distFullDay = "0 day";
         //ennyi napon belül kell foglalni
 
@@ -745,11 +749,6 @@ class BookingService
                 //jász utca vagy fesztivál bármikor foglalhat
                 //$dist = "-10 hour";
             //}
-            if (in_array($orvosId, [74])) {
-                //74 - Dr. Kővári Gábor
-                $dist = "24 hour";
-            }
-
             //BFKH - Buda / Pest / VIP
             if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
                 //cib
@@ -771,6 +770,10 @@ class BookingService
                 if (date("N") == 5) {
                     $dist = "120 hour";
                 }
+            }
+
+            if ($cegId == 642) {
+                $dist = "6 hour";
             }
 
             if (in_array($cegId, [82, 664, 340, 347, 348]) && Booking_Constants::SQL_DB == "hungariamed") {
@@ -823,6 +826,11 @@ class BookingService
             //0 óra foglalási idő ha a Magyar Államkincstár orvosra akar foglalni :P
             if(in_array($orvosId,[1089,841])){
                 $dist = "0 hour";
+            }
+
+            if (in_array($orvosId, [74, 25])) {
+                //74 - Dr. Kővári Gábor 25 - Dr. Tiba Sándor
+                $dist = "24 hour";
             }
         }
 
@@ -1416,7 +1424,7 @@ class BookingService
         return $return;
     }
 
-    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]) {
+    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]):string {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -1519,7 +1527,15 @@ class BookingService
                 $h .= "</div>";
             }
         }
-        if ($_SESSION['helyszindata']['tudoszuroopcio'] == 1 && $tid == 1 && in_array($helyszinId, [1, 100])) {
+
+        $radiologyCheckBoxNeeded = false;
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            if ($_SESSION["helyszindata"]["tudoszuroopcio"] == 1 && $tid == 1 && in_array($helyszinId, [1, 100])) {
+                $radiologyCheckBoxNeeded = true;
+            }
+        }
+
+        if ($radiologyCheckBoxNeeded) {
             $h .= "<div><input type='hidden' name = 'tudoszuroanswerneeded' value = '1' /><span style='font-weight: bold;'>Rendelkezik 1 éven belüli érvényes tüdőszűrő lelettel?</span><br/>";
             $h .= "<input type='radio' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1?"checked":"")."/>Nem rendelkezem, kérek tüdőszűrő vizsgálatot, azonnali lelet kiadással<br/>";
             $h .= "<input type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
@@ -2448,17 +2464,31 @@ class BookingService
         }
         
         $data = sql_fetch_array(sql_query("SELECT infopagetext,csomagidotartam FROM szurestipusok WHERE id=?",array($szurestipusid)));
-       
+
+        $text = "";
+
         if(!empty($data["infopagetext"])){
-            $text = $data["infopagetext"];
-        }else{
-            $text = "";
+            $text.= $data["infopagetext"];
         }
 
         foreach ($checkboxes as $checkbox) {
            if (isset($inputData[$checkbox])) {
                $text = str_replace("id='{$checkbox}'", "id='{$checkbox}' checked ", $text);
            }
+        }
+
+        $radiologyCheckBoxNeeded = false;
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            if ($_SESSION["helyszindata"]["tudoszuroopcio"] == 1 && $szurestipusid == 1) {
+                $radiologyCheckBoxNeeded = true;
+            }
+        }
+
+        if ($radiologyCheckBoxNeeded) {
+            $text .= "<div style='margin-bottom: 10px;'><input type='hidden' name = 'tudoszuroanswerneeded' value = '1' /><span style='font-weight: bold;'>Rendelkezik 1 éven belüli érvényes tüdőszűrő lelettel?</span><br/>";
+            $text .= "<input onchange='reservedTimeInvalidate();' type='radio' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1?"checked":"")."/>Nem rendelkezem, kérek tüdőszűrő vizsgálatot, azonnali lelet kiadással<br/>";
+            $text .= "<input onchange='reservedTimeInvalidate();' type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
+            $text .= "</div>";
         }
 
         $tipusData = sql_query("select * from szurestipusok t where t.id=?", [$szurestipusid])->fetch(PDO::FETCH_ASSOC);
