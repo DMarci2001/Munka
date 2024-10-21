@@ -594,12 +594,12 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2024-09-23 06:00:00"));
-        $orvosid=1409;
-        $helyszinid=941;
-        $rinterval=4;
-        $szurestipusid=58;
-        $cegId=681;
+        $datum = date("Y-m-d H:i:s", strtotime("2024-09-30 09:05:00"));
+        $orvosid=377;
+        $helyszinid=282;
+        $rinterval=5;
+        $szurestipusid=48;
+        $cegId=220;
         while ($r = sql_fetch_array($q)) {
 
             if(isset($r["datum"])&&!empty($r["datum"])){
@@ -630,10 +630,10 @@ class AdminBookingPage extends AdminCorePage
 
 
         //vessző eltűntetése:
-        //$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);
+        /*$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);
 
         //Páciens cím adatok tagolása:
-        /*$teljescimRaw = explode(" ", $r["teljes_cim"]);
+        $teljescimRaw = explode(" ", $r["teljes_cim"]);
 
             $irsz = $teljescimRaw[0];
             $varos = $teljescimRaw[1];
@@ -676,7 +676,25 @@ class AdminBookingPage extends AdminCorePage
         
 
         //Páciens insertelése a foglalások táblába:
-        /*sql_query(
+        /*$foglalasExist = false;
+        //Megizsgálom, hogy a páciensnek van-e már be regisztrált időpontja az adott szűréstípusra a helyszínen/napon
+        if(!$foglalasExist=sql_query("SELECT * FROM foglalasok WHERE INSTR(datum,'".date("Y-m-d",strtotime($datum))."') AND helyszinid=? AND szurestipusid=? AND taj=?",
+        [$helyszinid,$szurestipusid,$r["taj"]])->fetch(PDO::FETCH_ASSOC))
+        {
+            //Addig futtatom a while ciklust míg nem talál egy szabad helyet az adott napra
+            $idopontExist = false;
+            while(true){
+                if($idopontExist=sql_query("SELECT * FROM foglalasok WHERE datum=? AND helyszinid=? AND szurestipusid=?",
+                [$datum,$helyszinid,$szurestipusid])->fetch(PDO::FETCH_ASSOC))
+                {
+                    $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
+                }else{
+                    break;
+                }
+            }
+            
+            $foglid="";
+             sql_query(
                 "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
                                                   szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
                                                   smssent=1,orvosassigned=?,checked=1,megj=?,dokirexmunkakorid=?,dokirexcegid=?",
@@ -688,9 +706,13 @@ class AdminBookingPage extends AdminCorePage
             );
             $foglid= sql_insert_id();
             sql_query("UPDATE dokirex_insert_paciensek SET foglid=? WHERE id=?",array($foglid,$r["id"]));
-            echo "Sikeres foglalás rögzítés és insert tábla frissítés! (".$foglid.")<br>";
+            echo "Sikeres foglalás rögzítés és insert tábla frissítés! ({$foglid})({$r["nev"]})({$datum})<br>";
 
-            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));*/
+            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
+        }else{
+            echo "Az páciens már be van írva egy időpontra!({$r["nev"]})<br>";
+        }*/
+       
 
 
         /*$params = array(
@@ -742,7 +764,7 @@ class AdminBookingPage extends AdminCorePage
             );
             $dokirexService->insertUpdateFormElementValue($params);
             echo "Sikeres telephely rögzítés a dokirexben! ({$r["foglid"]})<br>";*/
-        //}
+       // }
 
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
