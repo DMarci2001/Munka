@@ -30,6 +30,7 @@ class PrintService
         "munkanaplopdf"      => "munkanaplopdf",
         "ghcsenior"          => "ghc-szures-2024-senior.pdf",
         "ghcstandard"        => "ghc-szures-2024-standard.pdf",
+        "genetika"           => "genetikai_teljes_dokumentum.pdf",
     );
 
     private array $inputs = array(
@@ -151,6 +152,11 @@ class PrintService
 
         if ($this->templateId == "ghcsenior" || $this->templateId == "ghcstandard") {
             $this->printGHCPdf();
+            return;
+        }
+
+        if ($this->templateId == "genetika") {
+            $this->printGenetikaiPdf();
             return;
         }
 
@@ -276,6 +282,53 @@ class PrintService
         if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
             $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
         }
+
+        $pdf = new Pdf("templates/{$this->templateFileName}");
+
+        $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($raw === false) {
+            $error = $pdf->getError();
+            var_dump($error);
+        } else {
+            header("Pragma: no-cache");
+            header("Cache-Control: no-store, no-cache");
+            header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must-revalidate");
+            header('Content-transfer-encoding: binary');
+            header("Content-Type: application/octet-stream");
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            //header("Content-Type: application/pdf");
+            echo $raw;
+        }
+    }
+
+    private function printGenetikaiPdf() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $cim  = $this->reservationData["irsz"]. " ". $this->reservationData["varos"].", ".$this->reservationData["utca"];
+        $szulhelyido = $this->reservationData["szulhely"].", ".date("Y.m.d",strtotime($this->reservationData["szuldatum"]));
+
+        $input = [
+            "PaciensNev" => $this->pdfChars($this->reservationData["nev"]),
+            "PaciensSzuletesiDatum" => date("Y. m. d.", strtotime($this->reservationData["szuldatum"])),
+            "PaciensSzulhelyIdo" => $this->pdfChars($szulhelyido),
+            "PaciensAnyjaNeve" => $this->pdfChars($this->reservationData["anyjaneve"]),
+            "PaciensAzonosito" => $this->pdfChars($this->reservationData["taj"]),
+            "PaciensTeljesCim" => $this->pdfChars($cim),
+            "PaciensTelefon" => $this->pdfChars($this->reservationData["telefon"]),
+            "PaciensEmail" => $this->pdfChars($this->reservationData["email"]),
+            "MaiDatum" => date("Y.m.d"),
+            "keltezes" => "Budapest, ".date("Y.m.d"),
+        ];
+
+        $fileName = "Genetikai_kerolap_es_beleegyezo({$input["PaciensNev"]})(".date("YmdHis").").pdf";
+
+        /*if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
+            $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
+        }*/
 
         $pdf = new Pdf("templates/{$this->templateFileName}");
 

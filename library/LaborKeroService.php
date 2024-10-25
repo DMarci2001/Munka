@@ -426,10 +426,10 @@ class LaborKeroService
 
         $html .= "<div style='padding:10px;'>";
 
-        $html .= "<div style='margin-bottom: 10px;'>";
+        $html .= "<div>";
         $html .= "<div style='display:table;width:100%;'>";
         $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 10px;width:10px;'>";
-        $html.= $this->packSelect();
+        $html .= $this->packSelect();
         $html .= "</div>";
 
         $html .= "<div style='display:table-cell;vertical-align: middle;padding-right: 10px;width:10px;'>";
@@ -450,6 +450,11 @@ class LaborKeroService
 
         $html .= "</div>";
 
+        $html .= "</div>";
+
+        //Extra gombok
+        $html .= "<div style='margin-bottom: 10px;margin-top:5px'>";
+        $html .= "<div><a class='printbutton' target='_blank' href='index.php?print&template=genetika&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Genetikai</a></div>";
         $html .= "</div>";
 
         $showCheckBoxes = $laborRequestData["status"] == "temp";
