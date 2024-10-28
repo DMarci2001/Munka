@@ -1,5 +1,9 @@
 <?php
 
+use phpseclib3\Net\SFTP;
+use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\PublicKeyLoader;
+
 class DicomService {
     const STORAGE_DIR = "/var/rtg";
     const STORAGE_DIR_TESZT = "/var/rtg/teszt";
@@ -428,7 +432,30 @@ class DicomService {
         if (!is_file($filePath)) {
             //a fájl archiválva lett, megpróbáljuk lehúzni az arhívumból
             $fileName = basename($filePath);
-            `scp -P 2223 root@81.183.233.8:/mnt/sdd/rtg/{$fileName} /var/rtg`;
+
+            $rsa = PublicKeyLoader::load(file_get_contents("/var/dicom_key"));
+
+            $sftp = new SFTP('81.183.233.8', 2223);
+            if (!$sftp->login("root", $rsa)) {
+                return false;
+            }
+
+            $remoteFile1 = "/mnt/sdd/rtg/{$fileName}";
+            $remoteFile2 = "/mnt/hdd4tb1/rtg/{$fileName}";
+
+            if ($sftp->file_exists($remoteFile1)) {
+                $content = $sftp->get($remoteFile1);
+                file_put_contents(self::STORAGE_DIR."/{$fileName}", $content);
+            } else {
+                if ($sftp->file_exists($remoteFile2)) {
+                    $content = $sftp->get($remoteFile2);
+                    file_put_contents(self::STORAGE_DIR . "/{$fileName}", $content);
+                }
+            }
+
+            $sftp->disconnect();
+
+            //`/usr/bin/scp -q -P 2223 root@81.183.233.8:/mnt/sdd/rtg/{$fileName} /var/rtg`;
         }
 
         return is_file($filePath);
