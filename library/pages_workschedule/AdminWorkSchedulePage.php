@@ -1,16 +1,14 @@
 <?php
 
 class AdminWorkSchedulePage extends AdminCorePage {
+    private WorkScheduleService $workScheduleService;
+    private WorkersSubPage $workersSubPage;
+    private WorkplacesSubPage $workplacesSubPage;
+    private NotifySubPage $notifySubPage;
+    private PrintSubPage $printSubPage;
+    private string $subPage = "beosztasok";
 
-    private $bookingService;
-    private $workScheduleService;
-    private $workersSubPage;
-    private $workplacesSubPage;
-    private $notifySubPage;
-    private $printSubPage;
-    private $subPage = "beosztasok";
-
-    private $napszakok = ["Délelőtt", "Délután", "Külső"];
+    private array $napszakok = ["Délelőtt", "Délután", "Külső"];
 
     public function __construct()
     {
@@ -487,7 +485,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         //}
         $html .= "</div>";
 
-        $html .= "<div class='scheduledayhead'>{$this->thisDay} ".$this->settings->hetnap[$weekDay]."<br/>Külső cégek</div>";
+        $html .= "<div class='scheduledayhead'>".$this->adminUtils->magyarDatum($this->thisDay)."<br/>Külső cégek</div>";
         $html .= "<div style='display:table;'>";
         $html .= "<div style='display:table-row;'>";
         $html .= $this->_rendeloFejCell("Cégek");
@@ -546,7 +544,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $html="";
         $html.="<div class='sch_oszlopdatacell' {$extraStyle}>{$tipusData["megnev"]}";
         if ($tipusData["cim"] != "") {
-            $html.= "&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/".urlencode($tipusData["cim"])."' target='_blank'><i class='fas fa-map-marker' style='font-size:14px;'></i></a>";
+            $html.= "&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/".urlencode($tipusData["cim"])."' target='_blank'><i class='fas fa-map'></i></a>";
         }
         $html.= ($tipusData["forday"]!="0000-00-00"?" <a href='#' onclick='Schedule.DeleteWorkplaceForDay({$tipusData["id"]}, \"{$day}\");return false;' title='cég törlése erről a napról'><i class='fas fa-trash-alt'></i></a>":"")."</div>";
         return $html;

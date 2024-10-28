@@ -3,12 +3,11 @@
 use PHPMailer\PHPMailer\PHPMailer;
 
 class WorkScheduleService {
-    public $weekStart;
-    public $scheduleMapping = [];
-    public $collisionData = [];
-    public $collisionsByDate = [];
+    public array $scheduleMapping = [];
+    public array $collisionData = [];
+    public array $collisionsByDate = [];
 
-    public $roles = [
+    public array $roles = [
         1 => "orvos",
         2 => "nővér",
         3 => "egyéb"
@@ -37,33 +36,23 @@ class WorkScheduleService {
         while ($row = sql_fetch_array($res)) {
             if ($row["napszak"] == 2) {
                 $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_2_{$row["tipusid"]}";
-                $this->scheduleMapping[$key][] = $row;
             } else {
-                //if (strtotime($row["datumfrom"]) < strtotime(date("Y-m-d 12:00:00", strtotime($row["datumfrom"])))) {
-                    $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_0_{$row["tipusid"]}";
-                    $this->scheduleMapping[$key][] = $row;
-                //}
-                //if (strtotime($row["datumto"]) > strtotime(date("Y-m-d 12:00:00", strtotime($row["datumto"])))) {
-                //    $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_1_{$row["tipusid"]}";
-                //    $this->scheduleMapping[$key][] = $row;
-                //}
+                $key = date("Y-m-d", strtotime($row["datumfrom"])) . "_0_{$row["tipusid"]}";
             }
-
-            //$key = date("Y-m-d", strtotime($row["datumfrom"])) . "_{$row["napszak"]}_{$row["tipusid"]}";
-            //$this->scheduleMapping[$key][] = $row;
+            $this->scheduleMapping[$key][] = $row;
         }
     }
 
     public function recalcAllCollisions() {
+        $thisWeekMonday = date("Y-m-d 00:00:00", strtotime("this week monday"));
         $collisions = [];
-        $suspects = sql_query("SELECT m.id, DATE(datumfrom) AS datum, workerid, napszak, COUNT(*) AS hany FROM schedule_mapping m WHERE datumfrom>NOW() GROUP BY DATE(datumfrom), CONCAT(workerid) HAVING hany>1")->fetchAll(PDO::FETCH_ASSOC);
+        $suspects = sql_query("SELECT m.id, DATE(datumfrom) AS datum, workerid, napszak, COUNT(*) AS hany FROM schedule_mapping m WHERE datumfrom>? GROUP BY DATE(datumfrom), CONCAT(workerid) HAVING hany>1", [$thisWeekMonday])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($suspects as $suspect) {
             $beos = sql_query("select m.id, m.datumfrom, m.datumto from schedule_mapping m 
             left join schedule_workers sw on m.workerid=sw.id
             left join schedule_tipusok st on m.tipusid=st.id
             where m.workerid=? and date(datumfrom)=? and sw.id is not null and st.id is not null", [$suspect["workerid"], $suspect["datum"]])->fetchAll(PDO::FETCH_ASSOC);
 
-            //(StartA <= EndB) and (EndA >= StartB)
             foreach ($beos as $beoLook) {
                 foreach ($beos as $beo) {
                     if ($beo["id"] == $beoLook["id"]) {
@@ -110,7 +99,7 @@ class WorkScheduleService {
             }
 
             if ($type == "sms") {
-                $utils->sendSMS($workerData["tel"], "Értesítjük, hogy beosztásában változás történt. kérjük ellenőrizze az emailben kiküldött linken. Üdv: Hungariamed");
+                $utils->sendSMS($workerData["tel"], "Értesítjük, hogy beosztásában változás történt. kérjük ellenőrizze az emailben kiküldött linken. Üdv: ".Booking_Constants::COMPANY_NAME_SHORT);
             }
 
         }

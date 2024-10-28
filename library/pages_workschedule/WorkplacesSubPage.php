@@ -88,7 +88,7 @@ class WorkplacesSubPage extends AdminCorePage {
                 $html.="<tr><td style='height: 10px;'></td></tr>";
                 $html.="<tr>";
                 $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
-                $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorkplace(\"{$data["roleid"]}\", \"{$data["kulso"]}\");return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
+                $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a title='új' style='color:white;' onclick='Schedule.AddNewWorkplace(\"{$data["roleid"]}\", \"{$data["kulso"]}\");return false;' href=''><i class='fa-solid fa-circle-plus'></i></a></div>";
                 $html.="<div style='display:table-cell;vertical-align: middle;'>{$name}";
                 $html.="</div>";
                 $html.="</td>";
@@ -99,7 +99,7 @@ class WorkplacesSubPage extends AdminCorePage {
             $html.= "<tr>";
             $html.= "<td valign='middle' style='padding:2px 10px 2px 0px;'><a onclick='Schedule.OpenWorkplaceDetail({$data["id"]});return false;' href='#'>{$data["megnev"]}</a>";
             if (!empty($data["cim"])) {
-                $html .= "&nbsp;&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/" . urlencode($data["cim"]) . "' target='_blank'><i class='fas fa-map' style='font-size:14px;'></i></a>";
+                $html .= "&nbsp;&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/" . urlencode($data["cim"]) . "' target='_blank'><i class='fas fa-map'></i></a>";
             }
             $html.= "</td>";
             $html.= "<td valign='middle' style='padding:2px 0px 2px 0px;'>";
@@ -119,7 +119,7 @@ class WorkplacesSubPage extends AdminCorePage {
             $html.= "<h2>{$data["megnev"]}</h2>";
 
             $html.="<form id='workplaceform' method='post'><input type='hidden' name='id' value='{$data["id"]}' />";
-            $html.="<div>Cég megnevezése:<br/><input type='text' placeholder='Megnevezés' name='megnev' value='{$data["megnev"]}' style='' /> <input type='text' placeholder='Sorrend' name='sorrend' value='{$data["sorrend"]}' style='width:30px;' title='Sorrend' /></div>";
+            $html.="<div>Hely megnevezése:<br/><input type='text' placeholder='Megnevezés' name='megnev' value='{$data["megnev"]}' style='' /> <input type='text' placeholder='Sorrend' name='sorrend' value='{$data["sorrend"]}' style='width:30px;' title='Sorrend' /></div>";
             if ($data["kulso"] == 1) {
                 $html .= "<div style='margin-top:5px;'>Cím:<br/><input style='width:300px;' type='text' placeholder='Cím' name='cim' value='{$data["cim"]}' style='' />&nbsp;&nbsp;<a title='Google Maps link (mentsd el a címet, mielőtt kattintasz)' href='https://www.google.com/maps/place/".urlencode($data["cim"])."' target='_blank'><i class='fas fa-map' style='font-size:18px;'></i></a></div>";
             }

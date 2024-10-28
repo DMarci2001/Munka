@@ -106,7 +106,7 @@ class WorkersSubPage extends AdminCorePage {
             $html.="<tr><td style='height: 10px;'></td></tr>";
             $html.="<tr>";
             $html.="<td colspan='10' style='padding:4px 4px 4px 4px;font-weight:bold;background:#aaa;color:#fff;'>";
-            $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a onclick='Schedule.AddNewWorker({$roleData["id"]});return false;' href=''><img height='16' src='/admin/images/add.png' title='hozzáadás'/></a></div>";
+            $html.="<div style='display:table-cell;vertical-align: middle;padding-right:5px;'><a style='color:#fff;' title='új' onclick='Schedule.AddNewWorker({$roleData["id"]});return false;' href=''><i class='fa-solid fa-circle-plus'></i></a></div>";
             $html.="<div style='display:table-cell;vertical-align: middle;'>{$roleData["megnev"]}</div>";
             $html.="</td>";
             $html.="</tr>";
