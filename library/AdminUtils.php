@@ -102,7 +102,7 @@ class AdminUtils
         $m = date("n", strtotime($datum));
         $n = date("Y-m-d", strtotime($datum));
         $w = date("N", strtotime($datum));
-        $date = substr($datum, 0, 4) . " " . ucfirst($GLOBALS["honaptext"][$m]) . " " . intval(substr($n, 8, 2)) . ".";
+        $date = substr($datum, 0, 4) . ". " . strtolower($GLOBALS["honaptext"][$m]) . " " . intval(substr($n, 8, 2)) . ".";
         if ($weekDay) {
             $date .= " " . $GLOBALS["hetnap"][$w];
         }
@@ -110,15 +110,14 @@ class AdminUtils
         return trim($date);
     }
 
-    public function munkakorlista($dokirexmunkakorid=null,$event=null)
-    {
+    public function munkakorlista($dokirexmunkakorid=null,$event=null):string {
         $button = "";
         $q = sql_query("SELECT * FROM activitylog WHERE tipus IN('munkakorlista_update_started','munkakorlista_update_finished') AND datum>DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY datum DESC LIMIT 1");
         $updateStatusz = sql_fetch_array($q);
         if (isset($updateStatusz["tipus"]) && $updateStatusz["tipus"] == "munkakorlista_update_started") {
             $button = "<a title='Munkakör lista manuális frissítés jelenleg fut'><i style='color:#FF4040' class='fa-solid fa-lock'></i></a>";
         }else{
-            $button = "<a href='#' onclick='refreshMunkakorlista(this);return false;' type='button' title='Munkakör lista manuális frissítése'><i style='color:#3ac63d' class='fas fa-sync fa-lg'></i></abutton>";
+            $button = "<a href='#' onclick='refreshMunkakorlista(this);return false;' type='button' title='Munkakör lista manuális frissítése'><i style='color:#3ac63d' class='fas fa-sync fa-lg'></i></a>";
         }
 
         if($dokirexmunkakorid){
@@ -158,7 +157,7 @@ class AdminUtils
         }
     
         $html = "<div style='width:100%;'>";
-        $html .= "<select class='s2 ceglist' name='dokirexcegid' {$event} style='width:calc(100% - 30px);'>";
+        $html .= "<select class='s2 ceglist' name='dokirexcegid' id='dokirexcegidselector' {$event} style='width:calc(100% - 30px);'>";
         if (isset($dokirexCeg) && $dokirexCeg != "") {
             if(strpos($dokirexCeg["TelephelyNev"],$dokirexCeg["CegNev"])!==false){
                 $megnev = $dokirexCeg["TelephelyNev"];

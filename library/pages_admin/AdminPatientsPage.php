@@ -179,8 +179,8 @@ class AdminPatientsPage extends AdminCorePage {
         if (isset($_GET["auchanreservationstatall"])) {
             if ((in_array(CompanyService::AUCHAN_ID, $this->adminUser->getCegListArray()) || $this->adminUser->allCegJog()) && Booking_Constants::SQL_DB == "keltexmed") {
                 $excelService = new ExcelService();
-                $excelService->auchanReservationStat();
-                $excelService->setFileName("Auchan foglalások összes " . date("Y-m-d") . ".xlsx");
+                $excelService->auchanReservationStat2();
+                $excelService->setFileName("Auchan foglalások összesítés " . date("Y-m-d") . ".xlsx");
                 $excelService->outputSpreadSheet();
             } else {
                 echo "nincs jogosultsága!";

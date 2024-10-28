@@ -785,25 +785,31 @@ function repositionIdopontEditor(id) {
     let el = $("#idoponteditor");
     let topPos = $(document).scrollTop();
     if ($(window).width() < 600) {
-        if (id != 0) {
-            //topPos = $("#det"+id).offset().top;
-            topPos = Math.round($(document).scrollTop());
-            console.log("top: " + topPos);
-            el.css("top", topPos);
-        }
-        el.css("left", "0px");
+        el.css("top", topPos);
+        el.css("left", "0");
         el.css("bottom", "auto");
         el.css("right", "auto");
         el.css("width", "100%");
         el.css("position", "absolute");
         el.show();
+
+        $(".bookingeditorcegselector2").css("width", $("#editcolumn").width());
+        $("#dokirexcegidselector").css("width", $("#editcolumn").width()*.9);
+        $(".bookingeditorselector2").css("width", $("#editcolumn").width()*.9);
+        $(".munkakorlist").css("width", $("#editcolumn").width()*.9);
     } else {
         el.css("top", "auto");
         el.css("left", "auto");
         el.css("bottom", "0");
         el.css("right", "0");
-        el.css("width", "auto");
+        el.css("width", "620px");
         el.css("position", "fixed");
+
+        $(".bookingeditorcegselector2").css("width", 200);
+        $("#dokirexcegidselector").css("width", 180);
+        $(".bookingeditorselector2").css("width", 180);
+        $(".munkakorlist").css("width", 180);
+
         el.slideDown();
     }
 }
@@ -2341,7 +2347,7 @@ function newUserDataFromReservation() {
             if (data.error != "") {
                 alert(data.error);
             } else {
-                foglalasMentes("booking");
+                foglalasMentes("booking", 0);
             }
         }
     });
