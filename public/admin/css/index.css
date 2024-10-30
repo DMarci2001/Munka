@@ -1279,6 +1279,13 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	z-index:10000;
 }
 
+#chatwindow {
+	position: fixed;
+	bottom:0;
+	right:0;
+	z-index:9999;
+}
+
 #idoponteditor {
 	position:fixed;
 	bottom:0px;
@@ -1571,6 +1578,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	padding:10px;
 	border-bottom:1px solid #ccc;
 	width:300px;
+	overflow: hidden;
+}
+
+.chatsessionlistitemmain {
+	display:inline-block;
+	cursor:pointer;
+	/*padding:10px;*/
+	border-bottom:1px solid #ccc;
+	width:100%;
+	/*white-space: nowrap;*/
 	overflow: hidden;
 }
 

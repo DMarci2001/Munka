@@ -28,6 +28,25 @@ function loadChatWindow(sessionId, scroll) {
     });
 }
 
+function loadChatWindowMain(sessionId, scroll) {
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { loadChatWindowMain:1, sessionId:sessionId },
+        success: function (response) {
+            $("#chatwindow").html(response.html);
+            $("#chatwindow").show();
+            if (scroll) {
+                scrollToChatBottom();
+                //chatSessionListRefresh();
+            }
+        }
+    });
+}
+
+function hideChatPopup() {
+    $("#chatwindow").html("");
+}
 
 function chatWindowRefresh() {
     loadChatWindow(0, false);
@@ -50,7 +69,7 @@ function chatSessionListRefresh() {
 
 
 function scrollToChatBottom() {
-    $('#chatsessionitems').scrollTop($('#chatsessionitems')[0].scrollHeight);
+    //$('#chatsessionitems').scrollTop($('#chatsessionitems')[0].scrollHeight);
 }
 
 function sendChatMessage() {
