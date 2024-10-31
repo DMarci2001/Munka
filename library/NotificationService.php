@@ -345,7 +345,10 @@ class NotificationService
                     $mbody .= "Szűréstípus: {$row["szurestipus"]}<br>";
                     $mbody .= $packText;
                     $mbody .= "Helyszín: {$row["helyszin"]}<br>";
-                    if ($row["megj"] != "") $mbody .= "Megjegyzés: {$row["megj"]}<br>";
+
+                    //cégnek ne menjen megjegyzés!!
+                    //if ($row["megj"] != "") $mbody .= "Megjegyzés: {$row["megj"]}<br>";
+
                     $mbody .= "<br/>";
 
                     if ($row["orvosnev"] != "" && $row["orvosemail"] != "") {
