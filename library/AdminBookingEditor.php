@@ -523,10 +523,12 @@ class AdminBookingEditor {
             //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=covidkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>COVID kérdőív</a>&nbsp;&nbsp;";
             //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzsersetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Menedzser sétálólap</a>&nbsp;&nbsp;";
 
-            if ($row["cegid"] == CompanyService::SUZUKI_GHC_ID && Booking_Constants::SQL_DB == "hungariamed") {
+            /*if ($row["cegid"] == CompanyService::SUZUKI_GHC_ID && Booking_Constants::SQL_DB == "hungariamed") {
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcsenior&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC SEN</a>&nbsp;&nbsp;";
                 $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=ghcstandard&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> GHC STA</a>&nbsp;&nbsp;";
-            }
+            }*/
+
+            $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> NKFIH sétálólap</a>&nbsp;&nbsp;";
 
             //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
