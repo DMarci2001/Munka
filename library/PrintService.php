@@ -1441,7 +1441,23 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             696 => "templates/szurovizsgalat_form_kisecset.pdf",
             701 => "templates/szurovizsgalat_form_diosjeno.pdf",
             697 => "templates/szurovizsgalat_form_szecsenyfelfalu.pdf",
+
+            958 => "templates/hazaipalya_cegled.pdf",
+            952 => "templates/hazaipalya_cegledbercel.pdf",
+            956 => "templates/hazaipalya_dany.pdf",
+            954 => "templates/hazaipalya_felsopakony.pdf",
+            948 => "templates/hazaipalya_koka.pdf",
+            950 => "templates/hazaipalya_korostetetlen.pdf",
+            953 => "templates/hazaipalya_nyarsapat.pdf",
+            957 => "templates/hazaipalya_pilis.pdf",
+            955 => "templates/hazaipalya_tapiobicske.pdf",
+            949 => "templates/hazaipalya_tarnok.pdf",
+            951 => "templates/hazaipalya_ujszilvas.pdf",
         ];
+
+        //958 => "templates/hazaipalya_danszentmiklos.pdf",
+        //958 => "templates/hazaipalya_kocser.pdf",
+        //958 => "templates/hazaipalya_pilisszentkereszt.pdf",
 
         $orvosId = $beoData["orvosid"];
         $helyszinId = $beoData["helyszinid"];
@@ -1487,8 +1503,11 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                         WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.nev<>'nincs név'
                         GROUP BY f.id order by f.nev", [$timeFrom, $timeTo, $helyszinId])->fetchAll(PDO::FETCH_ASSOC);
 
+        //echo "ok";
+        //echo count($reservations);
+        //die;
+
         $savedPdfs = [];
-        $reservation = [];
         foreach ($reservations as $key => $reservation) {
             $saveName = "templates/".session_id()."_{$key}.pdf";
             $savedPdfs[] = $saveName;

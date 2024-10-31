@@ -146,6 +146,7 @@ class AdminPage {
         echo "</table>";
 
         echo "<div id='generalpopup'></div>";
+        echo "<div id='chatwindow'></div>";
         echo "</body>";
         echo "</html>";
     }
@@ -165,13 +166,15 @@ class AdminPage {
         $html.= "<div id='adminuserswindow' onclick='toggleUsersWindow();'></div>";
 
         $html.= "<div style='padding:15px;'>";
-        $html.= "<div class='tdm' style='font-size: 22px;'><i id='hamburgericon' style='cursor:pointer;' class='fa-solid fa-bars'></i></div>";
+        if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
+            $html .= "<div class='tdm' style='font-size: 22px;'><i id='hamburgericon' style='cursor:pointer;' class='fa-solid fa-bars'></i></div>";
+        }
         $html.= "<div class='tdm' style='width:100%;'></div>";
         $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='chatbuttoncontainer'></div>";
         $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='warnbuttoncontainer'></div>";
         $html.= "<div class='tdm' style='padding-right: 5px;white-space: nowrap;' id='usersbuttoncontainer'></div>";
         $html.= "<div class='tdm' style='padding-right: 0px;'>" . $this->adminUser->getAdminLevel($this->adminUser->user, true) . "&nbsp;&nbsp;</div>";
-        $html.= "<div class='tdm' style='white-space: nowrap;padding-right: 5px;'><a style='color:#44f;' href='index.php?page=users&szerk=self'>" . mb_substr($this->adminUser->user["nev"], 0, 20) . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a title='kijelentkezés' href='index.php?logoutadmin'><i class='fa-solid fa-right-from-bracket fa-lg'></i></a></div>";
+        $html.= "<div class='tdm' style='white-space: nowrap;padding-right: 5px;'><a style='color:#44f;' href='index.php?page=users&szerk=self'>" . mb_substr($this->adminUser->user["nev"], 0, 20) . "</a>&nbsp;&nbsp;<a title='kijelentkezés' href='index.php?logoutadmin'><i class='fa-solid fa-right-from-bracket fa-lg'></i></a></div>";
         $html.= "</div>";
         return $html;
     }
@@ -180,16 +183,18 @@ class AdminPage {
         $subDomain = $_SESSION["helyszindata"]["domain"];
 
         $html = "";
-        $html.= "<div style='margin:10px 0px 10px 0px;padding-right:5px;text-align: center;'><a href='index.php'><img width='120' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
+        $html.= "<div style='margin:10px 0px 20px 0px;padding-right:5px;text-align: center;'><a href='index.php'><img width='120' src='/images/".Booking_Constants::SITE_ADMIN_LOGO."' /></a></div>";
         //if (is_file("images/logo_{$subDomain}.png") || is_file("../images/logo_{$subDomain}.png")) {
         //    $html.= "<div style='padding-right:5px;text-align: center;'><img width='120' src='/images/logo_{$subDomain}.png' /></div>";
         //}
 
-        $html.= "<div style='padding-top:10px;padding-bottom:10px;font-size:12px;'>";
+        $html.= $this->_chatColumn();
+
+        $html.= "<div style='padding-bottom:10px;font-size:12px;'>";
 
         foreach ($this->adminMenu as $menu) {
             if ($menu["sorrend"] == 0) {
-                 continue;
+                continue;
             }
 
             $aktualPage = $_GET["page"] == $menu["pageid"] || $this->pageData["parent"] == $menu["id"];
@@ -226,6 +231,16 @@ class AdminPage {
         }
 
         $html.= "</div>";
+
+        return $html;
+    }
+
+    private function _chatColumn():string {
+        $html = "";
+        if ($this->adminUser->chatAccess()) {
+            $chatService = new ChatService();
+            $html.= $chatService->getSessionListHTML($this->adminUser->user["id"]);
+        }
 
         return $html;
     }

@@ -387,7 +387,7 @@ class AdminBookingEditor {
     }
 
     private function companySelector($selectedCompanyId):string {
-        $html = "<div style='width:100%;'>";
+        $html = "<div style='' id='editcolumn'>";
         $html .= "<select class='bookingeditorcegselector2' onChange='setDefaultDokirexCegId($(this).val())' name='cegid' id='cegid' style='width:100%;'>";
         $html .= "<option value='0'>Nincs céghez kötve</option>";
 
@@ -503,7 +503,7 @@ class AdminBookingEditor {
     private function printButtons($row):string {
         $html = "";
         if ($row["nev"] != "" && $row["nev"] != "nincs név") {
-            $html .= "<div style='margin-bottom:5px;'>";
+            $html .= "<div style='padding:10px;background:#d0d0d0;'>";
             //$html.= "<a class='printbutton' target='_blank' href='index.php?print&template=menedzserkerdoiv&fid={$row["id"]}&p={$row["pass"]}'>menedzser kérdőív</a>&nbsp;&nbsp;";
             $html .= "<a title='Alkalmassági' class='printbutton' target='_blank' onclick='showAlkalmassagiWin({$row["id"]});return false;' href='#'>&nbsp;<i class='fa-solid fa-award'></i>&nbsp;</a>&nbsp;&nbsp;";
 
@@ -550,7 +550,7 @@ class AdminBookingEditor {
 
         $html.= "<div style='display:table;width:100%;'>";
         $html.= "<div style='display:table-row'>";
-        $html.= "<div class='tdm' style='width:{$this->textCellWidth};'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</div><div class='tdm' style='padding:1px 0;'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</div>";
+        $html.= "<div class='tdm' style='width:{$this->textCellWidth};white-space: nowrap;'><img height='13px' src='https://dokirex.hu/favicon.ico' title='Dokirex cég' />&nbsp;Cég:</div><div class='tdm' style='padding:1px 0;'>" . ($this->user->allCegJog() ? $this->adminUtils->ceglista($row["dokirexcegid"], $row["cegid"]) : "") . "</div>";
         $html.= "</div>";
         $html.= "<div style='display:table-row'>";
         $html.= "<div class='tdm'>Cég:</div><div class='tdm' style='padding:1px 0;'>" . $this->companySelector($row["cegid"]) . "</div>";
@@ -764,21 +764,24 @@ class AdminBookingEditor {
             $_GET["page"] = $_POST["page"];
         }
 
-        $html .= "<div style='padding-top:10px;margin-top:5px;border-top:1px solid #888;'>";
-        $html .= "<input type='button' class='ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});' value='Mentés'/>&nbsp;&nbsp;";
-        $html .= "<input onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();' type='button' value='Bezár'/>&nbsp;&nbsp;";
-        $html .= "<input onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\", 0);' type='button' value='foglalás törlése' style='background: #f00'>&nbsp;&nbsp;";
+        $html .= "<div style='padding:10px;background:#d0d0d0;'>";
+        $html .= "<a href='#' class='newsubmit ui-taborderon' onclick='foglalasMentes(\"{$_GET["page"]}\", {$allowNewCompany});return false;'>Mentés</a>&nbsp;&nbsp;";
+        $html .= "<a href='#' class='newsubmit' onclick='$(\"#idoponteditor\").slideUp();cancelFoglalasMove();return false;'>Bezár</a>&nbsp;&nbsp;";
+        $html .= "<a href='#' class='newsubmit' onclick='removeIdopont({$row["id"]},\"{$row["pass"]}\",\"{$_GET["page"]}\", 0);return false;' style='background:red;'><i title='foglalás törlése' class='fa-solid fa-trash'></i></a>&nbsp;&nbsp;";
+
+        $dokirexSign = empty($row["dokirex_userid"]) ? "":" <i class='fa-solid fa-check'></i>";
 
         if (Booking_Constants::COMPANY_NAME_SHORT == "Keltexmed") {
-            $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex Keltexmed' style='background:#5ed5e3'>&nbsp;&nbsp;";
-            $html .= "<input onClick='insertPaciensIntoDokirexHMM({$row["id"]})' type='button' value='Dokirex HMM' style='background:#9d0202'>&nbsp;&nbsp;";
+            $html .= "<a href='#' class='newsubmit' onclick='insertPaciensIntoDokirex({$row["id"]});return false;' style='background:#5ed5e3'>Dokirex Keltexmed</a>&nbsp;&nbsp;";
+            $html .= "<a href='#' class='newsubmit' onclick='insertPaciensIntoDokirexHMM({$row["id"]});return false;' style='background:#9d0202'>Dokirex HMM</a>&nbsp;&nbsp;";
         } else {
-            $html .= "<input onClick='insertPaciensIntoDokirex({$row["id"]})' type='button' value='Dokirex" . (empty($row["dokirex_userid"]) ? "" : " uid:{$row["dokirex_userid"]}") . "' style='background:#008080'>&nbsp;&nbsp;";
+            $html .= "<a href='#' class='newsubmit' onclick='insertPaciensIntoDokirex({$row["id"]});return false;' style='background:#008080' title='uid: {$row["dokirex_userid"]}'>Dokirex{$dokirexSign}</a>&nbsp;&nbsp;";
         }
 
         if ($this->user->varoteremuiAccess()) {
             $html .= $this->varoteremService->doc_choose_button($row);
         }
+
         $html .= "</div>";
 
         return $html;
@@ -824,20 +827,20 @@ class AdminBookingEditor {
             $html .= "<input type='hidden' name='mustChooseCompany' id='mustChooseCompany' value='{$mustChooseCompany}'/>";
             $html .= "<input type='hidden' name='allowNewCompany' id='allowNewCompany' value='{$allowNewCompany}'/>";
 
-            $html .= "<div style='position:relative;background:#e0e0e0;'>";
+            $html .= "<div style='background:#e0e0e0;'>";
 
             $html .= $this->heading($row);
 
-            $html .= "<div style='padding:10px;'>";
             $html .= $this->printButtons($row);
+            $html .= "<div style='padding:5px 10px 10px 10px;'>";
             $html .= $this->companyBlock($row);
             $html .= $this->patientNotFoundBlock($row);
             $html .= $this->patientDataBlock($row);
             $html .= $this->eljottBlock($row);
             $html .= $this->commentBlock($row);
             $html .= $this->extraServiceBlock($row);
-            $html .= $this->footerButtons($row);
             $html .= "</div>";
+            $html .= $this->footerButtons($row);
 
             $html .= "</div>";
             $html.= "</form>";

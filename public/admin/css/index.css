@@ -1279,6 +1279,13 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	z-index:10000;
 }
 
+#chatwindow {
+	position: fixed;
+	bottom:0;
+	right:0;
+	z-index:9999;
+}
+
 #idoponteditor {
 	position:fixed;
 	bottom:0px;
@@ -1574,6 +1581,16 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	overflow: hidden;
 }
 
+.chatsessionlistitemmain {
+	display:inline-block;
+	cursor:pointer;
+	/*padding:10px;*/
+	border-bottom:1px solid #ccc;
+	width:100%;
+	/*white-space: nowrap;*/
+	overflow: hidden;
+}
+
 .chatsessionlistitemaktiv {
 	filter: brightness(90%);
 }
@@ -1844,4 +1861,23 @@ and (max-width: 500px) {
 	.becell:first-child {
 		padding-right: 0px;
 	}
+}
+
+.select2-selection { overflow: hidden; }
+.select2-selection__rendered { white-space: normal; word-break: break-all; }
+
+.newsubmit {
+	background: #a9a9a9;
+	color:#fff;
+	padding:4px 10px;
+	border-radius: 3px;
+	text-decoration: none;
+	font-size: 14px;
+	box-sizing: border-box;
+	display:inline-block;
+}
+
+.newsubmit:hover {
+	text-decoration: none;
+	background: #999;
 }

@@ -5,6 +5,8 @@ class AdminChatPage extends AdminCorePage {
     const PRIVATE_CHAT_BACKGROUND = "#fdfdd3";
     const EXTERNAL_CHAT_BACKGROUND = "#eee";
 
+    private ChatService $chatService;
+
     private array $fastTexts = [
         "Jó napot kívánok, #name# vagyok, miben segíthetek!",
         "Kis türelmét kérem!",
@@ -15,7 +17,11 @@ class AdminChatPage extends AdminCorePage {
     public function __construct()
     {
         parent::__construct();
-        $GLOBALS["javascript"][] = "adminchat.js?v=".date("YmdHi");
+        //$GLOBALS["javascript"][] = "adminchat.js?v=".date("YmdHi");
+        //error_reporting(E_ALL);
+        //ini_set('display_errors', 1);
+
+        $this->chatService = new ChatService();
 
         if (!isset($_SESSION["openedsession"])) {
             $_SESSION["openedsession"] = 0;
@@ -96,43 +102,39 @@ class AdminChatPage extends AdminCorePage {
             }
 
             $html = "";
+            $html.= $this->chatService->showChatMessages($sessionId);
 
+            Utils::jsonOut(["html" => $html]);
+        }
 
-            if ($sessionId != 0) {
-                $messages = sql_query("select c.*, u.username from chat c
-                left join users u on u.id=c.userid
-                where c.chatsessionid=? order by c.datum", [$sessionId]);
-                foreach ($messages as $message) {
-                    if ($message["userid"] != 0) {
-                        $html .= "<div style='display:table-row;'>";
-                        $html .= "<div style='display:table-cell;vertical-align: top;font-size: 24px;padding:10px 10px 0px 0px;'>";
-                        $html .= "<i class='fa-solid fa-user-doctor'></i>";
-                        $html .= "</div>";
-                        $html .= "<div style='display:table-cell;vertical-align: top;padding:10px 0px 0px 0px;'>";
-                        $html .= "<div class='chatusermessage'>{$message["message"]}</div>";
-                        $html .= "<span class='chatstatus'>{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
-                        $html .= "</div>";
-                        $html .= "</div>";
-                    } else {
-                        $html .= "<div style='display:table-row;'>";
-                        $html .= "<div style='display:table-cell;vertical-align: top;font-size: 24px;padding:10px 10px 0px 0px;'>";
-                        $html .= "<i class='fas fa-user'></i>";
-                        $html .= "</div>";
-                        $html .= "<div style='display:table-cell;vertical-align: top;padding:10px 0px 0px 0px;'>";
-                        $html .= "<div class='chatadminmessage'>{$message["message"]}</div>";
-                        $html .= "<span class='chatstatus'>Felhasználó " . $this->chatTimeString($message["datum"]) . "</span></span>";
-                        $html .= "</div>";
-                        $html .= "</div>";
-                    }
-                    if ($message["readdate"] == "0000-00-00 00:00:00") {
-                        sql_query("update chat set readdate=now() where id=?", [$message["id"]]);
-                    }
-                }
+        if (isset($_POST["loadChatWindowMain"])) {
+            $sessionId = intval($_POST["sessionId"]);
+
+            if ($sessionId == 0) {
+                $sessionId = $_SESSION["openedsession"];
             } else {
-                $html.= "<div style='font-weight: bold;text-align: center;padding-bottom: 50px;'><i style='font-size: 60px;color:red;opacity: .5;' class='fas fa-triangle-exclamation'></i><br/><br/>Válassz a bal oldali chat szobák közül!</div>";
+                $_SESSION["openedsession"] = $sessionId;
             }
 
+            $chatUsersText = $this->chatService->getChatUsers($sessionId, $this->adminUser);
 
+            $html = "";
+
+            $html.= "<div style='border:1px solid #ccc;background:white;'>";
+
+            $html.= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+            $html.= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-flask'></i>&nbsp;&nbsp;{$chatUsersText}</div>";
+            $html.= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideChatPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+            $html.= "</div>";
+
+            $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
+            $html.= "<div id='chatsessionitems' style='display:inline-block;padding:5px;width:350px;max-height:300px;overflow:auto;border:1px solid #000;'>".$this->chatService->showChatMessages($sessionId)."</div>";
+            $html.= "</div>";
+
+            $html.= "<div style='margin-top:5px;'>";
+            $html.= "<input id='chatmessagetext' type='text' placeholder='Írd be az üzenetet...' value='' style='width:330px;border:1px solid #ccc;'/>&nbsp;&nbsp;<a title='Üzenet elküldése' href='#' onclick='sendChatMessage();return false;'><i style='font-size:16px;' class='fas fa-arrow-right'></i></a>";
+            $html.= "</div>";
+            $html.= "</div>";
 
             Utils::jsonOut(["html" => $html]);
         }
@@ -231,21 +233,6 @@ class AdminChatPage extends AdminCorePage {
     }
 
 
-    private function chatTimeString($datum):string {
-        $diff = strtotime("now") - strtotime($datum);
-        if ($diff < 60) {
-            return $diff . " másodperce";
-        }
-        if ($diff < 3600) {
-            return round($diff/60) . " perce";
-        }
-        if ($diff < 86400) {
-            return round($diff/3600) . " órája";
-        }
-
-        return round($diff/86400) . " napja";
-    }
-
     private function chatSessionRow($chatSession):string {
         $html = "";
 
@@ -282,9 +269,9 @@ class AdminChatPage extends AdminCorePage {
 
         $html.= "<div class='chatsessionlistitem".($_SESSION["openedsession"] == $chatSession["id"] ? " chatsessionlistitemaktiv":"")."' style='background:{$backgroundColor}' onclick='loadChatWindow({$chatSession["id"]}, true);'>";
         $html.= "<div style='margin-right: 10px;'>";
-        if ($lastItem["readdate"] == "0000-00-00 00:00:00" && $lastItem["userid"] == 0) {
-            $html.= "<div style='float:left;font-size:20px;padding-right:5px;padding-top:6px;color:red'><i title='új üzenet' class='fas fa-comment'></i></div>";
-        }
+        //if ($lastItem["readdate"] == "0000-00-00 00:00:00" && $lastItem["userid"] == 0) {
+        //    $html.= "<div style='float:left;font-size:20px;padding-right:5px;padding-top:6px;color:red'><i title='új üzenet' class='fas fa-comment'></i></div>";
+        //}
 
 
         $html.= "{$lock}<div>{$title}</div>";
@@ -293,7 +280,6 @@ class AdminChatPage extends AdminCorePage {
         $html.= "</div>";
         $html.= "<br clear='all' />";
         $html.= "<div class='sessioneditordiv'  id='sessioneditor{$chatSession["id"]}'></div>";
-
 
         return $html;
     }

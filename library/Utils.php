@@ -318,7 +318,7 @@ class Utils {
 
         $htmlout.="<title>{$pageTitle}</title>";
         $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />";
-        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />';
+        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1" />';
         $favicon="/images/".Booking_Constants::SITE_FAVICON;
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) {
             $favicon="/images/logo_{$subdomain}.png";
@@ -334,6 +334,7 @@ class Utils {
         $htmlout.='<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
         $htmlout.='<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
         $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
+        $htmlout.="<script type='text/javascript' src='js/adminchat.js?v={$v}'></script>";
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
             $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
