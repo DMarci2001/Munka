@@ -33,7 +33,7 @@ class Booking_Settings
         $GLOBALS["hetnap"] = $this->hetnap;
     }
 
-    public array $validIntervals = [1,2,3,4,5,6,8,10,12,13,15,20,30,40,45,60];
+    public array $validIntervals = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20,30,40,45,60];
 
     public function getMunkaszunetiNapok($locationId = 0):array {
         if (Booking_Constants::SQL_DB == "hungariamed") {
