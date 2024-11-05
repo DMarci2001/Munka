@@ -1,28 +1,46 @@
-var enableChatSessionListRefresh = true;
+var enableChatSessionListRefresh = false;
 
 $(document).ready(function () {
     self.setInterval("chatWindowRefresh()",3000);
     self.setInterval("chatSessionListRefresh()",10000);
     loadChatWindow(0, true);
+});
 
+
+function initChatEnterKey() {
     $("#chatmessagetext").on('keyup', function (e) {
         if (e.key === 'Enter' || e.keyCode === 13) {
             sendChatMessage();
         }
     });
-});
+}
 
+function newChatSession() {
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { newchatsession:1 },
+        success: function (response) {
+            $("#chatwindow").html(response.chatmain);
+            $("#chatwindow").show();
+            initChatEnterKey();
+        }
+    });
+}
 
 function loadChatWindow(sessionId, scroll) {
+    if ($("#chatsessionitems").length == 0) {
+        return;
+    }
+
     $.ajax({
         url: "index.php?page=chat",
         method: "POST",
         data: { loadChatWindow:1, sessionId:sessionId },
         success: function (response) {
             $("#chatsessionitems").html(response.html);
-            if (scroll) {
+            if (response.new == 1) {
                 scrollToChatBottom();
-                chatSessionListRefresh();
             }
         }
     });
@@ -35,11 +53,13 @@ function loadChatWindowMain(sessionId, scroll) {
         data: { loadChatWindowMain:1, sessionId:sessionId },
         success: function (response) {
             $("#chatwindow").html(response.html);
+            $("#chatsessionlist").html(response.sessionlist);
             $("#chatwindow").show();
             if (scroll) {
                 scrollToChatBottom();
                 //chatSessionListRefresh();
             }
+            initChatEnterKey();
         }
     });
 }
@@ -69,7 +89,7 @@ function chatSessionListRefresh() {
 
 
 function scrollToChatBottom() {
-    //$('#chatsessionitems').scrollTop($('#chatsessionitems')[0].scrollHeight);
+    $('#chatsessionitems').scrollTop($('#chatsessionitems')[0].scrollHeight);
 }
 
 function sendChatMessage() {
@@ -81,11 +101,13 @@ function sendChatMessage() {
     }
 
     $.ajax({
-        url: "index.php?page=chat",
+        url: "index.php?page=chat&newmessage",
         method: "POST",
         data: { sendmessage:1, message:message },
         success: function (response) {
-            loadChatWindow(0, true);
+            $("#chatsessionitems").html(response.messages);
+            $("#chatsessionlist").html(response.sessionlist);
+            scrollToChatBottom();
         }
     });
 }
@@ -138,7 +160,11 @@ function toggleChatSessionUser(el) {
         url: "index.php?page=chat",
         data: { toggleChatUserSession: sessionId, userId: userId, aktiv:aktiv },
         success: function (response) {
-            $("#sessionusers"+sessionId).html(response);
+            //$("#sessionusers"+sessionId).html(response);
+            $("#chatwindow").html(response.chatmain);
+            $("#chatsessionlist").html(response.sessionlist);
+            scrollToChatBottom();
+            initChatEnterKey();
         }
     });
 }

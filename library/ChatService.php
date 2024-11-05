@@ -2,51 +2,62 @@
 
 class ChatService {
 
+    public function __construct() {
+        if (!isset($_SESSION["openedsession"])) {
+            $_SESSION["openedsession"] = 0;
+        }
+    }
+
     public function getChatSessions($userId) {
-        return sql_query("SELECT s.*, su2.userid AS sessionuserid, GROUP_CONCAT(u.nev separator ', ') AS partnername FROM chatsession s 
+        return sql_query("SELECT s.*, su2.userid AS sessionuserid, uc.nev as creatorname, GROUP_CONCAT(u.nev separator ', ') AS partnername FROM chatsession s 
             LEFT JOIN chatsessionusers su ON su.sessionid=s.id AND su.userid=:userid
             LEFT JOIN chatsessionusers su2 ON su2.sessionid=s.id
-            LEFT JOIN users u ON u.id=su2.userid
+            LEFT JOIN users uc ON uc.id=s.createdby
+            LEFT JOIN users u ON u.id=su2.userid and u.id<>:userid
             WHERE s.pub=0 AND s.external=0 AND (s.createdby=:userid OR su.id IS NOT NULL) 
             GROUP BY s.id 
-            ORDER BY s.created DESC", ["userid" => $userId])->fetchAll(PDO::FETCH_ASSOC);
+            ORDER BY s.created DESC, u.nev", ["userid" => $userId])->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
-    public function getChatUsers($chatSessionId, AdminUser $adminUser):string {
+    public function getChatUsers($chatSessionId, AdminUser $adminUser):array {
         $usersData = sql_query("SELECT s.*, su2.userid AS sessionuserid, uc.nev as creatorname, GROUP_CONCAT(u.nev separator ',') AS partnername FROM chatsession s 
             LEFT JOIN chatsessionusers su ON su.sessionid=s.id AND su.userid=:userid
             LEFT JOIN chatsessionusers su2 ON su2.sessionid=s.id
             LEFT JOIN users uc ON uc.id=s.createdby
-            LEFT JOIN users u ON u.id=su2.userid
+            LEFT JOIN users u ON u.id=su2.userid and u.id<>:userid
             WHERE (s.createdby=:userid OR su.id IS NOT NULL) and s.id=:sess 
             GROUP BY s.id 
             ORDER BY s.created DESC", ["sess" => $chatSessionId, "userid" => $adminUser->user["id"]])->fetch(PDO::FETCH_ASSOC);
 
+        return ["valami" => "", "text" => implode(", ", $this->processUsersText($usersData))];
+    }
 
+    public function processUsersText($usersData):array {
         $users = [];
-        $usersText = "";
-        if ($adminUser->user["id"] == $usersData["creatorid"]) {
-            $users[] = $usersData["creatorname"].", ";
-        }
-
-        foreach (explode(",", $usersData["partnername"]) as $partner) {
-            if ($adminUser->user["nev"] != $partner) {
-                $users[] = $partner;
+        if (!empty($usersData["partnername"])) {
+            foreach (explode(",", $usersData["partnername"]) as $partner) {
+                $users[] = trim($partner);
             }
         }
 
-        //$usersText .= $usersData["partnername"];
-        return implode(", ", $users);
-    }
+        sort($users);
 
+        return $users;
+    }
 
     public function getSessionListHTML($userId):string {
         $html = "";
 
         $chatSessions = $this->getChatSessions($userId);
         foreach ($chatSessions as $chatSession) {
-            $html.= $this->chatSessionRow($chatSession);
+            if (!empty($chatSession["partnername"])) {
+                $html .= $this->chatSessionRow($chatSession);
+            }
+        }
+
+        if ($_SESSION["adminuser"]["username"] == "jns") {
+            $html .= $this->chatSessionRow([]);
         }
 
         return $html;
@@ -54,6 +65,16 @@ class ChatService {
 
     private function chatSessionRow($chatSession):string {
         $html = "";
+
+        if (empty($chatSession)) {
+            $html.= "<div class='chatsessionlistitemmain' style='background:".AdminChatPage::PRIVATE_CHAT_BACKGROUND."' onclick='newChatSession();'>";
+            $html.= "<div style='padding:10px;' title='Új chat nyitása'>";
+            $html.= "<div style='white-space: nowrap;overflow: hidden;text-align: center;'>+ Új chat ablak</div>";
+            $html.= "<div style='font-size: 11px;color:#777;white-space: nowrap;overflow: hidden;text-align: center;'>válassz felhasználót...</div>";
+            $html.= "</div>";
+            $html.= "</div>";
+            return $html;
+        }
 
         if (empty($chatSession["partnername"])) {
             $chatSession["partnername"] = "Nincs felhasználó";
@@ -83,7 +104,8 @@ class ChatService {
             $title = $chatSession["domain"];
             $backgroundColor = AdminChatPage::EXTERNAL_CHAT_BACKGROUND;
         } else {
-            $title = $chatSession["partnername"];
+            //$title = $chatSession["partnername"];
+            $title = implode(", ", $this->processUsersText($chatSession));
             $backgroundColor = AdminChatPage::PUBLIC_CHAT_BACKGROUND;
             if ($chatSession["pub"] == 0) {
                 $backgroundColor = AdminChatPage::PRIVATE_CHAT_BACKGROUND;
@@ -102,8 +124,6 @@ class ChatService {
         $html.= "<div style='font-size: 11px;color:#777;white-space: nowrap;overflow: hidden;'>{$lastItemText}</div>";
         $html.= "</div>";
         $html.= "</div>";
-        //$html.= "<br clear='all' />";
-        //$html.= "<div class='sessioneditordiv'  id='sessioneditor{$chatSession["id"]}'></div>";
 
         return $html;
     }
@@ -113,25 +133,34 @@ class ChatService {
         $html = "";
 
         if ($chatSessionId != 0) {
-            $messages = sql_query("select c.*, u.username from chat c
+            $messages = sql_query("select c.*, u.username, u.nev from chat c
                 left join users u on u.id=c.userid
                 where c.chatsessionid=? order by c.datum", [$chatSessionId]);
             foreach ($messages as $message) {
                 if ($message["userid"] != 0) {
-                    $html .= "<div style='display:table-row;'>";
-                    $html .= "<div style='display:table-cell;vertical-align: top;font-size: 24px;padding:10px 10px 0px 0px;'>";
-                    $html .= "<i class='fa-solid fa-user-doctor'></i>";
-                    $html .= "</div>";
-                    $html .= "<div style='display:table-cell;vertical-align: top;padding:10px 0px 0px 0px;'>";
-                    $html .= "<div class='chatusermessage'>{$message["message"]}</div>";
-                    $html .= "<span class='chatstatus'>{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
-                    $html .= "</div>";
-                    $html .= "</div>";
+                    if ($_SESSION["adminuser"]["id"] != $message["userid"]) {
+                        $html .= "<div style='display:table;'>";
+                        $html .= "<div style='display:table-cell;vertical-align: top;font-size:16px;padding:10px 10px 0px 0px;'>";
+                        $html .= $this->chatMonogram($message["nev"]);
+                        $html .= "</div>";
+                        $html .= "<div style='display:table-cell;vertical-align: top;padding:10px 0px 0px 0px;'>";
+                        $html .= "<div class='chatusermessage' style='display:inline-block;background:#f0f0f0;border-radius: 10px;color:black;padding:3px 10px;'>{$message["message"]}</div><br clear='all' />";
+                        $html .= "<span class='chatstatus'>{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
+                        $html .= "</div>";
+                        $html .= "</div>";
+                    } else {
+                        $html .= "<div style='padding:10px 0px 0px 0px;text-align: right;'>";
+                        $html .= "<div class='chatusermessage' style='display:inline-block;background:#f0f0f0;border-radius: 10px;color:black;padding:3px 10px;'>{$message["message"]}</div><br clear='all' />";
+                        $html .= "<span class='chatstatus'>{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
+                        $html .= "</div>";
+                    }
                 } else {
                     $html .= "<div style='display:table-row;'>";
-                    $html .= "<div style='display:table-cell;vertical-align: top;font-size: 24px;padding:10px 10px 0px 0px;'>";
-                    $html .= "<i class='fas fa-user'></i>";
-                    $html .= "</div>";
+                    if ($_SESSION["adminuser"]["id"] != $message["userid"]) {
+                        $html .= "<div style='display:table-cell;vertical-align: top;font-size: 24px;padding:10px 10px 0px 0px;'>";
+                        $html .= "<i class='fas fa-user'></i>";
+                        $html .= "</div>";
+                    }
                     $html .= "<div style='display:table-cell;vertical-align: top;padding:10px 0px 0px 0px;'>";
                     $html .= "<div class='chatadminmessage'>{$message["message"]}</div>";
                     $html .= "<span class='chatstatus'>Felhasználó " . $this->chatTimeString($message["datum"]) . "</span></span>";
@@ -146,6 +175,19 @@ class ChatService {
 
         return $html;
     }
+
+    private function chatMonogram($nev):string {
+        $monogram = "";
+        foreach (explode(" ", $nev) as $value) {
+            $monogram .= substr($value, 0, 1);
+            if (strlen($monogram) == 2) {
+                break;
+            }
+        }
+        return "<div style='font-family:Courier;background:#3ba9b8;color:white;padding:5px 7px;border-radius: 100px;text-transform:uppercase;font-weight: bold;'>{$monogram}</div>";
+    }
+
+
 
     private function chatTimeString($datum):string {
         $diff = strtotime("now") - strtotime($datum);
@@ -162,5 +204,34 @@ class ChatService {
         return round($diff/86400) . " napja";
     }
 
+    private array $selectedUsers;
+    public function showUserButtons($sessionId):string {
+        $this->selectedUsers = [];
+        $sessionUsers = sql_query("select * from chatsessionusers where sessionid=?", [$sessionId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($sessionUsers as $sessionUser) {
+            $this->selectedUsers[] = $sessionUser["userid"];
+        }
 
+        $buttons = "";
+        if ($sessionData = sql_query("select * from chatsession where id=?", [$sessionId])->fetch(PDO::FETCH_ASSOC)) {
+            $buttons.= "<div style='margin:5px 0px;font-weight: bold;'>Online felhasználók:</div>";
+            $buttons.= $this->userButtons($sessionData, sql_query("select * from users u where u.status>0 and u.username<>'' and lastlogin>date_sub(now(), interval 1 minute) order by trim(nev)")->fetchAll(PDO::FETCH_ASSOC));
+            $buttons.= "<div style='margin:5px 0px;font-weight: bold;'>Offline felhasználók:</div>";
+            $buttons.= $this->userButtons($sessionData, sql_query("select * from users u where u.status>0 and u.username<>'' and lastlogin<=date_sub(now(), interval 1 minute) order by trim(nev)")->fetchAll(PDO::FETCH_ASSOC));
+        }
+        return $buttons;
+    }
+
+    private function userButtons($sessionData, $users):string {
+        $buttons = "";
+        foreach ($users as $user) {
+            if ($user["id"] == $_SESSION["adminuser"]["id"]) {
+                continue;
+            }
+            $aktiv = in_array($user["id"], $this->selectedUsers) ? 1:0;
+            $class = $aktiv==1 ? "serviceselected":"servicenotselected";
+            $buttons.= "<a data-aktiv='{$aktiv}' data-chatsessionid='{$sessionData["id"]}' data-userid='{$user["id"]}' title='' class='{$class}' href='#' onclick='toggleChatSessionUser(this);return false;'>".trim($user["nev"])."</a> ";
+        }
+        return $buttons;
+    }
 }
