@@ -1542,6 +1542,22 @@ class BookingService
             $h .= "</div>";
         }
 
+        $noRadiologyWarningCheckBox = false;
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            if ($_SESSION["helyszindata"]["tudoszuroopcio"] == 1 && $tid == 1 && in_array($helyszinId, [644])) {
+                $noRadiologyWarningCheckBox = true;
+            }
+        }
+
+        if ($noRadiologyWarningCheckBox) {
+            $h .= "<div><span style='font-weight: bold;'>Ha tüdőszűrő vizsgálatra is szüksége van és Budapesten kíván részt venni a vizsgálatokon, kérjük, az alábbi rendelőink közül válasszon:</span><br/>";
+            $h .="<ul style=\"margin-left:10px\">";
+            $h .="  <li style=\"list-style: disc;\">1135 Budapest, Jász u. 33-35</li>";
+            $h .="  <li style=\"list-style: disc;\">1117 Budapest, Fehérvári út 44.</li>";
+            $h .="</ul>";
+            $h .= "</div>";
+        }
+
         if ($_SESSION['helyszindata']['laboropcio'] == 1 && $tid == 1 && in_array($helyszinId, [1])) {
             $h .= "<div><input type='hidden' id='laboranswerneeded' name = 'laboranswerneeded' value = '1' /><span style='font-weight: bold;'>Szükségem van BEM vizsgálatra is.</span><br/>";
             $h .= "<input type='radio' name = 'labor' value = '1' onchange='reservedTimeInvalidate();' ".(isset($_POST["labor"]) && $_POST["labor"] == 1?"checked":"")."/>Igen<br/>";
