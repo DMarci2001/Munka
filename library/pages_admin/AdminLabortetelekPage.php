@@ -572,7 +572,7 @@ class AdminLabortetelekPage extends AdminCorePage
             echo "</table>";
 
             echo "<div id='itemeditordiv' style='min-height:1000px;'>";
-            if (Booking_Constants::SQL_DB == "keltexmed") {
+            if (Booking_Constants::SQL_DB == "keltexmed" || true) {
                 echo $this->showItemChecker($packageData["id"]);
             } else {
                 echo $this->showItemsNew($packageData["id"]);

@@ -19,7 +19,7 @@ class ExcelService {
 
     public function __construct() {
         if (session_id() == "71pb0mbmb9vdblbq8lvmkj8hf8") {
-            $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
+            $this->extraFilter = $this->esztergomFilter;
         }
     }
 
@@ -987,12 +987,12 @@ class ExcelService {
         try {
             //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
-            $this->_rtgLista($sheetId++, $from, $to);
-            $this->_laborLeletLista($sheetId++, $from, $to);
+            //$this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
+            //$this->_rtgLista($sheetId++, $from, $to);
+            //$this->_laborLeletLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
-            $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
+            //$this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
             $this->_orvosWorkHours($sheetId++, $from, $to);
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
         } catch (\Exception $e) {
@@ -1263,6 +1263,96 @@ class ExcelService {
     }
 
     public function auchanReservationStat2() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Minden");
+        $this->titleRow("A1", "Auchan foglalások");
+
+        $sor = 3;
+
+        $registrations = sql_query("SELECT DATE(f.datum) AS datum, h.cim AS helyszin, t.megnev AS tipus, COUNT(*) AS total, SUM(eljott) AS eljott, f.cegid, f.helyszinid FROM foglalasok f 
+            LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+            LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+            WHERE f.cegid IN ('338','602') AND f.datum>'2024-10-01 00:00:00' 
+            GROUP BY DATE(datum), f.`helyszinid`, t.megnev", [CompanyService::AUCHAN_ID, 602])->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->headingRow("A", $sor, ["Dátum", "Helyszín", "Szolgáltatás", "Total", "Eljött", "Ár/db", "Ár * eljött"]);
+        $sor++;
+
+        $allServiceTotals = $allServiceTotalsE = [];
+        $totalReservation = $totalEljottReservation = 0;
+        foreach ($registrations as $registration) {
+            $this->dataRow("A", $sor, [$registration["datum"], $registration["helyszin"], $registration["tipus"], $registration["total"], $registration["eljott"]]);
+            //$this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("left");
+            //$this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("left");
+            //$totalReservation+= $registration["hany"];
+            //$totalEljottReservation+= $registration["eljottek"];
+            $sor++;
+
+
+
+            if ($registration["tipus"] == "Laborvizsgálatok") {
+                $serviceTotals = $serviceTotalsE = [];
+
+                $cartItems = sql_query("SELECT f.id, f.nev, f.eljott, i.product_id, IF(i.type='package', cs.name, IF(i.type='exam', a.megnev, IF(i.type='item', t.name, ''))) AS productname, i.type, i.price FROM foglalasok f 
+                LEFT JOIN cart_item i ON i.`reservation_id`=f.id
+                LEFT JOIN synlab_labor_csomagok cs ON cs.id=i.product_id
+                LEFT JOIN synlab_labor_tetelek t ON t.id=i.product_id
+                LEFT JOIN arak a ON a.id=i.product_id
+                WHERE f.foglalta='labshop' AND f.nev<>'nincs név' AND f.cegid=? AND helyszinid=? AND CONCAT(i.product_id,i.type)<>'113package' AND CONCAT(i.product_id,i.type)<>'13exam'
+                ORDER BY CONCAT(i.product_id,i.type)<>'113package', CONCAT(i.product_id,i.type)<>'13exam'", [$registration["cegid"], $registration["helyszinid"]])->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($cartItems as $cartItem) {
+                    $productName = trim("{$cartItem["productname"]}");
+
+                    if (!empty($productName)) {
+                        if (isset($serviceTotals[$productName])) {
+                            $serviceTotals[$productName][1]++;
+                            $serviceTotalsE[$productName][1] += $cartItem["eljott"];
+                        } else {
+                            $serviceTotals[$productName][0] = $cartItem["price"];
+                            $serviceTotals[$productName][1] = 1;
+                            $serviceTotalsE[$productName][1] = $cartItem["eljott"];
+                        }
+                        if (isset($allServiceTotals[$productName])) {
+                            $allServiceTotals[$productName][1]++;
+                            $allServiceTotalsE[$productName][1] += $cartItem["eljott"];
+                        } else {
+                            $allServiceTotals[$productName][0] = $cartItem["price"];
+                            $allServiceTotals[$productName][1] = 1;
+                            $allServiceTotalsE[$productName][1] = $cartItem["eljott"];
+                        }
+                    }
+                }
+
+                foreach ($serviceTotals as $service => $value) {
+                    $this->dataRow("A", $sor, [$registration["datum"], $registration["helyszin"], $service, $value[1], $serviceTotalsE[$service][1], $value[0], $value[0] * $serviceTotalsE[$service][1]]);
+                    $sor++;
+                }
+            }
+
+
+
+        }
+
+        //$this->dataRow("A", $sor, ["Összesen", $totalReservation, $totalEljottReservation, "", ""]);
+        //$this->sheet->getStyle("A{$sor}")->getFont()->setBold(true);
+        //$this->sheet->getStyle("B{$sor}")->getFont()->setBold(true);
+        //$this->sheet->getStyle("C{$sor}")->getFont()->setBold(true);
+
+
+        $this->setAutoWidth(range('A','D'));
+        $this->sheet->getColumnDimension('E')->setWidth(20);
+        $this->sheet->getColumnDimension('F')->setWidth(20);
+
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
+
+    public function auchanReservationStat3() {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 

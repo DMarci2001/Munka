@@ -238,8 +238,10 @@ class AdminPage {
     private function _chatColumn():string {
         $html = "";
         if ($this->adminUser->chatAccess()) {
+            $html.= "<div id='chatsessionlist'>";
             $chatService = new ChatService();
             $html.= $chatService->getSessionListHTML($this->adminUser->user["id"]);
+            $html.= "</div>";
         }
 
         return $html;

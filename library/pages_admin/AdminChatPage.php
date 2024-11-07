@@ -18,13 +18,20 @@ class AdminChatPage extends AdminCorePage {
     {
         parent::__construct();
         //$GLOBALS["javascript"][] = "adminchat.js?v=".date("YmdHi");
-        //error_reporting(E_ALL);
-        //ini_set('display_errors', 1);
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
 
         $this->chatService = new ChatService();
 
-        if (!isset($_SESSION["openedsession"])) {
-            $_SESSION["openedsession"] = 0;
+        if (isset($_POST["newchatsession"])) {
+            $sessionId = md5($this->adminUser->user["username"] . date("YmdHis"));
+            sql_query("insert into chatsession set created=now(), createdby=?, session=?, title=?, domain='', external=0, pub=0", [$this->adminUser->user["id"], $sessionId, "új chat"]);
+            $newId = sql_insert_id();
+
+            sql_query("insert into chatsessionusers set userid=?, sessionid=?", [$this->adminUser->user["id"], $newId]);
+
+            $_SESSION["openedsession"] = $newId;
+            Utils::jsonOut(["chatmain" => $this->chatMainWindow($newId)]);
         }
 
         if (isset($_POST["opensessioneditor"])) {
@@ -54,7 +61,7 @@ class AdminChatPage extends AdminCorePage {
             echo "<div style='padding-top:8px;'><a class='ujbutton' onclick='addNewChatSession();return false;' href='#'>{$saveButtonTitle}</a> <a class='ujbutton' onclick='closeChatSessionEditors();return false;' href='#'>Mégse</a></div>";
 
             if ($pub == 0 && isset($sessionData)) {
-                echo "<div style='width: 300px;' id='sessionusers{$sessionData["id"]}'>".$this->showUserButtons($sessionData["id"])."</div>";
+                echo "<div style='width: 300px;' id='sessionusers{$sessionData["id"]}'>".$this->chatService->showUserButtons($sessionData["id"])."</div>";
             }
 
             echo "</div>";
@@ -88,7 +95,8 @@ class AdminChatPage extends AdminCorePage {
                 sql_query("delete from chatsessionusers where userid=? and sessionid=?", [$userId, $sessionId]);
             }
 
-            echo $this->showUserButtons($sessionId);
+            Utils::jsonOut(["chatmain" => $this->chatMainWindow($sessionId), "sessionlist" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
+            //echo $this->chatService->showUserButtons($sessionId);
             die;
         }
 
@@ -104,43 +112,22 @@ class AdminChatPage extends AdminCorePage {
             $html = "";
             $html.= $this->chatService->showChatMessages($sessionId);
 
-            Utils::jsonOut(["html" => $html]);
+            $newMessage = 0;
+            if (sql_query("select id from chatsessionlog where userid=? and sessionid=? and tipus='unread' and checked=0", [$this->adminUser->user["id"], $sessionId])->fetch(PDO::FETCH_ASSOC)) {
+                $newMessage = 1;
+                sql_query("update chatsessionlog set checked=1, notified=1 where userid=? and sessionid=? and tipus='unread'", [$this->adminUser->user["id"], $sessionId]);
+            }
+
+            Utils::jsonOut(["html" => $html, "new" => $newMessage, "sess" => $sessionId]);
         }
 
         if (isset($_POST["loadChatWindowMain"])) {
             $sessionId = intval($_POST["sessionId"]);
-
-            if ($sessionId == 0) {
-                $sessionId = $_SESSION["openedsession"];
-            } else {
-                $_SESSION["openedsession"] = $sessionId;
-            }
-
-            $chatUsersText = $this->chatService->getChatUsers($sessionId, $this->adminUser);
-
-            $html = "";
-
-            $html.= "<div style='border:1px solid #ccc;background:white;'>";
-
-            $html.= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
-            $html.= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-flask'></i>&nbsp;&nbsp;{$chatUsersText}</div>";
-            $html.= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideChatPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
-            $html.= "</div>";
-
-            $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
-            $html.= "<div id='chatsessionitems' style='display:inline-block;padding:5px;width:350px;max-height:300px;overflow:auto;border:1px solid #000;'>".$this->chatService->showChatMessages($sessionId)."</div>";
-            $html.= "</div>";
-
-            $html.= "<div style='margin-top:5px;'>";
-            $html.= "<input id='chatmessagetext' type='text' placeholder='Írd be az üzenetet...' value='' style='width:330px;border:1px solid #ccc;'/>&nbsp;&nbsp;<a title='Üzenet elküldése' href='#' onclick='sendChatMessage();return false;'><i style='font-size:16px;' class='fas fa-arrow-right'></i></a>";
-            $html.= "</div>";
-            $html.= "</div>";
-
-            Utils::jsonOut(["html" => $html]);
+            Utils::jsonOut(["html" => $this->chatMainWindow($sessionId), "sessionlist" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
         }
 
         if (isset($_POST["chatSessionList"])) {
-            Utils::jsonOut(["html" => $this->chatSessionList()]);
+            Utils::jsonOut(["html" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
         }
 
         if (isset($_POST["sendmessage"])) {
@@ -149,9 +136,13 @@ class AdminChatPage extends AdminCorePage {
 
             if ($chatSession != 0) {
                 sql_query("insert into chat set datum=now(), chatsessionid=?, message=?, userid=?", [$chatSession, $message, $this->adminUser->user["id"]]);
+
+                foreach (sql_query("select u.userid from chatsessionusers u where u.sessionid=? and u.userid<>?", [$chatSession, $this->adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC) as $user) {
+                    sql_query("insert into chatsessionlog set sessionid=?, userid=?, tipus='unread'", [$chatSession, $user["userid"]]);
+                }
             }
 
-            die("sent");
+            Utils::jsonOut(["messages" => $this->chatService->showChatMessages($chatSession), "sessionlist" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
         }
 
         if (isset($_GET["closechat"])) {
@@ -168,27 +159,6 @@ class AdminChatPage extends AdminCorePage {
     }
 
 
-    private function showUserButtons($sessionId):string {
-        $selectedUsers = [];
-        $sessionUsers = sql_query("select * from chatsessionusers where sessionid=?", [$sessionId])->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($sessionUsers as $sessionUser) {
-            $selectedUsers[] = $sessionUser["userid"];
-        }
-
-        $buttons = "<div style='margin:5px 0px;font-weight: bold;'>Meghívott felhasználók:</div>";
-        if ($sessionData = sql_query("select * from chatsession where id=?", [$sessionId])->fetch(PDO::FETCH_ASSOC)) {
-            $users = sql_query("select * from users u where u.status>0 and u.username<>'' order by trim(username)")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($users as $user) {
-                $aktiv = in_array($user["id"], $selectedUsers) ? 1:0;
-                $class = $aktiv==1 ? "serviceselected":"servicenotselected";
-                $arr = explode("@", $user["username"]);
-                $username = array_shift($arr);
-                $buttons .= "<a data-aktiv='{$aktiv}' data-chatsessionid='{$sessionData["id"]}' data-userid='{$user["id"]}' title='' class='{$class}' href='#' onclick='toggleChatSessionUser(this);return false;'>{$username}</a> ";
-            }
-        }
-        return $buttons;
-    }
-
     public function showPage()
     {
         if (!$this->adminUser->chatAccess()) {
@@ -197,11 +167,12 @@ class AdminChatPage extends AdminCorePage {
         }
 
         if ($this->adminUtils->settings->chatStatus == 1) {
-            echo "<div style='margin-bottom:10px;color:green;'>A chat jelenleg <strong>online</strong> <a href='index.php?page=chat&chatstatus=0'>kikapcsolás</a></div>";
+            echo "<div style='margin-bottom:10px;color:green;'>Az ügyfélszolgálat chat jelenleg <strong>online</strong> <a href='index.php?page=chat&chatstatus=0'>kikapcsolás</a></div>";
         } else {
-            echo "<div style='color:red;margin-bottom:10px;'>A chat jelenleg <strong>offline</strong> <a href='index.php?page=chat&chatstatus=1'>bekapcsolás</a></div>";
+            echo "<div style='color:red;margin-bottom:10px;'>A ügyfélszolgálat chat jelenleg <strong>offline</strong> <a href='index.php?page=chat&chatstatus=1'>bekapcsolás</a></div>";
         }
 
+        /*
         echo "<div style='display:table-cell;vertical-align: top;'>";
 
         echo "<div id='chatsessionlist'>";
@@ -230,6 +201,7 @@ class AdminChatPage extends AdminCorePage {
         echo "</div>";
 
         echo "</div>";
+        */
     }
 
 
@@ -273,7 +245,6 @@ class AdminChatPage extends AdminCorePage {
         //    $html.= "<div style='float:left;font-size:20px;padding-right:5px;padding-top:6px;color:red'><i title='új üzenet' class='fas fa-comment'></i></div>";
         //}
 
-
         $html.= "{$lock}<div>{$title}</div>";
         $html.= "<div style='font-size: 11px;color:#777;white-space: nowrap;overflow: hidden;'>{$lastItemText}</div>";
         $html.= "</div>";
@@ -284,42 +255,43 @@ class AdminChatPage extends AdminCorePage {
         return $html;
     }
 
-    private function chatSessionList():string {
+
+
+    private function chatMainWindow($sessionId):string {
+        if ($sessionId == 0) {
+            $sessionId = $_SESSION["openedsession"];
+        } else {
+            $_SESSION["openedsession"] = $sessionId;
+        }
+
+        $chatUsers = $this->chatService->getChatUsers($sessionId, $this->adminUser);
+
         $html = "";
 
-        //publikus ablakok
-        $chatSessions = sql_query("SELECT s.* FROM chatsession s WHERE s.pub=1 and s.external=0 ORDER BY s.created DESC")->fetchAll(PDO::FETCH_ASSOC);
-        $html.= "<div style='font-weight: bold;padding:10px;font-size: 16px;'>Publikus chat ablakok<br/><a onclick='openChatSessionEditor(\"newsessionpublic\", 0, 1);return false;' href='#' style='font-size: 12px;'>+ új publikus chat ablak létrehozása</a></div>";
-        $html.= "<div class='sessioneditordiv' id='newsessionpublic'></div>";
-        foreach ($chatSessions as $chatSession) {
-            $html.= $this->chatSessionRow($chatSession);
-        }
+        $html.= "<div style='border:1px solid #ccc;background:white;'>";
 
-        //privát ablakok
-        $chatSessions = sql_query("SELECT s.*, su2.id AS sessionuserid FROM chatsession s 
-            LEFT JOIN chatsessionusers su ON su.sessionid=s.id AND su.`userid`=:userid
-            LEFT JOIN chatsessionusers su2 ON su2.sessionid=s.id
-            WHERE s.pub=0 AND s.external=0 AND (s.`createdby`=:userid OR su.id IS NOT NULL) GROUP BY s.id ORDER BY s.created DESC", ["userid" => $this->adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC);
-        $html.= "<div style='font-weight: bold;padding:10px;font-size: 16px;'>Privát chat ablakok<br/><a onclick='openChatSessionEditor(\"newsessionprivate\", 0, 0);return false;' href='#' style='font-size: 12px;'>+ új privát chat ablak létrehozása</a></div>";
-        $html.= "<div class='sessioneditordiv'  id='newsessionprivate'></div>";
-        foreach ($chatSessions as $chatSession) {
-            $html.= $this->chatSessionRow($chatSession);
-        }
+        $html.= "<div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'><i class='fa-solid fa-comment'></i>&nbsp;&nbsp;".mb_substr(empty($chatUsers["text"]) ? "Kivel szeretnél bezsélgetni?":$chatUsers["text"], 0, 40)."</div>";
+        $html.= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideChatPopup();return false;' class='fa-solid fa-circle-xmark'></i></div>";
+        $html.= "</div>";
 
-        //külső chat ablakok
-        $chatSessions = sql_query("SELECT s.* FROM chat c 
-            LEFT JOIN chatsession s ON s.id=c.chatsessionid
-            WHERE c.userid=0 AND s.external=1
-            AND (s.closed='0000-00-00 00:00:00' AND created>DATE_SUB(NOW(), INTERVAL 300 DAY)) OR closed>DATE_SUB(NOW(), INTERVAL 300 DAY) and s.created>DATE_SUB(now(), interval 300 day)
-            GROUP BY c.chatsessionid
-            ORDER BY s.created DESC")->fetchAll(PDO::FETCH_ASSOC);
+        $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
 
-        if (!empty($chatSessions)) {
-            $html.= "<div style='font-weight: bold;padding:10px;font-size: 16px;'>Nyitott külső chat ablakok</div>";
-            foreach ($chatSessions as $chatSession) {
-                $html.= $this->chatSessionRow($chatSession);
-            }
+        if (empty($chatUsers["text"])) {
+            $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
+            $html.= "<div style='display:inline-block;padding:5px;width:350px;max-height:500px;overflow:auto;border:1px solid #000;' id='sessionusers{$sessionId}'>".$this->chatService->showUserButtons($sessionId)."</div>";
+            $html.= "</div>";
+        } else {
+            $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
+            $html.= "<div id='chatsessionitems' style='display:inline-block;padding:5px 10px;width:370px;max-height:400px;overflow:auto;'>" . $this->chatService->showChatMessages($sessionId) . "</div>";
+            $html.= "</div>";
+            $html.= "<div style='margin:5px 0px;'>";
+            $html.= "<input id='chatmessagetext' type='text' placeholder='Írd be az üzenetet...' value='' style='margin:0px 5px 5px 5px;width:330px;padding:10px;border-radius: 10px;'/>&nbsp;&nbsp;<a title='Üzenet elküldése' href='#' onclick='sendChatMessage();return false;'><i style='font-size:16px;padding-right:10px;' class='fas fa-arrow-right'></i></a>";
+            $html.= "</div>";
         }
+        $html.= "</div>";
+
+        $html.= "</div>";
 
         return $html;
     }

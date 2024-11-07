@@ -1607,6 +1607,7 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 .chatstatus {
 	color:#999;
 	font-size: 11px;
+	padding:0px 5px;
 }
 
 .uploadbutton {
