@@ -987,12 +987,12 @@ class ExcelService {
         try {
             //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            //$this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
-            //$this->_rtgLista($sheetId++, $from, $to);
-            //$this->_laborLeletLista($sheetId++, $from, $to);
+            $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
+            $this->_rtgLista($sheetId++, $from, $to);
+            $this->_laborLeletLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
-            //$this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
+            $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
             $this->_orvosWorkHours($sheetId++, $from, $to);
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
         } catch (\Exception $e) {

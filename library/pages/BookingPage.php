@@ -1250,7 +1250,7 @@ class BookingPage extends CorePage
                 if (CompanyService::isBME()) {
                     $telephelySelectText = "Tanszék";
                 }
-                echo "<tr><td>{$telephelySelectText}: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
+                echo "<tr><td style='width: {$firstColumnWidth}px;'>{$telephelySelectText}: *</td><td><div id='telephelyvalaszto'>" . $this->_telephelySelector() . "</div></td></tr>";
                 echo "<tr><td></td><td></td></tr>";
             }
 

@@ -1882,3 +1882,31 @@ and (max-width: 500px) {
 	text-decoration: none;
 	background: #999;
 }
+
+
+@keyframes chatpulse {
+	0%   {
+		filter: brightness(1);
+		filter: contrast(1);
+		-webkit-filter: brightness(1);
+		-webkit-filter: contrast(1);
+	}
+	50%  {
+		filter: brightness(0.8);
+		filter: contrast(0.8);
+		-webkit-filter: brightness(0.8);
+		-webkit-filter: contrast(0.8);
+	}
+	100% {
+		filter: brightness(1);
+		filter: contrast(1);
+		-webkit-filter: brightness(1);
+		-webkit-filter: contrast(1);
+	}
+}
+
+.newchatpulse {
+	animation-name: chatpulse;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+}
