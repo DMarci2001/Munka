@@ -783,7 +783,7 @@ class AdminAjaxService {
                 $chatData["notify"] = 0;
                 $notifycations = sql_query("SELECT * FROM chatsessionlog WHERE userid=? AND notified=0 AND tipus='unread'", [$adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC);
                 if (!empty($notifycations)) {
-                    $chatService = new ChatService();
+                    $chatService = new ChatService($adminUser);
                     foreach ($notifycations as $notifycation) {
                         sql_query("update chatsessionusers set active=1 where userid=? and sessionid=?", [$notifycation["userid"], $notifycation["sessionid"]]);
                     }
@@ -801,7 +801,7 @@ class AdminAjaxService {
                 }
             }
 
-            $this->jsonOut(["number" => $number, "button" => $button, "users" => "", "usersbutton" => $usersButton, "usershtml" => $usersData["html"], "chatData" => $chatData]);
+            $this->jsonOut(["number" => $number, "button" => $button, "users" => "", "usersbutton" => $usersButton, "usershtml" => $usersData["html"], "chatData" => $chatData, "logged" => isset($adminUser->user["id"])]);
         }
 
         if (isset($_POST["showeljottlog"])) {

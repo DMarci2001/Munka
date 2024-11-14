@@ -239,7 +239,7 @@ class AdminPage {
         $html = "";
         if ($this->adminUser->chatAccess()) {
             $html.= "<div id='chatsessionlist'>";
-            $chatService = new ChatService();
+            $chatService = new ChatService($this->adminUser);
             $html.= $chatService->getSessionListHTML($this->adminUser->user["id"]);
             $html.= "</div>";
         }

@@ -309,12 +309,13 @@ class DailyStatService {
                             "ervenyesseg" => $ervenyesseg,
                             "vizsgalattipus" => $sheet->getCell("L{$rowNr}")->getValue(),
                             "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum)),
-                            "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum))
+                            "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum)),
+                            "email" => $sheet->getCell("O{$rowNr}")->getValue(),
                         ];
 
                         sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
                         sql_query("insert into dokirex_vizsgalatok set 
-                                    datum=:datum, moddatum=:datum, nev=:nev,
+                                    datum=:datum, moddatum=:datum, nev=:nev, email=:email,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
                                     paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
                                     korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum, felveteldatum=:felveteldatum", $row);
@@ -391,14 +392,15 @@ class DailyStatService {
                         "ervenyesseg" => date("Y-m-d", strtotime($ervenyesseg)),
                         "vizsgalattipus" => $sheet->getCell("M{$rowNr}")->getValue(),
                         "vizsgalatdatum" => $vizsgalatDatum,
-                        "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum))
+                        "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum)),
+                        "email" => $sheet->getCell("O{$rowNr}")->getValue(),
                     ];
 
                     //print_r($row);
 
                     sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
                     sql_query("insert into dokirex_vizsgalatok set 
-                                datum=:datum, moddatum=:datum, nev=:nev,
+                                datum=:datum, moddatum=:datum, nev=:nev, email=:email,
                                 szakrendeles=:szakrendeles, orvos=:orvos,
                                 paciensid=:paciensid,szuldatum=:szuldatum, telephely=:telephely, munkakor=:munkakor, 
                                 korlatozas=:korlatozas, alkalmassag=:alkalmassag, ervenyesseg=:ervenyesseg, vizsgalattipus=:vizsgalattipus, vizsgalatdatum=:vizsgalatdatum, felveteldatum=:felveteldatum", $row);

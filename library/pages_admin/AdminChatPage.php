@@ -21,7 +21,7 @@ class AdminChatPage extends AdminCorePage {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
-        $this->chatService = new ChatService();
+        $this->chatService = new ChatService($this->adminUser);
 
         if (isset($_POST["newchatsession"])) {
             $_SESSION["openedsession"] = 0;
@@ -153,7 +153,14 @@ class AdminChatPage extends AdminCorePage {
             $message = strip_tags($_POST["message"]);
 
             if ($chatSession != 0) {
+
+                sql_query("SET CHARACTER SET utf8mb4");
+                sql_query("SET COLLATION_CONNECTION='utf8mb4_unicode_ci'");
+
                 sql_query("insert into chat set datum=now(), chatsessionid=?, message=?, userid=?", [$chatSession, $message, $this->adminUser->user["id"]]);
+
+                sql_query("SET CHARACTER SET utf8");
+                sql_query("SET COLLATION_CONNECTION='utf8_unicode_ci'");
 
                 foreach (sql_query("select u.userid from chatsessionusers u where u.sessionid=? and u.userid<>?", [$chatSession, $this->adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC) as $user) {
                     sql_query("update chatsessionusers set active=1 where userid=? and sessionid=?", [$user["userid"], $chatSession]);
@@ -185,11 +192,30 @@ class AdminChatPage extends AdminCorePage {
             return;
         }
 
+        $chatSessions = $this->chatService->getChatSessions($this->adminUser->user["id"], false);
+
+        if (empty($chatSessions)) {
+            echo "Még nincs chat tevékenységed.";
+        }
+
+        foreach ($chatSessions as $chatSession) {
+            if (!empty($chatSession["partnername"])) {
+                echo $this->chatService->chatSessionBox($chatSession);
+            }
+        }
+
+
+
+        /*
         if ($this->adminUtils->settings->chatStatus == 1) {
             echo "<div style='margin-bottom:10px;color:green;'>Az ügyfélszolgálat chat jelenleg <strong>online</strong> <a href='index.php?page=chat&chatstatus=0'>kikapcsolás</a></div>";
         } else {
             echo "<div style='color:red;margin-bottom:10px;'>A ügyfélszolgálat chat jelenleg <strong>offline</strong> <a href='index.php?page=chat&chatstatus=1'>bekapcsolás</a></div>";
         }
+        */
+
+
+
     }
 
 
@@ -200,7 +226,7 @@ class AdminChatPage extends AdminCorePage {
             $_SESSION["openedsession"] = $sessionId;
         }
 
-        $chatUsers = $this->chatService->getChatUsers($sessionId, $this->adminUser);
+        $chatUsers = $this->chatService->getChatUsers($sessionId);
         $chatTitle = $chatUsers["text"];
         if (!empty($chatUsers["groupTitle"])) {
             $chatTitle = $chatUsers["groupTitle"]." - ".$chatTitle;
@@ -244,10 +270,13 @@ class AdminChatPage extends AdminCorePage {
         } else {
             if ($chatUsers["group"] == 1) {
                 $num = substr_count($chatUsers["text"], ", ")+1;
-                $html .= "<div style='display:table;width:100%;background:#f0f0f0;color:black;'>";
-                $html .= "<div style='display:table-cell;vertical-align: middle;padding:4px 8px;font-size: 14px;'><i title='Csoport szerkesztése' style='cursor: pointer;' onclick='editChatSession({$sessionId});return false;' class='fa-solid fa-pen'></i>&nbsp;&nbsp;<span title='{$chatUsers["text"]}'>{$num} résztvevő</span></div>";
-                //$html .= "<div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'><i style='cursor: pointer;' onclick='hideChatPopup();return false;' class='fa-solid fa-pen'></i></div>";
-                $html .= "</div>";
+                $html.= "<div style='display:table;width:100%;background:#f0f0f0;color:black;'>";
+                $html.= "<div style='display:table-cell;vertical-align: middle;padding:4px 8px;font-size: 14px;'>";
+                if ($this->adminUser->chatAdmin()) {
+                    $html .= "<i title='Csoport szerkesztése' style='cursor: pointer;' onclick='editChatSession({$sessionId});' class='fa-solid fa-pen'></i>&nbsp;&nbsp;";
+                }
+                $html.= "<span title='{$chatUsers["text"]}'>{$num} résztvevő</span></div>";
+                $html.= "</div>";
             }
 
             $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
