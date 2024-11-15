@@ -28,35 +28,62 @@ function newChatSession() {
     });
 }
 
+function editChatSession(id) {
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { editchatsession:id },
+        success: function (response) {
+            $("#chatwindow").html(response.chatmain);
+            $("#chatwindow").show();
+        }
+    });
+}
+
 function loadChatWindow(sessionId, scroll) {
     if ($("#chatsessionitems").length == 0) {
         return;
     }
 
     $.ajax({
-        url: "index.php?page=chat",
+        url: "index.php?page=chat&windowrefresh",
         method: "POST",
         data: { loadChatWindow:1, sessionId:sessionId },
         success: function (response) {
             $("#chatsessionitems").html(response.html);
             if (response.new == 1) {
                 scrollToChatBottom();
+                $("#chatsessionlist").html(response.sessionlist);
             }
         }
     });
 }
 
+function archiveChatWindow(sessionId) {
+    $.ajax({
+        url: "index.php?page=chat&windowarchive",
+        method: "POST",
+        data: { archiveChatWindow:1, sessionId:sessionId },
+        success: function (response) {
+            $("#chatsessionlist").html(response.sessionlist);
+        }
+    });
+}
+
 function loadChatWindowMain(sessionId, scroll) {
+    let chatGroupTitle = $("#chatgrouptitle").val() ? $("#chatgrouptitle").val() : "null";
+
     $.ajax({
         url: "index.php?page=chat",
         method: "POST",
-        data: { loadChatWindowMain:1, sessionId:sessionId },
+        data: { loadChatWindowMain:1, sessionId:sessionId, chatGroupTitle:chatGroupTitle },
         success: function (response) {
             $("#chatwindow").html(response.html);
             $("#chatsessionlist").html(response.sessionlist);
             $("#chatwindow").show();
             if (scroll) {
                 scrollToChatBottom();
+                $("#chatsessionlist").html(response.sessionlist);
                 //chatSessionListRefresh();
             }
             initChatEnterKey();
@@ -93,10 +120,10 @@ function scrollToChatBottom() {
 }
 
 function sendChatMessage() {
-    let message = $("#chatmessagetext").val();
+    let message = $("#chatmessagetext").val().trim();
     $("#chatmessagetext").val("");
 
-    if (message.trim() == "") {
+    if (message == "") {
         return;
     }
 
@@ -116,55 +143,25 @@ function chatFastText(text) {
     $("#chatmessagetext").val(text);
 }
 
-function openChatSessionEditor(div, id, pub) {
-    closeChatSessionEditors();
-    enableChatSessionListRefresh = false;
-    $.ajax({
-        url: "index.php?page=chat",
-        method: "POST",
-        data: { opensessioneditor:1, id:id, pub:pub },
-        success: function (response) {
-            $("#"+div).html(response);
-        }
-    });
-}
 
-function closeChatSessionEditors() {
-    enableChatSessionListRefresh = true;
-    $(".sessioneditordiv").html("");
-}
-
-function addNewChatSession() {
-    let id = $("#editedsessionid").val();
-    let pub = $("#editedsessionpublic").val();
-
-    $.ajax({
-        url: "index.php?page=chat",
-        method: "POST",
-        data: { savechatsession:1, id:id, pub:pub, title:$("#editedsessiontitle").val() },
-        success: function (response) {
-            closeChatSessionEditors();
-            chatSessionListRefresh();
-        }
-    });
-}
-
-
-function toggleChatSessionUser(el) {
+function addChatUserToSession(el) {
     let sessionId = $(el).data("chatsessionid");
     let userId = $(el).data("userid");
     let aktiv = $(el).data("aktiv");
+    let group = $("#chatgroupdata").length != 0;
 
     $.ajax({
         method: "POST",
         url: "index.php?page=chat",
-        data: { toggleChatUserSession: sessionId, userId: userId, aktiv:aktiv },
+        data: { addChatUserToSession: sessionId, userId: userId, aktiv:aktiv },
         success: function (response) {
-            //$("#sessionusers"+sessionId).html(response);
-            $("#chatwindow").html(response.chatmain);
             $("#chatsessionlist").html(response.sessionlist);
-            scrollToChatBottom();
-            initChatEnterKey();
+            $("#sessionusers"+sessionId).html(response.userbuttons);
+            if (!group) {
+                $("#chatwindow").html(response.chatmain);
+                scrollToChatBottom();
+                initChatEnterKey();
+            }
         }
     });
 }

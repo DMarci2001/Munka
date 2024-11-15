@@ -55,7 +55,7 @@ class VaroteremService
             $callin = sql_fetch_array(sql_query("SELECT szurestipusid,statusz FROM varoterem WHERE id=?", array($_POST["callInToVisit"])));
 
             //Ellenőrzöm, hogy a hozzám rendelt orvosnak van-e beosztása az adott szűrésípusra amire beakarom hívni a pácienst
-            if ($checkCapabality = sql_fetch_array(sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND tipusok LIKE \"%|{$callin["szurestipusid"]}|%\"", array($oid)))) {
+            if ($checkCapabality = sql_fetch_array(sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND INSTR(tipusok, ?)", array($oid, "|{$callin["szurestipusid"]}|")))) {
                 if (!$checkCapacity = sql_fetch_array(sql_query("SELECT * FROM varoterem WHERE orvosid=? AND statusz=\"vizsgalaton\" AND erkeztetve BETWEEN \"" . $_SESSION["setday"] . " 00:00:00\" AND \"" . date("Y-m-d") . " 23:59:59\"", array($oid)))) {
                     sql_query(
                         "UPDATE varoterem SET behivas_ideje=?, behivta=?,orvosid=?,statusz = 'vizsgalaton' WHERE id=?",
@@ -187,42 +187,9 @@ class VaroteremService
 
     public function finishedExamsTable()
     {
-        $html = $cegnev = "";
+        $html = "";
         $numb = 1;
-        /*$html .= "<h5><a class=\"badge bg-secondary mt-2 ms-2\" data-bs-toggle=\"collapse\" href=\"#collapseWidthExample\" role=\"button\" aria-expanded=\"false\" aria-controls=\"multiCollapseExample1\"><i class=\"fa-solid fa-filter\"></i></a></h5>";
-        $html .= "<div class=\"collapse collapse-horizontal\" id=\"collapseWidthExample\">";
-        $html .= "    <div class=\"container\">";
-        $html .= "       <div class=\"row row-cols-auto\" style=\"min-width:800px\">";
-        $html .= "           <div class=\"col\">";
-        $html .= "               <div class=\"input-group input-group-sm mb-1 mt-2\">";
-        $html .= "                   <label class=\"input-group-text\" for=\"inputGroupSelect01\"><i class=\"fa-solid fa-building\"></i></label>";
-        $html .= "                   <select class=\"form-select form-select-sm \" id=\"inputGroupSelect01\" style=\"max-width:300px\" aria-label=\".form-select-sm example\">";
-        $html .= "                       <option selected>Szűrés cégre</option>";
-        $html .= "                       <option value=\"1\">Cég</option>";
-        $html .= "                   </select>";
-        $html .= "               </div>";
-        $html .= "           </div>";
-        $html .= "           <div class=\"col\">";
-        $html .= "               <div class=\"input-group input-group-sm mb-1 mt-2\">";
-        $html .= "                   <label class=\"input-group-text\" for=\"inputGroupSelect01\"><i class=\"fa-solid fa-paste\"></i></label>";
-        $html .= "                   <select class=\"form-select form-select-sm \" id=\"inputGroupSelect01\" style=\"max-width:300px\" aria-label=\".form-select-sm example\">";
-        $html .= "                       <option selected>Szűrés vizsgálatra</option>";
-        $html .= "                       <option value=\"2\">Vizsgálat</option>";
-        $html .= "                   </select>";
-        $html .= "               </div>";
-        $html .= "           </div>";
-        $html .= "           <div class=\"col\">";
-        $html .= "               <div class=\"input-group input-group-sm mb-1 mt-2\">";
-        $html .= "                   <label class=\"input-group-text\" for=\"inputGroupSelect01\"><i class=\"fa-solid fa-user-doctor\"></i></label>";
-        $html .= "                   <select class=\"form-select form-select-sm \" id=\"inputGroupSelect01\" style=\"max-width:300px\" aria-label=\".form-select-sm example\">";
-        $html .= "                       <option selected>Szűrés Orvosra</option>";
-        $html .= "                       <option value=\"3\">Orvos</option>";
-        $html .= "                   </select>";
-        $html .= "               </div>";
-        $html .= "           </div>";
-        $html .= "        </div>";
-        $html .= "    </div>";
-        $html .= "</div>";*/
+
         $html .= "<div class=\"table-responsive\">";
         $html .= "<table class=\"table table-hover\" style=\"white-space: nowrap;\">";
         $html .= "    <thead>";
@@ -243,13 +210,13 @@ class VaroteremService
         $html .= "    </thead>";
         $html .= "    <tbody class=\"table-group-divider\">";
 
-        $q=sql_query("SELECT v.*,fogl.nev,c.megnev AS cegnev,sz.megnev AS szurestipusnev,o.nev AS orvosnev,u.nev AS asszisztensnev FROM varoterem v 
+        $q=sql_query("SELECT v.*,fogl.nev,c.megnev AS cegnev,sz.megnev AS szurestipusnev,o.nev AS orvosnev,u.nev AS asszisztensnev FROM varoterem v
                       LEFT JOIN foglalasok fogl ON fogl.id=v.fid
                       LEFT JOIN cegek c ON c.id=fogl.cegid
                       LEFT JOIN szurestipusok sz ON sz.id=v.szurestipusid
                       LEFT JOIN orvosok o ON o.id=v.orvosid
                       LEFT JOIN users u ON u.id=v.behivta
-                      WHERE v.vizsgalat_befejezve IS NOT NULL AND fogl.datum LIKE \"%".$_SESSION["setday"]."%\" AND v.statusz = \"vizsgalat_kesz\" ORDER BY v.vizsgalat_befejezve DESC");
+                      WHERE v.vizsgalat_befejezve IS NOT NULL AND fogl.datum>? and fogl.datum<? AND v.statusz='vizsgalat_kesz' ORDER BY v.vizsgalat_befejezve DESC", ["{$_SESSION["setday"]} 00:00:00", "{$_SESSION["setday"]} 23:59:59"]);
 
         while($r=sql_fetch_array($q)){
             $varakozasi_ido = number_format(ceil(((strtotime($r["behivas_ideje"])-strtotime($r["erkeztetve"]))/60)));
@@ -276,36 +243,6 @@ class VaroteremService
         
         $html .= "    </tbody>";
         $html .= "</table>";
-        $html .= "</div>";
-
-        return $html;
-    }
-
-    public function waitlistTable__demo()
-    {
-        $html = $header = $columns = $content = "";
-        $tipusok = array();
-        $relevant_exam_types = json_decode($_SESSION["adminuser"]["relevant_exam_types"]);
-        if (!empty($relevant_exam_types)) {
-            $q = sql_query("SELECT id,megnev,facode FROM szurestipusok WHERE id IN(" . implode(",", $relevant_exam_types) . ")");
-        } else {
-            return $html;
-        }
-
-        while ($result = sql_fetch_array($q)) $tipusok[] = $result;
-
-        //Itt kéne beaktíválnom a sorokat
-        foreach ($tipusok as $tipus) {
-            $content .= "<div class=\"row\">";
-            $content .= "    <div class=\"col py-2 px-2 mt-1 fw-bold fs-6\" style=\"background-color:#474747;color:white;max-width:250px\">" . (!empty($tipus["facode"]) ? $tipus["facode"] . "&nbsp;&nbsp;" : "") . "{$tipus["megnev"]}</div>";
-            $content .= "    <div class=\"col w-auto\" id=\"type-column-{$tipus["id"]}\">";
-            $content .=         $this->showWaitingPplv2($tipus["id"]);
-            $content .= "    </div>";
-            $content .= "</div>";
-        }
-
-        $html .= "<div class=\"container\">";
-        $html .= $content;
         $html .= "</div>";
 
         return $html;
@@ -357,8 +294,8 @@ class VaroteremService
 
         $q = sql_query("SELECT o.id,o.nev,beo.binterval,o.colorcode FROM orvosok o
                             LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
-                            WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$data["szurestipusid"]}|%' AND beo.aktiv=1
-                            GROUP BY o.id");
+                            WHERE beo.helyszinid=? AND (beo.nap=? OR beo.beonap=?) AND INSTR(tipusok, ?) AND beo.aktiv=1
+                            GROUP BY o.id", [$helyszinid, $numericDay, $stringDay, "|{$data["szurestipusid"]}|"]);
 
         while($r=sql_fetch_array($q)){
             if(substr_count($r["nev"],"Menedzser")){
@@ -409,8 +346,8 @@ class VaroteremService
 
         $q = sql_query("SELECT o.id,o.nev,beo.binterval,o.colorcode FROM orvosok o
                             LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
-                            WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$tipus["id"]}|%' AND beo.aktiv=1
-                            GROUP BY o.id");
+                            WHERE beo.helyszinid=? AND (beo.nap=? OR beo.beonap=?) AND instr(tipusok, ?) AND beo.aktiv=1
+                            GROUP BY o.id", [$helyszinid, $numericDay, $stringDay, "|{$tipus["id"]}|"]);
 
         while ($orvos = sql_fetch_array($q)) {
             if(substr_count($orvos["nev"],"Menedzser")){
@@ -420,7 +357,7 @@ class VaroteremService
             $visitString = "";
             $qVisit = sql_query("SELECT v.*,fogl.nev,fogl.pass FROM varoterem v
                             LEFT JOIN foglalasok fogl ON fogl.id=v.fid
-                            WHERE v.orvosid=? AND v.statusz='vizsgalaton' AND fogl.datum LIKE \"%" . $stringDay . "%\" ", array($orvos["id"]));
+                            WHERE v.orvosid=? AND v.statusz='vizsgalaton' AND fogl.datum>=? and fogl.datum<=?", array($orvos["id"], "{$stringDay} 00:00:00", "{$stringDay} 23:59:59"));
 
 
 
@@ -521,34 +458,6 @@ class VaroteremService
         return $html;
     }
 
-    public function showWaitingPplv2__old($tipus)
-    {
-        $html = $content = "";
-        $ul = "style=\"list-style: none;padding: 0;margin: 0;display: flex;flex-direction: column;flex-wrap: wrap;float:left;height:28px\"";
-        $colorcodes = array("#0a0", "#ffd700", "#ff4040");
-
-        $q = sql_query("SELECT v.*,fogl.nev FROM varoterem v
-                        LEFT JOIN foglalasok fogl ON fogl.id=v.fid
-                        WHERE v.szurestipusid={$tipus} AND fogl.datum LIKE \"%" . $_SESSION["setday"] . "%\" AND v.statusz=\"varakozik\" ");
-
-
-        while ($r = sql_fetch_array($q)) {
-            $mins = round((strtotime("NOW") - strtotime($r["erkeztetve"])) / 60);
-            $name = explode(" ", $r["nev"]);
-            if ($mins <= 10) $color = $colorcodes[0];
-            if ($mins > 10 && $mins <= 25) $color = $colorcodes[1];
-            if ($mins > 25) $color = $colorcodes[2];
-            $li = "style=\"margin-top:9px;margin-right:5px;text-align:center;vertical-align:middle;background:{$color};color:#fff;padding:5px;border-radius:5px;cursor:pointer;\"";
-            $content .= "<li title=\"{$r["nev"]}\"{$li}>{$name[0]}-001 ({$mins}p.)</li>";
-        }
-
-        $html .= "<ul {$ul}>";
-        $html .=    $content;
-        $html .= "</ul>";
-
-        //$html.= "        </div>";
-        return $html;
-    }
 
     public function showWaitingPplv2($tipus)
     {
@@ -559,8 +468,7 @@ class VaroteremService
         $q = sql_query("SELECT v.*,fogl.nev,fogl.id as fid,fogl.pass,o.colorcode FROM varoterem v
                         LEFT JOIN foglalasok fogl ON fogl.id=v.fid
                         LEFT JOIN orvosok o ON o.id=v.orvos_pref
-                        WHERE v.szurestipusid={$tipus} AND fogl.datum LIKE \"%" . $_SESSION["setday"] . "%\" AND fogl.helyszinid={$_SESSION["helyszin"]} AND v.statusz=\"varakozik\" ");
-
+                        WHERE v.szurestipusid={$tipus}  AND fogl.datum>? and fogl.datum<? AND fogl.helyszinid=? AND v.statusz='varakozik'", ["{$_SESSION["setday"]} 00:00:00", "{$_SESSION["setday"]} 23:59:59", $_SESSION["helyszin"]]);
 
         while ($r = sql_fetch_array($q)) {
             $mins = round((strtotime("NOW") - strtotime($r["erkeztetve"])) / 60);
@@ -624,82 +532,6 @@ class VaroteremService
         return $html;
     }
 
-    public function old__waitlistTable()
-    {
-
-        $html = $header = $columns = $content =  "";
-        $tipusok = array();
-        $relevant_exam_types = json_decode($_SESSION["adminuser"]["relevant_exam_types"]);
-        if (!empty($relevant_exam_types)) {
-            $q = sql_query("SELECT id,megnev FROM szurestipusok WHERE id IN(" . implode(",", $relevant_exam_types) . ")");
-        } else {
-            return $html;
-        }
-
-        while ($result = sql_fetch_array($q)) $tipusok[] = $result;
-
-        foreach ($tipusok as $tipus) {
-            $content .= "<div class=\"row\">";
-            $content .= "    <div class=\"col\">{$tipus["megnev"]}</div>";
-            $content .= "    <div class=\"col py-3 px-2\" style=\"background-color:#FF10F0;color:white;font-size:16px\" id=\"type-column-{$tipus["id"]}\"></div>";
-            $content .= "</div>";
-        }
-
-        $html .= "<div class=\"container\">";
-        $html .= $content;
-        $html .= "</div>";
-
-        /*foreach($tipusok as $tipus){
-            $header.= "<th scope=\"col\">{$tipus["megnev"]}</th>";
-            $columns.= "<td><div class=\"text-center\" id=\"type-column-{$tipus["id"]}\">{$this->showWaitingPpl()}</div></td>";
-        }
-
-        $html .= "<table class=\"table text-center w-auto\">";
-        $html .= "    <thead>";
-        $html .= "        <tr>";
-        $html .= $header;
-        $html .= "        </tr>";
-        $html .= "    </thead>";
-        $html .= "    <tbody class=\"table-group-divider\">";
-        $html .= "        <tr>";
-        $html .= $columns;
-        $html .= "        </tr>";
-        $html .= "    </tbody>";
-        $html .= "</table>";*/
-
-        /*$html .= "<div class=\"container mx-0\">";
-        $html .= "    <div class=\"row\">";
-        $html .= "        <div class=\"col\">";
-        $html .= "        Column";
-        $html .= "        </div>";
-        $html .= "    </div>";
-        $html .= "</div>";*/
-
-        return $html;
-    }
-
-    public function showWaitingPpl()
-    {
-        $html = "";
-
-        $ul = "style=\"list-style: none;padding: 0;margin: 0;display: flex;flex-direction: column;flex-wrap: wrap;float:left\"";
-        $li = "style=\"margin:5px;text-align:center;vertical-align:middle;background:#0a0;color:#fff;padding:5px;border-radius:5px;cursor:pointer\"";
-
-        $html .= "   <div>";
-        $html .= "       <ul class=\"\" {$ul}>";
-        $html .= "          <li {$li} class=\"\">Kis Béla</li>";
-        $html .= "          <li {$li} class=\"\">Nagy Tamás Béla Benekdek</li>";
-        $html .= "          <li {$li} class=\"\">Kis Béla</li>";
-        $html .= "          <li {$li} class=\"\">Nagy Tamás Béla Benekdek</li>";
-        $html .= "          <li {$li} class=\"\">Nagy Tamás Béla Benekdek</li>";
-        $html .= "          <li {$li} class=\"\">Kis Béla</li>";
-        $html .= "          <li {$li} class=\"\">7</li>";
-        $html .= "          <li {$li} class=\"\">8</li>";
-        $html .= "          <li {$li} class=\"\">9</li>";
-        $html .= "       </ul>";
-        $html .= "   </div>";
-        return $html;
-    }
 
     public function setupLathatoVizsgalatok()
     {
@@ -712,7 +544,7 @@ class VaroteremService
         $tipusok = $tipusDictionary = $orvosok = array();
         $relevant_exam_types = json_decode($_SESSION["adminuser"]["relevant_exam_types"]);
 
-        $q = sql_query("SELECT * FROM orvos_beosztas_new WHERE helyszinid=? AND aktiv=1 AND (nap = ? OR beonap LIKE \"{$stringDay}\") ", array($helyszinid, $numericDay));
+        $q = sql_query("SELECT * FROM orvos_beosztas_new WHERE helyszinid=? AND aktiv=1 AND (nap = ? OR beonap = ?) ", array($helyszinid, $numericDay, $stringDay));
 
         while ($result = sql_fetch_array($q)) {
             $tipusString .= $result["tipusok"];
@@ -740,8 +572,8 @@ class VaroteremService
                 if (in_array($tipus, $relevant_exam_types)) {
                         $qOrvos = sql_query("SELECT o.id,o.nev,\"{$result["megnev"]}\" as szurestipusnev FROM orvosok o
                                             LEFT JOIN orvos_beosztas_new beo ON beo.orvosid=o.id
-                                            WHERE beo.helyszinid={$helyszinid} AND (beo.nap={$numericDay} OR beo.beonap = '{$stringDay}') AND tipusok LIKE '%|{$tipus}|%' AND beo.aktiv=1
-                                            GROUP BY o.id");
+                                            WHERE beo.helyszinid=? AND (beo.nap=? OR beo.beonap=?) AND INSTR(tipusok, ?) AND beo.aktiv=1
+                                            GROUP BY o.id" ,[$helyszinid, $numericDay, $stringDay, "|{$tipus}|"]);
                         while ($rOrvos = sql_fetch_array($qOrvos)){
                             if(substr_count($rOrvos["nev"],"Menedzser")){
                                 continue;

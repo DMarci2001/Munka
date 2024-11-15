@@ -569,12 +569,11 @@ class AdminLabRequestsPage extends AdminCorePage {
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, f.telefon, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN cegek c ON c.id=f.cegid
             WHERE r.status<>'temp' {$w} 
-            GROUP BY r.id
             ORDER BY r.resultdate DESC LIMIT 1000", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 

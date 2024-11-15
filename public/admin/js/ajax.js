@@ -5,7 +5,7 @@ $(document).ready(function () {
 
     setTimeout(function () {
         checkAdminWarnings();
-    }, 1000);
+    }, 5500);
 
     $('.option-box').on('submit',(function(e) {
         $(this).slideToggle();
@@ -20,7 +20,7 @@ $(document).ready(function () {
     });
 
     self.setInterval("searchTimer()",1000);
-    self.setInterval("checkChat()",10000);
+    //self.setInterval("checkChat()",10000);
     self.setInterval("checkLaborKeroMessages()",5000);
 
     initUploadRoutine();
@@ -3587,6 +3587,24 @@ function checkChat() {
             $("#loggedusers").html(response.users);
             $("#usersbuttoncontainer").html(response.usersbutton);
             $("#adminuserswindow").html(response.usershtml);
+
+            if (response.chatData.notify === 1) {
+                if ($("#chatsessionitems").length == 0) {
+                    $.toast({
+                        text: response.chatData.notifyMessage,
+                        icon: "success"
+                    });
+                }
+                $("#chatsessionlist").html(response.chatData.sessionlist);
+            }
+
+            if (response.logged) {
+                setTimeout(function () {
+                    checkChat();
+                }, 10000);
+            }
+
+            /*
             $("#chatbuttoncontainer").html(response.button);
             if (response.number != 0) {
                 $.toast({
@@ -3594,6 +3612,8 @@ function checkChat() {
                     icon: "success"
                 });
             }
+            */
+
         }
     });
 

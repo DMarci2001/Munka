@@ -305,7 +305,7 @@ class SpektrumlabService {
                     $text = $pdf->getText();
                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
-                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=? where id=?", [$folyamatban, $fields[5], $lastResultDate, $lastRequestId]);
+                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=?, scanresult='' where id=?", [$folyamatban, $fields[5], $lastResultDate, $lastRequestId]);
                     $lastRequestId = intval($fields[2]);
                 }
             }

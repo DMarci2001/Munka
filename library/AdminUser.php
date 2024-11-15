@@ -99,7 +99,10 @@ class AdminUser {
             "description" => "Ezt nem tudom mi :)"
         ],
         "jog_chat" => [
-            "name" => "Chat"
+            "name" => "Chat használata"
+        ],
+        "jog_chatadmin" => [
+            "name" => "Chat admin"
         ],
         "jog_labortetelek" => [
             "name" => "Labor tételek kezelése"
@@ -520,6 +523,10 @@ class AdminUser {
 
     public function chatAccess():bool {
         return $this->checkPermission("jog_chat");
+    }
+
+    public function chatAdmin():bool {
+        return $this->checkPermission("jog_chatadmin");
     }
 
     public function beutaloHozzadasAccess():bool {

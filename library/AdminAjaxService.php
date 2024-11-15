@@ -777,31 +777,31 @@ class AdminAjaxService {
             $usersButton = "";
             $usersData = ["html" => ""];
 
-            if (!empty($adminUser->user)) {
-                if ($adminUser->chatAccess()) {
-                    $color = "#33cc33";
-                    $title = "chat online";
+            $chatData = [];
 
-                    $settings = new Booking_Settings();
-                    if ($settings->chatStatus == 0) {
-                        $color = "red";
-                        $title = "chat offline";
+            if ($adminUser->chatAccess()) {
+                $chatData["notify"] = 0;
+                $notifycations = sql_query("SELECT * FROM chatsessionlog WHERE userid=? AND notified=0 AND tipus='unread'", [$adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($notifycations)) {
+                    $chatService = new ChatService($adminUser);
+                    foreach ($notifycations as $notifycation) {
+                        sql_query("update chatsessionusers set active=1 where userid=? and sessionid=?", [$notifycation["userid"], $notifycation["sessionid"]]);
                     }
-
-                    $data = sql_query("SELECT COUNT(*) AS number FROM chat WHERE datum>DATE_SUB(NOW(), INTERVAL 8 HOUR) AND readdate='0000-00-00 00:00:00' and userid=0")->fetch(PDO::FETCH_ASSOC);
-                    $number = $data["number"];
-                    if ($number > 0) {
-                        $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i> {$number} új üzenet!</span>";
-                    } else {
-                        $button = "<span style='color:#fff;background:{$color};padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='window.location.href=\"index.php?page=chat\";' title='{$title}'><i class='fa-solid fa-comment'></i></span>";
-                    }
+                    sql_query("update chatsessionlog set notified=1 where userid=? and tipus='unread' and notified=0", [$adminUser->user["id"]]);
+                    $chatData["notify"] = 1;
+                    $chatData["notifyMessage"] = count($notifycations)." új üzenet érkezett";
+                    $chatData["sessionlist"] = $chatService->getSessionListHTML($adminUser->user["id"]);
                 }
+            }
+
+            if (!empty($adminUser->user)) {
                 $usersData = $this->getActiveUsers($adminUser);
                 if (!empty($usersData["html"])) {
                     $usersButton = "<span style='color:#fff;background:#33cc33;padding:2px 5px;cursor:pointer;border-radius: 3px;' onclick='toggleUsersWindow();' title='Bejelentkezés adatok'> {$usersData["count"]}&nbsp;<i class='fa-solid fa-user'></i></span>";
                 }
             }
-            $this->jsonOut(["number" => $number, "button" => $button, "users" => "", "usersbutton" => $usersButton, "usershtml" => $usersData["html"]]);
+
+            $this->jsonOut(["number" => $number, "button" => $button, "users" => "", "usersbutton" => $usersButton, "usershtml" => $usersData["html"], "chatData" => $chatData, "logged" => isset($adminUser->user["id"])]);
         }
 
         if (isset($_POST["showeljottlog"])) {
