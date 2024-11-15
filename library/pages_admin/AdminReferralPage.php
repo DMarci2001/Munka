@@ -96,7 +96,7 @@ class AdminReferralPage extends AdminCorePage {
 					
 					$removeCharSheet  = array("á","é","ú","ó","ű","ü","ö","ő","í"," ","-");
 					$replaceCharSheet = array("a","e","u","o","u","u","o","o","i","_","_");
-					$filename = strtolower(str_replace($removeCharSheet,$replaceCharSheet,$result["nev"]));
+					$filename = trim(strtolower(str_replace($removeCharSheet,$replaceCharSheet,$result["nev"])));
 					$filename.= "-".str_replace("-","",$result["szuldatum"]);
 					$setDate = date("Ymdhis");
 					$setDate = date("Ymdhis",strtotime($setDate." + 1 second"));
@@ -222,11 +222,6 @@ class AdminReferralPage extends AdminCorePage {
 				$mail->Body = $mbody;
 				$mail->AddAttachment($folder.$overallExcel.".xlsx");
 				$mail->Send();
-				
-				
-	
-				
-				
 				foreach($superiors as $name=>$data){
 					
 					//Ki kell találnom valami normális lista megnevezést xd....
