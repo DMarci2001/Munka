@@ -50,6 +50,42 @@ class AdminChatPage extends AdminCorePage {
             die;
         }
 
+        if (isset($_POST["finalizeImageUpload"])) {
+            $sessionId = $_SESSION["openedsession"];
+            $file = $this->chatService->getUploadedTempFileName($sessionId);
+            if (!empty($file)) {
+                $docAgent = new DocAgent();
+                $result = $docAgent->storeAssetImage(DocAgent::ASSET_CHAT_UPLOAD_IMAGE, $sessionId, $file["file"]);
+                if ($result["id"] != 0) {
+                    if ($imageData = sql_query("select * from dokumentumok where id=?", [$result["id"]])->fetch()) {
+                        $this->chatService->deleteUploadedTempFile($_SESSION["openedsession"]);
+                        $imageURL = $docAgent->getAssetImageURL($imageData);
+                        $_POST["sendmessage"] = true;
+                        $_POST["message"] = "<a target='_blank' href='{$imageURL}'><img src='{$imageURL}' class='chatupimage' alt='' /></a>";
+                    }
+                }
+            }
+        }
+
+        if (isset($_GET["chatimageupload"])) {
+            $this->chatService->uploadUserImageFile($_SESSION["openedsession"]);
+            echo $this->chatService->showChatUploads($_SESSION["openedsession"]);
+            die;
+        }
+
+        if (isset($_POST["deleteUploadedTempFile"])) {
+            $this->chatService->deleteUploadedTempFile($_SESSION["openedsession"]);
+            echo $this->chatService->showChatUploads($_SESSION["openedsession"]);
+            die;
+        }
+
+        if (isset($_GET["displaytempimage"])) {
+            $file = $this->chatService->getUploadedTempFileName($_GET["sessionid"]);
+            header("Content-Type: {$file["header"]}");
+            echo file_get_contents($file["file"]);
+            die;
+        }
+
         if (isset($_POST["addChatUserToSession"])) {
             $sessionId = trim($_POST["addChatUserToSession"]);
             $aktiv = intval($_POST["aktiv"]);
@@ -150,7 +186,7 @@ class AdminChatPage extends AdminCorePage {
 
         if (isset($_POST["sendmessage"])) {
             $chatSession = $_SESSION["openedsession"];
-            $message = strip_tags($_POST["message"]);
+            $message = strip_tags($_POST["message"], "<img><a>");
 
             if ($chatSession != 0) {
 
@@ -158,18 +194,19 @@ class AdminChatPage extends AdminCorePage {
                 sql_query("SET COLLATION_CONNECTION='utf8mb4_unicode_ci'");
 
                 sql_query("insert into chat set datum=now(), chatsessionid=?, message=?, userid=?", [$chatSession, $message, $this->adminUser->user["id"]]);
+                $messageId = sql_insert_id();
 
                 sql_query("SET CHARACTER SET utf8");
                 sql_query("SET COLLATION_CONNECTION='utf8_unicode_ci'");
 
                 foreach (sql_query("select u.userid from chatsessionusers u where u.sessionid=? and u.userid<>?", [$chatSession, $this->adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC) as $user) {
                     sql_query("update chatsessionusers set active=1 where userid=? and sessionid=?", [$user["userid"], $chatSession]);
-                    sql_query("insert into chatsessionlog set created=now(), sessionid=?, userid=?, tipus='unread'", [$chatSession, $user["userid"]]);
+                    sql_query("insert into chatsessionlog set created=now(), messageid=?, sessionid=?, userid=?, tipus='unread'", [$messageId, $chatSession, $user["userid"]]);
                 }
                 sql_query("update chatsessionusers set active=1 where userid=? and sessionid=?", [$this->adminUser->user["id"], $chatSession]);
             }
 
-            Utils::jsonOut(["messages" => $this->chatService->showChatMessages($chatSession), "sessionlist" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
+            Utils::jsonOut(["messages" => $this->chatMainWindow($chatSession), "sessionlist" => $this->chatService->getSessionListHTML($this->adminUser->user["id"])]);
         }
 
         if (isset($_GET["closechat"])) {
@@ -203,19 +240,6 @@ class AdminChatPage extends AdminCorePage {
                 echo $this->chatService->chatSessionBox($chatSession);
             }
         }
-
-
-
-        /*
-        if ($this->adminUtils->settings->chatStatus == 1) {
-            echo "<div style='margin-bottom:10px;color:green;'>Az ügyfélszolgálat chat jelenleg <strong>online</strong> <a href='index.php?page=chat&chatstatus=0'>kikapcsolás</a></div>";
-        } else {
-            echo "<div style='color:red;margin-bottom:10px;'>A ügyfélszolgálat chat jelenleg <strong>offline</strong> <a href='index.php?page=chat&chatstatus=1'>bekapcsolás</a></div>";
-        }
-        */
-
-
-
     }
 
 
@@ -281,6 +305,7 @@ class AdminChatPage extends AdminCorePage {
 
             $html.= "<div style='display:table-cell;height:400px;vertical-align: bottom;'>";
             $html.= "<div id='chatsessionitems' style='display:inline-block;padding:5px 10px;width:370px;max-height:400px;overflow:auto;'>" . $this->chatService->showChatMessages($sessionId) . "</div>";
+            $html.= "<div id='chatsessionuploads' style=''>" . $this->chatService->showChatUploads($sessionId) . "</div>";
             $html.= "</div>";
             $html.= "<div style='margin:5px 0px;'>";
             $html.= "<input id='chatmessagetext' type='text' placeholder='Írd be az üzenetet...' value='' style='margin:0px 5px 5px 5px;width:330px;padding:10px;border-radius: 10px;'/>&nbsp;&nbsp;<a title='Üzenet elküldése' href='#' onclick='sendChatMessage();return false;'><i style='font-size:16px;padding-right:10px;' class='fas fa-arrow-right'></i></a>";

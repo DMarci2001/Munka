@@ -162,9 +162,61 @@ class ChatService {
         if ($chatSession["pub"] == 0 && $chatSession["external"] == 0 && empty($chatSession["sessionuserid"])) {
             $lastItemText = "Hívj meg felhasználókat a chat ablakba";
         }
-        return $lastItemText;
+        return strip_tags($lastItemText);
     }
 
+
+    public function uploadedTempFileName($sessionId, $extension):string {
+        return Booking_Constants::DOCUMENT_PATH."chatuploadimage{$this->adminUser->user["id"]}_{$sessionId}.{$extension}";
+    }
+
+    public function uploadUserImageFile($sessionId) {
+        $extension = "jpg";
+        if (substr_count(strtolower($_SERVER["CONTENT_TYPE"]), "png")) {
+            $extension = "png";
+        }
+
+        $image = file_get_contents("php://input");
+        file_put_contents($this->uploadedTempFileName($sessionId, $extension), $image);
+    }
+
+    public function showChatUploads($sessionId):string {
+        $html = "";
+
+        $file = $this->getUploadedTempFileName($sessionId);
+
+        if (!empty($file["file"])) {
+            $html.= "<div style='text-align: center;'>";
+            $html.= "<div><img style='max-width:200px;max-height:80px;border:1px solid #e0e0e0;' src='index.php?page=chat&displaytempimage&sessionid={$sessionId}' /></div>";
+            $html.= "<div style='padding-top: 5px;'><a onclick='finalizeImageUpload();return false;' href='#'>beszúrás</a> | <a onclick='deleteUploadedTempFile();return false;' href='#'>mégse</a></div>";
+            $html.= "</div>";
+        }
+        return $html;
+    }
+
+
+    public function deleteUploadedTempFile($sessionId) {
+        $file = $this->getUploadedTempFileName($sessionId);
+        unlink($file["file"]);
+    }
+
+    public function getUploadedTempFileName($sessionId):array {
+        $checkJPG = $this->uploadedTempFileName($sessionId, "jpg");
+        $checkPNG = $this->uploadedTempFileName($sessionId, "png");
+
+        $file = $header = "";
+        if (is_file($checkJPG)) {
+            $file = $checkJPG;
+            $header = "image/jpeg";
+        } else {
+            if (is_file($checkPNG)) {
+                $file = $checkPNG;
+                $header = "image/png";
+            }
+        }
+
+        return ["file" => $file, "header" => $header];
+    }
 
     public function showChatMessages($chatSessionId):string {
         $html = "";
@@ -172,9 +224,10 @@ class ChatService {
         if ($chatSessionId != 0) {
             sql_query("SET CHARACTER SET utf8mb4");
 
-            $messages = sql_query("SELECT c.id, c.datum, c.chatsessionid, c.userid, c.readdate, c.message COLLATE 'utf8mb4_unicode_ci' AS message, u.username, u.nev from chat c
-                left join users u on u.id=c.userid
-                where c.chatsessionid=? order by c.datum", [$chatSessionId]);
+            $messages = sql_query("SELECT c.id, c.datum, c.chatsessionid, c.userid, c.readdate, c.message COLLATE 'utf8mb4_unicode_ci' AS message, u.username, u.nev, GROUP_CONCAT(l.userid) AS olvasta from chat c
+                LEFT JOIN users u ON u.id=c.userid
+                LEFT JOIN chatsessionlog l ON l.messageid=c.id AND l.checked=1
+                WHERE c.chatsessionid=? GROUP BY c.id ORDER BY c.datum limit 100", [$chatSessionId])->fetchAll(PDO::FETCH_ASSOC);
 
             sql_query("SET CHARACTER SET utf8");
 
@@ -191,9 +244,10 @@ class ChatService {
                         $html .= "</div>";
                         $html .= "</div>";
                     } else {
+                        $olvasta = !empty($message["olvasta"])  ? "<i style='color:lightgreen;' title='olvasta' class='fa-solid fa-check'></i> " : "";
                         $html .= "<div style='padding:10px 0px 0px 0px;text-align: right;'>";
                         $html .= "<div class='chatusermessage' style='display:inline-block;background:#f0f0f0;border-radius: 10px;color:black;padding:3px 10px;'>{$this->processMessage($message["message"])}</div><br clear='all' />";
-                        $html .= "<span class='chatstatus'>{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
+                        $html .= "<span class='chatstatus'>{$olvasta}{$message["username"]} " . $this->chatTimeString($message["datum"]) . "</span></span>";
                         $html .= "</div>";
                     }
                 } else {
