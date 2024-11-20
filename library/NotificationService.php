@@ -1376,17 +1376,14 @@ END:VCALENDAR";
 
     const OWNER_PASSWORD = "que3ikieP";
 
-    public function sendLaborLeletEmail($id)
-    {
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
-
+    public function sendLaborLeletEmail($id) {
         $adminUser = new AdminUser();
+        $docAgent = new DocAgent();
         if (empty($adminUser->user["email"])) {
             return;
         }
 
-        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.resultpdf, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
+        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
         WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
@@ -1400,7 +1397,8 @@ END:VCALENDAR";
             $ownerPassword = self::OWNER_PASSWORD;
             $patientEmail = $requestData["email"];
 
-            file_put_contents($pdfFileName, base64_decode($requestData["resultpdf"]));
+            //file_put_contents($pdfFileName, base64_decode($requestData["resultpdf"]));
+            file_put_contents($pdfFileName, $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $requestData["id"]));
 
             $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} user_pw {$userPassword}`;
 

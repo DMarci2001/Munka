@@ -504,7 +504,7 @@ class LaborKeroService
             $html.= "<div id='laborkerohistory'>";
             //$html.= "<div style='margin-bottom: 10px;'><a class='printbutton' onclick='refreshLaborKeroMessages();return false;' href='#' style='background: #00aa00'>Üzenetek frissítése</a></div>";
 
-            if ($laborRequestData["resultpdf"] != "") {
+            if ($laborRequestData["status"] == "done") {
                 $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>Lelet megérkezett {$laborRequestData["resultdate"]}</div>";
                 $html.= "<div style='margin: 10px 0px;'><a class='printbutton' target='_blank' href='https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=laborlelet1&rid={$laborRequestData["id"]}&p={$laborRequestData["pass"]}' style='background: #00aa00'>Lelet megtekintése</a></div>";
             }

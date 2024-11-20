@@ -450,5 +450,27 @@ class DocAgent {
         die;
     }
 
+
+    public function storeLaborLeletek() {
+        $tempPdf = "/var/pdfwork/laborResult_".Booking_Constants::SQL_DB.".pdf";
+
+        $resultids = sql_query("SELECT id FROM labrequests r WHERE r.`resultpdf`<>'' ORDER BY created desc LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($resultids as $resultid) {
+            echo "{$resultid["id"]} ";
+
+            if (!sql_query("select id from dokumentumok where assetid=? and dataid=?", [self::ASSET_LABOR_RESULT, $resultid["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                echo "not ";
+                $leletData = sql_query("select id, resultpdf from labrequests where id=?", [$resultid["id"]])->fetch(PDO::FETCH_ASSOC);
+                file_put_contents($tempPdf, base64_decode($leletData["resultpdf"]));
+
+                $this->saveLocalDoc($tempPdf, ["assetid" => self::ASSET_LABOR_RESULT, "dataid" => $resultid["id"]]);
+
+                //die("diehere...\n");
+            } else {
+                echo "found ";
+            }
+        }
+    }
+
 }
 

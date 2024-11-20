@@ -944,7 +944,7 @@ class ExcelService {
         $from.= " 00:00:00";
         $to.= " 23:59:59";
 
-        $data = sql_query("select r.resultdate, r.provider, nev, taj, szuldatum from labrequests r where resultdate>? AND resultdate<=? and status='done' and resultpdf<>'' ORDER BY resultdate", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
+        $data = sql_query("select r.resultdate, r.provider, nev, taj, szuldatum from labrequests r where resultdate>? AND resultdate<=? and status='done' ORDER BY resultdate", [$from, $to])->fetchAll(PDO::FETCH_ASSOC);
 
 
         //lista

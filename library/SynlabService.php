@@ -654,6 +654,7 @@ class SynlabService
 
 
     public function downloadSynlabEmails() {
+        $docAgent = new DocAgent();
 
         //$result = $this->parsePatientDataFromPDF("/var/pdfwork_hungariamed/mikro.pdf");
         //print_r($result);die;
@@ -745,7 +746,7 @@ class SynlabService
                                 if (substr_count(strtolower($fileName), ".pdf")) {
                                     //pdf csatolmány feldolgozása
                                     $tempFile = "{$dir}/lelet.pdf";
-                                    $tempFileDecoded = "{$dir}/leletdecoded.pdf";
+                                    $tempFileDecoded = "{$dir}/synlabResult_".Booking_Constants::SQL_DB.".pdf";
 
                                     $attachment = imap_fetchbody($connection, $msgNum, $a + 1);
                                     if ($encoding == 3) {
@@ -772,7 +773,7 @@ class SynlabService
 
                                     $parsedPatientData = $this->parsePatientDataFromPDF($tempFileDecoded);
 
-                                    sql_query("insert into labrequests set megj='',createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?, folyamatban=?, bekuldokod=?", [
+                                    sql_query("insert into labrequests set megj='',createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, pass=?, folyamatban=?, bekuldokod=?", [
                                         $mailDate,
                                         $parsedPatientData["nev"],
                                         $parsedPatientData["taj"],
@@ -781,11 +782,13 @@ class SynlabService
                                         $emailConfig["email"],
                                         $fileName,
                                         "",
-                                        base64_encode(file_get_contents($tempFileDecoded)),
                                         md5(date("YmdHis")) . md5($parsedPatientData["taj"] . date("Y-m-d His")),
                                         $parsedPatientData["folyamatban"],
                                         $parsedPatientData["bekuldokod"]
                                     ]);
+
+                                    $newRequestId = sql_insert_id();
+                                    $docAgent->saveLocalDoc($tempFileDecoded, ["assetid" => DocAgent::ASSET_LABOR_RESULT, "dataid" => $newRequestId]);
                                 }
 
 
@@ -822,18 +825,22 @@ class SynlabService
                                         while (false !== ($entry = $d->read())) {
                                             if (substr_count(strtolower($entry), ".pdf")) {
                                                 $leletPDF = base64_encode(file_get_contents("{$unzipDir}{$entry}"));
-                                                if (sql_query("select id from labrequests where resultdate=? and resultpdf=? limit 1", [$mailDate, $leletPDF])->fetch(PDO::FETCH_ASSOC)) {
-                                                    continue;
+                                                if ($checkData = sql_query("select id from labrequests where resultdate=? and status='done' limit 1", [$mailDate])->fetch(PDO::FETCH_ASSOC)) {
+                                                    if ($leletPDF == base64_encode($docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $checkData["id"]))) {
+                                                        continue;
+                                                    }
                                                 }
 
-                                                sql_query("insert into labrequests set megj='', createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, resultpdf=?, pass=?", [
+                                                sql_query("insert into labrequests set megj='', createdby='cron', created=now(), resultdate=?, status='done', provider=?, synlabfilename=?, synlabdata=?, pass=?", [
                                                     $mailDate,
                                                     $emailConfig["email"],
                                                     $fileName,
                                                     json_encode(["nev" => $entry, "taj" => "", "szuldatum" => "", "email" => "", "errors" => "Zip fájlból kicsomagolt lelet!"]),
-                                                    $leletPDF,
                                                     md5(date("YmdHis")) . md5($entry . date("Y-m-d His")),
                                                 ]);
+
+                                                $newRequestId = sql_insert_id();
+                                                $docAgent->saveLocalDoc("{$unzipDir}{$entry}", ["assetid" => DocAgent::ASSET_LABOR_RESULT, "dataid" => $newRequestId]);
 
                                                 echo $entry."\n";
                                                 unlink("{$unzipDir}{$entry}");
@@ -1109,8 +1116,9 @@ class SynlabService
     }
 
     public function processPdfFromMessages($smallOnly = false):void {
-        $tempPdf = "/var/pdfwork/synTemp.pdf";
-        $tempZip = "/var/pdfwork/synTemp.zip";
+        $docAgent = new DocAgent();
+        $tempPdf = "/var/pdfwork/synlabResult_".Booking_Constants::SQL_DB.".pdf";
+        $tempZip = "/var/pdfwork/synlabResult_".Booking_Constants::SQL_DB.".zip";
         $folder = $this->folders["k"]; //még csak klinika kémia
         $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider='synlab' and synlabtype=? and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10", [$folder])->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
@@ -1135,10 +1143,10 @@ class SynlabService
                     $text = $pdf->getText();
                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
-                    $base64Pdf = base64_encode(file_get_contents($tempPdf));
-
                     //echo "date:{$lastResultDate}, id:{$lastRequestId}\n";
-                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=? where id=?", [$folyamatban, $base64Pdf, $lastResultDate, $lastRequestId]);
+                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultdate=? where id=?", [$folyamatban, $lastResultDate, $lastRequestId]);
+
+                    $docAgent->saveLocalDoc($tempPdf, ["assetid" => DocAgent::ASSET_LABOR_RESULT, "dataid" => $lastRequestId]);
                 }
             }
 
