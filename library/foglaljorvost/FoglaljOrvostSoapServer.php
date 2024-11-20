@@ -6,11 +6,13 @@ class FoglaljOrvostSoapServer {
     private $bookingService;
     private $requestCode;
     private $logId = 0;
+    private $locationId = 0;
 
     public function __construct()
     {
         $this->method = $_SERVER["REQUEST_METHOD"];
         $this->bookingService = new BookingService();
+        $this->locationId = Booking_Constants::DEFAULT_PLACE_IDS[0];
     }
 
     public function startServer() {
@@ -21,6 +23,7 @@ class FoglaljOrvostSoapServer {
             $this->logId = sql_insert_id();
         }
 
+        $this->setLocationId($body);
         $namespace = Booking_Constants::SOAP_API_NAMESPACE;
 
         $soapServer = new soap_server();
@@ -39,6 +42,11 @@ class FoglaljOrvostSoapServer {
         exit();
     }
 
+    private function setLocationId($body) {
+        if (substr_count($body, "KELTEX_MED_BERCSENYI") > 0) {
+            $this->locationId = Booking_Constants::DEFAULT_PLACE_IDS[1];
+        }
+    }
 
     private function checkDoctor($oid) {
         if ($row = sql_fetch_array(sql_query("select id from orvosok where id=?", [$oid]))) {
@@ -85,7 +93,7 @@ class FoglaljOrvostSoapServer {
         $patientPhone           = (string)$xml->APPOINTMENT["PATIENT_PHONE"];
         $patientBirthDate       = isset($xml->APPOINTMENT["DATE_OF_BIRTH"]) ? str_replace(".","-",(string)$xml->APPOINTMENT["DATE_OF_BIRTH"]) : "0000-00-00";
         $reservationDescription = trim((string)$xml->APPOINTMENT["DESCRIPTION"]." ".$this->getServiceString($srvId, $fieldId));
-        $locationId             = Booking_Constants::DEFAULT_PLACE_IDS[0];
+        $locationId             = $this->locationId;
 
         if (empty(trim($patientName))) {
             $patientName = "nincs név";
