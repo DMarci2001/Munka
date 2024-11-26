@@ -59,6 +59,7 @@ class SpektrumlabService {
         "000000479" => "Hungária Med-M Kft. (Suzuki menedzser)",
         "000000519" => "Hungária Med-M Kft. (Apollo Tyres)",
         "000000524" => "Hungária Med-M Kft. (Aldi)",
+        "000000543" => "Hungária Med-M Kft. (BME)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [

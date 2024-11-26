@@ -154,6 +154,7 @@ class DocAgent {
 
                 $destinationFile = $this->_getDocPath($id);
                 rename($fileName, $destinationFile);
+                chown($destinationFile, "www-data");
                 return "0";
             } else {
                 return "A feltöltött file formátuma nem megfelelő (csak jpg, pdf, és word dokumentumot lehet feltölteni)";
@@ -414,7 +415,7 @@ class DocAgent {
     }
 
     public function getDocByType($tipus, $dataId):string {
-        if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC)) {
+        if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=? order by datum desc limit 1", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC)) {
             return $this->getDoc($docData["id"]);
         }
         return "";

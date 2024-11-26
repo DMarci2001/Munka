@@ -262,6 +262,10 @@ class CronService {
                 $scanItems[] = "alvadekos";
             }
 
+            if (substr_count(strtolower($text),"kevés minta")) {
+                $scanItems[] = "kevesminta";
+            }
+
             sql_query("update labrequests set scanresult=? where id=?", [json_encode($scanItems), $request["id"]]);
             echo json_encode($scanItems);
 

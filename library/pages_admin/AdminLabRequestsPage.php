@@ -475,6 +475,9 @@ class AdminLabRequestsPage extends AdminCorePage {
             if (in_array("alvadekos", $scanResult)) {
                 $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>alvadékos</span></div>";
             }
+            if (in_array("kevesminta", $scanResult)) {
+                $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>kevés minta</span></div>";
+            }
         }
 
         if ($request["printmatrica"] == 1) {
