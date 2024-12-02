@@ -548,7 +548,13 @@ class LaborKeroService
             if ($this->laborProvider == self::LABOR_PROVIDER_SYNLAB) {
                 $buttonTitle.= " <i class='fa-solid fa-caret-right'></i> {$this->bekuldoKod}";
             }
-            $html .= "<a class='printbutton' onclick='sendLaborKero();return false;' href='#' style='background: #00aa00'>{$buttonTitle}</a> ";
+
+            //$sendJs = "sendLaborKero()";
+            //if (session_id() == "6f4e9bbellt7r9qhrsvrsft1ge" || session_id() == "d89provjl77gjs7o7r6gau92fi") {
+                $sendJs = "sendLaborKeroNew()";
+            //}
+
+            $html .= "<a class='printbutton' onclick='{$sendJs};return false;' href='#' style='background: #00aa00'>{$buttonTitle}</a> ";
         }
         if (in_array($laborRequestData["status"], ["waiting"])) {
             $html .= "<a class='printbutton' onclick='cancelLaborKero();return false;' href='#' style='background: #aa0000'>Laborkérő visszavonása</a> ";

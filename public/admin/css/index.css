@@ -1917,3 +1917,7 @@ and (max-width: 500px) {
 	max-height: 70px;
 	padding: 5px 0px;
 }
+
+.swal2-container {
+	z-index: 20000 !important;
+}

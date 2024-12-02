@@ -163,6 +163,34 @@ Schedule = {
             }
         });
     },
+    ShowAddPlaceDialog: function(el) {
+        Schedule.DialogId = el;
+        let tipusid = $(el).data("tipusid");
+        let datum   = $(el).data("datum");
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addplacedialog=1&tipusid="+tipusid+"&datum="+datum,
+            success: function(data)	{
+                let position = $(el).offset();
+                let left = position.left + 15;
+
+                $(".sch_dialogcontent").html(data);
+                $(".sch_dialogtop").html($(el).data("tipusnev")+Schedule.DialogCloseHTML);
+                Schedule.Init();
+                $(".sch_dialog").show();
+
+                let width = $(".sch_dialog").width();
+                let winWidth = $(window).width();
+                if (left + width > winWidth) {
+                    left = winWidth - width;
+                }
+
+                $(".sch_dialog").css("top", position.top + 15);
+                $(".sch_dialog").css("left", left);
+            }
+        });
+    },
     ShowCollisions: function() {
         $("#collisionsdiv").toggle();
 
@@ -178,11 +206,33 @@ Schedule = {
     AddCompanyForDay: function(day) {
         let companyName = $("#companyname"+day).val();
         let companyAddress = $("#companyaddress"+day).val();
+        let companyComment = $("#companycomment"+day).val();
 
         $.ajax({
             type: "POST",
             url: Schedule.URL,
-            data: {addcompanyforday:1, companyname:companyName, companyaddress:companyAddress, day:day},
+            data: {addcompanyforday:1, companyname:companyName, companyaddress:companyAddress, companycomment:companyComment, day:day},
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+day).html(data.message);
+                $(".sch_dialog").hide();
+                Schedule.Init();
+            }
+        });
+    },
+    SavePlaceForDay: function(placeId) {
+        let companyName = $("#companynameeditor").val();
+        let companyAddress = $("#companyaddresseditor").val();
+        let companyComment = $("#companycommenteditor").val();
+        let day = $("#companydayeditor").val();
+
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: {savecompanyforday:1, companyname:companyName, companyaddress:companyAddress, companycomment:companyComment, id:placeId, day:day},
             success: function(data)	{
                 if (data.status != "ok") {
                     alert(data.message);
@@ -215,6 +265,23 @@ Schedule = {
         });
     },
     AddWorker: function () {
+        let params = $("#dialogform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addworker=1&"+params,
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#daycontainer"+$(Schedule.DialogId).data("datum")).html(data.message);
+                $(".sch_dialog").hide();
+                Schedule.Init();
+            }
+        });
+    },
+    AddPlace: function () {
         let params = $("#dialogform").serialize();
         $.ajax({
             type: "POST",

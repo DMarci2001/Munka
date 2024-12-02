@@ -99,7 +99,24 @@ class AdminWorkSchedulePage extends AdminCorePage {
             }
 
             if ($result["status"] == "ok") {
-                sql_query("insert into schedule_tipusok set megnev=?, cim=?, aktiv=1, sorrend=0, roleid=1, kulso=1, forday=?", [$_POST["companyname"], $_POST["companyaddress"], $_POST["day"]]);
+                sql_query("insert into schedule_tipusok set megnev=?, cim=?, megj=?, aktiv=1, sorrend=0, roleid=1, kulso=1, forday=?", [$_POST["companyname"], $_POST["companyaddress"], $_POST["companycomment"], $_POST["day"]]);
+
+                $this->workScheduleService->reloadScheduleMapping();
+                $result["message"] = $this->_scheduleDay($_POST["day"]);
+            }
+
+            $this->utils->jsonOut($result);
+        }
+
+        if (isset($_POST["savecompanyforday"])) {
+            $result = ["status" => "ok", "message" => ""];
+
+            if (empty($_POST["companyname"])) {
+                $result = ["status" => "error", "message" => "Add meg a cég nevét!"];
+            }
+
+            if ($result["status"] == "ok") {
+                sql_query("update schedule_tipusok set megnev=?, cim=?, megj=? where id=?", [$_POST["companyname"], $_POST["companyaddress"], $_POST["companycomment"], $_POST["id"]]);
 
                 $this->workScheduleService->reloadScheduleMapping();
                 $result["message"] = $this->_scheduleDay($_POST["day"]);
@@ -267,6 +284,33 @@ class AdminWorkSchedulePage extends AdminCorePage {
             die;
         }
 
+        if (isset($_POST["addplacedialog"])) {
+            $tipusId = intval($_POST["tipusid"]);
+            $thisDay = $_POST["datum"];
+            if ($tipusId != 0) {
+                $tipusData = sql_query("select * from schedule_tipusok where id=?", [$tipusId])->fetch(PDO::FETCH_ASSOC);
+            }
+
+            echo "<input type='hidden' name='datum' id='companydayeditor' value='{$_POST["datum"]}' />";
+            echo "<input type='hidden' name='tipusid' value='{$_POST["tipusid"]}' />";
+
+            echo "<div style='display:table-cell;vertical-align: top;'>";
+
+            echo "<div>Cég rövid neve:<br/><input type='text' name='companynameeditor' id='companynameeditor' value='{$tipusData["megnev"]}' /></div>";
+            echo "<div style='margin-top:5px;'>Cég címe:<br/><input style='width:350px;' type='text' name='companyaddresseditor' id='companyaddresseditor' value='{$tipusData["cim"]}' /></div>";
+            echo "<div style='margin-top:5px;'>Megjegyzése:<br/><input style='width:350px;' type='text' name='companycommenteditor' id='companycommenteditor' value='{$tipusData["megj"]}' /></div>";
+
+            echo "<div style='padding-top:10px;'>";
+            $buttonText = $tipusId == 0?"+ hozzáadás":"mentés";
+            echo "<input type='button' onclick='Schedule.SavePlaceForDay({$tipusId});' value='{$buttonText}'>";
+            if ($tipusId != 0) {
+                echo " <input type='button' onclick='Schedule.DeleteWorkplaceForDay({$tipusId}, \"{$thisDay}\");' value='Törlés'>";
+            }
+            echo "</div>";
+            echo "</div>";
+            die;
+        }
+
         if (isset($_GET["copyfrom"])) {
             $distance = strtotime($_GET["copyto"]) - strtotime($_GET["copyfrom"]);
 
@@ -278,8 +322,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 foreach ($copyDatas as $copyData) {
                     $newTimeStart = date("Y-m-d H:i:s", strtotime("{$copyData["datumfrom"]} + {$distance} second"));
                     $newTimeEnd   = date("Y-m-d H:i:s", strtotime("{$copyData["datumto"]} + {$distance} second"));
-
-                    //echo $copyData["datumfrom"]." ".$newTimeStart;
 
                     sql_query("insert into schedule_mapping set datumfrom=?, datumto=?, napszak=?, tipusid=?, roleid=?, workerid=?, noverid=?, megj=?, createdat=now(), createdby=?",
                     [$newTimeStart, $newTimeEnd, $copyData["napszak"], $copyData["tipusid"], $copyData["roleid"], $copyData["workerid"], $copyData["noverid"], $copyData["megj"], $this->adminUser->user["id"]]);
@@ -509,6 +551,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $html.="<div id='addnewcompanyday{$thisDay}' style='display: none;padding-top: 10px;'>";
         $html.="<div>Cég rövid neve:<br/><input type='text' name='companyname{$thisDay}' id='companyname{$thisDay}' value='' /></div>";
         $html.="<div style='margin-top:5px;'>Cég címe:<br/><input style='width:350px;' type='text' name='companyaddress{$thisDay}' id='companyaddress{$thisDay}' value='' /></div>";
+        $html.="<div style='margin-top:5px;'>Megjegyzése:<br/><input style='width:350px;' type='text' name='companycomment{$thisDay}' id='companycomment{$thisDay}' value='' /></div>";
         $html.="<div style='margin-top:5px;'><input type='button' onclick='Schedule.AddCompanyForDay(\"{$thisDay}\");' value='Cég hozzáadása'></div>";
         $html.= "</div>";
 
@@ -541,12 +584,27 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
     private function _rendeloCell($tipusData, $day = "") {
         $extraStyle = ($tipusData["roleid"]!=1?" style='background:#daeef3;'":"");
+        $extraStyle = $tipusData["forday"] == "0000-00-00" ? $extraStyle : "style='background:#daeef3;'";
         $html="";
-        $html.="<div class='sch_oszlopdatacell' {$extraStyle}>{$tipusData["megnev"]}";
+        $html.="<div class='sch_oszlopdatacell' {$extraStyle}>";
+        if ($tipusData["forday"] != "0000-00-00") {
+            $html.= "<a data-tipusid='{$tipusData["id"]}' data-datum='{$day}' data-tipusnev='{$tipusData["megnev"]}' href='#' onclick='Schedule.ShowAddPlaceDialog(this);return false;'>{$tipusData["megnev"]}</a>";
+        } else {
+            $html.= "{$tipusData["megnev"]}";
+        }
         if ($tipusData["cim"] != "") {
             $html.= "&nbsp;<a title='Google Maps' href='https://www.google.com/maps/place/".urlencode($tipusData["cim"])."' target='_blank'><i class='fas fa-map'></i></a>";
         }
-        $html.= ($tipusData["forday"]!="0000-00-00"?" <a href='#' onclick='Schedule.DeleteWorkplaceForDay({$tipusData["id"]}, \"{$day}\");return false;' title='cég törlése erről a napról'><i class='fas fa-trash-alt'></i></a>":"")."</div>";
+        $html.= ($tipusData["forday"]!="0000-00-00"?" <a href='#' onclick='Schedule.DeleteWorkplaceForDay({$tipusData["id"]}, \"{$day}\");return false;' title='cég törlése erről a napról'><i class='fas fa-trash-alt'></i></a>":"");
+
+        if (!empty($tipusData["megj"])) {
+            $html.= "<div style='font-style: italic;'>{$tipusData["megj"]}</div>";
+        }
+        $html.= "</div>";
+
+
+
+
         return $html;
     }
 

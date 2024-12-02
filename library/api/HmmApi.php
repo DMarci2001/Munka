@@ -397,6 +397,7 @@ class HmmApi {
         $docAgent = new DocAgent();
         $this->authNeeded = false;
 
+        $from  = $_GET["from"] ?? 0;
         $limit = $_GET["limit"] ?? 1;
         $catId = $_GET["catid"] ?? 84;
         $id = $_GET["id"] ?? 0;
@@ -412,8 +413,14 @@ class HmmApi {
             }
         }
 
+        $from = intval($from);
+        $limit = intval($limit);
+        $count = 0;
+
         if ($id == 0) {
-            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere} order by created desc limit {$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
+            $result = sql_query("select count(*) as hany from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere}", [$catId])->fetch(PDO::FETCH_ASSOC);
+            $count = $result["hany"];
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere} order by created desc limit {$from},{$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
         } else {
             $items = sql_query("select * from hmmweb.q9a8m_content c where c.id=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00')", [$id])->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -439,7 +446,6 @@ class HmmApi {
                         "url"   => "https://bejelentkezes.hungariamed.hu".$image["url"],
                     ];
                 }
-
             }
 
             $contents[] = [
@@ -454,6 +460,7 @@ class HmmApi {
         }
 
         return [
+            "count" => $count,
             "contentData" => $contents
         ];
     }
