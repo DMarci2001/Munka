@@ -211,6 +211,10 @@ class NotificationService
                 $mail->AddAttachment($attachment);
             }
 
+            if(CompanyService::isObudaiegyetem()){
+                die("Itt vagyok!");
+            }
+
             $mail->Send();
 
             $this->createNotificationRecord("usernotification", $id, $row["email"], $mailTemplate["subject"], $mailTemplate["body"]);
@@ -630,12 +634,12 @@ class NotificationService
         }
         $extraMsg = ($row["custompatientemail_option"] == 1 && !empty($row["custompatientemail_text"])) ? "<br/>" . nl2br($row["custompatientemail_text"]) . "<br/>" : "<br/>";
 
-        if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
+        /*if ($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE id = '" . intval($row["paciensid"]) . "'"))) {
             if ((strtotime("now") - strtotime($result["regtime"])) < 3600) {
                 $c = explode(",", $row["domain"]);
                 $extraMsg = "<br/>A kiállított leleteit és dokumentumait a " . Booking_Constants::SITE_PROTOCOL . "://{$c[0]}." . Booking_Constants::SITE_DOMAIN . " oldalon a taj számával megtekintheti online.<br/>";
             }
-        }
+        }*/
 
         $mbody = "";
         $mbody .= "<strong>" . date("Y.m.d. H:i", strtotime($row["datum"])) . " - {$row["helyszin"]}</strong><br/><br/>";
@@ -672,6 +676,10 @@ class NotificationService
             $mbody .= " <li style=\"list-style: disc;\">Tovább 24 órával a vizsgálat előtt egy SMS emlékeztetőt is küldünk Önnek.</li>";
             $mbody .= "</ul>";
         }
+
+        /*if(CompanyService::isObudaiegyetem($row["cegid"])){
+            $mbody = "";
+        }*/
 
         $mbody .= "{$webTextLocal["szurestipus"]}: {$szuresTipus}<br>";
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
@@ -1460,6 +1468,15 @@ END:VCALENDAR";
         $mail->Subject = $subject;
         $mail->Body = $mbody;
         $mail->Send();
+    }
+
+    public function ReminderForInspection($patient,$details){
+        $mail = self::getDefaultMailer();
+        $mail->addAddress($patient["email"]);
+        $mail->Subject = $details["object"];
+        $mail->Body = $this->setMailTemplate($details["content"],"Értesítés");
+        $mail->Send();
+        $this->createNotificationRecord($patient["reminderType"], null, $patient["email"], $mail->Subject, $mail->Body);
     }
 
     public function sendBFKHmarketing($email, $content)

@@ -3580,7 +3580,7 @@ function elojegyzesCegSearchStart() {
 
 function checkChat() {
     $.ajax({
-        url: "index.php",
+        url: "index.php?checkChat",
         method: "POST",
         data: { checkChat:1 },
         success: function (response) {
@@ -4862,4 +4862,59 @@ function initHamburgerIcon() {
             $('#hamburgericon').removeClass("pulse");
         }, 800);
     });
+}
+
+function uploadPatientDataExcel(upload){
+    let formData = new FormData();
+    let excel = upload.files[0]; 
+
+    formData.append("uploadPatientDataFile", true);
+    formData.append("excel", excel);
+
+    $.ajax({
+        url:"index.php?page=patientdata",
+        type:"POST",
+        processData: false,
+        cache: false,
+        async: true,
+        data:formData,
+        contentType: false,
+        dataType:'json',
+        success: function(response){
+            if(response.multiplesheets.length > 0){
+                Swal.fire({
+                    title: "Biztos elküldöd a laborkérést?",
+                    text: "A művelet nem visszavonható, a küldés után csak a labor ügyfélszolgálata tud módosítani!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Ok, mehet",
+                    cancelButtonText: "Mégse"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                    }
+                });
+                return;
+            }
+            if(response.html.length > 0){
+                $("#uploaded-excel-viewer").html(response.html);
+            }
+            
+        }
+    })
+}
+
+function setPatientDataCol(col,index){
+    $.ajax({
+        url:"index.php?page=patientdata",
+        type:"POST",
+        data:{setPatientDataCol:true,col:col,index:index},
+        success: function(response){
+            $.toast({
+                text: "Oszlopnév kiválasztva",
+                icon: "success"
+            });
+        }
+    })
 }

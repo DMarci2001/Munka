@@ -27,6 +27,12 @@ class ExcelService {
         $this->fileName = $fileName;
     }
 
+    private function read($fileName) {
+        $reader = IOFactory::createReader("Xlsx");
+        $this->spreadSheet = $reader->load($fileName);
+        return;
+    }
+
     public function outputSpreadSheet() {
         header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         header("Content-Disposition: attachment;filename=\"{$this->fileName}\"");
@@ -1497,6 +1503,18 @@ class ExcelService {
         //$this->sheet->getColumnDimension('A')->setWidth(20);
 
         $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
+    public function loadPatientDataExcel($fileName,$sheetIndex=null):array{
+        $this->read($fileName);
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $rows = $this->sheet->toArray();
+
+        return $rows;
+    }
+
+    public function checkSheets():array{
+        return $this->spreadSheet->getSheetNames();
     }
 
 }
