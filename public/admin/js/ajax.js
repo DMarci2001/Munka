@@ -1588,7 +1588,7 @@ function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function scrollTo(id) {
+/*function scrollTo(id) {
     let pos = $("#" + id).offset().top - ($("#stickytablefilter").height() + 20);
     if (id == "filterbox") {
         pos = 0;
@@ -1596,7 +1596,7 @@ function scrollTo(id) {
     $([document.documentElement, document.body]).animate({
         scrollTop: pos
     }, 500);
-}
+}*/
 
 //Highlight
 jQuery.fn.highlight = function (c, target) {
@@ -4875,6 +4875,45 @@ function initHamburgerIcon() {
 }
 
 function uploadPatientDataExcel(upload){
+    (async () => {
+    const { value: spreadsheet } = Swal.fire({
+        title: "Melyik munkafüzettel szeretnél dolgozni?",
+        input: "select",
+        icon: "warning",
+        inputOptions:{ Fruits: {
+            apples: "Apples",
+            bananas: "Bananas",
+            grapes: "Grapes",
+            oranges: "Oranges"
+          },
+          Vegetables: {
+            potato: "Potato",
+            broccoli: "Broccoli",
+            carrot: "Carrot"
+          },
+          icecream: "Ice cream"
+        },
+        inputPlaceholder: "Munkafüzet kiválasztása",
+        confirmButtonColor: "red",
+        confirmButtonText: "Kiválaszt",
+        showCancelButton: true,
+        cancelButtonText: "Mégse",
+        inputValidator: (value) => {
+          return new Promise((resolve) => {
+            if (value) {
+              resolve();
+            } else {
+              resolve("Válassz munkafüzetet!");
+            }
+          });
+        }
+      });
+      if (spreadsheet) {
+        console.log("valami");
+      }
+    })()
+      return;
+
     let formData = new FormData();
     let excel = upload.files[0]; 
 
@@ -4892,21 +4931,45 @@ function uploadPatientDataExcel(upload){
         dataType:'json',
         success: function(response){
             if(response.multiplesheets.length > 0){
-                Swal.fire({
-                    title: "Biztos elküldöd a laborkérést?",
-                    text: "A művelet nem visszavonható, a küldés után csak a labor ügyfélszolgálata tud módosítani!",
+                const { value: spreadsheet } = Swal.fire({
+                    title: "Melyik munkafüzettel szeretnél dolgozni?",
+                    input: "select",
                     icon: "warning",
+                    inputOptions: response.multiplesheets,
+                    inputPlaceholder: "Munkafüzet kiválasztása",
+                    confirmButtonColor: "red",
+                    confirmButtonText: "Kiválaszt",
                     showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Ok, mehet",
-                    cancelButtonText: "Mégse"
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                    cancelButtonText: "Mégse",
+                    inputValidator: (value) => {
+                      return new Promise((resolve) => {
+                        if (value) {
+                          resolve();
+                        } else {
+                          resolve("Válassz munkafüzetet!");
+                        }
+                      });
                     }
-                });
+                  });
+                  if (spreadsheet) {
+                    
+                    /*$.ajax({
+                        url:"index.php?page=patientdata",
+                        type:"POST",
+                        processData: false,
+                        cache: false,
+                        async: true,
+                        data:formData,
+                        contentType: false,
+                        dataType:'json',
+                        success: function(response){
+                        }
+                    })*/
+                  }
+                  console.log("valami");
                 return;
             }
+            
             if(response.html.length > 0){
                 $("#uploaded-excel-viewer").html(response.html);
             }
