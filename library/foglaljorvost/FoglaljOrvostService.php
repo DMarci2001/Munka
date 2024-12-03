@@ -395,10 +395,7 @@ class FoglaljOrvostService extends FoGeneral {
         return $this->sendMessageToFoglaljOrvost($xml);
     }
 
-    public function deleteOneSpecificConsultation() {
-        $doctorId = 67;
-        $this->setPlaceByDoctorId($doctorId);
-
+    public function deleteConsultationFix($beoId, $remoteId, $orvosId, $remoteOrvosId, $date) {
         $this->currentAction = "CONSULTATION_DEL";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -408,13 +405,13 @@ class FoglaljOrvostService extends FoGeneral {
                     ACTION="DEL"
                     ROTATE_HASH="#rotatehash#" />
                 <DOCTOR
-                    OWN_ID="'.$doctorId.'"
-                    OUTERSYS_ID="8232" />
+                    OWN_ID="'.$orvosId.'"
+                    OUTERSYS_ID="'.$remoteOrvosId.'" />
                 <CONSULTATION
-                    OWN_ID="30558"
-                    OUTERSYS_ID="203341"
+                    OWN_ID="'.$beoId.'"
+                    OUTERSYS_ID="'.$remoteId.'"
                     WEEK="1"
-                    STARTDATE="2022-03-29" />
+                    STARTDATE="'.$date.'" />
             </MESSAGE>';
         return $this->sendMessageToFoglaljOrvost($xml);
     }

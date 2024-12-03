@@ -4491,36 +4491,46 @@ function refreshLaborKeroMessages() {
 }
 
 
-function sendLaborKero() {
+function sendLaborKeroNew() {
     if (labRequestProcessRunning) {
         alert("Még fut az előző művelet, próbáld újra!");
         return;
     }
 
     $(".laborkerovizsgalatcheck").show();
-    if (!confirm("Biztos elküldöd a laborkérést? Küldés után csak a labor ügyfélszolgálata tudja módosítani!")) {
-        return;
-    }
 
-    let rid = $("#laborkerorequestid").val();
-    let fid = $("#laborkeroreservationid").val();
+    Swal.fire({
+        title: "Biztos elküldöd a laborkérést?",
+        text: "A művelet nem visszavonható, a küldés után csak a labor ügyfélszolgálata tud módosítani!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ok, mehet",
+        cancelButtonText: "Mégse"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let rid = $("#laborkerorequestid").val();
+            let fid = $("#laborkeroreservationid").val();
 
-    $.ajax({
-        type:"POST",
-        url:"index.php?page=booking",
-        data: {sendlaborkero:1, rid:rid, fid:fid},
-        success: function(response){
-            if (response.error != "") {
-                alert(response.error);
-            } else {
-                $.toast({
-                    text: "Laborkérés mentve",
-                    icon: 'success'
-                });
-            }
-            showGeneralPopup(response.html);
+            $.ajax({
+                type:"POST",
+                url:"index.php?page=booking",
+                data: {sendlaborkero:1, rid:rid, fid:fid},
+                success: function(response){
+                    if (response.error != "") {
+                        alert(response.error);
+                    } else {
+                        $.toast({
+                            text: "Laborkérés mentve",
+                            icon: 'success'
+                        });
+                    }
+                    showGeneralPopup(response.html);
+                }
+            })
         }
-    })
+    });
 }
 
 function cancelLaborKero() {

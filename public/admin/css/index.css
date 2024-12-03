@@ -1910,3 +1910,14 @@ and (max-width: 500px) {
 	animation-duration: 1s;
 	animation-iteration-count: infinite;
 }
+
+.chatupimage {
+	max-width:140px;
+	height:70px;
+	max-height: 70px;
+	padding: 5px 0px;
+}
+
+.swal2-container {
+	z-index: 20000 !important;
+}

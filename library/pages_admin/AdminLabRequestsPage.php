@@ -119,7 +119,7 @@ class AdminLabRequestsPage extends AdminCorePage {
 
         if (isset($_POST["showrequestdetails"])) {
             $id = intval($_POST["showrequestdetails"]);
-            $requestData = sql_query("SELECT resultdate, IF(r.resultpdf='', 0, 1) AS result, foglalasid, provider, laborpacks, nev, createdby FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            $requestData = sql_query("SELECT resultdate, IF(r.status='done', 1, 0) AS result, foglalasid, provider, laborpacks, nev, createdby FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
             $packIds = json_decode($requestData["laborpacks"], JSON_OBJECT_AS_ARRAY);
 
             $html = "";
@@ -189,7 +189,7 @@ class AdminLabRequestsPage extends AdminCorePage {
 
         if (isset($_POST["showSendLeletWindow"])) {
             $id = intval($_POST["showSendLeletWindow"]);
-            $request = sql_query("SELECT resultdate, IF(r.resultpdf='', 0, 1) AS result, id, foglalasid, provider, nev, taj, szuldatum, email, emailtext, ertesiteslog, r.megj FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+            $request = sql_query("SELECT resultdate, IF(r.status='done', 1, 0) AS result, id, foglalasid, provider, nev, taj, szuldatum, email, emailtext, ertesiteslog, r.megj FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
 
             $nev = $request["nev"] ?? "Nincs neve!";
 
@@ -475,6 +475,9 @@ class AdminLabRequestsPage extends AdminCorePage {
             if (in_array("alvadekos", $scanResult)) {
                 $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>alvadékos</span></div>";
             }
+            if (in_array("kevesminta", $scanResult)) {
+                $resultDate.= "<div style=''><span style='display:inline-block;background:#a2bffe;color:#fff;padding:2px 4px;border-radius: 4px;margin:2px 0px;'>kevés minta</span></div>";
+            }
         }
 
         if ($request["printmatrica"] == 1) {
@@ -569,7 +572,7 @@ class AdminLabRequestsPage extends AdminCorePage {
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.resultpdf='', 0, 1) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.status='done', 1, 0) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN cegek c ON c.id=f.cegid

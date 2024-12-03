@@ -13,7 +13,62 @@ function initChatEnterKey() {
             sendChatMessage();
         }
     });
+
+    $("#chatmessagetext").bind("paste", function(e) {
+        for (var i = 0 ; i < e.originalEvent.clipboardData.items.length ; i++) {
+            var item = e.originalEvent.clipboardData.items[i];
+            if (item.type.indexOf("image") != -1) {
+                uploadChatImage(item.getAsFile());
+            }
+        }
+    });
 }
+
+function finalizeImageUpload() {
+    $.ajax({
+        url: "index.php?page=chat&finalizeupload",
+        method: "POST",
+        data: { finalizeImageUpload:1 },
+        success: function (response) {
+            $("#chatwindow").html(response.messages);
+            $("#chatsessionlist").html(response.sessionlist);
+            scrollToChatBottom();
+        }
+    });
+}
+
+function deleteUploadedTempFile() {
+    $.ajax({
+        url: "index.php?page=chat",
+        method: "POST",
+        data: { deleteUploadedTempFile:1 },
+        success: function (response) {
+            $("#chatsessionuploads").html(response);
+        }
+    });
+}
+
+
+function uploadChatImage(file) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.onload = function() {
+        if (xhr.status == 200) {
+            $("#chatsessionuploads").html(xhr.responseText);
+        } else {
+            alert("Error! Upload failed");
+        }
+    };
+
+    xhr.onerror = function() {
+        alert("Error! Upload failed. Can not connect to server.");
+    };
+
+    xhr.open("POST", "index.php?page=chat&chatimageupload", true);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.send(file);
+}
+
 
 function newChatSession() {
     $.ajax({
@@ -132,7 +187,7 @@ function sendChatMessage() {
         method: "POST",
         data: { sendmessage:1, message:message },
         success: function (response) {
-            $("#chatsessionitems").html(response.messages);
+            $("#chatwindow").html(response.messages);
             $("#chatsessionlist").html(response.sessionlist);
             scrollToChatBottom();
         }

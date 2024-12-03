@@ -10,41 +10,48 @@ class DocAgent {
     const ASSET_WEB_GALLERY                 = "webgallery";
     const ASSET_LABOR_CSOMAG_IMAGE          = "laborcsomagimage";
     const ASSET_CONTENT_TITLE_IMAGE         = "contenttitleimage";
+    const ASSET_CHAT_UPLOAD_IMAGE           = "chatuploadimage";
+    const ASSET_LABOR_RESULT                = "laborresult";
 
     const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";
     const ASSET_DOCTOR_DEFAULT_IMAGE_FEMALE = "/images/doctor_female.png";
 
-    public $showDefaultAsset = false;
-    public $newUploadButton  = true;
+    public bool $showDefaultAsset = false;
+    public bool $newUploadButton  = true;
 
     public function __construct()
     {
     }
 
-    private function _getDocPath($fileId) {
+    private function _getDocPath($fileId):string {
         $id = (int)$fileId;
         $path = Booking_Constants::DOCUMENT_PATH.floor($id / 1000);
-        if (!is_dir($path)) mkdir($path);
+        if (!is_dir($path)) {
+            mkdir($path);
+            chown($path, "www-data");
+        }
         $path.="/{$id}.bin";
         return $path;
     }
 
-    private static function _getAssetImagePath($fileId) {
+    private static function _getAssetImagePath($fileId):string {
         $path = "/var/www/onlinebejelentkezes_keltexmed/public/images/assets_".Booking_Constants::SQL_DB."/";
         if (!is_dir($path)) {
             mkdir($path);
+            chown($path, "www-data");
         }
         $path.= floor((int)$fileId / 1000)."/";
         if (!is_dir($path)) {
             mkdir($path);
+            chown($path, "www-data");
         }
         return $path;
     }
 
     public function getAssetImageURL($imageData, $full = false) {
         $extension = $imageData["tipus"];
-        if ($extension == "png") {
+        if ($extension == "png" && $imageData["assetid"] != self::ASSET_CHAT_UPLOAD_IMAGE) {
             $extension = "jpg";
         }
 
@@ -99,6 +106,9 @@ class DocAgent {
 
                 $destinationFile = $this->_getDocPath($id);
                 @move_uploaded_file($uploadedFile["tmp_name"], $destinationFile);
+                if (!is_file($destinationFile)) {
+                    return "A file feltöltése nem sikerült!";
+                }
                 return "0";
             } else {
                 return "A feltöltött file formátuma nem megfelelő (csak jpg, pdf, és word dokumentumot lehet feltölteni)";
@@ -110,24 +120,41 @@ class DocAgent {
         }
     }
 
-    public function saveLocalDoc($fileName, $fileData) {
+    public function saveLocalDoc($fileName, $fileData):string {
         if (is_file($fileName)) {
             $fileSize = filesize($fileName);
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
             if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
-                if (empty($fileData["userid"])) {
+                if (empty($fileData["userid"]) && !empty($fileData["fid"])) {
                     $reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]));
                     $fileData["userid"] = $reservationData["paciensid"];
                 }
 
+                if (empty($fileData["fid"])) {
+                    $fileData["fid"] = 0;
+                }
+
+                if (empty($fileData["userid"])) {
+                    $fileData["userid"] = 0;
+                }
+
+                if (empty($fileData["assetid"])) {
+                    $fileData["assetid"] = "";
+                }
+
+                if (empty($fileData["dataid"])) {
+                    $fileData["dataid"] = 0;
+                }
+
                 sql_query("insert into dokumentumok set 
-                    foglalasid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    [$fileData["fid"], $fileData["userid"], pathinfo($fileName, PATHINFO_BASENAME), pathinfo($fileName, PATHINFO_BASENAME), $fileSize, $extension]);
+                    foglalasid=?, userid=?, assetid=?, dataid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
+                    [$fileData["fid"], $fileData["userid"], $fileData["assetid"], $fileData["dataid"], pathinfo($fileName, PATHINFO_BASENAME), pathinfo($fileName, PATHINFO_BASENAME), $fileSize, $extension]);
                 $id = sql_insert_id();
 
                 $destinationFile = $this->_getDocPath($id);
                 rename($fileName, $destinationFile);
+                chown($destinationFile, "www-data");
                 return "0";
             } else {
                 return "A feltöltött file formátuma nem megfelelő (csak jpg, pdf, és word dokumentumot lehet feltölteni)";
@@ -284,6 +311,37 @@ class DocAgent {
 
     }
 
+    public function storeAssetImage($tipus, $oid, $filePath):array {
+        $result = ["error" => "", "id" => 0];
+
+        if (is_file($filePath)) {
+            $fileName = pathinfo($filePath, PATHINFO_BASENAME);
+            $fileSize = filesize($filePath);
+            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+            if (in_array($extension, ["jpg", "jpeg", "png"])) {
+                sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
+                $fileId = sql_insert_id();
+                $path = $this->_getAssetImagePath($fileId);
+
+                $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
+                copy($filePath, $kepfile);
+
+                $success = true;
+                $result["id"] = $fileId;
+            }
+
+            if (!isset($success)) {
+                $result["error"] = "A feltöltött file csak jpg vagy png lehet!";
+            }
+        } else {
+            $result["error"] = "A feltöltés közben hiba történt!";
+        }
+
+        return $result;
+    }
+
+
     public function deleteAsset($tipus, $id) {
         $path = self::_getAssetImagePath($id)."{$tipus}_{$id}.jpg";
         @unlink($path);
@@ -356,6 +414,13 @@ class DocAgent {
         return $assets;
     }
 
+    public function getDocByType($tipus, $dataId):string {
+        if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=? order by datum desc limit 1", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC)) {
+            return $this->getDoc($docData["id"]);
+        }
+        return "";
+    }
+
     public function outputAsset($id, $code) {
         if ($asset = sql_query("select * from dokumentumok where id=? and kod=?", [$id, $code])->fetch(PDO::FETCH_ASSOC)) {
             $photoPath = $this->getAssetImageURL($asset, true);
@@ -384,6 +449,28 @@ class DocAgent {
             die("A kep nem talalhato, valoszinuleg torolve lett!");
         }
         die;
+    }
+
+
+    public function storeLaborLeletek() {
+        $tempPdf = "/var/pdfwork/laborResult_".Booking_Constants::SQL_DB.".pdf";
+
+        $resultids = sql_query("SELECT id FROM labrequests r WHERE r.`resultpdf`<>'' ORDER BY created desc LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($resultids as $resultid) {
+            echo "{$resultid["id"]} ";
+
+            if (!sql_query("select id from dokumentumok where assetid=? and dataid=?", [self::ASSET_LABOR_RESULT, $resultid["id"]])->fetch(PDO::FETCH_ASSOC)) {
+                echo "not ";
+                $leletData = sql_query("select id, resultpdf from labrequests where id=?", [$resultid["id"]])->fetch(PDO::FETCH_ASSOC);
+                file_put_contents($tempPdf, base64_decode($leletData["resultpdf"]));
+
+                $this->saveLocalDoc($tempPdf, ["assetid" => self::ASSET_LABOR_RESULT, "dataid" => $resultid["id"]]);
+
+                //die("diehere...\n");
+            } else {
+                echo "found ";
+            }
+        }
     }
 
 }

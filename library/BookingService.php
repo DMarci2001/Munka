@@ -749,6 +749,11 @@ class BookingService
                 //jász utca vagy fesztivál bármikor foglalhat
                 //$dist = "-10 hour";
             //}
+
+            if ($cegId == 888) {
+                $dist = "6 hour";
+            }
+
             //BFKH - Buda / Pest / VIP
             if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
                 //cib

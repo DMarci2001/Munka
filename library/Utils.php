@@ -327,7 +327,6 @@ class Utils {
         $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
         $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-3.7.1.min.js"></script>';
         $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
-        $htmlout.='<script type="text/javascript" src="/js/sweetalert/sweetalert2.min.js"></script>';
         $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
         $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
@@ -383,7 +382,11 @@ class Utils {
 
             $htmlout .= '<link href="/admin/js/cropperjs-main/dist/cropper.css" rel="stylesheet">';
             $htmlout .= '<script src="/admin/js/cropperjs-main/dist/cropper.js"></script>';
+
+            $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
         } else {
+            $htmlout .= '<script type="text/javascript" src="/js/sweetalert/sweetalert2.min.js"></script>';
+            $htmlout .= '<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
             $htmlout .= '<link href="/chat/chatStyle.css" rel="stylesheet" type="text/css">';
             $htmlout .= '<script src="/chat/chatJs.js"></script>';
         }
@@ -407,7 +410,6 @@ class Utils {
         }
 		$htmlout.='<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
         $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
-        $htmlout.='<link rel="stylesheet" href="/js/sweetalert/sweetalert2.css" type="text/css" />';
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
         $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";

@@ -533,7 +533,7 @@ class AdminBookingEditor {
             //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
-            $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . (sql_query("select id from labrequests where foglalasid=? and resultpdf<>'' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC) ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
+            $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . (sql_query("select id from labrequests where foglalasid=? and status='done' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC) ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
             $html .= "</div>";
         }

@@ -59,6 +59,7 @@ class SpektrumlabService {
         "000000479" => "Hungária Med-M Kft. (Suzuki menedzser)",
         "000000519" => "Hungária Med-M Kft. (Apollo Tyres)",
         "000000524" => "Hungária Med-M Kft. (Aldi)",
+        "000000543" => "Hungária Med-M Kft. (BME)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -279,7 +280,9 @@ class SpektrumlabService {
     */
 
     public function processPdfFromMessages($smallOnly = false):void {
-        $tempPdf = "/var/pdfwork/spekTemp.pdf";
+        $docAgent = new DocAgent();
+
+        $tempPdf = "/var/pdfwork/spektrumResult_".Booking_Constants::SQL_DB.".pdf";
         $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
             $lastRequestId = 0;
@@ -305,7 +308,9 @@ class SpektrumlabService {
                     $text = $pdf->getText();
                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
-                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultpdf=?, resultdate=?, scanresult='' where id=?", [$folyamatban, $fields[5], $lastResultDate, $lastRequestId]);
+                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultdate=?, scanresult='' where id=?", [$folyamatban, $lastResultDate, $lastRequestId]);
+                    $docAgent->saveLocalDoc($tempPdf, ["assetid" => DocAgent::ASSET_LABOR_RESULT, "dataid" => $lastRequestId]);
+
                     $lastRequestId = intval($fields[2]);
                 }
             }

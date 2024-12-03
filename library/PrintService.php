@@ -507,78 +507,12 @@ class PrintService
         $outFileName = "{$nev} laborlelet.pdf";
         header("Content-Type: application/pdf");
         header('Content-Disposition: attachment; filename="'.$outFileName.'"');
-        echo base64_decode($this->laborRequestData["resultpdf"]);
+
+        $docAgent = new DocAgent();
+        echo $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $this->laborRequestData["id"]);
+
+        //echo base64_decode($this->laborRequestData["resultpdf"]);
         die;
-
-
-        if (isset($_REQUEST["pdf"])) {
-            $id = $this->laborRequestData["id"];
-            $pass = $this->laborRequestData["pass"];
-            $pdfFileName = Booking_Constants::DOCUMENT_PATH."labor".md5($id.rand(1,10000)).".pdf";
-            $pdfFileNameEncripted = Booking_Constants::DOCUMENT_PATH."laborenc".md5($id.rand(1,10000)).".pdf";
-            $outFileName = $this->reservationData["nev"]." laborlelet.pdf";
-            $output = `chromium --headless --print-to-pdf="{$pdfFileName}" --no-pdf-header-footer --no-sandbox "https://bejelentkezes.hungariamed.hu/admin/index.php?print&template=laborlelet1&rid={$id}&p={$pass}"`;
-            $output = `pdftk {$pdfFileName} output {$pdfFileNameEncripted} owner_pw hmm1 user_pw hmm2`;
-
-            header("Content-Type: application/pdf");
-            header('Content-Disposition: attachment; filename="'.$outFileName.'"');
-            //echo file_get_contents($pdfFileName);
-            echo file_get_contents($pdfFileNameEncripted);
-            unlink($pdfFileName);
-            unlink($pdfFileNameEncripted);
-            die;
-        }
-
-        $maxRowsPerPage = 45;
-
-        header("Content-type: text/html; charset=UTF-8");
-
-        $templateContent = file_get_contents("templates/laborLeletHead.html");
-
-        $laborResultRows = [];
-
-        for ($i=1;$i<=60;$i++) {
-            $laborResultRows[] = "eredmény {$i}";
-        }
-
-        $pages = [];
-        $resultRows = "";
-        $pageNum = 0;
-        $allPages = ceil(count($laborResultRows) / $maxRowsPerPage);
-
-        $sor = 0;
-        foreach ($laborResultRows as $laborResultRow) {
-            if ($sor >= $maxRowsPerPage && isset($page)) {
-                $resultRows.= "<div style='margin-top:10px;'>A lelet a következő oldalon folytatódik!</div>";
-                $pageNum++;
-                $page = str_replace("#laboreredmenysorok#", $resultRows, $page);
-                $page = str_replace("#pagenum#", "{$pageNum}/{$allPages}", $page);
-                $resultRows = "";
-                $pages[] = $page;
-                unset($page);
-                $sor = 0;
-            }
-
-            if (!isset($page)) {
-                $page = file_get_contents("templates/{$this->templateFileName}");
-                $resultRows = "";
-            }
-
-            $resultRows.= "<div>{$laborResultRow}</div>";
-            $sor++;
-        }
-
-        if ($resultRows != "") {
-            $pageNum++;
-            $page = str_replace("#laboreredmenysorok#", $resultRows, $page);
-            $page = str_replace("#pagenum#", "{$pageNum}/{$allPages}", $page);
-            $pages[] = $page;
-        }
-
-        $templateContent = str_replace("#laborlelet#", implode("", $pages), $templateContent);
-        $templateContent = $this->setTemplateMacros($templateContent);
-
-        echo $templateContent;
     }
 
 
