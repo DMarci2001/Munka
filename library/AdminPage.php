@@ -264,7 +264,19 @@ class AdminPage {
 
         if (!isset($GLOBALS["nopageaccess"])) {
             if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
-                $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
+                if(!$menu["custom_js"]){
+                    $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
+                }else{
+                    $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>";
+                    $html .= "<label class='ujbutton' style='cursor:pointer'>";
+                    $html .= "  <input style='display:none' id='excel-file' type='file' onChange='uploadPatientDataExcel(this)'/>";
+                    $html .= "+ {$menu["newbutton"]}";
+                    $html .= "</label>";
+                    if(isset($_SESSION["patient-excel-data"])){
+                        $html.= " <a class='ujbutton' style='background:red;border:1px solid red' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&remove'><i title='Lista törlése' class='fa-solid fa-trash'></i></a>";
+                    }
+                    $html .= "</div>";
+                }
             }
             if (isset($_GET["szerk"])) {
                 $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
