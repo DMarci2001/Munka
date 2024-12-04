@@ -211,10 +211,6 @@ class NotificationService
                 $mail->AddAttachment($attachment);
             }
 
-            if(CompanyService::isObudaiegyetem()){
-                die("Itt vagyok!");
-            }
-
             $mail->Send();
 
             $this->createNotificationRecord("usernotification", $id, $row["email"], $mailTemplate["subject"], $mailTemplate["body"]);
