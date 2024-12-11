@@ -812,7 +812,7 @@ class AdminBookingPage extends AdminCorePage
         $htmlout       = "";
         $cimFilterHTML = $this->cimFilter();
         $cegFilterHTML = $this->cegFilter();
-        $tipusLinks[0] = ["url" => "javascript:scrollTo(\"filterbox\");", "nev" => "Oldal teteje"];
+        $tipusLinks[0] = ["url" => "javascript:scrollToElement(\"filterbox\");", "nev" => "Oldal teteje"];
         $rendelesek    = 0;
         $helyszin      = intval($_SESSION["helyszin"]);
         $nap           = date("Y-m-d", strtotime($setDay));
@@ -1125,7 +1125,7 @@ class AdminBookingPage extends AdminCorePage
 
             foreach ($this->orvosTipusok as $tipusId) {
                 if (!isset($tipusLinks[$tipusId])) {
-                    $tipusLinks[$tipusId]["url"] = "javascript:scrollTo(\"{$sectionName}\");";
+                    $tipusLinks[$tipusId]["url"] = "javascript:scrollToElement(\"{$sectionName}\");";
                     $tipusLinks[$tipusId]["nev"] = $tipusNevek[$tipusId];
                 }
                 $tipusLinks[$tipusId]["freepart"][$orvosId] = $freeCounter;

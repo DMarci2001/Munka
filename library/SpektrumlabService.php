@@ -60,6 +60,7 @@ class SpektrumlabService {
         "000000519" => "Hungária Med-M Kft. (Apollo Tyres)",
         "000000524" => "Hungária Med-M Kft. (Aldi)",
         "000000543" => "Hungária Med-M Kft. (BME)",
+        "000000544" => "Hungária Med-M Kft. (Pénzjegy nyomda)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -283,7 +284,7 @@ class SpektrumlabService {
         $docAgent = new DocAgent();
 
         $tempPdf = "/var/pdfwork/spektrumResult_".Booking_Constants::SQL_DB.".pdf";
-        $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 1 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+        $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 2 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
             $lastRequestId = 0;
             $lastResultDate = "0000-00-00 00:00:00";

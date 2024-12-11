@@ -1588,7 +1588,7 @@ function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/*function scrollTo(id) {
+function scrollToElement(id) {
     let pos = $("#" + id).offset().top - ($("#stickytablefilter").height() + 20);
     if (id == "filterbox") {
         pos = 0;
@@ -1596,7 +1596,7 @@ function scrollToTop() {
     $([document.documentElement, document.body]).animate({
         scrollTop: pos
     }, 500);
-}*/
+}
 
 //Highlight
 jQuery.fn.highlight = function (c, target) {

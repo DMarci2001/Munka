@@ -234,14 +234,15 @@ class CronService {
         }
     }
 
-    private function scanLaborPDF()
-    {
-        $requests = sql_query("select id, nev, resultpdf from labrequests where resultdate>date_sub(now(), interval 30 day) and resultpdf<>'' and scanresult='' order by resultdate desc")->fetchAll(PDO::FETCH_ASSOC) ;
+    private function scanLaborPDF() {
+        $docAgent = new DocAgent();
+
+        $requests = sql_query("select id, nev from labrequests where resultdate>date_sub(now(), interval 30 day) and status='done' and scanresult='' order by resultdate desc")->fetchAll(PDO::FETCH_ASSOC) ;
         foreach ($requests as $request) {
             echo "{$request["nev"]} ";
 
             $fileName = Booking_Constants::DOCUMENT_PATH . "/scanteszt.pdf";
-            file_put_contents($fileName, base64_decode($request["resultpdf"]));
+            file_put_contents($fileName, $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $request["id"]));
 
             $config = new \Smalot\PdfParser\Config();
             $config->setHorizontalOffset('');

@@ -1022,15 +1022,9 @@ and (max-width: 1200px) {
 
 }
 
-@media screen and (min-width: 0px) and (max-width:567px){
-    #idopontvalasztodiv{
-        width: 320px;
-        overflow: scroll;
-    }
-}
 
 .vizsgalatdoboz_hungariamed {
-    position: relative;
+    /*position: relative;*/
     border-radius: 5px;
     cursor: pointer;
     box-sizing: border-box;
@@ -1040,9 +1034,10 @@ and (max-width: 1200px) {
     background-color: #888;
     color:#fff;
     width: 202px;
-    height: 200px;
+    height: 204px;
     text-align: center;
     overflow: hidden;
+    font-size: 16px;
 }
 
 .vizsgalatdoboz_hungariamed:hover {
@@ -1050,7 +1045,7 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdoboz_keltexmed {
-    position: relative;
+    /*position: relative;*/
     border-radius: 5px;
     cursor: pointer;
     box-sizing: border-box;
@@ -1060,9 +1055,10 @@ and (max-width: 1200px) {
     background-color: #5c95af;
     color:#fff;
     width: 202px;
-    height: 200px;
+    height: 204px;
     text-align: center;
     overflow: hidden;
+    font-size: 16px;
 }
 
 .vizsgalatdoboz_keltexmed:hover {
@@ -1080,19 +1076,13 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbutton_hungariamed {
-    /*position:absolute;*/
     border-radius: 3px;
-    /*bottom:20px;
-    left: 50%;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
     box-sizing: border-box;
     background: #aaa;
-    width:150px
-    
-    /*margin-top:20px;*/
-
+    width:100%;
 }
 
 .vizsgalatdobozbutton_hungariamed:hover {
@@ -1100,16 +1090,13 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbutton_keltexmed {
-    /*position:absolute;*/
     border-radius: 3px;
-    /*bottom:20px;
-    left: 25px;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
     box-sizing: border-box;
     background: #318bb4;
-    width:150px
+    width:100%;
 }
 
 .vizsgalatdobozbutton_keltexmed:hover {
@@ -1117,10 +1104,7 @@ and (max-width: 1200px) {
 }
 
 .vizsgalatdobozbuttonwebdoctor {
-    /*position:absolute;*/
     border-radius: 3px;
-    /*bottom:20px;
-    left: 25px;*/
     text-transform: uppercase;
     display:inline-block;
     padding:5px 10px;
@@ -1132,6 +1116,29 @@ and (max-width: 1200px) {
 .vizsgalatdobozbuttonwebdoctor:hover {
     background: #830b0b;
 }
+
+@media screen and (min-width: 0px) and (max-width:567px){
+    #idopontvalasztodiv{
+        width: 320px;
+        overflow: scroll;
+    }
+
+    .vizsgalatdoboz_hungariamed {
+        height: 198px;
+        width: 160px;
+        font-size: 12px;
+    }
+
+    .vizsgalatdoboz_keltexmed {
+        height: 198px;
+        width: 160px;
+        font-size: 12px;
+    }
+
+}
+
+
+
 .recilistacell {
 	display:table-cell;
 	padding:3px 3px 3px 0px;
