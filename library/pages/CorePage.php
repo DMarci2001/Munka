@@ -9,9 +9,10 @@ class CorePage {
 
     public $pageTitle;
 
-    public $showMainMenu = true;
-    public $showLangMenu = true;
-    public $lockInPage  = false;
+    public bool $showMainMenu = true;
+    public bool $showLangMenu = true;
+    public bool $lockInPage  = false;
+    public bool $selfContained = false;
 
     public $showSuzukiLogo = false;
     public $customLogo = null;
