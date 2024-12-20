@@ -493,8 +493,13 @@ class BookingPage extends CorePage
                 }
             }
             if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
+                $_POST["telefon"] = str_replace(["+", " ", "/", "-", "(", ")"], "", $_POST["telefon"]);
                 if (empty($_POST["telefon"])) {
                     $this->errors[] = "{$webText["telkotelezo"]}";
+                } else {
+                    if (!preg_match('/^(36|06)(20|30|31|50|70)\d{7}$/', $_POST["telefon"])) {
+                        $this->errors[] = "{$webText["telformat"]}";
+                    }
                 }
             }
             if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
@@ -1895,12 +1900,16 @@ class BookingPage extends CorePage
 
             $html .= "<div style='text-align:center;margin-top:10px;'>";
 
-            $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px 15px 0px;'>{$webText["idopontfoglalas"]}</h2>";
-            if (count(Booking_Constants::DEFAULT_PLACE_IDS) > 1) {
-                $helyszinData = sql_query("select cim from helyszinek where id=?", [$helyszinId])->fetch(PDO::FETCH_ASSOC);
-                $html.= "<div style='font-size: 24px;'>{$helyszinData["cim"]}</div>";
+            if (!isset($_GET["menedzserszures"])) {
+                $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px 15px 0px;'>{$webText["szakrendelesek"]}</h2>";
+                if (count(Booking_Constants::DEFAULT_PLACE_IDS) > 1) {
+                    $helyszinData = sql_query("select cim from helyszinek where id=?", [$helyszinId])->fetch(PDO::FETCH_ASSOC);
+                    $html .= "<div style='font-size: 24px;'>{$helyszinData["cim"]}</div>";
+                }
+                $html .= $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
             }
-            $html .= $this->lang->getText("foglalas.inditas", "Kattintson a szakrendelés nevére a foglalás indításához!") . "<br/><br/>";
+
+            $managerBoxes = "";
 
             foreach ($services as $tipusData) {
                 if (($tipusData["megnev"] == "Szemészet____" || $tipusData["megnev"] == "Menedzserszűrés") && Booking_Constants::SQL_DB == "hungariamed") {
@@ -1908,9 +1917,9 @@ class BookingPage extends CorePage
                     continue;
                 }
 
-                //if ($tipusData["bnoreservation"] != 0) {
-                //    continue;
-                //}
+                if ((substr_count($tipusData["megnev"], "GHC ") || substr_count($tipusData["megnev"], "Várkap") || substr_count($tipusData["megnev"], "EDAG ") || substr_count($tipusData["megnev"], "Brand")) && Booking_Constants::SQL_DB == "hungariamed") {
+                    continue;
+                }
 
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
@@ -1922,15 +1931,28 @@ class BookingPage extends CorePage
                     $tipusData["facode"] = "<i class='fas fa-laptop-medical'></i>";
                 }
 
-                $html .= "<div class='vizsgalatdoboz_".Booking_Constants::SQL_DB . ($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor" : "") . "' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
-                $html .= "  <div style='height:130px'>";
-                $html .= "    <div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
-                $html .= "    <div style='font-size:16px;font-family: robotobold;color:#fff;'>{$tipusData["megnev"]}</div>";
-                $html .= "  </div>";
+                $box = "<div class='vizsgalatdoboz_".Booking_Constants::SQL_DB . ($tipusData["webdoktor"] == 1 ? " vizsgalatdobozwebdoctor" : "") . "' onclick='extendedReservationSelect({$tipusData["id"]},{$helyszinId},{$tipusData["noreservation"]});return false;'>";
+                $box .= "  <div style='height:140px'>";
+                $box .= "    <div style='font-size: 56px;padding:5px 10px 10px 10px;color:#fff;'>{$tipusData["facode"]}</div>";
+                $box .= "    <div style='font-family: robotoregular;'>{$tipusData["megnev"]}</div>";
+                $box .= "  </div>";
+                $box .= "  <div class='" . ($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor" : "vizsgalatdobozbutton_".Booking_Constants::SQL_DB) . "'>" . ($tipusData["webdoktor"] == 1 ? $webText["megrendelem"] : $webText["idopontfoglalas_gomb"]) . "</div>";
+                $box .= "</div>";
 
-                $html .= "<div class='" . ($tipusData["webdoktor"] == 1 ? "vizsgalatdobozbuttonwebdoctor" : "vizsgalatdobozbutton_".Booking_Constants::SQL_DB) . "'>" . ($tipusData["webdoktor"] == 1 ? $webText["megrendelem"] : $webText["idopontfoglalas_gomb"]) . "</div>";
+                if (substr_count($tipusData["megnev"], "HMM ")) {
+                    $managerBoxes.= $box;
+                    $box = "";
+                }
 
-                $html .= "</div>";
+                if (!isset($_GET["menedzserszures"])) {
+                    $html .= $box;
+                }
+            }
+
+            if (!empty($managerBoxes)) {
+                $html .= "<h2 style='font-size:32px;font-family:robotolight;margin:20px 0px 15px 0px;'>".$this->lang->getText("menedzserszures", "Menedzserszűrés") . "</h2>";
+                $html .= $this->lang->getText("manager.inditas", "Az időpontfoglalás indításához kattintson a menedzserszűrés csomagra!") . "<br/><br/>";
+                $html.= $managerBoxes;
             }
 
             $html .= "</div>";

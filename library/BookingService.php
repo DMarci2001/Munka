@@ -2408,7 +2408,7 @@ class BookingService
         $tipusok = array_unique($tipusok);
         $services = [];
 
-        $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by megnev");
+        $res = sql_query("select * from szurestipusok where id in (".implode(",", $tipusok).") order by !instr(megnev, 'prevent'), !instr(megnev, 'basic'), !instr(megnev, 'silver'), !instr(megnev, 'gold'), !instr(megnev, 'platina'), instr(megnev, 'extra'), megnev");
         while ($tipusData = sql_fetch_array($res)) {
             $tipusData["doctors"] = $this->beosztasService->getDoctors(11, 1, $tipusData["id"]);
             $tipusData["assets"] = $docAgent->getAssetsByType(DocAgent::ASSET_SERVICE_ILLUSTRATION_IMAGE, $tipusData["id"]);

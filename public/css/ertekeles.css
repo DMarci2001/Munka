@@ -1,0 +1,72 @@
+body {
+    background-color:#eee;
+    padding:0px;
+    margin:0px;
+    color:#444;
+    font-size:14px;
+    font-family:robotoregular;
+}
+
+a {
+    color:#a00;
+    text-decoration:none;
+}
+a:hover {
+    text-decoration:underline;
+}
+
+.ertekelesheader {
+    font-family:robotolight;
+    margin:20px 0px 0px 0px;
+    padding:20px 50px;
+    font-size:36px;
+    background: #fff;
+    color:#a00;
+    text-align:center;
+    box-shadow: 0px 3px 3px rgba(0,0,0,.1);
+}
+
+.flat-button {
+    position: relative;
+    vertical-align: top;
+    width: 100%;
+    height: 60px;
+    padding: 0;
+    font-size: 22px;
+    color: white;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    background: #d35400;
+    border: 0;
+    border-bottom: 2px solid #c54e00;
+    cursor: pointer;
+    -webkit-box-shadow: inset 0 -2px #c54e00;
+    box-shadow: inset 0 -2px #c54e00;
+}
+.flat-button:active {
+    top: 1px;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.kerdesdiv {
+    margin-bottom:20px;
+}
+.kerdesszoveg {
+    background:#aaa;
+    color:#fff;
+    padding:10px;
+    font-size:18px;
+    border-radius: 3px;
+}
+.valaszdiv {
+    margin-top:5px;
+}
+
+.ertekeleshiba {
+    background:#f00;
+    color:#fff;
+    padding:10px;
+    margin-bottom:10px;
+}

@@ -58,26 +58,29 @@ class Page
         $webText = $this->lang->webText;
 
         header("Content-type: text/html; charset=UTF-8");
-
         echo $this->utils->htmlheader($this->page->pageTitle);
-        echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . "".(CompanyService::isSuzukiGHC() && true?"style=\"font-family:SuzukiProRegular\"":"").">";
-        echo "<div class='pagecontainer' style=\"max-width:1200px\">";
-        echo $this->_pageMenu();
-        echo "<div class='contentcontainer' ".(CompanyService::isSuzukiGHC()?"style=\"min-width:none\"":"").">";
-        //echo $this->_pageHead();
-        echo "<div style='padding:20px;'>";
-        $this->page->showPage();
-        if(CompanyService::isSuzukiGHC()){
-            $this->suzukiGHCLogoContainer();
+
+        if ($this->page->selfContained) {
+            echo $this->page->showPage();
+        } else {
+            echo "<body " . ($_GET["page"] == "webfogleu" ? "onload=\"checkFogleuForm();\"" : "") . "" . (CompanyService::isSuzukiGHC() && true ? "style=\"font-family:SuzukiProRegular\"" : "") . ">";
+            echo "<div class='pagecontainer' style=\"max-width:1200px\">";
+            echo $this->_pageMenu();
+            echo "<div class='contentcontainer' " . (CompanyService::isSuzukiGHC() ? "style=\"min-width:none\"" : "") . ">";
+            echo "<div style='padding:20px;'>";
+            $this->page->showPage();
+            if (CompanyService::isSuzukiGHC()) {
+                $this->suzukiGHCLogoContainer();
+            }
+            if (CompanyService::isFiFi()) {
+                $this->FiFiLogoContainer();
+            }
+
+            echo "</div>";
+            echo $this->_pageFooter();
+            echo "</div>";
+            echo "</div>";
         }
-        if(CompanyService::isFiFi()){
-            $this->FiFiLogoContainer();
-        }
-       
-        echo "</div>";
-        echo $this->_pageFooter();
-        echo "</div>";
-        echo "</div>";
 
         $settings = new Booking_Settings();
         $chatAvailable = $settings->chatStatus == 1;

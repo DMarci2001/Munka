@@ -47,6 +47,7 @@ require_once(__DIR__ . "/library/pages/SuzukiFormPage.php");
 require_once(__DIR__ . "/library/pages/OltasIgenyFelmeresPage.php");
 require_once(__DIR__ . "/library/pages/OltasJelentkezesPage.php");
 require_once(__DIR__ . "/library/pages/ElsosegelyVizsgaPage.php");
+require_once(__DIR__ . "/library/pages/ReviewPage.php");
 require_once(__DIR__ . "/library/pages/CovidOltasNaploPage.php");
 require_once(__DIR__ . "/library/pages/MissingDataPage.php");
 require_once(__DIR__ . "/library/pages/ServicesPage.php");
@@ -77,6 +78,7 @@ require_once(__DIR__ . "/library/SpektrumlabService.php");
 require_once(__DIR__ . "/library/LaborKeroService.php");
 require_once(__DIR__ . "/library/InvoiceService.php");
 require_once(__DIR__ . "/library/LabshopService.php");
+require_once(__DIR__ . "/library/ReviewService.php");
 require_once(__DIR__ . "/library/ReservationService.php");
 require_once(__DIR__ . "/library/InspectionReminderService.php");
 

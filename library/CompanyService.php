@@ -27,10 +27,10 @@ class CompanyService {
     private function _domainProcess() {
         $d = $GLOBALS["subdomain"] = $this->_getSubDomain();
 
-        if ($d == "ertekeles") {
-            $GLOBALS["ertekeles"] = 1;
-            return;
-        }
+        //if ($d == "review") {
+        //    $GLOBALS["ertekeles"] = 1;
+        //    return;
+        //}
 
         if ($d == "keltexmed" || $d == "bejelentkezesuj" || $d == "demo") {
             $d = "bejelentkezes";
@@ -77,10 +77,17 @@ class CompanyService {
                     }
                     return;
                 }
+
+                if ($d == "review") {
+                    if (!isset($GLOBALS["admin"])) {
+                        $_GET["page"] = "review";
+                    }
+                    return;
+                }
             }
 
             unset($_SESSION["helyszindata"]);
-            die("Domain nem található!");
+            die("Domain nem található.");
         }
     }
 
