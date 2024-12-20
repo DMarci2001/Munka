@@ -1921,3 +1921,35 @@ and (max-width: 500px) {
 .swal2-container {
 	z-index: 20000 !important;
 }
+
+.ui-sortable tr {
+	cursor:move;
+}
+
+.sortable-col th {
+	cursor:move;
+}
+
+th[draggable] a,
+th[draggable] {cursor: move;}
+th[draggable] a:hover,
+th[draggable] a {
+	display: block; 
+	text-decoration: none; 
+	color: #333333;
+}
+.drag {
+	background-color: rgba(0, 0, 0, 0.25) !important; 
+	opacity: 0.25 !important
+}
+.dnd-drag {
+	opacity: 0.25 !important
+}
+.over {
+	background-color: rgba(0, 0, 255, 0.35) !important;
+}
+
+#recipient-list .form-check-input:checked {
+    background-color: #a00 !important;
+    border-color: #a00 !important;
+}

@@ -78,6 +78,7 @@ require_once(__DIR__ . "/library/LaborKeroService.php");
 require_once(__DIR__ . "/library/InvoiceService.php");
 require_once(__DIR__ . "/library/LabshopService.php");
 require_once(__DIR__ . "/library/ReservationService.php");
+require_once(__DIR__ . "/library/InspectionReminderService.php");
 
 require_once(__DIR__ . "/library/other/szamlaagent/examples/autoload.php");
 require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
@@ -152,6 +153,9 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminPreBookingManagementPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminMunkaNaploPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPatientDataPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminDirektMarketingPage.php");
+    
+
     
 }
 

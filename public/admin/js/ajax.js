@@ -4875,44 +4875,6 @@ function initHamburgerIcon() {
 }
 
 function uploadPatientDataExcel(upload){
-    (async () => {
-    const { value: spreadsheet } = Swal.fire({
-        title: "Melyik munkafüzettel szeretnél dolgozni?",
-        input: "select",
-        icon: "warning",
-        inputOptions:{ Fruits: {
-            apples: "Apples",
-            bananas: "Bananas",
-            grapes: "Grapes",
-            oranges: "Oranges"
-          },
-          Vegetables: {
-            potato: "Potato",
-            broccoli: "Broccoli",
-            carrot: "Carrot"
-          },
-          icecream: "Ice cream"
-        },
-        inputPlaceholder: "Munkafüzet kiválasztása",
-        confirmButtonColor: "red",
-        confirmButtonText: "Kiválaszt",
-        showCancelButton: true,
-        cancelButtonText: "Mégse",
-        inputValidator: (value) => {
-          return new Promise((resolve) => {
-            if (value) {
-              resolve();
-            } else {
-              resolve("Válassz munkafüzetet!");
-            }
-          });
-        }
-      });
-      if (spreadsheet) {
-        console.log("valami");
-      }
-    })()
-      return;
 
     let formData = new FormData();
     let excel = upload.files[0]; 
@@ -4931,42 +4893,7 @@ function uploadPatientDataExcel(upload){
         dataType:'json',
         success: function(response){
             if(response.multiplesheets.length > 0){
-                const { value: spreadsheet } = Swal.fire({
-                    title: "Melyik munkafüzettel szeretnél dolgozni?",
-                    input: "select",
-                    icon: "warning",
-                    inputOptions: response.multiplesheets,
-                    inputPlaceholder: "Munkafüzet kiválasztása",
-                    confirmButtonColor: "red",
-                    confirmButtonText: "Kiválaszt",
-                    showCancelButton: true,
-                    cancelButtonText: "Mégse",
-                    inputValidator: (value) => {
-                      return new Promise((resolve) => {
-                        if (value) {
-                          resolve();
-                        } else {
-                          resolve("Válassz munkafüzetet!");
-                        }
-                      });
-                    }
-                  });
-                  if (spreadsheet) {
-                    
-                    /*$.ajax({
-                        url:"index.php?page=patientdata",
-                        type:"POST",
-                        processData: false,
-                        cache: false,
-                        async: true,
-                        data:formData,
-                        contentType: false,
-                        dataType:'json',
-                        success: function(response){
-                        }
-                    })*/
-                  }
-                  console.log("valami");
+                checkIfMultipleSpreadSheetOccur(response.multiplesheets,formData);
                 return;
             }
             
@@ -4976,6 +4903,50 @@ function uploadPatientDataExcel(upload){
             
         }
     })
+}
+
+function checkIfMultipleSpreadSheetOccur(multiplesheets,formData){
+    (async () => {
+        const { value: spreadsheet } = await Swal.fire({
+            title: "Melyik munkafüzettel szeretnél dolgozni?",
+            input: "select",
+            icon: "warning",
+            inputOptions:multiplesheets,
+            inputPlaceholder: "Munkafüzet kiválasztása",
+            confirmButtonColor: "red",
+            confirmButtonText: "Kiválaszt",
+            showCancelButton: true,
+            cancelButtonText: "Mégse",
+            inputValidator: (value) => {
+              return new Promise((resolve) => {
+                if (value) {
+                  resolve();
+                } else {
+                  resolve("Válassz munkafüzetet!");
+                }
+              });
+            }
+          });
+          if (spreadsheet) {
+            formData.append("spreadsheet", spreadsheet);
+            $.ajax({
+                url:"index.php?page=patientdata",
+                type:"POST",
+                processData: false,
+                cache: false,
+                async: true,
+                data:formData,
+                contentType: false,
+                dataType:'json',
+                success: function(response){
+                    if(response.html.length > 0){
+                        $("#uploaded-excel-viewer").html(response.html);
+                    }
+                }
+            })
+          }
+        }
+    )()
 }
 
 function setPatientDataCol(col,index){

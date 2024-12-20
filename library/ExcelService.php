@@ -1507,9 +1507,14 @@ class ExcelService {
 
     public function loadPatientDataExcel($fileName,$sheetIndex=null):array{
         $this->read($fileName);
-        $this->sheet = $this->spreadSheet->getActiveSheet();
-        $rows = $this->sheet->toArray();
 
+        if($sheetIndex){
+            $this->sheet = $this->spreadSheet->getSheet($sheetIndex);
+        }else{
+            $this->sheet = $this->spreadSheet->getActiveSheet();
+        }
+        
+        $rows = $this->sheet->toArray();
         return $rows;
     }
 
