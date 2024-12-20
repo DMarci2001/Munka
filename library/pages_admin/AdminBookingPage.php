@@ -593,13 +593,13 @@ class AdminBookingPage extends AdminCorePage
         //die();
         //$dokirexService = new DokirexService();
         //mindent lekérdezek
-        //$q = sql_query("SELECT * from dokirex_insert_paciensek");
+        $q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés
         /*$q = sql_query("SELECT lista.* FROM dokirex_insert_paciensek lista
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
-        /*$params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2024-09-30 09:05:00"));
+        $params = array();
+        $datum = date("Y-m-d H:i:s", strtotime("2024-12-04 08:00:00"));
         $orvosid=377;
         $helyszinid=282;
         $rinterval=5;
@@ -623,8 +623,8 @@ class AdminBookingPage extends AdminCorePage
                 $helyszinid=$r["helyszinid"];
             }
             if(isset($r["rinterval"])&&!empty($r["rinterval"])){
-                //$rinterval=$r["rinterval"];
-            }*/
+                $rinterval=$r["rinterval"];
+            }
             
 
         /*echo "INSERT INTO foglalasok SET cegid={$cegId},regdatum=NOW(),datum=\"{$datum}\",rinterval={$rinterval},helyszinid={$helyszinid},szurestipusid={$szurestipusid},nev=\"{$r["nev"]}\",email=\"\",telefon=\"\",
@@ -769,7 +769,7 @@ class AdminBookingPage extends AdminCorePage
             );
             $dokirexService->insertUpdateFormElementValue($params);
             echo "Sikeres telephely rögzítés a dokirexben! ({$r["foglid"]})<br>";*/
-       // }
+        }
 
         echo "<div id='elojegyzestable'>" . $this->showElojegyzesTableNew($this->setDay) . "</div>";
         echo "<div id='elojdialog' class='eloj_dialog'><div class='eloj_dialogtop' onclick='$(\".eloj_dialog\").hide();'></div><div class='eloj_dialogcontent'></div></div>";
