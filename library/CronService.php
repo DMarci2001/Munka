@@ -90,7 +90,7 @@ class CronService {
         if ($this->interval == "1ora") {
             //óránként futó cronok
             $this->_sendReservationReportForDoctors();
-            $this->_sendReviewMails();
+            //$this->sendReviewMails();
             $this->_sendAlkExcel(); //** régi excel hívást használ, disabled
             $this->_sendAlkExpire();
             $this->suzukiNotificationCheck();
@@ -149,6 +149,38 @@ class CronService {
     }
 
     private function _tesztStuff() {
+        //$service = new NotificationService();
+        //$service->xmasCampaign2024();
+
+        $this->sendReviewMails();
+
+        /*
+
+        <?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="HUNGARIA_MED_M"
+                    MESSAGETYPE="CONSULTATION"
+                    ACTION="MOD"
+                    ROTATE_HASH="2c3e3e2db23fed868be9ac35c6cf59f5" />
+                <DOCTOR
+                    OWN_ID="1052"
+                    OUTERSYS_ID="13699" />
+                <CONSULTATION
+                    OWN_ID="34573"
+                    OUTERSYS_ID="14104892"
+                    WEEK="2"
+                    STARTDATETIME="2024-11-18 08:30:00"
+                    STOPDATETIME="2024-11-18 13:30:00" />
+            </MESSAGE>
+        */
+
+
+        //$foService = new FoglaljOrvostService();
+        //$result = $foService->deleteConsultationFix(34573, 14104892, 1052, 13699, "2024-11-18");
+        //echo $result;
+        //die("itt2");
+
         //$service = new SpektrumlabService();
         //$service->processPdfFromMessages();
 
@@ -166,19 +198,20 @@ class CronService {
         //$this->dokirexUserIdFill();
         //$this->dokirexPaciensDump();
 
+        //$docAgent = new DocAgent();
+        //$docAgent->storeLaborLeletek();
+
         //$this->scanLaborPDF();
         //$this->fillLabMessageDatas();
 
         //$this->readEmailReports();
-        //$service = new FoglaljOrvostService();
-        //$result = $service->deleteOneSpecificConsultation();
-        //print_r($result);
 
         //$this->refreshWorklist();
         //$this->sendManagerStatusEmail();
 
         //$service = new SynlabService();
         //$service->pdfTeszt();
+
 
         //$laborKeroService = new LaborKeroService();
         //$laborKeroService->storeLaborKeroFromLabShopData();
@@ -196,9 +229,9 @@ class CronService {
 
         //echo $result."\n";
 
-        $this->getServerData();
+        //$this->getServerData();
 
-        echo "teszt\n";
+        echo "teszt2\n";
         die();
     }
 
@@ -754,15 +787,6 @@ class CronService {
         }
     }
 
-    private function _sendReviewMails() {
-        $service = new NotificationService();
-        //érkeztetett foglalásokra elégedettségi form kiküldése
-        $res = sql_query("SELECT * FROM foglalasok WHERE eljott=1 AND eljottmail=0 AND datum>DATE_SUB(NOW(), INTERVAL 2 DAY) AND datum<NOW() AND email<>'' and externalid=''");
-        while ($foglalasData=sql_fetch_array($res)) {
-            $service->sendEljottMail($foglalasData);
-        }
-    }
-
     private function _sendReservationReportForDoctors() {
         //sms jelentés a másnapra összegyűlt foglalásokról az orvosoknak 19 órakor
         if (date("G")==19) {
@@ -1003,5 +1027,17 @@ class CronService {
         //echo "serverdata{$result}";
     }
 
+    private function sendReviewMails():void {
+        //érkeztetett foglalásokra elégedettségi form kiküldése
+
+        $service = new NotificationService();
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $reservations = sql_query("SELECT * FROM foglalasok WHERE eljott=1 and helyszinid=? AND datum>DATE_SUB(NOW(), INTERVAL 20 DAY) AND datum<DATE_SUB(NOW(), INTERVAL 1 DAY) AND email<>'' limit 100", [Booking_Constants::DEFAULT_PLACE_IDS[0]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($reservations as $reservation) {
+                $service->sendReviewMail($reservation);
+            }
+        }
+
+    }
 
 }

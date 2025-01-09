@@ -1059,23 +1059,31 @@ END:VCALENDAR";
         $mail->Send();
     }
 
-    public function sendEljottMail($foglalasData)
-    {
-        $mail = self::getDefaultMailer();
-        //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
-        //$mail->AddAddress("jns@jns.hu");
-
-        if ($emailData = sql_fetch_array(sql_query("select * from ertekeles_formok where (instr(rule_cegids,'|{$foglalasData["cegid"]}|') or rule_cegids='all') and rule_mail=1 and rule_aftereljott=1"))) {
-            $mailSzoveg = $emailData["mailszoveg_{$foglalasData["rlang"]}"];
+    public function sendReviewMail($reservation, $force = false) {
+        if ($emailData = sql_fetch_array(sql_query("select * from ertekeles_formok where (instr(rule_cegids,'|{$reservation["cegid"]}|') or rule_cegids='all') and rule_mail=1 and rule_aftereljott=1 ORDER BY id DESC LIMIT 1"))) {
+            $mailSzoveg = $emailData["mailszoveg_{$reservation["rlang"]}"];
             if ($mailSzoveg == "") $mailSzoveg = $emailData["mailszoveg_hu"];
-            $mailSubject = $emailData["megnev_{$foglalasData["rlang"]}"];
+            $mailSubject = $emailData["megnev_{$reservation["rlang"]}"];
             if ($mailSubject == "") $mailSubject = $emailData["megnev_hu"];
-            if ($mailSzoveg != "" && $mailSubject != "") {
-                $mailSzoveg = str_replace("#nev#", $foglalasData["nev"], $mailSzoveg);
-                $mail->Subject = $mailSubject;
-                $mail->Body = $mailSzoveg;
-                //$mail->Send();
-                sql_query("update foglalasok set eljottmail=1 where id=?", array($foglalasData["id"]));
+
+            if ($mailSzoveg != "" && $mailSubject != "" && filter_var($reservation["email"], FILTER_VALIDATE_EMAIL)) {
+                //aki kapott 30 napon belül, az ne kapjon újra
+                if ($force || !sql_query("select id from notifications where tipus=? and destination=? and datum>DATE_SUB(NOW(), INTERVAL 30 DAY)", ["reviewoption", $reservation["email"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $mail = self::getDefaultMailer();
+                    //$mail->AddAddress($foglalasData["email"]); //ne élesítsd még
+                    $mail->AddAddress("jnsmobil@gmail.com");
+
+                    $mailSzoveg = str_replace("#nev#", $reservation["nev"], $mailSzoveg);
+                    $mailSzoveg = str_replace("#reviewlink", "https://review.hungariamed.hu/index.php?eform={$emailData["kod"]}&kerdes", $mailSzoveg);
+                    $mailSzoveg = str_replace("#cegnev#", Booking_Constants::COMPANY_NAME, $mailSzoveg);
+                    $mail->Subject = $mailSubject;
+                    $mail->Body = $this->setMailTemplate($mailSzoveg, $mailSubject);
+                    $mail->Send();
+
+                    echo $reservation["datum"] . " " . $reservation["nev"] . "{$reservation["email"]}\n";
+                    $this->createNotificationRecord("reviewoption", $reservation["id"], $reservation["email"], $mailSubject, $mailSzoveg);
+                    die("teszt force exit\n");
+                }
             }
         }
     }
