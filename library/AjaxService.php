@@ -419,6 +419,31 @@ class AjaxService {
             die;
         }
 
+        if (isset($_GET["setsmtorzsszam"])) {
+            $taj = trim($_GET["setsmtorzsszam"]);
+            $error = "";
+
+            if (!in_array($taj, CompanyService::$suzukiManagerTajSzamok)) {
+                $error = "Helytelen TAJ szám!";
+            }
+
+            if (empty($taj)) {
+                $error = "Kérjük adja meg a TAJ számát!";
+            }
+
+            if (empty($error)) {
+                $_SESSION["suzukimanagertorzsszam"] = $taj;
+            }
+
+            Utils::jsonOut(["error" => $error]);
+        }
+
+        if (isset($_GET["clearsmtorzsszam"])) {
+            unset($_SESSION["suzukimanagertorzsszam"]);
+            header("location:index.php?cleared");
+            die;
+        }
+
     }
 
 

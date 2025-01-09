@@ -14,6 +14,7 @@ $(document).ready(function () {
     initSubReservationButtons();
     initBmeButtons();
     initSelect2();
+    initSMTorzsszamButton();
 });
 
 
@@ -1577,3 +1578,19 @@ function selectVizsgOk(){
 }
 
 
+function initSMTorzsszamButton() {
+    $("#smtorzsszambutton").click(function() {
+        let torzsszam = $("#suzukimanagertorzsszam").val();
+        $.ajax({
+            type: 'POST',
+            url: 'index.php?setsmtorzsszam=' + torzsszam,
+            success: function (result) {
+                if (result.error !== "") {
+                    myAlert(result.error);
+                    return;
+                }
+                window.location.href = "index.php";
+            }
+        });
+    });
+}

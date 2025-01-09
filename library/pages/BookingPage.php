@@ -744,16 +744,16 @@ class BookingPage extends CorePage
             }
 
             //Ha Suzukis, töltse ki az összes adatát a rendszer
-            if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
-                if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM suzuki_white_list WHERE taj=?",array($_POST["taj"])))){ 
-                    $this->errors[] = "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre, kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
-                }
-            }
+            //if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+            //    if(!$suzukiData=sql_fetch_array(sql_query("SELECT * FROM suzuki_white_list WHERE taj=?",array($_POST["taj"])))){
+            //        $this->errors[] = "Sajnálatos módon Ön nem jogosult a Suzuki Menedzser szűrésre, kérjük keresse meg a Magyar Suzuki Zrt. HR Osztályát.";
+            //    }
+            //}
 
 
             if (empty($this->errors)) {
 
-                if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()){
+                if ((CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) && isset($suzukiData)) {
                     $_POST["nev"]       = $suzukiData["nev"];
                     $_POST["szuldatum"] = $suzukiData["szuldatum"];
                     $_POST["szulhely"]  = $suzukiData["szulhely"];
@@ -1191,11 +1191,30 @@ class BookingPage extends CorePage
 
         $firstColumnWidth = 130;
 
-        //if (session_id() == "qk3om7q88ai3550oqhc631jceb") {
-            echo "<table cellpadding='3' cellspacing='0' style='width:100%;table-layout: fixed;'>";
-        //} else {
-        //    echo "<table cellpadding='3' cellspacing='0' style='width:100%;'>";
-        //}
+        $hiddenTable = "";
+
+        if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
+
+            if (isset($_SESSION["suzukimanagertorzsszam"])) {
+                echo "<div style='padding:20px;text-align: center;background:#f0f0f0;margin-bottom: 20px;'>";
+                echo "Ön a <strong>{$_SESSION["suzukimanagertorzsszam"]}</strong> TAJ foglal időpontot!<br/><a href='index.php?clearsmtorzsszam'>Nem ez a TAJ számom</a>";
+                //echo "<input type='hidden' name='torzsszam' value='{$_SESSION["suzukimanagertorzsszam"]}' />";
+                echo "</div>";
+                if (empty($_POST["taj"])) {
+                    $_POST["taj"] = $_SESSION["suzukimanagertorzsszam"];
+                }
+            } else {
+                echo "<div style='padding:20px;text-align: center;'>";
+                echo "<div>Kérjük az időpont foglalás megkezdéséhez adja meg a TAJ számát:</div>";
+                echo "<div style='margin-top: 10px;'><input type='text' id='suzukimanagertorzsszam' name='suzukimanagertorzsszam' value='' placeholder='TAJ szám' /></div>";
+                echo "<div style='margin-top: 10px;'><a id='smtorzsszambutton' href='#' class='newbutton' onclick='smTorzsszamSubmit();return false;'>Tovább</a></div>";
+                echo "</div>";
+                $hiddenTable = "display:none;";
+            }
+
+        }
+
+        echo "<table cellpadding='3' cellspacing='0' style='width:100%;table-layout: fixed;{$hiddenTable}'>";
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 

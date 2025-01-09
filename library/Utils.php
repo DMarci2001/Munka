@@ -660,7 +660,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
-                $extraHTML = "<tr class='datarow'><td>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' {$customJs} name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' {$customJs} name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
+                $extraHTML = "<tr class='datarow'><td style='width:130px;'>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' {$customJs} name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' {$customJs} name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
                 //if ($_SESSION['helyszindata']['id'] == 46) {
