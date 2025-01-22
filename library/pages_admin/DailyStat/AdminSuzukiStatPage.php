@@ -24,7 +24,7 @@ class AdminSuzukiStatPage extends AdminCorePage
         $this->startDate = date("Y-01-01", strtotime("this year"));
         $this->endDate = date("Y-m-d", strtotime("now + 3 months"));
 
-        if (!$this->adminUser->suzukiStatAccess() || !$this->adminUser->statAccess()) {
+        if (!$this->adminUser->suzukiStatAccess()) {
             echo "Nincs jogosultságod!";
             return;
         }
