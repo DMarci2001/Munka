@@ -236,6 +236,7 @@ class AdminSuzukiStatPage extends AdminCorePage
             //$this->debug_array($mixed);
         }
         //$this->debug_array($mixed);
+
         return $mixed;
     }
 
@@ -426,32 +427,17 @@ class AdminSuzukiStatPage extends AdminCorePage
      */
     private function show_suzuki_stat_data_table($data)
     {
-        $html = "";
-
+        $html = $tbody = "";
+        $overAllAvailableTimes = 0;
         $lang = new Lang();
         $webText = $lang->webText;
-        $html .= "<div class='container-xxl mx-3'>";
-        $html .= "<div class=\"h6\">Összes foglalás " . date("Y.m.d", strtotime($this->startDate)) . " óta: <strong>" . count($this->bookings) . "db</strong></div>";
-        $html .= "<div class=\"h6\">Vizsgálaton résztvettek száma " . date("Y.m.d", strtotime($this->startDate)) . "  óta: <strong>" . count(array_keys(array_column($this->bookings, "eljott"), 1)) . "db</strong></div>";
-        $html .= "<table class=\"table table-striped\">";
-        $html .= "   <thead>";
-        $html .= "       <tr class=\"h5\">";
-        //$html .= "       <th class=\"text-center\" scope=\"col\">#</th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-regular fa-calendar-days'></i></th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-plus'></i></th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-minus'></i></th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-solid fa-triangle-exclamation'></i></th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-solid fa-mars'></i></th>";
-        $html .= "       <th class=\"text-center\" scope=\"col\"><i class='fa-solid fa-venus'></i></th>";
-        $html .= "       </tr>";
-        $html .= "   </thead>";
-        $html .= "   <tbody>";
+
         foreach ($data as $key => $value) {
             if(strtotime($value["booking_date"])<strtotime("today")){
                 continue;
             }
-            $plus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0]];
-            $minus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0]];
+            $plus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0];
+            $minus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0];
             $male = $female = 0;
             $noTimeLeft = "";
             foreach ($value["params"] as $beo) {
@@ -468,17 +454,25 @@ class AdminSuzukiStatPage extends AdminCorePage
 
                         $minus45["capacity"] = ($minus45["capacity"] + $this->calc_capacity($beo));
                         $minus45["times"] = $this->get_bookedTimes($value["booking_date"], $beo, $minus45["times"]);
+                        $minus45["required"] = ($minus45["capacity"]-$minus45["times"]["overall"]);
                     }
                     if (in_array($type, [220, 221]) && $plus == 0) {
                         $plus++;
                         //$plus45["bottlenecks"] = $this->search_for_bottleneck([220, 221], $value["booking_date"], $beo);
                         $plus45["capacity"] = ($plus45["capacity"] + $this->calc_capacity($beo));
                         $plus45["times"] = $this->get_bookedTimes($value["booking_date"], $beo, $plus45["times"]);
+                        $plus45["required"] = ($plus45["capacity"]-$plus45["times"]["overall"]);
                     }
                 }
             }
-
+            $availableTimes = "";
+            $required = ($plus45["required"]+$minus45["required"]);
             $bottlenecks = $this->search_for_bottleneck([219, 220, 221, 222], $value["booking_date"]);
+            $lowestExamNumber = min($bottlenecks);
+            $overAllAvailableTimes = ($overAllAvailableTimes+$lowestExamNumber);
+            if($required>$lowestExamNumber && $lowestExamNumber!=0){
+                $availableTimes = $lowestExamNumber;
+            }
             
             $issues = array_keys($bottlenecks, 0);
             /*if($value["booking_date"]=="2025-01-24"){
@@ -487,6 +481,7 @@ class AdminSuzukiStatPage extends AdminCorePage
                 echo "elfogyott vizsgálatok:<br>";
                 $this->debug_array($issues);
             }*/
+
            
             //$this->debug_array($this->icons);
             foreach ($issues as $examination) {
@@ -501,15 +496,16 @@ class AdminSuzukiStatPage extends AdminCorePage
             $female = ($minus45["times"]["female"] + $plus45["times"]["female"]);
 
 
-            $html .= "<tr class=\"h6\">";
+            $tbody .= "<tr class=\"h6\">";
             //$html .= "<th class=\"text-center\" scope=\"row\">" . ($key + 1) . ".</th>";
-            $html .= "<td class=\"text-center\">" . str_replace("-", ".", $value["booking_date"]) . ", " . ucfirst($webText["hetnap"][date("N", strtotime($value["booking_date"]))]) . "</td>";
-            $html .= "<td class=\"text-center\">{$plus45["times"]["overall"]}/{$plus45["capacity"]}</td>";
-            $html .= "<td class=\"text-center\">{$minus45["times"]["overall"]}/{$minus45["capacity"]}</td>";
-            $html .= "<td class=\"text-center\">{$noTimeLeft}</td>";
-            $html .= "<td class=\"text-center\">" . ($male > 0 ? $male . "db" : " - ") . "</td>";
-            $html .= "<td class=\"text-center\">" . ($female > 0 ? $female . "db" : " - ") . "</td>";
-            $html .= "</tr>";
+            $tbody .= "<td class=\"text-center\">" . str_replace("-", ".", $value["booking_date"]) . ", " . ucfirst($webText["hetnap"][date("N", strtotime($value["booking_date"]))]) . "</td>";
+            $tbody .= "<td class=\"text-center\">{$plus45["times"]["overall"]}/{$plus45["capacity"]}</td>";
+            $tbody .= "<td class=\"text-center\">{$minus45["times"]["overall"]}/{$minus45["capacity"]}</td>";
+            $tbody .= "<td class=\"text-center\">{$availableTimes}</td>";
+            $tbody .= "<td class=\"text-center\">{$noTimeLeft}</td>";
+            $tbody .= "<td class=\"text-center\">" . ($male > 0 ? $male . "db" : " - ") . "</td>";
+            $tbody .= "<td class=\"text-center\">" . ($female > 0 ? $female . "db" : " - ") . "</td>";
+            $tbody .= "</tr>";
             if ($value["booking_date"] == "2025-01-22") {
                 //break;
                 //echo $value["booking_date"]."<br>";
@@ -517,6 +513,26 @@ class AdminSuzukiStatPage extends AdminCorePage
                 //return;
             }
         }
+
+        $html .= "<div class='container-xxl mx-3'>";
+        $html .= "<div class=\"h6\">Összes foglalás " . date("Y.m.d", strtotime($this->startDate)) . " óta: <strong>" . count($this->bookings) . "db</strong></div>";
+        $html .= "<div class=\"h6\">Vizsgálaton résztvettek száma " . date("Y.m.d", strtotime($this->startDate)) . "  óta: <strong>" . count(array_keys(array_column($this->bookings, "eljott"), 1)) . "db</strong></div>";
+        $html .= "<div class=\"h6\">Elérhető időpontok: <strong>{$overAllAvailableTimes}</strong></div>";
+        $html .= "<table class=\"table table-striped\">";
+        $html .= "   <thead>";
+        $html .= "       <tr class=\"h5\">";
+        //$html .= "       <th class=\"text-center\" scope=\"col\">#</th>";
+        $html .= "       <th class=\"text-center\" title='Rendelési dátum' scope=\"col\"><i class='fa-regular fa-calendar-days'></i></th>";
+        $html .= "       <th class=\"text-center\" title='45 év feletti csomag' scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-plus'></i></th>";
+        $html .= "       <th class=\"text-center\" title='45 év alatti csomag' scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-minus'></i></th>";
+        $html .= "       <th class=\"text-center\" title='Elérhető időpontok' scope=\"col\"><i class='fa-solid fa-circle-check'></i></th>";
+        $html .= "       <th class=\"text-center\" title='Problémás vizsgálatok' scope=\"col\"><i class='fa-solid fa-triangle-exclamation'></i></th>";
+        $html .= "       <th class=\"text-center\" title='Férfi foglalások' scope=\"col\"><i class='fa-solid fa-mars'></i></th>";
+        $html .= "       <th class=\"text-center\" title='Női foglalások' scope=\"col\"><i class='fa-solid fa-venus'></i></th>";
+        $html .= "       </tr>";
+        $html .= "   </thead>";
+        $html .= "   <tbody>";
+        $html .=        $tbody;
         $html .= "   </tbody>";
         $html .= "</table>";
         $html .= "</div>";
