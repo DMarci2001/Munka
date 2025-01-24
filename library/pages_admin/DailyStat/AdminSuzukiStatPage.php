@@ -190,14 +190,19 @@ class AdminSuzukiStatPage extends AdminCorePage
                 
                 //A beosztásokból kinézem az orvosok id-jait
                 $doctors = array_unique(array_column($schedule_properties, "orvosid"));
-                if($date=="2025-01-24" && $examination==10){
-                    //echo "Orvosok:<br>";
-                    //$this->debug_array($doctors);
-                }
+                /*if($date=="2025-02-10" && $examination==14){
+                    echo "Orvosok:<br>";
+                    $this->debug_array($doctors);
+                }*/
                 foreach ($doctors as $doctor) {
                     //Megkeresem az orvosokhoz tartozó beosztásokat
+                    $onVacation = sql_query("SELECT * FROM szabadsag WHERE oid=? AND datumtol=?",[$doctor,$date])->fetch(PDO::FETCH_ASSOC);
+                    if($onVacation){
+                        continue;
+                    }
                     $doctor_schedules = array_keys(array_column($schedule_properties, "orvosid"), $doctor);
                     $capacity = 0;
+
                     //Kikalkulálom a beosztások adatai alapján a lehetséges időpontok számát.
                     foreach ($doctor_schedules as $schedule) {
                         $capacity = ($capacity + $this->calc_capacity($schedule_properties[$schedule]));
@@ -205,36 +210,43 @@ class AdminSuzukiStatPage extends AdminCorePage
                     $schedules[$examination]["availability"][$doctor]["capacity"] = $capacity;
                     //Kikeresem az orvoshoz tartozó foglalásokat és letárolom.
                     $bookedTimes = array_keys(array_column($bookings, "orvosassigned"), $doctor);
-                    if($date=="2025-01-24" && $examination==10){
-                        //echo "Lefoglalt időpontok: {$examination} - {$doctor}<br>";
+                    /*if($date=="2025-02-10" && $examination==14){
+                        echo "Lefoglalt időpontok: {$examination} - {$doctor} (max {$capacity})<br>";
                         foreach($bookedTimes as $key){
-                            //$this->debug_array($bookings[$key]);
+                            $this->debug_array($bookings[$key]);
                         }
-                    }
+                    }*/
                     $schedules[$examination]["availability"][$doctor]["booked"] = count($bookedTimes);
                     $schedules[$examination]["availability"][$doctor]["free"] = ($capacity - count($bookedTimes));
                     $schedules[$examination]["availability"]["free"] = ($schedules[$examination]["availability"]["free"] + ($capacity - count($bookedTimes)));
-                    if($date=="2025-01-24" && $examination==10){
-                        //echo "Vizsgálat: {$examination} - {$doctor}<br>";
-                        //$this->debug_array($schedules[$examination]);
-                    }
+                    /*if($date=="2025-02-10" && $examination==14){
+                        echo "Vizsgálat: {$examination} - {$doctor}<br>";
+                        $this->debug_array($schedules[$examination]);
+                    }*/
                     $returnArray[$package]["availability"][$examination]["free"] = $schedules[$examination]["availability"]["free"];
-                    if (!isset($mixed[$examination])) {
-                        if($returnArray[$package]["availability"][$examination]["free"]<0){
-                            $mixed[$examination] = 0;
-                        }else{
-                            $mixed[$examination] = $returnArray[$package]["availability"][$examination]["free"];
-                        }
-                        
+
+                     if($returnArray[$package]["availability"][$examination]["free"]<0){
+                        $mixed[$examination] = 0;
+                    }else{
+                        $mixed[$examination] = $returnArray[$package]["availability"][$examination]["free"];
                     }
+                }
+                if (!isset($mixed[$examination])) {
+                    //echo "vizsgálat: {$examination}<br>";
+                    //echo $returnArray[$package]["availability"][$examination]["free"]."<br>";
+                    /*if($returnArray[$package]["availability"][$examination]["free"]<0){
+                        $mixed[$examination] = 0;
+                    }else{
+                        $mixed[$examination] = $returnArray[$package]["availability"][$examination]["free"];
+                    }*/
                 }
                 
                 //$this->debug_array($schedules[$examination]);
             }
         }
-        if($date=="2025-01-24" && $examination==10){
-            //$this->debug_array($mixed);
-        }
+        /*if($date=="2025-02-10"){
+            $this->debug_array($mixed);
+        }*/
         //$this->debug_array($mixed);
 
         return $mixed;
@@ -465,13 +477,16 @@ class AdminSuzukiStatPage extends AdminCorePage
                     }
                 }
             }
-            $availableTimes = "";
+            $availableTimes = $lowestExam = "";
             $required = ($plus45["required"]+$minus45["required"]);
             $bottlenecks = $this->search_for_bottleneck([219, 220, 221, 222], $value["booking_date"]);
             $lowestExamNumber = min($bottlenecks);
             $overAllAvailableTimes = ($overAllAvailableTimes+$lowestExamNumber);
             if($required>$lowestExamNumber && $lowestExamNumber!=0){
                 $availableTimes = $lowestExamNumber;
+                $lowestExam = array_search($lowestExamNumber,$bottlenecks);
+                $lowestExam = array_search($lowestExam,array_column($this->icons,"id"));
+                $lowestExam = $this->icons[$lowestExam]["name"];
             }
             
             $issues = array_keys($bottlenecks, 0);
@@ -501,7 +516,7 @@ class AdminSuzukiStatPage extends AdminCorePage
             $tbody .= "<td class=\"text-center\">" . str_replace("-", ".", $value["booking_date"]) . ", " . ucfirst($webText["hetnap"][date("N", strtotime($value["booking_date"]))]) . "</td>";
             $tbody .= "<td class=\"text-center\">{$plus45["times"]["overall"]}/{$plus45["capacity"]}</td>";
             $tbody .= "<td class=\"text-center\">{$minus45["times"]["overall"]}/{$minus45["capacity"]}</td>";
-            $tbody .= "<td class=\"text-center\">{$availableTimes}</td>";
+            $tbody .= "<td class=\"text-center\" title='{$lowestExam}'>{$availableTimes}</td>";
             $tbody .= "<td class=\"text-center\">{$noTimeLeft}</td>";
             $tbody .= "<td class=\"text-center\">" . ($male > 0 ? $male . "db" : " - ") . "</td>";
             $tbody .= "<td class=\"text-center\">" . ($female > 0 ? $female . "db" : " - ") . "</td>";
