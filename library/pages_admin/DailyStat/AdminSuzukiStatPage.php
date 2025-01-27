@@ -207,12 +207,12 @@ class AdminSuzukiStatPage extends AdminCorePage
                     $schedules[$examination]["availability"][$doctor]["capacity"] = $capacity;
                     //Kikeresem az orvoshoz tartozó foglalásokat és letárolom.
                     $bookedTimes = array_keys(array_column($bookings, "orvosassigned"), $doctor);
-                    if($date=="2025-01-31" && $examination==17){
-                        echo "Lefoglalt időpontok: {$examination} - {$doctor} (max {$capacity})<br>";
+                    /*if($date=="2025-01-31" && $examination==17){
+                        //echo "Lefoglalt időpontok: {$examination} - {$doctor} (max {$capacity})<br>";
                         foreach($bookedTimes as $key){
-                            $this->debug_array($bookings[$key]);
+                            //$this->debug_array($bookings[$key]);
                         }
-                    }
+                    }*/
                     $onVacation = sql_query("SELECT * FROM szabadsag WHERE oid=? AND datumtol=?",[$doctor,$date])->fetch(PDO::FETCH_ASSOC);
                     if($onVacation){
                        $bookedTimes = [];
@@ -221,10 +221,10 @@ class AdminSuzukiStatPage extends AdminCorePage
                     $schedules[$examination]["availability"][$doctor]["booked"] = count($bookedTimes);
                     $schedules[$examination]["availability"][$doctor]["free"] = ($capacity - count($bookedTimes));
                     $schedules[$examination]["availability"]["free"] = ($schedules[$examination]["availability"]["free"] + ($capacity - count($bookedTimes)));
-                    if($date=="2025-01-31" && $examination==17){
+                    /*if($date=="2025-01-31" && $examination==17){
                         echo "Vizsgálat: {$examination} - {$doctor}<br>";
                         $this->debug_array($schedules[$examination]);
-                    }
+                    }*/
                     $returnArray[$package]["availability"][$examination]["free"] = $schedules[$examination]["availability"]["free"];
 
                      if($returnArray[$package]["availability"][$examination]["free"]<0){
@@ -246,9 +246,9 @@ class AdminSuzukiStatPage extends AdminCorePage
                 //$this->debug_array($schedules[$examination]);
             }
         }
-        if($date=="2025-01-31"){
+        /*if($date=="2025-01-31"){
             $this->debug_array($mixed);
-        }
+        }*/
         //$this->debug_array($mixed);
 
         return $mixed;
