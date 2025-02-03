@@ -263,7 +263,7 @@ class AdminSuzukiStatPage extends AdminCorePage
                 }
             }
         }
-        /*if($date=="2025-03-07"){
+        /*if($date=="2025-02-26"){
             echo "Mixed:<br>";
             $this->debug_array(array_column($types,"szurestipusid"));
             $this->debug_array($mixed);
@@ -516,10 +516,13 @@ class AdminSuzukiStatPage extends AdminCorePage
                 }
             }
 
+
             $minus45["lowestExamNumber"] = min($minus45["bottlenecks"]);
             $minus45["lowestExam"] = array_search($minus45["lowestExamNumber"],$minus45["bottlenecks"]);
             $minus45["lowestExam"] = array_search($minus45["lowestExam"],array_column($this->icons,"id"));
+            
             $minus45["lowestExam"] = $this->icons[$minus45["lowestExam"]]["name"];
+            
             if($minus45["lowestExamNumber"]!=0){
                 //$minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
                 if($minus45["lowestExamNumber"]<=$minus45["required"]){
@@ -542,6 +545,14 @@ class AdminSuzukiStatPage extends AdminCorePage
             $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
             $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
             $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+
+            if($plus45["required"]>=$plus45["lowestExamNumber"] && $plus45["lowestExamNumber"]!=0){
+                $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+                $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
+                $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+            }
+
             if($plus45["lowestExamNumber"]!=0){
                 if($plus45["lowestExamNumber"]<=$plus45["required"]){
                     $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
@@ -552,18 +563,14 @@ class AdminSuzukiStatPage extends AdminCorePage
                 
             }
 
-            if($plus45["required"]>=$plus45["lowestExamNumber"] && $plus45["lowestExamNumber"]!=0){
-                $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
-                $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
-                $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
-                $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
-            }
             $plus45overAllAvailableTimes = ($plus45overAllAvailableTimes+$plus45["lowestExamNumber"]);
             if(date("N",strtotime($value["booking_date"]))!=5){
                 $availableTimesForMenPlus = ($availableTimesForMenPlus+$plus45["lowestExamNumber"]);
             }
 
-    
+            if($value["booking_date"]=="2025-02-26"){
+                echo $plus45["lowestExam"]."<br>";
+            }
 
             /*if($plus45["lowestExamNumber"]!=0){
                 $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
