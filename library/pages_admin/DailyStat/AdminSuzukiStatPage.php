@@ -154,6 +154,12 @@ class AdminSuzukiStatPage extends AdminCorePage
     private function search_for_bottleneck($packages, $date)
     {
         $dayCode = date("N", strtotime($date));
+        $weekCode = date("W",strtotime($date));
+        if ($weekCode % 2 == 0){
+            $weekCode = 2;
+        }else{
+            $weekCode = 1;
+        }
         $returnArray = $mixed = [];
         foreach ($packages as $package) {
             $schedules = [];
@@ -177,8 +183,8 @@ class AdminSuzukiStatPage extends AdminCorePage
                 $schedules[$value["szurestipusid"]] = sql_query(
                     "SELECT id,tol as startTime,ig as endTime,binterval,orvosid,beonap,nap 
                      FROM orvos_beosztas_new 
-                     WHERE (nap=? OR beonap=?) AND INSTR(tipusok,?) AND aktiv=1 AND helyszinid=1 AND INSTR(beocegek,?)",
-                    [$dayCode, $date, "|{$value["szurestipusid"]}|", "|892|"]
+                     WHERE (nap=? OR beonap=?) AND INSTR(tipusok,?) AND aktiv=1 AND helyszinid=1 AND (INSTR(beocegek,?) OR INSTR(beocegek,?)) AND (validto='' OR validto>=?) AND (hetek='' OR hetek={$weekCode})",
+                    [$dayCode, $date, "|{$value["szurestipusid"]}|","|92|", "|892|",$date]
                 )->fetchAll(PDO::FETCH_ASSOC);
             }
 
@@ -207,10 +213,10 @@ class AdminSuzukiStatPage extends AdminCorePage
                     $schedules[$examination]["availability"][$doctor]["capacity"] = $capacity;
                     //Kikeresem az orvoshoz tartozó foglalásokat és letárolom.
                     $bookedTimes = array_keys(array_column($bookings, "orvosassigned"), $doctor);
-                    /*if($date=="2025-01-31" && $examination==17){
-                        //echo "Lefoglalt időpontok: {$examination} - {$doctor} (max {$capacity})<br>";
+                    /*if($date=="2025-03-07" && $examination==14){
+                        echo "Lefoglalt időpontok: {$examination} - {$doctor} (max {$capacity})<br>";
                         foreach($bookedTimes as $key){
-                            //$this->debug_array($bookings[$key]);
+                            $this->debug_array($bookings[$key]);
                         }
                     }*/
                     $onVacation = sql_query("SELECT * FROM szabadsag WHERE oid=? AND datumtol=?",[$doctor,$date])->fetch(PDO::FETCH_ASSOC);
@@ -221,7 +227,7 @@ class AdminSuzukiStatPage extends AdminCorePage
                     $schedules[$examination]["availability"][$doctor]["booked"] = count($bookedTimes);
                     $schedules[$examination]["availability"][$doctor]["free"] = ($capacity - count($bookedTimes));
                     $schedules[$examination]["availability"]["free"] = ($schedules[$examination]["availability"]["free"] + ($capacity - count($bookedTimes)));
-                    /*if($date=="2025-01-31" && $examination==17){
+                    /*if($date=="2025-03-07" && $examination==14){
                         echo "Vizsgálat: {$examination} - {$doctor}<br>";
                         $this->debug_array($schedules[$examination]);
                     }*/
@@ -245,10 +251,32 @@ class AdminSuzukiStatPage extends AdminCorePage
                 
                 //$this->debug_array($schedules[$examination]);
             }
+            /*if($date=="2025-03-07"){
+            $this->debug_array($mixed);
+            }*/
+            foreach($types as $key=>$value){
+                if(!isset($mixed[$value["szurestipusid"]])){
+                    /*if($date=="2025-03-07"){
+                    echo "A {$value["szurestipusid"]} nem létezik!<br>";
+                    }*/
+                    $mixed[$value["szurestipusid"]] = 0;
+                }
+            }
         }
-        /*if($date=="2025-01-31"){
+        /*if($date=="2025-03-07"){
+            echo "Mixed:<br>";
+            $this->debug_array(array_column($types,"szurestipusid"));
             $this->debug_array($mixed);
         }*/
+        //Hozzá kell adnom, azokat a vizsgálatokat, amikre beosztást s találtam O.o...
+        
+        /*foreach($types as $key=>$value){
+            $exists = array_search($value["szurestipusid"],$mixed);
+            if($exists===false){
+                $mixed[$value["szurestipusid"]] = 0;
+            }
+        }*/
+        
         //$this->debug_array($mixed);
 
         return $mixed;
@@ -442,7 +470,7 @@ class AdminSuzukiStatPage extends AdminCorePage
     private function show_suzuki_stat_data_table($data)
     {
         $html = $tbody = "";
-        $overAllAvailableTimes = 0;
+        $overAllAvailableTimes = $plus45overAllAvailableTimes = $minus45overAllAvailableTimes = $availableTimesForMenPlus = 0;
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -450,8 +478,8 @@ class AdminSuzukiStatPage extends AdminCorePage
             if(strtotime($value["booking_date"])<strtotime("today")){
                 continue;
             }
-            $plus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0];
-            $minus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0];
+            $plus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0,"availableTimes"=>"","lowestExamNumber"=>0,"lowestExam"=>""];
+            $minus45 = ["capacity" => 0, "times" => ["overall" => 0, "male" => 0, "female" => 0],"required"=>0,"availableTimes"=>"","lowestExamNumber"=>0,"lowestExam"=>""];
             $male = $female = 0;
             $noTimeLeft = "";
             foreach ($value["params"] as $beo) {
@@ -460,15 +488,11 @@ class AdminSuzukiStatPage extends AdminCorePage
                     //echo "beosztás: ".$type." - {$value["booking_date"]}<br>";
                     if (in_array($type, [219, 222]) && $minus == 0) {
                         $minus++;
-                        if ($value["booking_date"] == "2025-01-22") {
-                            //echo $value["booking_date"]."<br>";
-                            //$this->search_for_bottleneck([219, 222], $value["booking_date"], $beo);
-                            //return;
-                        }
-
+                    
                         $minus45["capacity"] = ($minus45["capacity"] + $this->calc_capacity($beo));
                         $minus45["times"] = $this->get_bookedTimes($value["booking_date"], $beo, $minus45["times"]);
                         $minus45["required"] = ($minus45["capacity"]-$minus45["times"]["overall"]);
+                        
                     }
                     if (in_array($type, [220, 221]) && $plus == 0) {
                         $plus++;
@@ -479,9 +503,107 @@ class AdminSuzukiStatPage extends AdminCorePage
                     }
                 }
             }
+            $minus45["bottlenecks"] = $this->search_for_bottleneck([219, 222], $value["booking_date"]);
+            $plus45["bottlenecks"] = $this->search_for_bottleneck([220, 221], $value["booking_date"]);
+            if(date("N",strtotime($value["booking_date"]))==5){
+                unset($minus45["bottlenecks"][12]);
+                unset($plus45["bottlenecks"][12]);
+            }
+            $bottlenecks = $minus45["bottlenecks"];
+            foreach($plus45["bottlenecks"] as $index=>$param){
+                if(!isset($bottlenecks[$index])){
+                    $bottlenecks[$index] = $param;
+                }
+            }
+
+            $minus45["lowestExamNumber"] = min($minus45["bottlenecks"]);
+            $minus45["lowestExam"] = array_search($minus45["lowestExamNumber"],$minus45["bottlenecks"]);
+            $minus45["lowestExam"] = array_search($minus45["lowestExam"],array_column($this->icons,"id"));
+            $minus45["lowestExam"] = $this->icons[$minus45["lowestExam"]]["name"];
+            if($minus45["lowestExamNumber"]!=0){
+                //$minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
+                if($minus45["lowestExamNumber"]<=$minus45["required"]){
+                    $minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
+                }else{
+                    $minus45["lowestExamNumber"] = $minus45["required"];
+                    $minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
+                }
+            }
+            //$minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
+            if($minus45["required"]>=$minus45["lowestExamNumber"]  && $minus45["lowestExamNumber"]!=0){
+                $minus45["availableTimes"] = "(".$minus45["lowestExamNumber"].")";
+                $minus45["lowestExam"] = array_search($minus45["lowestExamNumber"],$minus45["bottlenecks"]);
+                $minus45["lowestExam"] = array_search($minus45["lowestExam"],array_column($this->icons,"id"));
+                $minus45["lowestExam"] = $this->icons[$minus45["lowestExam"]]["name"];
+            }
+            $minus45overAllAvailableTimes = ($minus45overAllAvailableTimes+$minus45["lowestExamNumber"]);
+
+            $plus45["lowestExamNumber"] = min($plus45["bottlenecks"]);
+            $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+            $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
+            $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+            if($plus45["lowestExamNumber"]!=0){
+                if($plus45["lowestExamNumber"]<=$plus45["required"]){
+                    $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                }else{
+                    $plus45["lowestExamNumber"] = $plus45["required"];
+                    $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                }
+                
+            }
+
+            if($plus45["required"]>=$plus45["lowestExamNumber"] && $plus45["lowestExamNumber"]!=0){
+                $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+                $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
+                $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+            }
+            $plus45overAllAvailableTimes = ($plus45overAllAvailableTimes+$plus45["lowestExamNumber"]);
+            if(date("N",strtotime($value["booking_date"]))!=5){
+                $availableTimesForMenPlus = ($availableTimesForMenPlus+$plus45["lowestExamNumber"]);
+            }
+
+    
+
+            /*if($plus45["lowestExamNumber"]!=0){
+                $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+            }else{
+                $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+                $key=array_search($plus45["lowestExam"],[11,12]);
+                if($key!==false){
+                    $bottleneckClone = $plus45["bottlenecks"];
+                    unset($bottleneckClone[$key]);
+                    $plus45["lowestExamNumber"] = min($bottleneckClone);
+                    $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                    //$plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+                    //$plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
+                    //$plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+                    //$plus45["lowestExam"] = 12;
+                    //$plus45["lowestExamNumber"] =$plus45["bottlenecks"][12];
+                    //$plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                }
+            }*/
+
+            /*if($plus45["required"]>=$plus45["lowestExamNumber"] && $plus45["lowestExamNumber"]!=0){
+                $plus45["availableTimes"] = "(".$plus45["lowestExamNumber"].")";
+                $plus45["lowestExam"] = array_search($plus45["lowestExamNumber"],$plus45["bottlenecks"]);
+                $plus45["lowestExam"] = array_search($plus45["lowestExam"],array_column($this->icons,"id"));
+                $plus45["lowestExam"] = $this->icons[$plus45["lowestExam"]]["name"];
+            }*/
+           
+            /*if($value["booking_date"]=="2025-02-10"){
+                echo "lowestExamNumber: {$minus45["lowestExamNumber"]}<br>";
+                echo "required: {$minus45["required"]}<br>";
+                $this->debug_array($minus45["bottlenecks"]);
+                echo "lowestExamNumber: {$plus45["lowestExamNumber"]}<br>";
+                echo "required: {$plus45["required"]}<br>";
+                $this->debug_array($plus45["bottlenecks"]);
+                $this->debug_array($bottlenecks);
+            }*/
+            //$this->debug_array($bottlenecks);
             $availableTimes = $lowestExam = "";
             $required = ($plus45["required"]+$minus45["required"]);
-            $bottlenecks = $this->search_for_bottleneck([219, 220, 221, 222], $value["booking_date"]);
+            //$bottlenecks = $this->search_for_bottleneck([219, 220, 221, 222], $value["booking_date"]);
             $lowestExamNumber = min($bottlenecks);
             $overAllAvailableTimes = ($overAllAvailableTimes+$lowestExamNumber);
             if($required>$lowestExamNumber && $lowestExamNumber!=0){
@@ -516,9 +638,9 @@ class AdminSuzukiStatPage extends AdminCorePage
             $tbody .= "<tr class=\"h6\">";
             //$html .= "<th class=\"text-center\" scope=\"row\">" . ($key + 1) . ".</th>";
             $tbody .= "<td class=\"text-center\">" . str_replace("-", ".", $value["booking_date"]) . ", " . ucfirst($webText["hetnap"][date("N", strtotime($value["booking_date"]))]) . "</td>";
-            $tbody .= "<td class=\"text-center\">{$plus45["times"]["overall"]}/{$plus45["capacity"]}</td>";
-            $tbody .= "<td class=\"text-center\">{$minus45["times"]["overall"]}/{$minus45["capacity"]}</td>";
-            $tbody .= "<td class=\"text-center\" title='{$lowestExam}'>{$availableTimes}</td>";
+            $tbody .= "<td class=\"text-center ".($plus45["availableTimes"]!=""?"bg-success":"")."\" title='{$plus45["lowestExam"]}'>{$plus45["times"]["overall"]}/{$plus45["capacity"]}&nbsp;{$plus45["availableTimes"]}</td>";
+            $tbody .= "<td class=\"text-center ".($minus45["availableTimes"]!=""?"bg-success":"")."\" title='{$minus45["lowestExam"]}'>{$minus45["times"]["overall"]}/{$minus45["capacity"]}&nbsp;{$minus45["availableTimes"]}</td>";
+            //$tbody .= "<td class=\"text-center\" title='{$lowestExam}'>{$availableTimes}</td>";
             $tbody .= "<td class=\"text-center\">{$noTimeLeft}</td>";
             $tbody .= "<td class=\"text-center\">" . ($male > 0 ? $male . "db" : " - ") . "</td>";
             $tbody .= "<td class=\"text-center\">" . ($female > 0 ? $female . "db" : " - ") . "</td>";
@@ -534,7 +656,11 @@ class AdminSuzukiStatPage extends AdminCorePage
         $html .= "<div class='container-xxl mx-3'>";
         $html .= "<div class=\"h6\">Összes foglalás " . date("Y.m.d", strtotime($this->startDate)) . " óta: <strong>" . count($this->bookings) . "db</strong></div>";
         $html .= "<div class=\"h6\">Vizsgálaton résztvettek száma " . date("Y.m.d", strtotime($this->startDate)) . "  óta: <strong>" . count(array_keys(array_column($this->bookings, "eljott"), 1)) . "db</strong></div>";
-        $html .= "<div class=\"h6\">Elérhető időpontok: <strong>{$overAllAvailableTimes}</strong></div>";
+        //$html .= "<div class=\"h6\">Elérhető időpontok: <strong>{$overAllAvailableTimes}</strong></div>";
+        $html .= "<div class=\"h6\">Elérhető 45+ időpontok : <strong>{$plus45overAllAvailableTimes}</strong></div>";
+        $html .= "<div class=\"h6\">Elérhető 45+ férfi időpontok : <strong>{$availableTimesForMenPlus}</strong></div>";
+        $html .= "<div class=\"h6\">Elérhető 45- időpontok : <strong>{$minus45overAllAvailableTimes}</strong></div>";
+
         $html .= "<table class=\"table table-striped\">";
         $html .= "   <thead>";
         $html .= "       <tr class=\"h5\">";
@@ -542,7 +668,7 @@ class AdminSuzukiStatPage extends AdminCorePage
         $html .= "       <th class=\"text-center\" title='Rendelési dátum' scope=\"col\"><i class='fa-regular fa-calendar-days'></i></th>";
         $html .= "       <th class=\"text-center\" title='45 év feletti csomag' scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-plus'></i></th>";
         $html .= "       <th class=\"text-center\" title='45 év alatti csomag' scope=\"col\"><i class='fa-solid fa-4'></i><i class='fa-solid fa-5'></i><i class='fa-solid fa-minus'></i></th>";
-        $html .= "       <th class=\"text-center\" title='Elérhető időpontok' scope=\"col\"><i class='fa-solid fa-circle-check'></i></th>";
+        //$html .= "       <th class=\"text-center\" title='Elérhető időpontok' scope=\"col\"><i class='fa-solid fa-circle-check'></i></th>";
         $html .= "       <th class=\"text-center\" title='Problémás vizsgálatok' scope=\"col\"><i class='fa-solid fa-triangle-exclamation'></i></th>";
         $html .= "       <th class=\"text-center\" title='Férfi foglalások' scope=\"col\"><i class='fa-solid fa-mars'></i></th>";
         $html .= "       <th class=\"text-center\" title='Női foglalások' scope=\"col\"><i class='fa-solid fa-venus'></i></th>";
