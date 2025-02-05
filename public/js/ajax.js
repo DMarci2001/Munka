@@ -1594,3 +1594,22 @@ function initSMTorzsszamButton() {
         });
     });
 }
+
+function changeWebSzolg(id){
+    $.ajax({
+        url:"?page=remoteBooking",
+        type:"POST",
+        data:{changeWebSzolg:id},
+        dataType:"JSON",
+        success: function(response){
+            if(response){
+                $("#saveForm").val(response.price);
+                if(response.appointment){
+                    $("#schedule-appointment").html(response.appointment);
+                }else{
+                    $("#schedule-appointment").html("");
+                }
+            }
+        }
+    });
+}

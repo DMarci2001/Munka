@@ -1429,7 +1429,7 @@ class BookingService
         return $return;
     }
 
-    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0]):string {
+    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0],$radioButton=false,$selectedSzolg):string {
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -1456,6 +1456,9 @@ class BookingService
 
         if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328 || $helyszinId == 644) {
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
+            /*if($tid==116){
+                $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0", array("|{$cegid}|", $tid));
+            }*/
             if (sql_num_rows($res) > 0) {
                 $chooseText = $webText["valasszonszolgaltatast"];
                 $hidden = "";
@@ -1468,6 +1471,9 @@ class BookingService
                     $chooseText = "Igénye esetén, válasszon a Fehérvári úti rendelőnkben elérhető alábbi téritéses szolgáltatások közül. BME dolgozókank 20% kedvezmény.";
                     //$hidden = "display:none;";
                     //$h.= "<div style='margin-bottom:10px;'><a class='bmebutton' href='#' onclick='$(\"#kiegdiv\").slideToggle();return false;' target='_blank'>Kattintson ide, és válasszon térítéses kiegészítő vizsgálatot!</a></div>";
+                }
+                if($tid==116){
+                    $priceDisplay = true;
                 }
 
                 $h .= "<div id='kiegdiv' style='margin:10px 0px;{$hidden}'>";
@@ -1522,7 +1528,12 @@ class BookingService
                         $h.= "<div style='font-size:15px;background:rgba(255, 255, 255, .7);color:#b00;padding:10px;'><strong>{$priceTextBox}</strong></div>";
                         $h.= "</div>";
                     } else {
-                        $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                        if(!$radioButton){
+                            $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                        }else{
+                            $h .= "<div><input type='radio' ".($tid==116?"onChange='changeWebSzolg({$row["id"]})'":"")." class='altipuscheck' name='altipusradiobutton' ".($selectedSzolg && $selectedSzolg==$row["id"]?"checked='true'":"")." value='{$row["id"]}' " . (isset($_POST["altipusradiobutton"]) && $_POST["altipusradiobutton"]==$row["id"] ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                        }
+                        
                     }
                 }
                 if (CompanyService::isBME()) {

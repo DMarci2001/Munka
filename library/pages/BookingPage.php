@@ -18,6 +18,8 @@ class BookingPage extends CorePage
     {
         parent::__construct();
 
+        unset($_SESSION["selectedService"]);
+
         if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
 
         }
@@ -1325,7 +1327,6 @@ class BookingPage extends CorePage
                     $index = $i;
                 }
 
-
                 $timeSelector = $this->_reservationTimeSelector($index);
 
                 echo "<tr class='datarow'><td valign='middle'><div style=''>{$numberTexts[$index]}: *</div></td><td>{$timeSelector["html"]}</td></tr>";
@@ -1609,7 +1610,7 @@ class BookingPage extends CorePage
             $_POST["orvosselected{$index}"] = 0;
         }
 
-        $enableCache  = true;
+        $enableCache  = false;
         $freeFound    = false;
         $firstFreeDay = 0;
         $testDay      = 0;
@@ -1638,6 +1639,7 @@ class BookingPage extends CorePage
                 if (substr_count($json, "foglalhatobtn")) {
                     $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"] = $testDay;
                     $freeFound = true;
+                    echo $firstFreeDay;
                     break;
                 }
                 $testDay += 7;

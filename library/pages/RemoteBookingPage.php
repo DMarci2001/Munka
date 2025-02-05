@@ -4,20 +4,62 @@ class RemoteBookingPage extends CorePage{
     private $arData;
     private $szuresData;
 	private $bookingPage;
+	private $bookingService;
+	private $selectedService;
 
 	public function __construct()
     {
         parent::__construct();
         $webText = $this->lang->webText;
 		if($_SESSION['helyszindata']['id']!=11) $_SESSION['helyszindata']['id']=11;
-        $bookingService = new BookingService();
-		$this->bookingPage = new BookingPage();
+        $this->bookingService = new BookingService();
+
+		if(isset($_POST["szurestipus"])){
+			$_SESSION["szurestipus"]=$_POST["szurestipus"];
+			//$_SESSION["arData"] = [];
+		}
+
+		if(!isset($_SESSION["szurestipus"])){
+			header("Location:index.php");
+		}
+
+		if(isset($_SESSION["selectedService"]) && $_SESSION["szurestipus"]!=116){
+			unset($_SESSION["selectedService"]);
+		}
+
+		if(isset($_SESSION["szurestipus"]) && $_SESSION["szurestipus"]==116 && !isset($_SESSION["selectedService"])){
+			$_SESSION["selectedService"] = 47;
+		}else{
+			//unset($_SESSION["selectedService"]);
+		}
+		 
+
+		if(isset($_SESSION["szurestipus"])){
+			$_POST["szurestipus"] = $_SESSION["szurestipus"];
+			$this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
+
+			if(isset($_SESSION["selectedService"])){
+				//itt le kezelem több tételre is az árakat
+				$this->arData = sql_query("SELECT * FROM arak WHERE id=? AND tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_SESSION["selectedService"],$_POST['szurestipus']])->fetch(PDO::FETCH_ASSOC);
+			}
+			
+			$_SESSION["arData"] = $this->arData;
+
+			$this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
+		}
+
+
 		
+
 		
-		if(isset($_GET['szurestipus'])){
+	
+		
+		/*if(isset($_GET['szurestipus'])){
+			echo "itt vagyok.<br>";
 			$count=0;
 			$request = sql_query("SELECT * FROM szurestipusok WHERE md5(concat('szurestipus',id))=?",array($_GET['szurestipus']));
 			if( sql_num_rows( $request ) == 1 ){
+				$_SESSION["szurestipus"]=$_GET["szurestipus"];
 				$result = sql_fetch_array($request);
 				$_POST['szurestipus'] = $result['id'];
 				$count++;
@@ -25,6 +67,7 @@ class RemoteBookingPage extends CorePage{
 			else{
 				$request = sql_query("SELECT * FROM szurestipusok WHERE id = ?",array($_GET['szurestipus']));
 				if( sql_num_rows( $request ) == 1 ){
+					$_SESSION["szurestipus"]=$_GET["szurestipus"];
 					$result = sql_fetch_array($request);
 					$_POST['szurestipus'] = $result['id'];
 					$count++;
@@ -32,9 +75,23 @@ class RemoteBookingPage extends CorePage{
 			}
 			if($count<1) header("Location:index.php");
 			//else header("Location:index.php");
+		}*/
+
+		//if(isset($_SESSION["szurestipus"])) $_POST["szurestipus"] = $_SESSION["szurestipus"];
+		//if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
+
+		if(isset($_POST["changeWebSzolg"])){
+			if($checkSzolg = sql_query("SELECT * FROM arak WHERE tipusid=? AND id=?",[$_SESSION["szurestipus"],$_POST["changeWebSzolg"]])->fetch(PDO::FETCH_ASSOC)){
+				$_SESSION["arData"]= $checkSzolg;
+				$_SESSION["selectedService"] = $_POST["changeWebSzolg"];
+				$array["price"] = "Fizetek (".number_format($_SESSION["arData"]['price'],0,",",".")." ".$_SESSION["arData"]['penznem'].")";
+				if(in_array($_POST["changeWebSzolg"],[254,255])){
+					$array["appointment"] = $this->appointmentSelector();
+				}
+				die(json_encode($array));
+			}
+			die();
 		}
-		
-		if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
 		
 		if(isset($_GET['orvos'])){
 			$request = sql_query("SELECT * FROM orvosok WHERE md5(concat('orvos',id))=?",array($_GET['orvos']));
@@ -53,21 +110,17 @@ class RemoteBookingPage extends CorePage{
 		//$result = sql_fetch_array($request);
 		
 		//if(isset($_GET['szurestipus'])) $_POST['szurestipus']=$_GET['szurestipus'];
-		if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
+		//if(!isset($_POST['szurestipus'])) $_POST['szurestipus']=0;
 		
-        $this->arData = sql_fetch_array(sql_query("SELECT * FROM arak WHERE tipusid=? AND cegid LIKE '%|{$_SESSION['helyszindata']['id']}|%' ", [$_POST['szurestipus']]));
-        $this->szuresData = sql_fetch_array(sql_query("SELECT * FROM szurestipusok WHERE id=?",array($_POST['szurestipus'])));
+        
 		
 		$this->szuresData['noreservation'] = 0;
 
         if(isset($_POST['saveForm'])){
-			
-			
 			//Végig kell futni a szurestipus parameterein, abban megtalálunk minden szükséges információt ami kellhet.
 			if (isset($_POST["szuldatumev"])) {
                 $_POST["szuldatum"] = $_POST["szuldatumev"]."-".substr("00".$_POST["szuldatumho"],-2)."-".substr("00".$_POST["szuldatumnap"],-2);
             }
-			
 			
 			
 			//Orvos választás:
@@ -99,6 +152,10 @@ class RemoteBookingPage extends CorePage{
 			if ($_POST['szuldatum']=="0-00-00") $this->errors[] = "A születési dátum megadása kötelező!";
 			if (!$this->utils->validateDate($_POST["szuldatum"], "Y-m-d")) $this->errors[] = $webText["szulformat"];
 			if (!isset($_POST["aszf"])) $this->errors[] = $webText["aszfkotelezo"];
+			if (!isset($_POST["sajat_felhasznalasu_veny"])) $this->errors[] = $webText["sajat_felhasznalasu_veny_kotelezo"];
+			//Ezt itt még le kell kezelnem...
+			if (isset($_POST["apppointment_scheduling"])) $_POST["megj"] = $_POST["apppointment_scheduling"];
+			
 			if (!isset($_POST["simplepay"])) $this->errors[] = "A simplepay felhasználási feltételeit a vásárláshoz el kell elfogadnia!";
 			if ($_POST['orvosid']==0) $this->errors[] = "Válasszon ellátó szakorvost!";
 			
@@ -140,11 +197,11 @@ class RemoteBookingPage extends CorePage{
 			$_POST["noreservation"] = 1;
 			
            
-            $_POST["totalprice"] = $this->arData["price"];
-            $_POST["currency"] = $this->arData["penznem"];
+            $_POST["totalprice"] = $_SESSION["arData"]["price"];
+            $_POST["currency"] = $_SESSION["arData"]["penznem"];
 
 			if (empty($this->errors)) {
-                $forwardURL = $bookingService->addReservation($_POST);
+                $forwardURL = $this->bookingService->addReservation($_POST);
                 header("location:{$forwardURL}");
 				die();
 			}
@@ -229,7 +286,7 @@ class RemoteBookingPage extends CorePage{
 			$html.= "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
 			$html.= "<h3 align='center' style='color:#FFF'>Figyelem!</h3>";
 			$html.= "<p style=' text-align:center;font-size:16px;color:#FFF'>";
-			$html.= "A <strong>WEB-Recept szolgáltatás</strong> vagyis az orvosi vény felírása <strong>kizárólag Ön célra, vehető igénybe.</strong> Korábban már a Hungária Med-M szolgáltatását igénybe <strong>vevő ügyfelek részére lehetséges ezen a felületen</strong>.";
+			$html.= "A <strong>WEB-Recept szolgáltatás</strong> vagyis az orvosi vény felírása <strong>kizárólag Saját felhasználásra, vehető igénybe.</strong> Korábban már a Hungária Med-M szolgáltatását igénybe <strong>vevő ügyfelek részére lehetséges ezen a felületen</strong>.";
 			$html.= "</p>";
 			//$html.= "<p style='text-align:center;font-size:16px;;color:#FFF'>";
 			//$html.= "Amennyiben Ön korábban még nem vette igénybe szolgáltatásainkat, kérjük, olvassa el az erre vonatkozó információkat a honlap WEB-Recept felületén.";
@@ -276,6 +333,15 @@ class RemoteBookingPage extends CorePage{
 		$html.= "</tr>";
 		$html.= 	$this->setFields($inputArr);
 		$html.= "</table>";
+
+		//Választható szolgáltatások
+		if($_POST["szurestipus"]==116){
+			$html.= $this->bookingService->getTipusMegj(11,$_POST['szurestipus'],1,1,$_SESSION["selectedService"]);
+		}
+
+		//Időpont egyeztetés:
+		$html.= "<div id='schedule-appointment'></div>";
+		
 		
 		//Kérdez/Felelek:
 		$html.= "<h2>Kérdések</h2>";
@@ -324,11 +390,13 @@ class RemoteBookingPage extends CorePage{
 		$html.= "<tr><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszffizetos"]}</div></td></tr>";
 		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' /> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
+		
 		//Jóváhagyó gombok helye:
 		
 		//Itt több opciónak is meg kell majd jelennie a vizsgálat beállításainak megfelelően:
+		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='sajat_felhasznalasu_veny' value='1' ".(isset($_POST["sajat_felhasznalasu_veny"])?"checked":"")."/> {$webText["sajat_felhasznalasu_veny"]}</div></td></tr>";
 		$html.= "<input type='hidden' name='szurestipus' value='{$_POST['szurestipus']}'/>";
-		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' name='saveForm' value='Fizetek (".number_format($this->arData['price'],0,",",".")." ".$this->arData['penznem'].")'/><div></td></tr>";
+		$html.= "<tr><td align='center'><div style='margin-top:20px;'><input type='submit' style='border:none' class='newbutton' id='saveForm' name='saveForm' value='Fizetek (".number_format($_SESSION["arData"]['price'],0,",",".")." ".$_SESSION["arData"]['penznem'].")'/><div></td></tr>";
 		$html.= "<tr><td align='center'><a href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'><img src='images/simplepay_bankcard_logos_left.jpg' style='max-width:40%;width:auto'></a></td></tr>";
 		
 		$html.= "</table>";
@@ -430,6 +498,13 @@ class RemoteBookingPage extends CorePage{
         $html.= "<tr><td></td><td><div id='idopontvalasztodiv' style='display:none;'></div></td></tr>";
 		return $html;
     }
-	
+	private function appointmentSelector(){
+		$html = "";
+		$html.= "<div style='font-weight:bold;margin-bottom:5px;'>Mikor kereshetjük meg időpont egyeztetés céljából?</div>";
+		$html.= "<div><input type='radio' checked name='apppointment_scheduling' value='8:00-12:00'>08:00 - 12:00</div>";
+		$html.= "<div><input type='radio' name='apppointment_scheduling' value='12:00-16:00'>12:00 - 16:00</div>";
+		$html.= "<br>";
+		return $html;
+	}
 	
 }

@@ -540,7 +540,13 @@ class NotificationService
         $mbody .= "Email: {$rowf["email"]}<br>";
         $mbody .= "Telefon: {$rowf["telefon"]}<br>";
         $mbody .= "Cím: {$rowf["irsz"]} {$rowf["varos"]}, {$rowf["utca"]}<br>";
-        $mbody .= "Szűréstípus: {$rowf["szurestipus"]}<br><hr>";
+        $mbody .= "Szűréstípus: {$rowf["szurestipus"]}<br>";
+        if($rowf["megj"]!=""){
+            $mbody .= "Visszahívást kér ebben az idősávban: {$rowf["megj"]}<br>";
+        }
+        
+        $mbody .= "<hr>";
+
         $mbody .= "{$rowf["questions"]}<br>";
 
         $mbody .= "<br/>";
