@@ -10,7 +10,7 @@ class AdminDirektMarketingPage extends AdminCorePage
         parent::__construct();
 
         if (isset($_GET["szerk"])) {
-            if (!empty($this->getDMList($_GET["szerk"])) && $_GET["szerk"] != "cimzett_lista") {
+            if (!empty($this->getDMList($_GET["szerk"])) && $_GET["szerk"]!="cimzett_lista") {
                 $this->dmId = $_SESSION["dmId"] = $_GET["szerk"];
             }
         }
@@ -44,50 +44,6 @@ class AdminDirektMarketingPage extends AdminCorePage
             die(json_encode(["error" => "A címzett nem található!"]));
         }
 
-        if (isset($_POST["saveEmailContent"])) {
-            echo "<pre>";
-            print_r($_POST);
-            echo "</pre>";
-            sql_query("UPDATE direkt_marketing SET email_content=?, email_subject=?, email_sender=? WHERE id=?", [$_POST["content"], $_POST["subject"], $_POST["sender"], $_SESSION["dmId"]]);
-            die();
-        }
-
-        if (isset($_POST["sendDM"])) {
-            $notificationService = new NotificationService();
-
-            $data = sql_query("SELECT * FROM direkt_marketing dm
-                               LEFT JOIN direkt_marketing_cimzettek_link_tabla dmclt ON dmclt.dm_id=dm.id
-                               LEFT JOIN direkt_marketing_cimzettek dmc ON dmc.id=dmclt.recipient_id
-                               WHERE dm.id=? AND dmc.subscribed=1", [$_POST["id"]])->fetchAll(PDO::FETCH_ASSOC);
-            
-            if (!empty($data)) {
-                foreach ($data as $recipient) {
-                    $mail = $notificationService->getDefaultMailer();
-                    $mail->From = $recipient["email_sender"];
-                    $mail->FromName = $recipient["email_sender"];
-                    $mail->AddAddress($recipient["email"]);
-                    if (!empty(Booking_Constants::USER_BCC_MAIL)) {
-                        $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
-                    }
-
-                    //unsubscribe link
-                    $recipient["email_content"] = str_replace("#unsubscribe#","https://bejelentkezes.hungariamed.hu/unsubscibe.php?campaign=xmasad2024&clientid=".$recipient["email"],$recipient["email_content"]);
-
-                    $mail->Subject = $recipient["email_subject"];
-                    $mail->Body = $recipient["email_content"];
-                    $mail->send();
-
-                    sql_query("UPDATE direkt_marketing SET last_send=? WHERE id=?", [date("Y-m-d H:i:s"), $_POST["id"]]);
-
-                    $notificationService->createNotificationRecord("direkt_marketing", $recipient["dm_id"], $recipient["email"], $recipient["email_subject"], $recipient["email_content"]);
-                }
-                
-                $recipient_list = json_encode(array_column($data,"email"));
-                $this->createDMRecord($data[0],$recipient_list);
-            }
-
-            die();
-        }
     }
 
     public function showPage()
@@ -101,12 +57,13 @@ class AdminDirektMarketingPage extends AdminCorePage
             $html .= $this->initializeDMList();
             $html .= "</div>";
         }
-        if (isset($_GET["szerk"]) && $_GET["szerk"] != "cimzett_lista") {
+        if (isset($_GET["szerk"]) && $_GET["szerk"]!="cimzett_lista") {
             $html  = "<div class='container-xxl mx-3'>";
             $html .= $this->initializeDMProcessManagerUI($_GET["szerk"]);
             $html .= "</div>";
         }
-        if (isset($_GET["szerk"]) && $_GET["szerk"] == "cimzett_lista") {
+        if (isset($_GET["szerk"]) && $_GET["szerk"]=="cimzett_lista") {
+            //$_GET["szerk"] = null;
             $html  = "<div class='container-xxl mx-3'>";
             $html .= $this->initializeRecipientList();
             $html .= "</div>";
@@ -226,6 +183,7 @@ class AdminDirektMarketingPage extends AdminCorePage
 
     private function recipientListViewer(): string
     {
+        echo $_GET["szerk"]."<br>";
         $html = "";
 
         $data = sql_query("SELECT dmc.* FROM direkt_marketing_cimzettek_link_tabla dmcl
@@ -253,9 +211,9 @@ class AdminDirektMarketingPage extends AdminCorePage
                 $html .= "           <tr role='button' data-dm-recipient-id='{$data[$i]["id"]}'>";
                 $html .= "               <th class='text-center align-middle' scope='row'>{$i}.</th>";
                 $html .= "               <td class='text-center align-middle'>";
-                if ($data[$i]["subscribed"] == 1) {
+                if($data[$i]["subscribed"]==1){
                     $html .= "              <button type='button' class='btn btn-danger btn-sm unsub-dm'><i class='fa-solid fa-bell-slash' title='Leiratkozás'></i></button>";
-                } else {
+                }else{
                     $html .= "              <button type='button' class='btn btn-success btn-sm resub-dm'><i class='fa-solid fa-bell' title='Feliratkozás'></i></button>";
                 }
                 //$html .= "                    <div class='form-check form-switch text-center'>";
@@ -278,24 +236,21 @@ class AdminDirektMarketingPage extends AdminCorePage
 
     private function setDMSend()
     {
-        $data = sql_query("SELECT * FROM direkt_marketing WHERE id=?", [$this->dmId])->fetch(PDO::FETCH_ASSOC);
-
         $html = "";
         $html .= "<div class='mb-3'>";
         $html .= "   <label for='dm-sender' class='form-label'>Küldő e-mail cím:</label>";
-        $html .= "   <input type='email' class='form-control' id='dm-sender' value='{$data["email_sender"]}' placeholder='name@example.com'>";
+        $html .= "   <input type='email' class='form-control' id='exampleFormControlInput1' placeholder='name@example.com'>";
         $html .= "</div>";
         $html .= "<div class='mb-3'>";
         $html .= "   <label for='dm-subject' class='form-label'>Üzenet tárgya:</label>";
-        $html .= "   <input type='text' class='form-control' id='dm-subject' value='{$data["email_subject"]}' placeholder='Tárgy'>";
+        $html .= "   <input type='text' class='form-control' id='dm-subject' placeholder='Tárgy'>";
         $html .= "</div>";
         $html .= "<div class='mb-3'>";
-        $html .= "   <label for='dm-email-content' class='form-label'>Levél tartalma:</label>"; //&nbsp;<button class='btn btn-secondary btn-sm save-email-content' type='button'><i class='fa-solid fa-floppy-disk'></i>&nbsp;Mentés</button>
-        $html .= "   <textarea class='form-control mce' id='email-content'>{$data["email_content"]}</textarea>";
+        $html .= "   <label for='dm-email-content' class='form-label'>Levél tartalma:&nbsp;<button class='btn btn-secondary btn-sm' type='button'><i class='fa-solid fa-floppy-disk'></i>&nbsp;Mentés</button></label>";
+        $html .= "   <textarea class='form-control mce' id='email-content'></textarea>";
         $html .= "</div>";
         $html .= "<div class='d-grid gap-2'>";
-        $html .= "    <button class='btn btn-secondary save-email-content' type='button'><i class='fa-solid fa-floppy-disk'></i>&nbsp;Mentés</button>";
-        $html .= "    <button class='btn btn-danger' onClick='sendDM({$this->dmId})' type='button'><i class='fa-regular fa-paper-plane'></i>&nbsp;Küldés</button>";
+        $html .= "    <button class='btn btn-danger' type='button'><i class='fa-regular fa-paper-plane'></i>&nbsp;Küldés</button>";
         $html .= "</div>";
 
         return $html;
@@ -304,6 +259,8 @@ class AdminDirektMarketingPage extends AdminCorePage
     private function initializeRecipientList(): string
     {
         $html = "";
+
+        echo $_GET["szerk"]."<br>";
 
         $data = sql_query("SELECT * FROM direkt_marketing_cimzettek", [$this->dmId])->fetchAll(PDO::FETCH_ASSOC);
 
@@ -322,9 +279,9 @@ class AdminDirektMarketingPage extends AdminCorePage
             $html .= "           <tr role='button' data-dm-recipient-id='{$data[$i]["id"]}'>";
             $html .= "               <th class='text-center align-middle' scope='row'>{$i}.</th>";
             $html .= "               <td class='text-center align-middle'>";
-            if ($data[$i]["subscribed"] == 1) {
+            if($data[$i]["subscribed"]==1){
                 $html .= "              <button type='button' class='btn btn-danger btn-sm unsub-dm'><i class='fa-solid fa-bell-slash' title='Leiratkozás'></i></button>";
-            } else {
+            }else{
                 $html .= "              <button type='button' class='btn btn-success btn-sm resub-dm'><i class='fa-solid fa-bell' title='Feliratkozás'></i></button>";
             }
 
@@ -342,13 +299,5 @@ class AdminDirektMarketingPage extends AdminCorePage
         $html .= "       </table>";
         $html .= "<script type='text/javascript' src='js/dm_ui.js'></script>";
         return $html;
-    }
-
-    private function createDMRecord($data, $recipient_list)
-    {
-        sql_query(
-            "INSERT INTO direkt_marketing_log SET dm_id=?,sent=?,sent_by=?,email_sender=?,dm_subject=?,dm_content=?,recipient_list=?",
-            [$data["dm_id"], $_SESSION["adminuser"]["id"], date("Y-m-d H:i:s"), $data["email_sender"], $data["email_subject"], $data["email_content"], $recipient_list]
-        );
     }
 }

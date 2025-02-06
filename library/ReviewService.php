@@ -33,7 +33,7 @@ class ReviewService {
                         $valasz=$v["valasz_hu"];
                     } else {
                         if ($kerdesData["kotelezo"] == 1) {
-                            $error[] = "Kérjük válaszoljon az összes kötelező kérdésre";
+                            $error[] = "Kérjük válaszoljon az összes csillaggal jelölt kötelező kérdésre";
                             continue;
                         } else {
                             $valasz = "nincs válasz";
@@ -52,11 +52,15 @@ class ReviewService {
                 if ($kerdesData["tipus"]==3) {
                     $valasz=$_POST["valasz_{$kerdesData["id"]}"];
                 }
-                sql_query("insert into ertekeles_data set cegid=?, formid=?,datum=?,sessid=?,kerdesid=?,valaszszoveg=?", array($_SESSION["eceg"], $kerdesData["formid"],$datum,$_COOKIE["ertekelesuserid"],$kerdesData["id"],$valasz));
+
+                $valaszExtraSzoveg = $_POST["valaszc_{$kerdesData["id"]}"] ?? "";
+
+                sql_query("insert into ertekeles_data set cegid=?, formid=?, datum=?, sessid=?, kerdesid=?, valaszszoveg=?, valaszextraszoveg=?",
+                    [$_SESSION["eceg"], $kerdesData["formid"], $datum, $_COOKIE["ertekelesuserid"], $kerdesData["id"], $valasz, $valaszExtraSzoveg]);
             }
             if (count($error)>0) {
-                $_SESSION["formerror"]=array_unique($error);
-                sql_query("delete from ertekeles_data where formid=? and sessid=?",array($_POST["formkitolt"],$_COOKIE["ertekelesuserid"]));
+                $_SESSION["formerror"] = array_unique($error);
+                sql_query("delete from ertekeles_data where formid=? and sessid=?", array($_POST["formkitolt"],$_COOKIE["ertekelesuserid"]));
             } else {
                 header("location: ".$this->ertekelesURL("&thanks"));
                 die();
@@ -118,7 +122,7 @@ class ReviewService {
     public function ertekelesHeader():string {
         $htmlout="";
         $htmlout.="<div class='ertekelesheader'>";
-        $htmlout.="<div style='font-size:22px;font-family:robotoregular'><img src='/images/hmm_gyor_logo.jpg' height='60' alt='' /></div>";
+        $htmlout.="<div style='font-size:22px;font-family:robotoregular'><img src='/images/hmm_logo_nagy.png' height='60' alt='' /></div>";
         $htmlout.=$this->getFormText("megnev");
         $htmlout.="</div>";
         return $htmlout;
@@ -148,53 +152,60 @@ class ReviewService {
                 unset($_SESSION["formerror"]);
             }
 
-            $kerdesRes=sql_query("select k.*,g.tipus from ertekeles_kerdesek k left join ertekeles_valaszgroups g on k.valaszgroupid=g.id where k.formid=? order by k.sorrend",array($GLOBALS["formData"]["id"]));
+            $kerdesRes = sql_query("select k.*,g.tipus from ertekeles_kerdesek k left join ertekeles_valaszgroups g on k.valaszgroupid=g.id where k.formid=? order by k.sorrend",array($GLOBALS["formData"]["id"]));
 
             $htmlout.="<form method='post'><input type='hidden' name='formkitolt' value='{$GLOBALS["formData"]["id"]}' />";
             while ($kerdesData=sql_fetch_array($kerdesRes)) {
                 $htmlout.= "<div class='kerdesdiv'>";
 
                 if ($kerdesData["tipus"] == 5) {
-                    $htmlout.="<h2 style='color:#444;'>".translate($kerdesData, "kerdes")."</h2>";
+                    $htmlout.= "<h2 style='color:#444;'>".$this->translate($kerdesData, "kerdes")."</h2>";
                     if ($kerdesData["subtext"] != "") {
-                        $htmlout.="<div style=''>{$kerdesData["subtext"]}</div>";
+                        $htmlout.= "<div style=''>{$kerdesData["subtext"]}</div>";
                     }
+                    $htmlout.= "</div>";
+                    continue;
                 } else {
                     $htmlout .= "<div class='kerdesszoveg'>";
-                    $htmlout .= translate($kerdesData, "kerdes");
-
-                    if ($kerdesData["kotelezo"] == 0) {
-                        $htmlout .= " (nem kötelező)";
+                    if ($kerdesData["kotelezo"] != 0) {
+                        $htmlout .= "* ";
                     }
-
+                    $htmlout .= $this->translate($kerdesData, "kerdes");
                     $htmlout .= "</div>";
                 }
 
                 $htmlout.= "<div class='valaszdiv'>";
+
                 //egy válaszlehetőség listából
                 if ($kerdesData["tipus"]==1) {
-                    $valaszRes=sql_query("select * from ertekeles_valaszok where valaszgroupid=?",array($kerdesData["valaszgroupid"]));
-                    while ($valaszData=sql_fetch_array($valaszRes)) {
-                        $htmlout.="<input type='radio' name='valasz_{$kerdesData["id"]}' id='valasz_{$kerdesData["id"]}' value='{$valaszData["id"]}'".($_POST["valasz_{$kerdesData["id"]}"]==$valaszData["id"]?" checked":"")."/> ";
-                        $htmlout.= translate($valaszData,"valasz")."&nbsp;&nbsp;";
+                    $valaszRes = sql_query("select * from ertekeles_valaszok where valaszgroupid=?",array($kerdesData["valaszgroupid"]))->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($valaszRes as $valaszData) {
+                        $htmlout.="<input type='radio' name='valasz_{$kerdesData["id"]}' id='valasz_{$kerdesData["id"]}_{$valaszData["id"]}' value='{$valaszData["id"]}'".(isset($_POST["valasz_{$kerdesData["id"]}"]) && $_POST["valasz_{$kerdesData["id"]}"]==$valaszData["id"]?" checked":"")."/>";
+                        $htmlout.= "<label for='valasz_{$kerdesData["id"]}_{$valaszData["id"]}'> ".$this->translate($valaszData,"valasz")."</label>&nbsp;&nbsp;";
+                    }
+                    if ($kerdesData["textcomment"] == 1) {
+                        $valasz = $_POST["valaszc_{$kerdesData["id"]}"] ?? "";
+                        $htmlout .= "<div><textarea placeholder='Ha szeretné, szövegesen is kifejtheti...' name='valaszc_{$kerdesData["id"]}' id='valaszc_{$kerdesData["id"]}' style='width:100%;height:100px;margin-top:10px;box-sizing: border-box;font-size: 14px;'>" . htmlentities($valasz) . "</textarea></div>";
                     }
                 }
+
                 //több válaszlehetőség listából
                 if ($kerdesData["tipus"]==4) {
-                    $valaszRes=sql_query("select * from ertekeles_valaszok where valaszgroupid=?",array($kerdesData["valaszgroupid"]));
-                    while ($valaszData=sql_fetch_array($valaszRes)) {
-                        $htmlout.="<div>";
-                        $htmlout.="<input type='checkbox' name='valasz_{$kerdesData["id"]}_{$valaszData["id"]}' id='valasz_{$kerdesData["id"]}_{$valaszData["id"]}' value='{$valaszData["id"]}'".(isset($_POST["valasz_{$kerdesData["id"]}_{$valaszData["id"]}"])?" checked":"")."/> ";
-                        $htmlout.= translate($valaszData,"valasz")."&nbsp;&nbsp;";
-                        $htmlout.="</div>";
+                    $valaszRes = sql_query("select * from ertekeles_valaszok where valaszgroupid=?",array($kerdesData["valaszgroupid"]))->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($valaszRes as $valaszData) {
+                        $htmlout.= "<div>";
+                        $htmlout.= "<input type='checkbox' name='valasz_{$kerdesData["id"]}_{$valaszData["id"]}' id='valasz_{$kerdesData["id"]}_{$valaszData["id"]}' value='{$valaszData["id"]}'".(isset($_POST["valasz_{$kerdesData["id"]}_{$valaszData["id"]}"])?" checked":"")."/>";
+                        $htmlout.= "<label for='valasz_{$kerdesData["id"]}_{$valaszData["id"]}'> ".$this->translate($valaszData,"valasz")."</label>&nbsp;&nbsp;";
+                        $htmlout.= "</div>";
                     }
                 }
+
                 //szöveges válasz
                 if ($kerdesData["tipus"]==3) {
-                    $htmlout.="<textarea name='valasz_{$kerdesData["id"]}' id='valasz_{$kerdesData["id"]}' style='width:100%;height:100px;box-sizing: border-box'>".htmlentities($_POST["valasz_{$kerdesData["id"]}"])."</textarea> ";
+                    $valasz = $_POST["valasz_{$kerdesData["id"]}"] ?? "";
+                    $htmlout.="<textarea name='valasz_{$kerdesData["id"]}' id='valasz_{$kerdesData["id"]}' style='width:100%;height:100px;box-sizing: border-box'>".htmlentities($valasz)."</textarea> ";
                 }
                 $htmlout.="</div>";
-
 
                 $htmlout.="</div>";
             }
@@ -203,10 +214,9 @@ class ReviewService {
             $htmlout.="</form>";
 
         } elseif (isset($_GET["thanks"])) {
-            $htmlout .= "<div>" . $this->getFormText("koszonoszoveg") . "</div>";
+            $htmlout .= "<div class='kerdesdiv'>" . $this->getFormText("koszonoszoveg") . "</div>";
         } else {
-            $intro=$this->getFormText("introszoveg");
-            $intro=str_replace("#kupon#","<a href='/images/audi-kupon.jpg' target='_blank'><img src='/images/audi-kupon.jpg' width='400' alt='Kupon' title='Kupon'/></a>",$intro);
+            $intro = $this->getFormText("introszoveg");
             $htmlout .= "<div style='text-align: center;'>{$intro}</div>";
             $htmlout .= "<div style='margin:20px auto;width:300px;'><input onclick='window.location.href=\"" . $this->ertekelesURL("kerdes") . "\"' type='button' value='{$webText["kerdoivkitoltese"]}' class='flat-button' /></div>";
         }

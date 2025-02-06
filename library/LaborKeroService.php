@@ -436,14 +436,23 @@ class LaborKeroService
         $html .= "<a title='Csomag hozzáadása a laborkéréshez' class='printbutton' onclick='addPackToLaborRequest();return false;' href='#' style='background: #00aa00'><i class='fa-solid fa-plus'></i> hozzáadás</a> ";
         $html .= "</div>";
         $html .= "<div style='display:table-cell;vertical-align: middle;'>";
+
+        $packText = "Nem választottál csomagot";
+
         if (empty($requestPacks)) {
             $html .= "Nem választottál még csomagot";
         } else {
+            $packArray = [];
             $rPacks = sql_query("select id, IF(hmm_name='' or hmm_name is null, name, hmm_name) as name, price from synlab_labor_csomagok where id in (" . implode(",", $requestPacks) . ")")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rPacks as $rPack) {
                 $html .= "<a class='printbutton' onclick='removePackFromLaborRequest({$rPack["id"]});return false;' href='#' style='background: #ccc;' title='{$rPack["name"]}'>" . mb_substr($rPack["name"], 0, 15) . " <i class='fa-solid fa-xmark'></i></a> ";
+                $packArray[] = $rPack["name"];
+                $packText = "Csomagok:<br/><strong>".implode("<br/>", $packArray)."</strong>";
             }
         }
+
+        $packText .= "<br/><br/>Beküldőkód: <strong>{$this->bekuldoKodSpektrumLab}</strong>";
+
         $html .= "</div>";
 
         $html .= "<div style='display:table-cell;vertical-align: middle;text-align: right;'><span id='laborkeroteteleknumber'>{$totalData["text"]}</span></div>";
@@ -549,12 +558,9 @@ class LaborKeroService
                 $buttonTitle.= " <i class='fa-solid fa-caret-right'></i> {$this->bekuldoKod}";
             }
 
-            //$sendJs = "sendLaborKero()";
-            //if (session_id() == "6f4e9bbellt7r9qhrsvrsft1ge" || session_id() == "d89provjl77gjs7o7r6gau92fi") {
-                $sendJs = "sendLaborKeroNew()";
-            //}
+            $sendJs = "sendLaborKeroNew()";
 
-            $html .= "<a class='printbutton' onclick='{$sendJs};return false;' href='#' style='background: #00aa00'>{$buttonTitle}</a> ";
+            $html .= "<a data-packtext='{$packText}' id='labreqsendbutton' class='printbutton' onclick='{$sendJs};return false;' href='#' style='background: #00aa00'>{$buttonTitle}</a> ";
         }
         if (in_array($laborRequestData["status"], ["waiting"])) {
             $html .= "<a class='printbutton' onclick='cancelLaborKero();return false;' href='#' style='background: #aa0000'>Laborkérő visszavonása</a> ";

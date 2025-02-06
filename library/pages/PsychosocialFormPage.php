@@ -3,6 +3,7 @@ class PsychosocialFormPage extends CorePage {
 
     private $psyhosocData;
     private $foglalasData;
+    //public $showLangMenu;
     private $notificationService;
     public $lang;
 

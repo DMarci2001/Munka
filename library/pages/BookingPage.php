@@ -14,6 +14,8 @@ class BookingPage extends CorePage
     private array $telephelyek = [];
     private array $selectedVizsgalatok = [];
 
+    private int $numberOfTimes = 1;
+
     public function __construct()
     {
         parent::__construct();
@@ -410,12 +412,12 @@ class BookingPage extends CorePage
 
             //több dátum check
             if (isset($_POST["datum1"])) {
-                $numberOfTimes = $this->bookingService->numberOfReservationRequired();
+                $this->numberOfTimes = $this->bookingService->numberOfReservationRequired();
 
                 $multipleTimes = $days = [];
-                for ($i = 1; $i <= $numberOfTimes; $i++) {
+                for ($i = 1; $i <= $this->numberOfTimes; $i++) {
                     if ($_POST["datum{$i}"] == "") {
-                        $this->errors[] = "Kérjük adja meg a {$numberOfTimes} időpontot!";
+                        $this->errors[] = "Kérjük adja meg a {$this->numberOfTimes} időpontot!";
                         break;
                     }
                     $multipleTimes[] = ["datum" => $_POST["datum{$i}"], "rinterval" => $_POST["rinterval{$i}"], "orvosselected" => $_POST["orvosselected{$i}"]];
@@ -427,8 +429,8 @@ class BookingPage extends CorePage
 
                 }
 
-                if (count($days) == $numberOfTimes && count(array_unique($days)) != $numberOfTimes) {
-                    $this->errors[] = "Kérjük különböző napokat jelöljön meg a {$numberOfTimes} időpont esetében!";
+                if (count($days) == $this->numberOfTimes && count(array_unique($days)) != $this->numberOfTimes) {
+                    $this->errors[] = "Kérjük különböző napokat jelöljön meg a {$this->numberOfTimes} időpont esetében!";
                 }
 
             } else {
@@ -1199,7 +1201,7 @@ class BookingPage extends CorePage
 
             if (isset($_SESSION["suzukimanagertorzsszam"])) {
                 echo "<div style='padding:20px;text-align: center;background:#f0f0f0;margin-bottom: 20px;'>";
-                echo "Ön a <strong>{$_SESSION["suzukimanagertorzsszam"]}</strong> TAJ foglal időpontot!<br/><a href='index.php?clearsmtorzsszam'>Nem ez a TAJ számom</a>";
+                echo "Ön a <strong>{$_SESSION["suzukimanagertorzsszam"]}</strong> TAJ számmal foglal időpontot!<br/><a href='index.php?clearsmtorzsszam'>Nem ez a TAJ számom</a>";
                 //echo "<input type='hidden' name='torzsszam' value='{$_SESSION["suzukimanagertorzsszam"]}' />";
                 echo "</div>";
                 if (empty($_POST["taj"])) {
@@ -1320,10 +1322,10 @@ class BookingPage extends CorePage
             $numberTexts = ["" => $webText["idopont"], 1 => "Első időpont", 2 => "Második időpont", 3 => "Harmadik időpont"];
             $this->bookingService->setHelyszin($_POST["helyszin"]);
             $this->bookingService->setSzuresTipus($_POST["szurestipus"]);
-            $numberOfTimes = $this->bookingService->numberOfReservationRequired();
-            for ($i = 1; $i <= $numberOfTimes; $i++) {
+            $this->numberOfTimes = $this->bookingService->numberOfReservationRequired();
+            for ($i = 1; $i <= $this->numberOfTimes; $i++) {
                 $index = "";
-                if ($numberOfTimes > 1) {
+                if ($this->numberOfTimes > 1) {
                     $index = $i;
                 }
 
@@ -1612,6 +1614,7 @@ class BookingPage extends CorePage
 
         $enableCache  = false;
         $freeFound    = false;
+        $skipScan     = false;
         $firstFreeDay = 0;
         $testDay      = 0;
         $helyszin     = intval($_POST["helyszin"]);
@@ -1622,27 +1625,33 @@ class BookingPage extends CorePage
             $enableCache = false;
         }
 
-        if (isset($_SESSION["firstfreeday{$szurestipus}_{$helyszin}"]) && $enableCache) {
-            $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"];
+        if (CompanyService::isFGSZ()) {
+            $skipScan = true;
             $freeFound = true;
-        } else {
-            while ($testDay < 100) {
-                $this->bookingService->setHelyszin($helyszin);
-                $this->bookingService->setSzuresTipus($szurestipus);
-                $this->bookingService->setHonnan($testDay);
-                $json = $this->bookingService->showIdoPontValasztoV2();
+        }
 
-                if (substr_count($json, "foglaltbtn")) {
-                    $firstFreeDay = $testDay;
-                }
+        if (!$skipScan) {
+            if (isset($_SESSION["firstfreeday{$szurestipus}_{$helyszin}"]) && $enableCache) {
+                $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"];
+                $freeFound = true;
+            } else {
+                while ($testDay < 100) {
+                    $this->bookingService->setHelyszin($helyszin);
+                    $this->bookingService->setSzuresTipus($szurestipus);
+                    $this->bookingService->setHonnan($testDay);
+                    $json = $this->bookingService->showIdoPontValasztoV2();
 
-                if (substr_count($json, "foglalhatobtn")) {
-                    $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"] = $testDay;
-                    $freeFound = true;
-                    echo $firstFreeDay;
-                    break;
+                    if (substr_count($json, "foglaltbtn")) {
+                        $firstFreeDay = $testDay;
+                    }
+
+                    if (substr_count($json, "foglalhatobtn")) {
+                        $firstFreeDay = $_SESSION["firstfreeday{$szurestipus}_{$helyszin}"] = $testDay;
+                        $freeFound = true;
+                        break;
+                    }
+                    $testDay += 7;
                 }
-                $testDay += 7;
             }
         }
 

@@ -666,10 +666,12 @@ class AdminLabortetelekPage extends AdminCorePage
 
             $itemTexts = [];
             if (!empty($items)) {
-                $items = sql_query("select * from synlab_labor_tetelek t where id in (" . implode(",", $items) . ") order by t.name")->fetchAll(PDO::FETCH_ASSOC);
+                $items = sql_query("select * from synlab_labor_tetelek t where id in (" . implode(",", $items) . ") order by t.dontsend, t.name")->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($items as $item) {
+                    if ($item["dontsend"] == 1) {
+                        $item["name"] = "<span style='background:#ff6961;color:#fff;padding:2px;border-radius: 5px;'>{$item["name"]}</span>";
+                    }
                     $itemTexts[] = $item["name"];
-                    //echo "<div>{$item["name"]}</div>";
                 }
             }
 
@@ -728,10 +730,7 @@ class AdminLabortetelekPage extends AdminCorePage
             $html.= "</div></td>";
             $html.= "</tr>";
 
-            //if (!empty($itemTexts)) {
-                $html.= "<tr><td colspan='10'><div style='max-width: 800px;border-bottom:1px solid #ccc;padding-bottom: 5px;'>".implode(", ", $itemTexts)."</div></td></tr>";
-            //}
-
+            $html.= "<tr><td colspan='10'><div style='max-width: 800px;border-bottom:1px solid #ccc;padding-bottom: 5px;'>".implode(", ", $itemTexts)."</div></td></tr>";
         }
 
         $html.= "</table>";
@@ -916,7 +915,7 @@ class AdminLabortetelekPage extends AdminCorePage
 
         $rq = sql_query("SELECT slt.* FROM synlab_labor_tetelek slt 
                          WHERE slt.provider='spektrumlab' " . (!empty($filterId) ? "AND category = {$filterId}" : "") . " " . (!empty($appform) ? "AND appform={$appform}" : "") . "
-                         ORDER BY " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC")->fetchAll(PDO::FETCH_ASSOC);
+                         ORDER BY dontsend, " . (!empty($packageInstallSpektrum) ? $strPackageItemsSpektrum : "") . " slt.name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         $html .= "<div style='display:table-cell;vertical-align:top;'>";
         $html .= "<div style='font-size: 18px;font-weight: bold;margin-bottom: 10px;'>Spektrumlab tételek (".count($packageInstallSpektrum)." tétel)</div>";
@@ -927,7 +926,7 @@ class AdminLabortetelekPage extends AdminCorePage
         foreach ($rq as $resq) {
             $name = mb_substr($resq["name"], 0, 50);
             $class = (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "serviceselected" : "servicenotselected");
-            $html.= "<a data-provider='spektrumlab' data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' title='' class='{$class} csitemcheckbox2' style='' href='#'>{$name}</a> ";
+            $html.= "<a data-provider='spektrumlab' data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' title='' class='{$class} csitemcheckbox2' style='' href='#'>".($resq["dontsend"] == 1 ? "<i class='fa-solid fa-circle-exclamation'></i> ":"")."{$name}</a> ";
 
             //$html .= "<input data-csomagid='{$packageId}' data-itemid='{$resq["id"]}' class='csitemcheckbox' type='checkbox' name='item[]' " . (!empty($packageInstallSpektrum) && in_array($resq["id"], $packageInstallSpektrum) ? "checked" : "") . " value=\"{$resq["id"]}\">&nbsp;";
             //$html .= mb_substr($resq["name"], 0, 50);

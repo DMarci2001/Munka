@@ -189,5 +189,9 @@ function getConfigFile() {
         die("Error loading config!");
     }
 
+    if ($config == "hungariamed") {
+        $config = "hmm";
+    }
+
     return $config;
 }

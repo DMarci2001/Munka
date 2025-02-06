@@ -271,8 +271,14 @@ class BookingSyncApi {
         }
     }
 
-    public function newReservation($reservationId) {
-        $clinic           = Booking_Constants::SQL_DB;
+    public function newReservation($reservationId, $execute = false) {
+        $clinic = Booking_Constants::SQL_DB;
+        if (!$execute) {
+            //detach process
+            `php /var/www/onlinebejelentkezes_keltexmed/cron.php 'config={$clinic}&action=syncnewreservation&id={$reservationId}' > /dev/null 2>/dev/null &`;
+            return;
+        }
+
         $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $destinationPlace = $this->placeSyncMap[$clinic][1];
         $apiURL           = $this->placeSyncMap[$clinic][2];
@@ -291,8 +297,14 @@ class BookingSyncApi {
         }
     }
 
-    public function modifyReservation($reservationId) {
-        $clinic           = Booking_Constants::SQL_DB;
+    public function modifyReservation($reservationId, $execute = false) {
+        $clinic = Booking_Constants::SQL_DB;
+        if (!$execute) {
+            //detach process
+            `php /var/www/onlinebejelentkezes_keltexmed/cron.php 'config={$clinic}&action=syncmodifyreservation&id={$reservationId}' > /dev/null 2>/dev/null &`;
+            return;
+        }
+
         $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $destinationPlace = $this->placeSyncMap[$clinic][1];
         $apiURL           = $this->placeSyncMap[$clinic][2];

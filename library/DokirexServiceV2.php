@@ -402,7 +402,7 @@ class DokirexService
         if(empty($ids)) {
             return $array;
         }
-        $q = sql_query("SELECT TelephelyID as id,TelephelyNev as nev FROM dokirex_telephelyek WHERE TelephelyID IN ({$ids})");
+        $q = sql_query("SELECT TelephelyID as id,TelephelyNev as nev FROM dokirex_telephelyek WHERE TelephelyID IN ({$ids}) ORDER BY INSTR(CegNev, 'Keltexmed')");
         while ($result=sql_fetch_array($q)) {
             $array[] = $result;
         }

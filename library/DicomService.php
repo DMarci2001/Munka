@@ -29,7 +29,7 @@ class DicomService {
 
     public function addFile($uploadedFile):string {
         if (is_uploaded_file($uploadedFile["tmp_name"])) {
-            $tempFile = self::STORAGE_DIR."/".$uploadedFile["name"];
+            $tempFile = self::STORAGE_DIR."/manual_".$uploadedFile["name"];
             @move_uploaded_file($uploadedFile["tmp_name"], $tempFile);
 
             $output = `dcm2xml +Ca latin-1 {$tempFile}`;
@@ -185,7 +185,7 @@ class DicomService {
         $d = dir(self::STORAGE_DIR);
 
         while (false !== ($entry = $d->read())) {
-            if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX") {
+            if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX" || substr_count(strtolower($entry), ".dcm") > 0) {
                 $entries[] = self::STORAGE_DIR."/".$entry;
             }
         }
@@ -286,6 +286,7 @@ class DicomService {
 
     public function getRawImage($id) {
         $param = "";
+        $dcmParam = "--use-window 1";
 
         if (isset($_GET["normalize"])) {
             $param.= " -normalize";
@@ -309,32 +310,22 @@ class DicomService {
             return $content;
         }
 
-        if (isset($_GET["embedinfo"])) {
-            $image = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
-
-            $black = imagecolorallocate($image, 0, 0, 0);
-            $white = imagecolorallocate($image, 255, 255, 255);
-            $fontPath = Booking_Constants::APP_PATH."public/images/webfonts/roboto_regular_hungarian/Roboto-Regular-webfont.ttf";
-            $text = "Ide jön a paciens neve!";
-
-            imagettftext($image, 45, 0, 76, 126, $black, $fontPath, $text);
-            imagettftext($image, 45, 0, 75, 125, $white, $fontPath, $text);
-
-            $content["imageData"] = $image;
-            return $content;
+        if ($content["manufacturerModelName"] == "NAOMI" && substr_count($content["fileName"], "manual_") > 0) {
+            //naomi sötét képekhez kivétel
+            $dcmParam = "--roi-min-max-window 700 700 1000 3000 --inverse-shape";
         }
 
         if (isset($_GET["thumb"])) {
             $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
             if (!is_file($thumbLocation)) {
-                `dcmj2pnm --write-png --min-max-window {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
+                `dcmj2pnm --write-png {$dcmParam} {$content["fileName"]} | convert - -resize 200 {$thumbLocation}`;
             }
             $content["imageData"] = imagecreatefromstring(file_get_contents($thumbLocation));
         } else {
             if (!empty($param)) {
-                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$content["fileName"]} | convert - {$param} png:-`);
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$dcmParam} {$content["fileName"]} | convert - {$param} png:-`);
             } else {
-                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png --use-window 1 {$content["fileName"]}`);
+                $content["imageData"] = imagecreatefromstring(`dcmj2pnm --write-png {$dcmParam} {$content["fileName"]}`);
             }
         }
 

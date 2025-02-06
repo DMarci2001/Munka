@@ -603,14 +603,16 @@ class BookingService
                         //új managerfoglalás módszer
                         if (!empty($this->packContentTypes)) {
                             if (!isset($availableData[$nap])) {
-                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET,$beginHour);
+                                $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET);
 
-                                /*echo "<pre>";
-                                print_r($availableData);
-                                echo "</pre>";*/
+                                if (session_id() == "6f4e9bbellt7r9qhrsvrsft1ge") {
+                                    //$sectionHTML.= "<pre>";
+                                    //$sectionHTML.= print_r($availableData, true);
+                                    //$sectionHTML.= "</pre>";
+                                }
                             }
-                            if (!empty($availableData[$nap]["error"])) {
 
+                            if (!empty($availableData[$nap]["error"])) {
                                 $buttonTitle = "";
                                 $buttonClass = "foglaltbtn";
                                 $buttonJava = "nemfog();return false;";
@@ -886,6 +888,10 @@ class BookingService
     }
 
 
+    public function getTimeSlots($beos):array {
+
+    }
+
     private bool $debugPack = false;
 
     public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array(),$forcdeBeginHour=null):array {
@@ -918,7 +924,7 @@ class BookingService
 
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId, $orvos, true)) {
                 foreach ($beos as &$beoData) {
-                    if ($beoData["nopack"] != 0) {
+                    if ($beoData["nopack"] != 0 && !isset($GLOBAL["ezmostegysuzukifoglalas"])) {
                         continue;
                     }
                     
@@ -926,13 +932,22 @@ class BookingService
                     $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];
                     $step        = 0;
-                    $beoMinMax   = $this->getMinMax($this->getBeosztasok($day, $this->helyszin, $packTypeId, $orvosId, true));
-                    $beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
-                    $beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
+                    //$beoMinMax   = $this->getMinMax($this->getBeosztasok($day, $this->helyszin, $packTypeId, $orvosId, true));
+                    //$beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
+                    //$beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
+
+                    $beginHour   = intval(substr($beoData["tol"], 0, 2));
+                    $beginMinute = intval(substr($beoData["tol"], 0, 2));
 
                     //Ha van küldött kezdési óra, akkor onnan kezdődik a szabad időpont keresés
+                    //ebben bug van, át kell nézni ha máskor kell ilyen
                     if(!empty($forcdeBeginHour)){
                         $beginHour = $forcdeBeginHour;
+                    }
+
+                    if ($orvosId == 64 and User::debugUser()) {
+                        //$error.= "<pre>{$orvosId}{$orvosNev}".print_r($beoMinMax, true)."</pre>";
+                        //$error.= "<pre>".print_r($timeData, true)."</pre>";
                     }
 
                     while (true) {
@@ -941,13 +956,26 @@ class BookingService
                         }
 
                         $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $interval, 0, date("m"), date("d"), date("Y")));
-                        if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
+                        //if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
+                        if (strtotime($ora) >= strtotime($beoData["ig"])) {
                             break;
                         }
                         $step++;
 
+                        if ($orvosId == 64 and User::debugUser()) {
+                            //$error.= "<pre>".print_r($beoMinMax, true)."</pre>";
+                            //$error.= "<pre>{$orvosId}".print_r($ora, true)."</pre>";
+                            //$error.= "<pre>{$orvosId}".print_r($beoData, true)."</pre>";
+                        }
+
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
                             $timeData = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
+
+                            if ($orvosId == 64 and User::debugUser()) {
+                                //$error.= "<pre>wtf ".print_r($beoMinMax, true)."</pre>";
+                                //$error.= "<pre>wtf2{$orvosId} ".print_r($timeData, true)."</pre>";
+                            }
+
                             if ($limitTimes) {
                                 $timeTableForPackage[$packTypeId] = $timeData;
                                 break 2;
@@ -964,9 +992,9 @@ class BookingService
                 $vanFixError = true;
             }
 
-            /*if (User::debugUser()) {
-                $error.= print_r($timeTableForPackage[$packTypeId],true);
-            }*/
+            //if (User::debugUser()) {
+            //    $error.= print_r($timeTableForPackage[$packTypeId],true);
+            //}
 
             if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
                 if (User::debugUser()) {
@@ -1429,7 +1457,10 @@ class BookingService
         return $return;
     }
 
-    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0],$radioButton=false,$selectedSzolg):string {
+    public function getTipusMegj($cegid, $tid, $helyszinId = Booking_Constants::DEFAULT_PLACE_IDS[0], $radioButton = false, $selectedSzolg = 0):string {
+        //$radioButton = false;
+        //$selectedSzolg = 0;
+
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -3015,14 +3046,15 @@ class BookingService
     }
 
     public function numberOfReservationRequired():int {
-        if (CompanyService::isCib()) {
-            if (session_id() == "ilh1cct47kd3jqpn5o5ggtqmf9" || session_id() == "rj5cbf2g8d5n22r73hv00jobar") {
+        if (CompanyService::isFGSZ()) {
+            if (session_id() == "fpsdm440519dgohrth4a3kf4om" || session_id() == "rj5cbf2g8d5n22r73hv00jobar") {
                 $doctors = $this->beosztasService->getDoctors($_SESSION["helyszindata"]["id"], $this->helyszin, $this->szuresTipus);
                 if (count($doctors) == 1) {
                     if ($doctors[0]["onlytel"] == 1 && substr_count($doctors[0]["email"], "@") && substr_count($doctors[0]["email"], ".")) {
                         return 3;
                     }
                 }
+                return 3;
             }
         }
         return 1;

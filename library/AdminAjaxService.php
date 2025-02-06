@@ -26,9 +26,9 @@ class AdminAjaxService {
         if (isset($_GET["keltexsync"])) {
             $service = new BookingSyncApi();
 
-            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned='406' AND datum>NOW()")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($reservations as $reservation) {
-                echo $reservation["nev"]." ";
+            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned='427' AND datum>NOW() limit 100")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($reservations as $key => $reservation) {
+                echo $key." ".$reservation["nev"]."<br/>";
                 $service->newReservation($reservation["id"]);
             }
             die;
@@ -39,6 +39,12 @@ class AdminAjaxService {
             $_SESSION["mainmenuwidth"] = $width;
             die;
         }
+
+        if (isset($_POST["setStyckyVarolista"])) {
+            $_SESSION["setStyckyVarolista"] = $_POST["setStyckyVarolista"];
+            die;
+        }
+
 
         if (isset($_GET["delassets22222222222222"])) {
             $docAgent = new DocAgent();
