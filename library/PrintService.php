@@ -1016,6 +1016,7 @@ class PrintService
         "Dr. Hollandi Erzsébet" =>60694,
         "Dr. Balogh Zsuzsanna" => 81137,
         "Dr. Nemecz Zsuzsanna" => 37220,
+        "Dr. Szűcs Rozália" => 31436,
     ];
 
     private function innioErtesites(){
