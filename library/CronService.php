@@ -22,6 +22,10 @@ class CronService {
         $this->utils = new Utils();
         $this->bookingService = new BookingService();
 
+        if (isset($_GET["action"])) {
+            $this->processActions();
+            die;
+        }
 
 
         if (isset($_GET["dicomteszt"])) {
@@ -149,10 +153,13 @@ class CronService {
     }
 
     private function _tesztStuff() {
-        //$service = new NotificationService();
-        //$service->xmasCampaign2024();
+        //$this->saveResultPdfs();
 
-        $this->sendReviewMails();
+
+        $service = new NotificationService();
+        $service->xmasCampaign2024();
+
+        //$this->sendReviewMails();
 
         /*
 
@@ -1037,6 +1044,37 @@ class CronService {
                 $service->sendReviewMail($reservation);
             }
         }
+
+    }
+
+
+    private function processActions() {
+        if ($_GET["action"] == "syncnewreservation") {
+            $service = new BookingSyncApi();
+            $service->newReservation($_GET["id"], true);
+        }
+        if ($_GET["action"] == "syncmodifyreservation") {
+            $service = new BookingSyncApi();
+            $service->modifyReservation($_GET["id"], true);
+        }
+    }
+
+    private function saveResultPdfs() {
+        $service = new DocAgent();
+
+        $results = sql_query("SELECT c.megnev AS ceg, r.* FROM labrequests r 
+            LEFT JOIN foglalasok f ON f.id=r.foglalasid
+            LEFT JOIN cegek c ON c.id=f.cegid
+            WHERE provider='spektrumlab' AND r.status='done' AND INSTR(c.megnev, 'auchan') AND YEAR(r.created)=2024
+            ORDER BY created DESC")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($results as $result) {
+            echo "{$result["id"]} {$result["nev"]}\n";
+
+            $pdf = $service->getDocByType("laborresult", $result["id"]);
+
+            file_put_contents("/var/www/marci/keltexmed_auchan_pdfek/".date("Y-m-d_", strtotime($result["created"]))."{$result["id"]}.pdf", $pdf);
+        }
+
 
     }
 

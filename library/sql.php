@@ -16,6 +16,9 @@ function sql_connect() {
 }
 
 function sql_query($q,$params=null) {
+    if (!empty($GLOBALS["showqueries"])) {
+        echo "<pre>".htmlentities($q)."</pre>";
+    }
     $stmt = $GLOBALS["db"]->prepare($q);
     $stmt->execute($params);
     $error = $stmt->errorInfo();

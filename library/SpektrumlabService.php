@@ -155,7 +155,7 @@ class SpektrumlabService {
     public function generateHL7FileByRequestId($requestId):string {
         $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
         $reservationData = sql_query("select f.*, o.nev as orvosnev from foglalasok f left join orvosok o on o.id=f.orvosassigned where f.id=?", [$requestData["foglalasid"]])->fetch(PDO::FETCH_ASSOC);
-        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=?", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
+        $items = sql_query("SELECT ri.*, commazo,t.`name` FROM labrequestitems ri LEFT JOIN synlab_labor_tetelek t ON t.id=ri.itemid WHERE ri.requestid=? AND t.dontsend=0", [$requestId])->fetchAll(PDO::FETCH_ASSOC);
         $result = "";
 
         if (CompanyService::isSuzuki($reservationData["cegid"])) {

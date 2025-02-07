@@ -51,6 +51,28 @@ class AdminLabRequestsPage extends AdminCorePage {
             die;
         }
 
+
+        if (isset($_POST["storeLabKiertekeles"])) {
+            if (!$this->adminUser->laborRequestPageAccess()) {
+                Utils::jsonOut(["error" => "Jogosultság hiba", "html" => ""]);
+            }
+
+            $error = "";
+            $message = "Kiértékelés visszavonva!";
+            $requestId = intval($_POST["storeLabKiertekeles"]);
+
+            sql_query("update labrequests set kiertekelve=not kiertekelve, kiertekelveby=?, kiertekelvedate=now() where id=?", [$this->adminUser->user["nev"], $requestId]);
+            if ($data = sql_query("SELECT kiertekelve, kiertekelveby FROM labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC)) {
+                if ($data["kiertekelve"] == 1) {
+                    $message = "Kiértékelés tárolva: {$data["kiertekelveby"]}";
+                }
+            }
+
+            $requests = $this->getLabRequests(["id" => $requestId]);
+
+            Utils::jsonOut(["error" => $error, "message"=> $message, "html" => $this->labRequestRow($requests[0])]);
+        }
+
         if (isset($_POST["savelaborpaciensdata"])) {
             if (!$this->adminUser->laborRequestPageAccess()) {
                 Utils::jsonOut(["error" => "Jogosultság hiba", "html" => ""]);
@@ -494,15 +516,15 @@ class AdminLabRequestsPage extends AdminCorePage {
         $html.= "<div style='{$cellStyle}'>{$request["szuldatum"]}<div>{$request["taj"]}</div></div>";
         $html.= "<div style='{$cellStyle}'>";
         if ($request["result"] == 1) {
-            $html.= "<div style=''><a class='printbutton' target='_blank' href='index.php?print&template=laborlelet1&rid={$request["id"]}&p={$request["pass"]}' style='background: #00aa00;padding:1px 5px;'>Lelet letöltése</a></div>";
+            $html.= "<div style=''><a class='printbutton' target='_blank' href='index.php?print&template=laborlelet1&rid={$request["id"]}&p={$request["pass"]}' style='background: #00aa00;padding:1px 5px;font-size: 15px;'>Letöltés</a>&nbsp;</div>";
         }
         $html.= "</div>";
         $html.= "<div style='{$cellStyle}'>";
         $html.= "<div id='ertesitesform{$request["id"]}'>".$this->userErtesitesForm($request)."</div>";
 
-        if (!empty($request["megj"])) {
-            $html.= "<div style='display: inline-block;background:red;color:white;border-radius: 5px;padding:3px 5px;max-width:400px;white-space: normal;'>{$request["megj"]}</div>";
-        }
+        //if (!empty($request["megj"])) {
+        //    $html.= "<div style='display: inline-block;background:red;color:white;border-radius: 5px;padding:3px 5px;max-width:400px;white-space: normal;'>{$request["megj"]}</div>";
+        //}
 
         $html.= "</div>";
 
@@ -510,21 +532,40 @@ class AdminLabRequestsPage extends AdminCorePage {
     }
 
     public function userErtesitesForm($request):string {
-        $html = "";
+        $html = $tooltip = "";
+        $icon = "fa-square";
+        $buttonText = "Küldés...";
+        $color = "#00aa00";
 
         if ($request["result"] == 1) {
             if ($request["ertesitve"] == 1) {
                 $logArray = explode("<br/>", $request["ertesiteslog"]);
-                $html .= $logArray[0];
-                $buttonText = "Újraküldés...";
+                //$html .= $logArray[0];
+                $tooltip = $logArray[0];
+                //$buttonText = "Újraküldés...";
+                $icon = "fa-square-check";
             } else {
-                $html .= "Még nincs kiküldve";
-                $buttonText = "Küldés...";
+                //$html .= "Még nincs kiküldve";
+                $tooltip = "Még nincs kiküldve";
+                $color = "#88aa88";
             }
 
-            if ($buttonText != "") {
-                $html .= " <a onclick='sendLeletWindow(this);return false;' title='{$request["email"]}' data-id='{$request["id"]}' data-email='{$request["email"]}' class='printbutton' target='_blank' href='#' style='background: #00aa00;padding:1px 5px;'><i class='fa-solid fa-envelope'></i> {$buttonText}</a>";
+            $html .= " <a title='{$tooltip}' onclick='sendLeletWindow(this);return false;' data-id='{$request["id"]}' data-email='{$request["email"]}' class='printbutton' target='_blank' href='#' style='background:{$color};padding:1px 5px;font-size: 15px;'><i class='fa-solid {$icon}'></i> {$buttonText}</a>";
+
+            if (substr_count($request["laboritems"], "\"".Booking_Constants::SPEKTRUM_KIERTEKELES_ID."\"")) {
+                $icon = "fa-square";
+                $tooltip = "Nincs kiértékelve";
+                if ($request["kiertekelve"] == 1) {
+                    $icon = "fa-check-square";
+                    $tooltip = "Kiértékelte: {$request["kiertekelveby"]}, időpont: ".date("Y-m-d H:i", strtotime($request["kiertekelvedate"]));
+                }
+                $html .= "&nbsp;&nbsp;<a title='{$tooltip}' onclick='storeLabKiertekeles(this);return false;' data-id='{$request["id"]}' class='printbutton' target='_blank' href='#' style='background: #aaaa00;padding:1px 5px;font-size: 15px;'><i class='fa-solid {$icon}'></i> Kiértékelés..</a>";
             }
+
+        }
+
+        if (!empty($request["megj"])) {
+            $html.= "<div style='display:inline-block;background:red;color:white;border-radius:5px;padding:3px 5px;white-space:nowrap;margin-left:10px;'>{$request["megj"]}</div>";
         }
 
         return $html;
@@ -572,7 +613,7 @@ class AdminLabRequestsPage extends AdminCorePage {
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, IF(r.status='done', 1, 0) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.laboritems, r.kiertekelveby, r.kiertekelve, r.kiertekelvedate, IF(r.status='done', 1, 0) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN cegek c ON c.id=f.cegid

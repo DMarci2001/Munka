@@ -92,4 +92,6 @@ class Booking_Constants {
     const COVID_ID                  = 101;
 
     const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
+
+    const SPEKTRUM_KIERTEKELES_ID   = 870;
 }

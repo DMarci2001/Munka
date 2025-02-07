@@ -16,6 +16,18 @@ class AdminDicomPage extends AdminCorePage
 
         $this->dicomService = new DicomService();
 
+        if (isset($_GET["dicomteszt"])) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', 1);
+
+            //sötét kép teszt";
+            header("Content-Type: image/png");
+            //imagePNG(imagecreatefromstring(`dcmj2pnm --write-png --histogram-window 8 /var/rtg/2024_12_17_100017_PA_CHEST.dcm`));
+            imagePNG(imagecreatefromstring(`dcmj2pnm --write-png --roi-min-max-window 700 700 1000 3000 --inverse-shape /var/rtg/2024_12_17_100017_PA_CHEST.dcm`));
+            die;
+        }
+
+
         if (!isset($_SESSION["lastdicomcompany"])) {
             $_SESSION["lastdicomcompany"] = 0;
         }

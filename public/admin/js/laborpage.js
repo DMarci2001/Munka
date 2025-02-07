@@ -248,6 +248,28 @@ function sendLeletWindow(el) {
     })
 }
 
+function storeLabKiertekeles(el) {
+    let rid = $(el).data("id");
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: { storeLabKiertekeles:rid },
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $("#requestrow"+rid).html(response.html);
+            $.toast({
+                text: response.message,
+                icon: 'success'
+            });
+        }
+    })
+
+}
+
 
 function saveLaborPaciensData(hide) {
     let rid = $("#laborrequestid").val();

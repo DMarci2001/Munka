@@ -1941,4 +1941,76 @@ END:VCALENDAR";
 
     }
 
+    public function xmasCampaign2024() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $subscribedEmails = [];
+        //$subscribedEmails[] = "jnsmobil@gmail.com";
+
+        $emailokRaw = file_get_contents("/var/www/onlinebejelentkezes_keltexmed/library/other/top100_emailok.txt");
+        foreach (explode("\n", $emailokRaw) as $line) {
+            $line = str_replace([";", ",", ":", "?", "\"", " ", "\t", "\n", "\r"], ["", "", "", "", "", "", "", "", ""], $line);
+            $line = trim($line);
+            if (!empty($line)) {
+                if (!filter_var($line, FILTER_VALIDATE_EMAIL)) {
+                    //rossz email
+                    //echo strlen($line) . $line . PHP_EOL;
+                } else {
+                    if (in_array($line, $subscribedEmails)) {
+                        //echo "Ez többször van: " . $line . PHP_EOL;
+                    } else {
+                        $subscribedEmails[] = $line;
+                    }
+                }
+            }
+        }
+
+        echo "count:" . count($subscribedEmails). PHP_EOL;
+        //die();
+
+        if (true) {
+            $subscribedEmails = [];
+            //$subscribedEmails[] = "jns@jns.hu";
+            $subscribedEmails[] = "jnsmobil@gmail.com";
+            //$subscribedEmails[] = "adamekne.tannert.ildiko@hungariamed.hu";
+            //$subscribedEmails[] = "kuzdy@kuzdy.hu";
+            //$subscribedEmails[] = "sandor@hungariamed.hu";
+        }
+
+
+        print_r($subscribedEmails);
+
+
+
+        $mail = self::getDefaultMailer();
+        $mail->From = "kuzdy@hungariamed.hu";
+        $mail->FromName = "Dr. Küzdy Gábor";
+
+        $mail->AddEmbeddedImage("/var/www/onlinebejelentkezes_keltexmed/public/images/image003.png", "image003");
+        $mail->AddEmbeddedImage("/var/www/onlinebejelentkezes_keltexmed/public/images/logo-retina.png", "logoimage");
+        $mail->AddAttachment("/var/www/onlinebejelentkezes_keltexmed/public/images/MaESZ_Igenylesi_es_Tamogatasi_Projekt_2025-11-14.pdf");
+
+        $number = 0;
+        foreach ($subscribedEmails as $email) {
+            $number ++;
+
+            $body = file_get_contents("/var/www/onlinebejelentkezes_keltexmed/public/images/hirlevel_2025_01.html");
+
+            $body = str_replace("{EMAIL}", $email, $body);
+            $body = str_replace("{EMAILURL}", urlencode($email), $body);
+
+            $mail->clearAddresses();
+            $mail->clearCCs();
+            $mail->clearBCCs();
+
+            $mail->addAddress($email);
+            $mail->Subject = "90%-os támogatottságú Egészségvédelmi szűrőprogramok országosan";
+            $mail->Body = $body;
+            $mail->send();
+            echo "{$number}. sent: ".date("Y-m-d H:i:s")." {$email}".PHP_EOL;
+        }
+    }
+
+
 }

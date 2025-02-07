@@ -169,6 +169,7 @@ class VaroteremService
         $html .= "  <button style=\"font-size:12px;\" class=\"btn btn-secondary\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#waitlist-setup-table\" aria-expanded=\"false\" aria-controls=\"waitlist-setup-table\">";
         $html .= "      <i class=\"fa-solid fa-sliders\"></i>&nbsp;Vizsgálatok testreszabása";
         $html .= "  </button>";
+        $html.= " <input type='checkbox' id='stickyvarolista' value='1' ".(!empty($_SESSION["setStyckyVarolista"]) ? "checked":"")." onchange='stickyVarolistaToggle(this);'/> rögzítés";
         //$html .= "<div  id=\"collapseExamSetupPanel\">";
         $html .= "  <div class=\"collapse\" id=\"waitlist-setup-table\">{$this->setupLathatoVizsgalatok()}</div>";
         //$html .=    ;

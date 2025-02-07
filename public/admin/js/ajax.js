@@ -4499,9 +4499,11 @@ function sendLaborKeroNew() {
 
     $(".laborkerovizsgalatcheck").show();
 
+    let packText = $("#labreqsendbutton").data("packtext")
+
     Swal.fire({
         title: "Biztos elküldöd a laborkérést?",
-        text: "A művelet nem visszavonható, a küldés után csak a labor ügyfélszolgálata tud módosítani!",
+        html: packText + "<br/><br/>A művelet nem visszavonható, a küldés után csak a labor ügyfélszolgálata tud módosítani!",
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
@@ -4962,3 +4964,22 @@ function setPatientDataCol(col,index){
         }
     })
 }
+
+
+function stickyVarolistaToggle(el) {
+    let checked = 0;
+    $("#waiting-room").css("position", "");
+    if ($(el).is(":checked")) {
+        checked = 1;
+        $("#waiting-room").css("position", "sticky");
+        $("#waiting-room").css("top", "0");
+    }
+
+
+    $.ajax({
+        url:"index.php?page=booking",
+        type:"POST",
+        data:{setStyckyVarolista:checked}
+    })
+}
+
