@@ -1030,8 +1030,22 @@ class CronService {
             "proc" => `w`,
         ];
 
+        $this->checkServerData($serverData);
+
         sql_query("insert into sitedata set datum=now(), tipus='serverdata', valuetext=?", [json_encode($serverData, JSON_PRETTY_PRINT)]);
         //echo "serverdata{$result}";
+    }
+
+    private function checkServerData($data){
+        $tels = ["06303668412","06209162276","06209996183"];
+        foreach($data as $index=>$server){
+            if(empty($server["hdd"]) || empty($server["proc"])){
+                $szoveg = "A {$server["name"]} nem elérhető! A pontos idő: ".date("Y.m.d H:i:s");
+                foreach($tels as $tel){
+                    $this->utils->sendSMS($tel,$szoveg);
+                }
+            }
+        }
     }
 
     private function sendReviewMails():void {
