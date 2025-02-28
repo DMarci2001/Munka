@@ -1018,6 +1018,7 @@ class PrintService
         "Dr. Nemecz Zsuzsanna" => 37220,
         "Dr. Szűcs Rozália" => 31436,
         "Dr.Kiss Beáta Margit" => 65886,
+        "Dr. Diczku Valéria" => 38122,
     ];
 
     private function innioErtesites(){
