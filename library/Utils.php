@@ -605,6 +605,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         $hidden       = $this->getFieldHidden($field);
         $inputMode    = "";
 
+
         switch ($fieldName) {
             case "taj":
                 $translateKey = "tajszam";
@@ -738,6 +739,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             case "adoszam":
                 //adószám csak 1 cégnek
                 if (!CompanyService::isFesztivalEgyeb()) {
+                    $hidden = true;
+                }
+                break;
+            case "companytext":
+                //cégbeírás csak a fogleü oldalra
+                if (!CompanyService::isFogleu()) {
                     $hidden = true;
                 }
                 break;

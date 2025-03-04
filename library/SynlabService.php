@@ -668,7 +668,6 @@ class SynlabService
         //die("txt ok");
 
 
-
         $emailConfigs["hungariamed"] = [
             ["email" => "tigazszures@hungariamed.hu", "password" => "Ree8ceix", "emailToCheck" => 100],
             ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 200],
@@ -679,6 +678,11 @@ class SynlabService
             ["email" => "aldilabor@hungariamed.hu", "password" => "pVT54EuzwetvfUk4", "emailToCheck" => 100],
         ];
 
+        /*
+        $emailConfigs["hungariamed"] = [
+            ["email" => "synlab@hungariamed.hu", "password" => "SynLaB2223", "emailToCheck" => 2000],
+        ];
+        */
         $emailConfigs["keltexmed"] = [
             ["email" => "keltexmed@keltexmed.hu", "password" => "Keltex55", "emailToCheck" => 200],
         ];
@@ -709,7 +713,7 @@ class SynlabService
 
                 $header = imap_headerinfo($connection, $msgNum);
                 //$raw_body = imap_body($connection, $msgNum);
-                $subject = $header->subject;
+                $subject = mb_decode_mimeheader($header->subject);
                 $from = $header->from[0]->mailbox . "@" . $header->from[0]->host;
                 $structure = imap_fetchstructure($connection, $msgNum);
                 $mailDate = date("Y-m-d H:i:s", strtotime($header->date));
@@ -718,7 +722,7 @@ class SynlabService
                     continue;
                 }
 
-                echo "processing mail from: {$from} {$mailDate}\n";
+                echo "processing mail from: {$from} {$mailDate} {$subject}\n";
 
                 $a = 0;
                 foreach ($structure->parts as $part) {
@@ -726,7 +730,7 @@ class SynlabService
                         $part->ifdparameters = 1;
                         $part->dparameters = $part->parameters;
                     }
-                    //print_r($part);
+
                     if ($part->ifdparameters) {
                         foreach ($part->dparameters as $object) {
                             echo "from:{$from} attr:".strtolower($object->attribute)."\n";
@@ -741,6 +745,7 @@ class SynlabService
                                     //continue;
                                 //}
 
+                                $fileName = mb_decode_mimeheader($fileName);
                                 echo "{$encoding} {$subtype} {$fileName}\n";
 
                                 if (substr_count(strtolower($fileName), ".pdf")) {
@@ -771,7 +776,7 @@ class SynlabService
                                         continue;
                                     }
 
-                                    $parsedPatientData = $this->parsePatientDataFromPDF($tempFileDecoded);
+                                    $parsedPatientData = $this->parsePatientDataFromPDF($tempFileDecoded, $subject);
 
                                     sql_query("insert into labrequests set megj='',createdby='cron', created=now(), resultdate=?, nev=?, taj=?, szuldatum=?, email=?, status='done', provider=?, synlabfilename=?, synlabdata=?, pass=?, folyamatban=?, bekuldokod=?", [
                                         $mailDate,
@@ -863,7 +868,7 @@ class SynlabService
     }
 
 
-    private function parsePatientDataFromPDF($pdfFile):array {
+    private function parsePatientDataFromPDF($pdfFile, $subject = ""):array {
         $utils = new Utils();
 
         $config = new \Smalot\PdfParser\Config();
@@ -888,6 +893,14 @@ class SynlabService
             $result["taj"] = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
             $result["szulDatum"] = substr($text, strpos($text, "www.synlab.hu") + 14, 10);
             $result["folyamatban"] = substr_count($text, "Folyamatban") ? 1 : 0;
+        }
+
+        if ($subject == "GenoID laboratóriumi eredmény") {
+            $nev = trim(substr($text, strpos($text, "Beküldő") + 9, 100));
+            $result["nev"] = substr($nev, 0, strpos($nev, "\t"));
+            $taj = trim(substr($text, strpos($text, "TAJ:") + 5, 50));
+            $result["taj"] = trim(substr($taj, 0, strpos($taj, "\t")));
+            $result["szulDatum"] = substr($text, strpos($text, "Születési idő:") + 17, 10);
         }
 
         $result["bekuldokod"] = "";

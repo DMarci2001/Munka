@@ -280,27 +280,41 @@ class SpektrumlabService {
     MSA|AR|23845|[REQNO: 23845] Sikertelen fogadás
     */
 
+
+    private string $storeTable = "labrequests";
+
+    private function getRequestId($id):int {
+        $this->storeTable = "labrequests";
+        if (substr_count($id, "gyor")) {
+            $id = str_replace("gyor", "", $id);
+            $this->storeTable = "hungariamed_gyor.labrequests";
+        }
+        return intval($id);
+    }
+
     public function processPdfFromMessages($smallOnly = false):void {
         $docAgent = new DocAgent();
 
         $tempPdf = "/var/pdfwork/spektrumResult_".Booking_Constants::SQL_DB.".pdf";
         $messages = sql_query("SELECT * FROM labrequestmessages WHERE laborprovider in ('spektrumlab', '') and STATUS='' and tipus='in' and datum>date_sub(now(), interval 2 week) ".($smallOnly ? "AND LENGTH(content)<20000":"")." ORDER BY datum DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($messages as $message) {
-            $lastRequestId = 0;
+            $lastRequestId = $this->getRequestId(0);
             $lastResultDate = "0000-00-00 00:00:00";
             $rows = explode("\r", $message["content"]);
             foreach ($rows as $key => $row) {
                 $fields = explode("|", $row);
                 if (trim($fields[0]) == "OBR") {
-                    $lastRequestId = intval($fields[2]);
+                    //$lastRequestId = intval($fields[2]);
+                    $lastRequestId = $this->getRequestId($fields[2]);
                     $lastResultDate = date("Y-m-d H:i:s", strtotime($fields[7]));
                 }
                 if (trim($fields[0]) == "MSA") {
-                    $lastRequestId = intval($fields[2]);
-                    sql_query("update labrequests set errormsg=? where id=?", [$row, $lastRequestId]);
+                    //$lastRequestId = intval($fields[2]);
+                    $lastRequestId = $this->getRequestId($fields[2]);
+                    sql_query("update {$this->storeTable} set errormsg=? where id=?", [$row, $lastRequestId]);
                 }
                 if (trim($fields[0]) == "ZPO" && !empty($lastRequestId)) {
-                    sql_query("update labrequests set matricacode=? where id=?", [$fields[1], $lastRequestId]);
+                    sql_query("update {$this->storeTable} set matricacode=? where id=?", [$fields[1], $lastRequestId]);
                 }
                 if (trim($fields[3]) == "LELETPDF") {
                     file_put_contents($tempPdf, base64_decode($fields[5]));
@@ -309,10 +323,11 @@ class SpektrumlabService {
                     $text = $pdf->getText();
                     $folyamatban = substr_count($text, "Folyamatban") ? 1:0;
 
-                    sql_query("update labrequests set status='done', ertesitve=0, folyamatban=?, resultdate=?, scanresult='' where id=?", [$folyamatban, $lastResultDate, $lastRequestId]);
+                    sql_query("update {$this->storeTable} set status='done', ertesitve=0, folyamatban=?, resultdate=?, scanresult='' where id=?", [$folyamatban, $lastResultDate, $lastRequestId]);
                     $docAgent->saveLocalDoc($tempPdf, ["assetid" => DocAgent::ASSET_LABOR_RESULT, "dataid" => $lastRequestId]);
 
-                    $lastRequestId = intval($fields[2]);
+                    //$lastRequestId = intval($fields[2]);
+                    $lastRequestId = $this->getRequestId($fields[2]);
                 }
             }
 

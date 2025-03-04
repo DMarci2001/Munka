@@ -435,7 +435,7 @@ function setSelectedOrvos(oId) {
 function addIdopont(idopont, szt, el) {
     $(".eloj_dialog").hide();
 
-    if (szt.indexOf(',') > -1 || szt === "254") {
+    if (szt.indexOf(',') > -1 || szt === "254" || szt === "191") {
         $.ajax({
             url: 'index.php',
             type: 'GET',
@@ -4983,3 +4983,15 @@ function stickyVarolistaToggle(el) {
     })
 }
 
+function filterElojegyzesTableByTipus(tid) {
+
+    $.ajax({
+        type: "GET",
+        url: "index.php?page=booking&showelojegyzestable&setelojegyzestipusfilter="+encodeURIComponent(tid),
+        success: function (response) {
+            $("#elojegyzestable").html(response);
+            afterElojegyzesTableInit();
+        }
+    });
+
+}

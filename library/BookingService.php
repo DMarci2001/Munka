@@ -2030,6 +2030,7 @@ class BookingService
         if (!isset($data["cegid"])) $data["cegid"] = 0;
         if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"],$data);
         if (!isset($data["jarat"])) $data["jarat"] = "";
+        if (!isset($data["companytext"])) $data["companytext"] = "";
 
         if (!empty($_SESSION["selectedJarat"])) {
             $data["jarat"] = $_SESSION["selectedJarat"];
@@ -2080,6 +2081,7 @@ class BookingService
 			expire=?,
 			pass=?,
             jarat=?,
+            companytext=?,
             dokirexcegid=?",
             array(
                 $data["parentid"],
@@ -2124,6 +2126,7 @@ class BookingService
                 $data["expire"],
                 $data["pass"],
                 $data["jarat"],
+                $data["companytext"],
                 $data["dokirexcegid"]
             )
         );

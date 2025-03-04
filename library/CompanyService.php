@@ -145,6 +145,10 @@ class CompanyService {
         return $_SESSION["helyszindata"]["domain"] == "oif" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
     }
 
+    public static function isFogleu($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "fogleu" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
     const BudapestBrand_ID = 840; 
     public static function isBudapestBrand($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "budapestbrand" || ($companyId == self::BudapestBrand_ID && Booking_Constants::SQL_DB == "hungariamed");
