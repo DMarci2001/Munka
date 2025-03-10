@@ -154,7 +154,7 @@
 
         <h2>Munkavállalók által végzett fő tevékenységek (munkakörök)</h2>
         <p>
-                <textarea style='width:100%;' name="tevekenysegek" id="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
+                <textarea style='width:100%;height: 222px;font-size: 11px;' name="tevekenysegek" id="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
         </p>
 
         <p>

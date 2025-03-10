@@ -26,7 +26,13 @@ class WorkersSubPage extends AdminCorePage {
             die;
         }
         if (isset($_POST["saveworker"])) {
-            sql_query("update schedule_workers set nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=? where id=?", [$_POST["nev"], $_POST["teljesnev"], $_POST["email"], $_POST["tel"], isset($_POST["smsert"])?1:0, isset($_POST["emailert"])?1:0, $_POST["id"]]);
+            sql_query("update schedule_workers set roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=? where id=?", [$_POST["roleid"], $_POST["nev"], $_POST["teljesnev"], $_POST["email"], $_POST["tel"], isset($_POST["smsert"])?1:0, isset($_POST["emailert"])?1:0, $_POST["id"]]);
+
+            if (isset($_POST["beouserid"])) {
+                sql_query("update users set beouserid=0 where beouserid=?", [$_POST["id"]]);
+                sql_query("update users set beouserid=? where id=?", [$_POST["id"], $_POST["beouserid"]]);
+            }
+
             $result = ["list" => $this->workerList(), "detail" => $this->workerDetail($_POST["id"])];
             $this->utils->jsonOut($result);
         }
@@ -124,7 +130,40 @@ class WorkersSubPage extends AdminCorePage {
         return $html;
     }
 
-    public function workerDetail($id, $szabadsagOpen = false) {
+    public function roleSelect($roleId):string {
+        $html = "";
+
+        $html.= "<select style='width:200px;' name='roleid'>";
+
+        $roles = sql_query("select * from schedule_roles")->fetchAll(PDO::FETCH_ASSOC);
+        $html.= "<option value='0'>Nincs kiválasztva</option>";
+        foreach ($roles as $role) {
+            $html.= "<option value='{$role["id"]}'".($roleId == $role["id"]?" selected":"").">{$role["megnev"]}</option>";
+        }
+
+        $html.= "</select> ";
+
+        return $html;
+    }
+
+    public function userLinkSelect($workerId):string {
+        $html = "";
+
+        $html.= "<select style='width:200px;' name='beouserid'>";
+
+        $users = sql_query("select u.id, u.nev, u.beouserid from users u order by u.nev")->fetchAll(PDO::FETCH_ASSOC);
+        $html.= "<option value='0'>Nincs összekapcsolva</option>";
+        foreach ($users as $user) {
+            $html.= "<option value='{$user["id"]}'".($workerId == $user["beouserid"]?" selected":"").">{$user["nev"]}</option>";
+        }
+
+        $html.= "</select> ";
+
+        return $html;
+    }
+
+
+    public function workerDetail($id, $szabadsagOpen = false):string {
         $html = "";
         if ($data = sql_fetch_array(sql_query("select * from schedule_workers where id=?", [$id]))) {
             $html.= "<h2>".(!empty($data["teljesnev"])?$data["teljesnev"]:$data["nev"])."</h2>";
@@ -133,13 +172,18 @@ class WorkersSubPage extends AdminCorePage {
 
             $html.="<form id='workerform' method='post'><input type='hidden' name='id' value='{$data["id"]}' />";
             $html.="<div style='display: table-row;'>";
-            $html.="<div style='display: table-cell;'>Munkatárs rövid neve:<br/><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='' /></div>";
+            $html.="<div style='display: table-cell;'>Munkatárs rövid neve:<br/><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='width:200px;' /></div>";
             $html.="<div style='display: table-cell;padding-left:10px;'>Munkatárs teljes neve:<br/><input style='width:200px;' type='text' placeholder='Munkatárs teljes neve' name='teljesnev' value='{$data["teljesnev"]}' style='' /></div>";
             $html.= "</div>";
             $html.="<div style='display: table-row;'>";
-            $html.="<div style='display: table-cell;padding-top:5px;'>Telefon:<br/><input type='text' placeholder='Telefonszám' name='tel' value='{$data["tel"]}' style='' /></div>";
+            $html.="<div style='display: table-cell;padding-top:5px;'>Telefon:<br/><input type='text' placeholder='Telefonszám' name='tel' value='{$data["tel"]}' style='width:200px;' /></div>";
             $html.="<div style='display: table-cell;padding-top:5px;padding-left:10px;'>Email:<br/><input style='width:200px;' type='text' placeholder='Email cím' name='email' value='{$data["email"]}' style='' /></div>";
             $html.= "</div>";
+            $html.="<div style='display: table-row;'>";
+            $html.="<div style='display: table-cell;padding-top:5px;'>Tipus:<br/>".$this->roleSelect($data["roleid"])."</div>";
+            $html.="<div style='display: table-cell;padding-top:5px;padding-left:10px;'>Felhasználó összekötés:<br/>".$this->userLinkSelect($id)."</div>";
+            $html.= "</div>";
+
             //$html.="<div style='display:table-cell;'>Bejelentkező kapcsolódás:<br/><input type='text' placeholder='Munkatárs neve' name='nev' value='{$data["nev"]}' style='' /></div>";
             $html.="<div style='margin-top:5px;'><input type='checkbox' name='smsert' value='1' ".($data["smsert"]==1?"checked":"")." /> sms értesítés</div>";
             $html.="<div><input type='checkbox' name='emailert' value='1' ".($data["emailert"]==1?"checked":"")." /> e-mail értesítés</div>";
@@ -174,8 +218,8 @@ class WorkersSubPage extends AdminCorePage {
             $html.= "</form>";
             $html.= "</div>";
 
-            $html.="<div style='margin-top:5px;'>";
-            $html.=$this->service->workerScheduleList($data);
+            $html.="<div id='workerbeosztasdiv' style='margin-top:5px;'>";
+            $html.=$this->service->workerScheduleList($data["id"]);
             $html.= "</div>";
         }
         return $html;

@@ -110,13 +110,16 @@ class WorkScheduleService {
         return sha1($workerData["id"].$workerData["roleid"].$workerData["email"].$workerData["tel"]).md5($workerData["email"].$workerData["tel"]);
     }
 
-    public function workerScheduleList($workerData):string {
+    public function workerScheduleList($workerId):string {
         $adminUtils = new AdminUtils();
         $html = "";
         $stat = [];
         $szabadsagNapok = [];
 
-        $szabiData = sql_query("select datumtol from schedule_szabadsag sz where sz.datumtol>date(now()) and oid=?", [$workerData["id"]])->fetchAll();
+        $workerData = sql_query("select nev, teljesnev from schedule_workers where id=?", [$workerId])->fetch(PDO::FETCH_ASSOC);
+        $html.= "<div style='font-weight: bold;'>{$workerData["teljesnev"]} beosztása / szabadságai</div>";
+
+        $szabiData = sql_query("select datumtol from schedule_szabadsag sz where sz.datumtol>date_sub(now(), interval 1 month) and oid=?", [$workerId])->fetchAll();
         foreach ($szabiData as $data) {
             $szabadsagNapok[] = $data["datumtol"];
         }
@@ -124,7 +127,8 @@ class WorkScheduleService {
         $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso, t.cim
                     FROM schedule_mapping m
                     LEFT JOIN schedule_tipusok t on t.id=m.tipusid
-                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$workerData["id"]]);
+                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$workerId]);
+
         while ($row = sql_fetch_array($res)) {
             $stat[$row["datum"]][] = $row;
         }
@@ -146,7 +150,9 @@ class WorkScheduleService {
             $display = [];
 
             if (in_array($thisDay, $szabadsagNapok)) {
-                $display[] = "<span style='padding:2px 5px;background:red;color:#fff;border-radius: 2px;'>Szabadság</span>";
+                $display[] = "<span onclick='toggleWorkerFreeDay(\"{$thisDay}\", {$workerId});' style='cursor:pointer;padding:2px 5px;background:#56af56;color:#fff;border-radius: 2px;'><i class='fa-regular fa-square-check'></i> szabi</span>";
+            } else {
+                $display[] = "<span onclick='toggleWorkerFreeDay(\"{$thisDay}\", {$workerId});' style='cursor:pointer;padding:2px 5px;background:lightgray;color:#fff;border-radius: 2px;'><i class='fa-regular fa-square'></i> szabi</span>";
             }
 
             if (isset($stat[$thisDay])) {

@@ -4995,3 +4995,19 @@ function filterElojegyzesTableByTipus(tid) {
     });
 
 }
+
+
+function toggleWorkerFreeDay(day, wid) {
+    $.ajax({
+        url:"index.php?page=workschedule",
+        type:"POST",
+        data:{toggleWorkerFreeDay:day,wid:wid},
+        success: function(response){
+            $.toast({
+                text: response.message,
+                icon: "success"
+            });
+            $("#workerbeosztasdiv").html(response.html);
+        }
+    })
+}
