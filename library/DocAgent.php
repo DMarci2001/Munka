@@ -12,6 +12,7 @@ class DocAgent {
     const ASSET_CONTENT_TITLE_IMAGE         = "contenttitleimage";
     const ASSET_CHAT_UPLOAD_IMAGE           = "chatuploadimage";
     const ASSET_LABOR_RESULT                = "laborresult";
+    const ASSET_PERSONA_REFERAL_PDF         = "personalreferalpdf";
 
     const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";
@@ -19,6 +20,7 @@ class DocAgent {
 
     public bool $showDefaultAsset = false;
     public bool $newUploadButton  = true;
+    public $lastSavedId = null;
 
     public function __construct()
     {
@@ -87,6 +89,7 @@ class DocAgent {
                 if (empty($fileData["fid"])) {
                     $fileData["fid"] = 0;
                 }
+
                 if (empty($fileData["userid"])) {
                     if ($reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]))) {
                         $fileData["userid"] = $reservationData["paciensid"];
@@ -95,10 +98,22 @@ class DocAgent {
                     }
                 }
 
+                if(empty($fileData["datatype"])){
+                    $fileData["datatype"]=null;
+                }
+
+                if(empty($fileData["dataid"])){
+                    $fileData["dataid"]=null;
+                }
+
+                if(empty($fileData["beutaloid"])){
+                    $fileData["beutaloid"]=0;
+                }
+
                 sql_query("insert into dokumentumok set 
-                    foglalasid=?, beutaloid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    array($fileData["fid"], $fileData["beutaloid"], $fileData["userid"], $fileData["megnev"], $fileName, $fileSize, $extension));
-                $id = sql_insert_id();
+                    foglalasid=?, beutaloid=?, datatype=?, dataid=?, userid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
+                    array($fileData["fid"], $fileData["beutaloid"], $fileData["datatype"], $fileData["dataid"], $fileData["userid"], $fileData["megnev"], $fileName, $fileSize, $extension));
+                $id = $this->lastSavedId =  sql_insert_id();
 
                 if (isset($fileData["sess"])) {
                     sql_query("update dokumentumok set sess=? where id=?",array($fileData["sess"], $id));
@@ -120,12 +135,16 @@ class DocAgent {
         }
     }
 
-    public function saveLocalDoc($fileName, $fileData):string {
+    public function saveLocalDoc($fileName, $fileData,$exceptions=array()):string {
+        $allowedExtensions = array("pdf","doc","xls","docx","xlsx","jpg","jpeg");
+        if(!empty($exceptions)){
+            $allowedExtensions = array_merge($allowedExtensions,$exceptions);
+        }
         if (is_file($fileName)) {
             $fileSize = filesize($fileName);
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
-            if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
+            if (in_array($extension, $allowedExtensions)) {
                 if (empty($fileData["userid"]) && !empty($fileData["fid"])) {
                     $reservationData = sql_fetch_array(sql_query("select paciensid from foglalasok where id=?", [$fileData["fid"]]));
                     $fileData["userid"] = $reservationData["paciensid"];
@@ -147,10 +166,14 @@ class DocAgent {
                     $fileData["dataid"] = 0;
                 }
 
+                if (empty($fileData["datatype"])) {
+                    $fileData["datatype"] = "";
+                }
+
                 sql_query("insert into dokumentumok set 
-                    foglalasid=?, userid=?, assetid=?, dataid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
-                    [$fileData["fid"], $fileData["userid"], $fileData["assetid"], $fileData["dataid"], pathinfo($fileName, PATHINFO_BASENAME), pathinfo($fileName, PATHINFO_BASENAME), $fileSize, $extension]);
-                $id = sql_insert_id();
+                    foglalasid=?, userid=?, assetid=?, datatype=?, dataid=?, megnev=?, filename=?, size=?, tipus=?, datum=now(), kod=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))",
+                    [$fileData["fid"], $fileData["userid"], $fileData["assetid"], $fileData["datatype"], $fileData["dataid"], pathinfo($fileName, PATHINFO_BASENAME), pathinfo($fileName, PATHINFO_BASENAME), $fileSize, $extension]);
+                $id = $this->lastSavedId = sql_insert_id();
 
                 $destinationFile = $this->_getDocPath($id);
                 rename($fileName, $destinationFile);
@@ -235,7 +258,7 @@ class DocAgent {
 
             if (in_array($extension, ["jpg", "jpeg", "png"])) {
                 sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
-                $fileId = sql_insert_id();
+                $fileId = $this->lastSavedId = sql_insert_id();
                 $path = $this->_getAssetImagePath($fileId);
 
                 $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
@@ -290,7 +313,7 @@ class DocAgent {
 
             if (in_array($extension, ["pdf"])) {
                 sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
-                $fileId = sql_insert_id();
+                $fileId = $this->lastSavedId = sql_insert_id();
                 $path = $this->_getAssetImagePath($fileId);
 
                 $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
@@ -321,7 +344,7 @@ class DocAgent {
 
             if (in_array($extension, ["jpg", "jpeg", "png"])) {
                 sql_query("insert into dokumentumok set datum=now(), assetid=?, dataid=?, filename=?, tipus=?, size=?, kod=?", [$tipus, $oid, $fileName, $extension, $fileSize, md5(date("YmdHis")."code1").md5(date("YmdHis")."code2")]);
-                $fileId = sql_insert_id();
+                $fileId = $this->lastSavedId = sql_insert_id();
                 $path = $this->_getAssetImagePath($fileId);
 
                 $kepfile = "{$path}/{$tipus}_{$fileId}.{$extension}";
@@ -387,6 +410,40 @@ class DocAgent {
         return $html;
     }
 
+    public function showAssetEditorForReferalFiles($tipus, $dataId):string {
+        $html = "";
+
+        $pdf = sql_query("select * from dokumentumok where datatype=? and dataid=?", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC);
+
+        if(empty($pdf)){
+            return $html;
+        }
+
+        $tipusok = [
+            ["tipus"=>"pdf","icon"=>"<i class='fa-solid fa-file-pdf' style='font-size:50px'></i>"],
+            ["tipus"=>"docx","icon"=>"<i class='fa-solid fa-file-word' style='font-size:50px'></i>"],
+            ["tipus"=>"xlsx","icon"=>"<i class='fa-solid fa-file-excel' style='font-size:50px'></i>"],
+        ];
+
+        if($tipus=="referal-sample-file"){
+            $photoURL = $this->getAssetImageURL($pdf)."?v=".date("YmdHis");
+            $photoOriginalURL = str_replace($pdf["assetid"], $pdf["assetid"]."_original", $photoURL);
+            $icon = array_search($pdf["tipus"],array_column($tipusok,"tipus"));
+            $html.= "<div style='display:inline-block;text-align: center'>";
+            $html.= "<a data-dataid='{$dataId}' data-id='{$pdf["id"]}' style='display:inline-block;' data-originalurl='{$photoOriginalURL}' onclick='showImageEditor(this);return false;' href='{$photoURL}' target='_blank'>{$tipusok[$icon]["icon"]}<div>{$pdf["filename"]}</div></a>";
+            $html.= "";
+            $html.= "<div style='margin-top:0px;text-align: center;'><a href='#' title='fájl törlése' onclick='deleteAsset(\"{$tipus}\", {$pdf["id"]}, {$pdf["dataid"]});return false;'><i class='fa-solid fa-trash-can'></i></a></div>";
+            $html.= "</div>";
+        }
+        
+        if($tipus=="personal-referal-file"){
+            $fileURL = $this->getAssetImageURL($pdf)."?v=".date("YmdHis");
+        }
+
+
+        return $html;
+    }
+
     public function getAssetsByType($tipus, $dataId):array {
         $assets = [];
         $images = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=?", [$tipus, $dataId])->fetchAll(PDO::FETCH_ASSOC);
@@ -416,6 +473,13 @@ class DocAgent {
 
     public function getDocByType($tipus, $dataId):string {
         if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=? order by datum desc limit 1", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC)) {
+            return $this->getDoc($docData["id"]);
+        }
+        return "";
+    }
+
+    public function getDocByDataType($datatype, $dataId):string {
+        if ($docData = sql_query("select id, datatype, tipus, filename from dokumentumok where datatype=? and dataid=? order by datum desc limit 1", [$datatype, $dataId])->fetch(PDO::FETCH_ASSOC)) {
             return $this->getDoc($docData["id"]);
         }
         return "";

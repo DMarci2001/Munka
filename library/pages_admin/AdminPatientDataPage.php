@@ -19,13 +19,25 @@ class AdminPatientDataPage extends AdminCorePage
         10 => ["name" => "Irsz.", "id" => "irsz"],
         11 => ["name" => "Település", "id" => "varos"],
         12 => ["name" => "Cím", "id" => "utca"],
-        13 => ["name" => "Munkakör", "id" => "munkakor"],
+        13 => ["name" => "Teljes cím", "id" => "cim"],
+        14 => ["name" => "Munkakör", "id" => "munkakor"],
+        15 => ["name" => "Törzsszám", "id" => "torzsszam"],
+        16 => ["name" => "Vizsgálat dátuma", "id" => "vizsgalatdatuma"],
+        17 => ["name" => "Visszarendelés", "id" => "visszarendeles"],
+        18 => ["name" => "Ellátás helyszíne", "id" => "ellatoorvos"],
+        19 => ["name" => "Felettes neve", "id" => "felettesnev"],
+        20 => ["name" => "Felettes email címe", "id" => "felettesemail"],
     ];
 
     private $actions = [
         0 => [
             "id" => "create-dm-recipient-list",
             "name" => "Címzett lista készítése DM-hez",
+            "operations" => [1],
+        ],
+        1 => [
+            "id" => "create-mass-ohr",
+            "name" => "Tömeges beutalók kiállítása",
             "operations" => [1],
         ],
     ];
@@ -51,7 +63,12 @@ class AdminPatientDataPage extends AdminCorePage
                 }
 
                 $this->currentAction = $_SESSION["currentAction"] = $this->actions[$key];
-                $this->currentAction["dmid"] = $_SESSION["currentAction"]["dmid"] = $_GET["dmid"];
+                if (isset($_GET["dmid"])) {
+                    $this->currentAction["dmid"] = $_SESSION["currentAction"]["dmid"] = $_GET["dmid"];
+                }
+                if (isset($_GET["id"])) {
+                    $this->currentAction["id"] = $_SESSION["currentAction"]["id"] = $_GET["id"];
+                }
             }
         }
 
@@ -91,6 +108,7 @@ class AdminPatientDataPage extends AdminCorePage
         }
 
         if (isset($_POST["sortPatientDataRows"])) {
+            echo count($_POST["data"]);
             $_SESSION["patient-excel-data"] = $this->data = $_POST["data"];
             $_SESSION["patient-excel-cols"] = $_POST["cols"];
 
@@ -118,6 +136,58 @@ class AdminPatientDataPage extends AdminCorePage
                 sql_query(
                     "INSERT INTO direkt_marketing_cimzettek_link_tabla SET recipient_id=?,dm_id=?,created=?,created_by=?",
                     [$recipient_id, $this->currentAction["dmid"], date("Y-m-d H:i:s"), $_SESSION["adminuser"]["id"]]
+                );
+            }
+            die();
+        }
+        if (isset($_POST["createReferalList"])) {
+
+            $bm = sql_query(
+                "SELECT id,cegid, superior_email_send, doctor_email_send, worker_email_send,
+                        superior_email_sender_address, superior_email_copy_address, superior_email_subject, 
+                        superior_email_content, doctor_email_sender_address, doctor_email_copy_address, 
+                        doctor_email_subject, doctor_email_content, worker_email_sender_address, 
+                        worker_email_copy_address, worker_email_subject, worker_email_content 
+                 FROM beutalo_kezeles WHERE id=?",
+                [$_POST["bmid"]]
+            )->fetch(PDO::FETCH_ASSOC);
+
+            sql_query(
+                "INSERT INTO beutalo_kezeles_sessions 
+                       SET bmid=?, cegid=?, created=NOW(), created_by={$_SESSION["adminuser"]["id"]}, status='inprogress';",
+                [$bm["id"],$bm["cegid"]]
+            );
+            $sessionId = sql_insert_id();
+
+            foreach ($this->data as $key => $row) {
+                $orvos = explode(" - ", $row[array_search("ellatoorvos", $_SESSION["patient-excel-cols"])]);
+                $taj = $row[array_search("taj", $_SESSION["patient-excel-cols"])];
+                if (strlen($taj) < 9) {
+                    $taj = "0" . $taj;
+                }
+
+                sql_query(
+                    "INSERT INTO beutalo_kezeles_data 
+                     SET nev=?, bmid=?, sessionid=?, torzsszam=?, szuldatum=?, taj=?, munkakor=?, anyjaneve=?, szulhely=?, vizsgalatdatuma=?, 
+                         visszarendeles=?, felettesnev=?, felettesemail=?, cim=?, ellatoorvos=?, datum=?",
+                    [
+                        $row[array_search("nev", $_SESSION["patient-excel-cols"])],
+                        $_POST["bmid"],
+                        $sessionId,
+                        $row[array_search("torzsszam", $_SESSION["patient-excel-cols"])],
+                        date("Y-m-d", strtotime($row[array_search("szuldatum", $_SESSION["patient-excel-cols"])])),
+                        $taj,
+                        $row[array_search("munkakor", $_SESSION["patient-excel-cols"])],
+                        $row[array_search("anyjaneve", $_SESSION["patient-excel-cols"])],
+                        $row[array_search("szulhely", $_SESSION["patient-excel-cols"])],
+                        date("Y-m-d", strtotime($row[array_search("vizsgalatdatuma", $_SESSION["patient-excel-cols"])])),
+                        date("Y-m-d", strtotime($row[array_search("visszarendeles", $_SESSION["patient-excel-cols"])])),
+                        $row[array_search("felettesnev", $_SESSION["patient-excel-cols"])],
+                        strtolower($row[array_search("felettesemail", $_SESSION["patient-excel-cols"])]),
+                        $row[array_search("cim", $_SESSION["patient-excel-cols"])],
+                        end($orvos),
+                        date("Y-m-d H:i:s"),
+                    ]
                 );
             }
             die();
@@ -188,7 +258,7 @@ class AdminPatientDataPage extends AdminCorePage
             }
             $html .= "  <option {$selected} value='{$col["id"]}'>{$col["name"]}</option>";
         }
-        $html .= "      <option value='remove'>Törés <i class='fa-solid fa-trash-can'></i></option>";
+        //$html .= "      <option value='remove'>Törés <i class='fa-solid fa-trash-can'></i></option>";
         $html .= "  </select>";
 
         $html .= "  <i style='font-size:14px;padding:5px;cursor:pointer' class='fa-solid fa-sort'></i>";
@@ -210,6 +280,11 @@ class AdminPatientDataPage extends AdminCorePage
             1 => [
                 "name" => "create-dm-recipient-list",
                 "html" => "<button type='button' class='btn btn-success btn-sm' title='Címzett lista készítése DM-hez' onClick='createDMRecipientList()'><i class='fa-regular fa-paper-plane'></i>&nbsp;<i class='fa-solid fa-list-ul'></i></button>",
+                "category" => "restricted",
+            ],
+            1 => [
+                "name" => "create-referal-list",
+                "html" => "<button type='button' class='btn btn-success btn-sm' title='Beutaló lista készítése' onClick='createReferalList()'><i class='fa-solid fa-file-pdf'></i>&nbsp;<i class='fa-solid fa-table-list'></i></button>",
                 "category" => "restricted",
             ],
         ];

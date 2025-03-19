@@ -156,8 +156,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminMunkaNaploPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPatientDataPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminDirektMarketingPage.php");
-    require_once(__DIR__ . "/library/pages_admin/AdminCancelsPage.php");
-
+    
 
     
 }

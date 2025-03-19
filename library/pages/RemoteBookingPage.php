@@ -315,7 +315,7 @@ class RemoteBookingPage extends CorePage{
 		
 		//Páciens adatok:
 		
-		$html.= "<h2>Szükséges adatok</h2>";
+		$html.= "<h2 style='margin:20px 0px 20px 0px'>Szükséges adatok</h2>";
 		$html.= "<table>";
 		if($this->szuresData['hideorvosvalaszto']!=1){
 			$html.=	$this->setOrvosList($_POST['szurestipus']);
@@ -344,7 +344,7 @@ class RemoteBookingPage extends CorePage{
 		
 		
 		//Kérdez/Felelek:
-		$html.= "<h2>Kérdések</h2>";
+		$html.= "<h2 style='margin:20px 0px 20px 0px'>Kérdések</h2>";
 		$html.= "<table style='width:100%;font-family:robotoregular,font-size:14px' id='questions'>";
 		$html.= 	$this->setQuestions($questionArr,$_POST['szurestipus']);
 		$html.= "</table>";
@@ -386,7 +386,7 @@ class RemoteBookingPage extends CorePage{
         
 		
 		//Captcha/ASZF:
-		$html.= "<tr><td style='height:30px'></td></tr>";
+		$html.= "<tr><td style='height:25px'></td></tr>";
 		$html.= "<tr><td><div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG'></div></td></tr>";
         $html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='aszf' value='1' ".(isset($_POST["aszf"])?"checked":"")."/> {$webText["aszffizetos"]}</div></td></tr>";
 		$html.= "<tr><td><div style='margin-top:10px;'><input type='checkbox' name='simplepay' value='1' /> <a style='' href='http://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf' target='_blank'>Elfogadom</a> a SimplePay feltételeit.</div></td></tr>";
@@ -436,6 +436,7 @@ class RemoteBookingPage extends CorePage{
 		
 		foreach($questionArr as $each){
 			if($each['servicetype']==$szurestipus){
+				if($sor!=0) $html.="<tr><td style='height:25px'></td></tr>";
 				if(!isset($each['placeholder']))$each['placeholder']="";
 				$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
 				if($each['answertype']=="textarea"){
@@ -449,7 +450,7 @@ class RemoteBookingPage extends CorePage{
 					}
 					$html.="</td></tr>";
 				}
-				$html.="<tr><td style='height:25px'></td></tr>";
+				
 				$sor++;
 			}
 		}

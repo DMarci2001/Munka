@@ -306,6 +306,7 @@ function setSzurestipusValasztoV2(){
 }
 
 function setSzurestipusValaszto(){
+
     var score = neme = 0;
     var szuldatum = "";
     if($("select[name=\"szuldatumev\"]").val()>0)  score++;
@@ -314,6 +315,7 @@ function setSzurestipusValaszto(){
     if($("input[name=\"neme\"]:checked").length>0) score++;
     
     if(score==4){
+
         szuldatum = $("select[name=\"szuldatumev\"]").val()+"-"+$("select[name=\"szuldatumho\"]").val()+"-"+$("select[name=\"szuldatumnap\"]").val();
         neme = $("input[name=\"neme\"]:checked").val();
 

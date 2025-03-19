@@ -3,15 +3,14 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class Utils {
+class Utils
+{
 
-    public function __construct()
+    public function __construct() {}
+
+    public function isTesztIP()
     {
-
-    }
-
-    public function isTesztIP() {
-        return in_array($_SERVER["REMOTE_ADDR"],array("88.151.97.121","81.182.23.124","5.204.54.10","81.182.23.106","194.143.226.42"));
+        return in_array($_SERVER["REMOTE_ADDR"], array("88.151.97.121", "81.182.23.124", "5.204.54.10", "81.182.23.106", "194.143.226.42"));
     }
 
     public function sendUserSMSKod($userId)
@@ -87,7 +86,6 @@ class Utils {
                             $GLOBALS["cs{$beo["id"]}"] = $ora;
                         }
                     }
-
                 }
             }
         }
@@ -124,18 +122,19 @@ class Utils {
         return $q;
     }
 
-    public function datumSelector($date, $prefix, $future = 0, $class = null,$customJs="") {
+    public function datumSelector($date, $prefix, $future = 0, $class = null, $customJs = "")
+    {
         $lang = new Lang();
         $webText = $lang->webText;
 
-        $h="";
+        $h = "";
 
-        $ev  = substr($date,0,4);
-        $ho  = substr($date,5,2);
-        $nap = substr($date,8,2);
+        $ev  = substr($date, 0, 4);
+        $ho  = substr($date, 5, 2);
+        $nap = substr($date, 8, 2);
 
-        $h.= "<select {$class} {$customJs} name='{$prefix}ev'>";
-        $h.= "<option value='0'>{$webText["ev"]}</option>";
+        $h .= "<select {$class} {$customJs} name='{$prefix}ev'>";
+        $h .= "<option value='0'>{$webText["ev"]}</option>";
         if ($future == 0) {
             for ($i = date("Y"); $i > date("Y") - 100; $i--) {
                 $h .= "<option value='{$i}'" . ($ev == $i ? " selected" : "") . ">{$i}</option>";
@@ -146,70 +145,75 @@ class Utils {
             }
         }
 
-        $h.= "</select> ";
+        $h .= "</select> ";
 
-        $h.= "<select {$class} {$customJs} name='{$prefix}ho'>";
-        $h.= "<option value='0'>{$webText["ho"]}</option>";
-        for ($i=1;$i<=12;$i++) {
-            $h.= "<option value='{$i}'".($ho==$i?" selected":"").">{$webText["honaptext"][$i]}</option>";
+        $h .= "<select {$class} {$customJs} name='{$prefix}ho'>";
+        $h .= "<option value='0'>{$webText["ho"]}</option>";
+        for ($i = 1; $i <= 12; $i++) {
+            $h .= "<option value='{$i}'" . ($ho == $i ? " selected" : "") . ">{$webText["honaptext"][$i]}</option>";
         }
-        $h.= "</select> ";
+        $h .= "</select> ";
 
-        $h.= "<select {$class} {$customJs} name='{$prefix}nap'>";
-        $h.= "<option value='0'>{$webText["nap"]}</option>";
-        for ($i=1;$i<=31;$i++) {
-            $h.= "<option value='{$i}'".($nap==$i?" selected":"").">{$i}</option>";
+        $h .= "<select {$class} {$customJs} name='{$prefix}nap'>";
+        $h .= "<option value='0'>{$webText["nap"]}</option>";
+        for ($i = 1; $i <= 31; $i++) {
+            $h .= "<option value='{$i}'" . ($nap == $i ? " selected" : "") . ">{$i}</option>";
         }
-        $h.= "</select>";
+        $h .= "</select>";
 
         return $h;
     }
 
-    public function fixPhoneNumber($tel) {
-        $tel=str_replace("(","",$tel);
-        $tel=str_replace(")","",$tel);
-        $tel=str_replace("-","",$tel);
-        $tel=str_replace("/","",$tel);
-        $tel=str_replace("+","",$tel);
-        $tel=str_replace(" ","",$tel);
-        if (substr($tel,0,2)=="06") $tel="36".substr($tel,2);
+    public function fixPhoneNumber($tel)
+    {
+        $tel = str_replace("(", "", $tel);
+        $tel = str_replace(")", "", $tel);
+        $tel = str_replace("-", "", $tel);
+        $tel = str_replace("/", "", $tel);
+        $tel = str_replace("+", "", $tel);
+        $tel = str_replace(" ", "", $tel);
+        if (substr($tel, 0, 2) == "06") $tel = "36" . substr($tel, 2);
         return $tel;
     }
 
 
-    public function checkSzulDatum($datum) {
-        $datum=str_replace("-","",$datum);
-        $datum=str_replace(".","",$datum);
-        $datum=str_replace(" ","",$datum);
+    public function checkSzulDatum($datum)
+    {
+        $datum = str_replace("-", "", $datum);
+        $datum = str_replace(".", "", $datum);
+        $datum = str_replace(" ", "", $datum);
 
-        if (strlen($datum)!=8) return false;
+        if (strlen($datum) != 8) return false;
         if (!is_numeric($datum)) return false;
 
-        $ev=intval(substr($datum,0,4));
-        $ho=intval(substr($datum,4,2));
-        $nap=intval(substr($datum,6,2));
+        $ev = intval(substr($datum, 0, 4));
+        $ho = intval(substr($datum, 4, 2));
+        $nap = intval(substr($datum, 6, 2));
 
-        if ($ev<1900 || $ev>date("Y")) return false;
-        if ($ho<1 || $ho>12) return false;
-        if ($nap<1 || $nap>31) return false;
+        if ($ev < 1900 || $ev > date("Y")) return false;
+        if ($ho < 1 || $ho > 12) return false;
+        if ($nap < 1 || $nap > 31) return false;
 
         return true;
     }
 
-    public function validateDate($date,$format="Y-m-d H:i:s") {
-        $d=DateTime::createFromFormat($format, $date);
-        return $d && $d->format($format)==$date;
+    public function validateDate($date, $format = "Y-m-d H:i:s")
+    {
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) == $date;
     }
 
 
-    function substr_jns($s,$p1,$p2) {
-        $sz=iconv("UTF-8","ISO-8859-2",$s);
-        $sz=substr($sz,$p1,$p2);
-        $sz=iconv("ISO-8859-2","UTF-8",$sz);
+    function substr_jns($s, $p1, $p2)
+    {
+        $sz = iconv("UTF-8", "ISO-8859-2", $s);
+        $sz = substr($sz, $p1, $p2);
+        $sz = iconv("ISO-8859-2", "UTF-8", $sz);
         return $sz;
     }
 
-    public function numToString($Mit) {
+    public function numToString($Mit)
+    {
         $EgyesStr = array('', 'egy', 'kettő', 'három', 'négy', 'öt', 'hat', 'hét', 'nyolc', 'kilenc');
         $TizesStr = array('', 'tíz', 'húsz', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');
         $TizenStr = array('', 'tizen', 'huszon', 'harminc', 'negyven', 'ötven', 'hatvan', 'hetven', 'nyolcvan', 'kilencven');
@@ -222,12 +226,12 @@ class Utils {
                 die("Túl nagy szám");
             }
 
-            $Oszto=1000000000;
-            $Osztonev="milliárd";
-            if ($Maradek>=$Oszto) {
-                if (mb_strlen($Result)>0) $Result = $Result . '-';
-                $Mit=$Maradek/$Oszto;
-                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+            $Oszto = 1000000000;
+            $Osztonev = "milliárd";
+            if ($Maradek >= $Oszto) {
+                if (mb_strlen($Result) > 0) $Result = $Result . '-';
+                $Mit = $Maradek / $Oszto;
+                if ($Mit >= 100) $Result = $Result . $EgyesStr[$Mit / 100] . 'száz';
                 $Mit = $Mit % 100;
                 if ($Mit % 10 !== 0) {
                     $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
@@ -235,14 +239,14 @@ class Utils {
                     $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
                 }
             }
-            $Maradek=$Maradek % $Oszto;
+            $Maradek = $Maradek % $Oszto;
 
-            $Oszto=1000000;
-            $Osztonev="millió";
-            if ($Maradek>=$Oszto) {
-                if (mb_strlen($Result)>0) $Result = $Result . '-';
-                $Mit=$Maradek/$Oszto;
-                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+            $Oszto = 1000000;
+            $Osztonev = "millió";
+            if ($Maradek >= $Oszto) {
+                if (mb_strlen($Result) > 0) $Result = $Result . '-';
+                $Mit = $Maradek / $Oszto;
+                if ($Mit >= 100) $Result = $Result . $EgyesStr[$Mit / 100] . 'száz';
                 $Mit = $Mit % 100;
                 if ($Mit % 10 !== 0) {
                     $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
@@ -250,14 +254,14 @@ class Utils {
                     $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
                 }
             }
-            $Maradek=$Maradek % $Oszto;
+            $Maradek = $Maradek % $Oszto;
 
-            $Oszto=1000;
-            $Osztonev="ezer";
-            if ($Maradek>=$Oszto) {
-                if (mb_strlen($Result)>0) $Result = $Result . '-';
-                $Mit=$Maradek/$Oszto;
-                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+            $Oszto = 1000;
+            $Osztonev = "ezer";
+            if ($Maradek >= $Oszto) {
+                if (mb_strlen($Result) > 0) $Result = $Result . '-';
+                $Mit = $Maradek / $Oszto;
+                if ($Mit >= 100) $Result = $Result . $EgyesStr[$Mit / 100] . 'száz';
                 $Mit = $Mit % 100;
                 if ($Mit % 10 !== 0) {
                     $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
@@ -265,14 +269,14 @@ class Utils {
                     $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
                 }
             }
-            $Maradek=$Maradek % $Oszto;
+            $Maradek = $Maradek % $Oszto;
 
-            $Oszto=1;
-            $Osztonev="";
-            if ($Maradek>=$Oszto) {
-                if (mb_strlen($Result)>0) $Result = $Result . '-';
-                $Mit=$Maradek/$Oszto;
-                if ($Mit>=100) $Result = $Result.$EgyesStr[$Mit/100].'száz';
+            $Oszto = 1;
+            $Osztonev = "";
+            if ($Maradek >= $Oszto) {
+                if (mb_strlen($Result) > 0) $Result = $Result . '-';
+                $Mit = $Maradek / $Oszto;
+                if ($Mit >= 100) $Result = $Result . $EgyesStr[$Mit / 100] . 'száz';
                 $Mit = $Mit % 100;
                 if ($Mit % 10 !== 0) {
                     $Result = $Result . $TizenStr[$Mit / 10] . $EgyesStr[$Mit % 10] . $Osztonev;
@@ -280,7 +284,7 @@ class Utils {
                     $Result = $Result . $TizesStr[$Mit / 10] . $Osztonev;
                 }
             }
-            $Maradek=$Maradek % $Oszto;
+            $Maradek = $Maradek % $Oszto;
 
             /*
               Alakit($Maradek, 1000000000, 'milliárd');
@@ -290,78 +294,80 @@ class Utils {
             */
 
             $Result = ucfirst($Result);
-            if ($Mit<0) $Result = 'Mínusz ' . $Result;
+            if ($Mit < 0) $Result = 'Mínusz ' . $Result;
         }
 
         return $Result;
     }
 
-    public function getTajFromString($str) {
+    public function getTajFromString($str)
+    {
         preg_match_all('/\d+/', $str, $matches);
         foreach ($matches[0] as $val) {
-            if (strlen($val)==9) return $val;
+            if (strlen($val) == 9) return $val;
         }
         return "";
     }
 
-    public function htmlheader($pageTitle = "Online bejelentkezés"):string {
+    public function htmlheader($pageTitle = "Online bejelentkezés"): string
+    {
         $subdomain = $_SESSION["helyszindata"]["domain"];
         if (isset($GLOBALS["subtitle"]) && !empty($GLOBALS["subtitle"])) {
             $pageTitle = "{$GLOBALS["subtitle"]} - $pageTitle";
         }
 
-        $htmlout='<!DOCTYPE html>';
-        $htmlout.='<html>';
-        $htmlout.='<head>';
+        $htmlout = '<!DOCTYPE html>';
+        $htmlout .= '<html>';
+        $htmlout .= '<head>';
 
-        $v = "version".date("YmdHi");
+        $v = "version" . date("YmdHi");
 
-        $htmlout.="<title>{$pageTitle}</title>";
-        $htmlout.="<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />";
-        $htmlout.='<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1" />';
-        $favicon="/images/".Booking_Constants::SITE_FAVICON;
+        $htmlout .= "<title>{$pageTitle}</title>";
+        $htmlout .= "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />";
+        $htmlout .= '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1" />';
+        $favicon = "/images/" . Booking_Constants::SITE_FAVICON;
         if (is_file("images/logo_{$subdomain}.png") || is_file("../images/logo_{$subdomain}.png")) {
-            $favicon="/images/logo_{$subdomain}.png";
+            $favicon = "/images/logo_{$subdomain}.png";
         }
 
-        $htmlout.="<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
-        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-3.7.1.min.js"></script>';
-        $htmlout.='<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
-        $htmlout.='<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
-        $htmlout.='<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
-        $htmlout.='<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
-        $htmlout.='<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
-        $htmlout.='<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
-        $htmlout.="<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
-        $htmlout.="<script type='text/javascript' src='js/adminchat.js?v={$v}'></script>";
+        $htmlout .= "<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
+        $htmlout .= '<script type="text/javascript" src="/js/jquery/jquery-3.7.1.min.js"></script>';
+        $htmlout .= '<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
+        $htmlout .= '<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
+        $htmlout .= '<script src="/js/air-datepicker-master/dist/js/datepicker.min.js"></script>';
+        $htmlout .= '<script src="/js/air-datepicker-master/dist/js/i18n/datepicker.hu.js"></script>';
+        $htmlout .= '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
+        $htmlout .= '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
+        $htmlout .= "<script type='text/javascript' src='js/ajax.js?v={$v}'></script>";
+        $htmlout .= "<script type='text/javascript' src='js/adminchat.js?v={$v}'></script>";
 
         if (isset($_GET["page"]) && $_GET["page"] == "covidform") {
-            $htmlout.="<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
+            $htmlout .= "<script type='text/javascript' src='js/covidform.js?v={$v}'></script>";
         }
 
-        if(isset($_GET["page"]) && $_GET["page"] == "psychosocialform") {
-            $htmlout.="<script type='text/javascript' src='js/psychosocform.js'></script>";
+        if (isset($_GET["page"]) && $_GET["page"] == "psychosocialform") {
+            $htmlout .= "<script type='text/javascript' src='js/psychosocform.js'></script>";
         }
 
         if (isset($_GET["page"]) && $_GET["page"] == "oltasigenyfelmeres") {
-            $htmlout.="<script type='text/javascript' src='js/oltasigenyform.js?v={$v}'></script>";
+            $htmlout .= "<script type='text/javascript' src='js/oltasigenyform.js?v={$v}'></script>";
         }
 
         if (isset($_GET["page"]) && $_GET["page"] == "suzukiform") {
-            $htmlout.="<script type='text/javascript' src='js/suzukiform.js?v={$v}'></script>";
+            $htmlout .= "<script type='text/javascript' src='js/suzukiform.js?v={$v}'></script>";
         }
 
         if (isset($_GET["page"]) && $_GET["page"] == "elsosegelyvizsga") {
-            $htmlout.="<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
+            $htmlout .= "<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
-        if(CompanyService::isSuzukiGHC() || CompanyService::isFiFi() || CompanyService::isAstostecCompany()){
-            if(isset($_GET["page"]) && in_array($_GET["page"],array("registration","login","booking","registrationsuccessful","bookinglist","documents","profile","bookingsuccessful","bookingvalidate"))){
+        if (CompanyService::isSuzukiGHC() || CompanyService::isFiFi() || CompanyService::isAstostecCompany()) {
+            if (isset($_GET["page"]) && in_array($_GET["page"], array("registration", "login", "booking", "registrationsuccessful", "bookinglist", "documents", "profile", "bookingsuccessful", "bookingvalidate"))) {
                 $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
                 $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
             }
         }
-        
+
 
         if (isset($GLOBALS["admin"])) {
             $htmlout .= '<link href="/admin/js/jquery.toast/jquery.toast.min.css" rel="stylesheet" type="text/css">';
@@ -394,30 +400,29 @@ class Utils {
         //$htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
         //$htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
 
-        $htmlout.="<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
-        $htmlout.="<link rel='stylesheet' type='text/css' href='css/index.css?v={$v}' />";
+        $htmlout .= "<script src='https://www.google.com/recaptcha/api.js?hl={$_COOKIE["lang"]}'></script>";
+        $htmlout .= "<link rel='stylesheet' type='text/css' href='css/index.css?v={$v}' />";
 
         if (isset($GLOBALS["css"])) {
             foreach ($GLOBALS["css"] as $css) {
-                $htmlout.="<link rel='stylesheet' type='text/css' href='css/{$css}?v={$v}' />";
-                
+                $htmlout .= "<link rel='stylesheet' type='text/css' href='css/{$css}?v={$v}' />";
             }
         }
         if (isset($GLOBALS["javascript"])) {
             foreach ($GLOBALS["javascript"] as $js) {
-                $htmlout.="<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
+                $htmlout .= "<script type='text/javascript' src='js/{$js}?v={$v}'></script>";
             }
         }
-		$htmlout.='<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
-        $htmlout.='<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
-        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
-        $htmlout.="<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+        $htmlout .= '<link rel="stylesheet" href="/css/fontawesome-free-6.2.1-web/css/all.css" />';
+        $htmlout .= '<link rel="stylesheet" href="/js/jquery/jquery-ui.css">';
+        $htmlout .= "<link rel='stylesheet' href='/images/webfonts/roboto_regular_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+        $htmlout .= "<link rel='stylesheet' href='/images/webfonts/roboto_bold_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
+        $htmlout .= "<link rel='stylesheet' href='/images/webfonts/roboto_light_hungarian/stylesheet.css' type='text/css' charset='utf-8' async/>";
 
         if (!isset($_GLOBALS["admin"])) {
             if (Booking_Constants::SQL_DB == "hungariamed") {
-                $htmlout.='<meta name="facebook-domain-verification" content="rwr3rpdmypu9vnv6jqwyuxvhpgxisw" />';
-                $htmlout.="<!-- Meta Pixel Code -->
+                $htmlout .= '<meta name="facebook-domain-verification" content="rwr3rpdmypu9vnv6jqwyuxvhpgxisw" />';
+                $htmlout .= "<!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -441,16 +446,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-P89C75S');</script>
 <!-- End Google Tag Manager -->";
-
             }
         }
 
 
-        $htmlout.="</head>";
+        $htmlout .= "</head>";
         return $htmlout;
     }
 
-    public function setupLongSession() {
+    public function setupLongSession()
+    {
         //$sessionUp = 2; //óra
         //ini_set('session.gc_maxlifetime', $sessionUp*60*60);
         //session_set_cookie_params($sessionUp*60*60);
@@ -458,13 +463,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         $_SESSION["LAST_ACTIVITY"] = time();
     }
 
-    public function sendSMS($num, $szoveg, $raw = false) {
-        $num = str_replace(" ","",$num);
-        $num = str_replace("-","",$num);
-        $num = str_replace("/","",$num);
-        $num = str_replace("(","",$num);
-        $num = str_replace(")","",$num);
-        $num = str_replace("+","",$num);
+    public function sendSMS($num, $szoveg, $raw = false)
+    {
+        $num = str_replace(" ", "", $num);
+        $num = str_replace("-", "", $num);
+        $num = str_replace("/", "", $num);
+        $num = str_replace("(", "", $num);
+        $num = str_replace(")", "", $num);
+        $num = str_replace("+", "", $num);
 
         /*
         if (!$raw) {
@@ -478,16 +484,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         */
 
         if (substr($num, 0, 4) == "0620") {
-            $num = "3620". substr($num, 4);
+            $num = "3620" . substr($num, 4);
         }
         if (substr($num, 0, 4) == "0630") {
-            $num = "3630". substr($num, 4);
+            $num = "3630" . substr($num, 4);
         }
         if (substr($num, 0, 4) == "0670") {
-            $num = "3670". substr($num, 4);
+            $num = "3670" . substr($num, 4);
         }
         if (substr($num, 0, 4) == "0651") {
-            $num = "3651". substr($num, 4);
+            $num = "3651" . substr($num, 4);
         }
 
 
@@ -502,15 +508,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         $result = $SeeMe->getResult();
         //print_r($result);
 
-        @sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?",array($num,$szoveg,print_r($SeeMe->getResult(),true)));
+        @sql_query("insert into smslog set datum=now(),tel=?,szoveg=?,result=?", array($num, $szoveg, print_r($SeeMe->getResult(), true)));
 
-        return $result["result"]=="OK";
+        return $result["result"] == "OK";
     }
 
 
-    public function ENS($companies) {
+    public function ENS($companies)
+    {
         foreach ($companies as $company) {
-            $query = sql_query( "SELECT felh.alklejarat,felh.nev,c.domain,felh.taj,felh.email AS umail,felh.id AS userid, felh.hrmail 
+            $query = sql_query("SELECT felh.alklejarat,felh.nev,c.domain,felh.taj,felh.email AS umail,felh.id AS userid, felh.hrmail 
 							 FROM felhasznalok felh
 							 LEFT JOIN cegek c ON c.id = felh.cegid
 							 WHERE cegid = {$company}
@@ -524,20 +531,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $checkFoglalas = sql_query("SELECT * FROM foglalasok WHERE email=? AND taj=? AND datum>=NOW() AND datum<ADDDATE(NOW(),14)", array($result['umail'], $result['taj']));
                 if ($checkFoglalas->rowCount() == 0) {
                     $mail = NotificationService::getDefaultMailer();
-                    $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['umail']));
+                    $mail->AddAddress(iconv("UTF-8", "ISO-8859-2", $result['umail']));
                     if ($result['hrmail'] != "") {
-                        $mail->AddAddress(iconv("UTF-8","ISO-8859-2",$result['hrmail']));
+                        $mail->AddAddress(iconv("UTF-8", "ISO-8859-2", $result['hrmail']));
                     }
 
                     $subject = "Orvosi alkalmassági vizsgálata hamarosan lejár!";
 
                     $mbody = "Kedves {$result['nev']},<br/>";
-                    $mbody.= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
-                    $mbody.= "Lejárat dátuma: ".date("Y.m.d",strtotime($result['alklejarat']))."<br/>";
-                    $mbody.= "Kérem foglaljon időpontot honlapunkon:<br/>";
-                    $mbody.= "<a href='".Booking_Constants::SITE_PROTOCOL."://".$result['domain'].".".Booking_Constants::SITE_DOMAIN."'>".Booking_Constants::SITE_PROTOCOL."://".$result['domain'].".".Booking_Constants::SITE_DOMAIN."</a><br/>";
-                    $mbody.= "Tisztelettel,<br/>";
-                    $mbody.= Booking_Constants::COMPANY_NAME;
+                    $mbody .= "Az orvosi alkalmassági vizsgálata hamarosan lejár!<br/>";
+                    $mbody .= "Lejárat dátuma: " . date("Y.m.d", strtotime($result['alklejarat'])) . "<br/>";
+                    $mbody .= "Kérem foglaljon időpontot honlapunkon:<br/>";
+                    $mbody .= "<a href='" . Booking_Constants::SITE_PROTOCOL . "://" . $result['domain'] . "." . Booking_Constants::SITE_DOMAIN . "'>" . Booking_Constants::SITE_PROTOCOL . "://" . $result['domain'] . "." . Booking_Constants::SITE_DOMAIN . "</a><br/>";
+                    $mbody .= "Tisztelettel,<br/>";
+                    $mbody .= Booking_Constants::COMPANY_NAME;
 
                     $mail->Subject = $subject;
                     $mail->Body = $mbody;
@@ -552,38 +559,40 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
     }
 
-    private function getWeeks( $date, $rollover ) {
-        $cut = substr( $date, 0, 8 );
+    private function getWeeks($date, $rollover)
+    {
+        $cut = substr($date, 0, 8);
         $daylen = 86400;
 
-        $timestamp 	= strtotime( $date );
-        $first 		= strtotime( $cut . "00" );
-        $elapsed	= ( $timestamp - $first ) / $daylen;
+        $timestamp     = strtotime($date);
+        $first         = strtotime($cut . "00");
+        $elapsed    = ($timestamp - $first) / $daylen;
 
         $weeks = 1;
 
         for ($i = 1; $i <= $elapsed; $i++) {
-            $dayfind = $cut.(strlen( $i ) < 2 ? '0' . $i : $i);
+            $dayfind = $cut . (strlen($i) < 2 ? '0' . $i : $i);
             $daytimestamp = strtotime($dayfind);
 
             $day = strtolower(date("l", $daytimestamp));
 
             if ($day == strtolower($rollover)) {
-                $weeks ++;
+                $weeks++;
             }
         }
 
         return $weeks;
     }
 
-    public function azonositotipusCheck($string){
-        $type="";
+    public function azonositotipusCheck($string)
+    {
+        $type = "";
         //$type=2 TAJ
         //$type=4 Útlevél
 
-        if(ctype_digit($string) && strlen($string)==9){
+        if (ctype_digit($string) && strlen($string) == 9) {
             $type = 2;
-        }else{
+        } else {
             $type = 4;
         }
 
@@ -591,7 +600,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
 
 
-    public function dataField($fieldName,$RequiedForced=false,$customJs="") {
+    public function dataField($fieldName, $RequiedForced = false, $customJs = "")
+    {
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -615,8 +625,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 if ($_SESSION["helyszindata"]["visszaigazolas"] == 1) {
                     $extraRow = "<tr class='datarow'><td></td><td>{$webText["kerjukugyeljenemail"]}</td></tr>";
                 }
-                if(CompanyService::isSuzukiGHC()){
-                    
+                if (CompanyService::isSuzukiGHC()) {
+
                     $extraRow  = "<tr class='datarow'>";
                     $extraRow .= "   <td></td>";
                     $extraRow .= "   <td>Kérjük ügyeljen arra, hogy e-mail címét és telefonszámát helyesen adja meg, ";
@@ -635,24 +645,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                     $value = $_POST[$field];
                     $korzetszamok = [20, 30, 31, 70];
-                    $extraHTML.= "<tr class='datarow'>";
-                    $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
-                    $extraHTML.= "<td>";
-                    $extraHTML.= "+36 <select class='inputbox' style='width:50px;' type='text' name='korzetszam' />";
+                    $extraHTML .= "<tr class='datarow'>";
+                    $extraHTML .= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML .= "<td>";
+                    $extraHTML .= "+36 <select class='inputbox' style='width:50px;' type='text' name='korzetszam' />";
                     foreach ($korzetszamok as $val) {
-                        $extraHTML.= "<option value='{$val}' ".($_POST["korzetszam"] == $val? "selected":"").">{$val}</option>";
+                        $extraHTML .= "<option value='{$val}' " . ($_POST["korzetszam"] == $val ? "selected" : "") . ">{$val}</option>";
                     }
-                    $extraHTML.= "</select>&nbsp;";
+                    $extraHTML .= "</select>&nbsp;";
 
-                    $extraHTML.= "<input class='inputbox' {$inputMode} style='width:100px;' type='text' name='{$field}' id='{$field}' value='{$value}' />";
+                    $extraHTML .= "<input class='inputbox' {$inputMode} style='width:100px;' type='text' name='{$field}' id='{$field}' value='{$value}' />";
 
-                    $extraHTML.= "</td>";
-                    $extraHTML.= "</tr>";
+                    $extraHTML .= "</td>";
+                    $extraHTML .= "</tr>";
                 }
 
                 break;
             case "szuldatum":
-                $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>".$this->datumSelector($_POST["szuldatum"],"szuldatum",0,null,$customJs)."</td></tr>";
+                $extraHTML = "<tr class='datarow'><td>{$webText["szuletesidatum"]}: #requiredmark#</td><td>" . $this->datumSelector($_POST["szuldatum"], "szuldatum", 0, null, $customJs) . "</td></tr>";
                 break;
             case "szulhely":
                 //if ($_SESSION['helyszindata']['id'] == 46) {
@@ -661,7 +671,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $translateKey = "szuletesihely";
                 break;
             case "neme":
-                $extraHTML = "<tr class='datarow'><td style='width:130px;'>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' {$customJs} name='neme' value='1' ".($_POST["neme"]==1?"checked":"")."/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' {$customJs} name='neme' value='2' ".($_POST["neme"]==2?"checked":"")."/> {$webText["no"]} </td></tr>";
+                $extraHTML = "<tr class='datarow'><td style='width:130px;'>{$webText["neme"]}: #requiredmark#</td><td><input type='radio' {$customJs} name='neme' value='1' " . ($_POST["neme"] == 1 ? "checked" : "") . "/> {$webText["ferfi"]}&nbsp;&nbsp;&nbsp;<input type='radio' {$customJs} name='neme' value='2' " . ($_POST["neme"] == 2 ? "checked" : "") . "/> {$webText["no"]} </td></tr>";
                 break;
             case "anyjaneve":
                 //if ($_SESSION['helyszindata']['id'] == 46) {
@@ -695,44 +705,44 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     //forced default
                     $_POST[$field] = "rendezvény kisegítő";
                 }
-                if($_SESSION["helyszindata"]["domain"]=="bp"){
-                    if(empty($_POST[$field]) || !isset($_POST[$field])){
+                if ($_SESSION["helyszindata"]["domain"] == "bp") {
+                    if (empty($_POST[$field]) || !isset($_POST[$field])) {
                         $_POST[$field] = "Képernyő előtti szellemi munkavégzés";
                     }
                 }
-                if($_SESSION["helyszindata"]["domain"]=="fgsz"){
-                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=? ORDER BY munkakor ASC",array(220));
-                    $extraHTML.= "<tr class='datarow'>";
-                    $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
-                    $extraHTML.= "<td>";
-                    $extraHTML.= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' />";
-                    while($r=sql_fetch_array($q)){
-                        $extraHTML.= "<option value=\"{$r["munkakor"]}\">{$r["munkakor"]}</option>";
+                if ($_SESSION["helyszindata"]["domain"] == "fgsz") {
+                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=? ORDER BY munkakor ASC", array(220));
+                    $extraHTML .= "<tr class='datarow'>";
+                    $extraHTML .= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML .= "<td>";
+                    $extraHTML .= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' />";
+                    while ($r = sql_fetch_array($q)) {
+                        $extraHTML .= "<option value=\"{$r["munkakor"]}\">{$r["munkakor"]}</option>";
                     }
-                    $extraHTML.= "</select>";
-                    $extraHTML.= "</td>";
-                    $extraHTML.= "</tr>";
+                    $extraHTML .= "</select>";
+                    $extraHTML .= "</td>";
+                    $extraHTML .= "</tr>";
                 }
 
-                if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID){
-                    $extraHTML.= "<tr class='datarow'>";
-                    $extraHTML.= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
-                    $extraHTML.= "<td>";
-                    $extraHTML.= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' />";
-                    $extraHTML.= "<option value=''>Válasszon!</option>";
+                if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
+                    $extraHTML .= "<tr class='datarow'>";
+                    $extraHTML .= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML .= "<td>";
+                    $extraHTML .= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' />";
+                    $extraHTML .= "<option value=''>Válasszon!</option>";
                     foreach ($this->astotecMunkakorok as $val) {
-                        $extraHTML.= "<option value='{$val}' ".($_POST[$field] == $val? "selected":"").">{$val}</option>";
+                        $extraHTML .= "<option value='{$val}' " . ($_POST[$field] == $val ? "selected" : "") . ">{$val}</option>";
                     }
-                    $extraHTML.= "</select>";
-                    $extraHTML.= "</td>";
-                    $extraHTML.= "</tr>";
+                    $extraHTML .= "</select>";
+                    $extraHTML .= "</td>";
+                    $extraHTML .= "</tr>";
                 }
                 break;
             case "torzsszam":
                 if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
                     $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\"";
                 }
-                if ($_SESSION["helyszindata"]["domain"]=="bp-teszt" || $_SESSION["helyszindata"]["domain"]=="bp"){
+                if ($_SESSION["helyszindata"]["domain"] == "bp-teszt" || $_SESSION["helyszindata"]["domain"] == "bp") {
                     $webText[$translateKey] = "NTID";
                 }
                 break;
@@ -750,15 +760,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 break;
         }
 
-        if($_SESSION["helyszindata"]["id"]==200 && $fieldName=="email"){
+        if ($_SESSION["helyszindata"]["id"] == 200 && $fieldName == "email") {
             $jsCall = "onfocusout=\"uniqaEmailCheck($(this).val())\" onClick=\"uniqaServiceCheck()\"";
             $extraNameTag = "Céges";
-        }else{
+        } else {
             $jsCall = $extraNameTag = "";
-            
         }
-        
-        if((CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) && $fieldName=="taj"){
+
+        if ((CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) && $fieldName == "taj") {
             $jsCall = "onfocusout='checkWhiteList($(this).val())'";
         }
 
@@ -766,53 +775,56 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             $jsCall = $customJs;
         }*/
 
-        if(CompanyService::isALDI() && $fieldName=="taj"){
+        if (CompanyService::isALDI() && $fieldName == "taj") {
             $value = $_POST[$field];
             $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\" maxlength='9'";
             $extraHTML = "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$inputMode} {$jsCall} style='width:{$width}px;' type='text' name='{$field}' id='{$field}' value='{$value}' /></td></tr>";
         }
 
-        if(CompanyService::isALDI() && $fieldName=="telefon"){
+        if (CompanyService::isALDI() && $fieldName == "telefon") {
             $inputMode = "inputmode='numeric' oninput=\"this.value = this.value.replace(/\D+/g, '')\" maxlength='11' placeholder='06301234567'";
         }
 
         if (!$hidden || $RequiedForced) {
             if (empty($extraHTML)) {
-                if(isset($_POST[$field])){
+                if (isset($_POST[$field])) {
                     $value = $_POST[$field];
-                }else{
+                } else {
                     $value = "";
                 }
-                $html.= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$inputMode} {$jsCall} style='width:{$width}px;' type='text' name='{$field}' id='{$field}' value='{$value}' /></td></tr>";
+                $html .= "<tr class='datarow'><td>{$extraNameTag} {$webText[$translateKey]}: #requiredmark#</td><td><input class='inputbox' {$inputMode} {$jsCall} style='width:{$width}px;' type='text' name='{$field}' id='{$field}' value='{$value}' /></td></tr>";
             } else {
-                $html.= $extraHTML;
+                $html .= $extraHTML;
             }
         }
-        $html.= $extraRow;
-        $html = str_replace("#requiredmark#",$required||$RequiedForced?"*":"", $html);
+        $html .= $extraRow;
+        $html = str_replace("#requiredmark#", $required || $RequiedForced ? "*" : "", $html);
 
         return $html;
     }
 
-    public function getFieldRequired($field) {
+    public function getFieldRequired($field)
+    {
         $required = true;
-		if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "notreq_{$field}") || $this->getFieldHidden($field)) {
-			$required = false;
-		}
-		
+        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "notreq_{$field}") || $this->getFieldHidden($field)) {
+            $required = false;
+        }
+
         return $required;
     }
 
-    public function getFieldHidden($field) {
+    public function getFieldHidden($field)
+    {
         $hidden = false;
-		if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "hidden_{$field}")) {
-			$hidden = true;
-		}
-		
+        if (substr_count($_SESSION["helyszindata"]["fieldoptions"], "hidden_{$field}")) {
+            $hidden = true;
+        }
+
         return $hidden;
     }
 
-    public function checkCaptcha() {
+    public function checkCaptcha()
+    {
         $lang = new Lang();
         $webText = $lang->webText;
 
@@ -835,53 +847,56 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return $error;
     }
 
-    public static function jsonOut($data, $encoding = "utf-8") {
+    public static function jsonOut($data, $encoding = "utf-8")
+    {
         header("Content-Type: application/json; charset={$encoding}");
         echo json_encode($data);
         die();
     }
-	
-	public static function isDemoSite() {
+
+    public static function isDemoSite()
+    {
         return Booking_Constants::IS_DEMO;
     }
 
-    public static function converResult($result) {
-        return htmlentities(trim(str_replace("\n\n","\n",str_replace("<","\n<", $result))));
+    public static function converResult($result)
+    {
+        return htmlentities(trim(str_replace("\n\n", "\n", str_replace("<", "\n<", $result))));
     }
 
-    public function create_zip( $files = array(), $destination = '', $removeContainers = NULL, $overwrite = false ) {
+    public function create_zip($files = array(), $destination = '', $removeContainers = NULL, $overwrite = false)
+    {
         //if the zip file already exists and overwrite is false, return false
-        if( file_exists( $destination ) && !$overwrite ) { return false; }
+        if (file_exists($destination) && !$overwrite) {
+            return false;
+        }
         //vars
         $valid_files = array();
         //if files were passed in...
-        if( is_array( $files )) {
+        if (is_array($files)) {
             //cycle through each file
-            foreach( $files as $file ) {
+            foreach ($files as $file) {
                 //make sure the file exists
-                if( file_exists( $file )) {
+                if (file_exists($file)) {
                     $valid_files[] = $file;
                 }
             }
         }
         //if we have good files...
-        if( count( $valid_files )) {
+        if (count($valid_files)) {
             //create the archive
             $zip = new ZipArchive();
-            if( $zip->open($destination,$overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true ) {
+            if ($zip->open($destination, $overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true) {
                 return false;
             }
             //add the files
-            foreach( $valid_files as $file ) {
-                if($removeContainers != NULL)
-                {
-                    $onlyFile = explode( "/", $file );
-                    $zip->addFile( $file,$onlyFile[array_key_last($onlyFile)]);
+            foreach ($valid_files as $file) {
+                if ($removeContainers != NULL) {
+                    $onlyFile = explode("/", $file);
+                    $zip->addFile($file, $onlyFile[array_key_last($onlyFile)]);
                     //
                     //$zip->addFile( $file, $onlyFile[$removeContainers] );
-                }
-                else
-                {
+                } else {
                     $zip->addFile($file, $file);
                 }
             }
@@ -889,19 +904,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             //echo 'The zip archive contains ',$zip->numFiles,' files with a status of ',$zip->status;
             //close the zip -- done!
             $zip->close();
-            
+
             //system("zip -P $password $destination $destination");
-            
+
             //check to make sure the file exists
-            return file_exists( $destination );
-        }
-        else
-        {
+            return file_exists($destination);
+        } else {
             return false;
         }
     }
 
-    public static function generateRandomString($length = 10) {
+    public static function generateRandomString($length = 10)
+    {
         $characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         $charactersLength = strlen($characters);
         $randomString = '';
@@ -911,7 +925,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return $randomString;
     }
 
-    public static function tajCheck($taj):bool {
+    public static function tajCheck($taj): bool
+    {
         $taj = trim($taj);
         if (!empty($taj)) {
             if (strlen($taj) != 9) {
@@ -920,7 +935,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 $checkNum = 0;
                 for ($i = 0; $i < 8; $i++) {
                     $number = intval(substr($taj, $i, 1));
-                    $checkNum += $i % 2 == 1 ? $number*7 : $number*3;
+                    $checkNum += $i % 2 == 1 ? $number * 7 : $number * 3;
                 }
                 if ($checkNum % 10 != substr($taj, -1)) {
                     return false;
@@ -930,7 +945,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return true;
     }
 
-    public static function getBetween($content, $start, $end):array {
+    public static function getBetween($content, $start, $end): array
+    {
         $n = explode($start, $content);
         $result = [];
         foreach ($n as $val) {
@@ -942,83 +958,272 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         return $result;
     }
 
-    public static function convertAccentsAndSpecialToNormal($string):string {
+    public static function convertAccentsAndSpecialToNormal($string): string
+    {
         $table = array(
-            'À'=>'Á', 'Á'=>'Á', 'Â'=>'Á', 'Ã'=>'Á', 'Ä'=>'Á', 'Å'=>'Á', 'Ă'=>'Á', 'Ā'=>'Á', 'Ą'=>'A', 'Æ'=>'A', 'Ǽ'=>'A',
-            'à'=>'á', 'á'=>'á', 'â'=>'á', 'ã'=>'á', 'ä'=>'á', 'å'=>'á', 'ă'=>'á', 'ā'=>'á', 'ą'=>'a', 'æ'=>'a', 'ǽ'=>'a',
+            'À' => 'Á',
+            'Á' => 'Á',
+            'Â' => 'Á',
+            'Ã' => 'Á',
+            'Ä' => 'Á',
+            'Å' => 'Á',
+            'Ă' => 'Á',
+            'Ā' => 'Á',
+            'Ą' => 'A',
+            'Æ' => 'A',
+            'Ǽ' => 'A',
+            'à' => 'á',
+            'á' => 'á',
+            'â' => 'á',
+            'ã' => 'á',
+            'ä' => 'á',
+            'å' => 'á',
+            'ă' => 'á',
+            'ā' => 'á',
+            'ą' => 'a',
+            'æ' => 'a',
+            'ǽ' => 'a',
 
-            'Þ'=>'B', 'þ'=>'b', 'ß'=>'Ss',
+            'Þ' => 'B',
+            'þ' => 'b',
+            'ß' => 'Ss',
 
-            'Ç'=>'C', 'Č'=>'C', 'Ć'=>'C', 'Ĉ'=>'C', 'Ċ'=>'C',
-            'ç'=>'c', 'č'=>'c', 'ć'=>'c', 'ĉ'=>'c', 'ċ'=>'c',
+            'Ç' => 'C',
+            'Č' => 'C',
+            'Ć' => 'C',
+            'Ĉ' => 'C',
+            'Ċ' => 'C',
+            'ç' => 'c',
+            'č' => 'c',
+            'ć' => 'c',
+            'ĉ' => 'c',
+            'ċ' => 'c',
 
-            'Đ'=>'Dj', 'Ď'=>'D',
-            'đ'=>'dj', 'ď'=>'d',
+            'Đ' => 'Dj',
+            'Ď' => 'D',
+            'đ' => 'dj',
+            'ď' => 'd',
 
-            'È'=>'É', 'É'=>'É', 'Ê'=>'É', 'Ë'=>'É', 'Ĕ'=>'É', 'Ē'=>'É', 'Ę'=>'É', 'Ė'=>'É',
-            'è'=>'é', 'é'=>'é', 'ê'=>'é', 'ë'=>'é', 'ĕ'=>'é', 'ē'=>'é', 'ę'=>'é', 'ė'=>'é',
+            'È' => 'É',
+            'É' => 'É',
+            'Ê' => 'É',
+            'Ë' => 'É',
+            'Ĕ' => 'É',
+            'Ē' => 'É',
+            'Ę' => 'É',
+            'Ė' => 'É',
+            'è' => 'é',
+            'é' => 'é',
+            'ê' => 'é',
+            'ë' => 'é',
+            'ĕ' => 'é',
+            'ē' => 'é',
+            'ę' => 'é',
+            'ė' => 'é',
 
-            'Ĝ'=>'G', 'Ğ'=>'G', 'Ġ'=>'G', 'Ģ'=>'G',
-            'ĝ'=>'g', 'ğ'=>'g', 'ġ'=>'g', 'ģ'=>'g',
+            'Ĝ' => 'G',
+            'Ğ' => 'G',
+            'Ġ' => 'G',
+            'Ģ' => 'G',
+            'ĝ' => 'g',
+            'ğ' => 'g',
+            'ġ' => 'g',
+            'ģ' => 'g',
 
-            'Ĥ'=>'H', 'Ħ'=>'H',
-            'ĥ'=>'h', 'ħ'=>'h',
+            'Ĥ' => 'H',
+            'Ħ' => 'H',
+            'ĥ' => 'h',
+            'ħ' => 'h',
 
-            'Ì'=>'Í', 'Í'=>'Í', 'Î'=>'Í', 'Ï'=>'Í', 'İ'=>'Í', 'Ĩ'=>'Í', 'Ī'=>'Í', 'Ĭ'=>'Í', 'Į'=>'Í',
-            'ì'=>'í', 'í'=>'í', 'î'=>'i', 'ï'=>'i', 'į'=>'i', 'ĩ'=>'i', 'ī'=>'i', 'ĭ'=>'i', 'ı'=>'i',
+            'Ì' => 'Í',
+            'Í' => 'Í',
+            'Î' => 'Í',
+            'Ï' => 'Í',
+            'İ' => 'Í',
+            'Ĩ' => 'Í',
+            'Ī' => 'Í',
+            'Ĭ' => 'Í',
+            'Į' => 'Í',
+            'ì' => 'í',
+            'í' => 'í',
+            'î' => 'i',
+            'ï' => 'i',
+            'į' => 'i',
+            'ĩ' => 'i',
+            'ī' => 'i',
+            'ĭ' => 'i',
+            'ı' => 'i',
 
-            'Ĵ'=>'J',
-            'ĵ'=>'j',
+            'Ĵ' => 'J',
+            'ĵ' => 'j',
 
-            'Ķ'=>'K',
-            'ķ'=>'k', 'ĸ'=>'k',
+            'Ķ' => 'K',
+            'ķ' => 'k',
+            'ĸ' => 'k',
 
-            'Ĺ'=>'L', 'Ļ'=>'L', 'Ľ'=>'L', 'Ŀ'=>'L', 'Ł'=>'L',
-            'ĺ'=>'l', 'ļ'=>'l', 'ľ'=>'l', 'ŀ'=>'l', 'ł'=>'l',
+            'Ĺ' => 'L',
+            'Ļ' => 'L',
+            'Ľ' => 'L',
+            'Ŀ' => 'L',
+            'Ł' => 'L',
+            'ĺ' => 'l',
+            'ļ' => 'l',
+            'ľ' => 'l',
+            'ŀ' => 'l',
+            'ł' => 'l',
 
-            'Ñ'=>'N', 'Ń'=>'N', 'Ň'=>'N', 'Ņ'=>'N', 'Ŋ'=>'N',
-            'ñ'=>'n', 'ń'=>'n', 'ň'=>'n', 'ņ'=>'n', 'ŋ'=>'n', 'ŉ'=>'n',
+            'Ñ' => 'N',
+            'Ń' => 'N',
+            'Ň' => 'N',
+            'Ņ' => 'N',
+            'Ŋ' => 'N',
+            'ñ' => 'n',
+            'ń' => 'n',
+            'ň' => 'n',
+            'ņ' => 'n',
+            'ŋ' => 'n',
+            'ŉ' => 'n',
 
-            'Ò'=>'Ó', 'Ó'=>'Ó', 'Ô'=>'Ő', 'Õ'=>'Ő', 'Ö'=>'Ö', 'Ø'=>'O', 'Ō'=>'Ö', 'Ŏ'=>'Ö', 'Ő'=>'Ő', 'Œ'=>'O',
-            'ò'=>'ó', 'ó'=>'ó', 'ô'=>'ő', 'õ'=>'ő', 'ö'=>'ö', 'ø'=>'o', 'ō'=>'ö', 'ŏ'=>'ö', 'ő'=>'ő', 'œ'=>'o', 'ð'=>'o',
+            'Ò' => 'Ó',
+            'Ó' => 'Ó',
+            'Ô' => 'Ő',
+            'Õ' => 'Ő',
+            'Ö' => 'Ö',
+            'Ø' => 'O',
+            'Ō' => 'Ö',
+            'Ŏ' => 'Ö',
+            'Ő' => 'Ő',
+            'Œ' => 'O',
+            'ò' => 'ó',
+            'ó' => 'ó',
+            'ô' => 'ő',
+            'õ' => 'ő',
+            'ö' => 'ö',
+            'ø' => 'o',
+            'ō' => 'ö',
+            'ŏ' => 'ö',
+            'ő' => 'ő',
+            'œ' => 'o',
+            'ð' => 'o',
 
-            'Ŕ'=>'R', 'Ř'=>'R',
-            'ŕ'=>'r', 'ř'=>'r', 'ŗ'=>'r',
+            'Ŕ' => 'R',
+            'Ř' => 'R',
+            'ŕ' => 'r',
+            'ř' => 'r',
+            'ŗ' => 'r',
 
-            'Š'=>'S', 'Ŝ'=>'S', 'Ś'=>'S', 'Ş'=>'S',
-            'š'=>'s', 'ŝ'=>'s', 'ś'=>'s', 'ş'=>'s',
+            'Š' => 'S',
+            'Ŝ' => 'S',
+            'Ś' => 'S',
+            'Ş' => 'S',
+            'š' => 's',
+            'ŝ' => 's',
+            'ś' => 's',
+            'ş' => 's',
 
-            'Ŧ'=>'T', 'Ţ'=>'T', 'Ť'=>'T',
-            'ŧ'=>'t', 'ţ'=>'t', 'ť'=>'t',
+            'Ŧ' => 'T',
+            'Ţ' => 'T',
+            'Ť' => 'T',
+            'ŧ' => 't',
+            'ţ' => 't',
+            'ť' => 't',
 
-            'Ù'=>'Ú', 'Ú'=>'Ú', 'Û'=>'Ű', 'Ü'=>'Ü', 'Ũ'=>'Ű', 'Ū'=>'Ü', 'Ŭ'=>'Ü', 'Ů'=>'Ú', 'Ű'=>'Ű', 'Ų'=>'U',
-            'ù'=>'ú', 'ú'=>'ú', 'û'=>'ű', 'ü'=>'ü', 'ũ'=>'ű', 'ū'=>'ü', 'ŭ'=>'ü', 'ů'=>'ú', 'ű'=>'ű', 'ų'=>'u',
+            'Ù' => 'Ú',
+            'Ú' => 'Ú',
+            'Û' => 'Ű',
+            'Ü' => 'Ü',
+            'Ũ' => 'Ű',
+            'Ū' => 'Ü',
+            'Ŭ' => 'Ü',
+            'Ů' => 'Ú',
+            'Ű' => 'Ű',
+            'Ų' => 'U',
+            'ù' => 'ú',
+            'ú' => 'ú',
+            'û' => 'ű',
+            'ü' => 'ü',
+            'ũ' => 'ű',
+            'ū' => 'ü',
+            'ŭ' => 'ü',
+            'ů' => 'ú',
+            'ű' => 'ű',
+            'ų' => 'u',
 
-            'Ŵ'=>'W', 'Ẁ'=>'W', 'Ẃ'=>'W', 'Ẅ'=>'W',
-            'ŵ'=>'w', 'ẁ'=>'w', 'ẃ'=>'w', 'ẅ'=>'w',
+            'Ŵ' => 'W',
+            'Ẁ' => 'W',
+            'Ẃ' => 'W',
+            'Ẅ' => 'W',
+            'ŵ' => 'w',
+            'ẁ' => 'w',
+            'ẃ' => 'w',
+            'ẅ' => 'w',
 
-            'Ý'=>'Y', 'Ÿ'=>'Y', 'Ŷ'=>'Y',
-            'ý'=>'y', 'ÿ'=>'y', 'ŷ'=>'y',
+            'Ý' => 'Y',
+            'Ÿ' => 'Y',
+            'Ŷ' => 'Y',
+            'ý' => 'y',
+            'ÿ' => 'y',
+            'ŷ' => 'y',
 
-            'Ž'=>'Z', 'Ź'=>'Z', 'Ż'=>'Z',
-            'ž'=>'z', 'ź'=>'z', 'ż'=>'z',
+            'Ž' => 'Z',
+            'Ź' => 'Z',
+            'Ż' => 'Z',
+            'ž' => 'z',
+            'ź' => 'z',
+            'ż' => 'z',
 
-            '“'=>'"', '”'=>'"', '‘'=>"'", '’'=>"'", '•'=>'-', '…'=>'...', '—'=>'-', '–'=>'-', '¿'=>'?', '¡'=>'!', '°'=>' degrees ',
-            '¼'=>' 1/4 ', '½'=>' 1/2 ', '¾'=>' 3/4 ', '⅓'=>' 1/3 ', '⅔'=>' 2/3 ', '⅛'=>' 1/8 ', '⅜'=>' 3/8 ', '⅝'=>' 5/8 ', '⅞'=>' 7/8 ',
-            '÷'=>' divided by ', '×'=>' times ', '±'=>' plus-minus ', '√'=>' square root ', '∞'=>' infinity ',
-            '≈'=>' almost equal to ', '≠'=>' not equal to ', '≡'=>' identical to ', '≤'=>' less than or equal to ', '≥'=>' greater than or equal to ',
-            '←'=>' left ', '→'=>' right ', '↑'=>' up ', '↓'=>' down ', '↔'=>' left and right ', '↕'=>' up and down ',
-            '℅'=>' care of ', '℮' => ' estimated ',
-            'Ω'=>' ohm ',
-            '♀'=>' female ', '♂'=>' male ',
-            '©'=>' Copyright ', '®'=>' Registered ', '™' =>' Trademark ',
+            '“' => '"',
+            '”' => '"',
+            '‘' => "'",
+            '’' => "'",
+            '•' => '-',
+            '…' => '...',
+            '—' => '-',
+            '–' => '-',
+            '¿' => '?',
+            '¡' => '!',
+            '°' => ' degrees ',
+            '¼' => ' 1/4 ',
+            '½' => ' 1/2 ',
+            '¾' => ' 3/4 ',
+            '⅓' => ' 1/3 ',
+            '⅔' => ' 2/3 ',
+            '⅛' => ' 1/8 ',
+            '⅜' => ' 3/8 ',
+            '⅝' => ' 5/8 ',
+            '⅞' => ' 7/8 ',
+            '÷' => ' divided by ',
+            '×' => ' times ',
+            '±' => ' plus-minus ',
+            '√' => ' square root ',
+            '∞' => ' infinity ',
+            '≈' => ' almost equal to ',
+            '≠' => ' not equal to ',
+            '≡' => ' identical to ',
+            '≤' => ' less than or equal to ',
+            '≥' => ' greater than or equal to ',
+            '←' => ' left ',
+            '→' => ' right ',
+            '↑' => ' up ',
+            '↓' => ' down ',
+            '↔' => ' left and right ',
+            '↕' => ' up and down ',
+            '℅' => ' care of ',
+            '℮' => ' estimated ',
+            'Ω' => ' ohm ',
+            '♀' => ' female ',
+            '♂' => ' male ',
+            '©' => ' Copyright ',
+            '®' => ' Registered ',
+            '™' => ' Trademark ',
         );
 
         return strtr($string, $table);
     }
 
-    public function generateRandomStringv2($length = 10) {
-        return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+    public function generateRandomStringv2($length = 10)
+    {
+        return substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $length);
     }
 
 
@@ -1127,83 +1332,89 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'Vevőkapcsolattartó',
     ];
 
-    public function getCegTelephelyCsoportok($cegid){
-        $telephelyek= [];
-        $q= sql_query("SELECT * FROM cegvars WHERE cegid=? AND parentid=0",[$cegid]);
-        while($res=sql_fetch_array($q)) $telephelyek[] = array("id"=>$res["id"],"name"=>$res["megnev"]);
+    public function getCegTelephelyCsoportok($cegid)
+    {
+        $telephelyek = [];
+        $q = sql_query("SELECT * FROM cegvars WHERE cegid=? AND parentid=0", [$cegid]);
+        while ($res = sql_fetch_array($q)) $telephelyek[] = array("id" => $res["id"], "name" => $res["megnev"]);
         return $telephelyek;
     }
 
-    public function showTelephelyHelyszinek($cegvarRow){
+    public function showTelephelyHelyszinek($cegvarRow)
+    {
         $h = "";
-        if($cegvarRow["parentid"]==0) return "";
-        $placeids = json_decode($cegvarRow["placeids"],true);
-        if(!empty($placeids)){
-        $h=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(cim) as cimek FROM helyszinek WHERE id IN(".implode(",",$placeids).")"));
+        if ($cegvarRow["parentid"] == 0) return "";
+        $placeids = json_decode($cegvarRow["placeids"], true);
+        if (!empty($placeids)) {
+            $h = sql_fetch_array(sql_query("SELECT GROUP_CONCAT(cim) as cimek FROM helyszinek WHERE id IN(" . implode(",", $placeids) . ")"));
         }
-        $html = "<span id=\"helyszinstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"".(isset($h["cimek"])?$h["cimek"]:"")."\" onclick='showTelephelyHelyszinValaszto({$cegvarRow["id"]});return false;'>".count($placeids)." Helyszín</a></span>";
+        $html = "<span id=\"helyszinstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"" . (isset($h["cimek"]) ? $h["cimek"] : "") . "\" onclick='showTelephelyHelyszinValaszto({$cegvarRow["id"]});return false;'>" . count($placeids) . " Helyszín</a></span>";
         return $html;
     }
 
-    public function showSzurestipusok($cegvarRow){
+    public function showSzurestipusok($cegvarRow)
+    {
         $h = "";
-        if($cegvarRow["parentid"]==0) return "";
-        $szurestipusids = json_decode($cegvarRow["szurestipusids"],true);
-        if(!empty($szurestipusids)){
-            $h=sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev) as szuresek FROM szurestipusok WHERE id IN(".implode(",",$szurestipusids).")"));
+        if ($cegvarRow["parentid"] == 0) return "";
+        $szurestipusids = json_decode($cegvarRow["szurestipusids"], true);
+        if (!empty($szurestipusids)) {
+            $h = sql_fetch_array(sql_query("SELECT GROUP_CONCAT(megnev) as szuresek FROM szurestipusok WHERE id IN(" . implode(",", $szurestipusids) . ")"));
         }
-        $html = "<span id=\"szuresstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"".(isset($h["szuresek"])?$h["szuresek"]:"")."\" onclick='showTelephelySzurestipusValaszto({$cegvarRow["id"]});return false;'>".count($szurestipusids)." Típus</a></span>";
-        
-        
+        $html = "<span id=\"szuresstatus{$cegvarRow["id"]}\"><a href=\"#\" class=\"tlink\" title=\"" . (isset($h["szuresek"]) ? $h["szuresek"] : "") . "\" onclick='showTelephelySzurestipusValaszto({$cegvarRow["id"]});return false;'>" . count($szurestipusids) . " Típus</a></span>";
+
+
         return $html;
     }
 
-    public function showTelephelyHelyszinValaszto($telephely){
+    public function showTelephelyHelyszinValaszto($telephely)
+    {
         $html = "";
         $telephelyek = json_decode($telephely["placeids"]);
 
-            $q=sql_query("SELECT beo.helyszinid,h.cim FROM orvos_beosztas_new beo
+        $q = sql_query("SELECT beo.helyszinid,h.cim FROM orvos_beosztas_new beo
                                 LEFT JOIN helyszinek h ON h.id=beo.helyszinid
                                 WHERE INSTR(beo.beocegek,\"|{$telephely["cegid"]}|\") GROUP BY beo.helyszinid");
-            $html.= "<div class=\"width:1000px;padding:4px 0px;\">";
-            while($helyszin=sql_fetch_array($q)){
-                $onClick = "onClick='selectTelephelyHelyszin({$telephely["id"]},{$helyszin["helyszinid"]})'";
-                $html.= "<a style=\"cursor:pointer\" {$onClick} class=\"".(in_array($helyszin["helyszinid"],$telephelyek)?"serviceselected":"servicenotselected")."\">";
-                $html.= $helyszin["cim"];
-                $html.= "</a>&nbsp;";
-            }
-            $html.= "</div>";
+        $html .= "<div class=\"width:1000px;padding:4px 0px;\">";
+        while ($helyszin = sql_fetch_array($q)) {
+            $onClick = "onClick='selectTelephelyHelyszin({$telephely["id"]},{$helyszin["helyszinid"]})'";
+            $html .= "<a style=\"cursor:pointer\" {$onClick} class=\"" . (in_array($helyszin["helyszinid"], $telephelyek) ? "serviceselected" : "servicenotselected") . "\">";
+            $html .= $helyszin["cim"];
+            $html .= "</a>&nbsp;";
+        }
+        $html .= "</div>";
 
-            return $html;
+        return $html;
     }
 
-    public function showTelephelySzurestipusValaszto($telephely){
+    public function showTelephelySzurestipusValaszto($telephely)
+    {
         $html = "";
         $szuresek = json_decode($telephely["szurestipusids"]);
 
-            $q=sql_query("SELECT sz.id,sz.megnev FROM szurestipusok sz
+        $q = sql_query("SELECT sz.id,sz.megnev FROM szurestipusok sz
                          LEFT JOIN orvos_beosztas_new beo ON INSTR(beo.tipusok,CONCAT(\"|\",sz.id,\"|\"))
-                         WHERE INSTR(beo.beocegek,CONCAT('|',".$telephely["cegid"].",'|')) GROUP BY sz.id");
+                         WHERE INSTR(beo.beocegek,CONCAT('|'," . $telephely["cegid"] . ",'|')) GROUP BY sz.id");
 
-            $html.= "<div class=\"width:1000px;padding:4px 0px;\">";
-            while($szures=sql_fetch_array($q)){
-                $onClick = "onClick='selectTelephelySzurestipus({$telephely["id"]},{$szures["id"]})'";
-                $html.= "<a style=\"cursor:pointer\" {$onClick} class=\"".(in_array($szures["id"],$szuresek)?"serviceselected":"servicenotselected")."\">";
-                $html.= $szures["megnev"];
-                $html.= "</a>&nbsp;";
-            }
-            $html.= "</div>";
+        $html .= "<div class=\"width:1000px;padding:4px 0px;\">";
+        while ($szures = sql_fetch_array($q)) {
+            $onClick = "onClick='selectTelephelySzurestipus({$telephely["id"]},{$szures["id"]})'";
+            $html .= "<a style=\"cursor:pointer\" {$onClick} class=\"" . (in_array($szures["id"], $szuresek) ? "serviceselected" : "servicenotselected") . "\">";
+            $html .= $szures["megnev"];
+            $html .= "</a>&nbsp;";
+        }
+        $html .= "</div>";
 
-            return $html;
+        return $html;
     }
 
-    public function AlternativSzurestipusNevByCeg($szurestipusId,$megnev){
-        $resq = sql_query("SELECT * FROM eltero_ceg_szurestipus_nevek WHERE cegid=? and szurestipusid=?",array($_SESSION["helyszindata"]["id"],$szurestipusId));
-        if($altmegnev=sql_fetch_array($resq)){
+    public function AlternativSzurestipusNevByCeg($szurestipusId, $megnev)
+    {
+        $resq = sql_query("SELECT * FROM eltero_ceg_szurestipus_nevek WHERE cegid=? and szurestipusid=?", array($_SESSION["helyszindata"]["id"], $szurestipusId));
+        if ($altmegnev = sql_fetch_array($resq)) {
             $megnev = $altmegnev["megnev"];
             return $megnev;
         }
-        
+
         return $megnev;
     }
 
@@ -1211,18 +1422,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      * Védelmi funkció Javascript és HTML inject támadások ellen.
      * @param array $array       Vizsgálandó tömb.
      */
-    public function sanitize_array(array $array):array{
-        if(!empty($array)){
-            foreach($array as $key=>$value){
-                $remove = ["<",">","\"","'"];
-                $replace = ["","","",""];
-                $array[$key] = str_replace($remove,$replace, $value);
+    public function sanitize_array(array $array): array
+    {
+        if (!empty($array)) {
+            foreach ($array as $key => $value) {
+                $remove = ["<", ">", "\"", "'"];
+                $replace = ["", "", "", ""];
+                $array[$key] = str_replace($remove, $replace, $value);
             }
         }
         return $array;
     }
 
-    public function ghc_notification_send(){
+    public function ghc_notification_send()
+    {
         $cegid = 904;
         $data = sql_query("SELECT fogl.*,sz.megnev as csomag FROM felhasznalok fogl 
                            LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=fogl.torzsszam 
@@ -1241,26 +1454,66 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         800,100
         */
 
-        $notificationService = New NotificationService();
+        $notificationService = new NotificationService();
 
-        echo "Lista mérete: ".count($data)."<br><br>";
+        echo "Lista mérete: " . count($data) . "<br><br>";
         $count = 0;
         //$emailek = array("marton.gergely@hungariamed.hu");
         //$telefonok = array("+36306406922");
 
-        foreach($data as $each){
-            
+        foreach ($data as $each) {
+
             $index = ($count);
             //$each["email"] = $emailek[$index];
             //$each["telefon"] = $telefonok[$index];
-            echo "#{$count} - ".$each["id"]."-".$each["nev"]." - ".$each["email"]." - ".$each["telefon"]."<br><br>";
+            echo "#{$count} - " . $each["id"] . "-" . $each["nev"] . " - " . $each["email"] . " - " . $each["telefon"] . "<br><br>";
             $count++;
             //$notificationService->ghc_notification($each);
-            
+
             //if($count==1) break;
         }
 
         die();
     }
 
+    public function cancelledAppointments($startDate = null, $endDate = null)
+    {
+        if (empty($startDate)) {
+            $startDate = date("Y-m-d", strtotime("now -1 month")) . " 00:00:00";
+            $endDate = date("Y-m-d", strtotime("now")) . " 23:59:59";
+        }
+
+        $logs = sql_query(
+            "SELECT * FROM activitylog WHERE tipus='foglalastorles' AND datum BETWEEN ? AND ?;",
+            [$startDate, $endDate]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $appointments = [];
+
+        foreach ($logs as $appointment) {
+            $data = json_decode($appointment["query"], true);
+
+            $specs = sql_query(
+                "SELECT (SELECT cim FROM helyszinek WHERE id=?) as helyszin, 
+                (SELECT megnev FROM cegek WHERE id=?) as ceg,
+                (SELECT megnev FROM szurestipusok WHERE id=?) as szurestipus",
+                [$data["helyszinid"], $data["cegid"], $data["szurestipusid"]]
+            )->fetch(PDO::FETCH_ASSOC);
+
+            $appointments[] = [
+                "id" => $data["id"],
+                "nev" => $data["nev"],
+                "taj" => $data["taj"],
+                "szuldatum" => $data["szuldatum"],
+                "regdatum" => $data["regdatum"],
+                "datum" => $data["datum"],
+                "helyszin" => $specs["helyszin"],
+                "ceg" => $specs["ceg"],
+                "szurestipus" => $specs["szurestipus"],
+            ];
+        }
+        echo "<pre>";
+        print_r($appointments);
+        echo "</pre>";
+    }
 }

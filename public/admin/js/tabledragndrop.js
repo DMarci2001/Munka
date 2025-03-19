@@ -218,7 +218,8 @@ function sortPatientDataRows(){
 		}
 		//var titles = cols[i].children;
 	}
-	console.table(columns);
+
+	//console.table(array);
 
     $.ajax({
         url:"index.php?page=patientdata",
@@ -411,7 +412,51 @@ function createDMRecipientList(){
 		  Swal.fire("Changes are not saved", "", "info");
 		}
 	  });
-	
+}
+
+function createReferalList(){
+
+	var queryString = window.location.search;
+	var urlParams = new URLSearchParams(queryString);
+
+	Swal.fire({
+		title: "Biztosan el akarod menteni a beutaló listát?",
+		showCancelButton: true,
+		icon: "question",
+		confirmButtonText: "Mentés",
+		cancelButtonText: "Bezárás",
+		//denyButtonText: ``
+	  }).then((result) => {
+		/* Read more about isConfirmed, isDenied below */
+		if (result.isConfirmed) {
+		  //Swal.fire("Sikeres mentés!", "", "success");
+		  Swal.fire({
+			title: "Sikeres mentés!",
+			text: "Ha vissza szeretnél lépni a beutalók kezeléséhez, kattints a vissza gombra",
+			icon: "success",
+			showCancelButton: true,
+			confirmButtonColor: "#3085d6",
+			confirmButtonText: "Vissza",
+			cancelButtonColor: "#d33",
+			cancelButtonText: "Bezárás"
+		  }).then((result) => {
+			if (result.isConfirmed) {
+				window.location.replace("?page=beutalokkezelese");
+			}
+		  });
+		  $.ajax({
+			url:"index.php?page=patientdata",
+			type:"POST",
+			//dataType:'json',
+			data:{createReferalList:true,bmid:urlParams.get('bmid')},
+			success: function(response){
+				console.log(response);
+			}
+		})
+		} else if (result.isDenied) {
+		  Swal.fire("Changes are not saved", "", "info");
+		}
+	  });
 }
 
 

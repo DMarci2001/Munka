@@ -683,6 +683,22 @@ class BookingService
                             
                         }
 
+                        if(CompanyService::isAszMenedzser()){
+                            if($this->szuresTipus==284){
+                                if(date("w",strtotime($nap))==5){
+                                    $r=sql_query("SELECT * FROM foglalasok WHERE INSTR(datum,?) AND szurestipusid=? AND cegid=?",
+                                        [$nap,$this->szuresTipus,$_SESSION["helyszindata"]["id"]]
+                                    )->fetchAll(PDO::FETCH_ASSOC);
+
+                                    if(count($r)>=4){
+                                        $buttonClass = "foglaltbtn";
+                                        $buttonJava = "nemfog();return false;";
+                                        $btn = "<a class='{$buttonClass}' title='' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                                    }
+                                }
+                            }
+                        }
+
                         $sectionHTML .= "<div style='text-align:center;'>{$btn}</div>";
 
 
@@ -1002,7 +1018,10 @@ class BookingService
                     if (substr_count($error, $text) == 0) {
                         $error .= $text;
                     }
-                    $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+                    if($packTypeId!=0){
+                        $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+                    }
+                    
                 } else {
                     //die("itt{$error}".$vanFixError);
                     $text = "nincs időpont<br/>";
@@ -2916,14 +2935,14 @@ class BookingService
         return $input;
     }
 
-    public function createReferalDoc($data, $docName)
+    public function createReferalDoc($data, $docName, $massDump=false)
     {
         //Dokumentum kikeresése név alapján
         $key = array_search($docName, array_column($this->availableDocs, "value"));
-        $pdf = new Pdf($this->availableDocs[$key]["filename"]);
+        
+$pdf = new Pdf($this->availableDocs[$key]["filename"]);
         $utils = New Utils();
         $auth_id = $utils->generateRandomStringv2(32);
-
         $filename = "{$data["nev"]}-{$data["taj"]}-{$data["szuldatum"]}-{$this->availableDocs[$key]["name"]}-(" . $auth_id . ").pdf";
 
         $input = [
@@ -2978,6 +2997,7 @@ class BookingService
             $docAgent= new DocAgent();
             //$docAgent->saveLocalDoc("/var/www/marci/onlinebejelentkezes/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
             $docAgent->saveLocalDoc("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
+            
             return $filename;
         }
     }

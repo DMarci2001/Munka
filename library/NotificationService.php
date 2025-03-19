@@ -55,6 +55,7 @@ class NotificationService
         $uid = $adminUser->user["id"] ?? 0;
 
         sql_query("INSERT INTO notifications SET datum=now(), tipus=?, objectid=?, destination=?, targy=?, szoveg=?, uid=?", [$tipus, $objectid, $destination, $subject, $text, $uid]);
+        return sql_insert_id();
     }
 
     public static function hasNotification($tipus, $objectid): bool
@@ -687,6 +688,26 @@ class NotificationService
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
         $mbody .= "{$packText}";
         $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
+
+        if(CompanyService::isAszMenedzser()){
+            $mbody .= "<hr>";
+
+            $mbody .= "<p>Bejelentkezés az emeleti recepción történik.</p><br>";
+
+            $mbody .= "<p>Kérjük, éhgyomorral érkezzen, szénsavmentes ásványvizet lehet és ajánlott is fogyasztani a vérvétel és az ultrahang vizsgálat előtt. ";
+            $mbody .= "A laboratóriumi mintákat vérvétel előtt a laborban tudja leadni.</p><br>";
+
+            $mbody .= "<p>Ezt követően reggelit biztosítunk szendvics formájában,(bármely érzékenysége van, vagy nem kérné, kérem, jelezze előre a megjegyzés rovatban) ";
+            $mbody .= "majd a későbbiekben kolléganőm fog kíséretet nyújtani a szakrendelésekre a délelőtt folyamán.</p><br>";
+
+            $mbody .= "<p>Parkolás szabad helyek függvényében az udvarban lehetséges, előzetes rendszám megadásával vagy az utcán, a rendelővel szemben a közterületen.</p><br>";
+
+            $mbody .= "<p>Ha pluszban választott kardiológiai vizsgálatot, ami tartalmaz terheléses EKG vizsgálatot, ajánlott hozni váltóruhát, ";
+            $mbody .= "egy kényelmesebb pólót, cipőt és nadrágot. Az úgynevezett béta-blokkoló (szívritmusszabályzó) gyógyszert a ";
+            $mbody .= "vizsgálat előtti napon és a vizsgálat napján nem kell bevenni, de hozzák magukkal. ";
+            $mbody .= "Ezek a gyógyszerek: Concor, Nebilet, Nebivolol, Lokren, Propanolol, Visken, Procolaran, Betaloc, Metoprolol, Bisoprolol, Bisoblock. ";
+            $mbody .= "Amennyiben két hónapon belül esett át a covid fertőzésen a terheléses EKG vizsgálatot nem tudjuk elvégezni.</p><br>";
+        }
 
         $resv = sql_query("SELECT * FROM visszaigazolok WHERE cegid='{$row["cegid"]}' AND (orvosid='{$row["orvosassigned"]}' OR orvosid=0) AND (helyszinid='{$row["helyszinid"]}' OR helyszinid=0) AND TRIM(szoveg)<>''");
         while ($rowv = sql_fetch_array($resv)) {
@@ -1798,6 +1819,61 @@ END:VCALENDAR";
             return "E-mail sent.";
         }
         return;
+    }
+
+    /**
+     * beutalóhoz tartozó levelek/fájlok küldése
+     * @param   string  $params["type]              Küldés típusa 
+     * @param   string  $params["destination"]      Címzett
+     * @param   string  $params["addressee"]        Címzett neve
+     * @param   array   $params["file"]             Fájl azonosító és fájlnév
+     * @param   string  $params["sender"]           Feladó címe
+     * @param   string  $params["copy"]             Másolatot kap
+     * @param   string  $params["subject"]          Levél tárgy
+     * @param   string  $params["content"]          Levél tartalom
+     * 
+     * @return  integer Notification adatsor azonosítója.
+    */
+    public function sendReferalNotification($params):int{
+       
+        $mail = self::getDefaultMailer();
+        $mail->From = $params["sender"];
+        $filePath = "";
+        //$mail->AddAddress($params["destination"]);
+        //$mail->AddCC($params["copy"]);
+        $mail->AddAddress("tesztemail@hungariamed.hu");
+        //$mail->AddCC("marton.gergely@hungariamed.hu");
+        $search = ["#nev#"];
+        $replace = [$params["addressee"]];
+        $params["content"] = str_replace($search,$replace,$params["content"]);
+
+        $mail->Subject = $params["subject"];
+        $mail->Body = $params["content"];
+
+        if(!empty($params["file"])){
+            $docAgent = New DocAgent();
+            $docPath =  __DIR__ . "/other/tmp/";
+            $docAgent = new DocAgent();
+            $fileContent = $docAgent->getDoc($params["file"]["id"]);
+            $filePath = $docPath . $params["file"]["filename"];
+            file_put_contents($filePath, $fileContent);
+            $fileContent = null;
+            $mail->AddAttachment($filePath);
+        }
+
+        if(!empty($params["list"])){
+            $mail->AddAttachment($params["list"]);
+        }
+
+        $mail->Send();
+        if($filePath){
+            unlink($filePath);
+        }
+        if(!empty($params["list"])){
+            unlink($params["list"]);
+        }
+       
+        return $this->createNotificationRecord($params["type"], $params["objectId"], implode(",",[$params["destination"],$params["copy"]]), $params["subject"], $params["content"]);
     }
 
     public function logProcess() {
