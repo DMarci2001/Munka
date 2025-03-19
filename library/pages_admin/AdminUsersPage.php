@@ -30,8 +30,9 @@ class AdminUsersPage extends AdminCorePage {
 
         if (isset($_POST["usermentes"]) || isset($_POST["userform"])) {
             $id = intval($_GET["szerk"]);
+            $beoUserId = $_POST["beouserid"] ?? 0;
 
-            sql_query("update users set	nev=?, email=?, tel=?, username=?, pecsetszam=? where id=?",array($_POST["nev"], $_POST["email"], $_POST["tel"], $_POST["username"], $_POST["pecsetszam"], $id));
+            sql_query("update users set	nev=?, email=?, tel=?, username=?, pecsetszam=?, beouserid=? where id=?",array($_POST["nev"], $_POST["email"], $_POST["tel"], $_POST["username"], $_POST["pecsetszam"], $beoUserId, $id));
 
             if ($_POST["password"]!="") sql_query("update users set password=md5(?)	where id=?",array($_POST["password"], $id));
 
@@ -107,11 +108,27 @@ class AdminUsersPage extends AdminCorePage {
             echo "<tr><td>Pecsétszám (ha orvos):</td><td><input class='inputbox' style='width:100px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'></td></tr>";
             echo "<tr><td>Új jelszó:</td><td><input autocomplete='off' class='inputbox' style='width:200px;' type='text' name='password' value=''> {$loginCode}</td></tr>";
 
+            echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";
+            echo "<tr><td colspan='2' style='padding:5px 0px;border-top: 1px solid #888;'></td></tr>";
+            echo "<tr><td>Beosztás összekapcsolás:</td><td>";
+            echo "<select name='beouserid'>";
+
+            $beoUsers = sql_query("select w.id, w.nev, w.teljesnev, r.megnev as role from schedule_workers w left join schedule_roles r on r.id=w.roleid order by concat(teljesnev,nev)")->fetchAll(PDO::FETCH_ASSOC);
+            echo "<option value='0'>Nincs összekapcsolva</option>";
+            foreach ($beoUsers as $beoUser) {
+                $nev = empty($beoUser["teljesnev"]) ? $beoUser["nev"] : $beoUser["teljesnev"];
+                //$nev .= empty($beoUser["role"]) ? "" : " ({$beoUser["role"]})";
+                echo "<option value='{$beoUser["id"]}'".($row["beouserid"]==$beoUser["id"]?" selected":"").">{$nev}</option>";
+            }
+
+            echo "</select> ";
+            echo "</td></tr>";
+
             if ($this->adminUser->jogosultsagAccess()) {
                 echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";
                 echo "<tr><td colspan='2' style='padding:5px 0px;border-top: 1px solid #888;'></td></tr>";
-                echo "<tr><td></td><td style='padding-bottom:5px;font-weight: bold;'>Jogosultságok</td></tr>";
-                echo "<tr><td>Engedélyezett cégek:</td><td>";
+                //echo "<tr><td></td><td style='padding-bottom:5px;font-weight: bold;'>Jogosultságok</td></tr>";
+                echo "<tr><td>Jogosultságok:</td><td>";
                 echo "<select name='jogosultsag' onchange=\"if (this.value>=2) { $('#cegjogok').hide(); } else { $('#cegjogok').show(); }\">";
                 echo "<option value='0'".($row["jogosultsag"]==0?" selected":"").">Csak a kiválasztott cégek (recepció)</option>";
                 echo "<option value='1'".($row["jogosultsag"]==1?" selected":"").">Csak a kiválasztott cégek (kezelés)</option>";
@@ -174,10 +191,20 @@ class AdminUsersPage extends AdminCorePage {
 
             echo "<div id='errorlistdiv' style='padding:10px;background:#f00;color:#fff;font-weight:bold;display:none;'></div>";
 
-            echo "<br/><input type='submit' name='usermentes' value='Mentés'> ";
-            echo "<input type='submit' name='usersavecancel' value='Vissza'> ";
+            $GLOBALS["savesubmitbutton"] = "iform";
+
+            echo "<br/><input type='hidden' name='usermentes' value='Mentés'> ";
 
             echo "</form>";
+
+            if (!empty($row["beouserid"])) {
+                $service = new WorkScheduleService();
+
+                echo "<div id='workerbeosztasdiv' style='padding:15px 0px 10px 0px;border-top: 1px solid #888;'>";
+                echo $service->workerScheduleList($row["beouserid"]);
+                echo "</div>";
+            }
+
             echo "</div>";
             return;
         }

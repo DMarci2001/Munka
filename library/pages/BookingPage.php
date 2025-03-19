@@ -580,6 +580,9 @@ class BookingPage extends CorePage
                     $this->errors[] = "{$webText["utcakotelezo"]}";
                 }
             }
+            if (CompanyService::isFogleu() && empty($_POST["companytext"])) {
+                $this->errors[] = "A cég megadása kötelező!";
+            }
             if (!$this->utils->getFieldHidden("munkakor") && $this->utils->getFieldRequired("munkakor")) {
                 if (empty($_POST["munkakor"])) {
                     $this->errors[] = "{$webText["munkakorkotelezo"]}";
@@ -1386,6 +1389,7 @@ class BookingPage extends CorePage
         echo $this->utils->dataField("irsz");
         echo $this->utils->dataField("varos");
         echo $this->utils->dataField("utca");
+        echo $this->utils->dataField("companytext");
         echo $this->utils->dataField("munkakor");
         echo $this->utils->dataField("adoszam");
         echo $this->utils->dataField("torzsszam");
@@ -1638,7 +1642,7 @@ class BookingPage extends CorePage
             $enableCache = false;
         }
 
-        if (CompanyService::isFGSZ()) {
+        if (CompanyService::isFGSZ() || CompanyService::isFogleu()) {
             $skipScan = true;
             $freeFound = true;
         }

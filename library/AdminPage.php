@@ -247,7 +247,7 @@ class AdminPage {
         return $html;
     }
 
-    private function _contentHeader($menu) {
+    private function _contentHeader($menu):string {
         $title = $menu["megnev"];
         if (!empty($this->page->subtitle)) {
             $title = $this->page->subtitle;
@@ -280,7 +280,12 @@ class AdminPage {
             }
            
             if (isset($_GET["szerk"])) {
-                $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
+                $savebutton = "";
+                if (isset($GLOBALS["savesubmitbutton"])) {
+                    $savebutton = "<a class='ujbutton' onclick='$(\"#{$GLOBALS["savesubmitbutton"]}\").submit();return false;' href='#'><i class='fa-solid fa-floppy-disk'></i> Mentés</a> ";
+                    unset($GLOBALS["savesubmitbutton"]);
+                }
+                $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>{$savebutton}<a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}'>Vissza</a></div>";
             }
         }
         $html.= "</div>";

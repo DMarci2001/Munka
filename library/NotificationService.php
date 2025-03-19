@@ -1393,6 +1393,7 @@ END:VCALENDAR";
     }
 
     const OWNER_PASSWORD = "que3ikieP";
+    const MAESZ_BEKULDOKOD = "000000481";
 
     public function sendLaborLeletEmail($id) {
         $adminUser = new AdminUser();
@@ -1401,7 +1402,7 @@ END:VCALENDAR";
             return;
         }
 
-        if ($requestData = sql_query("SELECT r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
+        if ($requestData = sql_query("SELECT r.bekuldokod, r.nev, r.szuldatum, r.taj, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabdata, r.emailtext FROM labrequests r 
         LEFT JOIN foglalasok f ON f.id=r.foglalasid
         LEFT JOIN cegek c ON c.id=f.cegid
         WHERE r.id=?", [$id])->fetch(PDO::FETCH_ASSOC)) {
@@ -1425,6 +1426,11 @@ END:VCALENDAR";
             //$mail->AddBCC("jnsmobil@gmail.com");
             //$mail->AddBCC("marton.gergely@hungariamed.hu");
             $mail->AddAttachment($pdfFileNameEncripted, $outFileName);
+
+            if ($requestData["bekuldokod"] == self::MAESZ_BEKULDOKOD && Booking_Constants::SQL_DB == "hungariamed") {
+                //máesznak külön pdf csatolás
+                $mail->AddAttachment(Booking_Constants::APP_PATH."public/admin/templates/Verkep_labor_tajekoztato.pdf");
+            }
 
             $subject = $requestData["nev"] . " labor lelet " . date("Y-m-d");
             $mbody = !empty($requestData["emailtext"]) ? nl2br($requestData["emailtext"]) : "Automatikus labor lelet küldés";

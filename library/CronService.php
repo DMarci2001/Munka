@@ -65,6 +65,7 @@ class CronService {
             $this->checkOneWebPage();
             $this->refreshWorklist();
             $this->deleteExpiredReservations();
+            $this->fillLabMessageDatas();
             //$this->dokirexUserIdFill();
 
 			$dicomService = new DicomService();
@@ -156,8 +157,8 @@ class CronService {
         //$this->saveResultPdfs();
 
 
-        $service = new NotificationService();
-        $service->xmasCampaign2024();
+        //$service = new NotificationService();
+        //$service->xmasCampaign2024();
 
         //$this->sendReviewMails();
 
@@ -209,7 +210,7 @@ class CronService {
         //$docAgent->storeLaborLeletek();
 
         //$this->scanLaborPDF();
-        //$this->fillLabMessageDatas();
+        $this->fillLabMessageDatas();
 
         //$this->readEmailReports();
 
@@ -246,12 +247,12 @@ class CronService {
         $orders = sql_query("SELECT c.`reservation_id`, v.name, b.* FROM banktransactions b 
             LEFT JOIN labshop_vasarlasok v ON v.`bankorderid`=b.`orderid`
             LEFT JOIN cart_item c ON c.session_id=v.id
-            WHERE INSTR(ack, 'labshop') AND result='finished' AND c.`reservation_id` IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
+            WHERE b.datum>DATE_SUB(NOW(), INTERVAL 1 MONTH) AND INSTR(ack, 'labshop') AND result='finished' AND c.`reservation_id` IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($orders as $order) {
             echo "{$order["reservation_id"]} {$order["orderid"]}\n";
             sql_query("update foglalasok set bankorderid=? where id=?", array($order["orderid"], $order["reservation_id"]));
         }
-
+        /*
         die;
 
 
@@ -272,6 +273,7 @@ class CronService {
                 }
             }
         }
+        */
     }
 
     private function scanLaborPDF() {

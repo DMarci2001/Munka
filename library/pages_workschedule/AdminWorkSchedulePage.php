@@ -347,6 +347,26 @@ class AdminWorkSchedulePage extends AdminCorePage {
             die;
         }
 
+        if (isset($_POST["toggleWorkerFreeDay"])) {
+            $day = $_POST["toggleWorkerFreeDay"];
+            $workerId = $_POST["wid"];
+
+            $result = [];
+
+            if ($szData = sql_query("select id from schedule_szabadsag sz where sz.datumtol=? and sz.oid=?", [$day, $workerId])->fetch(PDO::FETCH_ASSOC)) {
+                sql_query("delete from schedule_szabadsag where id=?", [$szData["id"]]);
+                $result["message"] = "Szabadság törölve";
+            } else {
+                sql_query("insert into schedule_szabadsag set datumtol=?, datumig=?, oid=?", [$day, $day, $workerId]);
+                $result["message"] = "Szabadság rögzítve";
+            }
+
+            $result["html"] = $this->workScheduleService->workerScheduleList($workerId);
+
+            Utils::jsonOut($result);
+            die;
+        }
+
         $GLOBALS["css"][] = "schedule.css";
         $GLOBALS["javascript"][] = "schedule.js";
     }
@@ -481,9 +501,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
             return;
         }
 
-        echo "<div style='margin:10px;'>";
-        echo "<h2>{$workerData["nev"]} beosztása</h2>";
-        echo $this->workScheduleService->workerScheduleList($workerData);
+        echo "<div id='workerbeosztasdiv' style='margin:10px;'>";
+        echo $this->workScheduleService->workerScheduleList($workerData["id"]);
         echo "</div>";
     }
 
