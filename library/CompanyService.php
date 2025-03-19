@@ -39,7 +39,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="suzuki-menedzserszures";
+            $d="asz-menedzserszures";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -192,6 +192,10 @@ class CompanyService {
 
     public static function isApollo($companyId = 0):bool{
         return $_SESSION["helyszindata"]["domain"] == "apollo" && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isAszMenedzser($companyId = 0):bool{
+        return $_SESSION["helyszindata"]["domain"] == "asz-menedzserszures" && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

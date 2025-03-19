@@ -201,15 +201,27 @@ class BookingPage extends CorePage
             }
             $tipusok = array_values(array_filter(array_unique($tipusok)));
 
-            $q=sql_query("SELECT sz.id,sz.megnev,sz.recommendedage,sz.recommendedgender FROM szurestipusok sz 
+            
+            $q=sql_query("SELECT sz.id,sz.megnev,sz.recommendedage,sz.recommendedgender,sz.recommendedageassist FROM szurestipusok sz 
                           WHERE sz.id IN(".implode(",",$tipusok).") AND ispack=1 
                           GROUP BY sz.id");
-
             while($res=sql_fetch_array($q)){
                 if($res["recommendedgender"]==$_POST["neme"]){
                     if(!empty($res["recommendedage"])){
                        if($this->ifStatement("{$kor}{$res["recommendedage"]}",$kor.$res["recommendedage"])){
+                        $firstStatement=true;
                         $szurestipusId=$res["id"];
+                       }else{
+                        $firstStatement=null;
+                       }
+                       if(!empty($res["recommendedageassist"])){
+                        if($this->ifStatement("{$kor}{$res["recommendedageassist"]}",$kor.$res["recommendedageassist"])){
+                            if($firstStatement==true){
+                                $szurestipusId=$res["id"];
+                            }else{
+                                $szurestipusId=null;
+                            }
+                        }
                        }
                     }
                 }
@@ -1258,7 +1270,7 @@ class BookingPage extends CorePage
                 echo "<tr><td></td><td><div id='szurestipusmegj'>{$tipusMegj}</div></td></tr>";
             }
         } else {
-            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
+            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isAszMenedzser()) {
                 $customJs="onChange='setSzurestipusValaszto()'";
                 echo $this->utils->dataField("neme",true,$customJs);
                 echo $this->utils->dataField("szuldatum",true,$customJs);
@@ -1552,6 +1564,7 @@ class BookingPage extends CorePage
                 echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
             }
         }
+        echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . "/> {$webText["gdprfelf"]}</div></td></tr>";
 
         /*if (CompanyService::isAstostecCompany()) {
             echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='tudoszuroelf' value='1' " . (!empty($_POST["tudoszuroelf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>";
@@ -1699,7 +1712,7 @@ class BookingPage extends CorePage
         $tipusnevek = [];
         $suzukiDisabled = "";
 
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
+        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC() || CompanyService::isAszMenedzser()){
             $suzukiDisabled = "disabled=\"true\"";
         }
 
