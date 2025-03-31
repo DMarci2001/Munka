@@ -685,7 +685,7 @@ class BookingService
 
                         if(CompanyService::isAszMenedzser()){
                             if($this->szuresTipus==284){
-                                if(date("w",strtotime($nap))==5){
+                                if(in_array(date("w",strtotime($nap)),[3,5])){
                                     $r=sql_query("SELECT * FROM foglalasok WHERE INSTR(datum,?) AND szurestipusid=? AND cegid=?",
                                         [$nap,$this->szuresTipus,$_SESSION["helyszindata"]["id"]]
                                     )->fetchAll(PDO::FETCH_ASSOC);
@@ -858,7 +858,7 @@ class BookingService
 
             if($cegId==1242){
                 if($szurestipusId==284){
-                    $distFullDay="14 day";
+                    $distFullDay="7 day";
                 }
             }
         }
