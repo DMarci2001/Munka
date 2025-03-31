@@ -424,7 +424,7 @@ class BookingService
 
             foreach ($orvosList as $oKey => $orvosId) {
                 $orvosData   = sql_query("select * from orvosok where id=?", [$orvosId])->fetch();
-                $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId);
+                $preResData  = $this->preReservationProtocol($cegId, $this->helyszin, $orvosId, $this->szuresTipus);
                 $napiBeos    = $this->getBeosztasok("{$nap}", $this->helyszin, $this->szuresTipus, $orvosId);
 
                 $thisServiceIsDisabled = 0;
@@ -753,7 +753,7 @@ class BookingService
 
 
 
-    private function preReservationProtocol($cegId, $helyszinId, $orvosId) {
+    private function preReservationProtocol($cegId, $helyszinId, $orvosId, $szurestipusId) {
         $dist = "24 hour";
         if (Booking_Constants::DEFAULT_PLACE_IDS[0] == $helyszinId) {
             $dist = "6 hour";
@@ -854,6 +854,12 @@ class BookingService
             if (in_array($orvosId, [74, 25])) {
                 //74 - Dr. Kővári Gábor 25 - Dr. Tiba Sándor
                 $dist = "24 hour";
+            }
+
+            if($cegId==1242){
+                if($szurestipusId==284){
+                    $distFullDay="14 day";
+                }
             }
         }
 
