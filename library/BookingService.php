@@ -1195,19 +1195,9 @@ class BookingService
         $ora           = substr($idopont, 11, 5);
         $cegid         = $_SESSION["helyszindata"]["id"];
         $helyszin      = $this->helyszin;
+        $orvosData     = false;
         if (!$this->szuresTipusData = sql_fetch_array(sql_query("select * from szurestipusok where id=?", array($this->szuresTipus)))) {
             return false;
-        }
-
-        if ($this->szuresTipusData["ispack"] == 1) {
-            $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
-
-            $packTimeData = $this->getPackageAvailabilityForDay($nap);
-            if (empty($packTimeData["error"])) {
-                return array("onlytel" => 0, "tel" => "");
-            } else {
-                return false;
-            }
         }
 
         //időpontra beosztott orvosok kiolvasása
@@ -1226,12 +1216,29 @@ class BookingService
                     //orvos szabad ->
                     if (!sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", array($rowb["orvosid"], $nap, $nap)))) {
                         //+nincs szabadságon
-                        return $rowb;
+                        $orvosData = $rowb;
                     }
                 }
             }
         }
-        return false;
+
+        if (!$orvosData) {
+            return false;
+        }
+
+        //pack esetén megnézzük a többi szolgáltatás foglaltságát is mielőtt visszaadjuk a szabad orvost
+        if ($this->szuresTipusData["ispack"] == 1) {
+            $this->packContentTypes = $this->getPackContentTypes($this->szuresTipus);
+
+            $packTimeData = $this->getPackageAvailabilityForDay($nap);
+            if (empty($packTimeData["error"])) {
+                return $orvosData;
+            } else {
+                return false;
+            }
+        }
+
+        return $orvosData;
     }
 
 

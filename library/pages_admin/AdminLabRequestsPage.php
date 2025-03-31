@@ -433,16 +433,21 @@ class AdminLabRequestsPage extends AdminCorePage {
             $requests = $this->getLabRequests();
         }
 
+        $stat = sql_query("select count(*) as allresult, sum(ertesitve) as ertesitve, sum(kiertekeles) as allkiertekeles, sum(kiertekelve) as kiertekelve from labrequests r where r.created>'2025-03-01 00:00:00' and r.status='done'")->fetch(PDO::FETCH_ASSOC);
+
         if (!empty($requests)) {
             $html .= "<div style='display:table;width:100%;'>";
             $html .= "<div style='display:table-row;background:#ccc;font-weight: bold;'>";
             //$html.= "<td nowrap valign='top' style='padding:5px 5px 5px 0px;width:40px;'></td>";
-            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény időpontja</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 5px;width:100px;'>Eredmény<br/>időpontja</div>";
             $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:90px;'>Provider</div>";
             $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:200px;'>Paciens</div>";
             $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:80px;'>Szül. idő / TAJ</div>";
             $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;width:30px;'>Eredmény</div>";
-            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;'>Értesítés</div>";
+            $html .= "<div style='display:table-cell;white-space:nowrap;padding:5px 5px 5px 0px;' title='Ennyi nincs értesítve és kiértékelve 2025-03-01 óta'>";
+            $html .=  "<div style='display:table-cell;'>Értesítendők<br/>".($stat["allresult"] - $stat["ertesitve"])." / {$stat["allresult"]}</div>";
+            $html .=  "<div style='display:table-cell;padding-left:10px;'>Kiértékelendők<br/>".($stat["allkiertekeles"] - $stat["kiertekelve"])." / {$stat["allkiertekeles"]}</div>";
+            $html .= "</div>";
             $html .= "</div>";
         }
 
@@ -553,6 +558,10 @@ class AdminLabRequestsPage extends AdminCorePage {
             $html .= " <a title='{$tooltip}' onclick='sendLeletWindow(this);return false;' data-id='{$request["id"]}' data-email='{$request["email"]}' class='printbutton' target='_blank' href='#' style='background:{$color};padding:1px 5px;font-size: 15px;'><i class='fa-solid {$icon}'></i> {$buttonText}</a>";
 
             if (substr_count($request["laboritems"], "\"".Booking_Constants::SPEKTRUM_KIERTEKELES_ID."\"")) {
+                if ($request["kiertekeles"] == 0) {
+                    sql_query("update labrequests set kiertekeles=1 where id=?", [$request["id"]]);
+                }
+
                 $icon = "fa-square";
                 $tooltip = "Nincs kiértékelve";
                 if ($request["kiertekelve"] == 1) {
@@ -613,7 +622,7 @@ class AdminLabRequestsPage extends AdminCorePage {
             //$w.= " and r.created<'".date("Y-m-d 23:59:59")."'";
         //}
 
-        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.laboritems, r.kiertekelveby, r.kiertekelve, r.kiertekelvedate, IF(r.status='done', 1, 0) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
+        return sql_query("SELECT r.nev, r.szuldatum, r.taj, f.cegid, r.email, c.megnev AS cegnev, r.id, r.pass, r.created, r.provider, r.foglalasid, r.laborpacks, r.laboritems, r.kiertekeles, r.kiertekelveby, r.kiertekelve, r.kiertekelvedate, IF(r.status='done', 1, 0) as result, r.resultdate, r.ertesitve, r.ertesitesdatum, r.ertesitesemail, r.synlabfilename, r.synlabdata, r.bekuldokod, r.folyamatban, r.ertesiteslog, r.emailtext, r.printmatrica, r.megj, r.scanresult 
             FROM labrequests r 
             LEFT JOIN foglalasok f ON f.id=r.foglalasid
             LEFT JOIN cegek c ON c.id=f.cegid

@@ -520,7 +520,19 @@ class LaborKeroService
 
             if ($laborRequestData["matricacode"] != "") {
                 $html.= "<div style='margin-top:5px;padding:5px;background:lightskyblue;'>Matrica megérkezett</div>";
-                $html.= "<div style='margin: 10px 0px;'><a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$reservationData["id"]}\", \"{$reservationData["pass"]}\");return false;' href='#' style='background: #00aa00'>Vonalkódos matrica nyomtatása</a></div>";
+                $html.= "<div style='margin: 10px 0px;'>";
+                $html.= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$reservationData["id"]}\", \"{$reservationData["pass"]}\");return false;' href='#' style='background: #00aa00'>Vonalkódos matrica nyomtatása</a>";
+
+                $blocks = explode("\n\n", base64_decode($laborRequestData["matricacode"]));
+                foreach ($blocks as $block) {
+                    if (substr_count($block, "\"Sz") && substr_count($block, "klet")) {
+                        $html.= " <a class='printbutton' target='_blank' onclick='printSpektrumlabMatricaSZV(\"{$reservationData["id"]}\", \"{$reservationData["pass"]}\");return false;' href='#' style='background: #00aa00'>SZV matrica nyomtatása</a>";
+                        break;
+                    }
+                }
+
+                $html.= "</div>";
+
                 if ($this->laborProvider == SELF::LABOR_PROVIDER_SYNLAB) {
                     $html.= "<div style='color:red;font-weight: bold;'>A vonalkódos matrica egyelőre csak a SpektrumLab laborkérés esetén működik</div>";
                 }

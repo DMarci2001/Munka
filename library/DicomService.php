@@ -310,7 +310,7 @@ class DicomService {
             return $content;
         }
 
-        if ($content["manufacturerModelName"] == "NAOMI" && substr_count($content["fileName"], "manual_") > 0) {
+        if (substr_count($content["fileName"], "INNOSPOT") > 0) {
             //naomi sötét képekhez kivétel
             $dcmParam = "--roi-min-max-window 700 700 1000 3000 --inverse-shape";
         }

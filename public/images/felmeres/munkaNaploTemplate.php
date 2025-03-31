@@ -136,25 +136,25 @@
         <p>
             <label>Munkáltató részéről<br/>
                 <input style='width:200px;' type="text" name="jelen1" value="<?= $_POST["jelen1"]?>">
-                munkakör: <input style='width:200px;' type="text" name="munkakor1" value="<?= $_POST["munkakor1"]?>">
+                munkakör: <input style='width:300px;' type="text" name="munkakor1" value="<?= $_POST["munkakor1"]?>">
             </label>
         </p>
         <p>
             <label>Foglalkozás-Egészségügy szolgálat részéről<br/>
                 <input style='width:200px;' type="text" name="jelen2" value="<?= $_POST["jelen2"]?>">
-                munkakör: <input style='width:200px;' type="text" name="munkakor2" value="<?= $_POST["munkakor2"]?>">
+                munkakör: <input style='width:300px;' type="text" name="munkakor2" value="<?= $_POST["munkakor2"]?>">
             </label>
         </p>
         <p>
             <label>Foglalkozás-Egészségügy szolgálat részéről<br/>
                 <input style='width:200px;' type="text" name="jelen3" value="<?= $_POST["jelen3"]?>">
-                munkakör: <input style='width:200px;' type="text" name="munkakor3" value="<?= $_POST["munkakor3"]?>">
+                munkakör: <input style='width:300px;' type="text" name="munkakor3" value="<?= $_POST["munkakor3"]?>">
             </label>
         </p>
 
         <h2>Munkavállalók által végzett fő tevékenységek (munkakörök)</h2>
         <p>
-                <textarea style='width:100%;height: 222px;font-size: 11px;' name="tevekenysegek" id="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
+                <textarea style='width:100%;height:122px;font-size: 11px;' name="tevekenysegek" id="tevekenysegek"><?= $_POST["tevekenysegek"]?></textarea>
         </p>
 
         <p>
@@ -188,12 +188,12 @@
             </label>
         </p>
         <p>
-            <label>Fizikai kóroki tényezők (zaj, vibráció, sugárzás)
+            <label style="width:100%;">Fizikai kóroki tényezők (zaj, vibráció, sugárzás)
                 <input type="text" name="munka_fizikai" value="<?= $_POST["munka_fizikai"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Kémiai kóroki tényezők (kémiai anyagok, növényvédő szer, por)
+            <label style="width:100%;">Kémiai kóroki tényezők (kémiai anyagok, növényvédő szer, por)
                 <input type="text" name="munka_kemiai" value="<?= $_POST["munka_kemiai"]?>" style="width:100%;">
             </label>
         </p>
@@ -203,27 +203,27 @@
             </label>
         </p>
         <p>
-            <label>Balesetveszély
+            <label style="width:100%;">Balesetveszély
                 <input type="text" name="munka_balesetveszely" value="<?= $_POST["munka_balesetveszely"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Tűzvédelem
+            <label style="width:100%;">Tűzvédelem
                 <input type="text" name="munka_tuzvedelem" value="<?= $_POST["munka_tuzvedelem"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Védőeszköz használat
+            <label style="width:100%;">Védőeszköz használat
                 <input type="text" name="munka_vedoeszkoz" value="<?= $_POST["munka_vedoeszkoz"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Higiénés körülmények
+            <label style="width:100%;">Higiénés körülmények
                 <input type="text" name="munka_higienes" value="<?= $_POST["munka_higienes"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Dohányzásra kijelölt hely
+            <label style="width:100%;">Dohányzásra kijelölt hely
                 <input type="text" name="munka_dohanyzas" value="<?= $_POST["munka_dohanyzas"]?>" style="width:100%;">
             </label>
         </p>
@@ -231,47 +231,47 @@
         <h2>Munkavégzés körülményei</h2>
 
         <p>
-            <label>Világítás
+            <label style="width:100%;">Világítás
                 <input type="text" name="vilagitas" value="<?= $_POST["vilagitas"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Szellőzés
+            <label style="width:100%;">Szellőzés
                 <input type="text" name="szellozes" value="<?= $_POST["szellozes"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Fűtés
+            <label style="width:100%;">Fűtés
                 <input type="text" name="futes" value="<?= $_POST["futes"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Takarítás, szemét tárolás
-                <input type="text" name="takaritas" value="<?= $_POST["takaritas"]?>" style="width:100%;">
+            <label style="width:100%;">Takarítás, szemét tárolás
+                <textarea style='width:100%;height:80px;' name="takaritas" id="takaritas"><?= $_POST["takaritas"]?></textarea>
             </label>
         </p>
         <p>
-            <label>Ivóvíz, kézmosási lehetőség
-                <input type="text" name="ivoviz" value="<?= $_POST["ivoviz"]?>" style="width:100%;">
+            <label style="width:100%;">Ivóvíz, kézmosási lehetőség
+                <textarea style='width:100%;height:80px;' name="ivoviz" id="ivoviz"><?= $_POST["ivoviz"]?></textarea>
             </label>
         </p>
         <p>
-            <label>WC, öltöző, fürdő
+            <label style="width:100%;">WC, öltöző, fürdő
                 <input type="text" name="wc" value="<?= $_POST["wc"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Étkezési lehetőség
+            <label style="width:100%;">Étkezési lehetőség
                 <input type="text" name="etkezes" value="<?= $_POST["etkezes"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Egyéni védőfelszerelések (szükségesség, megfelelőség, viselik-e?)
+            <label style="width:100%;">Egyéni védőfelszerelések (szükségesség, megfelelőség, viselik-e?)
                 <input type="text" name="vedofelszereles" value="<?= $_POST["vedofelszereles"]?>" style="width:100%;">
             </label>
         </p>
         <p>
-            <label>Szűrővizsgálatok rendje
+            <label style="width:100%;">Szűrővizsgálatok rendje
                 <input type="text" name="szurovizsgalat" value="<?= $_POST["szurovizsgalat"]?>" style="width:100%;">
             </label>
         </p>
@@ -279,17 +279,17 @@
 
         <h2>Elsősegélynyújtás személyi és tárgyi feltételei/elérhetősége</h2>
         <p>
-                <textarea style='width:100%;' name="elsosegely" id="elsosegely"><?= $_POST["elsosegely"]?></textarea>
+                <textarea style='width:100%;height:80px;' name="elsosegely" id="elsosegely"><?= $_POST["elsosegely"]?></textarea>
         </p>
 
         <h2>Kockázatértékelés</h2>
         <p>
-                <textarea style='width:100%;' name="kockazat" id="kockazat"><?= $_POST["kockazat"]?></textarea>
+                <textarea style='width:100%;height:80px;' name="kockazat" id="kockazat"><?= $_POST["kockazat"]?></textarea>
         </p>
 
         <h2>Munkaegészségügyi hiányosságok, észrevételek, javaslatok</h2>
         <p>
-                <textarea style='width:100%;' name="eszrevetelek" id="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
+                <textarea style='width:100%;height:80px;' name="eszrevetelek" id="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
         </p>
         <?php
         if (!empty($_GET["szerk"])) {

@@ -112,12 +112,15 @@ class CronService {
             //$spektrumLabService = new SpektrumlabService();
             //$spektrumLabService->sendAutomaticRequests();
 
-            $service = new SynlabService();
-            $service->downloadSynlabEmails();
-
             if (Booking_Constants::SQL_DB == "hungariamed") {
                 $this->getServerData();
             }
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $temp = file_get_contents("https://www.keltexmed.hu/index.php?sitemapgenerate");
+            }
+
+            $service = new SynlabService();
+            $service->downloadSynlabEmails();
         }
 
         if ($this->interval == "napi") {
@@ -210,7 +213,7 @@ class CronService {
         //$docAgent->storeLaborLeletek();
 
         //$this->scanLaborPDF();
-        $this->fillLabMessageDatas();
+        //$this->fillLabMessageDatas();
 
         //$this->readEmailReports();
 
@@ -232,8 +235,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->synlabProcess();
 
-        //$service = new SynlabService();
-        //$service->downloadSynlabEmails();
+        $service = new SynlabService();
+        $service->downloadSynlabEmails();
 
         //echo $result."\n";
 
