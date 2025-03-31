@@ -628,8 +628,8 @@ function removeIdopont(id, p, page, el) {
 }
 
 function addReplaceDoctor(nap, helyszin, beoid, sourceoid) {
-    let helyettesitoorvosid = $("#helyettesitoorvosid"+sourceoid).val();
-    let orvosMegj = $("#orvosmegj"+sourceoid).val();
+    let helyettesitoorvosid = $("#helyettesitoorvosid"+sourceoid+"_"+beoid).val();
+    let orvosMegj = $("#orvosmegj"+sourceoid+"_"+beoid).val();
 
     $.ajax({
         url:'index.php',
@@ -4361,6 +4361,21 @@ function printSpektrumlabMatrica(id, p) {
         type:"POST",
         url:"index.php?page=booking",
         data: {printSpektrumlabMatrica:id, p:p},
+        success: function(response){
+            if (response.substring(0, 5) === "error") {
+                alert(response.substring(5));
+                return;
+            }
+            zebraPrint(response);
+        }
+    })
+}
+
+function printSpektrumlabMatricaSZV(id, p) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {printSpektrumlabMatricaSZV:id, p:p},
         success: function(response){
             if (response.substring(0, 5) === "error") {
                 alert(response.substring(5));
