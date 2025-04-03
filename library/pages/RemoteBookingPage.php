@@ -19,6 +19,12 @@ class RemoteBookingPage extends CorePage{
 			//$_SESSION["arData"] = [];
 		}
 
+		if(isset($_GET["serviceCode"])){
+			if($_GET["serviceCode"]=="VqRH2WDdZSMApKse"){
+				$_SESSION["szurestipus"] = "287";
+			}
+		}
+
 		if(!isset($_SESSION["szurestipus"])){
 			header("Location:index.php");
 		}
@@ -342,9 +348,14 @@ class RemoteBookingPage extends CorePage{
 		//Időpont egyeztetés:
 		$html.= "<div id='schedule-appointment'></div>";
 		
-		
 		//Kérdez/Felelek:
-		$html.= "<h2 style='margin:20px 0px 20px 0px'>Kérdések</h2>";
+		if($_POST["szurestipus"]==287){
+			$html.= "<h2 style='margin:20px 0px 20px 0px'>Ide írhatja panaszát, kérését:</h2>";
+			
+		}else{
+			$html.= "<h2 style='margin:20px 0px 20px 0px'>Kérdések</h2>";
+		}
+		
 		$html.= "<table style='width:100%;font-family:robotoregular,font-size:14px' id='questions'>";
 		$html.= 	$this->setQuestions($questionArr,$_POST['szurestipus']);
 		$html.= "</table>";
@@ -433,12 +444,16 @@ class RemoteBookingPage extends CorePage{
 		//BACK-END:
 		$html="";
 		$sor=0;
-		
 		foreach($questionArr as $each){
 			if($each['servicetype']==$szurestipus){
 				if($sor!=0) $html.="<tr><td style='height:25px'></td></tr>";
 				if(!isset($each['placeholder']))$each['placeholder']="";
-				$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
+				if(count($questionArr)>1){
+					$html.="<tr><td><strong>".(isset($each['priority'])&&$each['priority']==1?"*&nbsp;":"").($sor+1).".</strong>&nbsp;{$each['question']}</td></tr>";
+				}else{
+					$html.= "<tr><td></td></tr>";
+				}
+				
 				if($each['answertype']=="textarea"){
 					$each['placeholder']=str_replace("\\\\n","\n",$each['placeholder']);
 					$html.="<tr><td><textarea name='kerdes-{$sor}' class='design-put' style='width:95%;height:150px'>".(isset($_POST["kerdes-{$sor}"])?$_POST["kerdes-{$sor}"]:$each['placeholder'])."</textarea></td></tr>";
