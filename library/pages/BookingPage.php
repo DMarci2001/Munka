@@ -1968,6 +1968,10 @@ class BookingPage extends CorePage
                     continue;
                 }
 
+                if(in_array($tipusData["id"],[287])){
+                    continue;
+                }
+
                 $tipusData["megnev"] = Lang::multiLangField($tipusData, "megnev");
 
                 if (empty($tipusData["facode"])) {
