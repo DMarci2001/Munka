@@ -251,9 +251,12 @@ class AdminAjaxService {
 
             if($p["dokirex_userid"]!=0){
                 //Munkakör rögzítése:
+                if(Booking_Constants::SQL_DB == "keltexmed")   $FormElementID = 225;
+                if(Booking_Constants::SQL_DB == "hungariamed") $FormElementID = 235;
+
                 if($p["dokirexmunkakorid"]){
                     $params = array(
-                        "FormElementID"=>235,
+                        "FormElementID"=>$FormElementID,
                         "PaciensID"=>$p["dokirex_userid"],
                         "PaciensEgyediUrlapID"=> -1,
                         "Value"=> strval($p["dokirexmunkakorid"])
@@ -263,8 +266,12 @@ class AdminAjaxService {
 
                 //Cég rögzítése:
                 if($p["dokirexcegid"]){
+
+                    if(Booking_Constants::SQL_DB == "keltexmed")   $FormElementID = 224;
+                    if(Booking_Constants::SQL_DB == "hungariamed") $FormElementID = 234;
+
                     $params = array(
-                        "FormElementID"=>234,
+                        "FormElementID"=>$FormElementID,
                         "PaciensID"=>$p["dokirex_userid"],
                         "PaciensEgyediUrlapID"=> -1,
                         "Value"=> strval($p["dokirexcegid"])
