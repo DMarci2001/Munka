@@ -592,6 +592,285 @@ class AdminBookingPage extends AdminCorePage
     {
         echo "<div id='webshoplist'>" . $this->webShopService->showOrdersList() . "</div>";
 
+        //echo $this->utils->lighttechReminder();
+        //die();
+
+        /*$generaliService = New GeneraliApiService();
+        echo "<style>";
+        echo "body{margin:0px;background-color:#133337;width:100%;height:100%;color:#c0c0c0}";
+        echo "</style>";
+        //examination = 21, 
+       // doctorid=2 carespotid=1
+        echo "<pre>";
+        print_r($generaliService->retrieveExaminationsOfCareSpotOfDoctor(2,1));
+        echo "</pre>";
+        
+        die();*/
+    
+        /*$csomagok = [];
+        $csaktetel = 0;
+        $q=sql_query("SELECT nev,szuldatum,taj,laborpacks FROM labrequests l
+                      WHERE bekuldokod='000000481' AND INSTR(created,'2025') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
+        echo "Összes laborkérő ami valid: ". count($q)."<br>";
+        $x = 0;
+        foreach($q as $l){
+            $packs = json_decode($l["laborpacks"]);
+            if(empty($packs)){
+                $csaktetel++;
+            }
+            foreach($packs as $pack){
+                $key = array_search($pack,array_column($csomagok,"csomagid"));
+                if($key!==false){
+                    $csomagok[$key]["db"] = ($csomagok[$key]["db"]+1);
+                }else{
+                    $csomagok[] = [
+                        "csomagid"=>$pack,
+                        "db"=>1,
+                    ];
+
+                }
+            }
+            //$x++;
+            if($x==20){
+                break;
+            }
+        }
+
+        echo "<table>";
+        echo "Csak tétel vásárlások: {$csaktetel}db<br>";
+        echo "<tr><td>Csomag</td><td>darab szám</td></tr>";
+        foreach($csomagok as $csomag){
+            $a = sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?",[$csomag["csomagid"]])->fetch(PDO::FETCH_ASSOC);
+            echo "<tr>";
+            echo "<td>{$a["name"]}</td>";
+            echo "<td>{$csomag["db"]}</td>";
+            echo "</tr>";
+        }
+        echo "</table>";*/
+
+
+        /*$x = 0;
+        $data = sql_query("SELECT fogl.id,fogl.nev AS paciensNev,fogl.datum,h.cim,c.megnev,o.nev AS orvosNev,o.email 
+                           FROM foglalasok fogl 
+                           LEFT JOIN cegek c ON c.id=fogl.cegid
+                           LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
+                           LEFT JOIN orvosok o ON o.id=fogl.orvosassigned
+                           WHERE foglalta=\"restore\" AND datum>=\"2024-06-04\"")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($data as $reservation){
+            $x++;
+            echo $x."<br>";
+            echo "<pre>";
+            print_r($reservation);
+            echo "</pre>";
+
+            //Orvos értesítése
+            $this->bookingService->notificationService->sendToCegAndOrvos($reservation["id"],1);
+            echo "Értesítés sikeres. ({$reservation["id"]}.)<br>";
+        }*
+
+        
+
+        /*$q=sql_query("SELECT * FROM labshop_vasarlasok where cegid=688 AND payment_method=\"simplepay\" AND status=\"done\"");
+        while($r=sql_fetch_array($q)){
+           $cart =  json_decode($r["cart_content"],true);
+
+            foreach($cart as $cartIndex => $cartData){
+                if(isset($cartData["type"])){
+                   
+                    if(isset($cartData["reservationId"])){
+                        //echo "Method: ".$r["payment_method"].", ReservationId: ".$cartData["reservationId"]."<br>";
+
+                        echo "UPDATE foglalasok SET paid=1 WHERE id={$cartData["reservationId"]};<br>";
+                    }
+                    
+                }
+            }
+        }*/
+
+        //------>Dokirex páciens lista feltöltés
+        //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
+        //die();
+        //$dokirexService = new DokirexService();
+        //mindent lekérdezek
+        $q = sql_query("SELECT * from dokirex_insert_paciensek");
+        //Specifikus lekérdezés
+        /*$q = sql_query("SELECT lista.* FROM dokirex_insert_paciensek lista
+                        LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
+                        WHERE felh.id IS NULL");*/
+        $params = array();
+        $datum = date("Y-m-d H:i:s", strtotime("2025-02-28 07:30:00"));
+        $orvosid=377;
+        $helyszinid=282;
+        $rinterval=10;
+        $szurestipusid=48;
+        $cegId=220;
+        while ($r = sql_fetch_array($q)) {
+
+            if(isset($r["datum"])&&!empty($r["datum"])){
+                $datum=$r["datum"];
+            }
+            if(isset($r["szurestipusid"])&&!empty($r["szurestipusid"])){
+                $szurestipusid=$r["szurestipusid"];
+            }
+            if(isset($r["cegid"])&&!empty($r["cegid"])){
+                $cegId=$r["cegid"];
+            }
+            if(isset($r["orvosid"])&&!empty($r["orvosid"])){
+                $orvosid=$r["orvosid"];
+            }
+            if(isset($r["helyszinid"])&&!empty($r["helyszinid"])){
+                $helyszinid=$r["helyszinid"];
+            }
+            if(isset($r["rinterval"])&&!empty($r["rinterval"])){
+                $rinterval=$r["rinterval"];
+            }
+            
+
+        /*echo "INSERT INTO foglalasok SET cegid={$cegId},regdatum=NOW(),datum=\"{$datum}\",rinterval={$rinterval},helyszinid={$helyszinid},szurestipusid={$szurestipusid},nev=\"{$r["nev"]}\",email=\"\",telefon=\"\",
+                                                  szuldatum=\"{$r["szuldatum"]}\",szulhely=\"{$r["szulhely"]}\",anyjaneve=\"{$r["anyjaneve"]}\",taj=\"{$r["taj"]}\",irsz=\"{$r["Iranyitoszam"]}\",varos=\"{$r["Telepules"]}\",utca=\"{$r["Cim"]}\",munkakor=\"{$r["munkakor"]}\",aktiv=1,ertesitve=1,
+                                                  smssent=1,orvosassigned={$orvosid},checked=1;<br><br>";
+
+            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));*/
+
+
+        //vessző eltűntetése:
+        /*$r["teljes_cim"] = str_replace(",","",$r["teljes_cim"]);
+
+        //Páciens cím adatok tagolása:
+        $teljescimRaw = explode(" ", $r["teljes_cim"]);
+
+            $irsz = $teljescimRaw[0];
+            $varos = $teljescimRaw[1];
+            unset($teljescimRaw[0], $teljescimRaw[1]);
+            foreach ($teljescimRaw as $key => $value) {
+                if (empty($value)) {
+                    unset($teljescimRaw[$key]);
+                }
+            }
+            $teljescimRaw = array_values($teljescimRaw);
+            $cim = implode(" ", $teljescimRaw);
+
+
+            $teljescim = array("irsz" => $irsz, "varos" => $varos, "cim" => $cim);
+            sql_query(
+                "UPDATE dokirex_insert_paciensek SET Iranyitoszam=?, Telepules=?, Cim=? WHERE id=?",
+                array($teljescim["irsz"], $teljescim["varos"], $teljescim["cim"], $r["id"])
+            );
+            echo "Páciens cím adata frisssítve lett!( {$r["id"]} )<br>";*/
+
+        //Páciens insertelése a felhasznalok táblába:
+        /*if($exist = sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",array($r["taj"],$cegId))->fetch(PDO::FETCH_ASSOC)){
+            echo "A páciens már rögzitve van! ({$r["taj"]})<br>";
+            sql_query("UPDATE dokirex_insert_paciensek SET fid=? WHERE id=?",array($exist["id"],$r["id"]));
+            echo "Adatsor rögzítve és frissítve ({$exist["id"]})!<br>";
+        }else{
+            echo "A páciens még nincs rögzitve! ({$r["taj"]})<br>";
+            sql_query(
+                "INSERT INTO felhasznalok SET nev=?,neme=?,cegid=?,szid=?,telefon=?,anyjaneve=?,szulhely=?,szuldatum=?,taj=?,email=?,
+                                                    irsz=?,varos=?,utca=?,regtime=?,validated=?,statusz=?",
+                array(
+                    $r["nev"], $r["neme"], $cegId, $r["szid"], $r["telefon"], $r["anyjaneve"], $r["szulhely"], $r["szuldatum"], $r["taj"], $r["email"],
+                    $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], date("Y-m-d H:i:s"), 1, 1
+                )
+            );
+            $fid = sql_insert_id();
+            sql_query("UPDATE dokirex_insert_paciensek SET fid=? WHERE id=?",array($fid,$r["id"]));
+            echo "Adatsor rögzítve és frissítve ({$fid})!<br>";
+        }*/
+        
+
+        //Páciens insertelése a foglalások táblába:
+        /*$foglalasExist = false;
+        //Megizsgálom, hogy a páciensnek van-e már be regisztrált időpontja az adott szűréstípusra a helyszínen/napon
+        if(!$foglalasExist=sql_query("SELECT * FROM foglalasok WHERE INSTR(datum,'".date("Y-m-d",strtotime($datum))."') AND helyszinid=? AND szurestipusid=? AND taj=?",
+        [$helyszinid,$szurestipusid,$r["taj"]])->fetch(PDO::FETCH_ASSOC))
+        {
+            //Addig futtatom a while ciklust míg nem talál egy szabad helyet az adott napra
+            $idopontExist = false;
+            while(true){
+                if($idopontExist=sql_query("SELECT * FROM foglalasok WHERE datum=? AND helyszinid=? AND szurestipusid=?",
+                [$datum,$helyszinid,$szurestipusid])->fetch(PDO::FETCH_ASSOC))
+                {
+                    $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
+                }else{
+                    break;
+                }
+            }
+            
+            $foglid="";
+             sql_query(
+                "INSERT INTO foglalasok SET cegid=?,paciensid=?,regdatum=?,datum=?,rinterval=?,helyszinid=?,szurestipusid=?,nev=?,email=?,telefon=?,
+                                                  szuldatum=?,szulhely=?,anyjaneve=?,neme=?,taj=?,irsz=?,varos=?,utca=?,munkakor=?,aktiv=1,ertesitve=1,
+                                                  smssent=1,orvosassigned=?,checked=1,megj=?,dokirexmunkakorid=?,dokirexcegid=?",
+                array(
+                    $cegId,$r["fid"], date("Y-m-d H:i:s"), $datum, $rinterval, $helyszinid, $szurestipusid, $r["nev"], $r["email"], $r["telefon"],
+                    $r["szuldatum"], (empty($r["szulhely"]))?"":$r["szulhely"],(empty($r["anyjaneve"]))?"":$r["anyjaneve"], $r["neme"], $r["taj"], $r["Iranyitoszam"], $r["Telepules"], $r["Cim"], $r["munkakor"],$orvosid,
+                    $r["megj"],$r["MunkakorID"],$r["TelephelyID"]
+                )
+            );
+            $foglid= sql_insert_id();
+            sql_query("UPDATE dokirex_insert_paciensek SET foglid=? WHERE id=?",array($foglid,$r["id"]));
+            echo "Sikeres foglalás rögzítés és insert tábla frissítés! ({$foglid})({$r["nev"]})({$datum})<br>";
+
+            $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
+        }else{
+            echo "Az páciens már be van írva egy időpontra!({$r["nev"]})<br>";
+        }*/
+       
+
+
+        /*$params = array(
+                "fid" => $r["foglid"],
+                "Nev" => $r["nev"],
+                "Azonosito" => $r["taj"],
+                "AzonositoTipusID" => 2,
+                "SzuletesiDatum" => $r["szuldatum"],
+                "SzuletesiHely" => $r["szulhely"],
+                "AnyjaNeve" => $r["anyjaneve"],
+                "Nem" => $r["neme"],
+                "SzuletesiNev" => $r["nev"],
+                "Allampolgarsag" => "109",
+                "Telefon" => $r["telefon"],
+                "Mobiltelefon" => $r["telefon"],
+                "Iranyitoszam" => $r["Iranyitoszam"],
+                "Telepules" => $r["Telepules"],
+                "Cim" => $r["Cim"],
+                "Email" => $r["email"],
+                "SzigSzam" => null,
+                "KozgyogyTol" => null,
+                "KozgyogyIg" => null,
+                "KozgyogySzam" => null,
+                "FelvevoID" => "3",
+                "UtolsoModositoID" => "3"
+            );
+
+            //Páciens rögzítése:
+            $dokirexService->insertPaciensIntoDokirex($params);
+            echo "Sikeres dokirex rögzítés! ({$r["foglid"]})<br>";*/
+
+        //$fogl = sql_fetch_array(sql_query("SELECT nev,dokirex_userid,dokirexmunkakorid,dokirexcegid FROM foglalasok WHERE id=?",array($r["foglid"])));
+
+        //Munkakör:
+        /*$params = array(
+                "FormElementID"=>16,
+                "PaciensID"=>$fogl["dokirex_userid"],
+                "PaciensEgyediUrlapID"=> -1,
+                "Value"=> strval($fogl["dokirexmunkakorid"])
+            );
+            $dokirexService->insertUpdateFormElementValue($params);
+
+            //Cég rögzítése:
+            $params = array(
+                "FormElementID"=>15,
+                "PaciensID"=>$fogl["dokirex_userid"],
+                "PaciensEgyediUrlapID"=> -1,
+                "Value"=> strval($fogl["dokirexcegid"])
+            );
+            $dokirexService->insertUpdateFormElementValue($params);
+            echo "Sikeres telephely rögzítés a dokirexben! ({$r["foglid"]})<br>";*/
+        }
+
         if ($this->adminUser->varoteremuiAccess()) {
             echo "<div id='waiting-room' style='z-index: 9999;background:white;".(!empty($_SESSION["setStyckyVarolista"]) ? "position:sticky;top:0":"")."'>" . $this->varoteremService->waitingRoom() . "</div>";
         }
@@ -1102,6 +1381,8 @@ class AdminBookingPage extends AdminCorePage
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
         //$ora = date("H:i", strtotime($rowf["datum"]));
 
+        $vipList = ["028175283","096001981","042559193","028970617","076132296","025946075","105492966","139745131"];
+
         $htmlout = "";
         $eljottText = "";
                                                                                                                                                                                                         /*Magyarállamkincstárosok nem látják hogy nem jött el :P*/
@@ -1128,7 +1409,7 @@ class AdminBookingPage extends AdminCorePage
             $companyWarning = "<a onclick='{$detailURL}' href='#'><i title='" . implode("\n", $warnings) . "' class='fas fa-exclamation-circle'></i></a>&nbsp;";
         }
 
-        $htmlout .= "<tr style=''>";
+        $htmlout .= "<tr style='".(in_array($reservationData["taj"],$vipList)?"background-color:yellow;font-weight:bold;margin-top:5px":"")."'>";
         $htmlout .= "<td valign='top' nowrap style=''>" . $this->idopontStatusIcon($reservationData) . "&nbsp;<span style=\"" . $this->datePastStyle($nap, $ora) . "\">" . ($idopontShow != $this->lastIdopont ? $idopontShow . ($this->potIdopont ? "&nbsp;<span title='pótidőpont'>(p)</span>" : "") : "") . "&nbsp;&nbsp;</span></td>";
         $htmlout .= "<td valign='top' nowrap>";
         if ($this->foglalasButtonVolt == 0 && "{$nap} {$idopontShow}" == "{$nap} {$ora}" && !$noAdd) {
@@ -1148,7 +1429,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "({$reservationData["rinterval"]} perc) ";
             }
 
-            $kidSign = "";
+            $kidSign = $vipSign = "";
             $tudoszuroSign = $reservationData["tudoszuro"] != 0 ? " <i title='tüdőszűrés kell' class='fas fa-lungs'></i>" : "";
             $hallasSign = $reservationData["kieg_hallas"] != 0 ? " <i title='hallásvizsgálat kell' class='fas fa-headphones'></i>" : "";
             $laborSign = $reservationData["kieg_labor"] != 0 ? " <i title='laborvizsgálat kell' class='fas fa-flask'></i>" : "";
@@ -1164,6 +1445,10 @@ class AdminBookingPage extends AdminCorePage
             if (!empty($reservationData["szuldatum"]) && strtotime("now") - strtotime($reservationData["szuldatum"]) < 567648000 && strtolower($reservationData["nev"]) != "szünet") {
                 $kidSign = " <i class='fas fa-child' title='Fiatalkorú (18 év alatti)'></i>";
                 $extraInfo .= "(18 év alatti!) ";
+            }
+
+            if(in_array($reservationData["taj"],$vipList)){
+                $vipSign="<i class='fa-solid fa-crown'></i>";
             }
 
             if (!empty($reservationData["alkalmassag"])) {
@@ -1184,7 +1469,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "</td><td valign='top' nowrap>";
             }
 
-            $htmlout .= "<a id='det{$reservationData["id"]}' onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>{$kidSign}{$tudoszuroSign}{$hallasSign}{$laborSign}{$docSign}&nbsp;&nbsp;";
+            $htmlout .= "{$vipSign}<a id='det{$reservationData["id"]}' onclick='{$detailURL}' href='#' style='" . ($reservationData["nev"] == "Foglalt" ? "color:#aaa;" : "") . "'>{$reservationData["nev"]}</a>{$vipSign}{$kidSign}{$tudoszuroSign}{$hallasSign}{$laborSign}{$docSign}&nbsp;&nbsp;";
 
             if (!empty($reservationData["externalid"])) {
                 $htmlout .= "<span class='externalmark' title='foglalás forrása'>" . str_replace("hungariamed", "hmm", preg_replace('/[0-9]+/', '', $reservationData["externalid"])) . "</span>&nbsp;&nbsp;";
