@@ -23,6 +23,23 @@ class AdminAjaxService {
             die;
         }
 
+
+        if (isset($_GET["hmmpackcopy"])) {
+            $packs = sql_query("select * from hungariamed.synlab_labor_csomagok where id in (219, 220, 84, 96, 98, 100, 97, 114, 115, 12, 13, 121, 120, 156, 140, 142, 141, 155, 157, 243, 244, 242, 130, 129, 127, 128, 134, 136, 131, 133, 144, 160, 159, 161, 160, 193, 191, 192, 194, 65)")->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($packs as $pack) {
+                echo $pack["hmm_name"]."<br/>";
+
+                sql_query("insert into keltexmed.synlab_labor_csomagok set
+                 appform=?, name=?, hmm_name=?, alias=?, price=?, line_through_price=?, items=?, spektrumitems=?,  categories=?, gender=?, companies=?, description=?, preperation_description=?, aktiv=?, kiemelt=?",
+                [$pack["appform"], $pack["name"], $pack["hmm_name"], $pack["alias"], $pack["price"], $pack["line_through_price"], $pack["items"], $pack["spektrumitems"], $pack["categories"], $pack["gender"], $pack["companies"], $pack["description"], $pack["preperation_description"], $pack["aktiv"], $pack["kiemelt"]]
+                );
+
+            }
+
+            die("ok");
+        }
+
         if (isset($_GET["keltexsync"])) {
             $service = new BookingSyncApi();
 
@@ -1218,6 +1235,264 @@ class AdminAjaxService {
         die();
     }
 
+
+    public function addCsvUsers() {
+        $users = [];
+
+        $users[] = ['1','Jeszenka Ildikó','Ady','075545989','1965.12.31','EP239015515'];
+        $users[] = ['2','Molnár Péter','Ady','028368371','1968.09.22','EP249021205'];
+        $users[] = ['3','Borbás Tamás','Ady','028027766','1968.05.23','EP229001985'];
+        $users[] = ['4','Feketéné Kárpáti Tímea ','Ady','081629804','1974.11.24','EP249012372'];
+        $users[] = ['5','Anisity Zsuzsanna','Ady','084344511','1978.03.13','EP249012368'];
+        $users[] = ['6','Bene Róbert ','Ady','027115354','1967.01.17',''];
+        $users[] = ['7','Gyarmatiné Herczeg Zsuzsanna ','Ady','074433195 ','1964.02.01',''];
+        $users[] = ['8','Diószeghy Edina','Ady','081320635','1974.07.19','EP239015532'];
+        $users[] = ['9','Egri Erzsébet','Ady','075619442','1966.02.15',''];
+        $users[] = ['10','Gerzseiné Balaska Enikő','Ady','078986710','1971.03.21','EP239015405'];
+        $users[] = ['11','Hegedüs-Horváth Szimonetta','Ady','088624264','1984.10.07','EP239015448'];
+        $users[] = ['12','Holczer József','Ady','025629165','1964.07.10',''];
+        $users[] = ['13','Link Tibor','Ady','033859066','1976.04.01','EP249012459'];
+        $users[] = ['14','Valasek Valéria','Ady','086346810','1981.01.05','EP249012462'];
+        $users[] = ['15','Földi János','Ady','030473056','1971.12.21','EP239015349'];
+        $users[] = ['16','Gáspár Alex','Ady','0108367438','1994.07.10',''];
+        $users[] = ['17','Huszár Zoltán','Ady','033368926','1975.09.04',''];
+        $users[] = ['18','Kaszáné Muráti Beáta Kinga','Ady','083954128','1977.09.05',''];
+        $users[] = ['19','Lauferné Orbán Anikó','Ady','085759352','1980.02.19','EP249012452'];
+        $users[] = ['20','Molnárné Pap Márta','Ady','081025622','1974.03.11',''];
+        $users[] = ['21','Orsós József','Ady','024430209','1962.06.09',''];
+        $users[] = ['22','Bacsóné Tajti Margit','Ady','082719069','1976.03.02',''];
+        $users[] = ['23','Tamaskó-Komjáti Anett','Ady','085125645','1979.04.02',''];
+        $users[] = ['24','Csécsei Judit','Ady','087354719','1982.08.04','EP239026406'];
+        $users[] = ['25','Amma Tamás','Apáczai','039637792','1984.04.05',''];
+        $users[] = ['26','Kohn Istvánné','Apáczai','077247593','1968.08.13','EP229001996'];
+        $users[] = ['27','Klajkóné Kalmár Anna ','Apáczai','076869231','1968.02.03','EP229001941'];
+        $users[] = ['28','László-Tóth Ivett ','Apáczai','086763040','1981.08.17','EP249012432'];
+        $users[] = ['29','Király-Ludvig Réka','Apáczai','088303105','1984.03.21','EP239003188'];
+        $users[] = ['30','Kozma Erzsébet Elvira ','Apáczai','074427578','1964.01.28','EP239015452'];
+        $users[] = ['31','Kovács Márta ','Apáczai','080541426','1973.07.03',''];
+        $users[] = ['32','Tar Melinda ','Apáczai','085898811','1980.05.03',''];
+        $users[] = ['33','Márfi Eszter  ','Apáczai','085613461','1979.12.03',''];
+        $users[] = ['34','Noé Zoltán','Apáczai','034596052','1977.02.11','EP249012426'];
+        $users[] = ['35','Balogh Attila','Bezerédj','040077077','1984.12.30','EP229001954'];
+        $users[] = ['36','Borosné Radinovics Mónika','Bezerédj','086718617','1981.07.25','EP245002996'];
+        $users[] = ['37','Simon Ivett ','Bezerédj','081191488','1974.05.25',''];
+        $users[] = ['38','Boros Norbert','Bezerédj','041664896','1987.07.26','EP219018929'];
+        $users[] = ['39','Molnár Gréta Klára','Bezerédj','084887155','1978.11.30',''];
+        $users[] = ['40','Egresi Kornélia Tereza','Bezerédj','084360186','1978.03.20','EP239014937'];
+        $users[] = ['41','Feketéné Földesi Judit','Bezerédj','087111970','1982.03.13','EP239014936'];
+        $users[] = ['42','Málnainé Banó Edina','Bezerédj','082817323','1976.04.15','EP239015058'];
+        $users[] = ['43','Szabó Rita','Bezerédj','076341083','1967.04.17','EP239015057'];
+        $users[] = ['44','Töttős Gábor','Hunyadi','035979395','1978.10.22','EP249021206'];
+        $users[] = ['45','Tomolik Katinka','Hunyadi','083231177','1976.10.10','EP229001955'];
+        $users[] = ['46','Kocsisné  Doszpod Sziliva','Hunyadi','081035670','1974.03.15','EP249012455'];
+        $users[] = ['47','Lukács Gábor','Hunyadi','036792205','1979.11.22','EP169007985'];
+        $users[] = ['48','Drégely-Turi Hedvig','Hunyadi','078706884','1970.10.07',''];
+        $users[] = ['49','Leskó László','Hunyadi','031911973','1974.01.14',''];
+        $users[] = ['50','Nagy Andrea','Hunyadi','081395899','1974.08.17','EP249030751'];
+        $users[] = ['51','Rittbergerné Fürj Anikó','Hunyadi','078819720','1970.12.19','EP229001991'];
+        $users[] = ['52','Orbánné Palkó Mária','Hunyadi','086133719','1980.09.05',''];
+        $users[] = ['53','Sársodi Bernadett','I. István','086133719','1980.09.05','EP229001516'];
+        $users[] = ['54','Rutai Renáta','I. István','089544589','1986.05.01','EP229001938'];
+        $users[] = ['55','Várszegi Petra','I. István','086912451','1981.11.15','EP229001951'];
+        $users[] = ['56','Némethné Márton Renáta','Magyar ','085089675','1979.03.15','EP229001987'];
+        $users[] = ['57','Fehér Katalin','Magyar ','086680550','1981.07.05','EP249015492 '];
+        $users[] = ['58','Fazekas Attiláné','Magyar','0106779482','1978.12.21',''];
+        $users[] = ['59','Háryné Viszló Beáta','Perczel','086293666','1980.12.04','EP020013046'];
+        $users[] = ['60','Virányi Gabriella ','Perczel','081896932','1975.03.16','EP219000568'];
+        $users[] = ['61','Barabás Ivett','Perczel','081283259','1974.07.04',''];
+        $users[] = ['62','Ferencz-Szőcs Szilvia','Perczel','083704325','1977.04.17',''];
+        $users[] = ['63','Brettnerné Ónadi Krisztina Edit','Perczel','106299218','1974.05.07','EP249027328'];
+        $users[] = ['64','Égető Zsolt','Perczel','031388067','1973.04.17',''];
+        $users[] = ['65','Furján Katalin Anett','Vályi','084563978','1978.06.22','EP229001461'];
+        $users[] = ['66','Balassáné Herczeg Szilvia','Vályi ','083643938','1977.04.21','EP229002013'];
+        $users[] = ['67','Kolozs Levente ','Vályi ','039213013','1983.07.21','EP229001449'];
+        $users[] = ['68','Németh Lehelné','Vályi ','076705283','1967.11.02','EP239014581'];
+        $users[] = ['69','Belényi Lászlóné','Vályi','074434178','1964.02.02','EP199015358'];
+        $users[] = ['70','Molnár Gábor','Vályi','036812040','1979.12.03','EP239014888'];
+        $users[] = ['71','Szilágyi Tímea','Vályi','078467716','1970.06.02','EP249012451'];
+        $users[] = ['72','Szabó József','Vályi','029341630','1970.04.21','EP239014881'];
+        $users[] = ['73','Pentz Andrea','Centrum','081560961','1974.10.24','EP052012371'];
+        $users[] = ['74','Pintér Dóra','Centrum','085991778','1980.06.22','EP163000954'];
+        $users[] = ['75','Sluzek Éva','Vizsgaközpont','081505315','1974.09.30','EP229001997'];
+        $users[] = ['76','Borosné Ács Annamária','Vizsgaközpont','085535653','1979.10.22',''];
+        $users[] = ['77','Dömötör Csaba','Centrum','025662302','1964.07.29','EP229001311'];
+        $users[] = ['78','Éles Márta ','Centrum','083279797','1976.11.03','EP229001936'];
+        $users[] = ['79','Szalai Ervin','Centrum','029267875','1970.03.16','EP239015205'];
+        $users[] = ['80','Németh Erika','Centrum','086451004','1981.03.04','EP229001305'];
+        $users[] = ['81','Dr. Szekeres Beáta','Centrum','085695847','1980.01.16','E129014343'];
+        $users[] = ['82','Csuta Károly','Centrum','028272722','1968.09.25','EP143006883'];
+        $users[] = ['83','Ruml Nikoletta','Centrum','092813872','1991.12.14','EP239015215'];
+        $users[] = ['84','Schmidt Ágnes','Centrum','087751273','1983.04.07','EP229001313'];
+        $users[] = ['85','Nemes Katalin','Centrum','085881091','1980.04.24','EP239015582'];
+        $users[] = ['86','Nótás Diána','Centrum','092183087','1990.11.18','EP229001944'];
+        $users[] = ['87','Vaskóné Csigi Viki','Centrum','084409566','1978.04.12','EP249030386'];
+        $users[] = ['88','Bacher Erika','Centrum','081762213','1975.01.21','EP229001989'];
+        $users[] = ['89','Elmné Tompai Mónika','Centrum','086993809','1982.01.03','EP239015517'];
+        $users[] = ['90','Gyarmati Éva','Centrum','075645625','1966.03.02','EP239015446'];
+
+        foreach ($users as $user) {
+            sql_query("insert into felhasznalok set cegid=?, nev=?, jelszo=?, taj=?, torzsszam=?, szuldatum=?, rkod=?, validated=1, statusz=1",
+                [   659,
+                    $user[1],
+                    md5($user[1].rand(10000000, 99999999)),
+                    $user[3],
+                    $user[5],
+                    str_replace(".", "-", $user[4]),
+                    rand(10000, 99999)]
+            );
+
+            echo $user[1]."\n";
+        }
+
+
+    }
+
+
+    /*
+     *
+SELECT t.megnev, COUNT(*) AS total
+,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+ FROM foglalasok f
+LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+WHERE helyszinid=1 AND datum>'2024-01-01 00:00:00' AND datum<'2024-12-31 23:59:59' AND f.cegid IN (56,59,75,87,98,104) AND f.eljott GROUP BY f.`szurestipusid`
+ORDER BY t.megnev
+;
+
+
+SELECT * FROM cegek WHERE INSTR(megnev, 'törv');
+
+
+SELECT t.megnev, COUNT(*) AS total
+,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+ FROM foglalasok f
+LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+WHERE datum>'2024-01-01 00:00:00' AND datum<'2024-12-31 23:59:59' AND f.eljott=1 GROUP BY f.`szurestipusid`
+ORDER BY t.megnev
+;
+
+fo;
+;
+
+SELECT * FROM notifications WHERE tipus='usermegerosito' ORDER BY datum DESC;
+;
+SELECT o.nev, COUNT(*) AS total
+,SUM(IF (MONTH(regdatum)=1, 1, 0)) AS jan
+,SUM(IF (MONTH(regdatum)=2, 1, 0)) AS feb
+,SUM(IF (MONTH(regdatum)=3, 1, 0)) AS marc
+,SUM(IF (MONTH(regdatum)=4, 1, 0)) AS apr
+,SUM(IF (MONTH(regdatum)=5, 1, 0)) AS maj
+,SUM(IF (MONTH(regdatum)=6, 1, 0)) AS jun
+,SUM(IF (MONTH(regdatum)=7, 1, 0)) AS jul
+,SUM(IF (MONTH(regdatum)=8, 1, 0)) AS aug
+,SUM(IF (MONTH(regdatum)=9, 1, 0)) AS szep
+,SUM(IF (MONTH(regdatum)=10, 1, 0)) AS okt
+,SUM(IF (MONTH(regdatum)=11, 1, 0)) AS nov
+,SUM(IF (MONTH(regdatum)=12, 1, 0)) AS 'dec'
+FROM foglalasok f
+LEFT JOIN orvosok o ON o.id=f.`orvosassigned`
+LEFT JOIN szurestipusok t ON t.id=f.szurestipusid
+WHERE regdatum>'2025-01-01 00:00:00' AND regdatum<'2025-12-31 00:59:59' AND eljott=1 AND cegid IN (11,392,606)
+GROUP BY f.orvosassigned
+
+ORDER BY o.nev
+
+
+    SELECT calcfoglalta AS forras, COUNT(*) AS total
+
+,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+
+FROM (SELECT datum, foglalta, szurestipusid,
+IF (foglalta='', 'bejelentkezo',
+
+IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
+FROM foglalasok
+WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
+
+LEFT JOIN szurestipusok t ON t.id=a.szurestipusid
+
+GROUP BY calcfoglalta ORDER BY t.megnev, calcfoglalta;
+
+
+
+
+ELECT szurestipusid, t.megnev AS tipus
+
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=1, 1, 0)) AS 2023_jan
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=2, 1, 0)) AS 2023_feb
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=3, 1, 0)) AS 2023_marc
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=4, 1, 0)) AS 2023_apr
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=5, 1, 0)) AS 2023_maj
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=6, 1, 0)) AS 2023_jun
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=7, 1, 0)) AS 2023_jul
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=8, 1, 0)) AS 2023_aug
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=9, 1, 0)) AS 2023_szep
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=10, 1, 0)) AS 2023_okt
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=11, 1, 0)) AS 2023_nov
+,SUM(IF (YEAR(datum)=2023 AND MONTH(datum)=12, 1, 0)) AS 2023_dec
+,SUM(IF (YEAR(datum)=2023, 1, 0)) AS 2023_total
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=1, 1, 0)) AS 2024_jan
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=2, 1, 0)) AS 2024_feb
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=3, 1, 0)) AS 2024_marc
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=4, 1, 0)) AS 2024_apr
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=5, 1, 0)) AS 2024_maj
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=6, 1, 0)) AS 2024_jun
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=7, 1, 0)) AS 2024_jul
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=8, 1, 0)) AS 2024_aug
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=9, 1, 0)) AS 2024_szep
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=10, 1, 0)) AS 2024_okt
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=11, 1, 0)) AS 2024_nov
+,SUM(IF (YEAR(datum)=2024 AND MONTH(datum)=12, 1, 0)) AS 2024_dec
+,SUM(IF (YEAR(datum)=2024, 1, 0)) AS 2024_total
+FROM (
+SELECT f.id, f.datum, f.orvosassigned, f.szurestipusid, f.nev, f.taj, (SELECT id FROM foglalasok ff WHERE datum<f.datum AND ff.taj=f.taj LIMIT 1) multiple  FROM foglalasok f
+WHERE f.datum>'2025-01-01 00:00:00' AND f.datum<'2025-12-31 23:00:00' AND f.helyszinid IN (176) AND eljott=1 AND f.cegid=42
+HAVING multiple IS NULL LIMIT 111111111111
+) a
+LEFT JOIN szurestipusok t ON a.szurestipusid=t.id
+WHERE t.megnev IS NOT NULL
+GROUP BY a.szurestipusid ORDER BY t.megnev
+
+
+
+
+
+
+
+         *
+     */
 
 
 }

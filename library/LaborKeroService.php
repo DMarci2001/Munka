@@ -5,6 +5,8 @@ class LaborKeroService
     const SPEKTRUMLAB_VERKEP_ID = 846;
     const LABOR_PROVIDER_SYNLAB = "synlab";
     const LABOR_PROVIDER_SPEKTRUMLAB = "spektrumlab";
+    const LABOR_VK_MAIL_RECIPIENT = "jnsmobil@gmail.com";
+
 
     private string $errorMessage = "";
     public string $laborProvider;
@@ -125,6 +127,35 @@ class LaborKeroService
             Utils::jsonOut(["message" => $message, "html" => $requestWindow]);
         }
 
+        if (isset($_POST["toggleLaborKiertekeles"])) {
+            $reservationId = intval($_POST["toggleLaborKiertekeles"]);
+
+            $message = "";
+            $newItems = [];
+
+            if ($requestData = sql_query("select id, laboritems from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC)) {
+
+                $items = json_decode($requestData["laboritems"], true);
+                foreach ($items as $item) {
+                    if ($item == Booking_Constants::SPEKTRUM_KIERTEKELES_ID) {
+                        $message = "Kiértékelés eltávolítva";
+                    } else {
+                        $newItems[] = $item;
+                    }
+                }
+
+                if (empty($message)) {
+                    $newItems[] = Booking_Constants::SPEKTRUM_KIERTEKELES_ID;
+                    $message = "Kiértékelés hozzáadva";
+                }
+
+                sql_query("update labrequests set laboritems=? where id=? limit 1", [json_encode($newItems), $requestData["id"]]);
+            }
+
+            Utils::jsonOut(["message" => $message]);
+        }
+
+
         if (isset($_POST["changeLaborBekuldoKod"])) {
             $reservationId = intval($_POST["changeLaborBekuldoKod"]);
             $laborId = $_POST["laborId"];
@@ -143,6 +174,40 @@ class LaborKeroService
             }
 
             Utils::jsonOut(["message" => $message, "html" => $this->laborKeroWindow($reservationId)]);
+        }
+
+        if (isset($_POST["sendvklaborkero"])) {
+            $requestId = intval($_POST["rid"]);
+            $reservationId = intval($_POST["fid"]);
+            $error = "";
+            //$error.= "{$requestId} {$reservationId}";
+
+
+            $requestData = sql_query("select * from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC);
+            $vkData = empty($requestData["vkdata"]) ? [] : json_decode($requestData["vkdata"], true);
+            if (empty($vkData["sendData"])) {
+                $vkData["sendData"] = [];
+            }
+
+            $adminUser = new AdminUser();
+
+            $vkData["sendData"][] = ["to" => self::LABOR_VK_MAIL_RECIPIENT, "time" => date("Y-m-d H:i:s"), "user" => $adminUser->user["nev"]];
+
+            /*
+            $bekuldokod = empty($this->bekuldoKodSpektrumLab) ? SpektrumlabService::DEFAULT_BEKULDOKOD:$this->bekuldoKodSpektrumLab;
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $bekuldokod = empty($this->bekuldoKodSpektrumLab) ? SpektrumlabService::DEFAULT_BEKULDOKOD_KELTEXMED:$this->bekuldoKodSpektrumLab;
+            }
+            */
+
+            sql_query("update labrequests set vkdata=?, bekuldokod=? where id=?", [json_encode($vkData, JSON_PRETTY_PRINT), $this->bekuldoKodSpektrumLab, $requestId]);
+
+            $printService = new PrintService();
+            $printService->setTemplate("vercsoportmail");
+            $printService->setLaborRequest($requestData["id"], $requestData["pass"]);
+            $printService->start();
+
+            Utils::jsonOut(["error" => $error, "html" => $this->laborKeroWindow($reservationId)]);
         }
 
         if (isset($_POST["sendlaborkero"])) {
@@ -196,6 +261,37 @@ class LaborKeroService
 
             echo $this->laborKeroWindow($reservationId);
             die;
+        }
+
+
+        if (isset($_POST["laborkeroItemChangeVK"])) {
+            $requestId = intval($_POST["rid"]);
+            $fieldType = $_POST["fieldType"];
+            $fieldValue = $_POST["fieldValue"];
+            $key = $_POST["key"];
+            $error = "";
+
+            if ($requestData = sql_query("select id, vkdata, status from labrequests where id=?", [$requestId])->fetch(PDO::FETCH_ASSOC)) {
+                $vkData = empty($requestData["vkdata"]) ? [] : json_decode($requestData["vkdata"], true);
+
+                if ($fieldType == "checkbox") {
+                    if ($fieldValue == 1) {
+                        $vkData[$key] = $fieldValue;
+                    } else {
+                        if (isset($vkData[$key])) {
+                            unset($vkData[$key]);
+                        }
+                    }
+                } else {
+                    $vkData[$key] = $fieldValue;
+                }
+
+                sql_query("update labrequests set vkdata=? where id=?", [json_encode($vkData, JSON_PRETTY_PRINT), $requestId]);
+            } else {
+                $error = "A laborkérés nem található!";
+            }
+
+            Utils::jsonOut(["error" => $error]);
         }
 
 
@@ -408,6 +504,19 @@ class LaborKeroService
         return $html;
     }
 
+
+    public static array $vercsoportFormCheckboxes = [
+        1 => "Kapott életében vérkészítményt",
+        2 => "Három hónapon belül kapott vérkészítményt",
+        3 => "Volt szerv- vagy szövetátültetése",
+        4 => "Volt már transzfúziós szövődménye",
+        5 => "Volt ÚHB-s (újszülöttkori hemolitikus betegség) újszülöttje",
+        6 => "Vérképzőrendszeri betegség gyanúja fennáll",
+        7 => "Kapott négy hónapon belül anti-D IgG-t",
+        8 => "Volt korábban vércsoportvizsgálati eredménye, melynek során ellenanyag került kimutatásra",
+        9 => "Jelenleg terhes",
+    ];
+
     public function laborKeroWindow($reservationId): string {
         $laborRequestData = $this->getLaborRequestData($reservationId);
         $requestPacks = json_decode($laborRequestData["laborpacks"]);
@@ -463,13 +572,51 @@ class LaborKeroService
 
         //Extra gombok
         $html .= "<div style='margin-bottom: 10px;margin-top:5px'>";
-        $html .= "<div><a class='printbutton' target='_blank' href='index.php?print&template=genetika&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Genetikai</a></div>";
+        $html .= "<div>";
+        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=genetika&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Genetikai</a>&nbsp;";
+        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=vercsoport&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Vércsoport</a>&nbsp;";
+        $html .= "<a class='printbutton' target='_blank' href='#' onclick='$(\"#vercsoportform\").slideToggle();return false;'><i class='fa-solid fa-print'></i> Vércsoport 2</a>";
+
+        $checked = in_array(Booking_Constants::SPEKTRUM_KIERTEKELES_ID, json_decode($laborRequestData["laboritems"])) ? "checked" : "";
+        $html.= "&nbsp;&nbsp;<input type='checkbox' name='kiertekelescheck' id='kiertekelescheck' {$checked} onchange='toggleLaborKiertekeles({$reservationId});' value='value'> <label for='kiertekelescheck'>Kiértékelés szükséges</label>";
+
+
+        $html .= "</div>";
         $html .= "</div>";
 
         $showCheckBoxes = $laborRequestData["status"] == "temp";
 
-
         $html .= "<div id='labortetelekcheckboxes' style='height:510px;overflow: auto;'>";
+
+        $html .= "<div id='vercsoportform' style='display:none;'>";
+        $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>Vércsoport kérőlap beküldés (<span style='color:red'>még ne használd</span>)</div>";
+
+        $selectedVKItems = [];
+        if (!empty($laborRequestData["vkdata"])) {
+            $selectedVKItems = json_decode($laborRequestData["vkdata"], true);
+        }
+
+        if (!empty($selectedVKItems["sendData"])) {
+            foreach ($selectedVKItems["sendData"] as $sendData) {
+                $html.= "<div style='background:lightseagreen;color:#fff;padding:5px;margin-top: 5px;'>Elküldve: ".date("Y.m.d H:i", strtotime($sendData["time"])).", kiküldte: {$sendData["user"]}, ide: {$sendData["to"]}</div>";
+            }
+        }
+
+
+        $html.= "<pre>".print_r($selectedVKItems, true)."</pre>";
+
+        foreach (self::$vercsoportFormCheckboxes as $key => $item) {
+            $checked = isset($selectedVKItems["vkcheckbox{$key}"]) && $selectedVKItems["vkcheckbox{$key}"] == 1 ? "checked" : "";
+            $html .= "<div class='laborkerovizsgalatcheck' data-vizsgalat='{$item}' style='display:inline-block;width:186px;overflow:hidden;white-space: nowrap;margin-right: 5px;'> <span title='{$item}'><input data-key='vkcheckbox{$key}' onchange='laborkeroItemChangeVK($(this));' id='vkitem{$key}' type='checkbox' value='1' {$checked}/> <label for='vkitem{$key}'>{$item}</label></span></div>";
+        }
+
+        $html.= "<div style='display:table-row;'><div class='tdm'>&nbsp;&nbsp;Terhességek száma&nbsp;&nbsp;</div><div class='tdm'><input onchange='laborkeroItemChangeVK($(this));' data-key='vkterhessegszam' type='text' value='".($selectedVKItems["vkterhessegszam"] ?? "")."' style='width:50px;'/></div></div>";
+        $html.= "<div style='display:table-row;'><div class='tdm'>&nbsp;&nbsp;Terhességi hét (ha terhes)&nbsp;&nbsp;</div><div class='tdm'><input onchange='laborkeroItemChangeVK($(this));' data-key='vkterhesseghet' type='text' value='".($selectedVKItems["vkterhesseghet"] ?? "")."' style='width:50px;'/></div></div>";
+        $html.= "<div style='display:table-row;'><div class='tdm'>&nbsp;&nbsp;Gyógyszerek&nbsp;&nbsp;</div><div class='tdm'><input onchange='laborkeroItemChangeVK($(this));' data-key='vkgyogyszerek' type='text' value='".($selectedVKItems["vkgyogyszerek"] ?? "")."' style='width:500px;'/></div></div>";
+
+        $html .= "<div style='margin-top: 10px;'><a id='vkreqsendbutton' class='printbutton' onclick='sendVKRequestEmail();return false;' href='#' style='background: #00aa00'>Vércsoport kérő nyomtatvány elküldése emailben</a> <a class='printbutton' onclick='$(\"#vercsoportform\").slideToggle();return false;' href='#' style='background: #00aa00'>Mégse</a></div>";
+
+        $html .= "</div>";
 
         if ($showCheckBoxes) {
             if (!isset($_SESSION["providerselected"])) {

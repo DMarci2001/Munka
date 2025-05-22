@@ -196,6 +196,12 @@ class ElsosegelyVizsgaPage extends CorePage {
             "validfrom" => "2025-01-17 06:00:00",
             "validuntil" => "2025-01-31 23:00:00"
         ],
+        [
+            "username" => "esv202504",
+            "password" => "esv202504",
+            "validfrom" => "2025-04-08 08:00:00",
+            "validuntil" => "2025-04-08 23:00:00"
+        ],
     ];
 
     private function authenticatedUser():array {

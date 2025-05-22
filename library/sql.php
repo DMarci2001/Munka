@@ -24,6 +24,7 @@ function sql_query($q,$params=null) {
     $error = $stmt->errorInfo();
     if ($error[2] != "") {
         print_r($error);
+        //echo $q;
     }
     return $stmt;
 }

@@ -208,7 +208,7 @@ class DailyStatService {
                             "ervenyesseg" => $ervenyesseg
                         ];
 
-                        sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                        sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=? and locked=0", [$row["datum"], $row["orvos"]]);
                         sql_query("insert into dokirex_vizsgalatok set 
                                     datum=:datum, moddatum=:datum, nev=:nev,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
@@ -313,7 +313,7 @@ class DailyStatService {
                             "email" => $sheet->getCell("O{$rowNr}")->getValue(),
                         ];
 
-                        sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                        sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=? and locked=0", [$row["datum"], $row["orvos"]]);
                         sql_query("insert into dokirex_vizsgalatok set 
                                     datum=:datum, moddatum=:datum, nev=:nev, email=:email,
                                     szakrendeles=:szakrendeles, orvos=:orvos,
@@ -398,7 +398,7 @@ class DailyStatService {
 
                     //print_r($row);
 
-                    sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=?", [$row["datum"], $row["orvos"]]);
+                    sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=? and locked=0", [$row["datum"], $row["orvos"]]);
                     sql_query("insert into dokirex_vizsgalatok set 
                                 datum=:datum, moddatum=:datum, nev=:nev, email=:email,
                                 szakrendeles=:szakrendeles, orvos=:orvos,

@@ -185,7 +185,7 @@ class AdminWebServicesPage extends AdminCorePage
                 $description = $descriptions[$item[0]] ?? "";
                 echo "<tr>";
                 echo "<td><input type='text' name='megnev{$key}' value='{$item[0]}' style='width:450px;' placeholder='megnevezés' /></td>";
-                echo "<td style='text-align: center;'><input type='text' name='sorrend{$key}' value='{$key}' style='width:14px;' placeholder='sorrend' title='sorrend'/> </td>";
+                echo "<td style='text-align: center;'><input type='text' name='sorrend{$key}' value='{$key}' style='width:34px;' placeholder='sorrend' title='sorrend'/> </td>";
                 echo "<td style='font-size: 14px;'>&nbsp;<a onclick='$(\"#packdescription{$key}\").slideToggle();return false;' href='#'>szöveg</a>&nbsp;&nbsp;<a href='index.php?page={$_GET["page"]}&pack={$_GET["pack"]}&delmanagerwebitem={$key}' onclick='return confirm(\"Biztos törlöd ezt az elemet?\")'><i class='fas fa-trash'></i></a></td>";
                 echo "</tr>";
                 echo "<tr>";
@@ -236,7 +236,7 @@ class AdminWebServicesPage extends AdminCorePage
             echo "<table cellpadding='0' cellspacing='0'>";
 
             $sor = 1;
-            $prices = sql_query("select * from arak where tipusid=? and instr(cegid, '|243|') and csomag=0 order by megnev", [$id])->fetchAll(PDO::FETCH_ASSOC);
+            $prices = sql_query("select * from arak where tipusid=? and instr(cegid, '|243|') and csomag=0 order by sorrend, megnev", [$id])->fetchAll(PDO::FETCH_ASSOC);
             if (!empty($prices)) {
                 echo "<tr style='font-weight: bold;'>";
                 echo "<td style='padding:5px 0px;'>Aktív&nbsp;&nbsp;</td>";
@@ -250,7 +250,7 @@ class AdminWebServicesPage extends AdminCorePage
                 echo "<tr>";
                 echo "<td><input type='hidden' name='arid{$sor}' id='arid{$sor}' value='{$price["id"]}' /><input type='checkbox' title='aktiv' name='aktiv{$sor}' value='1' ".($price["aktiv"] == 1 ? "checked":"")."/></td>";
                 echo "<td><input type='text' name='megnev{$sor}' value='{$price["megnev"]}' style='width:350px;' placeholder='megnevezés' /></td>";
-                echo "<td style='text-align: center;'><input type='text' name='sorrend{$sor}' value='{$price["sorrend"]}' style='width:14px;' placeholder='időtartam' title='időtartam módosító'/> </td>";
+                echo "<td style='text-align: center;'><input type='text' name='sorrend{$sor}' value='{$price["sorrend"]}' style='width:34px;' placeholder='időtartam' title='időtartam módosító'/> </td>";
                 echo "<td><input type='text' name='price{$sor}' value='{$price["price"]}' style='width:50px;' placeholder='ár'/>&nbsp;HUF</td>";
                 echo "<td style='font-size: 14px;'>&nbsp;<a href='index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}&deltipar={$price["id"]}' onclick='return confirm(\"Biztos törlöd ezt az árat?\")'><i class='fas fa-trash'></i></a></td>";
                 echo "</tr>";

@@ -7,6 +7,10 @@
 //start tlink: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/tlink_hungariamed.pid --exec /var/tlink_hungariamed/tlinkl
 //stop tlink: start-stop-daemon --stop --pidfile /var/run/tlink_hungariamed.pid
 
+//hungariamed győr tlink
+//start tlink: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/tlink_hungariamedgyor.pid --exec /var/tlink_hungariamedgyor/tlinkl
+//stop tlink: start-stop-daemon --stop --pidfile /var/run/tlink_hungariamedgyor.pid
+
 //keltexmed tlink
 //start tlink: start-stop-daemon --background --start --verbose --make-pidfile --pidfile /var/run/tlink_keltexmed.pid --exec /var/tlink_keltexmed/tlinkl
 //stop tlink: start-stop-daemon --stop --pidfile /var/run/tlink_keltexmed.pid
@@ -61,6 +65,8 @@ class SpektrumlabService {
         "000000524" => "Hungária Med-M Kft. (Aldi)",
         "000000543" => "Hungária Med-M Kft. (BME)",
         "000000544" => "Hungária Med-M Kft. (Pénzjegy nyomda)",
+        "000000607" => "Hungária Med-M Kft. (JABIL)",
+        "000000609" => "Hungária Med-M Kft. (MAHLE)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [

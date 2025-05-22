@@ -394,9 +394,14 @@ function removeFizSzolg(fid, id) {
 
 
 
+var lTerm = "";
+function setTerm(term) {
+    lTerm = term;
+}
+
 function setListDay(day) {
     $("#napfilter").css("background-image","url('/images/loading_transparent.svg')");
-    $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day),null,
+    $("#elojegyzestable").load("index.php?page=booking&showelojegyzestable&day="+encodeURIComponent(day)+"&lterm="+encodeURIComponent(lTerm),null,
         function(responseText){
             afterElojegyzesTableInit();
             $("#napfilter").css("background-image","url('/images/empty-128.png')");
@@ -4505,6 +4510,38 @@ function refreshLaborKeroMessages() {
     })
 }
 
+function sendVKRequestEmail() {
+    if (labRequestProcessRunning) {
+        alert("Még fut az előző művelet, próbáld újra!");
+        return;
+    }
+
+    if (!confirm("Biztos elküldöd emailben a vércsoport kérő nyomtatványt a spektrumlabnak?")) {
+        return;
+    }
+
+    let rid = $("#laborkerorequestid").val();
+    let fid = $("#laborkeroreservationid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {sendvklaborkero:1, rid:rid, fid:fid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+            } else {
+                $.toast({
+                    text: "Email elküldve",
+                    icon: 'success'
+                });
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+
+}
+
 
 function sendLaborKeroNew() {
     if (labRequestProcessRunning) {
@@ -4576,6 +4613,41 @@ function cancelLaborKero() {
     })
 }
 
+
+function laborkeroItemChangeVK(el) {
+    //labRequestProcessRunning = true;
+
+    let rid = $("#laborkerorequestid").val();
+    let key = $(el).data("key");
+    let fieldType = $(el).attr("type");
+    let fieldValue = $(el).val();
+
+    //alert(key+" "+fieldType+ " " + fieldValue);
+
+    if (fieldType === "checkbox") {
+        if (!$(el).is(':checked')) {
+            fieldValue = 0;
+        }
+    }
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {laborkeroItemChangeVK:1, key:key, fieldValue:fieldValue, rid:rid},
+        success: function(response){
+            labRequestProcessRunning = false;
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            $.toast({
+                text: "Tételek frissítve",
+                icon: 'success'
+            });
+        }
+    });
+
+}
 
 function laborkeroItemChange(el, itemId) {
     labRequestProcessRunning = true;
@@ -4730,6 +4802,21 @@ function toggleLaborProvider(selection, fid) {
         }
     })
 }
+
+function toggleLaborKiertekeles(fid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=booking",
+        data: {toggleLaborKiertekeles:fid},
+        success: function(response){
+            $.toast({
+                text: response.message,
+                icon: 'success'
+            });
+        }
+    })
+}
+
 
 function changeLaborBekuldoKod(laborId, selection, fid) {
     $.ajax({

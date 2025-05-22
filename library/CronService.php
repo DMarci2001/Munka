@@ -94,6 +94,7 @@ class CronService {
 
         if ($this->interval == "1ora") {
             //óránként futó cronok
+            $this->addSyncReservations();
             $this->_sendReservationReportForDoctors();
             //$this->sendReviewMails();
             $this->_sendAlkExcel(); //** régi excel hívást használ, disabled
@@ -157,6 +158,17 @@ class CronService {
     }
 
     private function _tesztStuff() {
+        //$this->addSyncReservations();
+
+        $this->tesztSynlabPdf();
+
+        //$dicomService = new DicomService();
+        //$dicomService->processEntries();
+
+        //$service = new AdminAjaxService();
+        //$service->addCsvUsers();
+        die;
+
         //$this->saveResultPdfs();
 
 
@@ -229,8 +241,6 @@ class CronService {
 
         //$spektrumLabService = new SpektrumlabService();
         //$spektrumLabService->sendAutomaticRequests();
-
-        //$this->addSyncReservations();
 
         //$service = new SynlabService();
         //$service->synlabProcess();
@@ -320,13 +330,14 @@ class CronService {
     }
 
     private function addSyncReservations() {
-        $api = new BookingSyncApi();
-        $reservations = sql_query("SELECT * FROM foglalasok WHERE szurestipusid='102' AND datum>NOW()")->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($reservations as $reservation) {
-            echo $reservation["nev"]."\n";
-            $api->modifyReservation($reservation["id"]);
+        if (Booking_Constants::SQL_DB == "hungariamed") {
+            $api = new BookingSyncApi();
+            $reservations = sql_query("SELECT * FROM foglalasok WHERE orvosassigned=973 AND datum>NOW()")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($reservations as $reservation) {
+                echo $reservation["nev"] . "\n";
+                $api->modifyReservation($reservation["id"]);
+            }
         }
-        die("done\n");
     }
 
     private function readEmailReports() {
@@ -707,7 +718,7 @@ class CronService {
                 $tel = $row["telefon"];
 
                 //kiegészítő vizsgálatokról nem kell sms
-                if (in_array($row["szurestipusid"], [Booking_Constants::TUDOSZURES_ID, Booking_Constants::LABOR_ID, Booking_Constants::HALLASVIZSGALAT_ID, Booking_Constants::COVID_ID])) {
+                if (in_array($row["szurestipusid"], [Booking_Constants::TUDOSZURES_ID, Booking_Constants::LABOR_ID, Booking_Constants::HALLASVIZSGALAT_ID, Booking_Constants::COVID_ID]) && !in_array($row["cegid"], [1274, 1275])) {
                     continue;
                 }
 
@@ -1096,5 +1107,21 @@ class CronService {
 
 
     }
+
+    private function tesztSynlabPdf() {
+        echo "start\n";
+
+        $service = new SynlabService();
+        $pdfFile = __DIR__."/tesztsynlab.pdf";
+
+        $result = $service->parsePatientDataFromPDF($pdfFile);
+        print_r($result);
+
+
+
+        echo "\n";
+        die;
+    }
+
 
 }

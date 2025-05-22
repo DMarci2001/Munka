@@ -311,7 +311,7 @@ class VaroteremService
             $onclick = "onClick=\"addToWaitList({$data["id"]},{$r["id"]});return false\"";
 
             if($supervisor){
-                $onclick = "onClick=\"callInToVisit({$data["vid"]},{$r["id"]})\"";
+                $onclick = "onClick=\"callInToVisit({$data["vid"]},{$r["id"]});return false;\"";
             }
 
             $docLi .= "<li><a class=\"dropdown-item marcidobozai\" style='text-decoration: none;' {$onclick}  href=\"#\">{$colorindicator}{$r["nev"]}</a></li>";
@@ -476,8 +476,8 @@ class VaroteremService
             //$name = explode(" ", $r["nev"]);
             $name = $r["nev"];
             $bookingEditor = "onClick=\"showIdopontEditor('booking','{$r["pass"]}',{$r["fid"]});return false;\"";
-            $removeFromList = "onClick=\"removeFromWaitList({$r["id"]})\"";
-            $callInToVisit = "onClick=\"callInToVisit({$r["id"]})\"";
+            $removeFromList = "onClick=\"removeFromWaitList({$r["id"]});return false;\"";
+            $callInToVisit = "onClick=\"callInToVisit({$r["id"]});return false;\"";
             if ($mins <= 10) $color = $colorcodes[0];
             if ($mins > 10 && $mins <= 25) $color = $colorcodes[1];
             if ($mins > 25) $color = $colorcodes[2];

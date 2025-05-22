@@ -868,7 +868,7 @@ class SynlabService
     }
 
 
-    private function parsePatientDataFromPDF($pdfFile, $subject = ""):array {
+    public function parsePatientDataFromPDF($pdfFile, $subject = ""):array {
         $utils = new Utils();
 
         $config = new \Smalot\PdfParser\Config();
@@ -891,7 +891,7 @@ class SynlabService
             $nev = substr($text, strpos($text, "Születési id") + 18, 100);
             $result["nev"] = substr($nev, 0, strpos($nev, "\n"));
             $result["taj"] = substr($text, strpos($text, "TAJ/ID:") + 8, 9);
-            $result["szulDatum"] = substr($text, strpos($text, "www.synlab.hu") + 14, 10);
+            $result["szulDatum"] = substr($text, strpos($text, "Rögzítés:") + 13, 10);
             $result["folyamatban"] = substr_count($text, "Folyamatban") ? 1 : 0;
         }
 

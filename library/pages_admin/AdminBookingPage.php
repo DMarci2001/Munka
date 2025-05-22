@@ -76,9 +76,11 @@ class AdminBookingPage extends AdminCorePage
             die();
         }
 
-        if (isset($_GET["showelojegyzestable"])) {
+        if (isset($_GET["lterm"])) {
+            $_SESSION["esearchkey"] = $_GET["lterm"];
+        }
 
-            //$_SESSION["setday"] = date("Y-m-d");
+        if (isset($_GET["showelojegyzestable"])) {
             if (isset($_GET["setday"])) $_SESSION["setday"] = $_GET["setday"];
             if (isset($_GET["day"])) $_SESSION["setday"] = $_GET["day"];
             echo $this->showElojegyzesTableNew($_SESSION["setday"]);
@@ -261,6 +263,7 @@ class AdminBookingPage extends AdminCorePage
                     left join orvosok o on o.id=f.orvosassigned
                     left join dokumentumok d on d.foglalasid=f.id
                 where {$sqlFilter} and f.nev<>'nincs név' {$cegFilter} " . ($this->adminUser->onlyDoctorReservations() ? " and f.orvosassigned in(" . $this->adminUser->getUserDoctorIds() . ")" : "") . "
+                group by f.id
                 order by f.datum desc
                 
                 limit 1000",
@@ -441,6 +444,11 @@ class AdminBookingPage extends AdminCorePage
                 //időpontok lefoglalása
                 $lefoglalva = 0;
                 $this->bookingService->replicateToFirstAvailableTime = false;
+
+                if (Booking_Constants::SQL_DB == "keltexmed") {
+                    //$this->bookingService->replicateToFirstAvailableTime = true;
+                }
+
                 foreach ($packContentIds as $tipusId) {
                     $this->bookingService->replicateReservationToAnotherService($packReservationData, $tipusId);
                     $lefoglalva++;
@@ -911,7 +919,7 @@ class AdminBookingPage extends AdminCorePage
 
     public function showElojegyzesTableNew($setDay):string {
         if (session_id() == "p9mvccbam099a47mtvlhv8ou9d") {
-            return $this->showElojegyzesTableFast($setDay);
+            //return $this->showElojegyzesTableFast($setDay);
         }
 
         $startTime     = microtime(true);
@@ -937,6 +945,7 @@ class AdminBookingPage extends AdminCorePage
         $sectionName   = "";
         $cegSearchLink = "[<a href='#' onclick='elojegyzesCegSearchStart();return false;'>lista</a>]";
         $this->paymentData = $this->getAllPaymentData();
+        $this->lastSearchTerm = $_SESSION["esearchkey"] ?? "";
 
         $htmlout .= "<div id='filterbox' style='margin-top:10px;'>";
         $htmlout .= "<div style='display:table-cell;vertical-align:middle;'>" . $this->napFilter2($setDay) . "</div>";
@@ -1080,7 +1089,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958])) {
+                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";
@@ -1189,7 +1198,7 @@ class AdminBookingPage extends AdminCorePage
                         }
                     }
 
-                    $reservations = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely from foglalasok f 
+                    $reservations = sql_query("select f.*, c.megnev as cegnev, o.nev as orvosnev, d.id as docid, sz.megnev as szurestipusnev, if(f.telephelyid=0, f.telephely, v.megnev) as telephely, sz.ispack from foglalasok f 
                         left join cegek c on c.id=f.cegid
                         left join szurestipusok sz on sz.id=f.szurestipusid
                         left join orvosok o on o.id=f.orvosassigned
@@ -1375,9 +1384,16 @@ class AdminBookingPage extends AdminCorePage
     private bool $showDoctorName = false;
     private bool $showInterval = false;
     private array $paymentData;
+    private string $lastSearchTerm = "";
 
     private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false): string
     {
+        if (!empty($this->lastSearchTerm)) {
+            if (substr_count(strtolower($reservationData["nev"]), strtolower($this->lastSearchTerm)) || substr_count(strtolower($reservationData["szuldatum"]), strtolower($this->lastSearchTerm)) || substr_count(strtolower($reservationData["taj"]), strtolower($this->lastSearchTerm))) {
+                $reservationData["nev"] = "<span style='color:darkblue;font-weight:bold;'>{$reservationData["nev"]}</span>";
+            }
+        }
+
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
         //$ora = date("H:i", strtotime($rowf["datum"]));
 
@@ -1505,6 +1521,46 @@ class AdminBookingPage extends AdminCorePage
         $this->lastIdopont = $idopontShow;
 
         $htmlout .= "</tr>";
+
+        if ($reservationData["ispack"] && session_id() == "uaku9hcmk8i7d3as8th1c1k1ka") {
+            $pixelMultiplier = 2;
+            $totalScaleMinutes = (16 - 7) * 60 * $pixelMultiplier;
+            $day = date("Y-m-d", strtotime($reservationData["datum"]));
+
+            $subReservations = sql_query("select f.id, f.datum, f.rinterval, c.megnev as cegnev, o.nev as orvosnev, sz.megnev as szurestipusnev from foglalasok f 
+                        left join cegek c on c.id=f.cegid
+                        left join szurestipusok sz on sz.id=f.szurestipusid
+                        left join orvosok o on o.id=f.orvosassigned
+                        where f.parentid=? and f.datum>'{$day} 00:00:00' and f.datum<'{$day} 23:59:59' 
+                        order by f.datum limit 10", [$reservationData["id"]])->fetchAll(PDO::FETCH_ASSOC);
+
+            $htmlout.= "<tr>";
+            $htmlout.= "<td nowrap colspan='3'></td>";
+            $htmlout.= "<td nowrap colspan='5'>";
+            //$htmlout.= "<div style='display:table-cell;vertical-align: middle;padding:0px 5px;'>07:00</div>";
+            //$htmlout.= "<div style='display:table-cell;'>";
+            $htmlout.= "<div style='background:#ffc;width:{$totalScaleMinutes}px;height:20px;border:1px solid #ccc;'>";
+            $htmlout.= "<div style='position:absolute;padding-left:".($totalScaleMinutes-65)."px;color:gray;height:20px;box-sizing:border-box;font-size:10px;'>07:00 - 16:00</div>";
+
+            foreach ($subReservations as $subReservation) {
+                $width = $subReservation["rinterval"] * $pixelMultiplier;
+                $pad = round((strtotime($subReservation["datum"]) - strtotime("{$day} 07:00:00")) / 60) * 2;
+                $color = ChatService::colorByText($subReservation["szurestipusnev"]);
+                $title = mb_substr($subReservation["szurestipusnev"], 0, 1);
+                $idopont = date("H:i", strtotime($subReservation["datum"])). " {$subReservation["rinterval"]} perc";
+
+                $htmlout.= "<div style='position:absolute;background:{$color};color:white;width:{$width}px;height:20px;margin-left: {$pad}px;overflow:hidden;box-sizing: border-box;padding:0px 3px;cursor: pointer;' title='{$idopont} {$subReservation["szurestipusnev"]} - {$subReservation["orvosnev"]}'>{$title}</div>";
+            }
+
+            $htmlout.= "</div>";
+            //$htmlout.= "</div>";
+
+            //$htmlout.= "<div style='display:table-cell;vertical-align: middle;padding:0px 5px;'>16:00</div>";
+
+            $htmlout.= "</td>";
+            $htmlout.= "</tr>";
+        }
+
 
         return $htmlout;
     }
@@ -1876,7 +1932,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958])) {
+                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";
