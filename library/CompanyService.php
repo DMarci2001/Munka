@@ -13,6 +13,7 @@ class CompanyService {
     const SUZUKI_GHC_ID     = 904;
     const BME_ID            = 851;
     const KRE_ID            = 888;
+    const LIGHTTECH_ID      = 858;
 
     public static array $makIds = [4,373, 374, 375, 376,933];
 
@@ -39,7 +40,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="asz-menedzserszures";
+            $d="bejelentkezes";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");

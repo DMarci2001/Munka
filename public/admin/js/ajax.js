@@ -5026,3 +5026,84 @@ function toggleWorkerFreeDay(day, wid) {
         }
     })
 }
+
+function setQuitter(paciensid){
+    $.ajax({
+        url:"index.php",
+        type:"POST",
+        data:{setQuitter:paciensid},
+        success: function(response){
+            $.toast({
+                text: "Sikeres rögzítés!",
+                icon: "success"
+            });
+        }
+    })
+}
+
+function showGeneraliDocSetup(oid) {
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {showGeneraliDocSetup:oid},
+        success: function(response){
+            if (response.error != "") {
+                alert(response.error);
+                return;
+            }
+            showGeneralPopup(response.html);
+        }
+    })
+}
+
+function storeGeneraliScreening(szid,generaliId){
+    console.log(generaliId);
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {storeGeneraliScreening:szid,generaliid:generaliId},
+        success: function(response){
+            if (response.error != "") {
+                $.toast({
+                    text: response.error,
+                    icon: "error"
+                });
+                //alert(response.error);
+                return;
+            }
+            //console.log(response.html);
+            $.toast({
+                text: response.message,
+                icon: "success"
+            });
+        }
+    })
+}
+
+function setExaminationOfSpeciality(szid,eid){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        //dataType: "json",
+        data: {setExaminationOfSpeciality:true,szid:szid,eid:eid},
+        success: function(response){
+            location.reload();
+        }
+    })
+}
+
+function refresGeneralihExaminations(szid){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        //dataType: "json",
+        data: {refresGeneralihExaminations:szid},
+        success: function(response){
+            console.log(response);
+            $("#select-examination").html(response);
+        }
+    })
+}
+

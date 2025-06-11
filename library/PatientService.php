@@ -2,7 +2,7 @@
 
 class PatientService {
 
-    private $patientFields = ["cegid", "nev", "email", "telefon", "szuldatum", "szulhely", "anyjaneve", "neme", "taj", "irsz", "varos", "utca", "munkakor", "torzsszam", "jelszo", "validated"];
+    private $patientFields = ["cegid", "nev", "email", "telefon", "szuldatum", "szulhely", "anyjaneve", "neme", "taj", "irsz", "varos", "utca", "munkakor", "torzsszam", "jelszo", "validated","kilepett"];
 
     public function __construct() {
 
@@ -40,6 +40,10 @@ class PatientService {
                 $fields .= "{$patientField}=?,";
                 $params[] = $patientData[$patientField];
             }
+        }
+        if(!isset($patientData["kilepett"])){
+            $fields.="kilepett=?,";
+            $params[] = null;
         }
 
         if (!empty($fields)) {

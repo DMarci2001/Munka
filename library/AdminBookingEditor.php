@@ -884,6 +884,13 @@ class AdminBookingEditor {
             }
         }
 
+        //Lighttech kilépett státusz állítása
+        if(isset($reservationData["paciensid"]) && $reservationData["cegid"]==CompanyService::LIGHTTECH_ID){
+            $r=sql_query("SELECT * FROM felhasznalok WHERE id=?",[$reservationData["paciensid"]])->fetch(PDO::FETCH_ASSOC);
+
+            $html.= "&nbsp;&nbsp;|&nbsp;&nbsp;<input type='checkbox' title='Kilépés státusz megadása' ".($r["kilepett"]==1?"checked='true'":"")." onChange='setQuitter({$r["id"]})' id='kilepett' value='1'  />&nbsp;<label for='kilepett'>Kilépett</label>";
+        }
+
         return $html;
     }
 

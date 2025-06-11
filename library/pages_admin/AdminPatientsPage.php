@@ -256,6 +256,7 @@ class AdminPatientsPage extends AdminCorePage {
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"]="";
             if (!isset($_POST["szulhely"])) $_POST["szulhely"]="";
             if (!isset($_POST["anyjaneve"])) $_POST["anyjaneve"]="";
+            if (!isset($_POST["kilepett"])) $_POST["kilepett"]="";
 
             echo "<tr><td>Születési hely: *</td><td><input class='inputbox' style='width:250px;' type='text' name='szulhely' value='{$_POST["szulhely"]}' placeholder='' ></td></tr>";
             echo "<tr><td>Anyja neve: *</td><td><input class='inputbox' style='width:250px;' type='text' name='anyjaneve' value='{$_POST["anyjaneve"]}' placeholder='' ></td></tr>";
@@ -271,6 +272,7 @@ class AdminPatientsPage extends AdminCorePage {
             } else {
                 echo "<tr><td>Jelszó: </td><td><input class='inputbox' style='width:250px;' type='text' name='jelszo' value='' placeholder='Csak akkor töltse ki, ha meg akarja változtatni.'/></td></tr>";
             }
+            echo "<tr><td>Kilépett:</td><td><input type='checkbox' style='margin:3px;' name='kilepett' value='1' ".($_POST["kilepett"]==1?"checked='true'":"")."></td></tr>";
 
             echo "</table>";
 
@@ -298,7 +300,7 @@ class AdminPatientsPage extends AdminCorePage {
 
             echo "<h1>{$row["nev"]} ".($row["validated"]==1?"<span style='font-size:12px;color:#0a0;'>(aktíválva)</span>":"<span style='font-size:12px;color:#f00;border-bottom:1px dashed #888;cursor:pointer;' title='sms-ben kapott kód: {$row["rkod"]}'>(nem aktív)</span>")."</h1>";
 
-            echo "<div style=''>Cég: {$row["cegnev"]} ".(!empty($row["munkakor"])?"({$row["munkakor"]})":"")."</div>";
+            echo "<div style=''>Cég: {$row["cegnev"]} ".(!empty($row["munkakor"])?"({$row["munkakor"]})":"").(!empty($row["kilepett"])?"&nbsp;<span style='color:red'>(Kilépett)</span>":"")."</div>";
             echo "<div style=''>TAJ: {$row["taj"]}</div>";
             if ($row["torzsszam"]!="") echo "<div style=''>Törzsszám: {$row["torzsszam"]}</div>";
             echo "<div style=''>Születési idő: {$row["szuldatum"]}</div>";
@@ -582,6 +584,9 @@ class AdminPatientsPage extends AdminCorePage {
                 echo "<td nowrap valign='top'><div class='{$tc}'>Regisztráció ideje</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>Név</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>Cég</div></td>";
+                if($row["cegid"]==CompanyService::LIGHTTECH_ID){
+                    echo "<td nowrap valign='top'><div class='{$tc}'>Státusz</div></td>";
+                }
                 echo "<td nowrap valign='top'><div class='{$tc}'>TAJ</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>Telefon</div></td>";
                 echo "<td nowrap valign='top'><div class='{$tc}'>SMS kód</div></td>";
@@ -600,6 +605,9 @@ class AdminPatientsPage extends AdminCorePage {
             echo "<td nowrap valign='top'><div class='{$tc}'><a style='color:#00f;' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["nev"]}</a></div></td>";
             //echo "<td nowrap valign='top'><div class='{$tc}' style='min-width:300px;'>{$row["cim"]}&nbsp;&nbsp;</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["cegnev"]}</div></td>";
+            if($row["cegid"]==CompanyService::LIGHTTECH_ID){
+                echo "<td nowrap valign='top'><div class='{$tc}'>".(!empty($row["kilepett"])?"<span style='color:red'>Kilépett</span>":"")."</div></td>";
+            }
             echo "<td nowrap valign='top'><div class='{$tc}'>TAJ: {$row["taj"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>Tel: {$row["telefon"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["rkod"]}</div></td>";

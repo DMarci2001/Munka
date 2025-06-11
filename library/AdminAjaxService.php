@@ -1149,6 +1149,81 @@ class AdminAjaxService {
             die();
         }
 
+        if(isset($_POST["setQuitter"])){
+            if($q=sql_query("SELECT * FROM felhasznalok WHERE id=?",[$_POST["setQuitter"]])->fetch(PDO::FETCH_ASSOC)){
+                if(empty($q["kilepett"])){
+                    sql_query("UPDATE felhasznalok SET kilepett=1 WHERE id=?",[$_POST["setQuitter"]]);
+                }else{
+                    sql_query("UPDATE felhasznalok SET kilepett=NULL WHERE id=?",[$_POST["setQuitter"]]);
+                }
+                $q=sql_query("SELECT * FROM felhasznalok WHERE id=?",[$_POST["setQuitter"]])->fetch(PDO::FETCH_ASSOC);
+            }
+            die();
+        }
+
+        if(isset($_POST["showGeneraliDocSetup"])){
+            $utils = New Utils();
+            die(json_encode(array("html"=>$utils->showGeneraliSetup($_POST["showGeneraliDocSetup"]),"error"=>"")));
+        }
+
+        if(isset($_POST["saveGeneraliDoctorData"])){
+            $generaliService = new GeneraliApiService();
+            echo "<pre>";
+            print_r($_POST);
+            echo "</pre>";
+
+            $q=sql_query("SELECT * FROM orvosok WHERE id=?",[$_POST["oid"]])->fetch(PDO::FETCH_ASSOC);
+
+            if(empty($q["generaliId"])){
+                $generaliService->storeDoctor($_POST["oid"],$_POST["name"],$_POST["titles"],$_POST["min_age"],$_POST["languages"]);
+                sql_query("UPDATE orvosok SET generaliId=? WHERE id=?",[$_POST["oid"],$_POST["oid"]]);
+            }else{
+                $generaliService->updateDoctor($q["generaliId"],$_POST["name"],$_POST["titles"],$_POST["min_age"],$_POST["languages"]);
+            }
+
+            
+            echo "<pre>";
+            print_r($generaliService->retrieveDoctors());
+            echo "</pre>";
+        }
+
+        if(isset($_POST["storeGeneraliScreening"])){
+            $error = $success = "";
+            $q=sql_query("SELECT * FROM szurestipusok WHERE id=?;",[$_POST["storeGeneraliScreening"]])->fetch(PDO::FETCH_ASSOC);
+            if(!empty($q["generaliId"])){
+                $error = "Szűréstípus már hozzá lett adva a Generali rendszeréhez!<br>";
+            }else{
+                $generaliService = New GeneraliApiService();
+                $generaliService->storeSpecialities($_POST["storeGeneraliScreening"],$_POST["generaliid"]);
+                sql_query("UPDATE szurestipusok SET generaliId=? WHERE id=?",[$_POST["storeGeneraliScreening"],$_POST["storeGeneraliScreening"]]);
+                $success = "Sikeres rögzítés!";
+            }
+            die(json_encode(array("error"=>$error,"message"=>$success)));
+        }
+
+        if(isset($_POST["refresGeneralihExaminations"])){
+            $generaliService = New GeneraliApiService();
+            $html = "";
+            if($_POST["refresGeneralihExaminations"]!="0"){
+                echo $_POST["refresGeneralihExaminations"];
+                $examinations = $generaliService->retrieveExaminationsOfSpeciality($_POST["refresGeneralihExaminations"]);
+                $html.= "<option>Válassz vizsgálatot!</option>";
+                foreach($examinations as $examination){
+                    if(!empty($examination["partner_examination_id"])){
+                        $html.= "<option value='{$examination["partner_examination_id"]}'>{$examination["name"]}</option>";
+                    }    
+                }
+            }
+            
+            die($html);
+        }
+
+        if(isset($_POST["setExaminationOfSpeciality"])){
+            $generaliService = New GeneraliApiService();
+            $generaliService->storeExamination($_POST["szid"],$_POST["eid"]);
+            die();
+        }
+
         new LaborKeroService();
         new InvoiceService();
     }
