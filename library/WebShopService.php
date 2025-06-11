@@ -54,7 +54,7 @@ class WebShopService {
                         if ($reservation = sql_query("select f.*, o.nev as orvosnev from foglalasok f
                             left join orvosok o on o.id=f.orvosassigned
                             where f.id=?", [$orderItem["reservationid"]])->fetch(PDO::FETCH_ASSOC)) {
-                            $html.= "foglalt időpont: <a title='ugrás a foglalás napjához' href='#' onclick='setListDay(\"".date("Y-m-d", strtotime($reservation["datum"]))."\")'>".date("Y-m-d H:i", strtotime($reservation["datum"]))."</a> {$reservation["orvosnev"]}";
+                            $html.= "foglalt időpont: <a title='ugrás a foglalás napjához' href='#' onclick='setTerm(\"{$order["nev"]}\");setListDay(\"".date("Y-m-d", strtotime($reservation["datum"]))."\")'>".date("Y-m-d H:i", strtotime($reservation["datum"]))."</a> {$reservation["orvosnev"]}";
                         }
                     }
 

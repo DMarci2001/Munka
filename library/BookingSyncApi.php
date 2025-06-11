@@ -6,8 +6,8 @@ class BookingSyncApi {
     private $utils;
 
     private array $placeSyncMap = [
-        "hungariamed" => [[100, 644], 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
-        "keltexmed"   => [[292, 328], 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
+        "hungariamed" => [[100, 644, 1], 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
+        "keltexmed"   => [[292, 328, 357], 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
     ];
 
     public function __construct() {
@@ -92,7 +92,7 @@ class BookingSyncApi {
             if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
                 $externalReservation["externalid"] = $externalId;
                 $externalReservation["orvosid"] = $orvosData["id"];
-                $externalReservation = $this->_fixReservation($externalReservation, $data);
+                $externalReservation = $this->_fixReservation($externalReservation, $data, $orvosData);
 
                 //print_r($externalReservation);die;
                 $bookingService = new BookingService();
@@ -114,7 +114,7 @@ class BookingSyncApi {
             if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
                 sql_query("insert into foglalasok set pass=?, orvosassigned=?, externalid=?", [$externalReservation["pass"], $orvosData["id"], $data["source"].$externalReservation["id"]]);
             }
-            $externalReservation = $this->_fixReservation($externalReservation, $data);
+            $externalReservation = $this->_fixReservation($externalReservation, $data, $orvosData);
             $this->_updateReservation($externalReservation);
         }
         $this->checkTudoSzures($data);
@@ -215,7 +215,7 @@ class BookingSyncApi {
         );
     }
 
-    private function _fixReservation($externalReservation, $syncData) {
+    private function _fixReservation($externalReservation, $syncData, $orvosData = []) {
         $externalReservation["paciensid"] = 0;
         $externalReservation["szurestipus"] = 0;
         $externalReservation["helyszin"] = 0;
@@ -239,6 +239,15 @@ class BookingSyncApi {
         } else {
             if (isset($syncData["defaulthelyszin"])) {
                 $externalReservation["helyszin"] = $syncData["defaulthelyszin"];
+            }
+        }
+
+        if (!empty($orvosData) && $externalReservation["szurestipus"] == 0) {
+            if ($orvosData["pecsetszam"] == "bognar" && Booking_Constants::SQL_DB == "keltexmed") {
+                $externalReservation["szurestipus"] = 75;
+            }
+            if ($orvosData["pecsetszam"] == "bognar" && Booking_Constants::SQL_DB == "hungariamed") {
+                $externalReservation["szurestipus"] = 137;
             }
         }
 
@@ -271,6 +280,24 @@ class BookingSyncApi {
         }
     }
 
+    private function needSync($reservation, $sourcePlaces):bool {
+        //bognár évát mindig synceljük
+        if ($reservation["pecsetszam"] == "bognar") {
+            return true;
+        }
+
+        //feleslegesen ne synceljük az összes jász utcát
+        if (in_array($reservation["helyszinid"], [1, 357])) {
+            return false;
+        }
+
+        if (in_array($reservation["helyszinid"], $sourcePlaces)) {
+            return true;
+        }
+        return false;
+    }
+
+
     public function newReservation($reservationId, $execute = false) {
         $clinic = Booking_Constants::SQL_DB;
         if (!$execute) {
@@ -284,7 +311,7 @@ class BookingSyncApi {
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if (in_array($reservation["helyszinid"], $sourcePlaces)) {
+        if ($this->needSync($reservation, $sourcePlaces)) {
             $data = [
                 "source" => $clinic,
                 "action" => "storenewreservation",
@@ -310,7 +337,7 @@ class BookingSyncApi {
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $reservation      = $this->_getReservation($reservationId);
 
-        if (in_array($reservation["helyszinid"], $sourcePlaces)) {
+        if ($this->needSync($reservation, $sourcePlaces)) {
             $data = [
                 "source" => $clinic,
                 "action" => "modifyremotereservation",
@@ -328,8 +355,9 @@ class BookingSyncApi {
         $sourcePlaces     = $this->placeSyncMap[$clinic][0];
         $apiURL           = $this->placeSyncMap[$clinic][2];
         $orvosData        = sql_query("SELECT id, pecsetszam FROM orvosok o where id=?", [$reservationData["orvosassigned"]])->fetch(PDO::FETCH_ASSOC);
+        $reservationData["pecsetszam"] = $orvosData["pecsetszam"];
 
-        if (in_array($reservationData["helyszinid"], $sourcePlaces)) {
+        if ($this->needSync($reservationData, $sourcePlaces)) {
             $data = [
                 "source"          => Booking_Constants::SQL_DB,
                 "action"          => "deleteremotereservation",

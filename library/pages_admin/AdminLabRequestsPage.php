@@ -557,7 +557,12 @@ class AdminLabRequestsPage extends AdminCorePage {
 
             $html .= " <a title='{$tooltip}' onclick='sendLeletWindow(this);return false;' data-id='{$request["id"]}' data-email='{$request["email"]}' class='printbutton' target='_blank' href='#' style='background:{$color};padding:1px 5px;font-size: 15px;'><i class='fa-solid {$icon}'></i> {$buttonText}</a>";
 
-            if (substr_count($request["laboritems"], "\"".Booking_Constants::SPEKTRUM_KIERTEKELES_ID."\"")) {
+            $laborItems = json_decode($request["laboritems"], true);
+            if (empty($laborItems)) {
+                $laborItems = [];
+            }
+
+            if (in_array(Booking_Constants::SPEKTRUM_KIERTEKELES_ID, $laborItems)) {
                 if ($request["kiertekeles"] == 0) {
                     sql_query("update labrequests set kiertekeles=1 where id=?", [$request["id"]]);
                 }

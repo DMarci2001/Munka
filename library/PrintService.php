@@ -31,6 +31,8 @@ class PrintService
         "ghcstandard"        => "ghc-szures-2024-standard.pdf",
         "nkfihsetalolap"     => "NKFIH_setalolap_2024.pdf",
         "genetika"           => "genetikai_teljes_dokumentum.pdf",
+        "vercsoport"         => "spektrum_vercsoport_v1-1.pdf",
+        "vercsoportmail"     => "spektrum_vercsoport_v2-1.pdf",
     );
 
     private array $inputs = array(
@@ -162,6 +164,16 @@ class PrintService
 
         if ($this->templateId == "genetika") {
             $this->printGenetikaiPdf();
+            return;
+        }
+
+        if ($this->templateId == "vercsoport") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+
+        if ($this->templateId == "vercsoportmail") {
+            $this->printGenetikaiPdf(true);
             return;
         }
 
@@ -348,12 +360,21 @@ class PrintService
         }
     }
 
-    private function printGenetikaiPdf() {
+    private function printGenetikaiPdf($send = false) {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
 
+        $spektrumlabService = new SpektrumlabService();
+
+        $vkData = empty($this->laborRequestData["vkdata"]) ? [] : json_decode($this->laborRequestData["vkdata"], true);
+
         $cim  = $this->reservationData["irsz"]. " ". $this->reservationData["varos"].", ".$this->reservationData["utca"];
         $szulhelyido = $this->reservationData["szulhely"].", ".date("Y.m.d",strtotime($this->reservationData["szuldatum"]));
+
+        $bekuldoNev = empty(SpektrumlabService::BEKOLDO_KOD_MAP[$this->laborRequestData["bekuldokod"]]) ? "" : SpektrumlabService::BEKOLDO_KOD_MAP[$this->laborRequestData["bekuldokod"]];
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $bekuldoNev = empty(SpektrumlabService::BEKOLDO_KOD_MAP_KELTEXMED[$this->laborRequestData["bekuldokod"]]) ? "" : SpektrumlabService::BEKOLDO_KOD_MAP_KELTEXMED[$this->laborRequestData["bekuldokod"]];
+        }
 
         $input = [
             "PaciensNev" => $this->pdfChars($this->reservationData["nev"]),
@@ -366,6 +387,25 @@ class PrintService
             "PaciensEmail" => $this->pdfChars($this->reservationData["email"]),
             "MaiDatum" => date("Y.m.d"),
             "keltezes" => "Budapest, ".date("Y.m.d"),
+
+            "BekuldoKod" => $this->laborRequestData["bekuldokod"],
+            "BekuldoNev" => $bekuldoNev,
+            "Gyogyszerek" => $vkData["vkgyogyszerek"].$bekuldoNev,
+            "TerhessegSzam" => $vkData["vkterhessegszam"].$bekuldoNev,
+            "TerhessegiHet" => $vkData["vkterhesseghet"].$bekuldoNev,
+            "GenderMale" => $this->reservationData["neme"] == 1 ? "x":"",
+            "GenderFemale" => $this->reservationData["neme"] == 2 ? "x":"",
+            "OrvosNev" => $spektrumlabService->params["orvosNev"],
+            "OrvosPecsetszam" => $spektrumlabService->params["orvosPecsetszam"],
+            "Check1" => !empty($vkData["vkcheckbox1"]) && $vkData["vkcheckbox1"] == "1" ? "x" : "",
+            "Check2" => !empty($vkData["vkcheckbox2"]) && $vkData["vkcheckbox2"] == "1" ? "x" : "",
+            "Check3" => !empty($vkData["vkcheckbox3"]) && $vkData["vkcheckbox3"] == "1" ? "x" : "",
+            "Check4" => !empty($vkData["vkcheckbox4"]) && $vkData["vkcheckbox4"] == "1" ? "x" : "",
+            "Check5" => !empty($vkData["vkcheckbox5"]) && $vkData["vkcheckbox5"] == "1" ? "x" : "",
+            "Check6" => !empty($vkData["vkcheckbox6"]) && $vkData["vkcheckbox6"] == "1" ? "x" : "",
+            "Check7" => !empty($vkData["vkcheckbox7"]) && $vkData["vkcheckbox7"] == "1" ? "x" : "",
+            "Check8" => !empty($vkData["vkcheckbox8"]) && $vkData["vkcheckbox8"] == "1" ? "x" : "",
+            "Check9" => !empty($vkData["vkcheckbox9"]) && $vkData["vkcheckbox9"] == "1" ? "x" : "",
         ];
 
         $fileName = "Genetikai_kerolap_es_beleegyezo({$input["PaciensNev"]})(".date("YmdHis").").pdf";
@@ -377,6 +417,33 @@ class PrintService
         $pdf = new Pdf("templates/{$this->templateFileName}");
 
         $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($send) {
+            $mail = NotificationService::getDefaultMailer();
+
+            $mail->From = Booking_Constants::COMPANY_EMAIL;
+            $mail->FromName = Booking_Constants::COMPANY_NAME;
+
+            $eles = false;
+
+            if ($eles) {
+                //$mail->AddAddress("uzemorvos@allamkincstar.gov.hu");
+                //$mail->AddBCC("jnsmobil@gmail.com");
+            } else {
+                $mail->AddAddress("jnsmobil@gmail.com");
+            }
+
+            $mail->AddStringAttachment($raw, "vercsoport_kerolap.pdf");
+
+            $subject = "Vércsoport kérőlap ".date("Y.m.d H:i", strtotime("now"));
+            $mbody = "Teszt";
+
+            $mail->Subject = $subject;
+            $mail->Body = $mbody;
+            $mail->Send();
+            return;
+        }
+
 
         if ($raw === false) {
             $error = $pdf->getError();
@@ -1387,13 +1454,14 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             950 => "templates/hazaipalya_korostetetlen.pdf",
             953 => "templates/hazaipalya_nyarsapat.pdf",
             957 => "templates/hazaipalya_pilis.pdf",
+            1077 => "templates/hazaipalya_kocser2.pdf",
             955 => "templates/hazaipalya_tapiobicske.pdf",
             949 => "templates/hazaipalya_tarnok.pdf",
+            1051 => "templates/hazaipalya_pilisszentkereszt2.pdf",
             951 => "templates/hazaipalya_ujszilvas.pdf",
         ];
 
         //958 => "templates/hazaipalya_danszentmiklos.pdf",
-        //958 => "templates/hazaipalya_kocser.pdf",
         //958 => "templates/hazaipalya_pilisszentkereszt.pdf",
 
         $orvosId = $beoData["orvosid"];

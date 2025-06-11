@@ -44,7 +44,7 @@ class BookingPage extends CorePage
         $this->detectServiceSelect();
 
         if (CompanyService::isBME() && empty($_POST["helyszin"])) {
-            $_POST["helyszin"] = 100;
+            $_POST["helyszin"] = 644; // 644: bercsény, 100:fehérvári
         }
 
         $this->telephelyek = sql_query("select * from cegvars where cegid=? and (placeids<>'' or selectable=0) order by sorrend, megnev", [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
@@ -1638,7 +1638,7 @@ class BookingPage extends CorePage
         $szurestipus  = intval($_POST["szurestipus"]);
         $message      = "";
 
-        if (CompanyService::isAuchan()) {
+        if (CompanyService::isAuchan() || Booking_Constants::SQL_DB == "keltexmed") {
             $enableCache = false;
         }
 
@@ -1827,10 +1827,6 @@ class BookingPage extends CorePage
         if($forcedSzurestipusId){
             $szuresTipus = $forcedSzurestipusId;
         }
-        if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC()){
-            //$disabled = "disabled=\"true\"";
-            //$_POST["helyszin"]=1;
-        }
 
         $_SESSION["orvosselected"] = 0;
 
@@ -1854,7 +1850,7 @@ class BookingPage extends CorePage
         if (!empty($szuresTipus)) {
             if (Booking_Constants::SQL_DB == "keltexmed") {
                 //tüdőszűrés esetén csak fehérvári út legyen választható
-                if ($_POST["tudoszuro"] ?? 0 == 1) {
+                if (isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1) {
                     $validPlaces[] = Booking_Constants::DEFAULT_PLACE_IDS[0];
                 }
             }
@@ -1877,9 +1873,9 @@ class BookingPage extends CorePage
         }
         $html .= "</select>";
 
-        if($disabled){
-            $html .= "<input type=\"hidden\" name=\"helyszin\" id=\"helyszin\" value=\"".(isset($_POST["helyszin"])?$_POST["helyszin"]:"")."\"/>";
-        }
+        //if($disabled){
+        //    $html .= "<input type=\"hidden\" name=\"helyszin\" id=\"helyszin\" value=\"".(isset($_POST["helyszin"])?$_POST["helyszin"]:"")."\"/>";
+        //}
 
         $html .= "<div id='helyszinvalasztowarn' style='display:none;background:#ff6961;color:#fff;font-size:16px;padding:10px;margin:10px 0px 0px 0px;'>Figyelem! Ha a győri címünkre szeretne foglalni, használja a győri bejelentkezési felületünket, majd ott kövesse az \"üzemorvosi vizsgálat\" linket. Foglalását telefonon is megteheted a következő számon: +36 20 373 3343<br/><br/><a class='newbutton' href='https://gyor-bejelentkezes.hungariamed.hu'>Folytatás a győri bejelentkező felületen</a></div>";
 

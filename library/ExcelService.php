@@ -18,8 +18,8 @@ class ExcelService {
     private string $extraFilter = "";
 
     public function __construct() {
-        if (session_id() == "71pb0mbmb9vdblbq8lvmkj8hf8") {
-            $this->extraFilter = $this->esztergomFilter;
+        if (session_id() == "qgaenhclttkb3n7mloi627s3bh") {
+            $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
         }
     }
 
@@ -993,7 +993,7 @@ class ExcelService {
         try {
             //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
+            //$this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
             $this->_laborLeletLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);

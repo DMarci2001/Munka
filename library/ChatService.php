@@ -277,19 +277,7 @@ class ChatService {
     }
 
     private function chatMonogram($nev):string {
-        $hash = md5($nev);
-
-        $color1 = hexdec(substr($hash, 8, 2));
-        $color2 = hexdec(substr($hash, 4, 2));
-        $color3 = hexdec(substr($hash, 0, 2));
-
-        if ($color1+$color2+$color3 > 200*3) {
-            $color1 = round($color1/2);
-            $color2 = round($color2/2);
-            $color3 = round($color3/2);
-        }
-
-        $color = "#".str_pad(dechex($color1), 2, "0").str_pad(dechex($color2), 2, "0").str_pad(dechex($color3), 2, "0");
+        $color = self::colorByText($nev);
 
         $monogram = "";
         foreach (explode(" ", $nev) as $value) {
@@ -302,6 +290,22 @@ class ChatService {
         return "<div style='font-family:Courier,serif;background:{$color};color:white;padding:5px 7px;border-radius: 100px;text-transform:uppercase;font-weight:bold;'>{$monogram}</div>";
     }
 
+
+    public static function colorByText($text):string {
+        $hash = md5($text);
+
+        $color1 = hexdec(substr($hash, 8, 2));
+        $color2 = hexdec(substr($hash, 4, 2));
+        $color3 = hexdec(substr($hash, 0, 2));
+
+        if ($color1+$color2+$color3 > 200*3) {
+            $color1 = round($color1/2);
+            $color2 = round($color2/2);
+            $color3 = round($color3/2);
+        }
+
+        return "#".str_pad(dechex($color1), 2, "0").str_pad(dechex($color2), 2, "0").str_pad(dechex($color3), 2, "0");
+    }
 
 
     private function chatTimeString($datum):string {

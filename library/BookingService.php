@@ -442,7 +442,7 @@ class BookingService
 
                 $html .= "<div style='display:table-cell;text-align:center;vertical-align: top;" . ($oKey > 1 ? "padding-left:3px;" : "") . "'>";
 
-                if ($_SESSION["helyszindata"]["no_doctor_select"] == 0 || session_id() == "e0k7gvs3s4e9jalq7fhafnir3k") {
+                if ($_SESSION["helyszindata"]["no_doctor_select"] == 0) {
                     $s = "width:100px;overflow: hidden;text-align: center;font-size: 12px;margin:0px auto 5px auto;";
                     $html .= "<div style='{$s}'>{$orvosData["nev"]}</div>";
                 } else {
@@ -473,8 +473,6 @@ class BookingService
                         }else{
                             continue;
                         }
-                        
-                        //echo $pre_beginHour." - ".$_prebeginMinute."<br>";
                     }
                     
 
@@ -799,6 +797,10 @@ class BookingService
                 $dist = "6 hour";
             }
 
+            if ($cegId == 937 && Booking_Constants::SQL_DB == "hungariamed") {
+                $dist = "0 hour";
+            }
+
             if (in_array($cegId, [82, 664, 340, 347, 348]) && Booking_Constants::SQL_DB == "hungariamed") {
                 //0 órás cégek
                 $dist = "0 hour -2 hour";
@@ -839,6 +841,11 @@ class BookingService
             }
 
             if(in_array($cegId, [373,374,376,933])){
+                $dist = "0 hour";
+            }
+
+            //lighttech
+            if (in_array($cegId, [884, 858])) {
                 $dist = "0 hour";
             }
 
@@ -910,10 +917,6 @@ class BookingService
     }
 
 
-    public function getTimeSlots($beos):array {
-
-    }
-
     private bool $debugPack = false;
 
     public function getPackageAvailabilityForDay($day, $limitTimes = true,$data=array(),$forcdeBeginHour=null):array {
@@ -954,22 +957,18 @@ class BookingService
                     $orvosNev    = $beoData["orvosnev"];
                     $interval    = $beoData["binterval"];
                     $step        = 0;
-                    //$beoMinMax   = $this->getMinMax($this->getBeosztasok($day, $this->helyszin, $packTypeId, $orvosId, true));
-                    //$beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
-                    //$beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
-
                     $beginHour   = intval(substr($beoData["tol"], 0, 2));
-                    $beginMinute = intval(substr($beoData["tol"], 0, 2));
+                    $beginMinute = intval(substr($beoData["tol"], 3, 2));
+
+                    //kingának kivétel eltáv miatt
+                    if (Booking_Constants::SQL_DB == "hungariamed" && $orvosId == 64 && isset($data["otherservices-{$packTypeId}-0"])) {
+                        $interval = 60;
+                    }
 
                     //Ha van küldött kezdési óra, akkor onnan kezdődik a szabad időpont keresés
                     //ebben bug van, át kell nézni ha máskor kell ilyen
                     if(!empty($forcdeBeginHour)){
                         $beginHour = $forcdeBeginHour;
-                    }
-
-                    if ($orvosId == 64 and User::debugUser()) {
-                        //$error.= "<pre>{$orvosId}{$orvosNev}".print_r($beoMinMax, true)."</pre>";
-                        //$error.= "<pre>".print_r($timeData, true)."</pre>";
                     }
 
                     while (true) {
@@ -984,19 +983,8 @@ class BookingService
                         }
                         $step++;
 
-                        if ($orvosId == 64 and User::debugUser()) {
-                            //$error.= "<pre>".print_r($beoMinMax, true)."</pre>";
-                            //$error.= "<pre>{$orvosId}".print_r($ora, true)."</pre>";
-                            //$error.= "<pre>{$orvosId}".print_r($beoData, true)."</pre>";
-                        }
-
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
                             $timeData = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
-
-                            if ($orvosId == 64 and User::debugUser()) {
-                                //$error.= "<pre>wtf ".print_r($beoMinMax, true)."</pre>";
-                                //$error.= "<pre>wtf2{$orvosId} ".print_r($timeData, true)."</pre>";
-                            }
 
                             if ($limitTimes) {
                                 $timeTableForPackage[$packTypeId] = $timeData;
@@ -1014,10 +1002,6 @@ class BookingService
                 $vanFixError = true;
             }
 
-            //if (User::debugUser()) {
-            //    $error.= print_r($timeTableForPackage[$packTypeId],true);
-            //}
-
             if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
                 if (User::debugUser()) {
                     $text = "nincs időpont:<br/>";
@@ -1027,7 +1011,7 @@ class BookingService
                     if($packTypeId!=0){
                         $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
                     }
-                    
+
                 } else {
                     //die("itt{$error}".$vanFixError);
                     $text = "nincs időpont<br/>";
@@ -1044,6 +1028,10 @@ class BookingService
 
         if (strtotime("now") > strtotime("{$day} 00:00:00")) {
             $error = "Erre a napra már nem lehet foglalni<br/>";
+        }
+
+        if (User::debugUser()) {
+            //$error = $forcdeBeginHour. " ". print_r($timeTableForPackage, true);
         }
 
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
@@ -1093,6 +1081,7 @@ class BookingService
                     $beoMinMax   = $this->getMinMax($this->getBeosztasok($day, $this->helyszin, $packTypeId, $orvosId, true));
                     $beginHour   = intval(substr($beoMinMax["minrendeles"], 0, 2));
                     $beginMinute = intval(substr($beoMinMax["minrendeles"], 3, 2));
+                    $strictCheck = Booking_Constants::SQL_DB == "hungariamed" && $orvosId == 64; //Kingának magasabb szintű ellenőrzés
 
                     while (true) {
                         if ($beoData["nap"] == 10 & $day != $beoData["beonap"]) {
@@ -1333,8 +1322,7 @@ class BookingService
         return $oid;
     }
 
-    public function orvosIdopontIsFree($idoPont, $orvosId, $interval = 15)
-    {
+    public function orvosIdopontIsFree($idoPont, $orvosId, $interval = 15) {
         $idoPont = $idoPont.":00";
         $nap     = substr($idoPont, 0, 10);
         $free    = false;
@@ -1618,6 +1606,7 @@ class BookingService
             $h .= "<div><input type='hidden' name = 'tudoszuroanswerneeded' value = '1' /><span style='font-weight: bold;'>Rendelkezik 1 éven belüli érvényes tüdőszűrő lelettel?</span><br/>";
             $h .= "<input type='radio' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1?"checked":"")."/>Nem rendelkezem, kérek tüdőszűrő vizsgálatot, azonnali lelet kiadással<br/>";
             $h .= "<input type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
+            //$h .= "<input type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>A munkakörömhöz nincs szükségem tüdőszűrésre<br/>";
             $h .= "</div>";
         }
 
@@ -2063,6 +2052,8 @@ class BookingService
         if (!isset($data["dokirexcegid"])) $data["dokirexcegid"] = $this->getDokirexCompanyID($data["cegid"],$data);
         if (!isset($data["jarat"])) $data["jarat"] = "";
         if (!isset($data["companytext"])) $data["companytext"] = "";
+        if (!isset($data["tudoszuro"])) $data["tudoszuro"] = 0;
+        if ($data["tudoszuro"] < 0) $data["tudoszuro"] = 0;
 
         if (!empty($_SESSION["selectedJarat"])) {
             $data["jarat"] = $_SESSION["selectedJarat"];
@@ -2586,6 +2577,7 @@ class BookingService
             $text .= "<div style='margin-bottom: 10px;'><input type='hidden' name = 'tudoszuroanswerneeded' value = '1' /><span style='font-weight: bold;'>Rendelkezik 1 éven belüli érvényes tüdőszűrő lelettel?</span><br/>";
             $text .= "<input onchange='reservedTimeInvalidate();' type='radio' name = 'tudoszuro' value = '1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 1?"checked":"")."/>Nem rendelkezem, kérek tüdőszűrő vizsgálatot, azonnali lelet kiadással<br/>";
             $text .= "<input onchange='reservedTimeInvalidate();' type='radio' name = 'tudoszuro' value = '0' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == 0?"checked":"")."/>Igen rendelkezem érvényes tüdőszűrő lelettel<br/>";
+            $text .= "<input onchange='reservedTimeInvalidate();' type='radio' name = 'tudoszuro' value = '-1' ".(isset($_POST["tudoszuro"]) && $_POST["tudoszuro"] == -1?"checked":"")."/>A munkakörömhöz nincs szükségem tüdőszűrésre<br/>";
             $text .= "</div>";
         }
 
@@ -2839,6 +2831,7 @@ class BookingService
         while ($beoData = sql_fetch_array($beoRes)) {
             $binterval = $beoData["binterval"];
             $orvosId = $beoData["orvosid"];
+            $strictCheck = Booking_Constants::SQL_DB == "hungariamed" && $orvosId == 64; //Kingának magasabb szintű ellenőrzés
 
             if (sql_fetch_array(sql_query("select * from szabadsag where oid=? and datumtol<=? and datumig>=?", [$orvosId, $date, $date]))) {
                 continue;
@@ -2864,7 +2857,13 @@ class BookingService
                     $bestTime = $checkTime;
                 }
 
-                if (!sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=? and orvosassigned=?", [$checkTime, $tipusId, $targetHelyszinId, $orvosId]))) {
+                if ($strictCheck) {
+                    $reservationCheckResult = $this->orvosIdopontIsFree(date("Y-m-d H:i", strtotime("{$checkTime}")), $orvosId, $binterval);
+                } else {
+                    $reservationCheckResult = !sql_fetch_array(sql_query("select * from foglalasok where datum=? and szurestipusid=? and helyszinid=? and orvosassigned=?", [$checkTime, $tipusId, $targetHelyszinId, $orvosId]));
+                }
+
+                if ($reservationCheckResult) {
                     $foundTimes[] = ["time" => $checkTime, "binterval" => $binterval, "orvosId" => $orvosId];
                     if ($this->replicateToFirstAvailableTime) {
                         break;
@@ -2891,6 +2890,10 @@ class BookingService
             $diff = 1000000;
             $optimalTime = [];
             $notSoGoodTime = [];
+
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                $this->replicatedTimes = [];
+            }
 
             foreach ($foundTimes as $foundTime) {
                 $checkDiff = abs(strtotime($reservationData["datum"]) - strtotime($foundTime["time"]));
@@ -2952,7 +2955,7 @@ class BookingService
     {
         //Dokumentum kikeresése név alapján
         $key = array_search($docName, array_column($this->availableDocs, "value"));
-        
+
 $pdf = new Pdf($this->availableDocs[$key]["filename"]);
         $utils = New Utils();
         $auth_id = $utils->generateRandomStringv2(32);
@@ -3010,7 +3013,7 @@ $pdf = new Pdf($this->availableDocs[$key]["filename"]);
             $docAgent= new DocAgent();
             //$docAgent->saveLocalDoc("/var/www/marci/onlinebejelentkezes/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
             $docAgent->saveLocalDoc("/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/" . $filename, ["fid" => $data["fid"]]);
-            
+
             return $filename;
         }
     }
