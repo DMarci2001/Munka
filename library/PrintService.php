@@ -31,6 +31,8 @@ class PrintService
         "ghcstandard"        => "ghc-szures-2024-standard.pdf",
         "nkfihsetalolap"     => "NKFIH_setalolap_2024.pdf",
         "genetika"           => "genetikai_teljes_dokumentum.pdf",
+        "generate_aldi_vv"   => "generate_aldi_vv",
+        "generateAszKartyak" => "generateAszKartyak",
         "vercsoport"         => "spektrum_vercsoport_v1-1.pdf",
         "vercsoportmail"     => "spektrum_vercsoport_v2-1.pdf",
     );
@@ -124,6 +126,18 @@ class PrintService
             return;
         }
 
+        if ($this->templateId == "generate_aldi_vv"){
+            $this->generate_aldi_vv();
+            return;
+        }
+
+        if ($this->templateId == "generateAszKartyak"){
+            $this->generateAszKartyak();
+            return;
+        }
+        
+        
+
         if ($this->templateId == "innioertesites"){
             $this->innioErtesites();
             return;
@@ -166,6 +180,8 @@ class PrintService
             $this->printGenetikaiPdf();
             return;
         }
+
+
 
         if ($this->templateId == "vercsoport") {
             $this->printGenetikaiPdf();
@@ -559,7 +575,7 @@ class PrintService
 
     private function pdfChars($text)
     {
-        $text = str_replace("ő", "ô", $text);
+        $text = str_replace("ő", "ö", $text);
         $text = str_replace("ű", "ü", $text);
         $text = str_replace("í", "i", $text);
         $text = str_replace("Ő", "Ö", $text);
@@ -1568,6 +1584,89 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         die;
     }
 
+    public function generate_aldi_vv(){
+        $laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000481' AND INSTR(created,'2025') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
+        $path = __DIR__."/pages_admin/other/tmp/";
+        foreach($laborRequestData as $data){
+            $filename = $data["id"].".pdf";
+            $docAgent = new DocAgent();
+            $pdf = $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $data["id"]);
+            file_put_contents($path.$filename,$pdf);
+            echo "{$data["id"]}.pdf ({$data["nev"]}) is done.<br>";
+        }
+    }
 
+    public function generateAszKartyak(){
+        $q=sql_query("SELECT * FROM asz_dolgozok WHERE email IS NOT NULL AND finished IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+        $sampleFilePath = __DIR__."/../public/admin/templates/peldakep_urlapos.pdf";
+        $docPath =  __DIR__ . "/pages_admin/other/tmp/";
+
+        $body = "";
+        $body.="<p>Tisztelt Hölgyem/Uram!</p>";
+
+        $body.="<p>Szeretnénk tájékoztatni, hogy a szerződés szerinti virtuális egészség kártya elkészült az Ön részére.</p>";
+
+        $body.="<p>Melynek a Hungária Med-M Kft 1135 Bp., Jász u. 33-35. alatti vizsgáló helyszínen történő bemutatásával ";
+        $body.="jogosult a szerződés szerinti egyszeri éves komplex szűrővizsgálatot igénybe venni, valamint minden ";
+        $body.="további pluszban kért szolgáltatásunk árából 10% kedvezményre jogosult a szerződés teljes időtartama alatt. </p>";
+
+        $body.="<p>Továbbá ezzel a kártyával igazolhatja közvetlen hozzátartozóját (szülő, testvér, házastárs, gyermek) is, ";
+        $body.="hogy jogosult az egyszeri komplex szűrővizsgálat igénybevételére, valamint a plusz szolgáltatásokat 10% ";
+        $body.="kedvezményes áron igénybe venni a szerződés teljes időtartama alatt.</p>";
+
+        $body.="<p>A komplex szűrővizsgálat a közvetlen hozzátartozók részére díjköteles, amit a helyszínen szükséges ";
+        $body.="kiegyenlíteniük. Szerződés szerinti ára 127.900 Forint .</p>";
+
+        $body.="Rendelőnkben az alábbi fizetési lehetőségek közül választhat:";
+        $body.="<ul style=\"margin-left:10px\">";
+        $body.="<li style=\"list-style: disc;\">Készpénz</li>";
+        $body.="<li style=\"list-style: disc;\">Bankkártya</li>";
+        $body.="<li style=\"list-style: disc;\">Szép-kártya (OTP, MBH, K&H)</li>";
+        $body.="<li style=\"list-style: disc;\">Egészségpénztári kártya</li>";
+        $body.="</ul>";
+        $body.="<p>Kérjük áfás számla igényét jelezze a recepciós kollégáinknál.</p>";
+        $body.="<br>";
+
+        $body.="<p>Üdvözlettel:</p><br>";
+        $body.="<p>Pongor Anita</p>";
+        $body.="<p>call center munkatárs</p>";
+        $body.="<p>+36 30 337 8223</p>";
+        $body.="<p>Hungária Med-M Kft.</p>";
+        $body.="<p>1135 Budapest Jász u. 33.-35.</p>";
+        $body .= "<a href=\"https://www.hungariamed.hu\" target=\"_blank\"><img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" style=\"margin:10px\"></a>";
+        
+        
+        foreach($q as $p){
+            //$pdf = new Pdf($sampleFilePath);
+            $filename = str_replace(" ", "_", trim($p["nev"])) . ".pdf";
+            /*$input = array(
+                "nev" => $p["nev"],
+                "azonosito"=>$p["felhId"],
+            );*/
+    
+            //echo $result = $pdf->fillForm($input)->flatten()->saveAs($docPath . $filename);
+            
+            $notificationService = new NotificationService();
+
+            $mail = $notificationService->getDefaultMailer();
+            $mail->AddAddress($p["email"]);
+            //$mail->AddAddress("marton.gergely@hungariamed.hu");
+            $mail->AddBCC("tesztemail@hungariamed.hu");
+            $mail->Subject = "Virtuális Egészség kártya - Állami Számvevőszék szűrőcsomag igénybevételéhez";
+
+            $mail->Body = $body;
+
+            $mail->AddAttachment($docPath . $filename);
+            $mail->AddAttachment( __DIR__."/../public/admin/templates/Árjegyzék_szakorvosi_vizsgálatokhoz.pdf");
+            $mail->AddAttachment( __DIR__."/../public/admin/templates/Labor_kiegészítés_javaslat_03.24..xlsx");
+            $mail->AddAttachment( __DIR__."/../public/admin/templates/Önköltségesen_igénybe_vehető_szolgáltatások_bővített_tájékoztató.docx");
+            $mail->Send();
+        }
+        
+        //echo "<pre>";
+        //print_r($q);
+        //echo "</pre>";
+
+    }
 }
 

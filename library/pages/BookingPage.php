@@ -20,6 +20,8 @@ class BookingPage extends CorePage
     {
         parent::__construct();
 
+        
+
         unset($_SESSION["selectedService"]);
 
         if ($_SESSION["helyszindata"]["onlyreg"] == 1 && !isset($_SESSION["user"])) {
@@ -905,6 +907,7 @@ class BookingPage extends CorePage
 
     public function showPage() {
         $webText = $this->lang->webText;
+
 
         if (!isset($_POST["helyszin"])) {
             $_POST["helyszin"] = $_POST["szurestipus"] = "";
