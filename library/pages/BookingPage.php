@@ -1289,7 +1289,7 @@ class BookingPage extends CorePage
 
             $szuresTipusValaszto = $this->_szuresTipusValasztoNew($_POST["szurestipus"]);
             $infoPageText = $this->bookingService->getInfoPageText($_POST["szurestipus"], $_POST);
-            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
+            //Itt volt a tipusMegj!! $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
             //beutaló nélkül szabad választás
             if (!empty($this->telephelyek)) {
                 $telephelySelectText = "Telephely";
@@ -1317,6 +1317,7 @@ class BookingPage extends CorePage
             echo "<tr><td nowrap style='width: {$firstColumnWidth}px;'>{$webText["szurestipus"]}: *</td><td><div id='szurestipusvalaszto'>{$szuresTipusValaszto}</div></td></tr>";
             echo "<tr><td></td><td><div id='infopagetext'>{$infoPageText}</div></td></tr>";
             echo "<tr><td>{$webText["helyszin"]}: *</td><td><div id='helyszinvalaszto'>" . $this->_reservationPlaceSelectorNew() . "</div></td></tr>";
+            $tipusMegj = $this->bookingService->getTipusMegj($_SESSION["helyszindata"]["id"], $_POST["szurestipus"], $_POST["helyszin"]);
 
             if(CompanyService::isFGSZ()){
                 //echo $_SESSION["helyszndata"]["domain"];

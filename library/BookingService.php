@@ -1481,6 +1481,12 @@ class BookingService
         //$radioButton = false;
         //$selectedSzolg = 0;
 
+        if(Booking_Constants::SQL_DB == "hungariamed"){
+            if($cegid==43){
+                $radioButton = true;
+            }
+        }
+
         $this->lang = new Lang();
         $webText = $this->lang->webText;
 
@@ -1504,7 +1510,7 @@ class BookingService
             }
             $h .= "</div>";
         }
-
+        
         if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328 || $helyszinId == 644 || $helyszinId == 162) {
             $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
             /*if($tid==116){
@@ -1580,9 +1586,9 @@ class BookingService
                         $h.= "</div>";
                     } else {
                         if(!$radioButton){
-                            $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                            $h .= "<div><input type='checkbox' class='altipuscheck' name='altipus{$row["id"]}' id='altipus{$row["id"]}' value='1' " . (isset($_POST["altipus{$row["id"]}"]) ? "checked" : "") . " /> <label for='altipus{$row["id"]}'>{$row["megnev"]}{$lengthText}{$priceText}</label></div>";
                         }else{
-                            $h .= "<div><input type='radio' ".($tid==116?"onChange='changeWebSzolg({$row["id"]})'":"")." class='altipuscheck' name='altipusradiobutton' ".($selectedSzolg && $selectedSzolg==$row["id"]?"checked='true'":"")." value='{$row["id"]}' " . (isset($_POST["altipusradiobutton"]) && $_POST["altipusradiobutton"]==$row["id"] ? "checked" : "") . " /> {$row["megnev"]}{$lengthText}{$priceText}</div>";
+                            $h .= "<div><input type='radio' ".($tid==116?"onChange='changeWebSzolg({$row["id"]})'":"")." class='altipuscheck' name='altipusradiobutton' ".($selectedSzolg && $selectedSzolg==$row["id"]?"checked='true'":"")." id='altipusradiobutton{$row["id"]}' value='{$row["id"]}' " . (isset($_POST["altipusradiobutton"]) && $_POST["altipusradiobutton"]==$row["id"] ? "checked" : "") . " /> <label for='altipusradiobutton{$row["id"]}'>{$row["megnev"]}{$lengthText}{$priceText}</label></div>";
                         }
                         
                     }
