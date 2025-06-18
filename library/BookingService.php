@@ -1916,6 +1916,16 @@ class BookingService
             }
         }
 
+        if(isset($data["altipusradiobutton"])){
+            if($altipus=sql_query("SELECT * FROM arak WHERE id=?",[$data["altipusradiobutton"]])->fetch(PDO::FETCH_ASSOC)){
+                sql_query("insert into fizkapcs set fid=?,aid=?,megnev=?,ar=?,valuta=?", 
+                    array($fid, $altipus["id"], $altipus["megnev"], $altipus["price"], $altipus["penznem"])
+                );
+            }
+        }
+
+
+
         //Dr. Danielisz Zsuszannánál több szolgáltatás választása esetén hosszabb idő foglalás
         if ($serviceNum > 1 && $data["orvosid"] == 1289 && Booking_Constants::SQL_DB == "hungariamed") {
             $rinterval = $data["rinterval"] * 2;
