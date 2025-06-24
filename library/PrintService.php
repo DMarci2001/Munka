@@ -35,6 +35,7 @@ class PrintService
         "generateAszKartyak" => "generateAszKartyak",
         "vercsoport"         => "spektrum_vercsoport_v1-1.pdf",
         "vercsoportmail"     => "spektrum_vercsoport_v2-1.pdf",
+        "szuloibeleegyezo"   => "szuloi_beleegyezo_nyilatkozat.pdf",
     );
 
     private array $inputs = array(
@@ -194,6 +195,11 @@ class PrintService
         }
 
         if ($this->templateId == "vercsoportsima") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+
+        if ($this->templateId == "szuloibeleegyezo") {
             $this->printGenetikaiPdf();
             return;
         }
@@ -434,6 +440,10 @@ class PrintService
         ];
 
         $fileName = "Genetikai_kerolap_es_beleegyezo({$input["PaciensNev"]})(".date("YmdHis").").pdf";
+
+        if($this->templateId=="szuloibeleegyezo"){
+            $fileName = "Szuloi_beleegyezo({$input["PaciensNev"]})(".date("YmdHis").").pdf";
+        }
 
         $pdf = new Pdf("templates/{$this->templateFileName}");
 
@@ -1598,8 +1608,11 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
     }
 
     public function generate_aldi_vv(){
-        $laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000481' AND INSTR(created,'2025') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
+        $laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000477' AND INSTR(created,'2024') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
         $path = __DIR__."/pages_admin/other/tmp/";
+
+        //echo count($laborRequestData)." db sor.";
+
         foreach($laborRequestData as $data){
             $filename = $data["id"].".pdf";
             $docAgent = new DocAgent();

@@ -568,6 +568,7 @@ class LaborKeroService
         $html .= "<div>";
         $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=genetika&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Genetikai</a>&nbsp;";
         $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=mikrobi&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Mikrobi</a>&nbsp;";
+        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=szuloibeleegyezo&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Szülői beleegyező</a>&nbsp;";
         //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=vercsoport&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Vércsoport</a>&nbsp;";
         $html .= "<a class='printbutton' target='_blank' href='#' onclick='$(\"#vercsoportform\").slideToggle();return false;'><i class='fa-solid fa-print'></i> Vércsoport </a>";
 
