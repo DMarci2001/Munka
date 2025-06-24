@@ -135,8 +135,8 @@ class PrintService
             $this->generateAszKartyak();
             return;
         }
-        
-        
+
+
 
         if ($this->templateId == "innioertesites"){
             $this->innioErtesites();
@@ -190,6 +190,11 @@ class PrintService
 
         if ($this->templateId == "vercsoportmail") {
             $this->printGenetikaiPdf(true);
+            return;
+        }
+
+        if ($this->templateId == "vercsoportsima") {
+            $this->printGenetikaiPdf();
             return;
         }
 
@@ -377,8 +382,12 @@ class PrintService
     }
 
     private function printGenetikaiPdf($send = false) {
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
+        if (empty($this->laborRequestData)) {
+            if (!$data = sql_fetch_array(sql_query("SELECT r.* FROM labrequests r WHERE r.foglalasid=? order by r.created desc", [$this->reservationData["id"]]))) {
+                die("error code 1354_2");
+            }
+            $this->laborRequestData = $data;
+        }
 
         $spektrumlabService = new SpektrumlabService();
 
@@ -406,9 +415,9 @@ class PrintService
 
             "BekuldoKod" => $this->laborRequestData["bekuldokod"],
             "BekuldoNev" => $bekuldoNev,
-            "Gyogyszerek" => $vkData["vkgyogyszerek"].$bekuldoNev,
-            "TerhessegSzam" => $vkData["vkterhessegszam"].$bekuldoNev,
-            "TerhessegiHet" => $vkData["vkterhesseghet"].$bekuldoNev,
+            "Gyogyszerek" => $vkData["vkgyogyszerek"],
+            "TerhessegSzam" => $vkData["vkterhessegszam"],
+            "TerhessegiHet" => $vkData["vkterhesseghet"],
             "GenderMale" => $this->reservationData["neme"] == 1 ? "x":"",
             "GenderFemale" => $this->reservationData["neme"] == 2 ? "x":"",
             "OrvosNev" => $spektrumlabService->params["orvosNev"],
@@ -426,10 +435,6 @@ class PrintService
 
         $fileName = "Genetikai_kerolap_es_beleegyezo({$input["PaciensNev"]})(".date("YmdHis").").pdf";
 
-        /*if (is_file("templates/{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}")) {
-            $this->templateFileName = "{$this->reservationData["alkalmassaguserid"]}_{$this->templateFileName}";
-        }*/
-
         $pdf = new Pdf("templates/{$this->templateFileName}");
 
         $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
@@ -440,19 +445,25 @@ class PrintService
             $mail->From = Booking_Constants::COMPANY_EMAIL;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
 
-            $eles = false;
+            $eles = true;
 
             if ($eles) {
-                //$mail->AddAddress("uzemorvos@allamkincstar.gov.hu");
-                //$mail->AddBCC("jnsmobil@gmail.com");
+                $mail->AddAddress(LaborKeroService::LABOR_VK_MAIL_RECIPIENT);
+                $mail->AddBCC("jnsmobil@gmail.com");
+                $mail->AddBCC("dudas.dorina@hungariamed.hu");
             } else {
                 $mail->AddAddress("jnsmobil@gmail.com");
+                $mail->AddBCC("jns@jns.hu");
+                $mail->AddBCC("dudas.dorina@hungariamed.hu");
             }
 
             $mail->AddStringAttachment($raw, "vercsoport_kerolap.pdf");
 
             $subject = "Vércsoport kérőlap ".date("Y.m.d H:i", strtotime("now"));
-            $mbody = "Teszt";
+            $mbody = "Vércsoport kérőlap";
+            if (!$eles) {
+                $mbody .= " teszt!";
+            }
 
             $mail->Subject = $subject;
             $mail->Body = $mbody;
@@ -1475,6 +1486,8 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             949 => "templates/hazaipalya_tarnok.pdf",
             1051 => "templates/hazaipalya_pilisszentkereszt2.pdf",
             951 => "templates/hazaipalya_ujszilvas.pdf",
+            1078 => "templates/hazaipalya_danszentmiklos2.pdf",
+            1079 => "templates/hazaipalya_kistarcsa.pdf",
         ];
 
         //958 => "templates/hazaipalya_danszentmiklos.pdf",
@@ -1524,10 +1537,6 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                         WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.nev<>'nincs név'
                         GROUP BY f.id order by f.nev", [$timeFrom, $timeTo, $helyszinId])->fetchAll(PDO::FETCH_ASSOC);
 
-        //echo "ok";
-        //echo count($reservations);
-        //die;
-
         $savedPdfs = [];
         foreach ($reservations as $key => $reservation) {
             $saveName = "templates/".session_id()."_{$key}.pdf";
@@ -1570,6 +1579,10 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 
         $fileName = $reservation["helyszin"]." - ".date("Y-m-d", strtotime($reservation["datum"])).".pdf";
         $raw = $multiPagePdf->toString();
+
+
+        //echo $fileName;
+        //die("semmu");
 
         header("Pragma: no-cache");
         header("Cache-Control: no-store, no-cache");
@@ -1634,8 +1647,8 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         $body.="<p>Hungária Med-M Kft.</p>";
         $body.="<p>1135 Budapest Jász u. 33.-35.</p>";
         $body .= "<a href=\"https://www.hungariamed.hu\" target=\"_blank\"><img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" style=\"margin:10px\"></a>";
-        
-        
+
+
         foreach($q as $p){
             //$pdf = new Pdf($sampleFilePath);
             $filename = str_replace(" ", "_", trim($p["nev"])) . ".pdf";
@@ -1643,9 +1656,9 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                 "nev" => $p["nev"],
                 "azonosito"=>$p["felhId"],
             );*/
-    
+
             //echo $result = $pdf->fillForm($input)->flatten()->saveAs($docPath . $filename);
-            
+
             $notificationService = new NotificationService();
 
             $mail = $notificationService->getDefaultMailer();
@@ -1662,7 +1675,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             $mail->AddAttachment( __DIR__."/../public/admin/templates/Önköltségesen_igénybe_vehető_szolgáltatások_bővített_tájékoztató.docx");
             $mail->Send();
         }
-        
+
         //echo "<pre>";
         //print_r($q);
         //echo "</pre>";

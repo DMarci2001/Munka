@@ -5,7 +5,7 @@ class LaborKeroService
     const SPEKTRUMLAB_VERKEP_ID = 846;
     const LABOR_PROVIDER_SYNLAB = "synlab";
     const LABOR_PROVIDER_SPEKTRUMLAB = "spektrumlab";
-    const LABOR_VK_MAIL_RECIPIENT = "jnsmobil@gmail.com";
+    const LABOR_VK_MAIL_RECIPIENT = "info@spektrumlab.hu";
 
 
     private string $errorMessage = "";
@@ -192,13 +192,6 @@ class LaborKeroService
             $adminUser = new AdminUser();
 
             $vkData["sendData"][] = ["to" => self::LABOR_VK_MAIL_RECIPIENT, "time" => date("Y-m-d H:i:s"), "user" => $adminUser->user["nev"]];
-
-            /*
-            $bekuldokod = empty($this->bekuldoKodSpektrumLab) ? SpektrumlabService::DEFAULT_BEKULDOKOD:$this->bekuldoKodSpektrumLab;
-            if (Booking_Constants::SQL_DB == "keltexmed") {
-                $bekuldokod = empty($this->bekuldoKodSpektrumLab) ? SpektrumlabService::DEFAULT_BEKULDOKOD_KELTEXMED:$this->bekuldoKodSpektrumLab;
-            }
-            */
 
             sql_query("update labrequests set vkdata=?, bekuldokod=? where id=?", [json_encode($vkData, JSON_PRETTY_PRINT), $this->bekuldoKodSpektrumLab, $requestId]);
 
@@ -574,8 +567,9 @@ class LaborKeroService
         $html .= "<div style='margin-bottom: 10px;margin-top:5px'>";
         $html .= "<div>";
         $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=genetika&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Genetikai</a>&nbsp;";
-        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=vercsoport&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Vércsoport</a>&nbsp;";
-        $html .= "<a class='printbutton' target='_blank' href='#' onclick='$(\"#vercsoportform\").slideToggle();return false;'><i class='fa-solid fa-print'></i> Vércsoport 2</a>";
+        $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=mikrobi&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Mikrobi</a>&nbsp;";
+        //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=vercsoport&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Vércsoport</a>&nbsp;";
+        $html .= "<a class='printbutton' target='_blank' href='#' onclick='$(\"#vercsoportform\").slideToggle();return false;'><i class='fa-solid fa-print'></i> Vércsoport </a>";
 
         $checked = in_array(Booking_Constants::SPEKTRUM_KIERTEKELES_ID, json_decode($laborRequestData["laboritems"])) ? "checked" : "";
         $html.= "&nbsp;&nbsp;<input type='checkbox' name='kiertekelescheck' id='kiertekelescheck' {$checked} onchange='toggleLaborKiertekeles({$reservationId});' value='value'> <label for='kiertekelescheck'>Kiértékelés szükséges</label>";
@@ -589,7 +583,7 @@ class LaborKeroService
         $html .= "<div id='labortetelekcheckboxes' style='height:510px;overflow: auto;'>";
 
         $html .= "<div id='vercsoportform' style='display:none;'>";
-        $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>Vércsoport kérőlap beküldés (<span style='color:red'>még ne használd</span>)</div>";
+        $html .= "<div style='font-weight:bold;margin-bottom:6px;padding-bottom:3px;margin-top:6px;padding-top:3px;border-bottom:1px solid #ccc;border-top:1px solid #ccc;font-size: 16px;'>Vércsoport kérőlap</div>";
 
         $selectedVKItems = [];
         if (!empty($laborRequestData["vkdata"])) {
@@ -602,8 +596,7 @@ class LaborKeroService
             }
         }
 
-
-        $html.= "<pre>".print_r($selectedVKItems, true)."</pre>";
+        //$html.= "<pre>".print_r($selectedVKItems, true)."</pre>";
 
         foreach (self::$vercsoportFormCheckboxes as $key => $item) {
             $checked = isset($selectedVKItems["vkcheckbox{$key}"]) && $selectedVKItems["vkcheckbox{$key}"] == 1 ? "checked" : "";
@@ -614,7 +607,11 @@ class LaborKeroService
         $html.= "<div style='display:table-row;'><div class='tdm'>&nbsp;&nbsp;Terhességi hét (ha terhes)&nbsp;&nbsp;</div><div class='tdm'><input onchange='laborkeroItemChangeVK($(this));' data-key='vkterhesseghet' type='text' value='".($selectedVKItems["vkterhesseghet"] ?? "")."' style='width:50px;'/></div></div>";
         $html.= "<div style='display:table-row;'><div class='tdm'>&nbsp;&nbsp;Gyógyszerek&nbsp;&nbsp;</div><div class='tdm'><input onchange='laborkeroItemChangeVK($(this));' data-key='vkgyogyszerek' type='text' value='".($selectedVKItems["vkgyogyszerek"] ?? "")."' style='width:500px;'/></div></div>";
 
-        $html .= "<div style='margin-top: 10px;'><a id='vkreqsendbutton' class='printbutton' onclick='sendVKRequestEmail();return false;' href='#' style='background: #00aa00'>Vércsoport kérő nyomtatvány elküldése emailben</a> <a class='printbutton' onclick='$(\"#vercsoportform\").slideToggle();return false;' href='#' style='background: #00aa00'>Mégse</a></div>";
+        $html.= "<div style='margin-top: 10px;'>";
+        $html.= "<a id='vkreqsendbutton' class='printbutton' onclick='sendVKRequestEmail();return false;' href='#' style='background: #00aa00'>Vércsoport kérő nyomtatvány elküldése emailben</a> ";
+        $html.= "<a class='printbutton' target='_blank' href='index.php?print&template=vercsoportsima&fid={$reservationData["id"]}&p={$reservationData["pass"]}'><i class='fa-solid fa-print'></i> Vércsoport kérő nyomtavány megjelenítése</a>&nbsp;";
+        $html.= "<a class='printbutton' onclick='$(\"#vercsoportform\").slideToggle();return false;' href='#' style='background: #00aa00'>Mégse</a>";
+        $html.= "</div>";
 
         $html .= "</div>";
 

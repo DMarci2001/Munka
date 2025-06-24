@@ -209,6 +209,29 @@ class AdminLabRequestsPage extends AdminCorePage {
             die;
         }
 
+
+        if (isset($_POST["saveleletsablon"])) {
+            $error = "";
+
+            if (empty($_POST["laboremailtext"])) {
+                $error = "Nincs megadva szöveg";
+            }
+
+            if (empty($error)) {
+                $count = sql_query("select count(*) as hany from labor_szoveg_sablonok where userid=?", [$this->adminUser->user["id"]])->fetch(PDO::FETCH_ASSOC);
+                $title = "Sablon ".($count["hany"] + 1);
+                sql_query("insert into labor_szoveg_sablonok set szoveg=?, userid=?, created=now(), title=?", [$_POST["laboremailtext"], $this->adminUser->user["id"], $title]);
+            }
+
+            $_POST["showSendLeletWindow"] = $_POST["saveleletsablon"];
+        }
+
+        if (isset($_POST["deleteleletsablon"])) {
+            sql_query("update labor_szoveg_sablonok set aktiv=0 where id=? and userid=?", [$_POST["id"], $this->adminUser->user["id"]]);
+            $_POST["showSendLeletWindow"] = $_POST["deleteleletsablon"];
+        }
+
+
         if (isset($_POST["showSendLeletWindow"])) {
             $id = intval($_POST["showSendLeletWindow"]);
             $request = sql_query("SELECT resultdate, IF(r.status='done', 1, 0) AS result, id, foglalasid, provider, nev, taj, szuldatum, email, emailtext, ertesiteslog, r.megj FROM labrequests r WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
@@ -250,9 +273,19 @@ class AdminLabRequestsPage extends AdminCorePage {
 
             $html.= "<div>Levél szövege:</div>";
             $html.= "<div><textarea style='width:500px;height: 270px;' id='laboremailtext'>{$request["emailtext"]}</textarea></div>";
-            $html.= "<div style='padding-top:5px;'>sablon betöltése: <a href='#' onclick='return loadLaborEmailTemplate(1);'>jó arcoknak</a> &bull; <a href='#' onclick='return loadLaborEmailTemplate(2);'>rossz arcoknak</a></div>";
+            $html.= "<div style='padding-top:5px;'>sablon betöltése: ";
+
+            $links = [];
+            $templates = sql_query("select * from labor_szoveg_sablonok s where s.userid=0 or s.userid=? and aktiv=1 order by s.userid, created, id", [$this->adminUser->user["id"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($templates as $template) {
+                $links[] = "<a href='#' onclick='return loadLaborEmailTemplate({$template["id"]});'>{$template["title"]}</a>".($template["userid"] == 0 ? "" : " <a onclick='deleteLaborEmailTemplate({$template["id"]});return false;' style='font-size: 10px;' href='#'><i class='fa-solid fa-trash'></i></a>");
+            }
+
+            $html.= implode(" &bull; ", $links);
+            //$html.= "<a href='#' onclick='return loadLaborEmailTemplate(1);'>jó arcoknak</a> &bull; <a href='#' onclick='return loadLaborEmailTemplate(2);'>rossz arcoknak</a></div>";
 
 
+            $html.= "</div>";
             $html.= "</div>";
 
             $html.= "</div>";
@@ -274,6 +307,7 @@ class AdminLabRequestsPage extends AdminCorePage {
 
             $html.= "<div style='margin:10px 0px 0px 0px;'>";
             $html.= "<a class='printbutton' onclick='sendLeletEmail();return false;' href='#' style='background: #00aa00'>Lelet kiküldése</a> ";
+            $html .= "<a class='printbutton' onclick='saveLeletSablon();return false;' href='#' style='background: #00aa00'>Sablon mentése</a> ";
             $html.= "</div>";
 
 
