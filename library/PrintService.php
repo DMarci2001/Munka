@@ -1123,6 +1123,7 @@ class PrintService
         "Dr. Szűcs Rozália" => 31436,
         "Dr.Kiss Beáta Margit" => 65886,
         "Dr. Diczku Valéria" => 38122,
+        "Dr. Finebone Adawari Godswill" => 91317,
     ];
 
     private function innioErtesites(){
