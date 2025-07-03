@@ -1888,7 +1888,11 @@ class BookingService
                  WHERE fogl.id=?",
                  array($fid));
 
+            $altipus=sql_query("SELECT * FROM arak WHERE id=?",[$data["altipusradiobutton"]])->fetch(PDO::FETCH_ASSOC);
+            
+
             if($referalData=sql_fetch_array($refQuery)){
+                $referalData["vizsgalat"] = $altipus["megnev"];
                 echo $this->createReferalDoc($referalData,"apollo-beutalo");
             }
         }
