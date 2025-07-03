@@ -27,7 +27,7 @@ class BookingService
 
         //array("name" => "FGSZ", "cegid"=>220, "type"=> "full-form", "value" => "fgsz-beutalo", "filename" => "/var/www/marci/onlinebejelentkezes/public/admin/templates/FGSZ_beutalo.pdf"),
         array("name" => "FGSZ", "cegid"=>220, "type"=> "full-form", "value" => "fgsz-beutalo", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/FGSZ_beutalo.pdf"),
-        
+        array("name"=>"Apollo", "cegid"=> 43, "type"=> "full-form", "value"=> "apollo-beutalo", "filename" => "/var/www/marci/onlinebejelentkezes/public/admin/templates/apollo_beutalo.pdf"),
         //array("name" => "Geodéta", "cegid"=>220, "value" => "Geodéta", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_geodeta_beutalo.pdf"),
         //array("name" => "Hírközlési munkatárs", "cegid"=>220, "value" => "Hírközlési munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_hirközlesi_munkatars_beutalo.pdf"),
         //array("name" => "Működés támogatás munkatárs", "cegid"=>220, "value" => "Működés támogatás munkatárs", "filename" => "/var/www/onlinebejelentkezes_keltexmed/public/admin/templates/fgsz_mukodes_tamogatas_munkatars_beutalo.pdf"),
@@ -44,6 +44,7 @@ class BookingService
         $this->adminUser = new AdminUser();
         $this->munkakorVizsgalatok = new MunkakorVizsgalatok();
         $this->utils = new Utils();
+
     }
 
     private function holterReserved($day):bool {
@@ -1875,6 +1876,24 @@ class BookingService
             //$foglalasinfo = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($fid)));
             //sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$data["cegid"],$foglalasinfo["pass"]));
         }
+
+        if($data["cegid"]==43){
+            $refQuery = sql_query(
+                "SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,
+                 fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes,felh.szervezet_megnev,
+                 felh.khkod,felh.torzsszam,fogl.szulhely,fogl.anyjaneve,'Apollo Tyres (Hungary) Kft.' as telephely,'{$data["reszleg"]}' as osztaly 
+                 FROM foglalasok fogl
+                 LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                 LEFT JOIN felhasznalok felh on felh.taj=fogl.taj
+                 WHERE fogl.id=?",
+                 array($fid));
+
+            if($referalData=sql_fetch_array($refQuery)){
+                echo $this->createReferalDoc($referalData,"apollo-beutalo");
+            }
+        }
+
+
         if($data["cegid"]==220){
             $refQuery = sql_query("SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes,felh.szervezet_megnev,felh.khkod,felh.torzsszam FROM foglalasok fogl
             LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
@@ -2957,7 +2976,8 @@ class BookingService
     }
 
     public function set_referal_values($data,$input){
-        $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE munkakor=? AND cegid=?",array($data["munkakor"],$data["cegid"]));
+
+        $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE munkakor=? AND cegid=? AND osztaly=?",array($data["munkakor"],$data["cegid"],$data["osztaly"]));
         while($r=sql_fetch_array($q)){
             foreach($r as $key=>$value){
                 $input[$key]=$value;
@@ -2972,7 +2992,7 @@ class BookingService
         //Dokumentum kikeresése név alapján
         $key = array_search($docName, array_column($this->availableDocs, "value"));
 
-$pdf = new Pdf($this->availableDocs[$key]["filename"]);
+        $pdf = new Pdf($this->availableDocs[$key]["filename"]);
         $utils = New Utils();
         $auth_id = $utils->generateRandomStringv2(32);
         $filename = "{$data["nev"]}-{$data["taj"]}-{$data["szuldatum"]}-{$this->availableDocs[$key]["name"]}-(" . $auth_id . ").pdf";
@@ -2981,6 +3001,8 @@ $pdf = new Pdf($this->availableDocs[$key]["filename"]);
             "nev" => $this->pdfChars($data["nev"]),
             "taj" => $data["taj"],
             "szuldatum" => date("Y.m.d", strtotime($data["szuldatum"])),
+            "szulhely" => $this->pdfChars($data["szulhely"]),
+            "anyjaneve" => $this->pdfChars($data["anyjaneve"]),
             "munkakor" => $this->pdfChars($data["munkakor"]),
             "vizsgalat"=> $this->pdfChars($data["vizsgalat"]),
             "telephely"=> $this->pdfChars($data["worklocation"]),
@@ -3013,8 +3035,6 @@ $pdf = new Pdf($this->availableDocs[$key]["filename"]);
         if($this->availableDocs[$key]["type"]=="full-form"){
             $input = $this->set_referal_values($data,$input);
         }
-        
-
 
         $result = $pdf->fillForm($input)
             ->flatten()

@@ -274,6 +274,7 @@ class BookingPage extends CorePage
             if (!isset($_POST["neme"]))      $_POST["neme"] = 0;
             if (!isset($_POST["betegallomanynyilatkozat"])) $_POST["betegallomanynyilatkozat"] = 0;
             if (!isset($_POST["tudoszuroelf"])) $_POST["tudoszuroelf"] = 0;
+            if (!isset($_POST["reszleg"])) $_POST["reszleg"] = "";
 
             if(isset($_POST["email"])) $_POST["email"] = trim($_POST["email"]);
 
@@ -999,14 +1000,104 @@ class BookingPage extends CorePage
 
                 //$html.= $webText["mainudvozles"];
 
+                //$html .= "<div class=\"row\">";
+                //$html .= "    <div class=\"col-md-3\"></div>";
+                //$html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
+                //$html .= "      <p>Üdvözöljük, a Suzuki GHC szűrés - online regisztrációs felületén.</p>";
+                //$html .= "      <p>Jelentkezését az októberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás szeptembertől indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                //$html .= "    </div>";
+                //$html .= "    <div class=\"col-md-3\"></div>";
+                //$html .= "</div>";
+                //$html .= "<div class=\"row\">";
+                //$html .= "    <div class=\"col-3\"></div>";
+                //$html .= "    <div class=\"col-6 mb-3 mt-3\">";
+                //$html .= "        <div class=\"row\">";
+                //$html .= "            <div class=\"col pb-3 text-center\">";
+                //$html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
+                //$html .= "           </div>";
+                //$html .= "            <div class=\"col pb-3 text-center\">";
+                //$html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
+                //$html .= "           </div>";
+                //$html .= "       </div>";
+                //$html .= "    </div>";
+                //$html .= "    <div class=\"col-3\"></div>";
+                //$html .= "</div>";
+
                 $html .= "<div class=\"row\">";
                 $html .= "    <div class=\"col-md-3\"></div>";
                 $html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
-                $html .= "      <p>Üdvözöljük, a Suzuki GHC szűrés - online regisztrációs felületén.</p>";
-                $html .= "      <p>Jelentkezését az októberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás szeptembertől indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                $html .= "      <p style=\"font-size:16px\">Üdvözöljük, a Suzuki GHC szűrés - online regisztrációs felületén.</p>";
+                $html .= "      <p>2025-ben is megújúlt tartalommal térünk vissza, 40 év alatt emlő ultrahang, 40 év felett mammográfia vizsgálatot biztosítunk a résztvevő Hölgyek számára és új szabadidős programokkal várjuk Önöket!</p>";
+                $html .= "      <p>Jelentkezését a szeptemberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás augusztustól indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-md-3\"></div>";
                 $html .= "</div>";
+
+                $html .= "<div class=\"row\">";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "    <div class=\"col-md\">";
+                $html .= "      <p><strong>Vizsgálati Csomagok:</strong> A munkavállalók egészségének átfogó felmérése érdekében az alábbi komplexszűrőcsomagokat kínáljuk:</p>";
+                $html .= "      <table>";
+                $html .= "        <tr>";
+                $html .= "            <td>";
+                $html .= "                <table>";
+                $html .= "                    <tr><td><strong>SENIOR Csomag</strong></td><td><strong>STANDARD Csomag</strong><td></tr>";
+                $html .= "                    <tr><td>Belgyógyászati vizsgálat + nyugalmi EKG</td><td>Belgyógyászati vizsgálat + nyugalmi EKG<td></tr>";
+                $html .= "                    <tr><td>Mellkas RTG</td><td>Mellkas RTG<td></tr>";
+                $html .= "                    <tr><td>ABI (Kar-Boka index)</td><td>ABI (Kar-Boka index)<td></tr>";
+                $html .= "                    <tr><td>BIA (Testösszetétel mérés)</td><td>BIA (Testösszetétel mérés)<td></tr>";
+                $html .= "                    <tr><td>Vérvétel + tumor markerekkel</td><td>Vérvétel + tumor markerekke<td></tr>";
+                $html .= "                    <tr><td>Hasi- és kismedencei ultrahang</td><td><td></tr>";
+                $html .= "                    <tr><td>Nyaki lágyrész, carotis és pajzsmirigy ultrahang</td><td><td></tr>";
+                $html .= "                    <tr><td>Melanóma szűrés</td><td><td></tr>";
+                $html .= "                </table>";
+                $html .= "            </td>";
+                $html .= "        </tr>"; 
+                $html .= "      </table>";
+                $html .= "      <div class=\"col mb-3 text-center\">";             
+                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/ghc_csomag_kepek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "      </div>";
+                $html .= "      <p><strong>Igénybevehető kiegészítő szolgáltatás mindkét csomag esetén:</strong> </p>";
+                $html .= "      <ul style=\"margin-left: 10px\">";
+                $html .= "          <li style=\"list-style: disc\">Vicardio- Szívstressz mérés</li>";
+                $html .= "          <li style=\"list-style: disc\">Csontsűrűség mérés</li>";
+                $html .= "      </ul>";
+                $html .= "      <hr></hr>";
+                $html .= "      <p><strong>Javaslat:</strong> </p>";
+
+                $html .= "      <p><strong>További tumormarkerrel kiegészített vérvételi csomag hölgyek részére:</strong><br>";
+                $html .= "      A <strong>CA 15-3</strong> (Cancer Antigen 15-3) elsősorban az <strong>emlőrák</strong> (mellrák) <strong>tumormarkerével</strong> egészítenénk ki a ";
+                $html .= "      szűrési laboratóriumi csomagot.</p>";
+
+                $html .= "      <p><strong>Női szűrőcsomag bővítése:</strong> A GHC szűrésre jelentkező nők számára a 2025. évben az alábbi kiegészítő ";
+                $html .= "      vizsgálatokkal való bővítést javasoljuk, a Senior és Standard csoportban egyaránt:</p>";
+
+                $html .= "      <ul style=\"margin-left: 10px\">";
+                $html .= "          <li style=\"list-style: disc\">40 év feletti nők (1985. december 31. előtt születettek): Mammográfiai szűrés</li>";
+                $html .= "          <li style=\"list-style: disc\">40 év alatti nők (1985. december 31. után születettek): Emlő ultrahang szűrés</li>";
+                $html .= "          <li style=\"list-style: disc\">Minden női résztvevő: Petefészek tumormarkerrel bővített laboratóriumi csomag</li>";
+                $html .= "      </ul>";
+
+                $html .= "      <hr></hr>";
+                $html .= "      <p><strong>Nyeremény játék:</strong> </p>";
+                $html .= "      <p><strpng>2 db</strong> (1 férfi, 1 női) <strong>Neuzer</strong> gyártmányú <strong>elektromos kerékpárt</strong>, amelyet a <strong>Magyar Suzuki Zrt.</strong> ";
+                $html .= "          a GHC szűrésen részvevők között kisorsol az <strong>első</strong> helyezettnek.";
+                $html .= "      </p>";
+
+                $html .= "      <div class=\"col mb-3 text-center\">";             
+                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "      </div>";
+
+                $html .= "      <p>További <strong>2 db</strong> csúcskategóriás <strong>vérnyomásmérő</strong> készüléket a <strong>második</strong>, és <strong>2 db egészségkosarat</strong> (gyümölcs) a <strong>harmadik</strong> nyertesének a nyereményjátéknak.</p>";
+
+                $html .= "      <div class=\"col mb-3 text-center\">";             
+                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek2.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "      </div>";
+
+                $html .= "    </div>";
+                $html .= "    <div class=\"col-md-3\"></div>";
+                $html .= "</div>";
+
                 $html .= "<div class=\"row\">";
                 $html .= "    <div class=\"col-3\"></div>";
                 $html .= "    <div class=\"col-6 mb-3 mt-3\">";
@@ -1014,9 +1105,9 @@ class BookingPage extends CorePage
                 $html .= "            <div class=\"col pb-3 text-center\">";
                 $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
                 $html .= "           </div>";
-                $html .= "            <div class=\"col pb-3 text-center\">";
-                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
-                $html .= "           </div>";
+                //$html .= "            <div class=\"col pb-3 text-center\">";
+                //$html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
+                //$html .= "           </div>";
                 $html .= "       </div>";
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-3\"></div>";
@@ -1531,7 +1622,7 @@ class BookingPage extends CorePage
 
         if (!isset($beutalodata)) {
             //apollo tyres kivétel
-            if (CompanyService::isApollo()) {
+            /*if (CompanyService::isApollo()) {
                 echo "<tr class='datarow'>";
                 echo "<td>{$webText["vizsgalati-ok"]}:</td>";
                 echo "<td>";
@@ -1548,7 +1639,7 @@ class BookingPage extends CorePage
                     echo "<option ".(isset($_SESSION["vizsgalati-ok"]) && in_array($reason,$_SESSION["vizsgalati-ok"])?"selected=\"true\"":"")." value=\"{$reason}\">".$webText[$reason]."</option>";
                 }
                 echo "</select>";
-            }
+            }*/
             echo "<tr class='datarow'><td>{$webText["megjegyzes"]}:</td><td><div id='fogleuwarn' style='display:none;margin-top:5px;color:#f00;font-weight:bold;'>Kérjük adja meg a megjegyzés rovatban a céget, ahonnan érkezik</div>";
             echo "<textarea class='inputbox' style='height:100px;width:100%;box-sizing:border-box;' name='megj' id='foglmegj'>{$_POST["megj"]}</textarea>";
             echo "</td></tr>";

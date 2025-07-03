@@ -1615,3 +1615,28 @@ function changeWebSzolg(id){
         }
     });
 }
+
+function setDept(cegid,dept){
+    $.ajax({
+        url:"index.php",
+        type:"POSt",
+        data:{setWorkplacesByDept:true,cegid:cegid,dept:dept},
+        success: function(response){
+            $("#munkakorContainer").html(response);
+        }
+    })
+}
+
+function showDietDescription(option){
+    //diet-description-container
+    console.log(option);
+    if(option=="yes"){
+        $("#diet-description-container").addClass("d-block");
+        $("#diet-description-container").removeClass("d-none");
+    }
+
+    if(option=="no"){
+        $("#diet-description-container").removeClass("d-block");
+        $("#diet-description-container").addClass("d-none");
+    }
+}

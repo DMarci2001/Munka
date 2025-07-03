@@ -710,8 +710,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                         $_POST[$field] = "Képernyő előtti szellemi munkavégzés";
                     }
                 }
-                if ($_SESSION["helyszindata"]["domain"] == "fgsz") {
-                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=? ORDER BY munkakor ASC", array(220));
+                if (CompanyService::isFGSZ()) {
+                    $q = sql_query("SELECT * FROM kockazati_tenyezok WHERE cegid=? ORDER BY munkakor ASC", array($_SESSION["helyszindata"]["id"]));
+
                     $extraHTML .= "<tr class='datarow'>";
                     $extraHTML .= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
                     $extraHTML .= "<td>";
@@ -722,6 +723,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     $extraHTML .= "</select>";
                     $extraHTML .= "</td>";
                     $extraHTML .= "</tr>";
+                }
+
+                if(CompanyService::isApollo()){
+                    $osztalyok = sql_query("SELECT osztaly FROM kockazati_tenyezok 
+                                            WHERE cegid=? GROUP BY osztaly ORDER BY osztaly DESC",
+                                            [$_SESSION["helyszindata"]["id"]])->fetchAll(PDO::FETCH_ASSOC);
+
+                    $extraHTML .= "<tr class='datarow'>";
+                    $extraHTML .= "<td>Részleg: #requiredmark#</td>";
+                    $extraHTML .= "<td>";
+                    $extraHTML .= "<select class='inputbox' onChange='setDept({$_SESSION["helyszindata"]["id"]},$(this).val())' style='width:{$width}px;' type='text' name='reszleg' value='' />";
+                    $extraHTML .= " <option>Válassz részleget!</option>";
+                    foreach($osztalyok as $osztaly){
+
+                        $extraHTML .= "<option value='{$osztaly["osztaly"]}'>{$osztaly["osztaly"]}</option>";
+                    }
+                    $extraHTML .= "</select>";
+                    $extraHTML .= "</td>";
+                    $extraHTML .= "</tr>";
+                                
+                    $extraHTML .= "<tr class='datarow'>";
+                    $extraHTML .= "<td>{$webText[$translateKey]}: #requiredmark#</td>";
+                    $extraHTML .= "<td id='munkakorContainer'>";
+                    $extraHTML .= "<select class='inputbox' style='width:{$width}px;' type='text' name='{$field}' value='{$_POST[$field]}' />";
+                    $extraHTML .= "<option>Válassz részleget!</option>";
+                    $extraHTML .= "</select>";
+                    $extraHTML .= "</td>";
+                    $extraHTML .= "</tr>";
+
+
                 }
 
                 if ($_SESSION["helyszindata"]["id"] == CompanyService::ASTOTEC_ID) {
@@ -1515,5 +1546,332 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         echo "<pre>";
         print_r($appointments);
         echo "</pre>";
+    }
+
+    public function lighttechReminder()
+    {
+        //Páciensek kigyűjtése
+        $r = sql_query(
+            "SELECT id,nev,szuldatum,taj,email 
+             FROM felhasznalok 
+             WHERE cegid=? 
+             GROUP BY taj 
+             ORDER BY nev ASC",
+            [858]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $noRecords = $expired = $notification = [];
+
+        $message = "";
+        $message.="<p style='font-family:calibri;font-size:18px'>Tisztelt #nev#!</p><br>";
+
+        $message.="<p style='font-family:calibri;font-size:14px'>Tájékoztatjuk, hogy az üzemorovosi alkalmassági vizsgálata #lejarat#. ";
+        $message.="Kérjük, foglaljon időpontot a lejárati idő előtt legalább két héttel, hogy biztosan legyen szabad hely vizsgálatra.</p>";
+        $message.="<p style='font-family:calibri;font-size:14px'>Az időpontot az alábbi linken tudja lefoglalni:</p>";
+
+        $message.="<p style='font-family:calibri;font-size:14px'>";
+        $message.="<a href='https://lighttech.hungariamed.hu/' style= 'color:#a00' target='_blank'>https://lighttech.hungariamed.hu/</a>";
+        $message.="</p>";
+
+        $message.="<p style='font-family:calibri;font-size:14px'>Kérjük, hogy kizárólag egy időpontra jelentkezzen, a jelentkezését követően a választott időponton lehetőleg ne módosítson, ";
+        $message.="illetve ha a változtatás feltétlenül szükséges mindenképpen gondoskodjon az eredeti időpont törléséről. Kérjük továbbá a vizsgálat napján a foglalt időpont előtt legalább 10 perccel korábban jelenjen meg, a szükséges adminisztráció miatt.</p>";
+        $message.="<p style='font-family:calibri;font-size:14px'>Ha segítségre van szüksége, hívja nyugodtan call centerünket a <a style= 'color:#a00' href='tel:3618009333'>+36 1 / 800 9333</a> számon, 8:00-16:00 között munkanapokon.</p>";
+        $message.="<p style='font-family:calibri;font-size:14px'>Üdvözlettel:</p>";
+        $message.="<p style='font-family:calibri;font-size:14px'>Hungária Med-M Kft.</p><br>";
+        $message.="<a href='https://hungariamed.hu' target='_blank'><img width='200' src='https://uj.hungariamed.hu/assets/hmm_logo_nagy.png'></a>";
+
+
+        $c = 0;
+        foreach ($r as $p) {
+            //Vizsgálatok kigyűjtése
+            $f = sql_query(
+                "SELECT nev,paciensid,datum,szakrendeles,vizsgalattipus,orvos,telephely,ervenyesseg 
+                 FROM dokirex_vizsgalatok 
+                 WHERE paciensid=? AND INSTR(szakrendeles,'Foglalkozás') AND INSTR(vizsgalattipus,'Alkalmassági')",
+                [$p["taj"]]
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            //Ha van vizsgálata a rendszerben akkor megnézem őket
+            if ($f) {
+                //echo "{$c}. - {$p["nev"]}({$p["taj"]})<br>";
+                $max = $f[0];
+                //Ha több van mint 1 akkor egy max kereséssel kiválasztom a legújabbat
+                if (count($f) > 1) {
+                    //echo "<span style='color:red'>Több van mint 1 vizsgálati lap!</span><br>";
+                    foreach ($f as $g) {
+                        if (!empty($max) && strtotime($max["datum"]) < strtotime($g["datum"])) {
+                            $max = $g;
+                        }
+                    }
+                }
+                //echo "<span style='color:green'>A legújabb vizsgálati lap {$max["datum"]}</span><br>";
+
+                //Megvizsgálom az érvényességet
+                if (strtotime($max["ervenyesseg"]) < strtotime("now + 4 week")) {
+                    $h = sql_query(
+                        "SELECT id,datum,nev,taj FROM foglalasok 
+                                    WHERE cegid=? AND taj=? AND datum BETWEEN NOW() and ?",
+                        [858, $p["taj"], date("Y-m-d", strtotime("now + 4 week"))]
+                    )->fetchAll(PDO::FETCH_ASSOC);
+                    if ($h) {
+                        echo "<span style='color:purple'>Van foglalása a páciensnek! ({$p["nev"]})</span><br>";
+                        echo "<pre>";
+                        print_r($h);
+                        echo "</pre>";
+                    }
+                    if (!$h) {
+                        //echo "<span style='color:orange'>Mennie kell az értesítőnek mert 2 hét múlva lejár vagy már lejárt.</span><br>";
+                        $p["ervenyesseg"] = $max["ervenyesseg"];
+                        $expired[$c] = $p;
+                    }
+                }
+
+                /*echo "<pre>";
+                print_r($f);
+                echo "</pre>";
+                echo "<hr>";*/
+            }
+            if (!$f) {
+                $noRecords[$c] = $p;
+            }
+            $c++;
+        }
+        echo count($noRecords) . "db páciensnek nincs rögzített előzménye.<br>";
+        echo count($expired) . "db páciensnek jár le az alkalmasságija 4 héten belül.<br>";
+
+        echo "<pre>";
+        print_r($expired);
+        echo "</pre>";
+
+        $notificationService = new NotificationService();
+        //Értesítők filterezése küldés előtt:
+        foreach ($expired as $e) {
+            //echo "SELECT * FROM notifications WHERE objectid={$e["id"]} and tipus='FogleuErtesito' and datum>='".date("Y-m-d",strtotime("now - 2 day"))."'<br>";
+            
+            /**
+             * Itt fel kell bontanom az ellenőrzést 2 részre.
+             * 1. rész: 1 hónappal a lejárat előtt. Ezt követően szünet 2 hétig.
+             * 2. rész: 2 héttel a lejárat előtt. Ezt követően 2 naponta küldök értesítést.
+            */
+
+            //1 hónappal a lejárat előtti értesítés:
+            if(strtotime($e["ervenyesseg"])<=strtotime("now + 4 week")){
+                echo "Egy hónapon belül lejár(t): {$e["nev"]} - {$e["ervenyesseg"]}<br>";
+
+                $i = sql_query(
+                    "SELECT * FROM notifications WHERE objectid=? and tipus=? and datum>=?",
+                    [$e["id"], "FogleuErtesitoHavi", date("Y-m-d",strtotime("now - 3 month"))]
+                )->fetch(PDO::FETCH_ASSOC);
+                if($i){
+                    echo "<span style='color:blue'>({$i["destination"]} - {$e["nev"]})Ment értesítő az elmúlt 3 hónapban.{$i["datum"]}</span><br>";
+                }
+                if(!$i){
+                    if(strtotime($e["ervenyesseg"])>strtotime("2025-04-25") && strtotime("ervenyesseg")<="2025-05-30"){
+                        echo "<span style='color:orange'>(Nem ment értesítő az elmúlt 3 hónapban.{$e["email"]} - {$e["nev"]}</span><br>";
+                        $e["ertesitoTipus"] = "FogleuErtesitoHavi";
+                        $notification[] = $e;
+                    }
+                    
+                    continue;
+                }
+            }
+
+            //2 héttel a lejárat előtti értesítés:
+            if(strtotime($e["ervenyesseg"])<=strtotime("now + 2 week")){
+                $i = sql_query(
+                    "SELECT * FROM notifications WHERE objectid=? and (tipus=? or tipus=?) and datum>=?",
+                    [$e["id"], "FogleuErtesito","FogleuErtesitoHavi", date("Y-m-d",strtotime("now - 2 days"))]
+                )->fetch(PDO::FETCH_ASSOC);
+
+                if($i){
+                    echo "<span style='color:blue'>({$i["destination"]})Ment értesítő az elmúlt 2 napban.{$i["datum"]}</span><br>";
+                }
+                if(!$i){
+                    echo "<span style='color:orange'>(Nem ment értesítő az elmúlt 2 napban.{$e["email"]}</span><br>";
+                    $e["ertesitoTipus"] = "FogleuErtesito";
+                    $notification[] = $e;
+                }
+            }
+
+
+            $i = sql_query(
+                "SELECT * FROM notifications WHERE objectid=? and tipus=? and datum>=?",
+                [$e["id"], "FogleuErtesito", date("Y-m-d",strtotime("now - 2 days"))]
+            )->fetch(PDO::FETCH_ASSOC);
+
+            /*Kétnapot*/
+            /*$i = sql_query(
+                "SELECT * FROM notifications WHERE objectid=? and tipus=? and datum>=?",
+                [$e["id"], "FogleuErtesito", date("Y-m-d",strtotime("now - 2 day"))]
+            )->fetch(PDO::FETCH_ASSOC);
+            if($i){
+                echo "<span style='color:blue'>({$i["destination"]})Ment értesítő az elmúlt 2 napban.{$i["datum"]}</span><br>";
+            }
+            if(!$i){
+                echo "<span style='color:orange'>(Nem ment értesítő az elmúlt 2 napban.{$e["email"]}</span><br>";
+            }*/
+
+            //$mail = $notificationService->getDefaultMailer();
+            //$mail->AddAddress("tesztemail@hungariamed.hu");
+            //$mail->Subject = "Jelentkezz be az üzemorvosi vizsgálatra!";
+            //$mail->Body = "Ez egy teszt levél :) címzett: {$e["email"]}";
+            //$mail->Send();
+            //echo $notificationService->createNotificationRecord("FogleuErtesito", $e["id"], $e["email"], $mail->Subject, $mail->Body);
+        }
+
+        
+        foreach($notification as $n){
+            echo "<span style='color:green'>{$n["nev"]}({$n["email"]}) részére menne most értesítő.({$n["ervenyesseg"]})</span><br>";
+            $search  = ["#nev#","#lejarat#"];
+            $replace = [$n["nev"],(strtotime($n["ervenyesseg"])<strtotime("now")?str_replace("-",".",$n["ervenyesseg"])." dátummal lejárt":str_replace("-",".",$n["ervenyesseg"])." dátummal lejár")];
+            $body = str_replace($search,$replace,$message);
+
+            $mail = $notificationService->getDefaultMailer();
+            $mail->AddAddress($n["email"]);
+            $mail->AddBCC("tesztemail@hungariamed.hu");
+            $mail->Subject = "Értesítés üzemorvosi vizsgálat esedékességéről - Hungária Med-M Kft.";
+            $mail->Body = $body;
+            $mail->Send();
+            echo $notificationService->createNotificationRecord($n["ertesitoTipus"], $n["id"], $n["email"], $mail->Subject, $mail->Body)."<br>";
+        }
+    }
+
+    public function showGeneraliSetup($oid){
+
+        $generaliService = New GeneraliApiService();
+        $o = sql_query("SELECT * FROM orvosok WHERE id=?",[$oid])->fetch(PDO::FETCH_ASSOC);
+        $o["titles"] = $o["languages"] = $o["min_age"] = null;
+
+        if(!empty($o["generaliId"])){
+            $connectedDocs = $generaliService->retrieveDoctors();
+            $key = array_search($o["generaliId"],array_column($connectedDocs,"partner_doctor_id"));
+            if($key!==false){
+                $o["titles"]    = $connectedDocs[$key]["titles"];
+                $o["min_age"]   = $connectedDocs[$key]["min_age"];
+                $o["languages"] = $connectedDocs[$key]["languages"];
+            }
+        }
+
+        $html = "";
+
+        $html .= "<div style='width:100%;max-width:500px;background:#eee;'>";
+        
+        $html .= "      <div style='display:table;width:100%;background:#8792ae;color:white;'>";
+        $html .= "          <div style='display:table-cell;vertical-align: middle;padding:8px;font-size: 14px;'>";
+        $html .= "              <i class=\"fa-solid fa-award\"></i>&nbsp;&nbsp;{$o["nev"]}";
+        $html .= "           </div>";
+        $html .= "          <div style='display:table-cell;vertical-align: middle;padding:10px;width:5px;font-size: 18px;'>";
+        $html .= "              <i style='cursor: pointer;' onclick='hideGeneralPopup();return false;' class='fa-solid fa-circle-xmark'></i>";
+        $html .= "          </div>";
+        $html .= "      </div>";
+
+        $html .= "      <div style='padding:10px;'>";
+        $html .= "          <div class='container'>";
+        $html .= "              <div class='row'>";
+        $html .= "                  <div class='col'>";
+        $html .= "                      <form id='generali-orvos-kapcsolat-box' method='POST'>";
+        $html .= "                          <input type='hidden' name='oid' id='oid' value='{$oid}'>";
+        $html .= "                          <div class='mb-3'>";
+        $html .= "                              <label for='name' class='form-label'>Orvos neve:</label>";
+        $html .= "                              <input type='text' class='form-control' name='name' id='name' value='{$o["nev"]}' placeholder='' readonly>";
+        $html .= "                          </div>";
+        $html .= "                          <div class='mb-3'>";
+        $html .= "                              <label for='titles' class='form-label'>Titulusok:</label>";
+        $html .= "                              <input type='text' class='form-control' name='titles' id='titles' value='{$o["titles"]}' placeholder=''>";
+        $html .= "                          </div>";
+        $html .= "                          <div class='mb-3'>";
+        $html .= "                              <label for='min_age' class='form-label'>Minimum életkor:</label>";
+        $html .= "                              <input type='text' class='form-control' name='min_age' id='min_age' value='{$o["min_age"]}' placeholder='6'>";
+        $html .= "                          </div>";
+        $html .= "                              <label class='form-label'>Beszélt nyelvek</label>";
+        $html .= "                          <div class='form-check'>";
+                                                $check="";
+                                                if(!empty($o["languages"])){
+                                                    if(in_array("Hungarian",$o["languages"])){
+                                                        $check="checked='true'";
+                                                    }
+                                                }
+        $html .= "                              <input class='form-check-input' type='checkbox' value='Hungarian' name='languages[]' {$check} id='hungarian'>";
+        $html .= "                              <label class='form-check-label' for='hungarian'>";
+        $html .= "                                  Magyar";
+        $html .= "                              </label>";
+        $html .= "                          </div>";
+        $html .= "                          <div class='form-check'>";
+                                                $check="";
+                                                if(!empty($o["languages"])){
+                                                    if(in_array("English",$o["languages"])){
+                                                        $check="checked='true'";
+                                                    }
+                                                }
+        $html .= "                              <input class='form-check-input' type='checkbox' value='English' name='languages[]' id='english'>";
+        $html .= "                              <label class='form-check-label' for='english'>";
+        $html .= "                                  Angol";
+        $html .= "                              </label>";
+        $html .= "                          </div>";
+       
+        /*if(!empty($o["generaliId"])){
+            $html .= "                          <div class='mb-3'>";
+            $html .= "                              <label for='' class='form-label'>Szakrendelések hozzáadása:</label>";
+            $specialities = $generaliService->retrieveSpecialities();
+            foreach($specialities as $speciality){
+                if(!empty($speciality["partner_speciality_id"])){
+                    $generaliService->att
+                    $html .= "                      <div class='form-check form-switch'>";
+                    $html .= "                          <input class='form-check-input' type='checkbox' role='switch' id='speciality{$speciality["partner_speciality_id"]}'>";
+                    $html .= "                          <label class='form-check-label' for='speciality{$speciality["partner_speciality_id"]}'>{$speciality["name"]}</label>";
+                    $html .= "                      </div>";
+                }
+            }
+           
+            $html .= "                          </div>";
+        }*/
+        
+        $html .= "                          <div class='form-check'>";
+        $html .= "                              <button type='submit' name='saveGeneraliDoctorData' class='btn btn-primary'>Orvos mentés</button>";
+        $html .= "                          </div>";
+        $html .= "                      </form>";
+        $html .= "                  </div>";
+
+
+        $html .= "                  <div class='col'>";
+        $html .= "                      <div class='mb-3'>";
+        $html .= "                          <label class='form-label' for='add-new-location'>Fejlesztés alatt!</label>";
+        $html .= "                          <select class='form-select form-select-sm' id='add-new-location' aria-label='Helyszín kiválasztása'>";
+        $html .= "                              <option selected>Új helyszín hozzáadása</option>";
+                                                $q=sql_query("SELECT id,cim FROM helyszinek ORDER BY cim ASC;")->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach($q as $helyszin){
+                                                    $html.= "<option value='{$helyszin["id"]}'>{$helyszin["cim"]}</option>";
+                                                }
+        $html .= "                          </select>";
+        $html .= "                      </div>";
+
+                                        if(!empty($o["generaliId"])){
+                                            $connectedLocations = $generaliService->retrieveCareSpotsOfDoctor($o["generaliId"]);
+                                            if(!empty($connectedLocations)){
+                                                foreach($connectedLocations as $location){
+                                                    $html .= "<div class='mb-3'>";
+                                                    $html .= "  <label class='form-label'>{$location["name"]}</label>";
+                                                    $html .= "  <select class='form-select form-select-sm' id='select-speciality' onChange='refresGeneralihExaminations($(this).val())' aria-label='Vizsgálat hozzáadása'>";
+                                                    $html .= "      <option value='0'>Válassz szakrendelést!</option>";
+                                                    $specialities = $generaliService->retrieveSpecialities();
+                                                    foreach($specialities as $speciality){
+                                                        if(!empty($speciality["partner_speciality_id"])){
+                                                          $html.= "<option value='{$speciality["partner_speciality_id"]}'>{$speciality["name"]}</option>";
+                                                        }
+                                                    }
+                                                    $html .= "  </select>";
+                                                    $html .= "  <select class='form-select form-select-sm' id='select-examination' aria-label=''>";
+                                                    $html .= "  </select>";
+                                                    $html .= "</div>";
+                                                }
+                                            }
+                                        }
+        $html .= "                  </div>";
+        $html .= "              </div>";
+        $html .= "          </div>";
+        $html .= "      </div>";
+        $html .= "</div>";
+        return $html;
+        
     }
 }

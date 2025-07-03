@@ -40,7 +40,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="bejelentkezes";
+            $d="apollotyres";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -196,7 +196,7 @@ class CompanyService {
     }
 
     public static function isApollo($companyId = 0):bool{
-        return $_SESSION["helyszindata"]["domain"] == "apollo" && Booking_Constants::SQL_DB == "hungariamed";
+        return $_SESSION["helyszindata"]["domain"] == "apollotyres" && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function isAszMenedzser($companyId = 0):bool{

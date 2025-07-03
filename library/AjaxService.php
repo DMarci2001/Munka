@@ -444,6 +444,24 @@ class AjaxService {
             die;
         }
 
+        if(isset($_POST["setWorkplacesByDept"])){
+            $html = "";
+            $html .= "<select class='inputbox' style='width:250px;' type='text' name='munkakor' value='' />";
+            $html .= "<option>Válassz részleget!</option>";
+            $html .= "</select>";
+
+            if($r = sql_query("SELECT id,munkakor FROM kockazati_tenyezok WHERE osztaly=? AND cegid=? ORDER BY munkakor DESC",[$_POST["dept"],$_POST["cegid"]])->fetchAll(PDO::FETCH_ASSOC)){
+                $html = "";
+                $html .= "<select class='inputbox' style='width:250px;' type='text' name='munkakor' value='' />";
+                $html .= "<option>Válassz munkakört!</option>";
+                foreach($r as $munkakor){
+                    $html.= "<option value='{$munkakor["munkakor"]}'>{$munkakor["munkakor"]}</option>";
+                }
+                $html .= "</select>";
+            }
+            die($html);
+        }
+
     }
 
 
