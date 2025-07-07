@@ -182,6 +182,11 @@ class PrintService
             return;
         }
 
+        if ($this->templateId == "mikrobi") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+
 
 
         if ($this->templateId == "vercsoport") {
@@ -1499,6 +1504,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             951 => "templates/hazaipalya_ujszilvas.pdf",
             1078 => "templates/hazaipalya_danszentmiklos2.pdf",
             1079 => "templates/hazaipalya_kistarcsa.pdf",
+            1088 => "templates/hazaipalya_hevizgyork.pdf",
         ];
 
         //958 => "templates/hazaipalya_danszentmiklos.pdf",
@@ -1523,6 +1529,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         if ($helyszinId == 702) {
             $pdfLocation = "templates/szurovizsgalat_form_varsany.pdf";
         }
+
 
         //csak a beosztás
         /*
@@ -1590,10 +1597,6 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 
         $fileName = $reservation["helyszin"]." - ".date("Y-m-d", strtotime($reservation["datum"])).".pdf";
         $raw = $multiPagePdf->toString();
-
-
-        //echo $fileName;
-        //die("semmu");
 
         header("Pragma: no-cache");
         header("Cache-Control: no-store, no-cache");

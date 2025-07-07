@@ -451,7 +451,85 @@ Schedule = {
         let copyText = $("#copylink").data("url");
         copyTextToClipboard(copyText);
         alert("URL vágólapra másolva");
-    }
+    },
+
+
+    ShowAddWorkerVacationDialog: function(el) {
+        Schedule.DialogId = el;
+        let datum = $(el).data("datum");
+
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addworkerdialogszabi=1&datum="+datum,
+            success: function(data)	{
+                let position = $(el).offset();
+                let left = position.left + 15;
+
+                $(".sch_dialogcontent").html(data);
+                $(".sch_dialogtop").html(datum+Schedule.DialogCloseHTML);
+                Schedule.Init();
+                $(".sch_dialog").show();
+
+                let width = $(".sch_dialog").width();
+                let winWidth = $(window).width();
+                if (left + width > winWidth) {
+                    left = winWidth - width;
+                }
+
+                $(".sch_dialog").css("top", position.top + 15);
+                $(".sch_dialog").css("left", left);
+            }
+        });
+    },
+
+    AddWorkerVacation: function () {
+        let params = $("#dialogform").serialize();
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "addworkervacation=1&"+params,
+            success: function(data)	{
+                if (data.status != "ok") {
+                    alert(data.message);
+                    return;
+                }
+                $("#szabirow"+$(Schedule.DialogId).data("datum")).html(data.message);
+                $(".sch_dialog").hide();
+            }
+        });
+    },
+    DeleteWorkerVacation: function (day, id) {
+        if (!confirm("Biztos törlöd ezt a szabadságot?")) {
+            return;
+        }
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "deleteworkervacation=1&datum="+day+"&id="+id,
+            success: function(data)	{
+                $("#szabirow"+day).html(data.message);
+            }
+        });
+    },
+    SetVacationStatus: function (day, id, status) {
+        $.ajax({
+            type: "POST",
+            url: Schedule.URL,
+            data: "setvacationstatus=1&datum="+day+"&id="+id+"&status="+status,
+            success: function(data)	{
+                if (data.error != "") {
+                    $.toast({
+                        text: data.error,
+                        icon: "error"
+                    });
+
+                }
+                $("#szabirow"+day).html(data.message);
+            }
+        });
+    },
+
 };
 
 

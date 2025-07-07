@@ -160,13 +160,16 @@ class CronService {
     private function _tesztStuff() {
         //$this->addSyncReservations();
 
-        $this->tesztSynlabPdf();
+        //$this->tesztSynlabPdf();
 
+        //$this->copyMAESZ();
         //$dicomService = new DicomService();
         //$dicomService->processEntries();
 
         //$service = new AdminAjaxService();
         //$service->addCsvUsers();
+
+        $this->sendRawWeeklyStat();
         die;
 
         //$this->saveResultPdfs();
@@ -1121,6 +1124,94 @@ class CronService {
 
         echo "\n";
         die;
+    }
+
+
+    private function copyMAESZ() {
+        echo "start\n";
+
+        $packs = sql_query("SELECT * FROM synlab_labor_csomagok cs WHERE INSTR(cs.`name`, 'MÁESZ') OR INSTR(cs.`hmm_name`, 'MÁESZ')")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($packs as $pack) {
+            echo "{$pack["id"]} {$pack["hmm_name"]}\n";
+
+            $itemsCodes = json_decode($pack["spektrumitems"], true);
+
+
+            $itemsHmm = sql_query("select group_concat(commazo) as commazos from synlab_labor_tetelek where id in (".implode(",", $itemsCodes).") order by commazo")->fetch(PDO::FETCH_ASSOC);
+            $itemsKeltex = sql_query("select group_concat(commazo) as commazos from synlab_labor_tetelek where id in (".implode(",", $itemsCodes).") order by commazo")->fetch(PDO::FETCH_ASSOC);
+
+            echo $itemsHmm["commazos"]."\n";
+            echo $itemsKeltex["commazos"]."\n";
+
+            if ($itemsHmm["commazos"] != $itemsKeltex["commazos"]) {
+                echo "not stimm\n";
+                die;
+            }
+
+
+            sql_query("insert into keltexmed.synlab_labor_csomagok set appform=?, name=?, hmm_name=?, alias=?, price=?, line_through_price=?, items=?, spektrumitems=?, categories=?, gender=?, description=?, preperation_description=?, aktiv=?, kiemelt=?"
+                ,[$pack["appform"], $pack["name"], $pack["hmm_name"], $pack["alias"], $pack["price"], $pack["line_through_price"], $pack["items"], $pack["spektrumitems"], $pack["categories"], $pack["gender"], $pack["description"], $pack["preperation_description"], $pack["aktiv"], $pack["kiemelt"]]
+            );
+            //die;
+        }
+
+    }
+
+
+    public static function getRawTempFileName():string {
+        return Booking_Constants::APP_PATH."library/other/tmp/rawweekly.xlsx";
+    }
+
+    private function sendRawWeeklyStat() {
+        if (Booking_Constants::SQL_DB != "hungariamed") {
+            return;
+        }
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $from = "2025-06-14";
+        $to = "2025-06-15";
+
+        $subject = "HMM - Keltexmed heti statisztika " . date("Y-m-d");
+        $fileName = $subject.= ".xlsx";
+
+        @unlink(self::getRawTempFileName());
+        $excelService = new ExcelService();
+        $excelService->rawWeeklyStat($from, $to);
+        $excelService->setFileName($fileName);
+        $excelService->outputSpreadSheetFile(self::getRawTempFileName());
+
+        //$notificationService = new NotificationService();
+        //$notificationService->sendRawWeeklyMail($subject);
+
+        $mail = NotificationService::getDefaultMailer();
+        $mail->From = "noreply@hungariamed.hu";
+        $mail->FromName = "Hungariamed.hu";
+
+        $mail->AddAttachment(self::getRawTempFileName(), $fileName);
+
+        $mail->addAddress("jnsmobil@gmail.com");
+
+
+        $mail->addAddress("sorger.eva@hungariamed.hu");
+        $mail->addAddress("korpics@hungariamed.hu");
+        $mail->addAddress("petra@rawagency.hu");
+        $mail->addAddress("kuzdy@kuzdy.hu");
+        $mail->addAddress("ugyvezetes@keltexmed.hu");
+        $mail->addAddress("kgabor@rawagency.hu");
+        $mail->addAddress("marketing@keltexmed.hu");
+        $mail->addAddress("valasek.vinczeildiko@keltexmed.hu");
+
+
+
+        $mail->Subject = $subject;
+        $mail->Body = "Ez egy automatikus email, ami minden hétfő reggel megy ki a címzetteknek.<br/>Ha valaki nem szeretné a továbbiakban kapni írjon a jnsmobil@gmail.com címre.";
+        $mail->send();
+
+        echo "output done";
+        die;
+
     }
 
 

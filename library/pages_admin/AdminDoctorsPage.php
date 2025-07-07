@@ -249,10 +249,12 @@ class AdminDoctorsPage extends AdminCorePage {
 
             $query = sql_query("SELECT * FROM foglalasok WHERE orvosassigned = ? AND datum BETWEEN ? AND ? AND nev<>'nincs név' limit 20", array($_POST['orvosid'], $tol, $ig));
             $data = "";
+            /*
             while($result = sql_fetch_array($query)) {
                 $data.=$result['nev'].",".$result['datum']."|";
             }
             $data =  substr($data, 0, -1);
+            */
             echo $data;
             die();
         }

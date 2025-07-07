@@ -85,7 +85,7 @@ class DocAgent {
             $fileSize = $uploadedFile["size"];
             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
 
-            if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg"))) {
+            if (in_array($extension, array("pdf","doc","xls","docx","xlsx","jpg","jpeg","msg"))) {
                 if (empty($fileData["fid"])) {
                     $fileData["fid"] = 0;
                 }

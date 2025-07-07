@@ -1513,7 +1513,7 @@ class BookingService
         }
         
         if ($helyszinId == Booking_Constants::DEFAULT_PLACE_IDS[0] || $helyszinId == 100 || $helyszinId == 328 || $helyszinId == 644 || $helyszinId == 162) {
-            $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1", array("|{$cegid}|", $tid));
+            $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0 and paciens=1 and aktiv=1", array("|{$cegid}|", $tid));
             /*if($tid==116){
                 $res = sql_query("select * from arak where instr(cegid,?) and tipusid=? and trim(megnev)<>'' and csomag=0", array("|{$cegid}|", $tid));
             }*/
@@ -3444,6 +3444,26 @@ class BookingService
             $data["error"] = "";
             if (!$data = sql_fetch_array(sql_query_common("SELECT * FROM foglalasok WHERE taj = ? order by datum desc limit 1", [$taj]))) {
                 $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!";
+            }
+        }
+
+        if (!empty($data["error"])) {
+            //keresés vízművekben
+            $data["error"] = "";
+
+            $file = file_get_contents(__DIR__."/vizmuvektaj.csv");
+            $lines = explode("\n", $file);
+
+            foreach ($lines as $key => $line) {
+                $fields = explode(";", $line);
+                if (trim($fields[2]) == $taj) {
+                    $data["nev"] = $fields[1];
+                    break;
+                }
+            }
+
+            if (empty($data["nev"])) {
+                $data["error"] = "Ezzel a TAJ számmal felhasználó nem található!".$lines[3][1];
             }
         }
 

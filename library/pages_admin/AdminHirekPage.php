@@ -129,7 +129,7 @@ class AdminHirekPage extends AdminCorePage {
 
         $html.= "<div style='border-top:1px solid #888;margin-top:25px;'>";
 
-        $html.= "<div style='display:table;padding-top:20px;'>";
+        $html.= "<div style='display:table;margin-top:20px;'>";
         $html.= "<div style='display:table-cell;vertical-align: middle;'>Szűrés:</div>";
         $html.= "<div style='display:table-cell;vertical-align: middle;padding-left:6px;'><a href='#' class='newsfilterbutton".("all" == $_SESSION["newsfilter"] ? " newsfilterbuttonselected":"")."' onclick='setNewsFilter(\"all\");return false;'>Összes</a></div>";
         foreach ($this->categories as $key => $category) {

@@ -37,9 +37,6 @@ class AdminUsersPage extends AdminCorePage {
             if ($_POST["password"]!="") sql_query("update users set password=md5(?)	where id=?",array($_POST["password"], $id));
 
             if ($this->adminUser->jogosultsagAccess()) {
-                if (!isset($_POST["auth2fac"])) {
-                    $_POST["auth2fac"] = 0;
-                }
                 if (!isset($_POST["localeaccess"])) {
                     $_POST["localeaccess"] = 0;
                 }
@@ -54,12 +51,19 @@ class AdminUsersPage extends AdminCorePage {
                     }
                 }
 
-                $fields = "auth2fac=?, localeaccess=?, localeip=?, jogosultsag=?, status=?, permissions=?";
-                $params = [$_POST["auth2fac"], $_POST["localeaccess"], $_POST["localeip"], $_POST["jogosultsag"], $_POST["status"], json_encode($permissions, JSON_PRETTY_PRINT)];
+                $fields = "localeaccess=?, localeip=?, jogosultsag=?, status=?, permissions=?";
+                $params = [$_POST["localeaccess"], $_POST["localeip"], $_POST["jogosultsag"], $_POST["status"], json_encode($permissions, JSON_PRETTY_PRINT)];
 
                 $params[] = $id;
 
                 sql_query("update users set {$fields} where id=?", $params);
+
+                if ($this->adminUser->user["2facset"] == 1) {
+                    if (!isset($_POST["auth2fac"])) {
+                        $_POST["auth2fac"] = 0;
+                    }
+                    sql_query("update users set auth2fac=? where id=?", [$_POST["auth2fac"], $id]);
+                }
 
                 $jogs = "";
                 $resh = sql_query("select * from cegek order by megnev");
@@ -183,7 +187,9 @@ class AdminUsersPage extends AdminCorePage {
                 echo "<tr><td colspan='2' style='padding:5px 0px;'></td></tr>";
                 echo "<tr><td colspan='2' style='padding:5px 0px;border-top: 1px solid #888;'></td></tr>";
                 echo "<tr><td>Csak lokális elérés ip címek:</td><td><input class='inputbox' style='width:300px;' type='text' name='localeip' value='{$_POST["localeip"]}'> <input type='checkbox' name='localeaccess' ".($_POST["localeaccess"]==1?"checked":"")." value='1' />&nbsp;csak helyi elérés engedélyezése</td></tr>";
-                echo "<tr><td></td><td><input type='checkbox' name='auth2fac' ".($_POST["auth2fac"]==1?"checked":"")." value='1' />&nbsp;2 faktoros authentikáció</td></tr>";
+                if ($this->adminUser->user["2facset"] == 1) {
+                    echo "<tr><td></td><td><input type='checkbox' name='auth2fac' " . ($_POST["auth2fac"] == 1 ? "checked" : "") . " value='1' />&nbsp;2 faktoros authentikáció</td></tr>";
+                }
                 echo "<tr><td></td><td><input type='checkbox' name='status' ".($_POST["status"]==1?"checked":"")." value='1' />&nbsp;aktiválás/deaktiválás</td></tr>";
             }
 
@@ -246,7 +252,8 @@ class AdminUsersPage extends AdminCorePage {
 
             echo "<td nowrap valign='top'><div class='{$tc}'>".$this->adminUser->getAdminLevel($row, true).(isset($cegList)?" (<span title='".(implode(", ", $cegList))."' style='border-bottom:1px dashed #888;'>".count($cegList)." cég</span>)":"")."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["tel"]}";
-            echo ($row["auth2fac"]==1?" <span title='kétfaktoros authentikáció' style='border:1px solid #f00;padding:1px 3px;color:#f00;'>2fac</span>":"").($row["localeaccess"]==1?" <span title='csak lokális belépés endedélyezett' style='border:1px solid #f00;padding:1px 3px;color:#f00;'>local</span>":"")."</div></td>";
+            echo ($row["auth2fac"]==1?" <span title='kétfaktoros authentikáció' style='border:1px solid #f00;padding:1px 3px;color:#f00;'>2fac</span>":"").($row["localeaccess"]==1?" <span title='csak lokális belépés endedélyezett' style='border:1px solid #f00;padding:1px 3px;color:#f00;'>local</span>":"").($row["status"]==0?" <span title='inaktív felhasználó' style='border:1px solid #f00;background:#f00;padding:1px 3px;color:#fff;'>inaktív</span>":"")."</div></td>";
+            //echo ($row["status"]==0?" <span title='inaktív felhasználó' style='border:1px solid #f00;background:#f00;padding:1px 3px;color:#fff;'>inaktív</span>":"")."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>{$row["email"]}</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>".($row["lastlogin"]=="0000-00-00 00:00:00"?"":"Utolsó login: ".substr($row["lastlogin"],0,16))."</div></td>";
             echo "<td nowrap valign='top'><div class='{$tc}'>[<a onclick='return confirm(\"Biztosan törlöd ezt a felhasználót?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&delete={$row["id"]}'>delete</a>]</div></td>";

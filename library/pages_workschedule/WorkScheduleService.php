@@ -115,13 +115,15 @@ class WorkScheduleService {
         $html = "";
         $stat = [];
         $szabadsagNapok = [];
+        $szabadsagStatuses = [];
 
         $workerData = sql_query("select nev, teljesnev from schedule_workers where id=?", [$workerId])->fetch(PDO::FETCH_ASSOC);
         $html.= "<div style='font-weight: bold;'>{$workerData["teljesnev"]} beosztása / szabadságai</div>";
 
-        $szabiData = sql_query("select datumtol from schedule_szabadsag sz where sz.datumtol>date_sub(now(), interval 1 month) and oid=?", [$workerId])->fetchAll();
+        $szabiData = sql_query("select datumtol, status from schedule_szabadsag sz where sz.datumtol>date_sub(now(), interval 6 month) and oid=?", [$workerId])->fetchAll();
         foreach ($szabiData as $data) {
             $szabadsagNapok[] = $data["datumtol"];
+            $szabadsagStatuses[$data["datumtol"]] = $data["status"];
         }
 
         $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso, t.cim
@@ -149,8 +151,17 @@ class WorkScheduleService {
             $html.= "<div style='display:table-cell;border-top:1px solid #ccc;'>";
             $display = [];
 
+
             if (in_array($thisDay, $szabadsagNapok)) {
-                $display[] = "<span onclick='toggleWorkerFreeDay(\"{$thisDay}\", {$workerId});' style='cursor:pointer;padding:2px 5px;background:#56af56;color:#fff;border-radius: 2px;'><i class='fa-regular fa-square-check'></i> szabi</span>";
+                $statusText = "Elbírálás folyamatban..";
+                if ($szabadsagStatuses[$thisDay] == 1) {
+                    $statusText = "<span style='color:darkgreen'>Engedélyezve</span>";
+                }
+                if ($szabadsagStatuses[$thisDay] == 2) {
+                    $statusText = "<span style='color:darkred'>! Elutasítva</span>";
+                }
+
+                $display[] = "<span onclick='toggleWorkerFreeDay(\"{$thisDay}\", {$workerId});' style='cursor:pointer;padding:2px 5px;background:#56af56;color:#fff;border-radius: 2px;'><i class='fa-regular fa-square-check'></i> szabi</span> {$statusText}";
             } else {
                 $display[] = "<span onclick='toggleWorkerFreeDay(\"{$thisDay}\", {$workerId});' style='cursor:pointer;padding:2px 5px;background:lightgray;color:#fff;border-radius: 2px;'><i class='fa-regular fa-square'></i> szabi</span>";
             }
@@ -174,7 +185,7 @@ class WorkScheduleService {
         return $html;
     }
 
-    public function workInterval($mapping) {
+    public function workInterval($mapping):string {
         $html="";
 
         $from = date("H:i", strtotime($mapping["datumfrom"]));

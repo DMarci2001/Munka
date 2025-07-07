@@ -851,12 +851,24 @@ class AdminBookingEditor {
         return $html;
     }
 
+    private array $keltexMunkakorok = ["Áruátvevő","Áruátvételi adminisztrátor","Raktári munkatárs (Göngyöleg)","Raktári munkatárs (Göngyöleg)","Áruátvevő","Csoportvezető","Csoportvezető-komissió","E-ker és hsz. ellenőr","Jövedéki adminisztrátor","Karbantartási adminisztrátor","Karbantartó","Készlet koordinátor","Készletgazda","Komissiózó","Magasemelős","Magasemelős targoncás","Minőségellenőr","Raklapválogató","Raktári adminisztrátor","Raktári munkatárs - száraz","Raktári munkatárs - friss","Mirelit áruátvevő","Mirelit komissiózó","Mirelit magasemelős","Mirelit készletgazda","Mirelit csoportvezető"];
+    //private array $keltexMunkakorok = ["Mirelit készletgazda","Mirelit csoportvezető"];
+
     private function munkakorInput($row):string {
         $html = "<input data-taborder='3'  class='inputbox ui-taborder fipad' style='width:100%;' type='text' name='munkakor' id='bookingeditormunkakor' value='{$row["munkakor"]}'>";
 
         $items = [];
         foreach (sql_query("SELECT TRIM(munkakor) as munkakor, COUNT(*) AS hany FROM foglalasok WHERE datum>DATE_SUB(NOW(), INTERVAL 1 WEEK) and munkakor IS NOT NULL AND munkakor<>'' AND CHAR_LENGTH(munkakor)<40 GROUP BY TRIM(munkakor) HAVING hany>1 ORDER BY TRIM(munkakor)")->fetchAll(PDO::FETCH_ASSOC) as $munkakor) {
             $items[] = "'".trim(str_replace("'", "", $munkakor["munkakor"]))."'";
+        }
+
+
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            foreach ($this->keltexMunkakorok as $munkakor) {
+                if (!in_array($munkakor, $items)) {
+                    $items[] = "'".$munkakor."'";
+                }
+            }
         }
 
         $html.= "<script>$(function() { var munkakorok = [".implode(",", $items)."];$('#bookingeditormunkakor').autocomplete({source: function(request, response) { var results = $.ui.autocomplete.filter(munkakorok, request.term);response(results.slice(0, 14)); }}); });</script>";

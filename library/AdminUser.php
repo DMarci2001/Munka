@@ -21,7 +21,10 @@ class AdminUser {
             "name" => "orvos beosztások kezelése"
         ],
         "jog_szabi" => [
-            "name" => "szabadságok beállítása"
+            "name" => "Orvos szabadságok beállítása"
+        ],
+        "jog_szabi_beosztas" => [
+            "name" => "Munkatárs szabadságok beállítása"
         ],
         "jog_statisztika" => [
             "name" => "statisztikák megtekintése"
@@ -385,7 +388,7 @@ class AdminUser {
         return implode(",", $doctorIds);
     }
 
-    private function checkPermission($key):bool {
+    public function checkPermission($key):bool {
         return ($this->authenticated() && isset($this->user[$key]) && $this->user[$key] == 1);
     }
 
