@@ -1881,7 +1881,7 @@ class BookingService
             $refQuery = sql_query(
                 "SELECT fogl.id AS fid,fogl.cegid,fogl.nev,fogl.szuldatum,fogl.taj,CONCAT(fogl.irsz,' ',fogl.varos,', ',fogl.utca) AS teljescim,
                  fogl.regdatum,fogl.munkakor,sz.megnev AS vizsgalat,null as worklocation,felh.beutalo_megjegyzes,felh.szervezet_megnev,
-                 felh.khkod,felh.torzsszam,fogl.szulhely,fogl.anyjaneve,'Apollo Tyres (Hungary) Kft.' as telephely,'{$data["reszleg"]}' as osztaly 
+                 felh.khkod,felh.torzsszam,fogl.szulhely,fogl.anyjaneve,'{$data["reszleg"]}' as worklocation 
                  FROM foglalasok fogl
                  LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
                  LEFT JOIN felhasznalok felh on felh.taj=fogl.taj
@@ -2981,7 +2981,7 @@ class BookingService
 
     public function set_referal_values($data,$input){
 
-        $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE munkakor=? AND cegid=? AND osztaly=?",array($data["munkakor"],$data["cegid"],$data["osztaly"]));
+        $q=sql_query("SELECT * FROM kockazati_tenyezok WHERE munkakor=? AND cegid=? AND osztaly=?",array($data["munkakor"],$data["cegid"],$data["worklocation"]));
         while($r=sql_fetch_array($q)){
             foreach($r as $key=>$value){
                 $input[$key]=$value;
