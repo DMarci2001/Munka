@@ -350,6 +350,50 @@ function sendLeletEmail() {
     })
 }
 
+function saveLeletSablon() {
+    if (!confirm("Mented a fenti szöveget sablonként?")) {
+        return;
+    }
+
+    let rid = $("#laborrequestid").val();
+    let laboremailtext = $("#laboremailtext").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {saveleletsablon:rid, laboremailtext:laboremailtext},
+        success: function(response){
+            showGeneralPopup(response);
+            $.toast({
+                text: "Sablon mentve",
+                icon: "success"
+            });
+        }
+    })
+}
+
+
+function deleteLaborEmailTemplate(id) {
+    if (!confirm("Biztos törlöd ezt a sablont?")) {
+        return;
+    }
+
+    let rid = $("#laborrequestid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php?page=labrequests",
+        data: {deleteleletsablon:rid, id:id},
+        success: function(response){
+            showGeneralPopup(response);
+            $.toast({
+                text: "Sablon törölve",
+                icon: "success"
+            });
+        }
+    })
+}
+
 
 function loadLaborEmailTemplate(id) {
     $.ajax({

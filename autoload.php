@@ -152,6 +152,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/WorkplacesSubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/NotifySubPage.php");
     require_once(__DIR__ . "/library/pages_workschedule/PrintSubPage.php");
+    require_once(__DIR__ . "/library/pages_workschedule/VacationSubPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPreBookingManagementPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminMunkaNaploPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminPatientDataPage.php");

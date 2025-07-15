@@ -383,10 +383,16 @@ class AdminScreeningsPage extends AdminCorePage
                 echo "<tr><td colspan='2'>";
                 echo "<table cellpadding='0' cellspacing='0'>";
 
-                $prices = sql_query("select * from keltexmedweb.products WHERE reservationTypeId=? order by productname", [$_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
+                $alias = "";
+                if ($aliasData = sql_query("select alias from keltexmedweb.products WHERE reservationTypeId=? limit 1", [$_GET["szerk"]])->fetch(PDO::FETCH_ASSOC)) {
+                    $alias = $aliasData["alias"];
+                }
+
+                $prices = sql_query("select * from keltexmedweb.products WHERE reservationTypeId=? or alias=? order by reservationTypeId desc, productname", [$_GET["szerk"], $alias])->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($prices as $price) {
                     echo "<tr>";
                     echo "<td>{$price["productname"]}</td>";
+                    echo "<td>".($price["reservationTypeId"] != 0 ? "foglalható":"")."</td>";
                     echo "<td><input type='text' name='webprice{$price["id"]}' value='{$price["price"]}' style='width:50px;margin:2px 0px 2px 10px;' placeholder='ár'/>&nbsp;HUF</td>";
                     echo "</tr>";
                 }

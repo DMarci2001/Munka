@@ -425,7 +425,10 @@ class AdminLabRequestsPage extends AdminCorePage {
 
         $felado = $this->adminUser->user["nev"];
         $feladoEmail = empty(trim($this->adminUser->user["email"])) ? "<span style='color:red;'>nincs megadva email cím, így a lelet kiküldés nem lehetséges</span>":$this->adminUser->user["email"];
-        echo "<div style='margin:10px 0px 10px 0px;padding:10px 0px 10px 0px;border-top:1px solid #ccc;border-bottom:1px solid #ccc;'>A leletek kiküldésekor a levél feladója: {$felado}, email: {$feladoEmail}</div>";
+        echo "<div style='margin:10px 0px 10px 0px;padding:10px 0px 10px 0px;border-top:1px solid #ccc;border-bottom:1px solid #ccc;'>";
+        echo "<div style=''>A leletek kiküldésekor a levél feladója: {$felado}, email: {$feladoEmail}</div>";
+        echo "<div style='margin-top:10px;padding:5px 10px;background:forestgreen;color:white;border-radius: 5px;'>*új funkció: saját sablont is tudsz menteni a leletek kiküldésénél.</div>";
+        echo "</div>";
 
         /*
         echo "<div style='display:table-cell;vertical-align: middle;'>";

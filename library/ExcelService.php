@@ -13,12 +13,12 @@ class ExcelService {
 
     private string $esztergomFilter = "f.helyszinid=532 and ";
     private string $jaszSuzukiFilter = "f.cegid IN (504) and ";
-    private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532) AND f.cegid IN (504) and ";
+    private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532, 100, 644) AND f.cegid IN (892) and ";
     private string $korosiUtcaFilter = "f.helyszinid in (600) and ";
     private string $extraFilter = "";
 
     public function __construct() {
-        if (session_id() == "qgaenhclttkb3n7mloi627s3bh") {
+        if (session_id() == "5bjd1s7gcfehaf9ar9uvs0g8k2") {
             $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
         }
     }
@@ -993,7 +993,7 @@ class ExcelService {
         try {
             //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
-            //$this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
+            $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
             $this->_laborLeletLista($sheetId++, $from, $to);
             $this->_cegEsOrvosStat($sheetId++, $from, $to);
@@ -1001,6 +1001,21 @@ class ExcelService {
             $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
             $this->_orvosWorkHours($sheetId++, $from, $to);
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
+        } catch (\Exception $e) {
+            //valami hibakezelés...
+        }
+
+        $this->spreadSheet->setActiveSheetIndex(0);
+    }
+
+    public function rawWeeklyStat($from, $to) {
+        $this->spreadSheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        $sheetId = 0;
+        try {
+            $this->_keltexmedSources($sheetId++, $from, $to);
+            $this->_hmmSources($sheetId++, $from, $to);
+            $this->_hmmGyorSources($sheetId++, $from, $to);
         } catch (\Exception $e) {
             //valami hibakezelés...
         }
@@ -1521,5 +1536,363 @@ class ExcelService {
     public function checkSheets():array{
         return $this->spreadSheet->getSheetNames();
     }
+
+
+
+    private function _keltexmedSources($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("KeltexMed");
+        $this->titleRow("A1", "Magán foglalások forrás alapján Keltexmed - ".date("Y", strtotime($from)));
+        $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
+        $sor = 5;
+
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, szurestipusid,
+            IF (foglalta='', 'bejelentkezo', 
+            
+            IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
+            FROM keltexmed.foglalasok 
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
+            
+            LEFT JOIN keltexmed.szurestipusok t ON t.id=a.szurestipusid
+            
+            GROUP BY calcfoglalta ORDER BY t.megnev, calcfoglalta", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["forras"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+            $sor++;
+        }
+
+        $sor++;
+        $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Keltexmed - ".date("Y", strtotime($from)));
+        $sor += 2;
+
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, orvosassigned
+            FROM keltexmed.foglalasok 
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
+            
+            LEFT JOIN keltexmed.orvosok o ON o.id=a.orvosassigned
+            
+            GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','L'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
+
+
+
+    private function _hmmSources($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Hungariamed Jász utca");
+        $this->titleRow("A1", "Magán foglalások forrás alapján Hungariamed Jász utca - ".date("Y", strtotime($from)));
+        $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
+        $sor = 5;
+
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, szurestipusid,
+            IF (foglalta='', 'bejelentkezo', 
+            
+            IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
+            FROM hungariamed.foglalasok 
+            WHERE datum>'2024-01-01 00:00:00' AND datum<'2024-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618,587) OR foglalta='foglaljorvost')) a
+            
+            LEFT JOIN hungariamed.szurestipusok t ON t.id=a.szurestipusid
+            
+            GROUP BY calcfoglalta ORDER BY calcfoglalta", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["forras"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+            $sor++;
+        }
+
+        $sor++;
+        $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Hungariamed Jász utca - ".date("Y", strtotime($from)));
+        $sor += 2;
+
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, orvosassigned
+            FROM hungariamed.foglalasok 
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618) OR foglalta='foglaljorvost')) a
+            
+            LEFT JOIN hungariamed.orvosok o ON o.id=a.orvosassigned
+            
+            GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','L'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
+
+
+    private function _hmmGyorSources($sheetId, $from, $to) {
+        if ($sheetId != 0) {
+            $this->spreadSheet->createSheet();
+            $this->spreadSheet->setActiveSheetIndex($sheetId);
+        }
+        $this->sheet = $this->spreadSheet->getActiveSheet();
+        $this->sheet->setTitle("Hungariamed Győr");
+        $this->titleRow("A1", "Magán foglalások forrás alapján Hungariamed Győr - ".date("Y", strtotime($from)));
+        $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
+        $sor = 5;
+
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, szurestipusid,
+            IF (foglalta='', 'bejelentkezo', 
+            IF (foglalta='fastreservation', 'admin', 
+            
+            IF (foglalta IN ('', 'fastreservation', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin'))) AS calcfoglalta
+            FROM hungariamed_gyor.foglalasok 
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
+            
+            LEFT JOIN hungariamed_gyor.szurestipusok t ON t.id=a.szurestipusid
+            
+            GROUP BY calcfoglalta ORDER BY calcfoglalta", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["forras"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+            $sor++;
+        }
+
+        $sor++;
+        $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Hungariamed Győr - ".date("Y", strtotime($from)));
+        $sor += 2;
+
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $sor++;
+
+        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+            ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
+            ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
+            ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
+            ,SUM(IF (MONTH(datum)=5, 1, 0)) AS maj
+            ,SUM(IF (MONTH(datum)=6, 1, 0)) AS jun
+            ,SUM(IF (MONTH(datum)=7, 1, 0)) AS jul
+            ,SUM(IF (MONTH(datum)=8, 1, 0)) AS aug
+            ,SUM(IF (MONTH(datum)=9, 1, 0)) AS szep
+            ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
+            ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
+            ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            
+            FROM (SELECT datum, foglalta, orvosassigned
+            FROM hungariamed_gyor.foglalasok 
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
+            
+            LEFT JOIN hungariamed_gyor.orvosok o ON o.id=a.orvosassigned
+            
+            GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($reservations as $reservation) {
+            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("E{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("F{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("G{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("H{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("I{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("J{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("K{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("L{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("M{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("N{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("O{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("P{$sor}")->getAlignment()->setHorizontal("right");
+            $this->sheet->getStyle("Q{$sor}")->getAlignment()->setHorizontal("right");
+
+            $sor++;
+        }
+
+        $this->setAutoWidth(range('B','L'));
+        $this->sheet->getColumnDimension('A')->setWidth(20);
+    }
+
 
 }

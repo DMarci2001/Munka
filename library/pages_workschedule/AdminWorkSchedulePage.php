@@ -3,6 +3,7 @@
 class AdminWorkSchedulePage extends AdminCorePage {
     private WorkScheduleService $workScheduleService;
     private WorkersSubPage $workersSubPage;
+    private VacationSubPage $vacationSubPage;
     private WorkplacesSubPage $workplacesSubPage;
     private NotifySubPage $notifySubPage;
     private PrintSubPage $printSubPage;
@@ -16,6 +17,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         $this->workScheduleService = new WorkScheduleService();
         $this->workersSubPage = new WorkersSubPage($this->workScheduleService);
+        $this->vacationSubPage = new VacationSubPage($this->workScheduleService);
         $this->workplacesSubPage = new WorkplacesSubPage($this->workScheduleService);
         $this->notifySubPage = new NotifySubPage($this->workScheduleService);
         $this->printSubPage = new PrintSubPage($this->workScheduleService);
@@ -284,6 +286,97 @@ class AdminWorkSchedulePage extends AdminCorePage {
             die;
         }
 
+        if (isset($_POST["addworkerdialogszabi"])) {
+            $datum = date("Y-m-d", strtotime($_POST["datum"]));
+
+            echo "<div style='display:table-cell;vertical-align: top;padding-right: 10px;'>";
+            echo "<input type='hidden' name='datum' value='{$datum}' />";
+            echo "<select size='6' name='workerselector' id='workerselector' style='width:250px;'>";
+            $res = sql_query("select * from schedule_workers where true order by roleid, nev", array($_POST["roleid"]));
+            while ($orvosData = sql_fetch_array($res)) {
+                $checked = "";
+                //if (isset($mapData) && $mapData["workerid"] == $orvosData["id"]) {
+                //    $checked = "selected";
+                //}
+                echo "<option value='{$orvosData["id"]}' {$checked}>{$orvosData["nev"]}</option>";
+            }
+            echo "</select>";
+
+            echo "<div style='padding-top:10px;'>";
+            echo "<input type='button' onclick='Schedule.AddWorkerVacation();' value='Hozzáadás'>";
+            echo "</div>";
+
+            echo "</div>";
+            die;
+        }
+
+        if (isset($_POST["addworkervacation"])) {
+            $result = ["status" => "ok", "message" => ""];
+
+            if (!isset($_POST["workerselector"])) {
+                $result = ["status" => "error", "message" => "Válassz dolgozót!"];
+            }
+
+            if ($result["status"] == "ok") {
+                $datumStart = "{$_POST["datum"]}";
+
+                sql_query("insert into schedule_szabadsag set datumtol=?, datumig=?, oid=?", [$datumStart, $datumStart, $_POST["workerselector"]]);
+                $newId = sql_insert_id();
+                sql_query("update schedule_szabadsag set groupid=? where id=?", [$newId, $newId]);
+
+                $result["message"] = VacationSubPage::displaySzabiDayItems($datumStart);
+            }
+
+            $this->utils->jsonOut($result);
+        }
+
+        if (isset($_POST["deleteworkervacation"])) {
+            $datum = date("Y-m-d", strtotime($_POST["datum"]));
+            $workerId = intval($_POST["id"]);
+
+            sql_query("delete from schedule_szabadsag where datumtol=? and oid=? limit 1", [$datum, $workerId]);
+
+            $result["message"] = VacationSubPage::displaySzabiDayItems($datum);
+            $this->utils->jsonOut($result);
+        }
+
+        if (isset($_POST["setvacationstatus"])) {
+            $datum = date("Y-m-d", strtotime($_POST["datum"]));
+            $workerId = intval($_POST["id"]);
+            $status = intval($_POST["status"]);
+            $result["error"] = "";
+
+            if ($this->adminUser->checkPermission("jog_szabi_beosztas")) {
+                sql_query("update schedule_szabadsag set status=? where datumtol=? and oid=? limit 1", [$status, $datum, $workerId]);
+            } else {
+                $result["error"] = "Nincs jogosultságod a szabadság állapotának változtatásához";
+            }
+
+            $result["message"] = VacationSubPage::displaySzabiDayItems($datum);
+            $this->utils->jsonOut($result);
+        }
+
+        if (isset($_POST["addworkervacation"])) {
+            $result = ["status" => "ok", "message" => ""];
+
+            if (!isset($_POST["workerselector"])) {
+                $result = ["status" => "error", "message" => "Válassz dolgozót!"];
+            }
+
+            if ($result["status"] == "ok") {
+                $datumStart = "{$_POST["datum"]}";
+
+                sql_query("insert into schedule_szabadsag set datumtol=?, datumig=?, oid=?", [$datumStart, $datumStart, $_POST["workerselector"]]);
+                $newId = sql_insert_id();
+                sql_query("update schedule_szabadsag set groupid=? where id=?", [$newId, $newId]);
+
+                $result["message"] = VacationSubPage::displaySzabiDayItems($datumStart);
+            }
+
+            $this->utils->jsonOut($result);
+        }
+
+
         if (isset($_POST["addplacedialog"])) {
             $tipusId = intval($_POST["tipusid"]);
             $thisDay = $_POST["datum"];
@@ -388,6 +481,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "<div id='menusor'>";
         echo "<a href='index.php?page={$_GET["page"]}'>Beosztások</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=workers'>Munkatársak</a> &bull; ";
+        echo "<a href='index.php?page={$_GET["page"]}&subpage=vacations'>Szabadságok</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=workplaces'>Munkahelyek</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=notify'>Értesítések</a> &bull; ";
         echo "<a href='index.php'>Vissza az adminba</a>";
@@ -470,6 +564,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if ($this->subPage == "workers") {
             echo "<div id='workersubpage' style='margin-top:20px;'>";
             echo $this->workersSubPage->showPage();
+            echo "</div>";
+        }
+
+        if ($this->subPage == "vacations") {
+            echo "<div id='szabisubpage' style='margin-top:20px;'>";
+            echo $this->vacationSubPage->showPage();
             echo "</div>";
         }
 
