@@ -704,6 +704,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 if (CompanyService::isFesztivalCompany($_SESSION["helyszindata"]["id"])) {
                     //forced default
                     $_POST[$field] = "rendezvény kisegítő";
+
+                    if($_SESSION["helyszindata"]["id"]==275){
+                        $_POST[$field] = "Sziget idénymunka";
+                    }
                 }
                 if ($_SESSION["helyszindata"]["domain"] == "bp") {
                     if (empty($_POST[$field]) || !isset($_POST[$field])) {
@@ -1726,13 +1730,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             $replace = [$n["nev"],(strtotime($n["ervenyesseg"])<strtotime("now")?str_replace("-",".",$n["ervenyesseg"])." dátummal lejárt":str_replace("-",".",$n["ervenyesseg"])." dátummal lejár")];
             $body = str_replace($search,$replace,$message);
 
-            $mail = $notificationService->getDefaultMailer();
-            $mail->AddAddress($n["email"]);
-            $mail->AddBCC("tesztemail@hungariamed.hu");
-            $mail->Subject = "Értesítés üzemorvosi vizsgálat esedékességéről - Hungária Med-M Kft.";
-            $mail->Body = $body;
-            $mail->Send();
-            echo $notificationService->createNotificationRecord($n["ertesitoTipus"], $n["id"], $n["email"], $mail->Subject, $mail->Body)."<br>";
+            //$mail = $notificationService->getDefaultMailer();
+            //$mail->AddAddress($n["email"]);
+            //$mail->AddBCC("tesztemail@hungariamed.hu");
+            //$mail->Subject = "Értesítés üzemorvosi vizsgálat esedékességéről - Hungária Med-M Kft.";
+            //$mail->Body = $body;
+            //$mail->Send();
+            //echo $notificationService->createNotificationRecord($n["ertesitoTipus"], $n["id"], $n["email"], $mail->Subject, $mail->Body)."<br>";
         }
     }
 
@@ -1848,10 +1852,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                         if(!empty($o["generaliId"])){
                                             $connectedLocations = $generaliService->retrieveCareSpotsOfDoctor($o["generaliId"]);
                                             if(!empty($connectedLocations)){
+                                                $x=0;
                                                 foreach($connectedLocations as $location){
+                                                    $x++;
                                                     $html .= "<div class='mb-3'>";
+                                                    $html .= "  <input type='hidden' id='care_spot_id{$x}' value='{$location["partner_care_spot_id"]}'/>";
                                                     $html .= "  <label class='form-label'>{$location["name"]}</label>";
-                                                    $html .= "  <select class='form-select form-select-sm' id='select-speciality' onChange='refresGeneralihExaminations($(this).val())' aria-label='Vizsgálat hozzáadása'>";
+                                                    $attachedExaminations = $generaliService->retrieveExaminationsOfCareSpotOfDoctor($oid,$location["partner_care_spot_id"]);
+
+                                                    $html .= "  <div id='attached-examination-container{$x}'>";
+                                                    $html .= $this->loadGeneraliExaminationsOfCareSpotOfDoctor($attachedExaminations);
+                                                    $html .= "  </div>";
+                                                    $html .= "  <a class='generali-button' id='add-examination-button{$x}' ";
+                                                    $html .= "      style='margin-bottom:5px' href='#' ";
+                                                    $html .= "      onclick='setDoctorSpecialitySelector(\"#doctorSpecialitySelector{$x}\",$x,\"#add-examination-button{$x}\")'>";
+                                                    $html .= "          <i class='fa-solid fa-plus'></i>&nbsp;Vizsgálat hozzáadása";
+                                                    $html .= "  </a>";
+                                                    $html .= "  <div id='doctorSpecialitySelector{$x}'></div>";
+                                                    /*$html .= "  <select class='form-select form-select-sm' id='select-speciality' onChange='refresGeneralihExaminations($(this).val())' aria-label='Vizsgálat hozzáadása'>";
                                                     $html .= "      <option value='0'>Válassz szakrendelést!</option>";
                                                     $specialities = $generaliService->retrieveSpecialities();
                                                     foreach($specialities as $speciality){
@@ -1861,7 +1879,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                                     }
                                                     $html .= "  </select>";
                                                     $html .= "  <select class='form-select form-select-sm' id='select-examination' aria-label=''>";
-                                                    $html .= "  </select>";
+                                                    $html .= "  </select>";*/
                                                     $html .= "</div>";
                                                 }
                                             }
@@ -1872,6 +1890,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         $html .= "      </div>";
         $html .= "</div>";
         return $html;
-        
+    }
+
+    public function loadGeneraliExaminationsOfCareSpotOfDoctor($attachedExaminations){
+        $html = "";
+        if(!empty($attachedExaminations)){
+            foreach($attachedExaminations as $examination){
+                $html .= "<label class='form-label' id='examination{$examination["examination"]["partner_examination_id"]}'>";
+                $html .= "  &nbsp;&nbsp;{$examination["examination"]["name"]}";
+                $html .= "  <a class='delete-button' onClick='deleteDoctorExamination({$examination["examination"]["partner_examination_id"]},{$examination["examination"]["partner_examination_id"]})' href='#'><i class='fa-solid fa-trash'></i></a>";
+                $html .= "</label>";
+            }
+        }
+        return $html;
     }
 }
