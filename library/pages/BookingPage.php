@@ -415,6 +415,19 @@ class BookingPage extends CorePage
                     $this->errors[] = $result;
                 }
             }
+            
+
+            if(CompanyService::isApollo()){
+
+                if(empty($_POST["reszleg"]) || $_POST["reszleg"]=="Válassz részleget!"){
+                    $this->errors[] = "Részleg kiválasztása kötelező!";
+                }
+
+                if(empty($_POST["munkakor"]) || $_POST["munkakor"]=="Válassz részleget!"){
+                    $this->errors[] = "Munkakör kiválasztása kötelező!";
+                }
+
+            }
 
             //if ($_POST["taj"] == "") $this->errors[] = "{$webText["tajkotelezo"]}";
             //if (!ctype_digit($_POST["taj"]) && $_POST["taj"] != "") $this->errors[] = "{$webText["tajformat"]}";
@@ -1023,75 +1036,147 @@ class BookingPage extends CorePage
                 //$html .= "    <div class=\"col-3\"></div>";
                 //$html .= "</div>";
 
-                $html .= "<div class=\"row\">";
+                $html .= "<div class=\"row\" style='color:#00368F'>";
                 $html .= "    <div class=\"col-md-3\"></div>";
                 $html .= "    <div class=\"col-md-6 col-sm-12 mb-3 mt-3 text-center\">";
-                $html .= "      <p style=\"font-size:16px\">Üdvözöljük, a Suzuki GHC szűrés - online regisztrációs felületén.</p>";
-                $html .= "      <p>2025-ben is megújúlt tartalommal térünk vissza, 40 év alatt emlő ultrahang, 40 év felett mammográfia vizsgálatot biztosítunk a résztvevő Hölgyek számára és új szabadidős programokkal várjuk Önöket!</p>";
-                $html .= "      <p>Jelentkezését a szeptemberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás augusztustól indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                $html .= "      <p style=\"font-size:18px;color:#00368F\"><strong>Üdvözöljük a Suzuki GHC szűrés - online regisztrációs felületén.</strong></p>";
+                $html .= "      <p style=\"font-size:20px;color:#DE0039\"><strong>2025-ben megújúlt tartalommal térünk vissza.</strong></p>"; // a résztvevő Hölgyek számára és új szabadidős programokkal várjuk Önöket!
+                $html .= "      <p style=\"font-size:14px\">Jelentkezését a szeptemberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás augusztustól indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-md-3\"></div>";
                 $html .= "</div>";
 
                 $html .= "<div class=\"row\">";
                 $html .= "    <div class=\"col-md-3\"></div>";
-                $html .= "    <div class=\"col-md\">";
-                $html .= "      <p><strong>Vizsgálati Csomagok:</strong> A munkavállalók egészségének átfogó felmérése érdekében az alábbi komplexszűrőcsomagokat kínáljuk:</p>";
-                $html .= "      <table>";
+                $html .= "    <div class=\"col-md-6\">";
+                $html .= "      <p style='text-align:center;color:#DE0039;font-size:20px'><strong>Vizsgálati Csomagok</strong></p>"; //A munkavállalók egészségének átfogó felmérése érdekében az alábbi komplexszűrőcsomagokat kínáljuk:
+                $html .= "      <table style='color:#00368F'>";
                 $html .= "        <tr>";
                 $html .= "            <td>";
                 $html .= "                <table>";
-                $html .= "                    <tr><td><strong>SENIOR Csomag</strong></td><td><strong>STANDARD Csomag</strong><td></tr>";
-                $html .= "                    <tr><td>Belgyógyászati vizsgálat + nyugalmi EKG</td><td>Belgyógyászati vizsgálat + nyugalmi EKG<td></tr>";
-                $html .= "                    <tr><td>Mellkas RTG</td><td>Mellkas RTG<td></tr>";
-                $html .= "                    <tr><td>ABI (Kar-Boka index)</td><td>ABI (Kar-Boka index)<td></tr>";
-                $html .= "                    <tr><td>BIA (Testösszetétel mérés)</td><td>BIA (Testösszetétel mérés)<td></tr>";
-                $html .= "                    <tr><td>Vérvétel + tumor markerekkel</td><td>Vérvétel + tumor markerekke<td></tr>";
-                $html .= "                    <tr><td>Hasi- és kismedencei ultrahang</td><td><td></tr>";
-                $html .= "                    <tr><td>Nyaki lágyrész, carotis és pajzsmirigy ultrahang</td><td><td></tr>";
-                $html .= "                    <tr><td>Melanóma szűrés</td><td><td></tr>";
+                //$html .= "                    <tr><td style='color:#DE0039'><strong>SENIOR Csomag</strong></td><td style='color:#00368F'><strong>STANDARD Csomag</strong><td></tr>";
+                //$html .= "                    <tr><td>Belgyógyászati vizsgálat + nyugalmi EKG</td><td>Belgyógyászati vizsgálat + nyugalmi EKG<td></tr>";
+                //$html .= "                    <tr><td>Mellkas RTG</td><td>Mellkas RTG<td></tr>";
+                //$html .= "                    <tr><td>ABI (Kar-Boka index)</td><td>ABI (Kar-Boka index)<td></tr>";
+                //$html .= "                    <tr><td>BIA (Testösszetétel mérés)</td><td>BIA (Testösszetétel mérés)<td></tr>";
+                //$html .= "                    <tr><td>Vérvétel + tumor markerekkel</td><td>Vérvétel + tumor markerekke<td></tr>";
+                //$html .= "                    <tr><td>Hasi- és kismedencei ultrahang</td><td><td></tr>";
+                //$html .= "                    <tr><td style='padding-right:20px'>Nyaki lágyrész, carotis és pajzsmirigy ultrahang</td><td><td></tr>";
+                //$html .= "                    <tr><td>Melanóma szűrés</td><td><td></tr>";
+                $html .= "                    <tr>";
+                //$html .= "                      <td style='color:#DE0039'><strong>SENIOR Csomag</strong></td>";
+                $html .= "                      <td style='vertical-align:middle'>";
+                $html .= "                          <table>";
+                $html .= "                              <tr><td ><strong>SENIOR Csomag</strong></td></tr>";
+                $html .= "                              <tr><td>Belgyógyászati vizsgálat + nyugalmi EKG</td></tr>";
+                $html .= "                              <tr><td>Mellkas RTG</td></tr>";
+                $html .= "                              <tr><td>ABI (Kar-Boka index)</td></tr>";
+                $html .= "                              <tr><td>BIA (Testösszetétel mérés)</td></tr>";
+                $html .= "                              <tr><td>Vérvétel + tumormarkerekkel</td></tr>";
+                $html .= "                              <tr><td>Hasi- és kismedencei ultrahang</td></tr>";
+                $html .= "                              <tr><td>Nyaki lágyrész, carotis és pajzsmirigy ultrahang</td></tr>";
+                $html .= "                              <tr><td>Melanóma szűrés</td></tr>";
+                $html .= "                              <tr><td></td></tr>";
+                $html .= "                          </table>";
+                $html .= "                      </td>";
+                $html .= "                      <td>";
+                $html .= "                          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki-arena.png\" width=\"301px\">";
+                $html .= "                      <td>";
+                $html .= "                    </tr>";
+
+                $html .= "                    <tr></tr>";
+
+                $html .= "                    <tr>";
+                $html .= "                      <td>";
+                $html .= "                          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki-egeszseghaz.png\" width=\"\" style='margin-right:10px'>";
+                $html .= "                      </td>";
+                $html .= "                      <td style='vertical-align:middle'>";
+                $html .= "                          <table>";
+                $html .= "                              <tr><td style='color:#00368F'><strong>STANDARD Csomag</strong><td></tr>";
+                $html .= "                              <tr><td>Belgyógyászati vizsgálat + nyugalmi EKG<td></tr>";
+                $html .= "                              <tr><td>Mellkas RTG<td></tr>";
+                $html .= "                              <tr><td>ABI (Kar-Boka index)<td></tr>";
+                $html .= "                              <tr><td>BIA (Testösszetétel mérés)<td></tr>";
+                $html .= "                              <tr><td>Vérvétel + tumormarkerekkel</td></tr>";
+                $html .= "                          </table>";
+                $html .= "                      </td>";
+                $html .= "                    </tr>";
                 $html .= "                </table>";
                 $html .= "            </td>";
                 $html .= "        </tr>"; 
-                $html .= "      </table>";
-                $html .= "      <div class=\"col mb-3 text-center\">";             
-                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/ghc_csomag_kepek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
-                $html .= "      </div>";
-                $html .= "      <p><strong>Igénybevehető kiegészítő szolgáltatás mindkét csomag esetén:</strong> </p>";
+                $html .= "      </table><br>";
+                $html .= "     <p style='font-size:20px;text-align:center;color:#DE0039'><strong>Újdonságok</strong></p>";
+                $html .= "     <p style='font-size:14px;text-align:center;color:#00368F'>Mindkét csomagot bővítettük</p>";
+                
+                //$html .= "      <p style='color:red;text-align:center'><strong>40 év alatt emlő ultrahang, 40 év felett mammográfia vizsgálatot biztosítunk.</strong></p>";
+                //$html .= "      <div class=\"col mb-3 text-center\">";             
+                //$html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/ghc_csomag_kepek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                //$html .= "      </div>";
+                //$html .= "      <p><strong>Igénybevehető kiegészítő szolgáltatás mindkét csomag esetén:</strong> </p>";
                 $html .= "      <ul style=\"margin-left: 10px\">";
+                $html .= "          <li style=\"list-style: disc\"><strong><span  style='color:#DE0039;font-size:16px'>40 év feletti hölgyek számára MAMMOGRÁFIA vizsgálat</span></strong></li>";
+                $html .= "          <li style=\"list-style: disc\"><strong><span style='color:#DE0039;font-size:16px'>40 év alatti hölgyek számára EMLŐ ULTRAHANG vizsgálat</span></strong></li>";
+                $html .= "          <li style=\"list-style: disc\"><strong><span style='color:#DE0039;font-size:16px'>Emlőrák tumormarkerével bővített laboratóriumi csomag hölgyeknek</span></strong></li>";
+                //$html .= "          <li style=\"list-style: disc\">Vicardio- Szívstressz mérés</li>";
+                //$html .= "          <li style=\"list-style: disc\">Csontsűrűség mérés</li>";
+
+                $html .= "      </ul>";
+                //$html .= "      <hr></hr>";
+                //$html .= "      <p><strong>Javaslat:</strong> </p>";
+
+                $html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Választható kiegészítő vizsgálatok:</strong></p>";
+                $html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
                 $html .= "          <li style=\"list-style: disc\">Vicardio- Szívstressz mérés</li>";
                 $html .= "          <li style=\"list-style: disc\">Csontsűrűség mérés</li>";
                 $html .= "      </ul>";
-                $html .= "      <hr></hr>";
-                $html .= "      <p><strong>Javaslat:</strong> </p>";
 
-                $html .= "      <p><strong>További tumormarkerrel kiegészített vérvételi csomag hölgyek részére:</strong><br>";
-                $html .= "      A <strong>CA 15-3</strong> (Cancer Antigen 15-3) elsősorban az <strong>emlőrák</strong> (mellrák) <strong>tumormarkerével</strong> egészítenénk ki a ";
-                $html .= "      szűrési laboratóriumi csomagot.</p>";
-
-                $html .= "      <p><strong>Női szűrőcsomag bővítése:</strong> A GHC szűrésre jelentkező nők számára a 2025. évben az alábbi kiegészítő ";
-                $html .= "      vizsgálatokkal való bővítést javasoljuk, a Senior és Standard csoportban egyaránt:</p>";
-
-                $html .= "      <ul style=\"margin-left: 10px\">";
-                $html .= "          <li style=\"list-style: disc\">40 év feletti nők (1985. december 31. előtt születettek): Mammográfiai szűrés</li>";
-                $html .= "          <li style=\"list-style: disc\">40 év alatti nők (1985. december 31. után születettek): Emlő ultrahang szűrés</li>";
-                $html .= "          <li style=\"list-style: disc\">Minden női résztvevő: Petefészek tumormarkerrel bővített laboratóriumi csomag</li>";
+                $html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Családbarát szolgáltatásaink:</strong></p>";
+                $html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
+                $html .= "          <li style=\"list-style: disc\">Családtervezési tanácsadás</li>";
+                $html .= "          <li style=\"list-style: disc\">Gyermekfejlesztés, konduktív pedagógia szolgáltatás</li>";
                 $html .= "      </ul>";
+                //$html .= "      <p><strong>További tumormarkerrel kiegészített vérvételi csomag hölgyek részére:</strong><br>";
+                //$html .= "      A <strong>CA 15-3</strong> (Cancer Antigen 15-3) elsősorban az <strong>emlőrák</strong> (mellrák) <strong>tumormarkerével</strong> egészítenénk ki a ";
+                //$html .= "      szűrési laboratóriumi csomagot.</p>";
+
+                //$html .= "      <p><strong>Női szűrőcsomag bővítése:</strong> A GHC szűrésre jelentkező nők számára a 2025. évben az alábbi kiegészítő ";
+                //$html .= "      vizsgálatokkal való bővítést javasoljuk, a Senior és Standard csoportban egyaránt:</p>";
+
+                //$html .= "      <ul style=\"margin-left: 10px\">";
+                //$html .= "          <li style=\"list-style: disc\">40 év feletti nők (1985. december 31. előtt születettek): Mammográfiai szűrés</li>";
+                //$html .= "          <li style=\"list-style: disc\">40 év alatti nők (1985. december 31. után születettek): Emlő ultrahang szűrés</li>";
+                //$html .= "          <li style=\"list-style: disc\">Minden női résztvevő: Petefészek tumormarkerrel bővített laboratóriumi csomag</li>";
+                //$html .= "      </ul>";
 
                 $html .= "      <hr></hr>";
-                $html .= "      <p><strong>Nyeremény játék:</strong> </p>";
-                $html .= "      <p><strpng>2 db</strong> (1 férfi, 1 női) <strong>Neuzer</strong> gyártmányú <strong>elektromos kerékpárt</strong>, amelyet a <strong>Magyar Suzuki Zrt.</strong> ";
-                $html .= "          a GHC szűrésen részvevők között kisorsol az <strong>első</strong> helyezettnek.";
+                $html .= "      <p style='font-size:20px;text-align:center;color:#DE0039'><strong>Nyereményjáték</strong> </p>";
+                $html .= "      <p style='text-align:center;color:#DE0039'><strong><span style='text-decoration:underline'>Minden résztvevő között</span> értékes nyereményeket sorsolunk ki</strong> </p>";
+                //$html .= "      <p style='text-align:center;color:#00368F'><strong>A résztvevők között nyereményeket sorsolunk ki</strong> </p>";
+                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>1. helyezett</strong></p>";
+                $html .= "      <p style='text-align:center;color:#00368F'>";
+                $html .= "          <strong>2 db</strong> (1 férfi, 1 női) <strong>Neuzer</strong> gyártmányú <strong>elektromos kerékpár</strong>";
                 $html .= "      </p>";
 
+                $html .= "      <div class=\"col mb-3 text-center\">";
+                $html .= "          <div class='row'>";
+                $html .= "                  <div class='col'><img src='https://{$_SERVER["HTTP_HOST"]}/images/neuzer-man.png'></div>";
+                $html .= "                  <div class='col'><img src='https://{$_SERVER["HTTP_HOST"]}/images/neuzer-woman.png'></div>";
+                $html .= "          </div>";
+                
+                //$html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "      </div>";
+                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>2. helyezett</strong></p>";
+                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> csúcskategóriás <strong>vérnyomásmérő</strong> készülék</p>";
+
                 $html .= "      <div class=\"col mb-3 text-center\">";             
-                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/nyeremenyjatek2.png\" width=\"200px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
                 $html .= "      </div>";
 
-                $html .= "      <p>További <strong>2 db</strong> csúcskategóriás <strong>vérnyomásmérő</strong> készüléket a <strong>második</strong>, és <strong>2 db egészségkosarat</strong> (gyümölcs) a <strong>harmadik</strong> nyertesének a nyereményjátéknak.</p>";
+                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>3. helyezett</strong></p>";
+                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> gyümölcskosár</p>";
 
                 $html .= "      <div class=\"col mb-3 text-center\">";             
-                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek2.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
+                $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/nyeremenyjatek3.png\" width=\"250px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
                 $html .= "      </div>";
 
                 $html .= "    </div>";
