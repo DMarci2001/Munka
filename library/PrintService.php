@@ -1129,6 +1129,7 @@ class PrintService
         "Dr.Kiss Beáta Margit" => 65886,
         "Dr. Diczku Valéria" => 38122,
         "Dr. Finebone Adawari Godswill" => 91317,
+        "Dr. Angyalosy Levente" => 83775,
     ];
 
     private function innioErtesites(){
