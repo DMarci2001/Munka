@@ -40,7 +40,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="apollotyres";
+            $d="suzuki-menedzserszures";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -206,6 +206,25 @@ class CompanyService {
 
     public static function isAszMenedzser($companyId = 0):bool{
         return $_SESSION["helyszindata"]["domain"] == "asz-menedzserszures" && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function telExceptions(){
+        
+        if(Booking_Constants::SQL_DB == "hungariamed"){
+            $telExceptions = [892];
+            if(in_array($_SESSION["helyszindata"]["id"], $telExceptions)){
+                return true;
+            }
+        }
+
+        if(Booking_Constants::SQL_DB == "keltexmed"){
+            $telExceptions = [];
+            if(in_array($_SESSION["helyszindata"]["id"], $telExceptions)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     const FESZTIVAL_ALKALMASSAGI_DEFAULT_TEXT = "Időszakos

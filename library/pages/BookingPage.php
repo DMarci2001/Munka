@@ -525,15 +525,18 @@ class BookingPage extends CorePage
                 }
             }
             if (!$this->utils->getFieldHidden("telefon") && $this->utils->getFieldRequired("telefon")) {
-                $_POST["telefon"] = str_replace(["+", " ", "/", "-", "(", ")"], "", $_POST["telefon"]);
-                if (empty($_POST["telefon"])) {
-                    $this->errors[] = "{$webText["telkotelezo"]}";
-                } else {
-                    if (!preg_match('/^(36|06)(20|30|31|50|70)\d{7}$/', $_POST["telefon"])) {
-                        $this->errors[] = "{$webText["telformat"]}";
+                if(!CompanyService::telExceptions()){
+                    $_POST["telefon"] = str_replace(["+", " ", "/", "-", "(", ")"], "", $_POST["telefon"]);
+                    if (empty($_POST["telefon"])) {
+                        $this->errors[] = "{$webText["telkotelezo"]}";
+                    } else {
+                        if (!preg_match('/^(36|06)(20|30|31|50|70)\d{7}$/', $_POST["telefon"])) {
+                            $this->errors[] = "{$webText["telformat"]}";
+                        }
                     }
                 }
             }
+
             if (!$this->utils->getFieldHidden("szulhely") && $this->utils->getFieldRequired("szulhely")) {
                 if (empty($_POST["szulhely"])) {
                     $this->errors[] = "{$webText["szulhelykotelezo"]}";
