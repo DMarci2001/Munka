@@ -708,6 +708,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     if($_SESSION["helyszindata"]["id"]==275){
                         $_POST[$field] = "Sziget idénymunka";
                     }
+
+                    if($_SESSION["helyszindata"]["id"]==1406){
+                        $_POST[$field] = "Eü bázis önkéntes";
+                    }
                 }
                 if ($_SESSION["helyszindata"]["domain"] == "bp") {
                     if (empty($_POST[$field]) || !isset($_POST[$field])) {
