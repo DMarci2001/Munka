@@ -123,7 +123,7 @@ class RegistrationPage extends CorePage
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
             }
             
-            if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE torzsszam=? AND cegid=?",array($_POST["torzsszam"],904))->fetch(PDO::FETCH_ASSOC)){
+            if($_POST["taj"]!="" && $registered=sql_query("SELECT * FROM felhasznalok WHERE torzsszam=? AND cegid=?",array($_POST["torzsszam"],1403))->fetch(PDO::FETCH_ASSOC)){
                 $error = "Ön már regisztrálva van a Suzuki GHC szűrésre.<br><br> Kérem, jelentkezzen be a \"Bejelentkezés\" menüpont alatt a TAJ számával.<br>";
                 $error.= "<a href=\"https://{$_SERVER["HTTP_HOST"]}/?page=login\">Bejelentkezésez kattintson ide!</a>";
                 die(json_encode(array("error"=>$error,"status" => $status, "url"=> $url)));
@@ -133,7 +133,8 @@ class RegistrationPage extends CorePage
             if(isset($_POST["taj"]) && $_POST["taj"]!=""){
                 if($preData=sql_query("SELECT * FROM foglalasok WHERE taj=?",array($_POST["taj"]))->fetch(PDO::FETCH_ASSOC)){
                     $minimalRequirement = true;
-                    if($_POST["birthdate"]==""){
+
+                    /*if($_POST["birthdate"]==""){
                         if($preData["szuldatum"]!="") {
                             $_POST["birthdate"] = $preData["szuldatum"];
                         }else{
@@ -163,7 +164,7 @@ class RegistrationPage extends CorePage
                         }else{
                             $_POST["address"] = "";
                         }
-                    }
+                    }*/
                 }
             }
             
@@ -171,7 +172,13 @@ class RegistrationPage extends CorePage
             //TAJ ellenőrzése
             if (isset($_POST["taj"]) && !empty($_POST["taj"])) {
                 if ($this->utils->tajCheck($_POST["taj"]) || true) {
-                    $status[] = array("id" => "taj", "response" => "Helyes!", "class" => "valid");
+                    $status[] = array("id" => "taj", "response" => "", "class" => "valid");
+
+                    if($tajRegistered=sql_query("SELECT * FROM felhasznalok WHERE taj=? AND cegid=?",[$_POST["taj"],1403])->fetch(PDO::FETCH_ASSOC)){
+                        $status[] = array("id" => "taj", "response" => "Ez a TAJ szám már regisztrálva lett!", "class" => "invalid");
+                        $error++;
+                    }
+
                 } else {
                     $status[] = array("id" => "taj", "response" => "Helytelen TAJ szám!", "class" => "invalid");
                     $error++;
@@ -183,7 +190,7 @@ class RegistrationPage extends CorePage
 
              //Törzsszám
              if (isset($_POST["torzsszam"]) && !empty($_POST["torzsszam"])) {
-                $status[] = array("id" => "torzsszam", "response" => "Helyes!", "class" => "valid");
+                $status[] = array("id" => "torzsszam", "response" => "", "class" => "valid");
             } else {
                 $status[] = array("id" => "torzsszam", "response" => "Adja meg a törzsszámát!", "class" => "invalid");
                 $error++;
@@ -198,12 +205,12 @@ class RegistrationPage extends CorePage
             }
 
             //Születési dátum ellenőrzése
-                if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
-                    $status[] = array("id" => "birthdate", "response" => "Helyes!", "class" => "valid");
-                } else {
-                    $status[] = array("id" => "birthdate", "response" => "Adja meg a születési dátumát!", "class" => "invalid");
-                    $error++;
-                }
+            if (isset($_POST["birthdate"]) && !empty($_POST["birthdate"])) {
+                $status[] = array("id" => "birthdate", "response" => "", "class" => "valid");
+            } else {
+                $status[] = array("id" => "birthdate", "response" => "Adja meg a születési dátumát!", "class" => "invalid");
+                $error++;
+            }
             
             
 
@@ -236,48 +243,35 @@ class RegistrationPage extends CorePage
             }
 
             //Irányítószám ellenőrzése
-            if (isset($_POST["zip-code"]) && !empty($_POST["zip-code"])) {
-                if (isset($_POST["zip-code"]) && !empty($_POST["zip-code"])) {
-                    $status[] = array("id" => "zip-code", "response" => "Helyes!", "class" => "valid");
-                } else {
-                    $status[] = array("id" => "zip-code", "response" => "Adja meg a irányítószámát!", "class" => "invalid");
-                    $error++;
-                }
-            }else {
+            if (isset($_POST["zip-code"]) && $_POST["zip-code"]!="") {
+                $status[] = array("id" => "zip-code", "response" => "", "class" => "valid");
+            } else {
                 $status[] = array("id" => "zip-code", "response" => "Adja meg a irányítószámát!", "class" => "invalid");
                 $error++;
             }
+            
 
             //Város ellenőrzése
             if (isset($_POST["city"]) && !empty($_POST["city"])) {
-                if (isset($_POST["city"]) && !empty($_POST["city"])) {
-                    $status[] = array("id" => "city", "response" => "Helyes!", "class" => "valid");
-                } else {
-                    $status[] = array("id" => "city", "response" => "Adja meg a Városa nevét!", "class" => "invalid");
-                    $error++;
-                }
-            }else {
+                $status[] = array("id" => "city", "response" => "", "class" => "valid");
+            } else {
                 $status[] = array("id" => "city", "response" => "Adja meg a Városa nevét!", "class" => "invalid");
                 $error++;
             }
+            
 
             //Lakcím ellenőrzése
             if (isset($_POST["address"]) && !empty($_POST["address"])) {
-                if (isset($_POST["address"]) && !empty($_POST["address"])) {
-                    $status[] = array("id" => "address", "response" => "Helyes!", "class" => "valid");
-                } else {
-                    $status[] = array("id" => "address", "response" => "Adja meg a pontos címét!", "class" => "invalid");
-                    $error++;
-                }
-            }else {
+                $status[] = array("id" => "address", "response" => "", "class" => "valid");
+            } else {
                 $status[] = array("id" => "address", "response" => "Adja meg a pontos címét!", "class" => "invalid");
                 $error++;
             }
 
             //Szállítási kérdés ellenőrzése
             if (isset($_POST["transportation"]) && !empty($_POST["transportation"])) {
-                $status[] = array("id" => "transport", "response" => "Helyes!", "class" => "valid");
-                $status[] = array("id" => "transport1", "response" => "Helyes!", "class" => "valid");
+                $status[] = array("id" => "transport", "response" => "", "class" => "valid");
+                $status[] = array("id" => "transport1", "response" => "", "class" => "valid");
                 $status[] = array("id" => "transport2", "response" => "", "class" => "valid");
             } else {
                 $status[] = array("id" => "transport", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
@@ -286,10 +280,60 @@ class RegistrationPage extends CorePage
                 $error++;
             }
 
+            //Diéta kérdés ellenőrzése
+            if (isset($_POST["diet"]) && !empty($_POST["diet"])) {
+                $status[] = array("id" => "diet", "response" => "", "class" => "valid");
+                $status[] = array("id" => "diet1", "response" => "", "class" => "valid");
+                $status[] = array("id" => "diet2", "response" => "", "class" => "valid");
+
+                if($_POST["diet"]=="yes"){
+                    if(isset($_POST["diet-description"]) && !empty($_POST["diet-description"])){
+                    $status[] = array("id" => "diet-description", "response" => "", "class" => "valid");
+                    }else{
+                        $status[] = array("id" => "diet-description", "response" => "Kérjük, adja meg milyen diétát tart.", "class" => "invalid");
+                        $error++;
+                    }
+                }
+
+            } else {
+                $status[] = array("id" => "diet", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
+                $status[] = array("id" => "diet1", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
+                $status[] = array("id" => "diet2", "response" => "", "class" => "invalid");
+                $error++;
+            }
+
+            //Tematikus nap kérdés ellenőrzése
+            if (isset($_POST["tematic-days"]) && !empty($_POST["tematic-days"])) {
+                $status[] = array("id" => "tematic-days", "response" => "", "class" => "valid");
+                $status[] = array("id" => "tematic-days1", "response" => "", "class" => "valid");
+                $status[] = array("id" => "tematic-days2", "response" => "", "class" => "valid");
+
+                if($_POST["tematic-days"]=="yes"){
+                    if(isset($_POST["family-planning"]) || isset($_POST["child-development"])){
+                        $status[] = array("id" => "tematic-days-description", "response" => "", "class" => "valid");
+                        $status[] = array("id" => "family-planning", "response" => "", "class" => "valid");
+                        $status[] = array("id" => "child-development", "response" => "", "class" => "valid");
+                    }else{
+                        $status[] = array("id" => "family-planning", "response" => "", "class" => "invalid");
+                        $status[] = array("id" => "child-development", "response" => "", "class" => "invalid");
+                        $status[] = array("id" => "tematic-days-description", "response" => "Kérjük, válaszd ki, mely eseményeink érdekelnének.", "class" => "invalid");
+                        $error++;
+                    }
+                }
+                
+
+            } else {
+                $status[] = array("id" => "tematic-days", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
+                $status[] = array("id" => "tematic-days1", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
+                $status[] = array("id" => "tematic-days2", "response" => "", "class" => "invalid");
+                $error++;
+            }
+
+
             //OTP egészségpénztár kérdés ellenőrzése
             if (isset($_POST["otp-healthfund"]) && !empty($_POST["otp-healthfund"])) {
-                $status[] = array("id" => "otp-healthfund", "response" => "Helyes!", "class" => "valid");
-                $status[] = array("id" => "otp-healthfund1", "response" => "Helyes!", "class" => "valid");
+                $status[] = array("id" => "otp-healthfund", "response" => "", "class" => "valid");
+                $status[] = array("id" => "otp-healthfund1", "response" => "", "class" => "valid");
                 $status[] = array("id" => "otp-healthfund2", "response" => "", "class" => "valid");
             } else {
                 $status[] = array("id" => "otp-healthfund", "response" => "Válasszon a lehetőségek közül!", "class" => "invalid");
@@ -435,7 +479,7 @@ class RegistrationPage extends CorePage
 
             if($error==0){
                 $url = $this->registerFiFiPatient($_POST);
-                //$url = $this->registerGHCPatient($_POST);
+
             }
 
             
@@ -563,7 +607,6 @@ class RegistrationPage extends CorePage
 
             if($error==0){
                 $url = $this->registerASTPatient($_POST);
-                //$url = $this->registerGHCPatient($_POST);
             }
 
             
@@ -677,15 +720,45 @@ class RegistrationPage extends CorePage
             $data["otp-healthfund"] = 1;
         }else{
             $data["otp-healthfund"] = 0;
+        }
+
+        if($data["diet"]=="yes"){
+            $data["diet"] = 1;
+        }else{
+            $data["diet"] = 0;
+            $data["diet-description"] = "";
         } 
+
+        if($data["tematic-days"]=="yes"){
+            $data["tematic-days"] = 1;
+        }else{
+            $data["tematic-days"] = 0;
+        }
+
+        if(isset($data["family-planning"])){
+            $data["family-planning"] = 1;
+        }else{
+            $data["family-planning"] = 0;
+        }
+
+        if(isset($data["child-development"])){
+            $data["child-development"] = 1;
+        }else{
+            $data["child-development"] = 0;
+        }
+        
+        
 
         $pass=md5(date("Y-m-d H:is").$data["name"]."ghc");
         
         $q = sql_query("INSERT INTO felhasznalok 
-        SET cegid=?,nev=?,szuldatum=?,email=?,telefon=?,taj=?,regtime=?,irsz=?,varos=?,utca=?,validated=?,szallitas=?,otp_penztar=?,pass=?,torzsszam=?
+        SET cegid=?,nev=?,szuldatum=?,email=?,telefon=?,taj=?,regtime=?,irsz=?,
+            varos=?,utca=?,validated=?,szallitas=?,otp_penztar=?,dieta=?,dieta_description=?,
+            family_planning=?,children_development=?,pass=?,torzsszam=?
         ", array(
-            904, $data["name"], $data["birthdate"], $data["email"], $data["phone"], $data["taj"], date("Y-m-d H:i:s"), $data["zip-code"],
-            $data["city"], $data["address"], 1, $data["transportation"], $data["otp-healthfund"],$pass,$data["torzsszam"]
+            1403, $data["name"], $data["birthdate"], $data["email"], $data["phone"], $data["taj"], date("Y-m-d H:i:s"), $data["zip-code"],
+            $data["city"], $data["address"], 1, $data["transportation"], $data["otp-healthfund"],$data["diet"],$data["diet-description"],
+            $data["family-planning"],$data["child-development"],$pass,$data["torzsszam"]
         ));
 
         $id = sql_insert_id();
@@ -914,13 +987,14 @@ class RegistrationPage extends CorePage
         $maxBirthDate = date("Y-m-d",strtotime("Now - 18 years"));
 
             $html = "";
-            $html .= "<div class=\"container og-bootstrap\" id='og-bootstrap'>";
+            $html .= "<div class=\"container og-bootstrap\" id='og-bootstrap' style='color:#00368F !important'>";
             $html .= "   <form id='suzuki-ghc-registration-form' method='POST' enctype='multipart/form-data'>";
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
             $html .= "               <label for=\"torzsszam\" class=\"form-label\">Törzsszám:</label>";
-            $html .= "               <input type=\"text\" class=\"form-control\" id=\"torzsszam\" name=\"torzsszam\" value=\"\">";
+            $html .= "               <label for=\"taj\" class=\"form-label\">(A törzsszám 5 karakter hosszú, számsor. Pl.: 01234, ha az Öné rövidebb, egy nullával egészítse ki!)</label>";
+            $html .= "               <input type=\"text\" class=\"form-control\" id=\"torzsszam\" name=\"torzsszam\" placeholder=\"pl: 01234\" value=\"\">";
             $html .= "               <div id=\"validation-torzsszam\" class=\"valid-feedback\"></div>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
@@ -968,9 +1042,10 @@ class RegistrationPage extends CorePage
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
             $html .= "               <label for=\"phone\" class=\"form-label\">Telefonszám:</label>";
+            $html .= "               <label for=\"phone\" class=\"form-label\">Ha Szlovák számot kíván megadni, használja +421-et magyar szám esetében pedig a +36-ot.</label>";
             $html .= "               <div class=\"input-group\">";
             $html .= "               <span class=\"input-group-text\" id=\"phonePrepend\"><i class=\"fa-solid fa-phone\"></i></span>";
-            $html .= "               <input type=\"text\" class=\"form-control\" id=\"phone\" name=\"phone\" value=\"+36\" aria-describedby=\"\">";
+            $html .= "               <input type=\"text\" class=\"form-control\" id=\"phone\" name=\"phone\" placeholder=\"+36301234678\" aria-describedby=\"\">";
             $html .= "               <div id=\"validation-phone\" class=\"valid-feedback\"></div>";
             $html .= "               </div>";
             $html .= "           </div>";
@@ -1008,13 +1083,13 @@ class RegistrationPage extends CorePage
             $html .= "           <div class=\"col mb-3\">";
             $html .= "               <label for=\"transportation\" class=\"form-label fw-bold\">Szeretne szállítást kérni?</label>";
             $html .= "               <div class=\"form-check\">";
-            $html .= "                   <input class=\"form-check-input\" type=\"radio\" name=\"transportation\" id=\"transport1\" value=\"transport-required\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showTransportationDescription($(this).val())' type=\"radio\" name=\"transportation\" id=\"transport1\" value=\"transport-required\">";
             $html .= "                   <label class=\"form-check-label\" for=\"transport1\">";
             $html .= "                       Igen, kérek szállítást.";
             $html .= "                   </label>";
             $html .= "               </div>";
             $html .= "               <div class=\"form-check\">";
-            $html .= "                   <input class=\"form-check-input\" type=\"radio\" name=\"transportation\" id=\"transport2\" value=\"no-transport\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showTransportationDescription($(this).val())' type=\"radio\" name=\"transportation\" id=\"transport2\" value=\"no-transport\">";
             $html .= "                   <label class=\"form-check-label\" for=\"transport2\">";
             $html .= "                       Nem kérek szállítást.";
             $html .= "                   </label>";
@@ -1023,18 +1098,105 @@ class RegistrationPage extends CorePage
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";
+
+            $html .= "      <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "              <div class=\"d-none\" id='transportation-description-container'>";
+            $html .= "                  <label for=\"transportation-description\">Szállításról, a szűrés időpontja előtti napon, kollégáink telefonon tájékoztatják.</label>";
+            $html .= "              </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "               <label for=\"diet\" class=\"form-label fw-bold\">Tart-e valamilyen diétát? <br>(Vegán, Laktóz/glutén mentes, IR stb.)</label>";
+            $html .= "               <div class=\"form-check\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showDietDescription($(this).val())' type=\"radio\" name=\"diet\" id=\"diet1\" value=\"yes\">";
+            $html .= "                   <label class=\"form-check-label\" for=\"diet1\">";
+            $html .= "                       Igen.";
+            $html .= "                   </label>";
+            $html .= "               </div>";
+            $html .= "               <div class=\"form-check\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showDietDescription($(this).val())' type=\"radio\" name=\"diet\" id=\"diet2\" value=\"no\">";
+            $html .= "                   <label class=\"form-check-label\" for=\"diet2\">";
+            $html .= "                       Nem.";
+            $html .= "                   </label>";
+            $html .= "                   <div id=\"validation-diet\" class=\"valid-feedback\"></div>";
+            $html .= "               </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
+            $html .= "      <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "              <div class=\"form-floating d-none\" id='diet-description-container'>";
+            $html .= "                  <textarea class=\"form-control\" placeholder=\"Leave a comment here\" id=\"diet-description\" name=\"diet-description\"></textarea>";
+            $html .= "                  <label for=\"diet-description\">Milyen diétát tart?</label>";
+            $html .= "                  <div id=\"validation-diet-description\" class=\"valid-feedback\"></div>";
+            $html .= "              </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "               <label for=\"tematic-days\" class=\"form-label fw-bold\">Szeretne részt venni a családbarát szolgáltatásainkon? (Családtervezési, gyermfejlesztési tanácsadás)</label>";
+            $html .= "               <div class=\"form-check\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showTematicDaysDescription($(this).val())' type=\"radio\" name=\"tematic-days\" id=\"tematic-days1\" value=\"yes\">";
+            $html .= "                   <label class=\"form-check-label\" for=\"tematic-days1\">";
+            $html .= "                       Igen.";
+            $html .= "                   </label>";
+            $html .= "               </div>";
+            $html .= "               <div class=\"form-check\">";
+            $html .= "                   <input class=\"form-check-input\" onChange='showTematicDaysDescription($(this).val())' type=\"radio\" name=\"tematic-days\" id=\"tematic-days2\" value=\"no\">";
+            $html .= "                   <label class=\"form-check-label\" for=\"tematic-days2\">";
+            $html .= "                       Nem.";
+            $html .= "                   </label>";
+            $html .= "                   <div id=\"validation-tematic-days\" class=\"valid-feedback\"></div>";
+            $html .= "               </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
+            $html .= "      <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "              <div class=\"d-none\" id='tematic-days-description-container'>";
+            $html .= "                  <div class=\"form-check\">";
+            $html .= "                      <input class=\"form-check-input\" type=\"checkbox\" value=\"yes\" id=\"family-planning\" name=\"family-planning\">";
+            $html .= "                      <label class=\"form-check-label\" for=\"family-planning\">";
+            $html .= "                          Családtervezési tanácsadás";
+            $html .= "                      </label>";
+            $html .= "                      </div>";
+            $html .= "                      <div class=\"form-check\">";
+            $html .= "                      <input class=\"form-check-input\" type=\"checkbox\" value=\"yes\" id=\"child-development\" name=\"child-development\">";
+            $html .= "                      <label class=\"form-check-label\" for=\"child-development\">";
+            $html .= "                          Gyermekfejlesztés, konduktív pedagógia szolgáltatás";
+            $html .= "                      </label>";
+            $html .= "                  </div>";
+            $html .= "                  <div id=\"validation-tematic-days-description\" style='display:block !important' class=\"valid-feedback\"></div>";
+            $html .= "              </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
             $html .= "               <label for=\"otp-healthfund\" class=\"form-label fw-bold\">Rendelkezik OTP egészségpénztári tagsággal?</label>";
             $html .= "               <div class=\"form-check\">";
-            $html .= "                   <input class=\"form-check-input\" type=\"radio\" name=\"otp-healthfund\" id=\"otp-healthfund1\" value=\"yes\">";
+            $html .= "                   <input class=\"form-check-input\" type=\"radio\" onChange='showOTPHealthFundDescription($(this).val())' name=\"otp-healthfund\" id=\"otp-healthfund1\" value=\"yes\">";
             $html .= "                   <label class=\"form-check-label\" for=\"otp-healthfund1\">";
             $html .= "                       Igen, rendelkezem.";
             $html .= "                   </label>";
             $html .= "               </div>";
             $html .= "               <div class=\"form-check\">";
-            $html .= "                   <input class=\"form-check-input\" type=\"radio\" name=\"otp-healthfund\" id=\"otp-healthfund2\" value=\"no\">";
+            $html .= "                   <input class=\"form-check-input\" type=\"radio\" onChange='showOTPHealthFundDescription($(this).val())' name=\"otp-healthfund\" id=\"otp-healthfund2\" value=\"no\">";
             $html .= "                   <label class=\"form-check-label\" for=\"otp-healthfund2\">";
             $html .= "                       Nem rendelkezem.";
             $html .= "                   </label>";
@@ -1043,6 +1205,17 @@ class RegistrationPage extends CorePage
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";
+
+            $html .= "      <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "              <div class=\"d-none\" id='otp-healthfund-description-container'>";
+            $html .= "                  <label for=\"otp-healthfund-description\">A szűréshez OTP egészségpénztári tagság szükséges. A szűrés napján a Suzuki Arénában, segítünk belépni az egészségpénztárba.</label>";
+            $html .= "              </div>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
+
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
@@ -1058,7 +1231,7 @@ class RegistrationPage extends CorePage
             $html .= "                      Az <a target=\"_blank\" data-bs-toggle=\"collapse\" href=\"#gdpr-collapse\" aria-expanded=\"false\" aria-controls=\"gdpr-collapse\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok.";
             $html .= "                  </label>";
             $html .= "              </div>";
-            $html .= "               <div id=\"validation-aszf\" class=\"valid-feedback\"></div>";
+            $html .= "               <div id=\"validation-aszf\" style='display:block !important' class=\"valid-feedback\"></div>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";

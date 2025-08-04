@@ -71,7 +71,7 @@ class CorePage {
 
             if(CompanyService::isSuzukiGHC()){
                 //$img = "<img src=\"https://suzuki.hu/app/webroot/landing_page/img/logo_double_v2.jpg\" height=\"60\"><img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" height=\"60\">";
-                $style="style=\"text-align:center;font-family:SuzukiProRegular !important\"";
+                $style="style=\"text-align:center;font-family:SuzukiProRegular !important;color:#00368F\"";
                 //$text = trim("{$text}<br><span style=\"display:block;font-size:16px;margin-top:20px;font-family:SuzukiProBold;font-size:16px;\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS</span>");
             }
 

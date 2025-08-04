@@ -1327,8 +1327,9 @@ function doResSubmit() {
     });
 });*/
 
-$(document).on("focus", "#suzuki-ghc-registration-form input", function(){
+$(document).on("focus", "#suzuki-ghc-registration-form input, #suzuki-ghc-registration-form textarea", function(){
     var id = $(this).attr("id");
+    console.log(id);
     var classes = ["is-valid","is-invalid","invalid-feedback","valid-feedback"];
     $(classes).each(function(index1,value){
         $("#"+id).removeClass(value);
@@ -1640,3 +1641,42 @@ function showDietDescription(option){
         $("#diet-description-container").addClass("d-none");
     }
 }
+
+function showTransportationDescription(option){
+    if(option=="transport-required"){
+        $("#transportation-description-container").addClass("d-block");
+        $("#transportation-description-container").removeClass("d-none");
+    }
+
+    if(option=="no-transport"){
+        $("#transportation-description-container").removeClass("d-block");
+        $("#transportation-description-container").addClass("d-none");
+    }
+}
+
+function showTematicDaysDescription(option){
+    if(option=="yes"){
+        $("#tematic-days-description-container").addClass("d-block");
+        $("#tematic-days-description-container").removeClass("d-none");
+    }
+
+    if(option=="no"){
+        $("#tematic-days-description-container").removeClass("d-block");
+        $("#tematic-days-description-container").addClass("d-none");
+    }
+}
+
+
+function showOTPHealthFundDescription(option){
+    if(option=="no"){
+        $("#otp-healthfund-description-container").addClass("d-block");
+        $("#otp-healthfund-description-container").removeClass("d-none");
+    }
+
+    if(option=="yes"){
+        $("#otp-healthfund-description-container").removeClass("d-block");
+        $("#otp-healthfund-description-container").addClass("d-none");
+    }
+}
+
+

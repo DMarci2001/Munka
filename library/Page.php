@@ -187,7 +187,10 @@ class Page
                 if(CompanyService::isFiFi()){
                     $html .= "<a class='toplink' href='https://{$_SESSION["helyszindata"]["webshop_alias"]}.hungariamed.hu'>Webshop</a>";
                 }else{
-                    $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
+                    if(!companyService::isSuzukiGHC()){
+                        $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
+                    }
+                    
                 }
                 
                 if ($_SESSION["helyszindata"]["web_fogleu"] == 1) {
@@ -256,7 +259,7 @@ class Page
         $html .= "<div class='{$class}'>";
 
         $html .= "<div style='float:left;margin:0px 40px 10px 0px;'>" . Booking_Constants::FOOTER_ADDRESS_PARAM . "</div>";
-        $html .= "<div style='float:left;margin:0px 10px 10px 0px;'>" . Booking_Constants::FOOTER_CONTACT_PARAM . "</div>";
+        //$html .= "<div style='float:left;margin:0px 10px 10px 0px;'>" . Booking_Constants::FOOTER_CONTACT_PARAM . "</div>";
         $html .= "<br clear='all'/>";
 
         $html .= "&copy; " . date("Y") . " " . Booking_Constants::FOOTER_COPYRIGHT;
@@ -285,9 +288,11 @@ class Page
         //$html .= "           <div class=\"col-md\"></div>";
         $html .= "           <div class=\"col mb-3 text-center\">";
         $html .= "              <img src=\"https://uj.hungariamed.hu/assets/hmm_logo_nagy.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
-        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/uj_ghc_korlogo_transparent.png\" width=\"150px\" style=\"margin:10px\">";
-        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_horizontal.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
-        $html .= "              <div style=\"font-family:SuzukiProBold;font-size:16px\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS...</div>";
+        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/ghc_logo_2025.png\" width=\"150px\" style=\"margin:10px\">";
+        
+        $html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/Signature_Horizontal_RGB_PNG_toka_2502.png\" width=\"170px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        //$html .= "              <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/suzuki_horizontal.png\" width=\"150px\" class=\"d-none d-md-inline\" style=\"margin:10px\">";
+        $html .= "              <div style=\"font-family:SuzukiProBold;font-size:16px;color:#00368F\">Suzuki EGÉSZSÉGÚT, az érezhető TÖRŐDÉS...</div>";
         $html .= "           </div>";
         //$html .= "           <div class=\"col-md\"></div>";
         $html .= "       </div>";

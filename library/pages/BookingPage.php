@@ -1045,6 +1045,14 @@ class BookingPage extends CorePage
                 $html .= "      <p style=\"font-size:18px;color:#00368F\"><strong>Üdvözöljük a Suzuki GHC szűrés - online regisztrációs felületén.</strong></p>";
                 $html .= "      <p style=\"font-size:20px;color:#DE0039\"><strong>2025-ben megújúlt tartalommal térünk vissza.</strong></p>"; // a résztvevő Hölgyek számára és új szabadidős programokkal várjuk Önöket!
                 $html .= "      <p style=\"font-size:14px\">Jelentkezését a szeptemberi szűrésre a \"Regisztráció\" gombra kattintva adhatja le. Az időpontfoglalás augusztustól indul, melyről e-mailben és SMS-ben értesítjük Önt.</p>";
+                
+                $html .= "      <p style=\"font-size:14px;text-align:left;margin-bottom:0px\">Keresse kollégáinkat bizalommal:</p>";
+                $html .= "      <ul style=\"margin-left: 10px;text-align:left\">";
+                $html .= "          <li style=\"list-style: disc\"><span  style='font-size:14px'>Suzuki - Teberi Andrea: +3630-122-9084</li>";
+                $html .= "          <li style=\"list-style: disc\"><span style='font-size:14px'>Suzuki - Balogh Miklós: +3620-587-8696</li>";
+                $html .= "          <li style=\"list-style: disc\"><span style='font-size:14px'>Hungária Med-M - Szabó Melinda: +3670-779-9485</li>";
+                $html .= "      </ul>";
+                
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-md-3\"></div>";
                 $html .= "</div>";
@@ -1127,11 +1135,11 @@ class BookingPage extends CorePage
                 //$html .= "      <hr></hr>";
                 //$html .= "      <p><strong>Javaslat:</strong> </p>";
 
-                $html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Választható kiegészítő vizsgálatok:</strong></p>";
-                $html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
-                $html .= "          <li style=\"list-style: disc\">Vicardio- Szívstressz mérés</li>";
-                $html .= "          <li style=\"list-style: disc\">Csontsűrűség mérés</li>";
-                $html .= "      </ul>";
+                //$html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Választható kiegészítő vizsgálatok:</strong></p>";
+                //$html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
+                //$html .= "          <li style=\"list-style: disc\">Vicardio- Szívstressz mérés</li>";
+                //$html .= "          <li style=\"list-style: disc\">Csontsűrűség mérés</li>";
+                //$html .= "      </ul>";
 
                 $html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Családbarát szolgáltatásaink:</strong></p>";
                 $html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
@@ -1155,32 +1163,35 @@ class BookingPage extends CorePage
                 $html .= "      <p style='font-size:20px;text-align:center;color:#DE0039'><strong>Nyereményjáték</strong> </p>";
                 $html .= "      <p style='text-align:center;color:#DE0039'><strong><span style='text-decoration:underline'>Minden résztvevő között</span> értékes nyereményeket sorsolunk ki</strong> </p>";
                 //$html .= "      <p style='text-align:center;color:#00368F'><strong>A résztvevők között nyereményeket sorsolunk ki</strong> </p>";
-                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>1. helyezett</strong></p>";
-                $html .= "      <p style='text-align:center;color:#00368F'>";
-                $html .= "          <strong>2 db</strong> (1 férfi, 1 női) <strong>Neuzer</strong> gyártmányú <strong>elektromos kerékpár</strong>";
-                $html .= "      </p>";
+                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>Fődíj</strong></p>";
 
                 $html .= "      <div class=\"col mb-3 text-center\">";
                 $html .= "          <div class='row'>";
                 $html .= "                  <div class='col'><img src='https://{$_SERVER["HTTP_HOST"]}/images/neuzer-man.png'></div>";
                 $html .= "                  <div class='col'><img src='https://{$_SERVER["HTTP_HOST"]}/images/neuzer-woman.png'></div>";
                 $html .= "          </div>";
+
+                $html .= "      <p style='text-align:center;color:#00368F'>";
+                $html .= "          <strong>2 db</strong> (1 férfi, 1 női) <strong>Neuzer</strong> gyártmányú <strong>elektromos kerékpár</strong>";
+                $html .= "      </p>";
                 
                 //$html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/neuzer_nyeremenyjatek.png\" width=\"450px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
-                $html .= "      </div>";
-                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>2. helyezett</strong></p>";
-                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> csúcskategóriás <strong>vérnyomásmérő</strong> készülék</p>";
+                $html .= "      </div><br>";
+                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>További nyeremények</strong></p>";
+                
 
                 $html .= "      <div class=\"col mb-3 text-center\">";             
                 $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/nyeremenyjatek2.png\" width=\"200px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
                 $html .= "      </div>";
+                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> csúcskategóriás <strong>vérnyomásmérő</strong> készülék</p>";
 
-                $html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>3. helyezett</strong></p>";
-                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> gyümölcskosár</p>";
+                //$html .= "      <p style='font-size:18px;text-align:center;color:#DE0039'><strong>3. helyezett</strong></p>";
+                
 
                 $html .= "      <div class=\"col mb-3 text-center\">";             
                 $html .= "          <img src=\"https://{$_SERVER["HTTP_HOST"]}/images/nyeremenyjatek3.png\" width=\"250px\"  style=\"margin:10px\">"; //class=\"d-none d-md-inline\"
                 $html .= "      </div>";
+                $html .= "      <p style='text-align:center;color:#00368F'><strong>2 db</strong> gyümölcskosár</p>";
 
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-md-3\"></div>";

@@ -12,6 +12,10 @@ class LoginPage extends CorePage {
         $_POST = $this->utils->sanitize_array($_POST);
         $_GET  = $this->utils->sanitize_array($_GET);
 
+        if(CompanyService::isSuzukiGHC()){
+            header("location:index.php");
+        }
+
         if($_SERVER["HTTP_HOST"]=="marciteszt.hungariamed.hu"){
             $this->developMode = true;
         }
@@ -29,7 +33,6 @@ class LoginPage extends CorePage {
         if(isset($_POST["sendsms"])){
             if($result = sql_fetch_array(sql_query("SELECT *,UNIX_TIMESTAMP()-UNIX_TIMESTAMP(rkoddatum) as rkodsec FROM felhasznalok WHERE taj=? AND cegid=?",array($_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 
-
                 //kód generálása és kiküldése:
                 $rn = rand(11000, 98000);
                 sql_query("update felhasznalok set rkod=?,rkoddatum=now() where id=?",array($rn, $result["id"]));

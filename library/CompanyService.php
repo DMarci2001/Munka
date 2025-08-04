@@ -40,7 +40,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="suzuki-menedzserszures";
+            $d="ghc";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -253,14 +253,14 @@ V: 1.0 1.0 .    KV: Cs IV
     ];
 
     public static function fesztivalCompanyIds():array {
-        return [138, 275, 261, 318, 322, 639, 285, 286, 647, 632, 635, 670];
+        return [138, 275, 261, 318, 322, 639, 285, 286, 647, 632, 635, 670, 1406];
     }
 
     public static function isFesztivalCompany($companyId = 0):bool {
         if ($companyId != 0) {
             return in_array($companyId, self::fesztivalCompanyIds()) && Booking_Constants::SQL_DB == "hungariamed";
         }
-        return $_SESSION["helyszindata"]["domain"] == "annagora-gastro" || $_SESSION["helyszindata"]["domain"] == "raga2000" || $_SESSION["helyszindata"]["domain"] == "aquapark-balatonfured" || $_SESSION["helyszindata"]["domain"] == "aquaticdipo" || $_SESSION["helyszindata"]["domain"] == "crewnmore" || $_SESSION["helyszindata"]["domain"] == "festfree" || $_SESSION["helyszindata"]["domain"] == "monofactura" || $_SESSION["helyszindata"]["domain"] == "etalon" || $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew";
+        return $_SESSION["helyszindata"]["domain"] == "annagora-gastro" || $_SESSION["helyszindata"]["domain"] == "raga2000" || $_SESSION["helyszindata"]["domain"] == "aquapark-balatonfured" || $_SESSION["helyszindata"]["domain"] == "aquaticdipo" || $_SESSION["helyszindata"]["domain"] == "crewnmore" || $_SESSION["helyszindata"]["domain"] == "festfree" || $_SESSION["helyszindata"]["domain"] == "monofactura" || $_SESSION["helyszindata"]["domain"] == "etalon" || $_SESSION["helyszindata"]["domain"] == "fesztivalonkentes" || $_SESSION["helyszindata"]["domain"] == "szigetideny" || $_SESSION["helyszindata"]["domain"] == "tranzorg" || $_SESSION["helyszindata"]["domain"] == "szigetegyeb" || $_SESSION["helyszindata"]["domain"] == "colorcrew" || $_SESSION["helyszindata"]["domain"] == "evolmed";
     }
 
     public function fillMAKPaciensData($data) {
