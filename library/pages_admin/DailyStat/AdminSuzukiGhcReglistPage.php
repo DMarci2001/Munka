@@ -45,15 +45,17 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $array = sql_query("SELECT felh.nev as \"Teljesnév\",felh.taj as \"TAJ\",felh.torzsszam as \"Törzszám\",sz.megnev as \"Csomag\",
                                    felh.email as \"E-mail\",felh.telefon as \"Telefonszám\",REPLACE(felh.szuldatum,\"-\",\".\") as \"Szül. dátum\",
                                    CONCAT(felh.irsz,\" \",felh.varos,\", \",felh.utca) as \"Lakcím\",
-                                   REPLACE(felh.regtime,\"-\",\".\") as \"Regisztráció\",
+                                   REPLACE(felh.regtime,\"-\",\".\") as \"Regisztráció\",dieta_description as \"Diéta\",
                                    if(felh.szallitas=1,\"Kér szállítást\",\"Nem kér szállítást\") as \"Szállítás\",
                                    if(felh.otp_penztar=1,\"Van\",\"Nincs\") as \"OTP egészségpénztár\",
+                                   if(felh.family_planning=1,\"Részt vesz\",\"\") as \"Családtervezés\",
+                                   if(felh.children_development=1,\"Részt vesz\",\"\") as \"Gyermekfejlesztés\",
                                    GROUP_CONCAT(REPLACE(fogl.datum,\"-\",\".\")) AS \"Időpont\"
                             FROM felhasznalok felh
                             LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
-                            LEFT JOIN foglalasok fogl ON fogl.taj=felh.taj AND fogl.cegid=904 AND fogl.szurestipusid IN(216,217) AND INSTR(fogl.datum,\"2024-10\")
-                            WHERE felh.cegid in(904) AND felh.id NOT IN(119511,119822)
+                            LEFT JOIN foglalasok fogl ON fogl.taj=felh.taj AND fogl.cegid=1403 AND fogl.szurestipusid IN(216,217) AND INSTR(fogl.datum,\"2025-09\")
+                            WHERE felh.cegid in(1403) AND felh.id NOT IN(119511,119822)
                             GROUP BY felh.id
                             ORDER BY felh.nev ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -83,7 +85,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html .= "</div>";
         
         //Itt kéne az összes napot kipakolni vhogy
-        $html .= $this->showDailyStatus();
+        //$html .= $this->showDailyStatus();
         
         $html .= "<table class=\"table table-striped\">";
         $html .= "   <thead>";
@@ -97,6 +99,9 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html .= "       <th class=\"text-center\" scope=\"col\">Lakcím</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">OTP egészségpénztár</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Szállítás</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Diéta</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Családtervezés</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Gyermekfejlesztés</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Csomag</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Regisztráció</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Időpont</th>";
@@ -115,6 +120,9 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
             $html .= "<td class=\"text-center\">{$value["Lakcím"]}</td>";
             $html .= "<td class=\"text-center\">{$value["OTP egészségpénztár"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Szállítás"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Diéta"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Családtervezés"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Gyermekfejlesztés"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Csomag"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Regisztráció"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Időpont"]}</td>";
