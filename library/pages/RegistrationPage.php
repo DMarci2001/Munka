@@ -1145,7 +1145,7 @@ class RegistrationPage extends CorePage
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
-            $html .= "               <label for=\"tematic-days\" class=\"form-label fw-bold\">Szeretne részt venni a családbarát szolgáltatásainkon? (Családtervezési, gyermfejlesztési tanácsadás)</label>";
+            $html .= "               <label for=\"tematic-days\" class=\"form-label fw-bold\">Szeretne részt venni a családbarát szolgáltatásainkon? (Családtervezési, gyermekfejlesztési tanácsadás)</label>";
             $html .= "               <div class=\"form-check\">";
             $html .= "                   <input class=\"form-check-input\" onChange='showTematicDaysDescription($(this).val())' type=\"radio\" name=\"tematic-days\" id=\"tematic-days1\" value=\"yes\">";
             $html .= "                   <label class=\"form-check-label\" for=\"tematic-days1\">";

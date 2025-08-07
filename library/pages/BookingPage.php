@@ -1143,9 +1143,10 @@ class BookingPage extends CorePage
 
                 $html .= "      <p style='color:#00368F;text-align:center;margin-bottom:0px'><strong>Családbarát szolgáltatásaink:</strong></p>";
                 $html .= "      <ul style=\"margin-left: 10px;color:#00368F\">";
-                $html .= "          <li style=\"list-style: disc\">Családtervezési tanácsadás</li>";
-                $html .= "          <li style=\"list-style: disc\">Gyermekfejlesztés, konduktív pedagógia szolgáltatás</li>";
+                $html .= "          <li style=\"list-style: disc\">Családtervezési tanácsadás (tudatos előkészítését és a fogamzásra való felkészülést jelenti)</li>";
+                $html .= "          <li style=\"list-style: disc\">Gyermekfejlesztés, konduktív pedagógia szolgáltatás (3-6 éves és 6-9 éves gyerekek részére)</li>";
                 $html .= "      </ul>";
+                $html .= "      <p style='text-align:center;color:#00368F;'>További részletekkel a családbarát szolgáltatásiankról <a target='_blank' href='images/SUZUKI_GHC_2025_COMP-DEV-PROGRAM.pdf'>kattintson ide</a></p>";
                 //$html .= "      <p><strong>További tumormarkerrel kiegészített vérvételi csomag hölgyek részére:</strong><br>";
                 //$html .= "      A <strong>CA 15-3</strong> (Cancer Antigen 15-3) elsősorban az <strong>emlőrák</strong> (mellrák) <strong>tumormarkerével</strong> egészítenénk ki a ";
                 //$html .= "      szűrési laboratóriumi csomagot.</p>";
