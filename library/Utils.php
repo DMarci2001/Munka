@@ -1908,4 +1908,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         return $html;
     }
+
+    public function ghcNoiCsomagKiegeszites($checkForTypes){
+        if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+        {
+            //Emlő ultrahang
+            if(strtotime($_SESSION["user"]["szuldatum"])<strtotime("1984-12-31")){
+            $checkForTypes[] = 112;
+            }
+
+            //Mammográfia
+            if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1985-12-31")){
+                $checkForTypes[] = 292;
+            }
+
+            //Ha 1985.01.01~1985.12.31 között született megkapja mind2 csomagot xd
+            //Mindkettő
+            if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1984-12-31")&&strtotime($_SESSION["user"]["szuldatum"])<strtotime("1986-01-01")){
+                $checkForTypes[] = 112;
+                $checkForTypes[] = 292;
+            }    
+        }
+        return $checkForTypes;
+    }
 }

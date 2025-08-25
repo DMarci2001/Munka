@@ -187,9 +187,9 @@ class Page
                 if(CompanyService::isFiFi()){
                     $html .= "<a class='toplink' href='https://{$_SESSION["helyszindata"]["webshop_alias"]}.hungariamed.hu'>Webshop</a>";
                 }else{
-                    if(!companyService::isSuzukiGHC()){
+                    //if(!companyService::isSuzukiGHC()){
                         $html .= "<a class='toplink' href='index.php?page=login'>" . ucfirst($webText["bejelentkezes"]) . "</a>";
-                    }
+                    //}
                     
                 }
                 

@@ -210,10 +210,9 @@ class BookingService
         }
 
         //echo "hét: {$this->honnan}<br>";
-        //Valahogy sikerült elcsesznem a foglalható időpont keresést, szval bedrótozom a ghc-t okt 2.-i héttel :P
         if(CompanyService::isSuzukiGHC()){
             $thisMonday = strtotime("this week monday");
-            $targetMonday = strtotime("2024-09-30");
+            $targetMonday = strtotime("2025-09-15");
             $diffvalue = ($targetMonday-$thisMonday);
             $diffdays = ($diffvalue/86400);
 
@@ -242,38 +241,40 @@ class BookingService
             if(CompanyService::isSuzukiGHC()){
                 $shifts = array(
                     "A-A-SE"=>array(
-                        1=>array("start"=>"7:0","end"=>"12:0"),
-                        2=>array("start"=>"7:0","end"=>"12:0"),
-                        3=>array("start"=>"7:0","end"=>"12:0"),
-                        4=>array("start"=>"7:0","end"=>"12:0"),
-                        5=>array("start"=>"7:0","end"=>"12:0"),
-                    ),
-                    "A-A-ST"=>array(
-                        1=>array("start"=>null,"end"=>null),
-                        2=>array("start"=>null,"end"=>null),
-                        3=>array("start"=>null,"end"=>null),
-                        4=>array("start"=>null,"end"=>null),
-                        5=>array("start"=>null,"end"=>null),
-                    ),
-                    "A-B-SE"=>array(
+                        //frissítve 2025
                         1=>array("start"=>null,"end"=>null),
                         2=>array("start"=>null,"end"=>null),
                         3=>array("start"=>null,"end"=>null),
                         4=>array("start"=>"13:0","end"=>"18:0"),
                         5=>array("start"=>null,"end"=>null),
                     ),
-                    "A-B-ST"=>array(
+                    "A-A-ST"=>array(
                         1=>array("start"=>"15:0","end"=>"18:0"),
                         2=>array("start"=>"15:0","end"=>"18:0"),
                         3=>array("start"=>"15:0","end"=>"18:0"),
                         4=>array("start"=>"15:0","end"=>"18:0"),
                         5=>array("start"=>"15:0","end"=>"18:0"),
                     ),
+                    "A-B-SE"=>array(
+                        //frissítve 2025
+                        1=>array("start"=>"7:0","end"=>"12:0"),
+                        2=>array("start"=>"7:0","end"=>"12:0"),
+                        3=>array("start"=>"7:0","end"=>"12:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
+                        5=>array("start"=>"7:0","end"=>"12:0"),
+                    ),
+                    "A-B-ST"=>array(
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>null,"end"=>null),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
                     "A-O-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
                         2=>array("start"=>"7:0","end"=>"12:0"),
                         3=>array("start"=>"7:0","end"=>"12:0"),
-                        4=>array("start"=>"7:0","end"=>"18:0"),
+                        4=>array("start"=>"7:0","end"=>"12:0"),
                         5=>array("start"=>"7:0","end"=>"12:0"),
                     ),
                     "A-O-ST"=>array(
@@ -284,46 +285,48 @@ class BookingService
                         5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                     "A-D-SE"=>array(
-                        1=>array("start"=>"7:0","end"=>"18:0"),
-                        2=>array("start"=>"7:0","end"=>"18:0"),
-                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        1=>array("start"=>"7:0","end"=>"13:0"),
+                        2=>array("start"=>"7:0","end"=>"13:0"),
+                        3=>array("start"=>"7:0","end"=>"13:0"),
                         4=>array("start"=>"7:0","end"=>"18:0"),
-                        5=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"13:0"),
                     ),
                     "A-D-ST"=>array(
-                        1=>array("start"=>"7:0","end"=>"18:0"),
-                        2=>array("start"=>"7:0","end"=>"18:0"),
-                        3=>array("start"=>"7:0","end"=>"18:0"),
-                        4=>array("start"=>"7:0","end"=>"18:0"),
-                        5=>array("start"=>"7:0","end"=>"18:0"),
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                     "B-A-SE"=>array(
-                        1=>array("start"=>null,"end"=>null),
-                        2=>array("start"=>null,"end"=>null),
-                        3=>array("start"=>null,"end"=>null),
-                        4=>array("start"=>"13:0","end"=>"18:0"),
-                        5=>array("start"=>null,"end"=>null),
-                    ),
-                    "B-A-ST"=>array(
-                        1=>array("start"=>"15:0","end"=>"18:0"),
-                        2=>array("start"=>"15:0","end"=>"18:0"),
-                        3=>array("start"=>"15:0","end"=>"18:0"),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>"15:0","end"=>"18:0"),
-                    ),
-                    "B-B-SE"=>array(
+                        //Frissítve 2025
                         1=>array("start"=>"7:0","end"=>"12:0"),
                         2=>array("start"=>"7:0","end"=>"12:0"),
                         3=>array("start"=>"7:0","end"=>"12:0"),
                         4=>array("start"=>"7:0","end"=>"12:0"),
                         5=>array("start"=>"7:0","end"=>"12:0"),
                     ),
-                    "B-B-ST"=>array(
+                    "B-A-ST"=>array(
                         1=>array("start"=>null,"end"=>null),
                         2=>array("start"=>null,"end"=>null),
                         3=>array("start"=>null,"end"=>null),
                         4=>array("start"=>null,"end"=>null),
                         5=>array("start"=>null,"end"=>null),
+                    ),
+                    "B-B-SE"=>array(
+                        //Frissítve 2025
+                        1=>array("start"=>null,"end"=>null),
+                        2=>array("start"=>null,"end"=>null),
+                        3=>array("start"=>null,"end"=>null),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>null,"end"=>null),
+                    ),
+                    "B-B-ST"=>array(
+                        1=>array("start"=>"15:0","end"=>"18:0"),
+                        2=>array("start"=>"15:0","end"=>"18:0"),
+                        3=>array("start"=>"15:0","end"=>"18:0"),
+                        4=>array("start"=>"15:0","end"=>"18:0"),
+                        5=>array("start"=>"15:0","end"=>"18:0"),
                     ),
                     "B-O-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
@@ -340,20 +343,73 @@ class BookingService
                         5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                     "B-D-SE"=>array(
-                        1=>array("start"=>"7:0","end"=>"18:0"),
-                        2=>array("start"=>"7:0","end"=>"18:0"),
-                        3=>array("start"=>"7:0","end"=>"18:0"),
+                        1=>array("start"=>"7:0","end"=>"13:0"),
+                        2=>array("start"=>"7:0","end"=>"13:0"),
+                        3=>array("start"=>"7:0","end"=>"13:0"),
                         4=>array("start"=>"7:0","end"=>"18:0"),
-                        5=>array("start"=>"7:0","end"=>"18:0"),
+                        5=>array("start"=>"7:0","end"=>"13:0"),
                     ),
                     "B-D-ST"=>array(
-                        1=>array("start"=>"7:0","end"=>"18:0"),
-                        2=>array("start"=>"7:0","end"=>"18:0"),
-                        3=>array("start"=>"7:0","end"=>"18:0"),
-                        4=>array("start"=>"7:0","end"=>"18:0"),
-                        5=>array("start"=>"7:0","end"=>"18:0"),
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                 );
+
+                /**
+                 * Női dolgozók részére extra sávok kellenek O.o...
+                 * A délelőtti sávon kell nekik időpontot biztosítani óránként maximum 4 helyet.
+                */
+                if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+                {  
+
+                    //Ez kvázi egy korlátozás, ezért csak akkor alkalmazom, hogyha tényleg kéri a vizsgálatot a dolgozó az emlő/mammót
+                    if(isset($_GET["szurestipus292"]) || isset($_GET["szurestipus112"])){
+
+                        $shifts["A-A-ST"][1] = array("start"=>"15:0","end"=>"18:0");
+                        $shifts["A-A-ST"][2] = array("start"=>"15:0","end"=>"18:0");
+                        $shifts["A-A-ST"][3] = array("start"=>"15:0","end"=>"18:0");
+                        $shifts["A-A-ST"][4] = array("start"=>"15:0","end"=>"18:0");
+                        $shifts["A-A-ST"][5] = array("start"=>"15:0","end"=>"18:0");
+
+                        $shifts["A-B-ST"][1] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["A-B-ST"][2] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["A-B-ST"][3] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["A-B-ST"][4] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["A-B-ST"][5] = array("start"=>"7:0","end"=>"12:0");
+
+                        $shifts["B-A-ST"][1] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["B-A-ST"][2] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["B-A-ST"][3] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["B-A-ST"][4] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["B-A-ST"][5] = array("start"=>"7:0","end"=>"12:0");
+
+                        $shifts["A-O-ST"][1] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["A-O-ST"][2] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["A-O-ST"][3] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["A-O-ST"][4] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["A-O-ST"][5] = array("start"=>"13:0","end"=>"15:0");
+
+                        $shifts["B-O-ST"][1] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["B-O-ST"][2] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["B-O-ST"][3] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["B-O-ST"][4] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["B-O-ST"][5] = array("start"=>"13:0","end"=>"15:0");
+                    }
+                      
+                    
+
+                    
+
+                    //$shifts["B-B-ST"][1] = array("start"=>"7:0","end"=>"18:0");
+                    //$shifts["B-B-ST"][2] = array("start"=>"7:0","end"=>"18:0");
+                    //$shifts["B-B-ST"][3] = array("start"=>"7:0","end"=>"18:0");
+                    //$shifts["B-B-ST"][4] = array("start"=>"7:0","end"=>"18:0");
+                    //$shifts["B-B-ST"][5] = array("start"=>"7:0","end"=>"18:0");
+                }
+                
 
                 //Default paraméterek
                 $week = null;
@@ -361,10 +417,10 @@ class BookingService
                 $_prebeginMinute = "";
 
                 //Hétválasztás (A hét, B hét)
-                if(in_array(date("W",strtotime($nap)),[41])){
+                if(in_array(date("W",strtotime($nap)),[38,40])){
                     $week = "A";
                 }
-                if(in_array(date("W",strtotime($nap)),[40,42])){
+                if(in_array(date("W",strtotime($nap)),[39])){
                     $week = "B";
                 }
 
@@ -377,7 +433,7 @@ class BookingService
                     //echo $beginHour." - ".$beginMinute."<br>";
                     $startIdo = explode(":",$shifts["{$week}-{$_GET["muszak"]}-{$csomag}"][date("w",strtotime($nap))]["start"]);
                     $endIdo   = explode(":",$shifts["{$week}-{$_GET["muszak"]}-{$csomag}"][date("w",strtotime($nap))]["end"]);
-                    
+
 
                     //Definiálom a kezdő és vég idő értékeket (kezdő nullákat levágom, nehogy furán viselkedjen az mktime fügvény)
                     if(count($startIdo)>1){
@@ -393,6 +449,7 @@ class BookingService
                     //echo $pre_beginHour." - ".$_prebeginMinute."<br>";
                     //echo $week."-{$_GET["muszak"]}-{$csomag}<br>";
                 }
+
                 
            }
             
@@ -467,7 +524,9 @@ class BookingService
                     //Megvizsgálom lett-e predefiniált beosztás kiválasztva ha igen, felül írom a kezdő értékeket vele
                     if(CompanyService::isSuzukiGHC()){
                         if($pre_beginHour!="" && $_prebeginMinute!=""){
+                            //echo $beginHour."<".$pre_beginHour."<br>";
                             if($beginHour<$pre_beginHour){
+                                
                                 $beginHour = $pre_beginHour;
                                 $beginMinute = $_prebeginMinute;
                             }
@@ -475,6 +534,8 @@ class BookingService
                             continue;
                         }
                     }
+
+                    //echo $beginHour.":".$beginMinute."<br>";
                     
 
                     if ($orvosData["pecsetszam"] == "temp") {
@@ -483,11 +544,12 @@ class BookingService
 
                     $sectionHTML = "";
                     if ($beoKey != 0) {
-                        $sectionHTML .= "<div style='width:70px;border-top:1px solid #888;padding-top:5px;margin:8px auto 0px auto;'>";
+                        $sectionHTML .= "<div style='width:70px;border-top:1px solid #888;padding-top:5px;margin:8px auto 0px auto;'></div>";
                     } else {
                         $sectionHTML .= "<div>";
                     }
 
+                    $currentora="";
                     while (true) {
                         $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $binterval, 0, date("m"), date("d"), date("Y")));
                         $buttonTitle = "";
@@ -496,20 +558,23 @@ class BookingService
                         $buttonStyle = "";
                         $beoData = [];
 
+                        
+
+                        //Ez most nem tudom mit csinál egész pontosan xd (2025)
                         if(companyService::isSuzukiGHC()){
                             if($pre_EndHour!="" && $pre_EndMinute!=""){
                                 $pre_EndHour = $endIdo[0];
                                 $pre_EndMinute = $endIdo[1];
                                 $overtime = strtotime($pre_EndHour.":".$pre_EndMinute);
                                 //echo "Current: {$ora}(".strtotime($ora)."<br>";
-                                //echo "End: ".$overtime."(".strtotime($pre_EndHour.":".$pre_EndMinute).")<br><br>";
+                                //echo "End: ".$pre_EndHour.":".$pre_EndMinute."(".strtotime($pre_EndHour.":".$pre_EndMinute).")<br><br>";
                                 if($overtime<=strtotime($ora)){
                                     break;
                                 }
                             }
                         }
                         
-
+                        
 
                         $step++;
 
@@ -524,14 +589,25 @@ class BookingService
 
                         //Óránként csak 1 időpontot rakok ki ezzel a pár sorral megoldva
                         if(CompanyService::isSuzukiGHC()){
+                            if(isset($currentora)){
+                                //echo $currentora." -> ".date("H",strtotime($ora))."<br>";
+                            }
+                            if(isset($currentora)){
+                                //echo $currentora."<br>";
+                            }
+                            
                             if(isset($currentora) && $currentora==date("H",strtotime($ora))){
+                                //echo $currentora."-".date("H",strtotime($ora))."<br>";
+                                //echo "és most kifogja hagyni.<br>";
                                 continue;
                             }
+
+                            //echo $nap." ".$ora."<br>";
                         }
                         
-
+                        
                         //beosztások beolvasása
-                        if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) {
+                        if ($beos = $this->getBeosztasok("{$nap} {$ora}", $this->helyszin, $this->szuresTipus, $orvosId)) { 
                             //szabad orvos kiválasztása
                             foreach ($beos as &$beoData) {
                                 //Meg kell találnom azokat a beokat, amiknél jelezve van, hogy van backup plan-jük. vagy orvost? Nézzük meg orvosra, úgy talán
@@ -602,6 +678,7 @@ class BookingService
                         //új managerfoglalás módszer
                         if (!empty($this->packContentTypes)) {
                             if (!isset($availableData[$nap])) {
+
                                 $availableData[$nap] = $this->getPackageAvailabilityForDay($nap,true,$_GET);
 
                                 if (session_id() == "6f4e9bbellt7r9qhrsvrsft1ge") {
@@ -618,6 +695,23 @@ class BookingService
                                 $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
                                 $dayError = "<div style='font-size:11px;width:100px;margin: 10px auto;'>{$availableData[$nap]["error"]}</div>";
                             }
+
+                            //Órákénti ellenőrzés
+                            /*if(CompanyService::isSuzukiGHC()){
+                                if (!isset($availableData["{$nap} {$ora}"])) {
+                                    $availableData["{$nap} {$ora}"] = $this->getPackageAvailabilityForHour("{$nap} {$ora}",true,$_GET);
+                                    if (!empty($availableData["{$nap} {$ora}"]["error"])) {
+                                        //echo "<pre>";
+                                        //print_r($availableData["{$nap} {$ora}"]);
+                                        //echo "</pre>";
+                                        $buttonTitle = "";
+                                        $buttonClass = "foglaltbtn";
+                                        $buttonJava = "nemfog();return false;";
+                                        $btn = "<a class='{$buttonClass}' title='{$buttonTitle}' onclick='{$buttonJava}' href='#'>{$ora}</a><br/>";
+                                        $dayError = "<div style='font-size:11px;width:100px;margin: 10px auto;'>{$availableData["{$nap} {$ora}"]["error"]}</div>";
+                                    }
+                                }
+                            }*/
                         }
 
                         //sorszám override aldi esetében
@@ -675,8 +769,129 @@ class BookingService
                                 //echo $ora."<br>";
                                 continue;
                             }
+
+                            /**
+                             * Meg kell vizsgáljam azt is hogy férfi v. nőről van szó... óránként csak 11 férfi foglalhat...
+                             * ezt a legegyszerűbben úgy érhetem el, hogyha az adott órára lehivom a foglalt időpontokat, 
+                             * törzszámok alapján megnézem a nemet a segéd táblában és egy counter alapján ellenőrzöm hogy elérhet-e a limitet vagy még foglalhat.
+                            */
+                            $maxFoglalhatoFerfi = 11;
+                            if($ferfiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=1",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC)){
+                                //Le kell kérdezzem az összes férfi időpontot...
+                                $currentora01 = date("H",strtotime($ora));
+                                $nextora = date("H",strtotime($ora." + 1 hour"));
+                                $ferfiIdopontok = sql_query("SELECT * FROM foglalasok fogl
+                                                             LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
+                                                             LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
+                                                             WHERE gs.torzsszam!='' AND gs.nem=1 AND fogl.helyszinid=? AND fogl.szurestipusid IN(216,217)
+                                                             AND datum BETWEEN '{$nap} {$currentora01}%' AND '{$nap} {$nextora}'",
+                                                             [640])->fetchAll(PDO::FETCH_ASSOC);
+                                if(count($ferfiIdopontok)>=$maxFoglalhatoFerfi){
+                                    $buttonClass == "foglaltbtn";
+                                }
+                                //echo $nap." ".$currentora. " - ".$nextora."<br>";
+                                //echo "A férfi időpontok száma: ".count($ferfiIdopontok)."<br>";
+                            }
+
+                            $maxFoglalhatoNoHaVanExtra = 4;
+                            if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC)){
+                                if(isset($_GET["szurestipus292"]) || isset($_GET["szurestipus112"])){
+                                    $currentora02 = date("H",strtotime($ora));
+                                    $nextora = date("H",strtotime($ora." + 1 hour"));
+                                    $noiIdopontok = sql_query("SELECT * FROM foglalasok fogl
+                                                                LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
+                                                                LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
+                                                                WHERE gs.torzsszam!='' AND gs.nem=2 AND fogl.helyszinid=? AND fogl.szurestipusid IN(216,217)
+                                                                AND datum BETWEEN '{$nap} {$currentora02}%' AND '{$nap} {$nextora}'",
+                                                                [640])->fetchAll(PDO::FETCH_ASSOC);
+                                    //echo $nap." ".$currentora. " - ".$nextora."<br>";
+                                    //echo "A női időpontok száma: ".count($noiIdopontok)."<br>";
+                                    if(count($noiIdopontok)>=$maxFoglalhatoNoHaVanExtra){
+                                        $buttonClass == "foglaltbtn";
+                                    }
+                                   
+                                }
+                            }
+                            
+
+
+                            
+
+                            if(!isset($csomagBeo[$nap])){
+                                //Itt kell megvizsgáljam hogy a csomagba tartozó vizsgálatokhoz az adott órában van-e szabad hely...
+                                $checkForTypes = $this->packContentTypes;
+                                $checkForTypes = $this->utils->ghcNoiCsomagKiegeszites($checkForTypes);
+
+                                foreach($checkForTypes as $packTypeIndex=>$packTypeId){
+                                    if(!isset($_GET["szurestipus{$packTypeId}"])){
+                                        //echo $checkForTypes[$packTypeIndex]." törölve.<br>";
+                                        unset($checkForTypes[$packTypeIndex]);
+                                        
+                                        $checkForTypes = array_values($checkForTypes);
+                                    }
+                                }
+
+                                
+
+                                //echo "<pre>";
+                                //print_r($checkForTypes);
+                                //echo "</pre>";
+
+                                $possibleIdopont[$nap] = [];
+                                foreach($checkForTypes as $typeId){
+                                    $csomagBeo[$nap] = sql_query("SELECT beonap,tol,ig,aktiv,binterval,{$typeId} as szurestipusid FROM orvos_beosztas_new WHERE helyszinid=? AND INSTR(tipusok,?) AND beonap=? AND aktiv=1 ORDER BY tol ASC",
+                                                    [$this->helyszin, "|{$typeId}|",$nap])->fetchAll(PDO::FETCH_ASSOC);
+                                    //echo "<pre>";
+                                    //print_r($csomagBeo[$nap]);
+                                    //echo "</pre>";
+                                    $possibleIdopontok[$nap][$typeId] = [];
+                                    foreach($csomagBeo[$nap] as $beoData){
+                                        $to_time = strtotime("{$beoData["beonap"]} {$beoData["tol"]}");
+                                        $from_time = strtotime("{$beoData["beonap"]} {$beoData["ig"]}");
+                                        $possibleTimes = ((round(abs($to_time - $from_time) / 60,2))/$beoData["binterval"]);
+                                        for($o=0;$o<$possibleTimes;$o++){
+                                            $possibleIdopontok[$nap][$typeId][] = date("Y-m-d H:i",strtotime("{$beoData["beonap"]} {$beoData["tol"]} + ".($o*$beoData["binterval"])." minutes"));
+                                        }  
+                                    }
+                                }
+                            }
+
+                            $hour = date("H:00",strtotime($ora));
+                            $available = 0;
+                            if(isset($checkForTypes)){
+                                foreach($checkForTypes as $typeId){
+                                    //echo $typeId." óra: {$hour}\n<br>";
+                                    foreach($possibleIdopontok[$nap][$typeId] as $index=>$value){
+                                        //Azokba az időpontokba megyek csak be, ami az adott időpontban van
+                                        //echo "{$value}>={$nap} {$hour}&&{$value}<=".date("Y-m-d H:i",strtotime("{$nap} {$hour} + 1 hour"))."\n<br>";
+                                        //echo "{$value}(".strtotime($value).") >= {$nap} {$hour}(".strtotime("{$nap} {$hour}").") && {$value}(".strtotime($value).") <= ".date("Y-m-d H:i",strtotime("{$nap} {$hour} + 1 hour"))."(".strtotime("{$nap} {$hour} + 1 hour").")<br>";
+                                        if(strtotime($value)>=strtotime("{$nap} {$hour}") && strtotime($value)<strtotime("{$nap} {$hour} + 1 hour")){
+                                            if($Availablity = sql_query("SELECT * FROM foglalasok WHERE helyszinid=? AND szurestipusid=? AND datum=?",[$this->helyszin,$typeId,$value])->fetch(PDO::FETCH_ASSOC)){
+                                                //Ha foglalt, törlöm tömbből, legközelebb nem is fog már rá próbálni így
+                                                //unset($possibleIdopontok[$nap][$typeId][$index]);
+                                                //$possibleIdopontok[$nap] = array_values($possibleIdopontok[$nap]);
+                                            }else{
+                                                
+                                                //echo "a {$value} időpont szabad a {$typeId}-hez\n<br>";
+                                                $available++;
+                                                break 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            
+                            if($available!=count($checkForTypes)){
+                                //echo "{$available}!=".count($checkForTypes)." ({$buttonClass})\n\n<br><br>";
+                                continue;
+                            }
+                            
+
                             if(!isset($dayError) && $buttonClass=="foglalhatobtn"){
                                 $currentora = date("H",strtotime($ora));
+                                //echo "a currentora: {$currentora}<br>";
+                                
                                 $btn = "<a class='{$buttonClass}' title='' onclick='setJarat(\"{$currentora}:00\");{$buttonJava}' href='#'>{$currentora}:00</a><br/>";
                             }
                             
@@ -928,6 +1143,29 @@ class BookingService
         $checkForTypes = $this->packContentTypes;
         $checkForTypes[] = $this->szuresTipus; //csekkoljuk magát csomagot is, hogy van-e benne hely
 
+        if(CompanyService::isSuzukiGHC()){
+            if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+            {
+                //Emlő ultrahang
+                if(strtotime($_SESSION["user"]["szuldatum"])<strtotime("1984-12-31")){
+                $checkForTypes[] = 112;
+                }
+
+                //Mammográfia
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1985-12-31")){
+                    $checkForTypes[] = 292;
+                }
+
+                //Ha 1985.01.01~1985.12.31 között született megkapja mind2 csomagot xd
+                //Mindkettő
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1984-12-31")&&strtotime($_SESSION["user"]["szuldatum"])<strtotime("1986-01-01")){
+                    $checkForTypes[] = 112;
+                    $checkForTypes[] = 292;
+                }    
+            }
+        }
+        
+
         if (empty($this->szuresTipusMap)) {
             $res = sql_query("select * from szurestipusok");
             while ($row = sql_fetch_array($res)) {
@@ -1038,6 +1276,145 @@ class BookingService
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
     }
 
+    public function getPackageAvailabilityForHour($idoPont, $limitTimes = true,$data=array(),$forcdeBeginHour=null):array {
+        $vanFixError = false;
+        $error = "";
+        $timeTableForPackage = [];
+
+        $checkForTypes = $this->packContentTypes;
+        $checkForTypes[] = $this->szuresTipus; //csekkoljuk magát csomagot is, hogy van-e benne hely
+
+        if(CompanyService::isSuzukiGHC()){
+            if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+            {
+                //Emlő ultrahang
+                if(strtotime($_SESSION["user"]["szuldatum"])<strtotime("1984-12-31")){
+                $checkForTypes[] = 112;
+                }
+
+                //Mammográfia
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1985-12-31")){
+                    $checkForTypes[] = 292;
+                }
+
+                //Ha 1985.01.01~1985.12.31 között született megkapja mind2 csomagot xd
+                //Mindkettő
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1984-12-31")&&strtotime($_SESSION["user"]["szuldatum"])<strtotime("1986-01-01")){
+                    $checkForTypes[] = 112;
+                    $checkForTypes[] = 292;
+                }    
+            }
+        }
+        
+
+        if (empty($this->szuresTipusMap)) {
+            $res = sql_query("select * from szurestipusok");
+            while ($row = sql_fetch_array($res)) {
+                $this->szuresTipusMap[$row["id"]] = $row;
+            }
+        }
+
+        foreach ($checkForTypes as $packTypeId) {
+            $orvos = 0;
+
+            //Orvos választás ha van előre küldött adatt
+            if(isset($data["prefDoctor{$packTypeId}"])){
+                $orvos = $data["prefDoctor{$packTypeId}"];
+            }
+
+            //Ha foglaló kivette a kötelező elemek közül a vizsgálatot akkor kihagyjuk a loopból ezt a szűréstípust.
+            if(!isset($data["szurestipus{$packTypeId}"]) && (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC())){
+                continue;
+            }
+
+            if ($beos = $this->getBeosztasok("{$idoPont}", $this->helyszin, $packTypeId, $orvos, true)) {
+                foreach ($beos as &$beoData) {
+                    if ($beoData["nopack"] != 0 && !isset($GLOBAL["ezmostegysuzukifoglalas"])) {
+                        continue;
+                    }
+                    
+                    $orvosId     = $beoData["orvosid"];
+                    $orvosNev    = $beoData["orvosnev"];
+                    $interval    = $beoData["binterval"];
+                    $step        = 0;
+                    $beginHour   = intval(substr($beoData["tol"], 0, 2));
+                    $beginMinute = intval(substr($beoData["tol"], 3, 2));
+
+                    //kingának kivétel eltáv miatt
+                    if (Booking_Constants::SQL_DB == "hungariamed" && $orvosId == 64 && isset($data["otherservices-{$packTypeId}-0"])) {
+                        $interval = 60;
+                    }
+
+                    //Ha van küldött kezdési óra, akkor onnan kezdődik a szabad időpont keresés
+                    //ebben bug van, át kell nézni ha máskor kell ilyen
+                    if(!empty($forcdeBeginHour)){
+                        $beginHour = $forcdeBeginHour;
+                    }
+                    $idoData = explode(" ",$idoPont);
+
+                    while (true) {
+                        if ($beoData["nap"] == 10 & $idoData[0] != $beoData["beonap"]) {
+                            break;
+                        }
+
+                        $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $interval, 0, date("m"), date("d"), date("Y")));
+                        //if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
+                        if (strtotime($ora) >= strtotime($beoData["ig"])) {
+                            break;
+                        }
+                        $step++;
+
+                        if ($this->orvosIdopontIsFree($idoPont, $beoData["orvosid"], $interval)) {
+                            $timeData = ["idopont" => $idoPont, "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
+
+                            if ($limitTimes) {
+                                $timeTableForPackage[$packTypeId] = $timeData;
+                                break 2;
+                            } else {
+                                $timeTableForPackage[$packTypeId][] = $timeData;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!isset($timeTableForPackage[$packTypeId]) && $packTypeId == $this->szuresTipus) {
+                $error = "Erre a napra elfogytak az időpontok!";
+                $vanFixError = true;
+            }
+
+            if (!isset($timeTableForPackage[$packTypeId]) && !$vanFixError) {
+                if (User::debugUser()) {
+                    $text = "nincs időpont:<br/>";
+                    if (substr_count($error, $text) == 0) {
+                        $error .= $text;
+                    }
+                    if($packTypeId!=0){
+                        $error .= "{$this->szuresTipusMap[$packTypeId]["megnev"]}<br/>";
+                    }
+
+                } else {
+                    //die("itt{$error}".$vanFixError);
+                    $text = "nincs időpont<br/>";
+                    if (substr_count($error, $text) == 0) {
+                        $error .= $text;
+                    }
+                }
+            }
+        }
+
+        if (count($timeTableForPackage) < count($this->packContentTypes)) {
+            //$error = "Nincs időpont erre a napra!";
+        }
+
+
+        if (User::debugUser()) {
+            //$error = $forcdeBeginHour. " ". print_r($timeTableForPackage, true);
+        }
+
+        return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
+    }
+
 
     public function getPackageAvailabilityForDayV2($day, $limitTimes = true, $data = [], $forceBeginHour = ""):array {
         $vanFixError = false;
@@ -1055,6 +1432,28 @@ class BookingService
             }
         }
 
+        if(CompanyService::isSuzukiGHC()){
+            if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+            {
+                //Emlő ultrahang
+                if(strtotime($_SESSION["user"]["szuldatum"])<strtotime("1984-12-31")){
+                $checkForTypes[] = 112;
+                }
+
+                //Mammográfia
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1985-12-31")){
+                    $checkForTypes[] = 292;
+                }
+
+                //Ha 1985.01.01~1985.12.31 között született megkapja mind2 csomagot xd
+                //Mindkettő
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1984-12-31")&&strtotime($_SESSION["user"]["szuldatum"])<strtotime("1986-01-01")){
+                    $checkForTypes[] = 112;
+                    $checkForTypes[] = 292;
+                }    
+            }
+        }
+
         foreach ($checkForTypes as $packTypeId) {
             $orvos = 0;
             $foundTimes = [];
@@ -1069,7 +1468,9 @@ class BookingService
                 continue;
             }
 
+            //Meghívom az aktuális vizsgálathoz elérhető beosztásokat
             if ($beos = $this->getBeosztasok("{$day}", $this->helyszin, $packTypeId, $orvos, true)) {
+
                 foreach ($beos as &$beoData) {
                     if ($beoData["nopack"] != 0) {
                         continue;
@@ -1090,18 +1491,29 @@ class BookingService
                         }
 
                         $ora = date("H:i", mktime($beginHour, $beginMinute + $step * $interval, 0, date("m"), date("d"), date("Y")));
+                        //echo $ora."<br>";
+                        //ha elérte a rendelés végét akkor kilép
                         if (strtotime($ora) >= strtotime($beoMinMax["maxrendeles"])) {
                             break;
                         }
                         $step++;
 
+                        //Ebbe akkor fut bele, ha talál szabad időpontot
                         if ($this->orvosIdopontIsFree("{$day} {$ora}", $beoData["orvosid"], $interval)) {
-                            $timeData = ["idopont" => "{$day} {$ora}", "interval" => $interval, "orvosid" => $orvosId, "orvosnev" => $orvosNev, "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]];
+                            $timeData = [
+                                "idopont" => "{$day} {$ora}", 
+                                "interval" => $interval, 
+                                "orvosid" => $orvosId, 
+                                "orvosnev" => $orvosNev, 
+                                "tipusnev" => $this->szuresTipusMap[$packTypeId]["megnev"]
+                            ];
+                            //Ez nincs annyira használva
                             if ($limitTimes) {
                                 $timeTableForPackage[$packTypeId] = $timeData;
                                 break 2;
                             } else {
-                                if (empty($forceBeginHour) || strtotime("{$day} {$forceBeginHour}") < strtotime("{$day} {$ora}")) {
+                                //második vagy teljesül
+                                if (empty($forceBeginHour) || strtotime("{$day} {$forceBeginHour}") <= strtotime("{$day} {$ora}")) {
                                     $foundTimes[] = $timeData;
                                 }
                             }
@@ -1109,6 +1521,10 @@ class BookingService
                     }
                 }
             }
+
+            //echo "<pre>";
+            //print_r($foundTimes);
+            //echo "</pre>";
 
 
             if (!empty($foundTimes) && !empty($data)) {
@@ -1981,7 +2397,6 @@ class BookingService
 
         $api = new BookingSyncApi();
         $api->newReservation($fid);
-
         return $forwardURL;
     }
 
@@ -1991,10 +2406,14 @@ class BookingService
 
             $map = $this->getPackageAvailabilityForDayV2(date("Y-m-d", strtotime($data["datum"])), false, $data, CompanyService::isSuzukiGHC() ? date("H:i", strtotime($data["datum"])) : "");
 
+            echo "<pre>";
+            print_r($map);
+            echo "</pre>";
+
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
             $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
             $data["megj"] = $data["megj"] == "" ? "{$tipusData["megnev"]}":"{$tipusData["megnev"]} - {$data["megj"]}";
-
+        
             $originMegj = $data["megj"];
             foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
                 if ($parentReservationData["szurestipusid"] == $subTypeId) {
@@ -2641,6 +3060,37 @@ class BookingService
             $pack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
                                LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
                                WHERE k.csomagid=? ORDER BY t.megnev", [$szurestipusid])->fetchAll(PDO::FETCH_ASSOC);
+
+            //További vizsgálatok hozzáadása kor és nem alapján:
+            //Ha nőről van szó, megvizsgálom hogy melyik vizsgálatra jogosult (mammó/emlő) a kora alapján (Ha 1985.12.31 előtt született akkor 40+ ha ezután születt akkor 40-)
+            if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC))
+            {
+                //Emlő ultrahang
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1985-12-31")){
+                    $extraPack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                                       LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
+                                       WHERE k.csomagid=0 AND k.szurestipusid=292")->fetch(PDO::FETCH_ASSOC);
+                    $pack[] = $extraPack;
+                }
+
+                //Mammográfia
+                if(strtotime($_SESSION["user"]["szuldatum"])<strtotime("1984-12-31")){
+                    $extraPack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                                       LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
+                                       WHERE k.csomagid=0 AND k.szurestipusid=112")->fetch(PDO::FETCH_ASSOC);
+
+                    $pack[] = $extraPack;
+                }
+
+                //Ha 1985.01.01~1985.12.31 között született megkapja mind2 csomagot xd
+                //Mindkettő
+                if(strtotime($_SESSION["user"]["szuldatum"])>strtotime("1984-12-31")&&strtotime($_SESSION["user"]["szuldatum"])<strtotime("1986-01-01")){
+                     $extraPack = sql_query("SELECT t.megnev, t.id,k.szurestipusid,k.optionaldoctors,k.shortdescription,k.otherservices  FROM szurescsomagok_kapcs k 
+                                             LEFT JOIN szurestipusok t ON t.id = k.szurestipusid
+                                             WHERE k.csomagid=0 AND k.szurestipusid IN (112,292)")->fetchAll(PDO::FETCH_ASSOC);
+                    $pack = array_merge($pack,$extraPack);
+                }    
+            }
 
             if($pack){
                 //Megjelenített szöveg kezdete

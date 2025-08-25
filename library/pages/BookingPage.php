@@ -1205,9 +1205,9 @@ class BookingPage extends CorePage
                 $html .= "            <div class=\"col pb-3 text-center\">";
                 $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=registration'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Regisztráció</button>";
                 $html .= "           </div>";
-                //$html .= "            <div class=\"col pb-3 text-center\">";
-                //$html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
-                //$html .= "           </div>";
+                $html .= "            <div class=\"col pb-3 text-center\">";
+                $html .= "               <button type=\"button\" onClick=\"location.href='https://{$_SERVER["HTTP_HOST"]}/?page=login'\" class=\"btn btn-hungariamed btn-lg\" style=\"width:170px\">Időpontfoglalás</button>";
+                $html .= "           </div>";
                 $html .= "       </div>";
                 $html .= "    </div>";
                 $html .= "    <div class=\"col-3\"></div>";
@@ -1910,6 +1910,7 @@ class BookingPage extends CorePage
         $tipusok = [];
         $tipusnevek = [];
         $suzukiDisabled = "";
+
 
         if(CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser() || CompanyService::isSuzukiGHC() || CompanyService::isAszMenedzser()){
             $suzukiDisabled = "disabled=\"true\"";

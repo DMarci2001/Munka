@@ -165,7 +165,7 @@ function showIdoPontValasztoV2(honnan, orvosid) {
     }
 
     if($("#cid").length){
-        if($("#cid").val()==904 && $("#muszak option:selected").val()!==""){
+        if($("#cid").val()==1403 && $("#muszak option:selected").val()!==""){
             muszak = $("#muszak option:selected").val();
         }
         if($("#muszak option:selected").val()==""){

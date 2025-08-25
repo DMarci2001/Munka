@@ -13,7 +13,7 @@ class LoginPage extends CorePage {
         $_GET  = $this->utils->sanitize_array($_GET);
 
         if(CompanyService::isSuzukiGHC()){
-            header("location:index.php");
+            //header("location:index.php");
         }
 
         if($_SERVER["HTTP_HOST"]=="marciteszt.hungariamed.hu"){
