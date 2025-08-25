@@ -20,7 +20,7 @@ class BookingPage extends CorePage
     {
         parent::__construct();
 
-        
+        $this->utils->ghc_notification_send();
 
         unset($_SESSION["selectedService"]);
 
@@ -1763,7 +1763,10 @@ class BookingPage extends CorePage
                 echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
             }
         }
-        echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . "/> {$webText["gdprfelf"]}</div></td></tr>";
+        if(!CompanyService::isSuzukiGHC()){
+            echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . "/> {$webText["gdprfelf"]}</div></td></tr>";
+        }
+        
 
         /*if (CompanyService::isAstostecCompany()) {
             echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='tudoszuroelf' value='1' " . (!empty($_POST["tudoszuroelf"]) ? "checked" : "") . "/> {$webText["tudoszuroelf"]}</div></td></tr>";
