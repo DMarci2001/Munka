@@ -20,7 +20,7 @@ class BookingPage extends CorePage
     {
         parent::__construct();
 
-        $this->utils->ghc_notification_send();
+        //$this->utils->ghc_notification_send();
 
         unset($_SESSION["selectedService"]);
 
