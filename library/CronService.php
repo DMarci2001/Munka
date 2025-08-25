@@ -66,6 +66,7 @@ class CronService {
             $this->refreshWorklist();
             $this->deleteExpiredReservations();
             $this->fillLabMessageDatas();
+            $this->sendKeltexWebpageReservationsToFO();
             //$this->dokirexUserIdFill();
 
 			$dicomService = new DicomService();
@@ -169,7 +170,7 @@ class CronService {
         //$service = new AdminAjaxService();
         //$service->addCsvUsers();
 
-        $this->sendRawWeeklyStat();
+        //$this->sendRawWeeklyStat();
         die;
 
         //$this->saveResultPdfs();
@@ -1193,7 +1194,6 @@ class CronService {
 
         $mail->addAddress("jnsmobil@gmail.com");
 
-
         $mail->addAddress("sorger.eva@hungariamed.hu");
         $mail->addAddress("korpics@hungariamed.hu");
         $mail->addAddress("petra@rawagency.hu");
@@ -1203,16 +1203,32 @@ class CronService {
         $mail->addAddress("marketing@keltexmed.hu");
         $mail->addAddress("valasek.vinczeildiko@keltexmed.hu");
 
-
-
         $mail->Subject = $subject;
         $mail->Body = "Ez egy automatikus email, ami minden hétfő reggel megy ki a címzetteknek.<br/>Ha valaki nem szeretné a továbbiakban kapni írjon a jnsmobil@gmail.com címre.";
         $mail->send();
 
-        echo "output done";
+        echo "output done\n";
         die;
 
     }
 
+    private function sendKeltexWebpageReservationsToFO() {
+        if (Booking_Constants::SQL_DB != "keltexmed") {
+            return;
+        }
+
+        $foService = new FoglaljOrvostService();
+
+        $reservations = sql_query("SELECT * FROM foglalasok f LEFT JOIN orvosok o on o.id=f.orvosassigned WHERE datum>now() and o.foid<>0 ORDER BY datum")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($reservations as $reservationData) {
+            echo "{$reservationData["datum"]} ".($reservationData["fofid"]==0?" nincs szinkronizálva":" szinkronizálva")."\n";
+
+            if ($reservationData["fofid"] == 0) {
+                $result = $foService->newReservation($reservationData["id"]);
+                print_r($result);
+            }
+
+        }
+    }
 
 }
