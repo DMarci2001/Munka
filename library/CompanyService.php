@@ -211,7 +211,7 @@ class CompanyService {
     public static function telExceptions(){
         
         if(Booking_Constants::SQL_DB == "hungariamed"){
-            $telExceptions = [892];
+            $telExceptions = [892,1403];
             if(in_array($_SESSION["helyszindata"]["id"], $telExceptions)){
                 return true;
             }
