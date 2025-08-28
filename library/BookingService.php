@@ -774,42 +774,112 @@ class BookingService
                              * Meg kell vizsgáljam azt is hogy férfi v. nőről van szó... óránként csak 11 férfi foglalhat...
                              * ezt a legegyszerűbben úgy érhetem el, hogyha az adott órára lehivom a foglalt időpontokat, 
                              * törzszámok alapján megnézem a nemet a segéd táblában és egy counter alapján ellenőrzöm hogy elérhet-e a limitet vagy még foglalhat.
+                             * A férfi foglalási szám függ a dátumtól, órától...
+                             * az emlő napokon max 5 ember, ami 17,18,19,22,23,03
                             */
-                            $maxFoglalhatoFerfi = 11;
+
+                            $maxFoglalhatoFerfi = 9;
+                            $emlonapok = ["2025-09-17","2025-09-18","2025-09-19","2025-09-22","2025-09-23","2025-10-03"];
+                            
                             if($ferfiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=1",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC)){
                                 //Le kell kérdezzem az összes férfi időpontot...
                                 $currentora01 = date("H",strtotime($ora));
                                 $nextora = date("H",strtotime($ora." + 1 hour"));
+
+                                //Emlő napokon max 5 férfi...
+                                if(in_array($nap,$emlonapok)){
+                                    //echo "ez egy emlő nap!({$nap})<br>";
+                                    $maxFoglalhatoFerfi=5;
+                                    if($currentora01>="13"){
+                                        $maxFoglalhatoFerfi=11;
+                                    }
+                                }
+
+                                if(!in_array($nap,$emlonapok)){
+                                    if($currentora01>="13"){
+                                        //echo "Már délután van! ({$currentora01})<br>";
+                                        $maxFoglalhatoFerfi=15;
+                                    }
+                                }
+                                
+
                                 $ferfiIdopontok = sql_query("SELECT * FROM foglalasok fogl
                                                              LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
                                                              LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
                                                              WHERE gs.torzsszam!='' AND gs.nem=1 AND fogl.helyszinid=? AND fogl.szurestipusid IN(216,217)
-                                                             AND datum BETWEEN '{$nap} {$currentora01}%' AND '{$nap} {$nextora}'",
+                                                             AND datum BETWEEN '{$nap} {$currentora01}%' AND '{$nap} {$nextora}%'",
                                                              [640])->fetchAll(PDO::FETCH_ASSOC);
-                                if(count($ferfiIdopontok)>=$maxFoglalhatoFerfi){
-                                    $buttonClass == "foglaltbtn";
+                                foreach($ferfiIdopontok as $index58=>$ferfiak){
+                                    //echo date("H",strtotime($ferfiak["datum"])).">.".date("H",strtotime($ora))."<br>";
+                                    if(date("H",strtotime($ferfiak["datum"]))>date("H",strtotime($ora))){
+                                        //echo "bele mentem.<br>";
+                                        unset($ferfiIdopontok[$index58]);
+                                    }
+                                    //echo $ferfiak["nev"]." - ".$ferfiak["datum"]."({$ora})<br>";
                                 }
-                                //echo $nap." ".$currentora. " - ".$nextora."<br>";
-                                //echo "A férfi időpontok száma: ".count($ferfiIdopontok)."<br>";
+                                //echo $nap." ".$currentora01. " - ".$nextora."<br>";
+                                //echo "A férfi időpontok száma: ".count($ferfiIdopontok)."/{$maxFoglalhatoFerfi} ($buttonClass)<br>";
+                                if(count($ferfiIdopontok)>=$maxFoglalhatoFerfi){
+                                    //echo "belementem.<br>";
+                                    continue;
+                                    //$buttonClass == "foglaltbtn";
+                                }
+                                
                             }
 
-                            $maxFoglalhatoNoHaVanExtra = 4;
+                            $maxFoglalhatoNoHaVanExtra = 6;
                             if($noiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=2",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC)){
-                                if(isset($_GET["szurestipus292"]) || isset($_GET["szurestipus112"])){
-                                    $currentora02 = date("H",strtotime($ora));
-                                    $nextora = date("H",strtotime($ora." + 1 hour"));
+
+                                $currentora02 = date("H",strtotime($ora));
+                                $nextora = date("H",strtotime($ora." + 1 hour"));
+
+                                if(isset($_GET["szurestipus292"])){
+                                    $maxFoglalhatoNoHaVanExtra=4;
                                     $noiIdopontok = sql_query("SELECT * FROM foglalasok fogl
                                                                 LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
                                                                 LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
                                                                 WHERE gs.torzsszam!='' AND gs.nem=2 AND fogl.helyszinid=? AND fogl.szurestipusid IN(216,217)
-                                                                AND datum BETWEEN '{$nap} {$currentora02}%' AND '{$nap} {$nextora}'",
+                                                                AND fogl.szuldatum > '1985-12-31' AND datum BETWEEN '{$nap} {$currentora02}%' AND '{$nap} {$nextora}'",
                                                                 [640])->fetchAll(PDO::FETCH_ASSOC);
-                                    //echo $nap." ".$currentora. " - ".$nextora."<br>";
-                                    //echo "A női időpontok száma: ".count($noiIdopontok)."<br>";
+                                    foreach($noiIdopontok as $index59=>$nok){
+                                        //echo date("H",strtotime($nok["datum"])).">.".date("H",strtotime($ora))."<br>";
+                                        if(date("H",strtotime($nok["datum"]))>date("H",strtotime($ora))){
+                                            //echo "bele mentem.<br>";
+                                            unset($noiIdopontok[$index59]);
+                                        }
+                                        //echo $ferfiak["nev"]." - ".$ferfiak["datum"]."({$ora})<br>";
+                                    }
+                                    //echo $nap." ".$currentora02. " - ".$nextora."<br>";
+                                    //echo "A női időpontok száma: ".count($noiIdopontok)."/{$maxFoglalhatoNoHaVanExtra}<br>";
                                     if(count($noiIdopontok)>=$maxFoglalhatoNoHaVanExtra){
-                                        $buttonClass == "foglaltbtn";
+                                        //echo "belementem.<br>";
+                                        continue;
+                                        //$buttonClass == "foglaltbtn";
                                     }
                                    
+                                }
+                                if(isset($_GET["szurestipus112"])){
+                                    $noiIdopontok = sql_query("SELECT * FROM foglalasok fogl
+                                                                LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
+                                                                LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
+                                                                WHERE gs.torzsszam!='' AND gs.nem=2 AND fogl.helyszinid=? AND fogl.szurestipusid IN(216,217)
+                                                                AND fogl.szuldatum <= '1985-12-31' AND datum BETWEEN '{$nap} {$currentora02}%' AND '{$nap} {$nextora}'",
+                                                                [640])->fetchAll(PDO::FETCH_ASSOC);
+                                    foreach($noiIdopontok as $index59=>$nok){
+                                        //echo date("H",strtotime($nok["datum"])).">.".date("H",strtotime($ora))."<br>";
+                                        if(date("H",strtotime($nok["datum"]))>date("H",strtotime($ora))){
+                                            //echo "töröltem.<br>";
+                                            unset($noiIdopontok[$index59]);
+                                        }
+                                        //echo $nok["nev"]." - ".$nok["datum"]."({$ora})<br>";
+                                    }
+                                    //echo $nap." ".$currentora02. " - ".$nextora."<br>";
+                                    //echo "A női időpontok száma: ".count($noiIdopontok)."/{$maxFoglalhatoNoHaVanExtra}<br>";
+                                    if(count($noiIdopontok)>=$maxFoglalhatoNoHaVanExtra){
+                                        //echo "belementem.<br>";
+                                        continue;
+                                        //$buttonClass == "foglaltbtn";
+                                    }
                                 }
                             }
                             
@@ -2406,9 +2476,6 @@ class BookingService
 
             $map = $this->getPackageAvailabilityForDayV2(date("Y-m-d", strtotime($data["datum"])), false, $data, CompanyService::isSuzukiGHC() ? date("H:i", strtotime($data["datum"])) : "");
 
-            echo "<pre>";
-            print_r($map);
-            echo "</pre>";
 
             $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
             $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);

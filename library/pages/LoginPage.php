@@ -86,7 +86,7 @@ class LoginPage extends CorePage {
             }
             die(json_encode(array("error"=>"A megadott törzsszám helytelen!")));
         }*/
-        $usageKey = "342323212";
+        $usageKey = "125332612";
         if(isset($_POST["suzukilogin"]) && $usageKey=="125332612"){
             if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE rkod=? AND taj=? and cegid=?",array($_POST["sms-code"],$_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 if (strtotime("now") - strtotime($result["rkoddatum"]) > 600) {
@@ -151,7 +151,7 @@ class LoginPage extends CorePage {
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
-            $html .= "              <h4 style='color:red;text-align:center'>*Az időpontfoglalás egyenlőre szünetel, elnézést kérünk a kellemetlenségért!</h4>";
+            //$html .= "              <h4 style='color:red;text-align:center'>*Az időpontfoglalás egyenlőre szünetel, elnézést kérünk a kellemetlenségért!</h4>";
             $html .= "           </div>";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "       </div>";
