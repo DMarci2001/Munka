@@ -86,8 +86,8 @@ class LoginPage extends CorePage {
             }
             die(json_encode(array("error"=>"A megadott törzsszám helytelen!")));
         }*/
-
-        if(isset($_POST["suzukilogin"])){
+        $usageKey = "342323212";
+        if(isset($_POST["suzukilogin"]) && $usageKey=="125332612"){
             if($result = sql_fetch_array(sql_query("SELECT * FROM felhasznalok WHERE rkod=? AND taj=? and cegid=?",array($_POST["sms-code"],$_POST["taj"],$_SESSION["helyszindata"]["id"])))){
                 if (strtotime("now") - strtotime($result["rkoddatum"]) > 600) {
                     die(json_encode(array("error"=>"A megadott TAJ szám, vagy kód nem megfelelő!")));
@@ -148,6 +148,13 @@ class LoginPage extends CorePage {
             $html = $this->displayFejlec("Suzuki GHC szűrés",true);
             $html .= "<div class=\"container\">";
             $html .= "   <form id='suzuki-ghc-login-form' method='POST' enctype='multipart/form-data'>";
+            $html .= "       <div class=\"row\">";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "           <div class=\"col mb-3\">";
+            $html .= "              <h4 style='color:red;text-align:center'>*Az időpontfoglalás egyenlőre szünetel, elnézést kérünk a kellemetlenségért!</h4>";
+            $html .= "           </div>";
+            $html .= "           <div class=\"col-md\"></div>";
+            $html .= "       </div>";
             $html .= "       <div class=\"row\">";
             $html .= "           <div class=\"col-md\"></div>";
             $html .= "           <div class=\"col mb-3\">";
