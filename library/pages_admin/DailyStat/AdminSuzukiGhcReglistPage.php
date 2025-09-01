@@ -54,7 +54,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
                             FROM felhasznalok felh
                             LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
-                            LEFT JOIN foglalasok fogl ON fogl.taj=felh.taj AND fogl.cegid=1403 AND fogl.szurestipusid IN(216,217) AND INSTR(fogl.datum,\"2025-09\")
+                            LEFT JOIN foglalasok fogl ON fogl.taj=felh.taj AND fogl.cegid=1403 AND fogl.szurestipusid IN(216,217) AND fogl.datum>'2025-09-14 23:59:59'
                             WHERE felh.cegid in(1403) AND felh.id NOT IN(119511,119822)
                             GROUP BY felh.id
                             ORDER BY felh.nev ASC")->fetchAll(PDO::FETCH_ASSOC);
