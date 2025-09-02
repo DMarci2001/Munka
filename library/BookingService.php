@@ -386,17 +386,17 @@ class BookingService
                         $shifts["B-A-ST"][4] = array("start"=>"7:0","end"=>"12:0");
                         $shifts["B-A-ST"][5] = array("start"=>"7:0","end"=>"12:0");
 
-                        $shifts["A-O-ST"][1] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["A-O-ST"][2] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["A-O-ST"][3] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["A-O-ST"][4] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["A-O-ST"][5] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["A-O-ST"][1] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["A-O-ST"][2] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["A-O-ST"][3] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["A-O-ST"][4] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["A-O-ST"][5] = array("start"=>"13:0","end"=>"18:0");
 
-                        $shifts["B-O-ST"][1] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["B-O-ST"][2] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["B-O-ST"][3] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["B-O-ST"][4] = array("start"=>"13:0","end"=>"15:0");
-                        $shifts["B-O-ST"][5] = array("start"=>"13:0","end"=>"15:0");
+                        $shifts["B-O-ST"][1] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["B-O-ST"][2] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["B-O-ST"][3] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["B-O-ST"][4] = array("start"=>"13:0","end"=>"18:0");
+                        $shifts["B-O-ST"][5] = array("start"=>"13:0","end"=>"18:0");
                     }
                       
                     
