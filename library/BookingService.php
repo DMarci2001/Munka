@@ -249,11 +249,11 @@ class BookingService
                         5=>array("start"=>null,"end"=>null),
                     ),
                     "A-A-ST"=>array(
-                        1=>array("start"=>"15:0","end"=>"18:0"),
-                        2=>array("start"=>"15:0","end"=>"18:0"),
-                        3=>array("start"=>"15:0","end"=>"18:0"),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>"15:0","end"=>"18:0"),
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                     "A-B-SE"=>array(
                         //frissítve 2025
@@ -322,11 +322,11 @@ class BookingService
                         5=>array("start"=>null,"end"=>null),
                     ),
                     "B-B-ST"=>array(
-                        1=>array("start"=>"15:0","end"=>"18:0"),
-                        2=>array("start"=>"15:0","end"=>"18:0"),
-                        3=>array("start"=>"15:0","end"=>"18:0"),
-                        4=>array("start"=>"15:0","end"=>"18:0"),
-                        5=>array("start"=>"15:0","end"=>"18:0"),
+                        1=>array("start"=>"13:0","end"=>"18:0"),
+                        2=>array("start"=>"13:0","end"=>"18:0"),
+                        3=>array("start"=>"13:0","end"=>"18:0"),
+                        4=>array("start"=>"13:0","end"=>"18:0"),
+                        5=>array("start"=>"13:0","end"=>"18:0"),
                     ),
                     "B-O-SE"=>array(
                         1=>array("start"=>"7:0","end"=>"12:0"),
@@ -374,11 +374,11 @@ class BookingService
                         $shifts["A-A-ST"][4] = array("start"=>"15:0","end"=>"18:0");
                         $shifts["A-A-ST"][5] = array("start"=>"15:0","end"=>"18:0");
 
-                        $shifts["A-B-ST"][1] = array("start"=>"7:0","end"=>"12:0");
-                        $shifts["A-B-ST"][2] = array("start"=>"7:0","end"=>"12:0");
-                        $shifts["A-B-ST"][3] = array("start"=>"7:0","end"=>"12:0");
-                        $shifts["A-B-ST"][4] = array("start"=>"7:0","end"=>"12:0");
-                        $shifts["A-B-ST"][5] = array("start"=>"7:0","end"=>"12:0");
+                        $shifts["A-B-ST"][1] = array("start"=>"7:0","end"=>"18:0");
+                        $shifts["A-B-ST"][2] = array("start"=>"7:0","end"=>"18:0");
+                        $shifts["A-B-ST"][3] = array("start"=>"7:0","end"=>"18:0");
+                        $shifts["A-B-ST"][4] = array("start"=>"7:0","end"=>"18:0");
+                        $shifts["A-B-ST"][5] = array("start"=>"7:0","end"=>"18:0");
 
                         $shifts["B-A-ST"][1] = array("start"=>"7:0","end"=>"12:0");
                         $shifts["B-A-ST"][2] = array("start"=>"7:0","end"=>"12:0");
@@ -834,7 +834,7 @@ class BookingService
                                 $nextora = date("H",strtotime($ora." + 1 hour"));
 
                                 if(isset($_GET["szurestipus292"])){
-                                    $maxFoglalhatoNoHaVanExtra=4;
+                                    $maxFoglalhatoNoHaVanExtra=10;
                                     $noiIdopontok = sql_query("SELECT * FROM foglalasok fogl
                                                                 LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
                                                                 LEFT JOIN ghc_segedtabla gs ON gs.torzsszam=felh.torzsszam
@@ -847,7 +847,7 @@ class BookingService
                                             //echo "bele mentem.<br>";
                                             unset($noiIdopontok[$index59]);
                                         }
-                                        //echo $ferfiak["nev"]." - ".$ferfiak["datum"]."({$ora})<br>";
+                                        //echo $nok["nev"]." - ".$nok["datum"]."({$ora})<br>";
                                     }
                                     //echo $nap." ".$currentora02. " - ".$nextora."<br>";
                                     //echo "A női időpontok száma: ".count($noiIdopontok)."/{$maxFoglalhatoNoHaVanExtra}<br>";
@@ -930,13 +930,19 @@ class BookingService
                             $available = 0;
                             if(isset($checkForTypes)){
                                 foreach($checkForTypes as $typeId){
-                                    //echo $typeId." óra: {$hour}\n<br>";
+                                    //echo "({$nap}) ".$typeId." óra: {$hour}\n<br>";
                                     foreach($possibleIdopontok[$nap][$typeId] as $index=>$value){
                                         //Azokba az időpontokba megyek csak be, ami az adott időpontban van
+                                        if($typeId==292){
+                                            //echo "{$value}>={$nap} {$hour}&&{$value}<=".date("Y-m-d H:i",strtotime("{$nap} {$hour} + 1 hour"))."\n<br>";
+                                        }
                                         //echo "{$value}>={$nap} {$hour}&&{$value}<=".date("Y-m-d H:i",strtotime("{$nap} {$hour} + 1 hour"))."\n<br>";
                                         //echo "{$value}(".strtotime($value).") >= {$nap} {$hour}(".strtotime("{$nap} {$hour}").") && {$value}(".strtotime($value).") <= ".date("Y-m-d H:i",strtotime("{$nap} {$hour} + 1 hour"))."(".strtotime("{$nap} {$hour} + 1 hour").")<br>";
                                         if(strtotime($value)>=strtotime("{$nap} {$hour}") && strtotime($value)<strtotime("{$nap} {$hour} + 1 hour")){
                                             if($Availablity = sql_query("SELECT * FROM foglalasok WHERE helyszinid=? AND szurestipusid=? AND datum=?",[$this->helyszin,$typeId,$value])->fetch(PDO::FETCH_ASSOC)){
+                                                if($typeId==292){
+                                                    //echo $Availablity["datum"]." - {$Availablity["nev"]}\n<br>";
+                                                }
                                                 //Ha foglalt, törlöm tömbből, legközelebb nem is fog már rá próbálni így
                                                 //unset($possibleIdopontok[$nap][$typeId][$index]);
                                                 //$possibleIdopontok[$nap] = array_values($possibleIdopontok[$nap]);
@@ -957,12 +963,13 @@ class BookingService
                                 continue;
                             }
                             
-
                             if(!isset($dayError) && $buttonClass=="foglalhatobtn"){
                                 $currentora = date("H",strtotime($ora));
                                 //echo "a currentora: {$currentora}<br>";
                                 
                                 $btn = "<a class='{$buttonClass}' title='' onclick='setJarat(\"{$currentora}:00\");{$buttonJava}' href='#'>{$currentora}:00</a><br/>";
+                            }else{
+                                //echo $dayError." - ".$buttonClass;
                             }
                             
                         }
