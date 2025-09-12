@@ -19,6 +19,154 @@ class AdminSettingsPage extends AdminCorePage
         //$data = sql_query("SELECT * FROM tesco_2024_segedtabla")->fetchAll(PDO::FETCH_ASSOC);
 
 
+        //Lighttech állományi lista lehívása
+        
+        //Összes vizsgálat itt van
+        /*$r=sql_query("SELECT nev,paciensid,szuldatum,telephely,munkakor,datum,ervenyesseg,szakrendeles,vizsgalattipus,alkalmassag 
+                      FROM dokirex_vizsgalatok WHERE INSTR(telephely,'lighttech')")->fetchAll(PDO::FETCH_ASSOC);
+
+        $ignoreExaminations = ["Gépkezelő - targonca","Alkalmassági - Gépjárműalkalmasság","Baleset - Egyéb baleset","Egyéb - Egyéb","Egyéb ellátás",""];
+
+        //Összes foglalás itt van
+        $x = sql_query("SELECT * FROM foglalasok WHERE helyszinid=627")->fetchAll(PDO::FETCH_ASSOC);
+
+        //Kilépettek
+        $q=sql_query("SELECT * FROM felhasznalok WHERE cegid=858 AND kilepett=1")->fetchAll(PDO::FETCH_ASSOC);
+
+        $p = [];
+        //kell egy névlista ebből...
+        foreach($r as $t){
+            $t["status"] = "";
+
+            //Ha a vizsgálattípus ignorálandó, skippelem
+            if(in_array($t["vizsgalattipus"],$ignoreExaminations)){
+                continue;
+            }
+
+            //Ha a páciens kilépett, skippelem
+            $qKey=array_search($t["paciensid"],array_column($q,"taj"));
+            if($qKey!==false){
+                continue;
+            }
+
+            //Páciensek egyszer szerepeljenek a listában
+            $key=array_search($t["paciensid"],array_column($p,"paciensid"));
+            if($key===false){
+                $p[]=$t;
+                $key = array_key_last($p);
+            }
+
+            
+            //Ha találok egy nagyobb érvényességet, akkor lecserélem a vizsgálati adatokat a nagyobbra
+            if($key!==false){
+                $p[$key]["ervenyesseg"] = str_replace(".","-",$p[$key]["ervenyesseg"]);
+                if(strtotime($p[$key]["ervenyesseg"])<strtotime($t["ervenyesseg"])){
+                    $p[$key] = $t;
+                    
+                }
+            }
+
+            if(strtotime($p[$key]["ervenyesseg"])<strtotime("now")){
+                $p[$key]["status"] = "LEJÁRT";
+            }
+
+            $s = sql_query("SELECT datum FROM foglalasok WHERE taj=? AND eljott=1 ORDER BY datum DESC limit 1;",[$p[$key]["paciensid"]])->fetch(PDO::FETCH_ASSOC);
+            
+            if(empty($s)){
+                $k = array_search($p[$key]["nev"],array_column($x,"nev"));
+                if($k!==false){
+                    $s["datum"] = $x[$k]["datum"];
+                }
+            }
+            
+            if(isset($s["datum"])){
+                $p[$key]["utolsoidopont"] = $s["datum"];
+            }else{
+                $p[$key]["utolsoidopont"] = "";
+            }
+
+            //Dátumok átalakítása
+            $p[$key]["ervenyesseg"] = str_replace("-",".",$p[$key]["ervenyesseg"]);
+            $p[$key]["szuldatum"] = str_replace("-",".",$p[$key]["szuldatum"]);
+            $p[$key]["datum"] = str_replace("-",".",$p[$key]["datum"]);
+        }
+
+        $keys = array_column($p,"nev");
+        array_multisort($keys, SORT_ASC, $p);
+
+        $excelService = new ExcelService();
+        $excelService->generateXlsxFromArray($p, "A", "N", []);
+        $excelService->setFileName("lightTech_uzemorvosi_lista_" . date("Ymdhis") . ".xlsx");
+        $excelService->outputSpreadSheet();
+
+        die();*/
+
+
+        //TESCO telítettségi kimutatás
+        $helyszinek = [];
+        $datumok = [];
+        /*$beos = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo
+                           LEFT JOIN helyszinek h on h.id=beo.helyszinid
+                           WHERE instr(beo.beocegek,'|682|') AND INSTR(beo.beonap,'2025');")->fetchAll(PDO::FETCH_ASSOC);*/
+
+        $beos = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo
+                           LEFT JOIN helyszinek h on h.id=beo.helyszinid
+                           WHERE (instr(beo.beocegek,'|340|') OR instr(beo.beocegek,'|348|')) AND INSTR(beo.beonap,'2025') ORDER BY h.cim;")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($beos as $beo){
+            //echo "<pre>";
+            //print_r($beo);
+            //echo "</pre>";
+            $key = array_search($beo["helyszinid"],array_column($helyszinek,"helyszinid"));
+            if($key!==false){
+                $foglalasok=sql_query("SELECT * FROM foglalasok WHERE datum BETWEEN '{$beo["beonap"]} {$beo["tol"]}' AND '{$beo["beonap"]} {$beo["ig"]}' AND helyszinid=? AND orvosassigned=?",[$beo["helyszinid"],$beo["orvosid"]])->fetchAll(PDO::FETCH_ASSOC);
+                $time = (strtotime($beo["beonap"]." ".$beo["ig"])-strtotime($beo["beonap"]." ".$beo["tol"]));
+                $helyszinek[$key][] = ["helyszinid"=>$beo["helyszinid"],"datum"=>$beo["beonap"],"tol"=>$beo["tol"],"ig"=>$beo["ig"],"binterval"=>$beo["binterval"],"limit"=>floor((($time/60)/$beo["binterval"])),"appointments"=>count($foglalasok)];
+            }else{
+                $foglalasok=sql_query("SELECT * FROM foglalasok WHERE datum BETWEEN '{$beo["beonap"]} {$beo["tol"]}' AND '{$beo["beonap"]} {$beo["ig"]}' AND helyszinid=? AND orvosassigned=?",[$beo["helyszinid"],$beo["orvosid"]])->fetchAll(PDO::FETCH_ASSOC);
+                $time = (strtotime($beo["beonap"]." ".$beo["ig"])-strtotime($beo["beonap"]." ".$beo["tol"]));
+                $helyszinek[][] = ["helyszinid"=>$beo["helyszinid"],"datum"=>$beo["beonap"],"tol"=>$beo["tol"],"ig"=>$beo["ig"],"binterval"=>$beo["binterval"],"limit"=>floor((($time/60)/$beo["binterval"])),"appointments"=>count($foglalasok)];
+            }
+        }
+
+        /*echo "<pre>";
+        print_r($helyszinek);
+        echo "</pre>";*/
+
+        echo "<table>";
+        echo "  <tr>";
+        echo "      <td>Helyszín</td>";
+        echo "      <td>Dátum</td>";
+        echo "      <td>Intervallum</td>";
+        echo "      <td>Foglalható időpontok</td>";
+        echo "      <td>Foglalások</td>";
+        echo "      <td>Telítettségi arány</td>";
+        echo "  </tr>";
+
+       
+
+        foreach($helyszinek as $helyszin){
+            
+            foreach($helyszin as $beonap){
+            $cim = sql_query("SELECT cim FROM helyszinek WHERE id=?",[$beonap["helyszinid"]])->fetch(PDO::FETCH_ASSOC);
+            echo "<tr>";
+            echo "  <td>{$cim["cim"]}</td>";
+            echo "  <td>{$beonap["datum"]}</td>";
+            echo "  <td>{$beonap["tol"]}-{$beonap["ig"]}</td>";
+            echo "  <td>{$beonap["limit"]}</td>";
+            echo "  <td>{$beonap["appointments"]}</td>";
+            echo "  <td>".floor((($beonap["appointments"]/$beonap["limit"])*100))."%</td>";
+            echo "</tr>";
+            }
+            
+        }
+
+        echo "</table>";
+        die();
+        //echo "<pre>";
+        //print_r($helyszinek);
+        //echo "</pre>";
+
 
         //Tól-ig
         /*foreach($data as $index=>$value){
