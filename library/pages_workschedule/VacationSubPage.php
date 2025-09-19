@@ -23,26 +23,7 @@ class VacationSubPage
 
         $html.="<div id='workervacationsdiv' style='margin-top:5px;'>";
 
-        /*
-        $szabiData = sql_query("select datumtol from schedule_szabadsag sz where sz.datumtol>date_sub(now(), interval 1 month) and oid=?", [$workerId])->fetchAll();
-        foreach ($szabiData as $data) {
-            $szabadsagNapok[] = $data["datumtol"];
-        }
-
-        $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso, t.cim
-                    FROM schedule_mapping m
-                    LEFT JOIN schedule_tipusok t on t.id=m.tipusid
-                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$workerId]);
-
-        while ($row = sql_fetch_array($res)) {
-            $stat[$row["datum"]][] = $row;
-        }
-        */
-
-        $szabadsagNapok = [];
-
-
-        for ($i = 0; $i < 7 * 15; $i++) {
+        for ($i = 0; $i < 7 * 52; $i++) {
             $thisDay = date("Y-m-d", strtotime("last week monday + {$i} day"));
             $weekDay = date("N", strtotime($thisDay));
             $weekNum = date("W", strtotime($thisDay));

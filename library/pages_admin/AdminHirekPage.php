@@ -113,7 +113,9 @@ class AdminHirekPage extends AdminCorePage {
         $html = "";
 
         $html.= "<div style=''>";
-        $html.= "<div style='padding-top: 5px;'><a class='ujbutton' href='#' onclick='$(\"#newtopic\").toggle();return false;'>+ téma hozzáadása</a></div>";
+        if ($this->adminUser->newsInsertAccess()) {
+            $html .= "<div style='padding-top: 5px;'><a class='ujbutton' href='#' onclick='$(\"#newtopic\").toggle();return false;'>+ téma hozzáadása</a></div>";
+        }
 
         $html.= "<div id='newtopic' style='display:none;'>";
         $html.= "<div style='padding-top:15px;'><select id='topiccategoryid'>";

@@ -535,7 +535,33 @@ class AdminBookingEditor {
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' onclick='showLaborKeroWin({$row["id"]});return false;' href='#' style='background: green;'><i class='fa-solid fa-flask'></i> Laborkérő" . (sql_query("select id from labrequests where foglalasid=? and status='done' limit 1", [$row["id"]])->fetch(PDO::FETCH_ASSOC) ? " <i class='fa-solid fa-circle-check'></i>" : "") . "</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' onclick='printSpektrumlabMatrica(\"{$row["id"]}\", \"{$row["pass"]}\");return false;' href='#' style='background: green;' title='Spektrumlab matrica'><i class='fa-solid fa-print'></i> SM</a>&nbsp;&nbsp;";
+
+            if (CompanyService::isSuzukiGHC($row["cegid"])) {
+                if ($row["neme"] == 1) {
+                    $html .= "<div style='padding-top:10px;'>";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=1&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 1</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=2&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 2</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=3&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 3</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=4&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> standard 4</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=5&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> standard 5</a>&nbsp;&nbsp;";
+                    $html .= "</div>";
+                }
+                if ($row["neme"] == 2) {
+                    $html .= "<div style='padding-top:10px;'>";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=6&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 1</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=7&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 2</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=8&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> senior 3</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=9&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> standard 4</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=10&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> standard 5</a>&nbsp;&nbsp;";
+                    $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=suzukisetalolap&version=11&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> standard 5</a>&nbsp;&nbsp;";
+                    $html .= "</div>";
+                }
+
+            }
+
             $html .= "</div>";
+
+
         }
         return $html;
     }
@@ -666,7 +692,15 @@ class AdminBookingEditor {
         }
         $html.= "</div>";
         $html.= "<div style='display:table-row'>";
-        $html.= "<div class='tdm'>Neme:&nbsp;</div><div class='tdm' style='padding:3px 0px;'><input type='radio' name='neme' " . ($row["neme"] == 1 ? "checked" : "") . " value='1' class='fipad'/>&nbsp;Férfi&nbsp;<input type='radio' name='neme' " . ($row["neme"] == 2 ? "checked" : "") . " value='2' class='fipad'>&nbsp;Nő</div>";
+        $html.= "<div class='tdm'>Neme:&nbsp;</div>";
+        $html.= "<div class='tdm' style='padding:3px 0px;'>";
+        $html.= "<input type='radio' name='neme' " . ($row["neme"] == 1 ? "checked" : "") . " value='1' class='fipad'/>&nbsp;Férfi&nbsp;<input type='radio' name='neme' " . ($row["neme"] == 2 ? "checked" : "") . " value='2' class='fipad'>&nbsp;Nő";
+
+        if (CompanyService::isSuzukiGHC($row["cegid"])) {
+            $html.= " <span style='color:#fff;background:#f00;border-radius:5px;padding:2px 3px;'><i class='fa-solid fa-arrow-left'></i> válasszd ki a nemét</span>";
+        }
+
+        $html.= "</div>";
         $html.= "</div>";
         $html.= "</div>";
 

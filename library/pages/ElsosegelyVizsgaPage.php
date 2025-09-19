@@ -212,7 +212,13 @@ class ElsosegelyVizsgaPage extends CorePage {
             "username" => "kv202506",
             "password" => "kv202506",
             "validfrom" => "2025-06-23 10:00:00",
-            "validuntil" => "2025-07-06 19:00:00"
+            "validuntil" => "2025-07-08 19:00:00"
+        ],
+        [
+            "username" => "polomania",
+            "password" => "poloPass88",
+            "validfrom" => "2025-08-25 07:00:00",
+            "validuntil" => "2025-08-29 19:00:00"
         ],
     ];
 

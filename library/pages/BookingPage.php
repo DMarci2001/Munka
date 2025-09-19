@@ -1763,7 +1763,7 @@ class BookingPage extends CorePage
                 echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='aszf' value='1' " . (isset($_POST["aszf"]) ? "checked" : "") . "/> {$webText["aszfelf"]}</div></td></tr>";
             }
         }
-        if(!CompanyService::isSuzukiGHC()){
+        if(!CompanyService::isSuzukiGHC() && Booking_Constants::SQL_DB == "hungariamed") {
             echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='gdpr' value='1' " . (isset($_POST["gdpr"]) ? "checked" : "") . "/> {$webText["gdprfelf"]}</div></td></tr>";
         }
         
@@ -1980,6 +1980,17 @@ class BookingPage extends CorePage
                 if (CompanyService::isBudapestBrand() && $tipus == 15) {
                     continue;
                 }
+
+                //eon esetében csak egy eszközöst rakunk ki
+                if (CompanyService::isEON()) {
+                    if ($tipus == Booking_Constants::LABOR_ID) {
+                        $tipusdisplay[$tipus] = "Helyszíni díjmentes szűrővizsgálat";
+                        continue;
+                    } else {
+                        continue;
+                    }
+                }
+
                 @$tipusdisplay[$tipus] = $tipusnevek[$tipus];
             }
             if (isset($tipusdisplay)) {

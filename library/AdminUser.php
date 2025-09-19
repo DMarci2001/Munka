@@ -158,6 +158,9 @@ class AdminUser {
         ],
         "jog_suzukighclista" => [
             "name" => "Suzuki GHC regisztrációkat láthatja",
+        ],
+        "jog_newsinsert" => [
+            "name" => "Faliújságra támát hozzáadhat",
         ]
 
     ];
@@ -496,6 +499,10 @@ class AdminUser {
         return $this->checkPermission("jog_beallitasok");
     }
 
+    public function logAccess():bool {
+        return $this->checkPermission("jog_tevekenysegnaplo");
+    }
+
     public function beallitasTevekenysegnaploAccess():bool {
         return $this->checkPermission("jog_tevekenysegnaplo");
     }
@@ -596,6 +603,14 @@ class AdminUser {
         return $this->checkPermission("jog_suzukighclista");
     }
 
-    
+    public function newsInsertAccess():bool {
+        return $this->checkPermission("jog_newsinsert");
+    }
+
+
+    public function isDrMadai():bool {
+        return $this->user["id"] == 295 && Booking_Constants::SQL_DB == "keltexmed";
+    }
+
 
 }

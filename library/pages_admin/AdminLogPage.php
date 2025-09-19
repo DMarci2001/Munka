@@ -78,7 +78,7 @@ class AdminLogPage extends AdminCorePage {
 
     public function showPage() {
         
-        if (!$this->adminUser->beallitasLangAccess()) {
+        if (!$this->adminUser->logAccess()) {
             echo $this->noPermissionMessage();
             return;
         }

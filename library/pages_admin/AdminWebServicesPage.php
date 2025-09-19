@@ -70,8 +70,8 @@ class AdminWebServicesPage extends AdminCorePage
                 }
                 $managerOptions["items"] = $managerItems;
 
-                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seokeywords=?, seodescription=?, weboptions=?, packcontents=? where id=?",
-                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seokeywords"], $_POST["seodescription"], json_encode($webOptions), json_encode($managerOptions), $_GET["szerk"]]);
+                sql_query("update szurestipusok set webalias=?, webkiemelt=?, webdescription=?, seotitle=?, seokeywords=?, seodescription=?, weboptions=?, packcontents=? where id=?",
+                    [$_POST["webalias"], $_POST["webkiemelt"], $_POST["webdescription"], $_POST["seotitle"], $_POST["seokeywords"], $_POST["seodescription"], json_encode($webOptions), json_encode($managerOptions), $_GET["szerk"]]);
 
                 logActivity("wwwservice",$_GET["szerk"],"{$_POST["megnev"]} adatlap", print_r($_POST,true));
             }
@@ -300,8 +300,9 @@ class AdminWebServicesPage extends AdminCorePage
             echo "<textarea class='mce' name='webdescription' style='width:900px;height:600px;'>{$service["webdescription"]}</textarea>";
             echo "</div></td></tr>";
             echo "<tr><td>Alias:</td><td><input class='inputbox' style='width:200px;' type='text' name='webalias' value='{$service["webalias"]}' placeholder='ez lesz az url' />&nbsp;&nbsp;<input type='checkbox' value='1' name='webkiemelt'" . ($service["webkiemelt"] == 1 ? " checked" : "") . "> Kiemelve a weboldalon</td></tr>";
-            echo "<tr><td>SEO keywords:</td><td><input class='inputbox' style='width:800px;' type='text' name='seokeywords' value='{$service["seokeywords"]}'  /></td></tr>";
-            echo "<tr><td>SEO description:</td><td><input class='inputbox' style='width:800px;' type='text' name='seodescription' value='{$service["seodescription"]}'  /></td></tr>";
+            echo "<tr><td>SEO title:</td><td><input class='inputbox' style='width:600px;' type='text' name='seotitle' value='{$service["seotitle"]}' /> (csak akkor töltsd ki, ha különbözik a szolgáltatás nevétől)</td></tr>";
+            echo "<tr><td>SEO keywords:</td><td><input class='inputbox' style='width:800px;' type='text' name='seokeywords' value='{$service["seokeywords"]}' /></td></tr>";
+            echo "<tr><td>SEO description:</td><td><input class='inputbox' style='width:800px;' type='text' name='seodescription' value='{$service["seodescription"]}' /></td></tr>";
 
             echo "<tr><td></td><td>";
 

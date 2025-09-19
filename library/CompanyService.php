@@ -11,9 +11,13 @@ class CompanyService {
     const SUZUKI_ID         = 81;
     const SUZUKI_EGESZSEGUT_ID = 504;
     const SUZUKI_GHC_ID     = 904;
+    const SUZUKI_GHC2025_ID = 1403;
     const BME_ID            = 851;
     const KRE_ID            = 888;
     const LIGHTTECH_ID      = 858;
+    const EON_ID            = 207;
+
+    const SUZUKI_ARENA_HELSZIN_ID = 640;
 
     public static array $makIds = [4,373, 374, 375, 376,933];
 
@@ -185,7 +189,7 @@ class CompanyService {
     }
 
     public static function isSuzukiGHC($companyId = 0):bool{
-        return $_SESSION["helyszindata"]["domain"] == "ghc" && Booking_Constants::SQL_DB == "hungariamed";
+        return ($companyId == self::SUZUKI_GHC2025_ID || $_SESSION["helyszindata"]["domain"] == "ghc") && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function isALDI($companyId = 0):bool{
@@ -206,6 +210,10 @@ class CompanyService {
 
     public static function isAszMenedzser($companyId = 0):bool{
         return $_SESSION["helyszindata"]["domain"] == "asz-menedzserszures" && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isEON($companyId = 0):bool{
+        return ($companyId == self::EON_ID || $_SESSION["helyszindata"]["domain"] == "eon") && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function telExceptions(){

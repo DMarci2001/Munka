@@ -402,6 +402,10 @@ class AdminLabRequestsPage extends AdminCorePage {
 
         $bekuldoKodok = SpektrumlabService::BEKOLDO_KOD_MAP;
         $bekuldoKodok["000000719"] = "SYNLAB Hungaria Med-M Kft.";
+        if (Booking_Constants::SQL_DB == "keltexmed") {
+            $bekuldoKodok = SpektrumlabService::BEKOLDO_KOD_MAP_KELTEXMED;
+        }
+
 
         echo "<div style='display:table-cell;vertical-align: middle;'>";
         echo "<select name='reqlaborbekuldokodfilter' id='reqlaborbekuldokodfilter' onchange='labReuestPageFilter(this.value);' style='width:210px;background:#ffc;' title='Szűrés beküldőkódra'>";

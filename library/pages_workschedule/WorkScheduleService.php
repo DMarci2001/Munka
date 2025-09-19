@@ -135,7 +135,7 @@ class WorkScheduleService {
             $stat[$row["datum"]][] = $row;
         }
 
-        for ($i = 0; $i < 7 * 5; $i++) {
+        for ($i = 0; $i < 7 * 52; $i++) {
             $thisDay = date("Y-m-d", strtotime("last week monday + {$i} day"));
             $weekDay = date("N", strtotime($thisDay));
             $weekNum = date("W", strtotime($thisDay));

@@ -18,8 +18,9 @@ class ExcelService {
     private string $extraFilter = "";
 
     public function __construct() {
-        if (session_id() == "5bjd1s7gcfehaf9ar9uvs0g8k2") {
-            $this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
+        if (session_id() == "btqfm25e01jam1p2v2hrl9kq49") {
+            //$this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
+            $this->extraFilter = $this->jaszSuzukiFilter;
         }
     }
 
@@ -1607,7 +1608,7 @@ class ExcelService {
         $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
         $sor++;
 
-        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+        $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
             ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
@@ -1621,17 +1622,24 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
             
-            FROM (SELECT datum, foglalta, orvosassigned
+            FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM keltexmed.foglalasok 
             WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
             
             LEFT JOIN keltexmed.orvosok o ON o.id=a.orvosassigned
+            LEFT JOIN keltexmed.szurestipusok t ON a.szurestipusid=t.id
             
             GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($reservations as $reservation) {
-            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            if (empty($reservation["orvos"])) {
+                continue;
+            }
+
+            $orvos = "{$reservation["orvos"]} ({$reservation["tipus"]})";
+
+            $this->dataRow("A", $sor, [$orvos, $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
             $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
@@ -1653,7 +1661,7 @@ class ExcelService {
         }
 
         $this->setAutoWidth(range('B','L'));
-        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('A')->setWidth(40);
     }
 
 
@@ -1691,10 +1699,10 @@ class ExcelService {
             
             IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
             FROM hungariamed.foglalasok 
-            WHERE datum>'2024-01-01 00:00:00' AND datum<'2024-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618,587) OR foglalta='foglaljorvost')) a
+            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618,587) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed.szurestipusok t ON t.id=a.szurestipusid
-            
+      
             GROUP BY calcfoglalta ORDER BY calcfoglalta", [])->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -1726,7 +1734,7 @@ class ExcelService {
         $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
         $sor++;
 
-        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+        $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
             ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
@@ -1740,17 +1748,24 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
             
-            FROM (SELECT datum, foglalta, orvosassigned
+            FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM hungariamed.foglalasok 
             WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed.orvosok o ON o.id=a.orvosassigned
+            LEFT JOIN hungariamed.szurestipusok t ON a.szurestipusid=t.id
             
             GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($reservations as $reservation) {
-            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            if (empty($reservation["orvos"])) {
+                continue;
+            }
+
+            $orvos = "{$reservation["orvos"]} ({$reservation["tipus"]})";
+
+            $this->dataRow("A", $sor, [$orvos, $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
             $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
@@ -1772,7 +1787,7 @@ class ExcelService {
         }
 
         $this->setAutoWidth(range('B','L'));
-        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('A')->setWidth(40);
     }
 
 
@@ -1813,7 +1828,7 @@ class ExcelService {
             WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed_gyor.szurestipusok t ON t.id=a.szurestipusid
-            
+     
             GROUP BY calcfoglalta ORDER BY calcfoglalta", [])->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -1845,7 +1860,7 @@ class ExcelService {
         $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
         $sor++;
 
-        $reservations = sql_query("SELECT o.nev AS orvos, COUNT(*) AS total
+        $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
             ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
@@ -1859,17 +1874,24 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
             
-            FROM (SELECT datum, foglalta, orvosassigned
+            FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM hungariamed_gyor.foglalasok 
             WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed_gyor.orvosok o ON o.id=a.orvosassigned
-            
+            LEFT JOIN hungariamed_gyor.szurestipusok t ON a.szurestipusid=t.id
+      
             GROUP BY orvosassigned ORDER BY o.nev", [])->fetchAll(PDO::FETCH_ASSOC);
 
 
         foreach ($reservations as $reservation) {
-            $this->dataRow("A", $sor, [$reservation["orvos"], $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
+            if (empty($reservation["orvos"])) {
+                continue;
+            }
+
+            $orvos = "{$reservation["orvos"]} ({$reservation["tipus"]})";
+
+            $this->dataRow("A", $sor, [$orvos, $reservation["total"], $reservation["jan"], $reservation["feb"], $reservation["marc"], $reservation["apr"], $reservation["maj"], $reservation["jun"], $reservation["jul"], $reservation["aug"], $reservation["szep"], $reservation["okt"], $reservation["nov"], $reservation["dec"]]);
             $this->sheet->getStyle("B{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("C{$sor}")->getAlignment()->setHorizontal("right");
             $this->sheet->getStyle("D{$sor}")->getAlignment()->setHorizontal("right");
@@ -1891,7 +1913,7 @@ class ExcelService {
         }
 
         $this->setAutoWidth(range('B','L'));
-        $this->sheet->getColumnDimension('A')->setWidth(20);
+        $this->sheet->getColumnDimension('A')->setWidth(40);
     }
 
 

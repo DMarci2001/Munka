@@ -317,6 +317,11 @@ class DicomService {
             $dcmParam = "--roi-min-max-window 700 700 1000 3000 --inverse-shape";
         }
 
+        if (substr_count($content["manufacturer"], "RF CO") > 0) {
+            //naomi sötét képekhez kivétel
+            $dcmParam = "--roi-min-max-window 700 700 1000 3000 --inverse-shape";
+        }
+
         if (isset($_GET["thumb"])) {
             $thumbLocation = self::STORAGE_DIR."/thumbnails/{$id}.jpg";
             if (!is_file($thumbLocation)) {

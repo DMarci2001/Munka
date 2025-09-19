@@ -159,6 +159,11 @@ class CronService {
     }
 
     private function _tesztStuff() {
+
+        //$foService = new FoglaljOrvostService();
+        //$result = $foService->deleteSzabadsagFix();
+        //echo $result;
+
         //$this->addSyncReservations();
 
         //$this->tesztSynlabPdf();
@@ -170,7 +175,7 @@ class CronService {
         //$service = new AdminAjaxService();
         //$service->addCsvUsers();
 
-        //$this->sendRawWeeklyStat();
+        $this->sendRawWeeklyStat();
         die;
 
         //$this->saveResultPdfs();
@@ -1193,6 +1198,7 @@ class CronService {
         $mail->AddAttachment(self::getRawTempFileName(), $fileName);
 
         $mail->addAddress("jnsmobil@gmail.com");
+
 
         $mail->addAddress("sorger.eva@hungariamed.hu");
         $mail->addAddress("korpics@hungariamed.hu");

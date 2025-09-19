@@ -918,7 +918,7 @@ class AdminAjaxService {
             if ($imageData = sql_query("select * from dokumentumok where id=?", [$docId])->fetch(PDO::FETCH_ASSOC)) {
                 $imagePath = $docAgent->getAssetImageURL($imageData, true);
                 $originalImagePath = str_replace($imageData["assetid"], $imageData["assetid"]."_original", $imagePath);
-                $execute = "convert {$originalImagePath} -crop {$imageCropWidth}x{$imageCropHeight}+{$imageCropX}+{$imageCropY} {$imagePath}";
+                $execute = "convert {$originalImagePath} -crop {$imageCropWidth}x{$imageCropHeight}+{$imageCropX}+{$imageCropY} -quality 70 {$imagePath}";
                 //$message.= $execute;
                 `{$execute}`;
             }

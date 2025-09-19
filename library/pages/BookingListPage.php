@@ -8,6 +8,9 @@ class BookingListPage extends CorePage {
         $webText = $this->lang->webText;
 
         if (isset($_GET["dodeletereservation"])) {
+            echo "Foglalás törlés ideiglenesen letiltva.. Kérjük foglalás lemondás ügyben hívja az ügyfélszolgálatot!";
+            die;
+
             $bookingService = new BookingService();
             $GLOBALS["extraloginfo"] = "felhasználó adatlapján törölte";
             $bookingService->deleteReservation($_GET["id"], $_GET["rk"]);

@@ -1089,7 +1089,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077, 1078, 1079, 1088])) {
+                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077, 1078, 1079, 1088, 1093])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";
@@ -1100,7 +1100,7 @@ class AdminBookingPage extends AdminCorePage
                 //    $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>DR. KIZMAN EZEN A NAPON NEM ELÉRHETŐ, EZÉRT TÜDŐSZŰRÉSRE NEM LEHET FOGLALNI!</span></div>";
                 //}
 
-                if ($szabi) {
+                if ($szabi && !$this->adminUser->isDrMadai()) {
                     $szabiData = sql_fetch_array(sql_query("select min(datumtol) as datumtol, max(datumig) as datumig from szabadsag where groupid=?", [$szabi["groupid"]]));
                     $htmlout .= "<div style='padding:2px 0px;'><span style='color:#fff;background:#f00;padding:2px 5px;'>Szabadságon {$szabiData["datumtol"]} - {$szabiData["datumig"]}</span></div>";
                 }
@@ -1232,7 +1232,7 @@ class AdminBookingPage extends AdminCorePage
                         $htmlout .= "<tr style=''>";
                         $htmlout .= "<td valign='top' nowrap style=''>" . $this->idopontStatusIcon() . "&nbsp;<span style=\"" . $this->datePastStyle($nap, $ora) . "\">{$ora}" . ($this->potIdopont ? " <span title='pótidőpont'>(p)</span>" : "") . "&nbsp;&nbsp;</span></td>";
                         $htmlout .= "<td valign='top'><a onclick='{$this->addIdopontJavaScript}' class='iconbutton' title='foglalás' href='#'><i class='fas fa-plus-square'></i></a>&nbsp;&nbsp;</td>";
-                        if ($szabi) {
+                        if ($szabi && !$this->adminUser->isDrMadai()) {
                             $htmlout .= "<td valign='top'>Szabadság miatt nem foglalható</td>";
                         }
                         $htmlout .= "</tr>";
@@ -1944,7 +1944,7 @@ class AdminBookingPage extends AdminCorePage
                 $htmlout .= "<div style='display:table-cell;vertical-align:middle;cursor:pointer;font-size:32px;padding:0px 10px 0px 10px;' onclick=\"toggleElojegyzesTableNaptar({$orvosId}, {$sectionNum});\"><i id='tablenyito{$orvosId}_{$sectionNum}' class='tablenyito fas fa-chevron-up' style='" . ($this->elojegyzesRowClosed($orvosId, $szuresTipus["id"]) ? "transform:rotate(180deg);" : "") . "'></i></div>";
                 $htmlout .= "<div style='display:table-cell;vertical-align:top;'>";
                 $htmlout .= "<div id='orvosdiv{$orvosId}' style='font-size:16px;font-weight:bold;'>{$rendeloOrvosLink}&nbsp;" . implode(", ", $orvosTipusNevek) . "&nbsp;&nbsp;{$addDoctorLink} {$helyettesitesLink} {$szemelyzetLink} {$printBeoLink}";
-                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077, 1078, 1079, 1088])) {
+                if (Booking_Constants::SQL_DB == "hungariamed" && in_array($helyszin, [679, 681, 682, 678, 683, 684, 685, 686, 687, 689, 690, 693, 688, 696, 697, 701, 699, 702, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 1051, 1077, 1078, 1079, 1088, 1093])) {
                     $htmlout.= " {$printBeoPdfLink}";
                 }
                 $htmlout .= "</div>";

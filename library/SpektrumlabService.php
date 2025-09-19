@@ -67,6 +67,7 @@ class SpektrumlabService {
         "000000544" => "Hungária Med-M Kft. (Pénzjegy nyomda)",
         "000000607" => "Hungária Med-M Kft. (JABIL)",
         "000000609" => "Hungária Med-M Kft. (MAHLE)",
+        "000000637" => "Hungária Med-M Kft. (Knorr Bremse)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [
@@ -74,6 +75,7 @@ class SpektrumlabService {
         "000000533" => "Keltexmed Kft. (Auchan)",
         "000000574" => "Keltexmed Kft. (HMM Buda)",
         "000000577" => "KLTX-TMSZC",
+        "000000633" => "Keltexmed Kft. (MÁESZ)",
     ];
 
     const DEFAULT_BEKULDOKOD = "000000370";

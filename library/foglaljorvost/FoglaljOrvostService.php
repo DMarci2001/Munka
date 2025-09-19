@@ -506,7 +506,7 @@ class FoglaljOrvostService extends FoGeneral {
         $this->currentAction = "APPOINTMENT_DEL";
         $res = sql_query("select * from szabadsag where groupid=? and foid<>0", [$szabadsagGroupId]);
         while ($szabadsagData = sql_fetch_array($res)) {
-            $this->setPlaceByDoctorId($szabadsagData["orvosid"]);
+            $this->setPlaceByDoctorId($szabadsagData["oid"]);
 
             $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
@@ -523,5 +523,24 @@ class FoglaljOrvostService extends FoGeneral {
         }
         return $result;
     }
+
+
+    public function deleteSzabadsagFix() {
+        $this->setPlaceByDoctorId(479);
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+            <MESSAGE>
+                <MSGINFO
+                    IFCNAME="#ifcname#"
+                    MESSAGETYPE="APPOINTMENT"
+                    ACTION="DEL"
+                    ROTATE_HASH="#rotatehash#" />
+                <APPOINTMENT
+                    OWN_ID="sz1429"
+                    OUTERSYS_ID="9552210" />
+            </MESSAGE>';
+        return $this->sendMessageToFoglaljOrvost($xml);
+    }
+
 
 }

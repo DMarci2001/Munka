@@ -440,6 +440,7 @@ class DailyStatService {
     }
 
     public static function getDokirexVizsgalatok($from, $to = ""):array {
+        return [];
         if (empty($to)) {
             $to = $from;
         }

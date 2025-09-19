@@ -19,12 +19,12 @@ class NotificationService
 
         if (Booking_Constants::SQL_DB == "keltexmed") {
             $mail->isSMTP();
-            $mail->Host = "isp.itcoffee.hu";
+            $mail->Host = "mail.keltexmed.hu";
             $mail->SMTPAuth = true;
-            $mail->Username = "ugyfelkapcsolat@keltexmed.hu";
-            $mail->Password = "6qWmXx7gC";
+            $mail->Username = "keltexmed@keltexmed.hu";
+            $mail->Password = "Keltex66";
             $mail->SMTPSecure = "tls";
-            $mail->Port = 25;
+            $mail->Port = 587;
 
             $mail->From = Booking_Constants::NO_REPLY_ADDRESS;
             $mail->FromName = Booking_Constants::COMPANY_NAME;
@@ -660,6 +660,10 @@ class NotificationService
         $szuresTipus = $row["szurestipus"];
         if (CompanyService::isAuchan()) {
             $szuresTipus = $szuresTipus . ". " . substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
+        }
+
+        if (CompanyService::isEON() && $row["szurestipusid"] == Booking_Constants::LABOR_ID) {
+            $szuresTipus = "Helyszíni díjmentes szűrővizsgálat";
         }
 
         if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {

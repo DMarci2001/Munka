@@ -780,7 +780,7 @@ class BookingService
 
                             $maxFoglalhatoFerfi = 9;
                             $emlonapok = ["2025-09-17","2025-09-18","2025-09-19","2025-09-22","2025-09-23","2025-10-03"];
-                            
+
                             if($ferfiDolgozo=sql_query("SELECT * FROM ghc_segedtabla WHERE torzsszam=? AND nem=1",[$_SESSION["user"]["torzsszam"]])->fetch(PDO::FETCH_ASSOC)){
                                 //Le kell kérdezzem az összes férfi időpontot...
                                 $currentora01 = date("H",strtotime($ora));
@@ -801,7 +801,7 @@ class BookingService
                                         $maxFoglalhatoFerfi=15;
                                     }
                                 }
-                                
+
 
                                 $ferfiIdopontok = sql_query("SELECT * FROM foglalasok fogl
                                                              LEFT JOIN felhasznalok felh ON felh.id=fogl.paciensid
@@ -824,7 +824,7 @@ class BookingService
                                     continue;
                                     //$buttonClass == "foglaltbtn";
                                 }
-                                
+
                             }
 
                             $maxFoglalhatoNoHaVanExtra = 6;
@@ -1491,6 +1491,8 @@ class BookingService
 
         return ["error" => $error, "timeTableForPackage" => $timeTableForPackage];
     }
+
+
 
 
     public function getPackageAvailabilityForDayV2($day, $limitTimes = true, $data = [], $forceBeginHour = ""):array {
@@ -2329,6 +2331,7 @@ class BookingService
         $this->doOIFExceptions($fid);
         $this->doBudapestBrandExceptions($fid);
         $this->doKREExceptions($fid);
+        $this->doEONExceptions($fid);
 
         $this->newReservationId=$fid;
 
@@ -2477,6 +2480,8 @@ class BookingService
         return $forwardURL;
     }
 
+    private array $parentReservationData = [];
+
     public function addSubReservation($data, $parentId)
     {
         if ($this->szuresTipusData["ispack"] == 1) {
@@ -2484,13 +2489,13 @@ class BookingService
             $map = $this->getPackageAvailabilityForDayV2(date("Y-m-d", strtotime($data["datum"])), false, $data, CompanyService::isSuzukiGHC() ? date("H:i", strtotime($data["datum"])) : "");
 
 
-            $parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
-            $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
+            $this->parentReservationData = sql_fetch_array(sql_query("select * from foglalasok where id=?", array($parentId)));
+            $tipusData = sql_query("select megnev from szurestipusok t where t.id=?", [$this->parentReservationData["szurestipusid"]])->fetch(PDO::FETCH_ASSOC);
             $data["megj"] = $data["megj"] == "" ? "{$tipusData["megnev"]}":"{$tipusData["megnev"]} - {$data["megj"]}";
         
             $originMegj = $data["megj"];
             foreach ($map["timeTableForPackage"] as $subTypeId => $subData) {
-                if ($parentReservationData["szurestipusid"] == $subTypeId) {
+                if ($this->parentReservationData["szurestipusid"] == $subTypeId) {
 
                     //a parent tipus időpontját pontosítjuk
                     //sql_query("update foglalasok set datum=?, orvosassigned=? where id=?", array($subData["idopont"], $subData["orvosid"], $parentId));
@@ -2500,7 +2505,7 @@ class BookingService
 
                 $servicesToMegj = "";
                 //Megvizsgálom, hogy van-e a szűréstípushoz tartozó egyéb szolgáltatás
-                $reskapcs = sql_fetch_array(sql_query("SELECT * FROM szurescsomagok_kapcs WHERE csomagid=? AND szurestipusid=?",[$parentReservationData["szurestipusid"],$subTypeId]));
+                $reskapcs = sql_fetch_array(sql_query("SELECT * FROM szurescsomagok_kapcs WHERE csomagid=? AND szurestipusid=?",[$this->parentReservationData["szurestipusid"],$subTypeId]));
                 if(!empty($reskapcs["otherservices"])){
                     //Ha van, akkor dekódolom a JSON objektumot és végig fuok rajta egy loopban.
                     $otherservices = json_decode($reskapcs["otherservices"],true);
@@ -2513,12 +2518,12 @@ class BookingService
                 }
 
                 $data["datum"] = $subData["idopont"];
-                $data["paciensid"] = $parentReservationData["paciensid"];
+                $data["paciensid"] = $this->parentReservationData["paciensid"];
                 $data["rn"] = rand(1000000, 9999999);
-                $data["aktiv"] = $parentReservationData["aktiv"];
+                $data["aktiv"] = $this->parentReservationData["aktiv"];
                 $data["parentid"] = $parentId;
-                $data["cegid"] = $parentReservationData["cegid"];
-                $data["lang"] = $parentReservationData["rlang"];
+                $data["cegid"] = $this->parentReservationData["cegid"];
+                $data["lang"] = $this->parentReservationData["rlang"];
                 $data["orvosid"] = $subData["orvosid"];
                 $data["szurestipus"] = $subTypeId;
                 $data["rinterval"] = $subData["interval"];
@@ -3361,6 +3366,8 @@ class BookingService
         return $helyszinId;
     }
 
+    public bool $sameTime = false;
+
     public function replicateReservationToAnotherService($reservationData, $tipusId, $testOnly = false):string {
         $this->lastSubReservationId = 0;
         //$this->replicatedTimes[] = $reservationData["datum"];
@@ -3479,8 +3486,13 @@ class BookingService
                 $optimalTime = $notSoGoodTime;
             }
 
+            if (Booking_Constants::SQL_DB == "hungariamed" && $reservationData["helyszinid"] == CompanyService::SUZUKI_ARENA_HELSZIN_ID) {
+                //ghc esetében fixen a csomag időpontja mindennek az időpontja
+                $optimalTime["time"] = $reservationData["datum"];
+            }
+
             $reservationData["parentid"] = $reservationData["id"];
-            $reservationData["datum"] = $optimalTime["time"];
+            $reservationData["datum"] = $this->sameTime ? $reservationData["datum"] : $optimalTime["time"];
             $reservationData["rinterval"] = $optimalTime["binterval"];
             $reservationData["orvosid"] = $optimalTime["orvosId"];
             $reservationData["szurestipus"] = $tipusId;
@@ -3793,6 +3805,26 @@ class BookingService
                     $reservedTipusok[] = $tipusId;
                 }
             }
+        }
+
+    }
+
+    public function doEONExceptions($reservationId):void {
+        if (!CompanyService::isEON()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $eonTypes = [110, 164, 185];
+
+        $reservedTipusok = $reservationTipusMap = [];
+        $this->replicateDuplicateCheck = false;
+        $this->sameTime = true;
+        foreach ($eonTypes as $tipusId) {
+            $this->replicateReservationToAnotherService($reservationData, $tipusId);
         }
 
     }
