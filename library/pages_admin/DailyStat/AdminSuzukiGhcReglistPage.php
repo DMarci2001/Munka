@@ -50,7 +50,8 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
                                    if(felh.otp_penztar=1,\"Van\",\"Nincs\") as \"OTP egészségpénztár\",
                                    if(felh.family_planning=1,\"Részt vesz\",\"\") as \"Családtervezés\",
                                    if(felh.children_development=1,\"Részt vesz\",\"\") as \"Gyermekfejlesztés\",
-                                   GROUP_CONCAT(REPLACE(fogl.datum,\"-\",\".\")) AS \"Időpont\"
+                                   GROUP_CONCAT(REPLACE(fogl.datum,\"-\",\".\")) AS \"Időpont\",
+                                   IF(fogl.eljott=1,REPLACE(fogl.eljottidopont,\"-\",\".\"),\"\") AS \"Megjelenés időpontja\"
                             FROM felhasznalok felh
                             LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                             LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
@@ -105,6 +106,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
         $html .= "       <th class=\"text-center\" scope=\"col\">Csomag</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Regisztráció</th>";
         $html .= "       <th class=\"text-center\" scope=\"col\">Időpont</th>";
+        $html .= "       <th class=\"text-center\" scope=\"col\">Megjelenés időpontja</th>";
         $html .= "       </tr>";
         $html .= "   </thead>";
         $html .= "   <tbody>";
@@ -126,6 +128,7 @@ class AdminSuzukiGhcReglistPage extends AdminCorePage
             $html .= "<td class=\"text-center\">{$value["Csomag"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Regisztráció"]}</td>";
             $html .= "<td class=\"text-center\">{$value["Időpont"]}</td>";
+            $html .= "<td class=\"text-center\">{$value["Megjelenés időpontja"]}</td>";
             $html .= "</tr>";
         }
         $html .= "   </tbody>";
