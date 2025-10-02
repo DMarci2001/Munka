@@ -30,6 +30,7 @@ class PrintService
         "ghcsenior" => "ghc-szures-2024-senior.pdf",
         "ghcstandard" => "ghc-szures-2024-standard.pdf",
         "nkfihsetalolap" => "NKFIH_setalolap_2024.pdf",
+        "mende_adatkezeles" => "mende_adatkezeles.pdf",
         "genetika" => "genetikai_teljes_dokumentum.pdf",
         "generate_aldi_vv" => "generate_aldi_vv",
         "generateAszKartyak" => "generateAszKartyak",
@@ -49,6 +50,9 @@ class PrintService
         ),
         "nkfihsetalolap" => array(
             "nev", "szulhely", "szuldatum", "cegnev", "taj", "vizsgnevdatum", "megj"
+        ),
+        "mende_adatkezeles" => array(
+            "nev", "szuldatum", "taj", "teljescim", "levelezes", "telefon", "email"
         )
     );
 
@@ -178,6 +182,11 @@ class PrintService
 
         if ($this->templateId == "nkfihsetalolap") {
             $this->printNKFIHsetalo();
+            return;
+        }
+
+        if ($this->templateId == "mende_adatkezeles") {
+            $this->printMendeAdatkezeles();
             return;
         }
 
@@ -401,6 +410,48 @@ class PrintService
             echo $raw;
         }
     }
+
+    private function printMendeAdatkezeles()
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $cim = $this->reservationData["irsz"] . " " . $this->reservationData["varos"] . ", " . $this->reservationData["utca"];
+
+        $input = [
+            "nev" => $this->pdfChars($this->reservationData["nev"]),
+            "szuldatum" => date("Y. m. d.", strtotime($this->reservationData["szuldatum"])),
+            "taj" => $this->pdfChars($this->reservationData["taj"]),
+            "cim" => $this->pdfChars($cim),
+            "levelezesicim" => $this->pdfChars($cim),
+            "telefon" => $this->pdfChars($this->reservationData["telefon"]),
+            "email" => $this->pdfChars($this->reservationData["email"]),
+        ];
+
+        $fileName = "Mende_Adatkezeles_" . date("Y_m_d", strtotime($this->reservationData["datum"])) . "_{$this->reservationData["nev"]}.pdf";
+
+        $pdf = new Pdf("templates/{$this->templateFileName}");
+
+        $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($raw === false) {
+            $error = $pdf->getError();
+            var_dump($error);
+        } else {
+            header("Pragma: no-cache");
+            header("Cache-Control: no-store, no-cache");
+            header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must-revalidate");
+            header('Content-transfer-encoding: binary');
+            header("Content-Type: application/octet-stream");
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            //header("Content-Type: application/pdf");
+            echo $raw;
+        }
+    }
+
+    
 
     private function printGenetikaiPdf($send = false)
     {
@@ -1636,19 +1687,19 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
         die;
     }
 
-    public function generate_aldi_vv()
-    {
-        $laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000477' AND INSTR(created,'2024') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
-        $path = __DIR__ . "/pages_admin/other/tmp/";
+    public function generate_aldi_vv(){
+        //$laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000477' AND INSTR(created,'2024') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
+        $laborRequestData = sql_query("SELECT * FROM asz_vv_table;")->fetchAll(PDO::FETCH_ASSOC);
+        $path = __DIR__."/pages_admin/other/tmp/";
 
         //echo count($laborRequestData)." db sor.";
 
-        foreach ($laborRequestData as $data) {
-            $filename = $data["id"] . ".pdf";
+        foreach($laborRequestData as $data){
+            $filename = $data["requestid"].".pdf";
             $docAgent = new DocAgent();
-            $pdf = $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $data["id"]);
-            file_put_contents($path . $filename, $pdf);
-            echo "{$data["id"]}.pdf ({$data["nev"]}) is done.<br>";
+            $pdf = $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $data["requestid"]);
+            file_put_contents($path.$filename,$pdf);
+            echo "{$data["requestid"]}.pdf ({$data["nev"]}) is done.<br>";
         }
     }
 

@@ -530,6 +530,8 @@ class AdminBookingEditor {
 
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> NKFIH sétálólap</a>&nbsp;&nbsp;";
 
+            $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=mende_adatkezeles&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Mende adatkezelési</a>&nbsp;&nbsp;";
+
             //$html .= "<a class='printbutton' target='_blank' href='index.php?print&template=nkfihsetalolap&fid={$row["id"]}&p={$row["pass"]}'>NKFIH sétálólap</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matricamegj&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Megjegyzés</a>&nbsp;&nbsp;";
             $html .= "<a class='printbutton' target='_blank' href='index.php?print&template=matrica&fid={$row["id"]}&p={$row["pass"]}'><i class='fa-solid fa-print'></i> Matrica</a>&nbsp;&nbsp;";
