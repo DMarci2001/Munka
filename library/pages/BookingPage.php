@@ -55,6 +55,11 @@ class BookingPage extends CorePage
             //labshopból érkezés, labor foglaláshoz irányítás
             //https://bejelentkezes.hungariamed.hu/index.php?page=booking&labcode=ccb124b499f1a0d372e49adfe3fc18c3161913b92a32805ba8751ab0b345e354
             $_SESSION["labcode"] = $_GET["labcode"];
+            //DRV-s labshop megoldás
+            if($_SESSION["helyszindata"]["id"]==1487){
+                header("location:index.php?page=booking&szurestipus=48&helyszin=1202");
+                die;
+            }
             header("location:index.php?page=booking&szurestipus=48&helyszin=1");
             die;
         }
