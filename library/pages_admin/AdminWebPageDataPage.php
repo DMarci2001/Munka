@@ -58,7 +58,7 @@ class AdminWebPageDataPage extends AdminCorePage {
                 }
             }
 
-            sql_query("update webpagedata set domain=?, parent=?, params=?, aktiv=?, checkdate='0000-00-00 00:00:00' where id=?", [$_POST["domain"], $_POST["parent"], json_encode($params, JSON_PRETTY_PRINT), isset($_POST["aktiv"])?1:0, $_GET["szerk"]]);
+            sql_query("update webpagedata set domain=?, parent=?, forwardurl=?, params=?, aktiv=?, checkdate='0000-00-00 00:00:00' where id=?", [$_POST["domain"], $_POST["parent"], $_POST["forwardurl"], json_encode($params, JSON_PRETTY_PRINT), isset($_POST["aktiv"])?1:0, $_GET["szerk"]]);
             sql_query("update webpagedata set checkdate='0000-00-00 00:00:00' where parent=?", [$_GET["szerk"]]);
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
@@ -105,6 +105,9 @@ class AdminWebPageDataPage extends AdminCorePage {
             }
             echo "</select>";
             echo "</div>";
+
+            echo "<div style='margin-top:{$koz}px;'>Átirányítás:</div><div><input class='inputbox' style='{$textBoxStyle}' type='text' name='forwardurl' value='{$data["forwardurl"]}' placeholder='Töltsd ki ha legyen átirányítva ez a domain'></div>";
+
             echo "<div style='margin-top:{$koz}px;margin-bottom:10px;padding-bottom:10px;'>";
             echo "<input type='checkbox' value='1' name='aktiv'" . ($data["aktiv"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
             echo "</div>";

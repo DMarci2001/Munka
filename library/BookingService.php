@@ -2284,7 +2284,7 @@ class BookingService
 
             sql_query("update beutalok set foglalasid='0' where foglalasid=?", array($row["id"]));
             sql_query("delete from foglalasok WHERE id=?", array($row["id"]));
-            sql_query("delete from foglalasok WHERE parentid=? and parentid<>0", array($row["id"]));
+            sql_query("delete from foglalasok WHERE parentid=? and parentid<>0 and datum>date_sub(now(), interval 1 month)", array($row["id"]));
             sql_query("delete from fizkapcs where fid=?", array($row["id"]));
         }
     }
@@ -2332,6 +2332,8 @@ class BookingService
         $this->doBudapestBrandExceptions($fid);
         $this->doKREExceptions($fid);
         $this->doEONExceptions($fid);
+        $this->doCargoExceptions($fid);
+        $this->doDRVExceptions($fid);
 
         $this->newReservationId=$fid;
 
@@ -3828,6 +3830,45 @@ class BookingService
         }
 
     }
+
+    public function doCargoExceptions($reservationId):void {
+        if (!CompanyService::isCargo()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $copyTypes = [14, 15, 164, 58, 9];
+
+        $this->replicateDuplicateCheck = false;
+        $this->sameTime = true;
+        foreach ($copyTypes as $tipusId) {
+            $this->replicateReservationToAnotherService($reservationData, $tipusId);
+        }
+
+    }
+
+    public function doDRVExceptions($reservationId):void {
+        if (!CompanyService::isDRV()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $copyTypes = [67,164,107,58];
+
+        $this->replicateDuplicateCheck = false;
+        $this->sameTime = true;
+        foreach ($copyTypes as $tipusId) {
+            $this->replicateReservationToAnotherService($reservationData, $tipusId);
+        }
+
+    }
+
 
     public function doKREExceptions($reservationId):void {
         if (!CompanyService::isKRE()) {

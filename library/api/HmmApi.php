@@ -12,7 +12,7 @@ class HmmApi {
     private $tokenData;
 
     private $utils;
-    private $bookingService;
+    private BookingService $bookingService;
     private $authNeeded = true;
 
     public function __construct() {
@@ -47,7 +47,7 @@ class HmmApi {
                 $savedMethod.= "/".$this->apiMethod;
             }
 
-            sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID,  !empty($this->postBody) ? $this->postBody : print_r($_REQUEST, true), "", "", $savedMethod));
+            //sql_query("insert into webservicelog set tipus=?, datum=now(), keres=?, ip=?, useragent=?, action=?", array(self::LOG_ID,  !empty($this->postBody) ? $this->postBody : print_r($_REQUEST, true), "", "", $savedMethod));
             $logId = sql_insert_id();
         }
 
@@ -397,6 +397,7 @@ class HmmApi {
         $docAgent = new DocAgent();
         $this->authNeeded = false;
 
+        $filtersite = $_GET["filtersite"] ?? "";
         $from  = $_GET["from"] ?? 0;
         $limit = $_GET["limit"] ?? 1;
         $catId = $_GET["catid"] ?? 84;
@@ -413,16 +414,31 @@ class HmmApi {
             }
         }
 
+        if (!empty($filtersite)) {
+            if ($filtersite == "hmmgyor") {
+                $serviceWhere .= " AND c.aktivhmmgyor = 1";
+            }
+            if ($filtersite == "hmmbp") {
+                $serviceWhere .= " AND c.aktivhmmbp = 1";
+            }
+            if ($filtersite == "keltexmed") {
+                $serviceWhere .= " AND c.aktivkeltexmed = 1";
+            }
+            if ($filtersite == "keltexmed") {
+                $serviceWhere .= " AND c.aktivkeltexmed = 1";
+            }
+        }
+
         $from = intval($from);
         $limit = intval($limit);
         $count = 0;
 
         if ($id == 0) {
-            $result = sql_query("select count(*) as hany from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere}", [$catId])->fetch(PDO::FETCH_ASSOC);
+            $result = sql_query("select count(*) as hany from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') and c.state=1 {$serviceWhere}", [$catId])->fetch(PDO::FETCH_ASSOC);
             $count = $result["hany"];
-            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') {$serviceWhere} order by created desc limit {$from},{$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.catid=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') and c.state=1 {$serviceWhere} order by created desc limit {$from},{$limit}", [$catId])->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            $items = sql_query("select * from hmmweb.q9a8m_content c where c.id=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00')", [$id])->fetchAll(PDO::FETCH_ASSOC);
+            $items = sql_query("select * from hmmweb.q9a8m_content c where c.id=? and publish_up<now() and (publish_down>now() or publish_down='0000-00-00 00:00:00') and c.state=1", [$id])->fetchAll(PDO::FETCH_ASSOC);
         }
 
         foreach ($items as $contentData) {
@@ -455,6 +471,7 @@ class HmmApi {
                 "contentImages" => $contentImages,
                 "created"       => $contentData["created"],
                 "alias"         => $contentData["alias"],
+                "catid"         => $contentData["catid"],
                 "fulltext"      => $contentData["fulltext"],
             ];
         }
@@ -743,6 +760,8 @@ class HmmApi {
                     $body["patientGender"], $body["patientPostcode"], $body["patientCity"], $body["patientAddress"],
                     $reservationData["id"], $body["authorizationCode"]]);
 
+            $this->doDRVExceptionsPut($reservationData["id"], $body);
+
             return $this->_reservationArray(sql_fetch_array(sql_query("select * from foglalasok where id=?", [$reservationData["id"]])));
         } else {
             $this->apiError(400, "E1003", "Reservation not found.");
@@ -863,6 +882,8 @@ class HmmApi {
 
         //set authcode
         sql_query("update foglalasok set pass=?, foglalta=? where id=?", [$authorizationCode, $this->tokenData["username"], $reservationId]);
+
+        $this->doDRVExceptions($reservationId, $data["cegid"]);
 
         //$unionService = new UnionService();
         //$unionService->newReservation($fid);
@@ -1197,6 +1218,39 @@ class HmmApi {
             FROM synlab_labor_tetelek t LEFT JOIN synlab_labor_tetel_kategoriak k ON k.id=t.category 
             WHERE provider='spektrumlab' and t.visibility=1 and t.price<>0 
             ORDER BY k.id IS NULL, k.id, t.name")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    private function doDRVExceptions($reservationId, $companyId):void {
+        if ($companyId != 1487) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $copyTypes = [67,164,107,58];
+
+        $this->bookingService->replicateDuplicateCheck = false;
+        $this->bookingService->sameTime = true;
+        foreach ($copyTypes as $tipusId) {
+            $this->bookingService->replicateReservationToAnotherService($reservationData, $tipusId);
+        }
+    }
+
+    private function doDRVExceptionsPut($reservationId, $body):void {
+        $reservations = sql_query("SELECT id, cegid FROM foglalasok WHERE parentid = ?", [$reservationId])->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($reservations as $reservation) {
+            if ($reservation["cegid"] != 1487) {
+                continue;
+            }
+
+            sql_query("update foglalasok set helyszinid=?, nev=?, taj=?, telefon=?, email=?, szuldatum=?, anyjaneve=?, megj=?, aktiv=?, expire=?, neme=?, irsz=?, varos=?, utca=? where id=?",
+                [$body["locationId"], $body["patientName"], $body["patientTaj"], $body["patientPhone"], $body["patientEmail"], date("Y-m-d", strtotime($body["patientDateOfBirth"])), $body["patientMothersName"], $body["patientComment"], $body["active"], $body["expiration"],
+                    $body["patientGender"], $body["patientPostcode"], $body["patientCity"], $body["patientAddress"],
+                    $reservation["id"]]);
+        }
     }
 
 }

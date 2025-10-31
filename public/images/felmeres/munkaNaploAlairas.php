@@ -1,5 +1,4 @@
 <br/>
-<br/>
 
 <p>A VIZSGÁLATOT VÉGEZTÉK</p>
 
@@ -12,7 +11,6 @@
 </div>
 </p/>
 
-<br/>
 <br/>
 
 <table>

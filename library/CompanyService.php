@@ -16,6 +16,10 @@ class CompanyService {
     const KRE_ID            = 888;
     const LIGHTTECH_ID      = 858;
     const EON_ID            = 207;
+    const CARGO_HELYSZINI   = 1453;
+    const DRV_HELYSZINI     = 1487;
+    const ALDI_FIFI_ID      = 348;
+    const ALDI_FIFI_CTD_ID  = 340;
 
     const SUZUKI_ARENA_HELSZIN_ID = 640;
 
@@ -214,6 +218,14 @@ class CompanyService {
 
     public static function isEON($companyId = 0):bool{
         return ($companyId == self::EON_ID || $_SESSION["helyszindata"]["domain"] == "eon") && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isCargo($companyId = 0):bool{
+        return ($companyId == self::CARGO_HELYSZINI || $_SESSION["helyszindata"]["domain"] == "cargo-partner-helyszini") && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isDRV($companyId = 0):bool{
+        return ($companyId == self::DRV_HELYSZINI || $_SESSION["helyszindata"]["domain"] == "drv-helyszini") && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function telExceptions(){

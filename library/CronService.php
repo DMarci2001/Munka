@@ -54,26 +54,41 @@ class CronService {
 
     public function run() {
         if ($this->interval == "perc") {
+            $startTime = microtime(true);
+
             //percenként futó cronok
+            echo "_deleteNotActivatedReservations\n";
             $this->_deleteNotActivatedReservations();
+            echo "_smsAlertBeforeReservation\n";
             $this->_smsAlertBeforeReservation();
+            echo "_updateNaploszam\n";
             $this->_updateNaploszam();
+            echo "_sendFoglaljOrvostHeartBeat\n";
             $this->_sendFoglaljOrvostHeartBeat();
-			$this->sendReservationReminders();
-			$this->sendMissingDataEmails();
+            echo "sendReservationReminders\n";
+            $this->sendReservationReminders();
+            echo "sendMissingDataEmails\n";
+            $this->sendMissingDataEmails();
+            echo "sendLabShopMails\n";
             $this->sendLabShopMails();
+            echo "checkOneWebPage\n";
             $this->checkOneWebPage();
-            $this->refreshWorklist();
+            //$this->refreshWorklist();
+            echo "deleteExpiredReservations\n";
             $this->deleteExpiredReservations();
+            echo "fillLabMessageDatas\n";
             $this->fillLabMessageDatas();
-            $this->sendKeltexWebpageReservationsToFO();
+            echo "sendWebpageReservationsToFO\n";
+            $this->sendWebpageReservationsToFO();
             //$this->dokirexUserIdFill();
 
-			$dicomService = new DicomService();
-			$dicomService->processEntries();
+            echo "processEntries\n";
+            $dicomService = new DicomService();
+            $dicomService->processEntries();
 
-			$foService = new FoglaljOrvostService();
-			$foService->retryFailedMessages();
+            echo "retryFailedMessages\n";
+            $foService = new FoglaljOrvostService();
+            $foService->retryFailedMessages();
 
             //if (Booking_Constants::SQL_DB == "hungariamed") {
             $spektrumLabService = new SpektrumlabService();
@@ -86,12 +101,18 @@ class CronService {
 
             if (Booking_Constants::SQL_DB == "hungariamed") {
                 //synlab feldolgozás
+                /*
                 $service = new SynlabService();
                 $service->synlabProcess();
                 $service->processPdfFromMessages();
+                */
             }
 
+            $endTime = microtime(true);
+            echo "Execution time: " . round($endTime - $startTime, 2) . " sec\n";
+
         }
+
 
         if ($this->interval == "1ora") {
             //óránként futó cronok
@@ -810,6 +831,7 @@ class CronService {
 
     private function _updateNaploszam() {
         //naplószám átírása foglalásba (beutaló -> foglalás)
+        return;
         $res = sql_query("SELECT id,nszam FROM foglalasok WHERE checked=0 limit 100");
         while ($row = sql_fetch_array($res)) {
             if ($rowb = sql_fetch_array(sql_query("select * from beutalok where foglalasid='{$row["id"]}' and naploszam<>''"))) {
@@ -1218,22 +1240,17 @@ class CronService {
 
     }
 
-    private function sendKeltexWebpageReservationsToFO() {
-        if (Booking_Constants::SQL_DB != "keltexmed") {
-            return;
-        }
-
+    private function sendWebpageReservationsToFO() {
         $foService = new FoglaljOrvostService();
 
-        $reservations = sql_query("SELECT * FROM foglalasok f LEFT JOIN orvosok o on o.id=f.orvosassigned WHERE datum>now() and o.foid<>0 ORDER BY datum")->fetchAll(PDO::FETCH_ASSOC);
+        $reservations = sql_query("SELECT f.*, o.nev as orvosnev FROM foglalasok f LEFT JOIN orvosok o on o.id=f.orvosassigned WHERE datum>now() and o.foid<>0 and f.fofid=0 ORDER BY datum")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($reservations as $reservationData) {
-            echo "{$reservationData["datum"]} ".($reservationData["fofid"]==0?" nincs szinkronizálva":" szinkronizálva")."\n";
+            echo "{$reservationData["datum"]} {$reservationData["orvosnev"]}".($reservationData["fofid"]==0?" nincs szinkronizálva":" szinkronizálva")."\n";
 
             if ($reservationData["fofid"] == 0) {
                 $result = $foService->newReservation($reservationData["id"]);
                 print_r($result);
             }
-
         }
     }
 

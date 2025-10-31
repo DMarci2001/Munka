@@ -13,6 +13,11 @@ class AdminMenusPage extends AdminCorePage
         }
 
         if (isset($_POST["menumentes"])) {
+            //echo "<pre>";
+            //print_r($_POST);
+            //echo "</pre>";
+            //die;
+
             $path        = "";
             $componentId = 0;
             $type        = "";
@@ -23,6 +28,12 @@ class AdminMenusPage extends AdminCorePage
             if ($target == 1) {
                 $link = "#";
                 $type = "url";
+            }
+
+            if ($target == -1) {
+                $link = $_POST["link"];
+                $type = "url";
+                $path = $_POST["link"];
             }
 
             if (substr_count($target, "service")) {
@@ -67,7 +78,7 @@ class AdminMenusPage extends AdminCorePage
 
     public function showPage()
     {
-        if (!$this->adminUser->szurestipusAccess()) {
+        if (!$this->adminUser->beallitasWebAdatokAccess()) {
             echo $this->noPermissionMessage();
             return;
         }

@@ -1987,7 +1987,7 @@ class BookingPage extends CorePage
                 }
 
                 //eon esetében csak egy eszközöst rakunk ki
-                if (CompanyService::isEON()) {
+                if (CompanyService::isEON() || CompanyService::isCargo() || CompanyService::isDRV()) {
                     if ($tipus == Booking_Constants::LABOR_ID) {
                         $tipusdisplay[$tipus] = "Helyszíni díjmentes szűrővizsgálat";
                         continue;

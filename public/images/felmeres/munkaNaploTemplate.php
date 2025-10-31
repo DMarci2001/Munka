@@ -257,7 +257,7 @@
         </p>
         <p>
             <label style="width:100%;">WC, öltöző, fürdő
-                <input type="text" name="wc" value="<?= $_POST["wc"]?>" style="width:100%;">
+                <textarea style='width:100%;height:50px;' name="wc" id="kockazat"><?= $_POST["wc"]?></textarea>
             </label>
         </p>
         <p>
@@ -279,17 +279,17 @@
 
         <h2>Elsősegélynyújtás személyi és tárgyi feltételei/elérhetősége</h2>
         <p>
-                <textarea style='width:100%;height:80px;' name="elsosegely" id="elsosegely"><?= $_POST["elsosegely"]?></textarea>
+                <textarea style='width:100%;height:60px;' name="elsosegely" id="elsosegely"><?= $_POST["elsosegely"]?></textarea>
         </p>
 
         <h2>Kockázatértékelés</h2>
         <p>
-                <textarea style='width:100%;height:80px;' name="kockazat" id="kockazat"><?= $_POST["kockazat"]?></textarea>
+                <textarea style='width:100%;height:50px;' name="kockazat" id="kockazat"><?= $_POST["kockazat"]?></textarea>
         </p>
 
         <h2>Munkaegészségügyi hiányosságok, észrevételek, javaslatok</h2>
         <p>
-                <textarea style='width:100%;height:80px;' name="eszrevetelek" id="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
+                <textarea style='width:100%;height:130px;' name="eszrevetelek" id="eszrevetelek"><?= $_POST["eszrevetelek"]?></textarea>
         </p>
         <?php
         if (!empty($_GET["szerk"])) {

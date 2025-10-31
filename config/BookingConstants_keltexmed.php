@@ -74,8 +74,12 @@ class Booking_Constants {
     const SIMPLEPAY_MERCHANT_SECRET_SANDBOX = "FxDa5w314kLlNseq2sKuVwaqZshZT5d6";
 
     //simplePay hmm sandbox
-    const SIMPLEPAY_MERCHANT_ID     = "S076901";
-    const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
+    //const SIMPLEPAY_MERCHANT_ID     = "S076901";
+    //const SIMPLEPAY_MERCHANT_SECRET = "SfYyNetaA1sYYppo0a2S4yv7Sy1iR3Js";
+
+    //simplePay keltexmed
+    const SIMPLEPAY_MERCHANT_ID     = "S581901";
+    const SIMPLEPAY_MERCHANT_SECRET = "Rfbi1e3e21J3LibsPeRsTy6eZjzs43BW";
 
     const SEEME_API_KEY             = "1uivd276x0rvuo9v97k6z4x7axmaukoi5828";
 
@@ -93,5 +97,7 @@ class Booking_Constants {
 
     const GOOGLE_MAPS_API_KEY       = "AIzaSyAZxXvfDzq149JL3wd-gJkiFy_OLsq25b8";
 
-    const SPEKTRUM_KIERTEKELES_ID   = 870;
+    const SPEKTRUM_KIERTEKELES_ID   = 959;
 }
+
+

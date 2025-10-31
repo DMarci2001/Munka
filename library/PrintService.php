@@ -1533,6 +1533,8 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 
     public function printBeoPdf($beoId, $nap): string
     {
+        die;
+
         //$beoId = $_GET["printbeopdf"];
         //$nap = $_GET["nap"];
         $timeFrom = "{$nap} 00:00:00";
