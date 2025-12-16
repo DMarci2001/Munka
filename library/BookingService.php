@@ -1063,6 +1063,10 @@ class BookingService
                 $dist = "6 hour";
             }
 
+            if ($cegId == 1531 || $cegId == 1214) {
+                $dist = "0 hour";
+            }
+
             //BFKH - Buda / Pest / VIP
             if ($cegId == 136 || $cegId == 131 || $cegId == 137) {
                 //cib
@@ -3004,7 +3008,7 @@ class BookingService
             $tids = explode("|", $tipusData["tipusok"]);
             foreach ($tids as $tid) {
                 if (!empty($tid)) {
-                    if ($tid == 114 && !isset($_SESSION["enabletest"])) {
+                    if ($tid == 114 && !isset($_SESSION["enabletest"]) && Booking_Constants::SQL_DB == "hungariamed") {
                         continue;
                     }
                     $tipusok[] = $tid;

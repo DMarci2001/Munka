@@ -472,7 +472,7 @@ class HmmApi {
                 "created"       => $contentData["created"],
                 "alias"         => $contentData["alias"],
                 "catid"         => $contentData["catid"],
-                "fulltext"      => $contentData["fulltext"],
+                "fulltext"      => isset($_GET["titleonly"]) ? "":$contentData["fulltext"],
             ];
         }
 

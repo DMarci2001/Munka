@@ -308,6 +308,7 @@ class AdminWebServicesPage extends AdminCorePage
 
             $webOptions = json_decode($service["weboptions"], true);
 
+            echo "<div><input type='checkbox' value='1' name='weboptions_faq'" . (isset($webOptions["faq"]) && $webOptions["faq"] == 1 ? " checked" : "") . "> FAQ</div>";
             echo "<div><input type='checkbox' value='1' name='weboptions_prices'" . (isset($webOptions["prices"]) && $webOptions["prices"] == 1 ? " checked" : "") . "> Árlista</div>";
             echo "<div><input type='checkbox' value='1' name='weboptions_blog'" . (isset($webOptions["blog"]) && $webOptions["blog"] == 1 ? " checked" : "") . "> Blog kivonat</div>";
             echo "<div><input type='checkbox' value='1' name='weboptions_doctorlist'" . (isset($webOptions["doctorlist"]) && $webOptions["doctorlist"] == 1 ? " checked" : "") . "> Orvosok</div>";

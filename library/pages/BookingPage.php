@@ -2156,6 +2156,8 @@ class BookingPage extends CorePage
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
 
+            //$html.= "<pre>".print_r($services, true)."</pre>";
+
             $html .= "<div style='text-align:center;margin-top:10px;'>";
 
             if (!isset($_GET["menedzserszures"])) {

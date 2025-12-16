@@ -188,6 +188,7 @@ class CronService {
         //$this->addSyncReservations();
 
         //$this->tesztSynlabPdf();
+        //die;
 
         //$this->copyMAESZ();
         //$dicomService = new DicomService();
@@ -275,8 +276,8 @@ class CronService {
         //$service = new SynlabService();
         //$service->synlabProcess();
 
-        $service = new SynlabService();
-        $service->downloadSynlabEmails();
+        //$service = new SynlabService();
+        //$service->downloadSynlabEmails();
 
         //echo $result."\n";
 
@@ -1143,7 +1144,7 @@ class CronService {
         echo "start\n";
 
         $service = new SynlabService();
-        $pdfFile = __DIR__."/tesztsynlab.pdf";
+        $pdfFile = __DIR__."/tesztsynlab5.pdf";
 
         $result = $service->parsePatientDataFromPDF($pdfFile);
         print_r($result);

@@ -7,7 +7,7 @@ use phpseclib3\Crypt\PublicKeyLoader;
 
 class SynlabService
 {
-    public array $bekuldoKodok = ["000000719", "HMMSZURES", "HMMMAALLK"];
+    public array $bekuldoKodok = ["000000719", "HMMSZURES", "HMMMAALLK", "HMMTORVSZ"];
 
     const BEKOLDO_KOD_MAP = [
         "MMFGSMIS" => "Hungaria Med-M Kft. (FGSZ Zrt. - Miskolc)",
@@ -868,7 +868,7 @@ class SynlabService
     }
 
 
-    public function parsePatientDataFromPDF($pdfFile, $subject = ""):array {
+    public function parsePatientDataFromPDF_old($pdfFile, $subject = ""):array {
         $utils = new Utils();
 
         $config = new \Smalot\PdfParser\Config();
@@ -929,6 +929,70 @@ class SynlabService
         return $result;
     }
 
+    public function parsePatientDataFromPDF($pdfFile, $subject = ""):array {
+        $utils = new Utils();
+
+        $config = new \Smalot\PdfParser\Config();
+        $config->setHorizontalOffset('');
+        $parser = new \Smalot\PdfParser\Parser([], $config);
+        $pdf = $parser->parseFile($pdfFile);
+        $text = $pdf->getText();
+
+        if (substr_count($text, "Mikrobiológiai Labor")) {
+            //mikrobiológiai lelet
+            $nev = trim(substr($text, strpos($text, "Név:") + 5, 100));
+            $result["nev"] = substr($nev, 0, strpos($nev, "\n"));
+            $taj = trim(substr($text, strpos($text, "Taj:") + 5, 50));
+            $result["taj"] = trim(substr($taj, 0, strpos($taj, "(")));
+            $szulDatum = trim(substr($text, strpos($text, "Született:") + 11, 50));
+            $result["szulDatum"] = substr($szulDatum, 0, 10);
+        }
+
+        if (empty($result["nev"])) {
+            $subText = substr($text, strpos($text, "Cím:") + 6, 500);
+            $userDataRows = explode("\n", $subText);
+            //print_r($userDataRows);
+
+            //echo "n".$nev."\n";
+            $result["nev"] = trim($userDataRows[2]);
+            $result["taj"] = trim($userDataRows[3]);
+            $result["szulDatum"] = trim($userDataRows[6]);
+            $result["folyamatban"] = substr_count($text, "Folyamatban") ? 1 : 0;
+        }
+
+        if ($subject == "GenoID laboratóriumi eredmény") {
+            $nev = trim(substr($text, strpos($text, "Beküldő") + 9, 100));
+            $result["nev"] = substr($nev, 0, strpos($nev, "\t"));
+            $taj = trim(substr($text, strpos($text, "TAJ:") + 5, 50));
+            $result["taj"] = trim(substr($taj, 0, strpos($taj, "\t")));
+            $result["szulDatum"] = substr($text, strpos($text, "Születési idő:") + 17, 10);
+        }
+
+        $result["bekuldokod"] = "";
+        foreach ($this->bekuldoKodok as $kod) {
+            if (substr_count($text, "({$kod})")) {
+                $result["bekuldokod"] = $kod;
+                break;
+            }
+        }
+
+        if (!ctype_digit($result["taj"])) {
+            $result["taj"] = "";
+        }
+        if (!$utils->validateDate($result["szulDatum"], "Y.m.d")) {
+            $result["szulDatum"] = "";
+        }
+
+        $result["patientEmail"] = "";
+        if (!empty($result["taj"]) && !empty($result["szulDatum"])) {
+            //email kibányászása
+            if ($reservationData = sql_query("select email from foglalasok where taj=? and szuldatum=? order by datum desc limit 1", [$result["taj"], str_replace(".", "-", $result["szulDatum"])])->fetch(PDO::FETCH_ASSOC)) {
+                $result["patientEmail"] = $reservationData["email"];
+            }
+        }
+
+        return $result;
+    }
 
     private array $synLabParams = [
         "hungariamed" => [
