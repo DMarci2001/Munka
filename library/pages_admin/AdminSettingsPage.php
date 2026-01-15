@@ -101,19 +101,18 @@ class AdminSettingsPage extends AdminCorePage
 
         die();*/
 
-
+        //---->ITT KEZDŐDIK
         //TESCO telítettségi kimutatás
-        $helyszinek = [];
+        /*$helyszinek = [];
         $datumok = [];
-        /*$beos = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo
-                           LEFT JOIN helyszinek h on h.id=beo.helyszinid
-                           WHERE instr(beo.beocegek,'|682|') AND INSTR(beo.beonap,'2025');")->fetchAll(PDO::FETCH_ASSOC);*/
-
         $beos = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo
                            LEFT JOIN helyszinek h on h.id=beo.helyszinid
-                           WHERE (instr(beo.beocegek,'|340|') OR instr(beo.beocegek,'|348|')) AND INSTR(beo.beonap,'2025') ORDER BY h.cim;")->fetchAll(PDO::FETCH_ASSOC);
+                           WHERE instr(beo.beocegek,'|682|') AND beo.beonap>'2025-09-30';")->fetchAll(PDO::FETCH_ASSOC);*/
 
-        foreach($beos as $beo){
+        /*$beos = sql_query("SELECT beo.*,h.cim FROM orvos_beosztas_new beo
+                           LEFT JOIN helyszinek h on h.id=beo.helyszinid
+                           WHERE (instr(beo.beocegek,'|340|') OR instr(beo.beocegek,'|348|')) AND INSTR(beo.beonap,'2025') ORDER BY h.cim;")->fetchAll(PDO::FETCH_ASSOC);*/
+        /*foreach($beos as $beo){
             //echo "<pre>";
             //print_r($beo);
             //echo "</pre>";
@@ -127,13 +126,14 @@ class AdminSettingsPage extends AdminCorePage
                 $time = (strtotime($beo["beonap"]." ".$beo["ig"])-strtotime($beo["beonap"]." ".$beo["tol"]));
                 $helyszinek[][] = ["helyszinid"=>$beo["helyszinid"],"datum"=>$beo["beonap"],"tol"=>$beo["tol"],"ig"=>$beo["ig"],"binterval"=>$beo["binterval"],"limit"=>floor((($time/60)/$beo["binterval"])),"appointments"=>count($foglalasok)];
             }
-        }
+        }*/
+
 
         /*echo "<pre>";
         print_r($helyszinek);
         echo "</pre>";*/
 
-        echo "<table>";
+        /*echo "<table>";
         echo "  <tr>";
         echo "      <td>Helyszín</td>";
         echo "      <td>Dátum</td>";
@@ -162,7 +162,7 @@ class AdminSettingsPage extends AdminCorePage
         }
 
         echo "</table>";
-        die();
+        die();*/
         //echo "<pre>";
         //print_r($helyszinek);
         //echo "</pre>";
