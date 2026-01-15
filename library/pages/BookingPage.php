@@ -1987,7 +1987,7 @@ class BookingPage extends CorePage
                 }
 
                 //eon esetében csak egy eszközöst rakunk ki
-                if (CompanyService::isEON()) {
+                if (CompanyService::isEON() || CompanyService::isCargo() || CompanyService::isDRV()) {
                     if ($tipus == Booking_Constants::LABOR_ID) {
                         $tipusdisplay[$tipus] = "Helyszíni díjmentes szűrővizsgálat";
                         continue;
@@ -2155,6 +2155,8 @@ class BookingPage extends CorePage
 
         foreach (Booking_Constants::DEFAULT_PLACE_IDS as $helyszinId) {
             $services = $this->bookingService->getPublicServices($helyszinId);
+
+            //$html.= "<pre>".print_r($services, true)."</pre>";
 
             $html .= "<div style='text-align:center;margin-top:10px;'>";
 

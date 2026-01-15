@@ -14,6 +14,11 @@ class AdminDailyStatPage extends AdminCorePage
 
         $GLOBALS["css"][] = "dailystat.css";
         $GLOBALS["javascript"][] = "dailystat.js";
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+
     }
 
     public function showPage()

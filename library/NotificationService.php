@@ -662,7 +662,7 @@ class NotificationService
             $szuresTipus = $szuresTipus . ". " . substr($row["megj"], strpos($row["megj"], "Választott vizsgálat"));
         }
 
-        if (CompanyService::isEON() && $row["szurestipusid"] == Booking_Constants::LABOR_ID) {
+        if ((CompanyService::isDRV() || CompanyService::isEON() || CompanyService::isCargo()) && $row["szurestipusid"] == Booking_Constants::LABOR_ID) {
             $szuresTipus = "Helyszíni díjmentes szűrővizsgálat";
         }
 
@@ -693,6 +693,41 @@ class NotificationService
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
         $mbody .= "{$packText}";
         $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
+
+        if ($row["cegid"] == CompanyService::ALDI_FIFI_ID && Booking_Constants::SQL_DB == "hungariamed") {
+            $mbody.= "<hr><br/>";
+            $mbody.= "<strong>Kedves Jelentkező!</strong><br/>
+                <br/>
+                Köszönjük a regisztrációdat! Hamarosan újra kezdetét veszi a FIFI, amelyre sok szeretettel várjuk régi és új pácienseinket.<br/>
+                A környezettudatosság jegyében idén nem készülnek nyomtatott plakátok, ezért a papírmentes kommunikációra helyezzük a hangsúlyt.<br/>
+                Az alábbi linkre kattintva megnézhetitek a finanszírozott és a kiemelt önköltséges csomagok részleteit, és itt tudtok időpontot foglalni a vérvételre.<br/>
+                <br/>
+                <a href='https://aldi-fifi-uzletek-webshop.hungariamed.hu' target='_blank'>https://aldi-fifi-uzletek-webshop.hungariamed.hu</a><br/>
+                <br/>
+                Mindenki egészségének megőrzése fontos számunkra, hisz ez a küldetésünk, ezért kérünk Benneteket, hogy juttassátok el minél több kollégátokhoz a szükséges információkat és segítsétek Őket a jelentkezésben.<br/>
+                Örömmel vesszük az előzetes bejelentkezést a gördülékenyebb munka érdekében. Természetesen helyszíni regisztrációra is van lehetőség, amelyben a Hungária Med-M Kft. dolgozói segítenek.<br/>
+                A Fiolányi Figyelem, egy csepp gondoskodás, mert jobb megelőzni, mint a kezelni.<br/>
+                <br/>
+                Hungária Med-M csapata<br/><br/>";
+        }
+
+        if ($row["cegid"] == CompanyService::ALDI_FIFI_CTD_ID && Booking_Constants::SQL_DB == "hungariamed") {
+            $mbody.= "<hr><br/>";
+            $mbody.= "<strong>Kedves Jelentkező!</strong><br/>
+                <br/>
+                Köszönjük a regisztrációdat! Hamarosan újra kezdetét veszi a FIFI, amelyre sok szeretettel várjuk régi és új pácienseinket.<br/>
+                A környezettudatosság jegyében idén nem készülnek nyomtatott plakátok, ezért a papírmentes kommunikációra helyezzük a hangsúlyt.<br/>
+                Az alábbi linkre kattintva megnézhetitek a finanszírozott és a kiemelt önköltséges csomagok részleteit, és itt tudtok időpontot foglalni a vérvételre.<br/>
+                <br/>
+                <a href='https://aldi-fifi-webshop.hungariamed.hu' target='_blank'>https://aldi-fifi-webshop.hungariamed.hu</a><br/>
+                <br/>
+                Mindenki egészségének megőrzése fontos számunkra, hisz ez a küldetésünk, ezért kérünk Benneteket, hogy juttassátok el minél több kollégátokhoz a szükséges információkat és segítsétek Őket a jelentkezésben.<br/>
+                Örömmel vesszük az előzetes bejelentkezést a gördülékenyebb munka érdekében. Természetesen helyszíni regisztrációra is van lehetőség, amelyben a Hungária Med-M Kft. dolgozói segítenek.<br/>
+                A Fiolányi Figyelem, egy csepp gondoskodás, mert jobb megelőzni, mint a kezelni.<br/>
+                <br/>
+                Hungária Med-M csapata<br/><br/>";
+        }
+
 
         if(CompanyService::isAszMenedzser()){
             $mbody .= "<hr>";

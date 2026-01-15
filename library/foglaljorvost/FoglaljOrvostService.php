@@ -48,7 +48,7 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
 
-    public array $bercsenyiDoctorIds = [461, 454, 468, 463, 458, 480, 479];
+    public array $bercsenyiDoctorIds = [461, 454, 468, 463, 458, 480, 479, 489];
 
     private function setPlaceByDoctorId($doctorId):void {
         //bercsényi előkészítése

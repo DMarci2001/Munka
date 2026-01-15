@@ -391,7 +391,7 @@ class LaborKeroService
         }
 
         self::updateLaborKeroData($reservationId);
-        $this->addAldiDefaultPack($reservationId);
+        //$this->addAldiDefaultPack($reservationId);
 
         $result = sql_query("select * from labrequests where foglalasid=?", [$reservationId])->fetch(PDO::FETCH_ASSOC);
         $result["items"] = sql_query("select * from labrequestitems where id=?", [$reservationId])->fetchAll(PDO::FETCH_ASSOC);
@@ -917,7 +917,7 @@ class LaborKeroService
                     //echo "{$cartItem["name"]} - pack: {$packData["name"]} ".count($packItems)."\n";
                     foreach ($packItems as $packItem) {
                         if (!in_array($packItem, $items)) {
-                            echo "processing item {$packItem}\n";
+                            echo "processing item {$packItem} (storeLaborKeroFromLabShopData)\n";
                             $items[] = $packItem;
                         }
                     }

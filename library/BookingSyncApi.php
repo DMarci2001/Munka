@@ -89,7 +89,7 @@ class BookingSyncApi {
 
             $externalId = $data["source"].$externalReservation["id"];
 
-            if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
+            if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=? and datum>date_sub(now(), interval 2 day)", [$externalReservation["pass"], $orvosData["id"]]))) {
                 $externalReservation["externalid"] = $externalId;
                 $externalReservation["orvosid"] = $orvosData["id"];
                 $externalReservation = $this->_fixReservation($externalReservation, $data, $orvosData);
@@ -111,7 +111,7 @@ class BookingSyncApi {
             //echo "orvos";die;
             $externalReservation = $data["reservation"];
             $externalReservation["orvosid"] = $orvosData["id"];
-            if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=?", [$externalReservation["pass"], $orvosData["id"]]))) {
+            if (!$reservationData = sql_fetch_array(sql_query("select id from foglalasok where pass=? and orvosassigned=? and datum>date_sub(now(), interval 2 day)", [$externalReservation["pass"], $orvosData["id"]]))) {
                 sql_query("insert into foglalasok set pass=?, orvosassigned=?, externalid=?", [$externalReservation["pass"], $orvosData["id"], $data["source"].$externalReservation["id"]]);
             }
             $externalReservation = $this->_fixReservation($externalReservation, $data, $orvosData);
@@ -164,6 +164,7 @@ class BookingSyncApi {
                 munkakor=?,
                 tudoszuro=?,
                 aktiv=?,
+                eljott=?,
                 foglalta=?,
                 modifiedby=?,
                 modifiedtime=?,
@@ -200,6 +201,7 @@ class BookingSyncApi {
                 $data["munkakor"],
                 $data["tudoszuro"],
                 $data["aktiv"],
+                $data["eljott"],
                 $data["foglalta"],
                 $data["modifiedby"],
                 $data["modifiedtime"],

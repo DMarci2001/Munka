@@ -32,10 +32,10 @@ class AdminMunkaNaploPage extends AdminCorePage
 
 
             if (trim($_POST["munkaltato"]) == "") {
-                $error.= "A munkáltató megadása kötelező<br/>";
+                //$error.= "A munkáltató megadása kötelező<br/>";
             }
             if (trim($_POST["letszam"]) == 0) {
-                $error.= "A létszám megadása kötelező<br/>";
+                //$error.= "A létszám megadása kötelező<br/>";
             }
 
             if ($error == "") {

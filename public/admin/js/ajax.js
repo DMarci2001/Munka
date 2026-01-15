@@ -3847,6 +3847,44 @@ function addNewComment(el) {
     });
 }
 
+function notifyNotReadNews(el, channel) {
+    let id = $(el).data("id");
+    let checkedUsers = "";
+
+    $("#ertesitusers_"+id).find(':checkbox').each(function(){
+
+        if ($(this).is(":checked")) {
+            let userId = $(this).val();
+            checkedUsers += userId + "_";
+        }
+
+    });
+
+    if (checkedUsers === "") {
+        alert("Nincs kijelölt felhasználó!");
+        return;
+    }
+
+    $.ajax({
+        url: "index.php?page=hirek",
+        method: "POST",
+        data: { notifynotreaders:true, id:id, channel:channel, checkedUsers:checkedUsers },
+        success: function (response) {
+            if (response.nev != "") {
+                $.toast({
+                    text: response.nev,
+                    icon: response.icon
+                });
+
+                setTimeout(() => {
+                    notifyNotReadNews(el, channel);
+                }, 1000);
+            }
+        }
+    });
+
+}
+
 
 function iReadTheNews(el) {
     let id = $(el).data("id");

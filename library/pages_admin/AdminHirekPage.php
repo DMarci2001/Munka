@@ -6,6 +6,7 @@ class AdminHirekPage extends AdminCorePage {
         1 => ["name" => "Protokoll"],
         2 => ["name" => "Rendelési idő"],
         3 => ["name" => "Napi feladatok"],
+        4 => ["name" => "Fontos információk"],
     ];
 
     private array $users = [];
@@ -96,6 +97,78 @@ class AdminHirekPage extends AdminCorePage {
             die;
         }
 
+
+        if (isset($_POST["notifynotreaders"])) {
+            $channel = $_POST["channel"];
+            if (!in_array($channel, ["email", "sms"])) {
+                $utils->jsonOut(["nev" => "error", "icon" => "error"]);
+            }
+
+            $id = intval($_POST["id"]);
+            $newsItem = sql_query("select * from news where id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+
+            $readers = $notified = [];
+            if (!empty($newsItem["readby"])) {
+                $readers = explode("|", $newsItem["readby"]);
+            }
+            if (!empty($newsItem["notification"])) {
+                $notified = explode(",", $newsItem["notification"]);
+            }
+
+            $checkedUsers = explode("_", $_POST["checkedUsers"]);
+            foreach ($checkedUsers as $key => $user) {
+                $checkedUsers[$key] = intval($user);
+            }
+            $checkedUsers[] = 0;
+
+            $lastNotified = "";
+            $icon = "success";
+            $hirekUsers = sql_query("SELECT id, nev, username, tel, email FROM users WHERE INSTR(permissions, 'jog_faliujsag') AND STATUS=1 and id in (".implode(",", $checkedUsers).") order by nev")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($hirekUsers as $hirekUser) {
+                if (!in_array($hirekUser["id"], $readers) && !in_array($hirekUser["id"], $notified)) {
+                    if ($channel == "sms") {
+                        $lastNotified = "{$channel}: " . $hirekUser["nev"] . " " . $hirekUser["tel"];
+                        if (trim($hirekUser["tel"]) == "") {
+                            $lastNotified = "{$channel}: " . $hirekUser["nev"] . ", nincs telefonszám!";
+                            $icon = "error";
+                        } else {
+                            //$tel = "06209996183";
+                            $tel = $hirekUser["tel"];
+                            $this->utils->sendSMS($tel, "Új faliújság bejegyzés a ".Booking_Constants::COMPANY_NAME_SHORT." bejelentkezőben");
+                        }
+                    }
+
+                    if ($channel == "email") {
+                        $lastNotified = "{$channel}: " . $hirekUser["nev"] . " " . $hirekUser["email"];
+                        if (trim($hirekUser["email"]) == "") {
+                            $lastNotified = "{$channel}: " . $hirekUser["nev"] . ", nincs email!";
+                            $icon = "error";
+                        } else {
+                            $mail = NotificationService::getDefaultMailer();
+                            //$mail->AddAddress("jnsmobil@gmail.com");
+                            $mail->AddAddress($hirekUser["email"]);
+
+                            $subject = "Új faliújság bejegyzés a ".Booking_Constants::COMPANY_NAME_SHORT." bejelentkezőben";
+                            $mail->Subject = $subject;
+
+                            $text  = "<h3>Kedves {$hirekUser["nev"]}!</h3>";
+                            $text.= "Új falijság bejegyzés került rögzítésre a bejelentkező rendszerben, kérjük olvassa el!";
+
+                            $mail->Body = $text;
+                            $mail->Send();
+
+                        }
+                    }
+
+                    $notified[] = $hirekUser["id"];
+                    sql_query("update news set notification=? where id=?", [implode(",", $notified), $id]);
+                    break;
+                }
+            }
+
+            $utils->jsonOut(["nev" => $lastNotified, "icon" => $icon]);
+            die;
+        }
     }
 
     public function showPage() {
@@ -203,6 +276,41 @@ class AdminHirekPage extends AdminCorePage {
         $html.= "</div>";
 
         $html.= "<div style='display:table-cell;vertical-align:middle;color:#888;'>".date("Y.m.d. H:i", strtotime($newsItem["datum"]))." - {$newsItem["username"]}</div><div style='display:table-cell;vertical-align: middle;'>&nbsp;{$deleteTopicLink}</div>";
+
+        $readers = [];
+        if (!empty($newsItem["readby"])) {
+            $readers = explode("|", $newsItem["readby"]);
+        }
+
+        if ($this->adminUser->user["id"] == $newsItem["createdby"] || $this->adminUser->user["username"] == "jns") {
+            $notified = [];
+            if (!empty($newsItem["notification"])) {
+                $notified = explode(",", $newsItem["notification"]);
+            }
+
+            $notReadUsers = [];
+            $number = 0;
+            $hirekUsers = sql_query("SELECT id, nev, username FROM users WHERE INSTR(permissions, 'jog_faliujsag') AND STATUS=1 order by nev")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($hirekUsers as $hirekUser) {
+                if (!in_array($hirekUser["id"], $readers)) {
+                    if (in_array($hirekUser["id"], $notified)) {
+                        $hirekUser["nev"].=" <i title='értesítve' class='fa-solid fa-bell'></i> ";
+                        $checked = "";
+                    } else {
+                        $number++;
+                    }
+                    $notReadUsers[] = "<span style='white-space: nowrap;'><input type='checkbox' id='ertesit_{$hirekUser["id"]}' value='{$hirekUser["id"]}' /><a target='_blank' href='index.php?page=users&szerk={$hirekUser["id"]}'>{$hirekUser["nev"]}</a></span>";
+                }
+            }
+
+            if (!empty($notReadUsers)) {
+                $html .= "<div style='margin-top:10px;' id='ertesitusers_{$newsItem["id"]}'>";
+                $html .= "<strong>Nem olvasták:</strong> " . implode(", ", $notReadUsers);
+                $html .= "</div>";
+                $html .= "<div style='margin-top: 5px;'><a href='#' data-id='{$newsItem["id"]}' onclick='if (!confirm(\"Biztos értesíted a kijelölt felhasználókat sms-ben?\")) {return};notifyNotReadNews(this, \"sms\");return false;' class='kisbutton' style='padding:2px 5px;'>kijelöltek értesítése sms-ben</a> <a href='#' data-id='{$newsItem["id"]}' onclick='if (!confirm(\"Biztos értesíted a kijelölt felhasználókat emailben?\")) {return};notifyNotReadNews(this, \"email\");return false;' class='kisbutton' style='padding:2px 5px;'>kijelöltek értesítése email-ben</a></div>";
+            }
+        }
+
         $html.= "<div style='margin-top:10px;'>".nl2br($newsItem["szoveg"])."</div>";
 
         $html.= "</div>";
@@ -220,7 +328,6 @@ class AdminHirekPage extends AdminCorePage {
 
         if (!empty($newsItem["readby"])) {
             $html.= "<div style='margin-top:5px;'>Látta: ";
-            $readers = explode("|", $newsItem["readby"]);
             foreach ($readers as $reader) {
                 if (!empty($reader) && !empty($this->users[$reader])) {
                     $html .= "<div class='commenterbox'>".$this->users[$reader]["username"]."</div>";

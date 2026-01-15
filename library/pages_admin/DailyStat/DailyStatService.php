@@ -310,7 +310,7 @@ class DailyStatService {
                             "vizsgalattipus" => $sheet->getCell("L{$rowNr}")->getValue(),
                             "vizsgalatdatum" => date("Y-m-d H:i:s", strtotime($vizsgalatDatum)),
                             "felveteldatum" => date("Y-m-d H:i:s", strtotime($felvetelDatum)),
-                            "email" => $sheet->getCell("O{$rowNr}")->getValue(),
+                            "email" => $sheet->getCell("L{$rowNr}")->getValue(),
                         ];
 
                         sql_query("delete from dokirex_vizsgalatok where datum=? and orvos=? and locked=0", [$row["datum"], $row["orvos"]]);

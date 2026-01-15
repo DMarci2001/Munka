@@ -173,7 +173,7 @@ class DicomService {
 
             $contentDate = substr($contentDate,0,4)."-".substr($contentDate,4,2)."-".substr($contentDate,6,2)." ".substr($contentTime,0,2).":".substr($contentTime,2,2).":".substr($contentTime,4,2);
 
-            echo "storing {$patientName}\n";
+            echo "Dicom storing {$patientName} (processEntries)\n";
 
             sql_query("insert into dicom set uploadtime=?, contentDate=?, fileName=?, xml=?, patientName=?, patientID=?, patientBirthDate=?, patientSex=?, patientOtherIDs=?, studyDescription=?, seriesDescription=?, manufacturer=?, manufacturerModelName=?, institutionName=?, uid=uuid(), token=CONCAT(MD5(CONCAT('paSS1', xml)),MD5(CONCAT('paSS2AndLast', xml)))",
                 [$fileDate, $contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientUniqueId, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $seriesDescription, $manufacturer, $manufacturerModelName, $institutionName]);
@@ -248,7 +248,7 @@ class DicomService {
         //echo "{$wDateRestrict} {$w} ";
         //echo print_r($queryParams, true);
 
-        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 1500", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
+        return sql_query_common("select d.*, max(d.contentDate) as datum, count(*) as imageNum from dicom d where TRUE {$wDateRestrict} {$w} group by d.patientID, d.patientBirthDate order by max(contentDate) desc limit 2000", $queryParams)->fetchAll(PDO::FETCH_ASSOC);
     }
 
 

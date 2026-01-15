@@ -33,6 +33,10 @@ class AdminContentsPage extends AdminCorePage
                 $state = 1;
             }
 
+            $_POST["aktivhmmbp"] = $_POST["aktivhmmbp"] ?? 0;
+            $_POST["aktivhmmgyor"] = $_POST["aktivhmmgyor"] ?? 0;
+            $_POST["aktivkeltexmed"] = $_POST["aktivkeltexmed"] ?? 0;
+
             $linkedServices = [];
             foreach ($this->services as $service) {
                 if (isset($_POST["linkedservice{$service["id"]}"])) {
@@ -40,8 +44,8 @@ class AdminContentsPage extends AdminCorePage
                 }
             }
 
-            sql_query("update hmmweb.q9a8m_content c set catid=?, title=?, alias=?, created=?, publish_up=?, publish_down=?, state=?, c.fulltext=?, tipusid=?, tags=? where id=?",
-                [$_POST["catid"], $_POST["title"], $_POST["alias"], $_POST["created"], $_POST["publish_up"], $_POST["publish_down"], $state, $_POST["fulltext"], json_encode($linkedServices), $_POST["tags"], $_GET["szerk"]]);
+            sql_query("update hmmweb.q9a8m_content c set catid=?, title=?, alias=?, created=?, publish_up=?, publish_down=?, state=?, c.fulltext=?, tipusid=?, tags=?, aktivhmmbp=?, aktivhmmgyor=?, aktivkeltexmed=? where id=?",
+                [$_POST["catid"], $_POST["title"], $_POST["alias"], $_POST["created"], $_POST["publish_up"], $_POST["publish_down"], $state, $_POST["fulltext"], json_encode($linkedServices), $_POST["tags"], $_POST["aktivhmmbp"], $_POST["aktivhmmgyor"], $_POST["aktivkeltexmed"], $_GET["szerk"]]);
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die;
@@ -103,7 +107,10 @@ class AdminContentsPage extends AdminCorePage
         echo "</td></tr>";
 
         echo "<tr><td colspan='2' valign='top'>";
-        echo "<input type='checkbox' value='1' name='state'" . ($content["state"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;";
+        echo "<input type='checkbox' value='1' name='state'" . ($content["state"] == 1 ? " checked" : "") . "> Aktív&nbsp;&nbsp;&bull;&nbsp;&nbsp;Láthatóság:&nbsp;&nbsp;";
+        echo "<input type='checkbox' value='1' name='aktivhmmbp'" . ($content["aktivhmmbp"] == 1 ? " checked" : "") . "> HMM Budapest&nbsp;&nbsp;";
+        echo "<input type='checkbox' value='1' name='aktivhmmgyor'" . ($content["aktivhmmgyor"] == 1 ? " checked" : "") . "> HMM Győr&nbsp;&nbsp;";
+        echo "<input type='checkbox' value='1' name='aktivkeltexmed'" . ($content["aktivkeltexmed"] == 1 ? " checked" : "") . "> Keltexmed&nbsp;&nbsp;";
 
         echo "</td></tr>";
 

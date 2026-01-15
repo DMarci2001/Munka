@@ -14,7 +14,7 @@ class SimplePayService {
     public function __construct()
     {
         if (Booking_Constants::SQL_DB == "keltexmed") {
-            $this->setSandBox(true);
+            //$this->setSandBox(true);
         }
 
         if (isset($_SESSION["labcode"])) {

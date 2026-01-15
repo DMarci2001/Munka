@@ -215,6 +215,10 @@ class AdminPage {
             }
 
             if ($url != "#" || !empty($subMenuHtml)) {
+                $awesome = "";
+                if ($menu["fontawesome"] != "") {
+                    $awesome = "<i class='{$menu["fontawesome"]}'></i> ";
+                }
                 if ($menu["pageid"] == "hirek") {
                     $news = sql_query("select id from news where datum>date_sub(now(), interval 1 month) and !instr(readby, ?) limit 1", ["|{$this->adminUser->user["id"]}|"])->fetchAll(PDO::FETCH_ASSOC);
                     $newSign = "";
@@ -223,7 +227,7 @@ class AdminPage {
                     }
                     $html .= "<div><a class='mainmenuitem".($_GET["page"]=="hirek"?"_aktiv":"")."' href='index.php?page=hirek'><i class='fas fa-rss'></i> Faliújság {$newSign}</a></div>";
                 } else {
-                    $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$menu["megnev"]}".(empty($subMenuHtml)?"":" <i class='fa-solid fa-angle-down'></i>")."</a></div>";
+                    $html .= "<div><a class='mainmenuitem" . ($aktualPage ? "_aktiv" : "") . "' href='{$url}' onclick='{$onClick}'>{$awesome}{$menu["megnev"]}".(empty($subMenuHtml)?"":" <i class='fa-solid fa-angle-down'></i>")."</a></div>";
                 }
             }
 

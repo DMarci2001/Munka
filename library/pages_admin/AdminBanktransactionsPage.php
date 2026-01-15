@@ -141,6 +141,9 @@ class AdminBanktransactionsPage extends AdminCorePage {
                 if (!empty($result["orderid"])) {
                     $source = "labshop";
                 }
+                if ($this->paymentSource == "keltexmedwebshop") {
+                    $source = "keltexmedwebshop";
+                }
 				$rows.="[<a href='#' class='retransfer_button' onClick='showRefundWindow(\"{$source}\", {$result['id']})' >VISSZAUTALÁS</a>]";
 			}
 			$rows.="	</td>";

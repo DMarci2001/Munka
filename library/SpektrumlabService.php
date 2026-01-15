@@ -68,6 +68,14 @@ class SpektrumlabService {
         "000000607" => "Hungária Med-M Kft. (JABIL)",
         "000000609" => "Hungária Med-M Kft. (MAHLE)",
         "000000637" => "Hungária Med-M Kft. (Knorr Bremse)",
+        "000000645" => "Hungária Med-M Kft. (MENDE)",
+        "000000648" => "Hungária Med-M Kft. (EON)",
+        "000000650" => "Hungária Med-M Kft. (Cargo-Partner)",
+        "000000651" => "Hungária Med-M Kft. (RESRG)",
+        "000000674" => "Hungária Med-M Kft. (MVM)",
+        "000000679" => "Hungária Med-M Kft. (DRV)",
+        "000000680" => "Hungária Med-M Kft. (Stellantis)",
+        "000000681" => "Hungária Med-M Kft. (Segesd)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [

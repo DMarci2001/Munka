@@ -32,6 +32,7 @@ class PrintService
         "nkfihsetalolap" => "NKFIH_setalolap_2024.pdf",
         "mende_adatkezeles" => "mende_adatkezeles.pdf",
         "genetika" => "genetikai_teljes_dokumentum.pdf",
+        "mikrobi" => "genetikai_teljes_dokumentum.pdf",
         "generate_aldi_vv" => "generate_aldi_vv",
         "generateAszKartyak" => "generateAszKartyak",
         "vercsoport" => "spektrum_vercsoport_v1-1.pdf",
