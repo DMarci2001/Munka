@@ -1201,10 +1201,8 @@ class AdminAjaxService {
                 $generaliService->updateDoctor($q["generaliId"],$_POST["name"],$_POST["titles"],$_POST["min_age"],$_POST["languages"]);
             }
 
-            
-            echo "<pre>";
-            print_r($generaliService->retrieveDoctors());
-            echo "</pre>";
+            //Specialitás rögzítése/tárolása
+
         }
 
         if(isset($_POST["storeGeneraliScreening"])){
@@ -1241,6 +1239,180 @@ class AdminAjaxService {
         if(isset($_POST["setExaminationOfSpeciality"])){
             $generaliService = New GeneraliApiService();
             $generaliService->storeExamination($_POST["szid"],$_POST["eid"]);
+            die();
+        }
+
+        if(isset($_POST["setDoctorSpecialitySelector"])){
+            $generaliService = New GeneraliApiService();
+            $html = "";
+            $html .= "<form method='POST' id='form-doctorSpecialitySelector{$_POST["unit"]}'>";
+            $html .= "  <select class='form-select form-select-sm' id='select-speciality{$_POST["unit"]}' name='select-speciality{$_POST["unit"]}' onChange='refresGeneralihExaminations($(this).val(),{$_POST["unit"]})'>";
+            $html .= "      <option value='0'>Válassz szakrendelést!</option>";
+            $specialities = $generaliService->retrieveSpecialities();
+            foreach($specialities as $speciality){
+                if(!empty($speciality["partner_speciality_id"])){
+                    $html.= "<option value='{$speciality["partner_speciality_id"]}'>{$speciality["name"]}</option>";
+                }
+            }
+            $html .= "  </select>";
+            $html .= "  <select class='form-select form-select-sm' id='select-examination{$_POST["unit"]}' name='select-examination{$_POST["unit"]}' aria-label=''>";
+            $html .= "  </select>";
+
+            $html .= "<div class='input-group'>";
+            $html .= "  <input type='text' class='form-control' id='totalprice{$_POST["unit"]}' name='totalprice{$_POST["unit"]}' placeholder='Ár1'>";
+            $html .= "  <input type='text' class='form-control' id='publicprice{$_POST["unit"]}' name='publicprice{$_POST["unit"]}' placeholder='Ár2'>";
+            $html .= "</div>";
+            
+
+            $html .= "  <a class='generali-button' id='save-examination-button{$_POST["unit"]}'";
+            $html .= "      style='margin-bottom:5px' href='#' ";
+            $html .= "      onclick='saveDoctorExamination(\"#form-doctorSpecialitySelector{$_POST["unit"]}\",{$_POST["unit"]})'>";
+            $html .= "          <i class='fa-solid fa-plus'></i>&nbsp;Mentés";
+            $html .= "  </a>";
+            $html .= "<form>";
+            die($html);
+        }
+
+        if(isset($_POST["saveDoctorExamination"])){
+            /**
+             * Mit kell figyelembe vegyek?
+             * újra nevezem a paramétereket mert egy group kezelésből jönnek. így kényelmesebb a munka vele.
+             * Ellenőrzöm a paramétereket, helyesek, léteznek és az adat kapcsolat már létre lett-e hozva korábban.
+             * Az adatok nincsenek mi a oldalunkon tárolva, minden lekérdezhető a generali oldaláról így nem kell folyamatosan frissítenem a mi oldalunkat.
+            */
+
+            $params = array();
+            parse_str($_POST["data"], $params);
+            $attachedExaminations = [];
+            $utils = new Utils();
+            //Adatok reorganizációja
+            foreach($params as $name=>$value){
+                $search  = ["select-",$_POST["unit"]];
+                $replace = ["",""];
+                $newName = str_replace($search,$replace,$name);
+                $params[$newName]=$value;
+                unset($params[$name]);
+                array_values($params);
+            }
+
+            $generaliService = new GeneraliApiService();
+            $examinations = $generaliService->retrieveExaminationsOfSpeciality($params["speciality"]);
+
+            //Létezik a specialitás?
+            if(!empty($examinations)){
+                //Létezik a vizsgálat?
+                $key = array_search($params["examination"],array_column($examinations,"partner_examination_id"));
+                if($key!==false){
+                    //Hozzáadom a vizsgálatot, ha jól értelmezem, akkor itt nem történik semmi, hogy ha már létezik(maybe);
+                    $generaliService->attachExaminationToCareSpotOfDoctor(
+                        $_POST["docId"],
+                        $_POST["careSpotId"],
+                        $params["examination"],
+                        $params["totalprice"],
+                        $params["publicprice"],
+                    );
+
+                    $attachedExaminations = $generaliService->retrieveExaminationsOfCareSpotOfDoctor($_POST["docId"],$_POST["careSpotId"]);
+                }
+            }
+            
+            die(json_encode(array("examinationContainer"=>$utils->loadGeneraliExaminationsOfCareSpotOfDoctor($attachedExaminations))));
+        }
+
+        if(isset($_POST["deleteDoctorExamination"])){
+            $generaliService = new GeneraliApiService();
+            $generaliService->detachExaminationFromCareSpotOfDoctor($_POST["docId"],$_POST["careSpotId"],$_POST["examinationId"]);
+            $attachedExaminations = $generaliService->retrieveExaminationsOfCareSpotOfDoctor($_POST["docId"],$_POST["careSpotId"]);
+            echo "<pre>";
+            print_r($attachedExaminations);
+            echo "</pre>";
+            die();
+        }
+
+        if(isset($_POST["shareBeoWithGenerali"])){
+            $message = "Beosztás nem létezik!";
+            $status = "error";
+            if($beo=sql_query("SELECT * FROM orvos_beosztas_new WHERE id=?",[$_POST["shareBeoWithGenerali"]])->fetch(PDO::FETCH_ASSOC)){
+                if($beo["generali_enabled"]==0){
+                    $value = 1;
+                    $message = "Beosztás megosztva!";
+                    $status = "success";
+                }else{
+                    $value = 0;
+                    $message = "Megosztás megszüntetve!";
+                    $status = "success";
+                }
+                sql_query("UPDATE orvos_beosztas_new SET generali_enabled=? WHERE id=?",[$value,$beo["id"]]);
+            }
+           
+            die(json_encode(array("message"=>$message,"status"=>$status)));
+        }
+
+        if (isset($_POST["showGenaraliTipusok"])) {
+            $html = "";
+            if($beo = sql_query("SELECT * FROM orvos_beosztas_new WHERE id=?",[$_POST["beosztasid"]])->fetch(PDO::FETCH_ASSOC)){
+                $generaliService = new GeneraliApiService();
+                 if(true){
+                     $helyszinId = 1;
+                }
+                else{
+                    $helyszinId = $beo["helyszinid"];
+                }
+                $tipusok = $generaliService->retrieveExaminationsOfCareSpotOfDoctor($beo["orvosid"],$helyszinId);
+
+                $beo["generali_services"] = json_decode($beo["generali_services"],true);
+
+                $html.= "<div style='width:1000px;padding:4px 0px;'>";
+
+                foreach ($tipusok as $tipus) {
+                    if(is_array($beo["generali_services"]) && in_array($tipus["examination"]["partner_examination_id"],$beo["generali_services"])){
+                        $class = "generaliserviceselected";
+                    }else{
+                        $class = "generaliservicenotselected";
+                    }
+
+                    $html.= "<a data-beoid='{$_POST["beosztasid"]}' data-generalitipusid='{$tipus["examination"]["partner_examination_id"]}' title='' class='{$class}' href='#' onclick='toggleGeneraliService(this);return false;'>{$tipus["examination"]["name"]}</a> ";
+                }
+
+                $html.= "<div style=''><input type='button' onclick='showGenaraliTipusok({$_POST["beosztasid"]});' value='OK'></div>";
+                $html.= "</div>";
+            }
+            die($html);
+        }
+
+        if(isset($_POST["toggleGeneraliService"])){
+
+            if($beo=sql_query("SELECT * FROM orvos_beosztas_new WHERE id=?",[$_POST["beosztasId"]])->fetch(PDO::FETCH_ASSOC)){
+                $beo["generali_services"] = json_decode($beo["generali_services"],true);
+                if(is_array($beo["generali_services"])){
+                    $key=array_search($_POST["generaliService"],$beo["generali_services"]);
+                    if($key!==false){
+                        unset($beo["generali_services"][$key]);
+                        $beo["generali_services"] = array_values($beo["generali_services"]);
+                        echo count($beo["generali_services"]);
+                    }else{
+                        $beo["generali_services"][] = $_POST["generaliService"];
+                         echo count($beo["generali_services"]);
+                    }
+                }else{
+                    $beo["generali_services"][] = $_POST["generaliService"];
+                     echo count($beo["generali_services"]);
+                }
+                sql_query("UPDATE orvos_beosztas_new SET generali_services=? WHERE id=?",[json_encode($beo["generali_services"]),$_POST["beosztasId"]]);
+            }
+            die();
+        }
+
+        if(isset($_POST["upgradeBeoToRelevant"])){
+            $groupId  = "1303";
+            $beoCegek = "|11||92||892||1352|";
+
+            if(!empty($_POST["beoId"])){
+                $data = sql_query("SELECT * FROM orvos_beosztas_new WHERE orvosid=? AND beocegek<>? AND id=?",[64,$beoCegek,$_POST["beoId"]])->fetch(PDO::FETCH_ASSOC);
+                if($data){ //Ha megtalálja a beosztást és nincs benne a fő groupban és még Kingához is tartozik akkor foglalkozunk vele.
+                    sql_query("UPDATE orvos_beosztas_new SET groupid=?, beocegek=? WHERE id=?",[$groupId,$beoCegek,$_POST["beoId"]]);
+                }
+            }
             die();
         }
 

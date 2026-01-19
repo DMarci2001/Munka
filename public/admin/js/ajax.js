@@ -4238,6 +4238,7 @@ function showLaborKeroWin(fid) {
                 alert(response.error);
                 return;
             }
+            
             showGeneralPopup(response.html);
             setupLaborVizsgalatFilter();
         }
@@ -5219,16 +5220,156 @@ function setExaminationOfSpeciality(szid,eid){
     })
 }
 
-function refresGeneralihExaminations(szid){
+function setDoctorSpecialitySelector(container,unit,triggerButton){
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        //dataType: "json",
+        data: {setDoctorSpecialitySelector:true,unit:unit},
+        success: function(response){
+            $(triggerButton).css("display","none");
+            $(container).html(response);
+        }
+    })
+}
+
+function saveDoctorExamination(form,unit){
+    var data = $(form).serialize();
+    var docId = $("#orvosid").val();
+    var careSpotId = $("#care_spot_id"+unit).val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {saveDoctorExamination:true,data:data,unit:unit,docId:docId,careSpotId:careSpotId},
+        success: function(response){
+            $("#attached-examination-container"+unit).html(response.examinationContainer);
+            $("#doctorSpecialitySelector"+unit).html("");
+            $("#add-examination-button"+unit).css("display","inline-block");
+        }
+    })
+}
+
+function deleteDoctorExamination(examinationId,careSpotId){
+    var docId = $("#orvosid").val();
+
+    $.ajax({
+        type:"POST",
+        url:"index.php",
+        data: {deleteDoctorExamination:true,examinationId:examinationId,docId:docId,careSpotId:careSpotId},
+        success: function(response){
+            console.log(response);
+            $("#examination"+examinationId).remove();
+            //$("#select-examination"+unit).html(response);
+        }
+    })
+}
+
+function refresGeneralihExaminations(szid,unit){
     $.ajax({
         type:"POST",
         url:"index.php",
         //dataType: "json",
         data: {refresGeneralihExaminations:szid},
         success: function(response){
-            console.log(response);
-            $("#select-examination").html(response);
+            $("#select-examination"+unit).html(response);
         }
     })
+}
+
+function shareBeoWithGenerali(id){
+     $.ajax({
+        type:"POST",
+        url:"index.php",
+        dataType: "json",
+        data: {shareBeoWithGenerali:id},
+        success: function(response){
+            $.toast({
+                text: response.message,
+                icon: response.status
+            });
+        }
+    })
+}
+
+function showGenaraliTipusok(beosztasid) {
+    if ($.trim($("#generalitipusvalaszto" + beosztasid).html())) {
+        $("#generalitipusvalaszto" + beosztasid).html("");
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {showGenaraliTipusok:true,beosztasid:beosztasid},
+        success: function(response){
+           console.log(response);
+           $("#generalitipusvalaszto"+beosztasid).html(response);
+        }
+    });
+}
+
+function toggleGeneraliService(button) {
+    if ($(button).hasClass("generaliserviceselected")) {
+        $(button).removeClass("generaliserviceselected");
+        $(button).addClass("generaliservicenotselected");
+    } else {
+        $(button).removeClass("generaliservicenotselected");
+        $(button).addClass("generaliserviceselected");
+    }
+
+    var beosztasId = $(button).data("beoid");
+    var generaliService = $(button).data("generalitipusid");
+
+
+   $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {toggleGeneraliService:true,generaliService:generaliService,beosztasId:beosztasId},
+        success: function(response){
+           $("#generalitipus"+beosztasId).find("a").html(response+" típus");
+        }
+    });
+
+    /*var tk = "";
+    var num = 0;
+    var t = "nincs tipus hozzárendelve";
+    var tlist = "";
+    var beosztasid = $(button).data("beoid");
+
+    $("#tipusvalaszto" + beosztasid + " a").each(function () {
+        if ($(this).hasClass("serviceselected")) {
+            tk = tk + "|" + $(this).data("tipusid") + "|";
+            num++;
+            tlist = tlist + ", " + $(this).html();
+        }
+    });
+
+    if (num > 0) {
+        t = tlist.substring(2);
+    }
+
+    $("#tipusstatus" + beosztasid).html("<a href='#' class='tlink' title='" + t + "' onclick='showTipusValaszto(" + beosztasid + ");return false;'>" + num + " tipus</a>");
+
+    $.ajax({
+        url: "index.php",
+        type: "get",
+        data: "page=doctors&savebeosztastipusok=" + beosztasid + "&value=" + encodeURIComponent(tk)
+    });*/
+}
+
+function upgradeBeoToRelevant(orvosid,beoid){
+    if(orvosid==64){
+        $.ajax({
+            type: "POST",
+            url: "index.php",
+            data: {upgradeBeoToRelevant:true,beoId:beoid},
+            success: function(response){
+                //console.log(response);
+                location.reload();
+            }
+        })
+    }
 }
 

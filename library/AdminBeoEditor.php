@@ -240,8 +240,43 @@ class AdminBeoEditor {
             $html.= "<a href='#' title='Sor törlése' onclick='delBeoRow({$doctorId},{$beo["id"]});return false;'><i class='fas fa-trash-alt'></i></a> ";
             $html.= "<a href='#' title='Extra adatok' onclick='$(\"#extradata{$beo["id"]}\").toggle();return false;'><i class='fas fa-bars'></i></a>";
 
+            //Kinga kinyitása minden releváns cégre gombja
+            if($doctorId==64 && $beo["groupid"]!=1303){
+                $html.= "&nbsp;<a href='#' title='Beosztás megnyitása minden releváns cég számára' onclick='upgradeBeoToRelevant({$doctorId},{$beo["id"]});return false;'><i style='color:#8a2be2' class='fa-solid fa-calendar-plus'></i></a>";
+            }
+            
+
             if ($beo["fobid"] != 0) {
                 $html.= " <span style='border:1px solid #080;color:#080;cursor:pointer;' title='id: {$beo["fobid"]}'>FO</span>";
+            }
+
+            if(!empty($doctorData["generaliId"])){
+                $html.= "<span class='custom-checkbox' title='generalival megosztott beosztás'>";
+                $html.= "    <input type='checkbox' onChange='shareBeoWithGenerali({$beo["id"]})' value='1' ".($beo["generali_enabled"]==1?"checked":"")." id='checkbox1'>";
+                $html.= "    <label for='checkbox1'></label>";
+                $html.= "</span>";
+                $generaliService = new GeneraliApiService();
+
+                if(true){
+                     $helyszinId = 1;
+                }
+                else{
+                    $helyszinId = $beo["helyszinid"];
+                }
+
+                echo "<pre>";
+                print_r($generaliService->retrieveExaminationsOfCareSpotOfDoctor($beo["orvosid"],1));
+                echo "</pre>";
+
+                if(!empty($beo["generali_services"])){
+                    $generaliServices = count(json_decode($beo["generali_services"],true));
+                }else{
+                    $generaliServices = 0;
+                }
+
+                $html.= "<span id='generalitipus{$beo["id"]}' style='margin-left:8px'><a href='#' class='generalilink' title='' onclick='showGenaraliTipusok({$beo["id"]});return false;'>{$generaliServices} tipus</a></span> ";
+
+                //$key = array_search()
             }
 
 
@@ -249,10 +284,15 @@ class AdminBeoEditor {
             $html.= "Érvényesség: <input onchange='beoSave({$doctorId},{$beoId},\"validfrom\");' id='validfrom' name='validfrom' type='text' value='{$beo["validfrom"]}' style='width:80px;' placeholder='éééé-hh-nn' /> - <input onchange='beoSave({$doctorId},{$beoId},\"validto\");' id='validto' name='validto' type='text' value='{$beo["validto"]}' style='width:80px;' placeholder='éééé-hh-nn' /> ";
             $html.= "Megjegyzés: <input onchange='beoSave({$doctorId},{$beoId},\"bmegj\");' id='bmegj' name='bmegj' type='text' value='{$beo["bmegj"]}' style='width:400px;' placeholder='megjegyzés a rendelési időhöz' /> ";
             $html.= "<input onchange='beoSave({$doctorId},{$beoId},\"nopack\");'  value='1' type='checkbox' id='nopack' name='nopack'" . ($beo["nopack"] == 1 ? " checked" : "") . ">Ne kerüljön csomagba ";
+            $html.= "<i class='fa-solid fa-calendar-plus'></i>";
             $html.= "<br>Nyitás minden cégnek: <input type=\"checkbox\" onchange='beoSave({$doctorId},{$beoId},\"openforallcompany\");' name=\"open_beo_for_all_company\" " . ($beo["open_beo_for_all_company"] == 1 ? " checked" : "") . " value=\"1\"> lejárat előtt ennyivel:&nbsp;<input type=\"text\" style=\"width:80px\" onchange='beoSave({$doctorId},{$beoId});' placeholder=\"óra\" name=\"release_beo_before_expire_time\" value=\"".$beo["release_beo_before_expire_time"]."\">";
             $html.= "</div>";
 
             $html.= "<div id='tipusvalaszto{$beo["id"]}'></div>";
+
+            if(!empty($doctorData["generaliId"])){
+                $html.= "<div id='generalitipusvalaszto{$beo["id"]}'></div>";
+            }
             $html.= "</form>";
             $html.= "</div>";
 
