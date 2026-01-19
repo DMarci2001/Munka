@@ -252,9 +252,9 @@ class AdminLabortetelekPage extends AdminCorePage
                 $packageColumnWithData[] = $columnData["Field"]."=".$data[$columnData["Field"]];
             }
             //Csomagok alap adatok másolása új rekordként (Működik)
-            sql_query("INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).") 
+            /*sql_query("INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).") 
                       SELECT ".implode(",",$packageColumnNames)." FROM synlab_labor_csomagok WHERE id=?;",[$_GET["szerk"]]);
-            $copyId = sql_insert_id();          
+            $copyId = sql_insert_id(); */         
             
 
             //Csomagokhoz tartozó képek lekérdezése
@@ -263,6 +263,9 @@ class AdminLabortetelekPage extends AdminCorePage
             $imageTableDescribe=sql_query("DESCRIBE dokumentumok;")->fetchAll(PDO::FETCH_ASSOC);
             $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
             foreach($images as $image){ //Végig futok a dokumentumokon egy tömbben
+
+            echo $docAgent->_getDocPath($image["id"]);
+            die();
 
                 $exceptions = ["id"];
                 foreach($imageTableDescribe as $columnData){
@@ -306,9 +309,9 @@ class AdminLabortetelekPage extends AdminCorePage
                 sql_query("INSERT INTO dokumentumok SET ".implode(",",$imagesColumnWithData).";"); //Létre kell hozzak egy új rekordot az adatbázisban amit tudok                                            
                 $copyImageId = sql_insert_id();                                                    //használni mint referencia pont a képek másolásához.
                 //echo "id:{$copyImageId}<br>";
-                $destinationFile = $docAgent->_getDocPath($copyImageId); //lekérem a fájlhoz
+                $destinationFile = $docAgent->_getAssetImagePath($copyImageId); //lekérem a fájlhoz az új útvonalát.
                 //echo $destinationFile;
-                $filePath = $docAgent->_getAssetImagePath($image["id"]); //Lekérem a dokumentum könyvtárát.
+                $filePath = $docAgent->_getAssetImagePath($image["id"]); //Lekérem az eredeti dokumentum könyvtárát.
                 $fileName = "{$filePath}/{$image["assetid"]}_{$image["id"]}.{$image["tipus"]}"; //Létrehozom a fájl elérési útját.
                 copy($fileName, $destinationFile); //Átmásolom az új helyére a fájlt.
 
