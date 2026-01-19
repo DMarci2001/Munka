@@ -235,6 +235,116 @@ class AdminLabortetelekPage extends AdminCorePage
             );
         }
 
+        //Mentés másként
+        if (isset($_POST["savePackageAsNew"])){
+            $packageColumnNames = $packageColumnWithData = [];
+            $imagesColumnNames = $imagesColumnWithData = [];
+            //Csomagok adatainak lekérdezése
+            $packageTableDescribe=sql_query("DESCRIBE synlab_labor_csomagok;")->fetchAll(PDO::FETCH_ASSOC);
+            $data = sql_query("SELECT * FROM synlab_labor_csomagok WHERE id=?",[$_GET["szerk"]])->fetch(PDO::FETCH_ASSOC);
+
+            $exceptions = ["id"];
+            foreach($packageTableDescribe as $columnData){
+                if(in_array($columnData["Field"],$exceptions)){
+                    continue;
+                }
+                $packageColumnNames[]    = $columnData["Field"];
+                $packageColumnWithData[] = $columnData["Field"]."=".$data[$columnData["Field"]];
+            }
+            //Csomagok alap adatok másolása új rekordként (Működik)
+            sql_query("INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).") 
+                      SELECT ".implode(",",$packageColumnNames)." FROM synlab_labor_csomagok WHERE id=?;",[$_GET["szerk"]]);
+            $copyId = sql_insert_id();          
+            
+
+            //Csomagokhoz tartozó képek lekérdezése
+            $docAgent = new DocAgent();
+            //legyűjtöm az összes dokumentumot a csomaghoz egy tömbbe.
+            $imageTableDescribe=sql_query("DESCRIBE dokumentumok;")->fetchAll(PDO::FETCH_ASSOC);
+            $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach($images as $image){ //Végig futok a dokumentumokon egy tömbben
+
+                $exceptions = ["id"];
+                foreach($imageTableDescribe as $columnData){
+                    if(in_array($columnData["Field"],$exceptions)){ //kizárom a kivételeket
+                        continue;
+                    }
+
+                    if($columnData["Field"]=="dataid"){ //felülírom az előző csomag id-jét az új másolat id-jére
+                        $imagesColumnNames[]    = $columnData["Field"];
+                        $imagesColumnWithData[] = $columnData["Field"]."=".$copyId;
+                        continue;
+                    }
+
+                    if($columnData["Field"]=="datum"){ //datumot frissítem
+                        $imagesColumnNames[]    = $columnData["Field"];
+                        $imagesColumnWithData[] = $columnData["Field"]."=now()";
+                        continue;
+                    }
+
+
+                    if($columnData["Field"]=="kod"){ //kod esetében generálok neki egy újat
+                        $imagesColumnNames[]    = $columnData["Field"];
+                        $imagesColumnWithData[] = $columnData["Field"]."=SHA1(MD5(CONCAT(NOW(),RAND()*20000)))";
+                        continue;
+                    }
+
+                    $imagesColumnNames[]    = $columnData["Field"];
+                    if(strpos($columnData["Type"],"int")!==false){
+                        $imagesColumnWithData[] = $columnData["Field"]."=".(!empty($image[$columnData["Field"]])?$image[$columnData["Field"]]:"0");
+                        continue;
+                    }
+                    if(strpos($columnData["Type"],"varchar")!==false){
+                        $imagesColumnWithData[] = $columnData["Field"]."=".(!empty($image[$columnData["Field"]])?"\"".$image[$columnData["Field"]]."\"":"\"\"");
+                        continue;
+                    }
+                    $imagesColumnWithData[] = $columnData["Field"]."=".(!empty($image[$columnData["Field"]])?$image[$columnData["Field"]]:"\"\"");
+                } //módosítottam a másolat szükséges adatmezőit, referencia pontként használjam az adott kép másolásához.
+
+                //Ez itt az insert query
+                //echo "INSERT INTO dokumentumok SET ".implode(",",$imagesColumnWithData).";<br>";
+                sql_query("INSERT INTO dokumentumok SET ".implode(",",$imagesColumnWithData).";"); //Létre kell hozzak egy új rekordot az adatbázisban amit tudok                                            
+                $copyImageId = sql_insert_id();                                                    //használni mint referencia pont a képek másolásához.
+                //echo "id:{$copyImageId}<br>";
+                $destinationFile = $docAgent->_getDocPath($copyImageId); //lekérem a fájlhoz
+                echo $destinationFile;
+                $filePath = $docAgent->_getAssetImagePath($image["id"]); //Lekérem a dokumentum könyvtárát.
+                $fileName = "{$filePath}/{$image["assetid"]}_{$image["id"]}.{$image["tipus"]}"; //Létrehozom a fájl elérési útját.
+                //copy($fileName, $destinationFile); //Átmásolom az új helyére a fájlt.
+
+                //header("Location:{$_SERVER["PHP_SELF"]}?page=labortetelek&szerk={$copyId}"); //átirányítom a felhasználót a másolatra.
+                
+                /*echo $ImagePath."<br>";
+                echo $filePath."<br>";
+                echo "<pre>";
+                print_r($image);
+                echo "</pre>";*/
+
+            }
+            //storeAssetImage
+            //_getAssetImagePath
+            
+
+            
+
+            //echo "INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).")<br>";
+            //echo "SELECT ".implode(",",$packageColumnNames)." FROM synlab_labor_csomagok WHERE id={$_GET["szerk"]};";
+
+
+            
+
+            $w=sql_query("DESCRIBE synlab_labor_csomagok;")->fetchAll(PDO::FETCH_ASSOC);
+
+            /*foreach($w as $columnData){
+                $imagesColumnNames[]    = $columnData["Field"];
+                $imagesColumnWithData[] = $columnData["Field"]."=".$
+            }*/
+            //echo implode(",",$columnNames);
+            echo "<pre>";
+            //print_r($columns);
+            echo "</pre>";
+        }
+
         if (isset($_POST["changeLaborCsomagPrice"])) {
             $price = intval($_POST["changeLaborCsomagPrice"]);
             $cid = intval($_POST["cid"]);
@@ -543,7 +653,10 @@ class AdminLabortetelekPage extends AdminCorePage
 
             //Alap adatok megadása:
             echo "<table>";
-            echo "<tr><td colspan='2'><input type='submit' name='savePackage' value='Mentés'></td></tr>";
+            echo "<tr><td colspan='2'><input type='submit' name='savePackage' value='Mentés'>&nbsp;";
+            echo "<input class='ujbutton' type='submit' name='savePackageAsNew' value='Mentés másként'>";
+            echo "</td></tr>";
+            echo "<tr><td colspan='2'></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése (public): </p></td><td><input type=\"textbox\" name=\"name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Csomag megnevezése (házon belül): </p></td><td><input type=\"textbox\" name=\"hmm_name\" style=\"min-width:300px;height:25px\" value=\"{$packageData["hmm_name"]}\"></td></tr>";
             echo "<tr><td><p style=\"font-weight:bold;font-size:14px\">Kérőlap: </p></td><td><input type=\"textbox\" disabled=\"true\" name=\"appform\" style=\"min-width:300px;height:25px\" value=\"{$packageData["kerolap"]}\"></td></tr>";

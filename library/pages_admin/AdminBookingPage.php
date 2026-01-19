@@ -1,5 +1,7 @@
 <?php
 
+use function PHPSTORM_META\map;
+
 class AdminBookingPage extends AdminCorePage
 {
 
@@ -598,22 +600,200 @@ class AdminBookingPage extends AdminCorePage
 
     public function showPage()
     {
+
+        /*$ferfi = $no = 0;
+        $utvonalak = [];
+        $utvonalak[1] = array("ultrahang"=>1,"labor"=>2,"eszkozos"=>3,"belgyogyaszat"=>4,"borgyogyaszat"=>5,"mrtg"=>6,"emlo"=>null,"mammo"=>null);
+        $utvonalak[2] = array("ultrahang"=>3,"labor"=>1,"eszkozos"=>2,"belgyogyaszat"=>4,"borgyogyaszat"=>5,"mrtg"=>6,"emlo"=>null,"mammo"=>null);
+        $utvonalak[3] = array("ultrahang"=>2,"labor"=>3,"eszkozos"=>1,"belgyogyaszat"=>4,"borgyogyaszat"=>5,"mrtg"=>6,"emlo"=>null,"mammo"=>null);
+        $utvonalak[4] = array("ultrahang"=>4,"labor"=>5,"eszkozos"=>6,"belgyogyaszat"=>7,"borgyogyaszat"=>3,"mrtg"=>2,"emlo"=>1,"mammo"=>null);
+        $utvonalak[5] = array("ultrahang"=>6,"labor"=>4,"eszkozos"=>5,"belgyogyaszat"=>7,"borgyogyaszat"=>3,"mrtg"=>2,"emlo"=>null,"mammo"=>1);
+        $utvonalak[6] = array("ultrahang"=>7,"labor"=>5,"eszkozos"=>6,"belgyogyaszat"=>8,"borgyogyaszat"=>4,"mrtg"=>3,"emlo"=>2,"mammo"=>1);
+        $data = sql_query("SELECT * FROM ghc_setalolap_segedtabla")->fetchAll(PDO::FETCH_ASSOC);
+
+        //echo "<pre>";
+        //print_r($data);
+        //echo "</pre>";
+        //die();
+       foreach($data as $row){
+        //$utvonal = 0;
+        if($row["neme"]=="Férfi"){
+            $ferfi++;
+
+            $utvonal = ($ferfi);
+
+            $row["utvonal"]=        $utvonal;
+            $row["ultrahang"] =     $utvonalak[$utvonal]["ultrahang"];
+            $row["labor"] =         $utvonalak[$utvonal]["labor"];
+            $row["eszkozos"] =      $utvonalak[$utvonal]["eszkozos"];
+            $row["belgyogyaszat"] = $utvonalak[$utvonal]["belgyogyaszat"];
+            $row["borgyogyaszat"] = $utvonalak[$utvonal]["borgyogyaszat"];
+            $row["mrtg"] =          $utvonalak[$utvonal]["mrtg"];
+            $row["emlo"] =          $utvonalak[$utvonal]["emlo"];
+            $row["mammo"] =         $utvonalak[$utvonal]["mammo"];
+
+            if($ferfi==3){
+                $ferfi = 0;
+            }
+        }
+
+        if($row["neme"]=="Nő"){
+            //$no++;
+           
+            if($row["kell_mammo"]==0 && $row["kell_emlo"]==1){
+                 echo "itt vagyok<br>";
+                $utvonal=4;
+            }
+            if($row["kell_mammo"]==1 && $row["kell_emlo"]==0){
+                $utvonal=5;
+            }
+
+            if($row["kell_mammo"]==1 && $row["kell_emlo"]==1){
+                $utvonal=6;
+            }
+            //$utvonal = ($no+2);
+            if($utvonal){
+                //echo "<pre>";
+                //print_r($row);
+                //echo "</pre>";
+            }
+            $row["utvonal"]=        $utvonal;
+            $row["ultrahang"] =     $utvonalak[$utvonal]["ultrahang"];
+            $row["labor"] =         $utvonalak[$utvonal]["labor"];
+            $row["eszkozos"] =      $utvonalak[$utvonal]["eszkozos"];
+            $row["belgyogyaszat"] = $utvonalak[$utvonal]["belgyogyaszat"];
+            $row["borgyogyaszat"] = $utvonalak[$utvonal]["borgyogyaszat"];
+            $row["mrtg"] =          $utvonalak[$utvonal]["mrtg"];
+            $row["emlo"] =          $utvonalak[$utvonal]["emlo"];
+            $row["mammo"] =         $utvonalak[$utvonal]["mammo"];
+        }
+
+        echo "<pre>";
+        print_r($row);
+        echo "</pre>";
+
+        sql_query("UPDATE ghc_setalolap_segedtabla SET utvonal=?,ultrahang=?,labor=?,eszkozos=?,belgyogyaszat=?,borgyogyaszat=?,mrtg=?,emlo=?,mammo=? WHERE id=?",
+        [$row["utvonal"],$row["ultrahang"],$row["labor"],$row["eszkozos"],$row["belgyogyaszat"],$row["borgyogyaszat"],$row["mrtg"],$row["emlo"],$row["mammo"],$row["id"]]);
+       }
+
+        die();*/
+
         echo "<div id='webshoplist'>" . $this->webShopService->showOrdersList() . "</div>";
 
+        //ALDI fifi összes alap csomag 
+        /*$data=sql_query("SELECT fogl.id,fogl.nev,fogl.taj,fogl.szuldatum,c.megnev,h.cim,fogl.eljott,lq.status,lq.laborpacks FROM foglalasok fogl
+                         LEFT JOIN labrequests lq ON lq.foglalasid=fogl.id
+                         LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
+                         LEFT JOIN cegek c ON c.id=fogl.cegid
+                         WHERE *6
+                         /*TESCO*/
+                         /*fogl.helyszinid IN (1180,1179,1178,1177,1176,1175,1174,1173,
+                                             1172,1171,1170,1169,1168,1167,1166,1165,
+                                             1164,1163,1162,1161,1160,1159,1158,1157,
+                                             1156,1155,1154,1153,1152,1151,1150,1149,
+                                             1148,1147,1146,1145,1144,1143,1142,1141,
+                                             1140,1139,1138,1137,1136,1135,1134,1133,
+                                             1132,1131,1130,1129,1128,1127,1126,1125,
+                                             1124,1123,1122,1121,1120,1119,1118,1117,
+                                             1116,1115,1190,1178,1178,1178,1178,1178,1178)*/
+                         /*ALDI*/
+                         /*fogl.helyszinid IN (327,327,327,786,785,787,866,783,821,712,
+                                                  713,810,934,730,733,732,1110,805,806,823,
+                                                  822,735,734,774,776,750,751,754,1095,818,
+                                                  819,959,817,829,795,799,832,831,794,749,
+                                                  865,864,775,767,766,760,761,731,729,762,
+                                                  758,759,765,825,826,769,827,768,1103,753,
+                                                  752,720,813,718,719,721,722,723,842,847,
+                                                  846,757,1105,840,778,779,777,1099,736,
+                                                  1098,737,742,1101,745,727,726,725,724,
+                                                  830,707,706,705,816,728,788,789,1100,
+                                                  868,850,851,852,853,717,716,714,715,1111,
+                                                  820,835,838,836,837,839,803,1097,802,800,
+                                                  801,869,426,815,814,1109,859,857,856,772,
+                                                  855,854,771,770,867,1102,1112,790,791,793,
+                                                  1096,849,933,824,807,808,1108,811,797,798,708,
+                                                  710,709,843,1106,1107,744,743,748,747,858,860,861,
+                                                  862,863,746,848,711,834,845,844,782,781,780,741,
+                                                  1104,740,739,738,812,755,756,809,841,327,578,327,
+                                                  327,327,578,327,327,327,327,327,327,820) AND fogl.szurestipusid=48*/
+                         /*fogl.cegid IN (340,348)*/
+                         //AND fogl.eljott=1 AND fogl.datum BETWEEN '2025-09-15' AND '2025-12-05' AND lq.status='done';")->fetchAll(PDO::FETCH_ASSOC);
+        
+        
+        
+        /*echo "<table>";
+        echo "<tr>";
+        echo "<td>ID.</td>";
+        echo "<td>Teljesnév</td>";
+        echo "<td>TAJ</td>";
+        echo "<td>Szül. dátum</td>";
+        echo "<td>Cég</td>";
+        echo "<td>Helyszín</td>";
+        echo "<td>Eljött?</td>";
+        echo "<td>Labor státusz</td>";
+
+        //echo "<td>ALDI által finanszírozott Alap csomag vizelet vizsgálattal</td>";
+        //echo "<td>ALDI által finanszírozott alap csomag női tumormarkerrel</td>";
+        //echo "<td>ALDI által finanszírozott alap csomag férfi tumormarkerrel</td>";
+        echo "</tr>";
+        
+        foreach($data as $row){ 
+            //$search = ['"','[',']'];
+            //$replace = ['','',''];
+            //$row["laborpacks"] = str_replace($search,$replace,$row["laborpacks"]);
+            //echo $row["laborpacks"]."<br>";
+            //$csomagok = explode(",",$row["laborpacks"]);
+            
+            
+
+            echo "<tr>";
+            echo "<td>{$row["id"]}</td>";
+            echo "<td>{$row["nev"]}</td>";
+            echo "<td>{$row["taj"]}</td>";
+            echo "<td>{$row["szuldatum"]}</td>";
+            echo "<td>{$row["megnev"]}</td>";
+            echo "<td>{$row["cim"]}</td>";
+            echo "<td>{$row["eljott"]}</td>";
+            echo "<td>{$row["status"]}</td>";
+
+            //echo "<td>".(in_array(72,$csomagok)?1:0)."</td>";
+            //echo "<td>".(in_array(317,$csomagok)?1:0)."</td>";
+            //echo "<td>".(in_array(318,$csomagok)?1:0)."</td>";
+            echo "</tr>";
+    }
+
+    echo "</table>";
+    die();*/
         //echo $this->utils->lighttechReminder();
         //die();
 
-        /*$generaliService = New GeneraliApiService();
-        echo "<style>";
-        echo "body{margin:0px;background-color:#133337;width:100%;height:100%;color:#c0c0c0}";
-        echo "</style>";
-        //examination = 21, 
-       // doctorid=2 carespotid=1
-        echo "<pre>";
-        print_r($generaliService->retrieveExaminationsOfCareSpotOfDoctor(2,1));
-        echo "</pre>";
+        $notificatinService = New NotificationService();
         
-        die();*/
+        //$notificatinService->sendUserReservationNotification(915912,true);
+
+        //echo $notificatinService->tesco_ertesito();
+        //die();
+
+        //$generaliService = New GeneraliApiService();
+        //echo "<style>";
+        //echo "body{margin:0px;background-color:#133337;width:100%;height:100%;color:#c0c0c0}";
+        //echo "</style>";
+
+        //$testApi = new testEnviromentForApi();
+
+        /*echo "<pre>";
+        print_r($testApi->getSlots());
+        echo "</pre>";
+        $testApi->reservationTypeId = 9;
+        $testApi->locationId = 1;*/
+        //examination = 21, 
+        //doctorid=2 carespotid=1
+        //echo "<pre>";
+        //print_r($generaliService->getSlots("2025-07-14","2025-07-18"));
+        //print_r($generaliService->retrieveSpecialities());
+        //echo "</pre>";
+        
+        //die();
     
         /*$csomagok = [];
         $csaktetel = 0;
@@ -699,7 +879,7 @@ class AdminBookingPage extends AdminCorePage
         //------>Dokirex páciens lista feltöltés
         //echo $this->adminUtils->checkBejelentkezoCegForDokirexCegid($dokirexcegid=17,$cid=1);
         //die();
-        //$dokirexService = new DokirexService();
+        $dokirexService = new DokirexService();
         //mindent lekérdezek
         $q = sql_query("SELECT * from dokirex_insert_paciensek");
         //Specifikus lekérdezés
@@ -790,21 +970,25 @@ class AdminBookingPage extends AdminCorePage
 
         //Páciens insertelése a foglalások táblába:
         /*$foglalasExist = false;
+        $checkForCrowd = false;
         //Megizsgálom, hogy a páciensnek van-e már be regisztrált időpontja az adott szűréstípusra a helyszínen/napon
         if(!$foglalasExist=sql_query("SELECT * FROM foglalasok WHERE INSTR(datum,'".date("Y-m-d",strtotime($datum))."') AND helyszinid=? AND szurestipusid=? AND taj=?",
         [$helyszinid,$szurestipusid,$r["taj"]])->fetch(PDO::FETCH_ASSOC))
         {
             //Addig futtatom a while ciklust míg nem talál egy szabad helyet az adott napra
             $idopontExist = false;
-            while(true){
-                if($idopontExist=sql_query("SELECT * FROM foglalasok WHERE datum=? AND helyszinid=? AND szurestipusid=?",
-                [$datum,$helyszinid,$szurestipusid])->fetch(PDO::FETCH_ASSOC))
-                {
-                    $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
-                }else{
-                    break;
+            if($checkForCrowd){
+                while(true){
+                    if($idopontExist=sql_query("SELECT * FROM foglalasok WHERE datum=? AND helyszinid=? AND szurestipusid=?",
+                    [$datum,$helyszinid,$szurestipusid])->fetch(PDO::FETCH_ASSOC))
+                    {
+                        $datum = date("Y-m-d H:i:s", strtotime($datum . " + {$rinterval} minutes"));
+                    }else{
+                        break;
+                    }
                 }
             }
+            
             
             $foglid="";
              sql_query(
@@ -861,15 +1045,15 @@ class AdminBookingPage extends AdminCorePage
 
         //Munkakör:
         /*$params = array(
-                "FormElementID"=>16,
-                "PaciensID"=>$fogl["dokirex_userid"],
-                "PaciensEgyediUrlapID"=> -1,
-                "Value"=> strval($fogl["dokirexmunkakorid"])
-            );
-            $dokirexService->insertUpdateFormElementValue($params);
+            "FormElementID"=>16,
+            "PaciensID"=>$fogl["dokirex_userid"],
+            "PaciensEgyediUrlapID"=> -1,
+            "Value"=> strval($fogl["dokirexmunkakorid"])
+        );
+        $dokirexService->insertUpdateFormElementValue($params);*/
 
             //Cég rögzítése:
-            $params = array(
+            /*$params = array(
                 "FormElementID"=>15,
                 "PaciensID"=>$fogl["dokirex_userid"],
                 "PaciensEgyediUrlapID"=> -1,
@@ -1390,7 +1574,9 @@ class AdminBookingPage extends AdminCorePage
     private array $vizmuvekList = ["116295028","032343434","093469403","028100610","024207717","025065136","040279659","025479850","043344510","114910156","036120521","021737901","036161922","031444026","041782905","030241671","105720027","042511384","045061125","034568947","040923699"];
 
     private function elojegyzesTableRow($reservationData, $ora, $binterval, $noAdd = false): string
-    {
+    {   
+        $this->vipList = sql_query("SELECT taj FROM vip_lista")->fetchAll(PDO::FETCH_ASSOC);
+
         if (!empty($this->lastSearchTerm)) {
             if (substr_count(strtolower($reservationData["nev"]), strtolower($this->lastSearchTerm)) || substr_count(strtolower($reservationData["szuldatum"]), strtolower($this->lastSearchTerm)) || substr_count(strtolower($reservationData["taj"]), strtolower($this->lastSearchTerm))) {
                 $reservationData["nev"] = "<span style='color:darkblue;font-weight:bold;'>{$reservationData["nev"]}</span>";
@@ -1399,6 +1585,10 @@ class AdminBookingPage extends AdminCorePage
 
         $nap = date("Y-m-d", strtotime($reservationData["datum"]));
         //$ora = date("H:i", strtotime($rowf["datum"]));
+
+        $vipList =sql_query("SELECT taj FROM vip_lista")->fetchAll(PDO::FETCH_ASSOC);
+
+        $vipList = ["028175283","096001981","042559193","028970617","076132296","025946075","105492966","139745131","087120093","081599152",];
 
         $htmlout = "";
         $eljottText = "";

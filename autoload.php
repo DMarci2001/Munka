@@ -57,6 +57,7 @@ require_once(__DIR__ . "/library/BookingService.php");
 require_once(__DIR__ . "/library/BeosztasService.php");
 require_once(__DIR__ . "/library/PrintService.php");
 require_once(__DIR__ . "/library/ZeusService.php");
+require_once(__DIR__ . "/library/GeneraliApiServiceV1.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoGeneral.php");
 require_once(__DIR__ . "/library/foglaljorvost/FoglaljOrvostService.php");
 require_once(__DIR__ . "/library/ReservationExportService.php");
@@ -87,6 +88,8 @@ require_once(__DIR__ . "/library/other/seeme-gateway-class.php");
 require_once(__DIR__ . "/library/other/google-drive-downloader.php");
 require_once(__DIR__ . "/library/other/SimplePayService.php");
 require_once(__DIR__ . "/library/other/KeltexMedWebSQL.php");
+require_once(__DIR__ . "/library/testEnviromentForApi.php");
+
 
 //admin...
 
@@ -158,7 +161,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminPatientDataPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminDirektMarketingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminVehiclesPage.php");
-
+    require_once(__DIR__ . "/library/pages_admin/AdminBeutalokKezelesePage.php");
+    
 
     
 }

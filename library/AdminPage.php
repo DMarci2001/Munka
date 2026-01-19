@@ -58,7 +58,7 @@ class AdminPage {
         }
 
         $pageName = "Admin".ucfirst($_GET["page"])."Page";
-
+        
         if (class_exists($pageName)) {
             $page = new $pageName;
         } else {

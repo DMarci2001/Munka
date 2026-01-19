@@ -26,7 +26,7 @@ class DocAgent {
     {
     }
 
-    private function _getDocPath($fileId):string {
+    public function _getDocPath($fileId):string {
         $id = (int)$fileId;
         $path = Booking_Constants::DOCUMENT_PATH.floor($id / 1000);
         if (!is_dir($path)) {
@@ -37,7 +37,7 @@ class DocAgent {
         return $path;
     }
 
-    private static function _getAssetImagePath($fileId):string {
+    public static function _getAssetImagePath($fileId):string {
         $path = "/var/www/onlinebejelentkezes_keltexmed/public/images/assets_".Booking_Constants::SQL_DB."/";
         if (!is_dir($path)) {
             mkdir($path);
