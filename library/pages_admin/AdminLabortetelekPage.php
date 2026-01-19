@@ -252,9 +252,9 @@ class AdminLabortetelekPage extends AdminCorePage
                 $packageColumnWithData[] = $columnData["Field"]."=".$data[$columnData["Field"]];
             }
             //Csomagok alap adatok másolása új rekordként (Működik)
-            /*sql_query("INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).") 
+            sql_query("INSERT INTO synlab_labor_csomagok(".implode(",",$packageColumnNames).") 
                       SELECT ".implode(",",$packageColumnNames)." FROM synlab_labor_csomagok WHERE id=?;",[$_GET["szerk"]]);
-            $copyId = sql_insert_id(); */         
+            $copyId = sql_insert_id();      
             
 
             //Csomagokhoz tartozó képek lekérdezése
@@ -263,9 +263,6 @@ class AdminLabortetelekPage extends AdminCorePage
             $imageTableDescribe=sql_query("DESCRIBE dokumentumok;")->fetchAll(PDO::FETCH_ASSOC);
             $images = sql_query("select * from dokumentumok where assetid=? and dataid=?", [DocAgent::ASSET_LABOR_CSOMAG_IMAGE, $_GET["szerk"]])->fetchAll(PDO::FETCH_ASSOC);
             foreach($images as $image){ //Végig futok a dokumentumokon egy tömbben
-
-            echo $docAgent->_getDocPath($image["id"]);
-            die();
 
                 $exceptions = ["id"];
                 foreach($imageTableDescribe as $columnData){
