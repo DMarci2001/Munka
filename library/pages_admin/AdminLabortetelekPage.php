@@ -312,7 +312,7 @@ class AdminLabortetelekPage extends AdminCorePage
                 $fileName = "{$filePath}/{$image["assetid"]}_{$image["id"]}.{$image["tipus"]}"; //Létrehozom a fájl elérési útját.
                 copy($fileName, $destinationFile); //Átmásolom az új helyére a fájlt.
 
-                //header("Location:{$_SERVER["PHP_SELF"]}?page=labortetelek&szerk={$copyId}"); //átirányítom a felhasználót a másolatra.
+                header("Location:{$_SERVER["PHP_SELF"]}?page=labortetelek&szerk={$copyId}"); //átirányítom a felhasználót a másolatra.
                 
                 /*echo $ImagePath."<br>";
                 echo $filePath."<br>";
