@@ -307,12 +307,12 @@ class AdminLabortetelekPage extends AdminCorePage
                 $copyImageId = sql_insert_id();                                                    //használni mint referencia pont a képek másolásához.
                 //echo "id:{$copyImageId}<br>";
                 $destinationFile = $docAgent->_getDocPath($copyImageId); //lekérem a fájlhoz
-                echo $destinationFile;
+                //echo $destinationFile;
                 $filePath = $docAgent->_getAssetImagePath($image["id"]); //Lekérem a dokumentum könyvtárát.
                 $fileName = "{$filePath}/{$image["assetid"]}_{$image["id"]}.{$image["tipus"]}"; //Létrehozom a fájl elérési útját.
-                //copy($fileName, $destinationFile); //Átmásolom az új helyére a fájlt.
+                copy($fileName, $destinationFile); //Átmásolom az új helyére a fájlt.
 
-                //header("Location:{$_SERVER["PHP_SELF"]}?page=labortetelek&szerk={$copyId}"); //átirányítom a felhasználót a másolatra.
+                header("Location:{$_SERVER["PHP_SELF"]}?page=labortetelek&szerk={$copyId}"); //átirányítom a felhasználót a másolatra.
                 
                 /*echo $ImagePath."<br>";
                 echo $filePath."<br>";
