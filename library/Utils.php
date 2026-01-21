@@ -1475,11 +1475,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     public function ghc_notification_send()
     {
-        $cegid = 904;
-        $data = sql_query("SELECT fogl.*,sz.megnev as csomag FROM felhasznalok fogl 
-                           LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=fogl.torzsszam 
+        $cegid = 1403;
+        $data = sql_query("SELECT felh.*,sz.megnev as csomag FROM felhasznalok felh 
+                           LEFT JOIN ghc_segedtabla ghc ON ghc.torzsszam=felh.torzsszam 
                            LEFT JOIN szurestipusok sz ON sz.id=ghc.csomagid
-                           WHERE cegid=904")->fetchAll(PDO::FETCH_ASSOC);
+                           WHERE felh.cegid=1403")->fetchAll(PDO::FETCH_ASSOC);
 
         /*
         0,100
@@ -1734,13 +1734,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             $replace = [$n["nev"],(strtotime($n["ervenyesseg"])<strtotime("now")?str_replace("-",".",$n["ervenyesseg"])." dátummal lejárt":str_replace("-",".",$n["ervenyesseg"])." dátummal lejár")];
             $body = str_replace($search,$replace,$message);
 
-            //$mail = $notificationService->getDefaultMailer();
-            //$mail->AddAddress($n["email"]);
-            //$mail->AddBCC("tesztemail@hungariamed.hu");
-            //$mail->Subject = "Értesítés üzemorvosi vizsgálat esedékességéről - Hungária Med-M Kft.";
-            //$mail->Body = $body;
-            //$mail->Send();
-            //echo $notificationService->createNotificationRecord($n["ertesitoTipus"], $n["id"], $n["email"], $mail->Subject, $mail->Body)."<br>";
+            $mail = $notificationService->getDefaultMailer();
+            $mail->AddAddress($n["email"]);
+            $mail->AddBCC("tesztemail@hungariamed.hu");
+            $mail->Subject = "Értesítés üzemorvosi vizsgálat esedékességéről - Hungária Med-M Kft.";
+            $mail->Body = $body;
+            $mail->Send();
+            echo $notificationService->createNotificationRecord($n["ertesitoTipus"], $n["id"], $n["email"], $mail->Subject, $mail->Body)."<br>";
         }
     }
 
