@@ -20,8 +20,9 @@ class CompanyService {
     const DRV_HELYSZINI     = 1487;
     const ALDI_FIFI_ID      = 348;
     const ALDI_FIFI_CTD_ID  = 340;
+    const SUZUKI_MENEDZSER  = 892;
 
-    const SUZUKI_ARENA_HELSZIN_ID = 640;
+    const SUZUKI_ARENA_HELYSZIN_ID = 640;
 
     public static array $makIds = [4,373, 374, 375, 376,933];
 
@@ -48,7 +49,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="ghc";
+            $d="tesco";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -189,7 +190,7 @@ class CompanyService {
     }
 
     public static function isSuzukiMenedzser($companyId = 0):bool{
-        return $_SESSION["helyszindata"]["domain"] == "suzuki-menedzserszures" && Booking_Constants::SQL_DB == "hungariamed";
+        return ($companyId==self::SUZUKI_MENEDZSER || $_SESSION["helyszindata"]["domain"] == "suzuki-menedzserszures") && Booking_Constants::SQL_DB == "hungariamed";
     }
 
     public static function isSuzukiGHC($companyId = 0):bool{

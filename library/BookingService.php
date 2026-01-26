@@ -3492,7 +3492,7 @@ class BookingService
                 $optimalTime = $notSoGoodTime;
             }
 
-            if (Booking_Constants::SQL_DB == "hungariamed" && $reservationData["helyszinid"] == CompanyService::SUZUKI_ARENA_HELSZIN_ID) {
+            if (Booking_Constants::SQL_DB == "hungariamed" && $reservationData["helyszinid"] == CompanyService::SUZUKI_ARENA_HELYSZIN_ID) {
                 //ghc esetében fixen a csomag időpontja mindennek az időpontja
                 $optimalTime["time"] = $reservationData["datum"];
             }
