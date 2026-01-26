@@ -77,26 +77,26 @@ class NotificationService
             $mail->AddBCC(Booking_Constants::USER_BCC_MAIL);
         }
 
-        $subject = "Suzuki GHC szűrés időpontfoglalás újraindult!";
+        $subject = "Suzuki GHC szűrés időpontfoglalás elindult!";
         $mail->Subject = $subject;
 
         $text  = "<h3>Tisztelt {$data["nev"]}!</h3>";
 
-        $text .= "<p>Elnézést kérünk a kellemetlenségért, az időpontfoglaló rendszer újra elérhető mostmár, ha korábbi időpontfoglalása nem megfelelő az Ön számára, kérem, keresse fel a korábban megjelölt Munkatársainkat az időpontja áthelyezésével kapcsolatban!</p>";
-        /*$text .= "<p style=\"font-size:14px;\">Köszönjük jelentkezését a 2024 évi munkavállalói szűrésre!</p><br>";
+        //$text .= "<p>Elnézést kérünk a kellemetlenségért, az időpontfoglaló rendszer újra elérhető mostmár, ha korábbi időpontfoglalása nem megfelelő az Ön számára, kérem, keresse fel a korábban megjelölt Munkatársainkat az időpontja áthelyezésével kapcsolatban!</p>";
+        $text .= "<p style=\"font-size:14px;\">Köszönjük jelentkezését a 2025 évi munkavállalói szűrésre!</p><br>";
         $text .= "<p style=\"font-size:14px;\">Időpontot az alábbi linkre kattintva foglalhat:</p>";
         $text .= "<p style=\"font-size:14px;\"><a style=\"color:#a00\" target=\"_blank\" href=\"https://ghc.hungariamed.hu/?page=login\">https://ghc.hungariamed.hu/?page=login</a></p><br><br>";
         $text .= "<p style=\"font-size:14px;\"><strong>Az Ön szűrőcsomagja:</strong> {$data["csomag"]}.</p><br><br>";
         $text .= "<p style=\"font-size:14px;\">Az időpontfoglaláshoz szüksége lesz a TAJ számára. A tovább lépéshez SMS kódot küldünk.</p><br>";
-        $text .= "<p style=\"font-size:14px;\">A szűrés időpontja: <strong><span style=\"font-size:16px;\">2024.10.02-től 2024.10.18-ig</span></strong> tart.</p><br>";
+        $text .= "<p style=\"font-size:14px;\">A szűrés időpontja: <strong><span style=\"font-size:16px;\">2025.09.15-től 2025.10.03-ig</span></strong> tart.</p><br>";
 
-        if($data["csomag"]=="Senior GHC csomag"){
+        /*if($data["csomag"]=="Senior GHC csomag"){
             $text .= "<p style=\"font-size:14px;\">Senior szűrést 7:00-tól 12:00-ig végezzük. Két műszakos kollegák esetében a délutános műszak előtti délelőttön.</p><br>";
 
             $text .= "VAGY<br><br>";
         }else{
             $text .= "<p style=\"font-size:14px;\">Standard szűrést 13:00-tól 17:00-ig végezzük. Két műszakos kollegák esetében délelőttös műszak utáni délutánon.</p><br>";
-        }
+        }*/
 
         $text .= "<p style=\"font-size:14px;\">Az időpontfoglaláskor meg kell adnia műszakját. Ezután a fent leírtak szerint tud időpontot foglalni. Ha Ön nem tud választani a felkínált időpontok között, kérje munkatársaink segítségét!</p><br>";
         $text .="<p style=\"font-size:14px;\"><strong>Munkatársaink elérhetőségei:</strong></p>";
@@ -110,13 +110,13 @@ class NotificationService
         $text .="<ul style=\"margin-left:10px;font-size:14px;\">";
         $text .="<li style=\"list-style: disc;\">Suzuki Aréna</li>";
         $text .="<li style=\"list-style: disc;\">2500 Esztergom, Helischer József út 5.</li>";
-        $text .= "</ul>";*/
+        $text .= "</ul>";
 
-        $text= $this->setMailTemplate($text, "Suzuki GHC szűrés időpontfoglalás újraindult!", "ghc");
+        $text= $this->setMailTemplate($text, "Suzuki GHC szűrés időpontfoglalás elindult!", "ghc");
         $mail->Body = $text;
 
         $smsSzoveg  = "Tisztelt GHC jelentkező! A szűrésre időpontot foglalhat a mai naptól, ";
-        $smsSzoveg .= "2024.09.02 12:00-tól, az alábbi linken: https://ghc.hungariamed.hu/?page=login Bővebb tájékoztatást e-mailben olvashat.";
+        $smsSzoveg .= "2025.08.25 22:00-tól, az alábbi linken: https://ghc.hungariamed.hu/?page=login Bővebb tájékoztatást e-mailben olvashat.";
 
         //$this->utils->sendSMS($data["telefon"],$smsSzoveg);
 
@@ -188,7 +188,7 @@ class NotificationService
                 $mail->addStringAttachment($this->getCalendarItem($row), 'foglalas.ics', 'base64', 'text/calendar');
             }
 
-            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser()) {
+            if (CompanyService::isSuzukiTeszt() || CompanyService::isSuzukiMenedzser($row["cegid"])) {
                 //Kiválasztom melyik fájlt akarom csatolni a levélhez.
                 if ($row["szurestipus"] == "Suzuki 45 év alatti férfi csomag" || $row["szurestipus"] == "Suzuki 45 év alatti nő csomag") {
                     $filename = "Suzuki menedzser tajekoztato 45 alattiaknak.pdf";
@@ -2141,5 +2141,45 @@ END:VCALENDAR";
         }
     }
 
+    public function tesco_ertesito(){
+        
+        $data = sql_query("SELECT fogl.nev,fogl.email,fogl.telefon,fogl.datum,h.cim,sz.megnev FROM foglalasok fogl
+                           LEFT JOIN helyszinek h ON h.id=fogl.helyszinid
+                           LEFT JOIN szurestipusok sz ON sz.id=fogl.szurestipusid
+                           WHERE fogl.cegid=682 AND fogl.datum>='2025-10-15';")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($data as $row){
+            $title = "Sikeres időpont regisztráció";
+
+            $text = "<strong>{$row["datum"]} - {$row["cim"]}</strong><br><br>";
+            $text.= "Név: {$row["nev"]}<br><br>"; 
+            $text.= "<strong>Időpont: {$row["datum"]}</strong><br><br>";
+            $text.= "Szűrés típusa: {$row["megnev"]}<br>";
+            $text.= "Helyszín: {$row["cim"]}";
+            $text.= "<hr>"; 
+            $text.="<br><p><strong>Kedves Jelentkező!</strong></p></br>";
+            $text.="<p>Köszönjük a regisztrációdat!<br>";
+            $text.="Várunk szeretettel a Tesco vérvételi szűrésen!<br><br>";
+            $text.="Az alábbi linkre kattintva megnézhetitek a finanszírozott és a kiemelt önköltséges csomagok részleteit, és itt tudtok időpontot foglalni a vérvételre.<br>";
+            $text.="<a style='color:#a00' href='https://tesco-webshop.hungariamed.hu/' target='_blank'>https://tesco-webshop.hungariamed.hu/</a><br><br>";
+            $text.="Mindenki egészségének megőrzése fontos számunkra, hisz ez a küldetésünk, ezért kérünk Benneteket, hogy juttassátok el minél több kollégátokhoz a szükséges információkat, és segítsétek Őket a jelentkezésben!<br><br>";
+            $text.="Örömmel vesszük az előzetes bejelentkezést a gördülékenyebb munka érdekében. Természetesen helyszíni regisztrációra is van lehetőség, amelyben a Hungária Med-M Kft. dolgozói segítenek.<br>";
+            $text.="</p><br>";
+            $text.="<p>Hungária Med-M csapata</p>";
+
+            $body = $this->setMailTemplate($text,$title);
+            
+            //$mail = self::getDefaultMailer();
+            //$mail->AddAddress($row["email"]);
+            //$subject = "Sikeres időpont regisztráció!";
+        
+
+            //$mail->Subject = $subject;
+            //$mail->Body = $body;
+            //$mail->Send();
+        }
+        echo "done.";
+        
+    }
 
 }
