@@ -471,6 +471,7 @@ class HmmApi {
                 "contentImages" => $contentImages,
                 "created"       => $contentData["created"],
                 "alias"         => $contentData["alias"],
+                "metadesc"      => $contentData["metadesc"],
                 "catid"         => $contentData["catid"],
                 "fulltext"      => isset($_GET["titleonly"]) ? "":$contentData["fulltext"],
             ];

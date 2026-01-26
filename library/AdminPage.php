@@ -269,7 +269,12 @@ class AdminPage {
         if (!isset($GLOBALS["nopageaccess"])) {
             if ($menu["newbutton"] != "" && !isset($_GET["szerk"])) {
                 if(!$menu["custom_js"]){
-                    $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&addnew'>+ {$menu["newbutton"]}</a></div>";
+                    $param = "addnew";
+                    if (substr_count($menu["newbutton"], "termék")) {
+                        $param = "addnewproduct";
+                    }
+
+                    $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'><a class='ujbutton' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&{$param}'>+ {$menu["newbutton"]}</a></div>";
                 }else{
                     $html .= "<div style='display:table-cell;vertical-align:middle;padding:0px 0px 0px 20px;'>";
                     $html .= "<label class='ujbutton' style='cursor:pointer'>";

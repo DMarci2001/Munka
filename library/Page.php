@@ -264,7 +264,7 @@ class Page
 
         $html .= "&copy; " . date("Y") . " " . Booking_Constants::FOOTER_COPYRIGHT;
         if(!CompanyService::isSuzukiGHC()){
-            $html .= " ".session_id()."";
+            //$html .= " ".session_id()."";
         }
         $html .= " <span style=\"display:none\">".session_id()."</span>";
         
