@@ -10,6 +10,7 @@ class DocAgent {
     const ASSET_WEB_GALLERY                 = "webgallery";
     const ASSET_LABOR_CSOMAG_IMAGE          = "laborcsomagimage";
     const ASSET_CONTENT_TITLE_IMAGE         = "contenttitleimage";
+    const ASSET_KELTEX_PRODUCT_IMAGE        = "keltexproductimage";
     const ASSET_CHAT_UPLOAD_IMAGE           = "chatuploadimage";
     const ASSET_LABOR_RESULT                = "laborresult";
     const ASSET_PERSONA_REFERAL_PDF         = "personalreferalpdf";

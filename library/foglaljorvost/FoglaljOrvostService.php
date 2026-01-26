@@ -315,6 +315,10 @@ class FoglaljOrvostService extends FoGeneral {
             return $beo["error"];
         }
 
+        if ($beo["orvosid"] == 64) {
+            //return "error: Dr. Csanády Kinga előjegyzés felküldése tiltva";
+        }
+
         $this->currentAction = "CONSULTATION_NEW";
         $xml = '<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>

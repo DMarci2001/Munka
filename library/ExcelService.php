@@ -12,7 +12,7 @@ class ExcelService {
     private $columnNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X", "Y", "Z"];
 
     private string $esztergomFilter = "f.helyszinid=532 and ";
-    private string $jaszSuzukiFilter = "f.cegid IN (504) and ";
+    private string $jaszSuzukiFilter = "f.cegid IN (504, 99) and ";
     private string $jaszAndEsztergomSuzukiFilter = "f.helyszinid in (1, 532, 100, 644) AND f.cegid IN (892) and ";
     private string $korosiUtcaFilter = "f.helyszinid in (600) and ";
     private string $extraFilter = "";
@@ -995,6 +995,7 @@ class ExcelService {
         try {
             //$this->_orvosWorkHours($sheetId++, $from, $to);
             $this->_bejelentkezoFoglalasokLista($sheetId++, $from, $to);
+
             $this->_dokirexVizsgalatokLista($sheetId++, $from, $to);
             $this->_rtgLista($sheetId++, $from, $to);
             $this->_laborLeletLista($sheetId++, $from, $to);
@@ -1002,6 +1003,7 @@ class ExcelService {
             $this->_bejelentkezoEljottStat($sheetId++, $from, $to);
             $this->_bejelentkezoNemEljottLista($sheetId++, $from, $to);
             $this->_orvosWorkHours($sheetId++, $from, $to);
+
             //$this->_fizetesLista($sheetId++, $rawInput, $from, $to);
         } catch (\Exception $e) {
             //valami hibakezelés...
@@ -1552,11 +1554,10 @@ class ExcelService {
         $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
         $sor = 5;
 
-        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1568,13 +1569,14 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             
             FROM (SELECT datum, foglalta, szurestipusid,
             IF (foglalta='', 'bejelentkezo', 
             
             IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
             FROM keltexmed.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
             
             LEFT JOIN keltexmed.szurestipusok t ON t.id=a.szurestipusid
             
@@ -1606,11 +1608,10 @@ class ExcelService {
         $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Keltexmed - ".date("Y", strtotime($from)));
         $sor += 2;
 
-        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1622,10 +1623,11 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             
             FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM keltexmed.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (292,328) AND eljott=1 AND cegid IN (11,392,606)) a
             
             LEFT JOIN keltexmed.orvosok o ON o.id=a.orvosassigned
             LEFT JOIN keltexmed.szurestipusok t ON a.szurestipusid=t.id
@@ -1678,11 +1680,10 @@ class ExcelService {
         $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
         $sor = 5;
 
-        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1694,13 +1695,14 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
-            
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+
             FROM (SELECT datum, foglalta, szurestipusid,
             IF (foglalta='', 'bejelentkezo', 
             
             IF (foglalta IN ('', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin')) AS calcfoglalta
             FROM hungariamed.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618,587) OR foglalta='foglaljorvost')) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618,587) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed.szurestipusok t ON t.id=a.szurestipusid
       
@@ -1732,11 +1734,10 @@ class ExcelService {
         $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Hungariamed Jász utca - ".date("Y", strtotime($from)));
         $sor += 2;
 
-        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1748,10 +1749,11 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
-            
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+
             FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM hungariamed.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618) OR foglalta='foglaljorvost')) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (1) AND eljott=1 AND (cegid IN (11,618) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed.orvosok o ON o.id=a.orvosassigned
             LEFT JOIN hungariamed.szurestipusok t ON a.szurestipusid=t.id
@@ -1803,11 +1805,10 @@ class ExcelService {
         $this->dataRow("A", 2, ["Jelentés készült: ".date("Y.m.d")]);
         $sor = 5;
 
-        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Forrás", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT calcfoglalta AS forras, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1819,6 +1820,7 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             
             FROM (SELECT datum, foglalta, szurestipusid,
             IF (foglalta='', 'bejelentkezo', 
@@ -1826,7 +1828,7 @@ class ExcelService {
             
             IF (foglalta IN ('', 'fastreservation', 'labshop', 'foglaljorvost', 'union', 'webpage', 'webshop', 'keltexmedwww'), foglalta, 'admin'))) AS calcfoglalta
             FROM hungariamed_gyor.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed_gyor.szurestipusok t ON t.id=a.szurestipusid
      
@@ -1858,11 +1860,10 @@ class ExcelService {
         $this->titleRow("A{$sor}", "Magán foglalások orvos alapján Hungariamed Győr - ".date("Y", strtotime($from)));
         $sor += 2;
 
-        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 jan", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec"]);
+        $this->headingRow("A", $sor, ["Orvos", "Összesen", "2025 feb", "2025 már", "2025 ápr", "2025 máj", "2025 jun", "2025 júl", "2025 aug", "2025 szep", "2025 okt", "2025 nov", "2025 dec", "2026 jan"]);
         $sor++;
 
         $reservations = sql_query("SELECT o.nev AS orvos, GROUP_CONCAT(DISTINCT t.megnev SEPARATOR ', ') AS tipus, COUNT(*) AS total
-            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
             ,SUM(IF (MONTH(datum)=2, 1, 0)) AS feb
             ,SUM(IF (MONTH(datum)=3, 1, 0)) AS marc
             ,SUM(IF (MONTH(datum)=4, 1, 0)) AS apr
@@ -1874,10 +1875,11 @@ class ExcelService {
             ,SUM(IF (MONTH(datum)=10, 1, 0)) AS okt
             ,SUM(IF (MONTH(datum)=11, 1, 0)) AS nov
             ,SUM(IF (MONTH(datum)=12, 1, 0)) AS 'dec'
-            
+            ,SUM(IF (MONTH(datum)=1, 1, 0)) AS jan
+
             FROM (SELECT datum, foglalta, orvosassigned, szurestipusid
             FROM hungariamed_gyor.foglalasok 
-            WHERE datum>'2025-01-01 00:00:00' AND datum<'2025-12-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
+            WHERE datum>'2025-02-01 00:00:00' AND datum<'2026-01-31 23:55:55' AND (foglalta='foglaljorvost' OR eljott=1) AND helyszinid IN (176) AND eljott=1 AND (cegid IN (42) OR foglalta='foglaljorvost')) a
             
             LEFT JOIN hungariamed_gyor.orvosok o ON o.id=a.orvosassigned
             LEFT JOIN hungariamed_gyor.szurestipusok t ON a.szurestipusid=t.id

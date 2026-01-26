@@ -515,6 +515,10 @@ class AdminUser {
         return $this->checkPermission("jog_webadatok");
     }
 
+    public function beallitasWebAKeltexmedAccess():bool {
+        return $this->checkPermission("jog_web");
+    }
+
     public function labortetelAccess():bool{
         return $this->checkPermission("jog_labortetelek");
     }

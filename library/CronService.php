@@ -182,10 +182,11 @@ class CronService {
 
     private function _tesztStuff() {
 
-        //$foService = new FoglaljOrvostService();
+        $foService = new FoglaljOrvostService();
         //$result = $foService->deleteSzabadsagFix();
-        //echo $result;
-
+        //$result = $foService->deleteConsultation(35067);
+        //echo print_r($result, true);
+        //die;
         //$this->addSyncReservations();
 
         //$this->tesztSynlabPdf();
@@ -1223,15 +1224,16 @@ class CronService {
 
         $mail->addAddress("jnsmobil@gmail.com");
 
-
-        $mail->addAddress("sorger.eva@hungariamed.hu");
-        $mail->addAddress("korpics@hungariamed.hu");
-        $mail->addAddress("petra@rawagency.hu");
-        $mail->addAddress("kuzdy@kuzdy.hu");
-        $mail->addAddress("ugyvezetes@keltexmed.hu");
-        $mail->addAddress("kgabor@rawagency.hu");
-        $mail->addAddress("marketing@keltexmed.hu");
-        $mail->addAddress("valasek.vinczeildiko@keltexmed.hu");
+        if (true) {
+            $mail->addAddress("sorger.eva@hungariamed.hu");
+            $mail->addAddress("korpics@hungariamed.hu");
+            $mail->addAddress("petra@rawagency.hu");
+            $mail->addAddress("kuzdy@kuzdy.hu");
+            $mail->addAddress("ugyvezetes@keltexmed.hu");
+            $mail->addAddress("kgabor@rawagency.hu");
+            $mail->addAddress("marketing@keltexmed.hu");
+            $mail->addAddress("valasek.vinczeildiko@keltexmed.hu");
+        }
 
         $mail->Subject = $subject;
         $mail->Body = "Ez egy automatikus email, ami minden hétfő reggel megy ki a címzetteknek.<br/>Ha valaki nem szeretné a továbbiakban kapni írjon a jnsmobil@gmail.com címre.";
