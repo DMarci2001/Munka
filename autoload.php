@@ -162,6 +162,7 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminDirektMarketingPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminVehiclesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminKeltexmedProductsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminCancelsPage.php");
     //require_once(__DIR__ . "/library/pages_admin/AdminBeutalokKezelesePage.php");
     
 
