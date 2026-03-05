@@ -1063,7 +1063,7 @@ class BookingService
                 $dist = "6 hour";
             }
 
-            if ($cegId == 1531 || $cegId == 1214) {
+            if (in_array($cegId,[1531,1214,1581])/*$cegId == 1531 || $cegId == 1214*/) {
                 $dist = "0 hour";
             }
 
