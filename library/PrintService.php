@@ -1665,6 +1665,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                 "eletkor" => $age,
                 "neme" => $this->pdfChars($neme),
                 "szurestipus" => $this->pdfChars($reservation["szurestipusnev"]),
+                "keltezes" => $this->pdfChars($reservation["helyszin"]).", ".$this->pdfChars($reservation["datum"])
             ];
             $pdf = new Pdf($pdfLocation);
             $pdf->fillForm($input)->needAppearances()->flatten()->saveAs($saveName);
@@ -1690,7 +1691,8 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
 
     public function generate_aldi_vv(){
         //$laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000477' AND INSTR(created,'2024') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
-        $laborRequestData = sql_query("SELECT * FROM asz_vv_table;")->fetchAll(PDO::FETCH_ASSOC);
+        //$laborRequestData = sql_query("SELECT * FROM asz_vv_table;")->fetchAll(PDO::FETCH_ASSOC);
+        $laborRequestData = sql_query("SELECT * FROM obh_laborok_2;")->fetchAll(PDO::FETCH_ASSOC);
         $path = __DIR__."/pages_admin/other/tmp/";
 
         //echo count($laborRequestData)." db sor.";
@@ -1700,7 +1702,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             $docAgent = new DocAgent();
             $pdf = $docAgent->getDocByType(DocAgent::ASSET_LABOR_RESULT, $data["requestid"]);
             file_put_contents($path.$filename,$pdf);
-            echo "{$data["requestid"]}.pdf ({$data["nev"]}) is done.<br>";
+            echo "{$data["taj"]}.pdf is done.<br>";
         }
     }
 
