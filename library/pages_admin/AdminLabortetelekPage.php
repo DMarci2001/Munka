@@ -463,7 +463,10 @@ class AdminLabortetelekPage extends AdminCorePage
             die;
         }
 
-
+        if (isset($_REQUEST["generalsearch"])) {
+            echo $this->showPackages($_REQUEST["term"]);
+            die;
+        }
     }
 
 
@@ -629,6 +632,12 @@ class AdminLabortetelekPage extends AdminCorePage
         }
 
         if (!isset($_GET["szerk"])) {
+
+            echo "<div style='margin-bottom:20px;'>";
+            echo "<input data-page='labortetelek' data-resultdiv='labortetelek-form' type='text' id='generalsearch' value='' placeholder='Keresés...'/>&nbsp;";
+            echo "</div>";
+
+
             echo "<div id='labortetelek-form'>";
             echo $this->showPackages();
             echo "</div>";
@@ -732,7 +741,12 @@ class AdminLabortetelekPage extends AdminCorePage
         return json_encode($array);
     }
 
-    private function showPackages():string {
+    private function showPackages($term = ""):string {
+        $wterm = "";
+        if ($term != "") {
+            $wterm = " AND slc.name LIKE '%{$term}%' ";
+        }
+
         $html = "";
         $companyId = $_SESSION["selectedcsomagcompany"];
 
@@ -745,9 +759,15 @@ class AdminLabortetelekPage extends AdminCorePage
         //Le kell kérdeznem a csomagokat:
         $rq = sql_query("SELECT slc.*,slk.name AS kerolap FROM synlab_labor_csomagok slc
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slc.appform
+                         WHERE true {$wterm}
                          ORDER BY slc.aktiv desc, name ASC");
 
         $qf = sql_query("SELECT id,name FROM synlab_labor_kerolapok ORDER BY name ASC");
+
+
+        if (sql_num_rows($rq) == 0) {
+            return "<div style='margin:10px 0px;'>Nincs találat</div>";
+        }
 
         $formFilter = "<select name=\"formFilterInPackages\">";
         $formFilter .= "<option value=\"*\">Összes</option>";
@@ -762,7 +782,7 @@ class AdminLabortetelekPage extends AdminCorePage
         $html.= "<td colspan='1' style='background:#ccc;color:#fff;font-weight: bold;padding:5px;font-size:18px;text-align:center;'>Árak<br/>";
         $html.= "<select id='companycsomag' style='width:300px;'>";
         $html.= "<option value='0'>Publikus ár</option>";
-        $companies = sql_query("select id, megnev from cegek order by megnev")->fetchAll(PDO::FETCH_ASSOC);
+        $companies = sql_query("select id, megnev from cegek where megnev<>'' order by megnev")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($companies as $company) {
             $html.= "<option ".($_SESSION["selectedcsomagcompany"] == $company["id"] ? "selected":"")." value='{$company["id"]}'>{$company["megnev"]}</option>";
         }

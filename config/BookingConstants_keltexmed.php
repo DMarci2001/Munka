@@ -85,7 +85,8 @@ class Booking_Constants {
 
     const API_KEY                   = "e23f8b75-9d88-4ad1-8149-12ece3ff9ce9";
 
-    const DEFAULT_PLACE_IDS         = [292, 328]; //fehérvári út
+    //const DEFAULT_PLACE_IDS         = [292, 328]; //fehérvári út
+    const DEFAULT_PLACE_IDS         = [372, 328]; //bicskei út
     const DEFAULT_COMPANY_ID        = 11;
 
     const REPORT_MAILS              = "jns@jns.hu, jnsmobil@gmail.com, marton.gergely@hungariamed.hu";
