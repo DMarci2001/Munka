@@ -141,7 +141,9 @@ class AdminReferralPage extends AdminCorePage {
 
 					$mbody = "<h1 style='font-family:calibri'>Tisztelt Munkavállaló!</h1>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Ezúton értesítjük, hogy munka alkalmassági igazolásának érvényessége <strong>".date("Y.m.d",strtotime($result["expiration"]))." dátummal lejár</strong>. Kérjük, hogy az Ön telephelyére kijelölt üzemorvosnál jelentkezzen be az éves vizsgálat elvégzésére!</p>";
-					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Czeglédi Erika részére elküldeni</strong> a <a href=\"mailto:czegledi.erika@opusenergetika.hu\" style=\"color:#a90000\">czegledi.erika@opusenergetika.hu</a> e-mail címre.</p>";
+					//$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük <strong>Czeglédi Erika részére elküldeni</strong> a <a href=\"mailto:czegledi.erika@opusenergetika.hu\" style=\"color:#a90000\">czegledi.erika@opusenergetika.hu</a> e-mail címre.</p>";
+					$mbody.= "<p style='font-family:calibri;font-size:14px'>Az alkalmassági eredményt kérjük TIGÁZ Munkaügy részére elküldeni a <a href=\"mailto:tigaz_munkaugy@opusenergetika.hu\" style=\"color:#a90000\">tigaz_munkaugy@opusenergetika.hu</a> e-mail címre, ";
+					$mbody.= "illetve eredetiben kérjük elpostázni a 4024 Debrecen Kossuth utca 41. D. ép. 103. szoba postacímre.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'>Bármely felmerülő kérdéssel kapcsolatban ügyfélkapcsolati munkatársunk áll szolgálatára.</p>";
 					$mbody.= "<p style='font-family:calibri;font-size:14px'><b>Telefonos ügyfélszolgálat:</b><br>";
 					$mbody.= "<i>Munkanapokon 08:00 –tol 16:00-ig.</i><br>";
@@ -194,6 +196,7 @@ class AdminReferralPage extends AdminCorePage {
 					$mail->AddAddress("tesztemail@hungariamed.hu");
 				} else {
 					$mail->AddAddress("czegledi.erika@opusenergetika.hu");
+					$mail->AddAddress("tigaz_munkaugy@opusenergetika.hu");
 				}
 			
 				if (!empty(Booking_Constants::USER_BCC_MAIL)) {
