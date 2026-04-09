@@ -34,11 +34,12 @@ class AdminKeltexmedProductsPage extends AdminCorePage
             $_POST["reservable"] = $_POST["reservable"] ?? 0;
             $_POST["fehervariexists"] = $_POST["fehervariexists"] ?? 0;
             $_POST["bercsenyiexists"] = $_POST["bercsenyiexists"] ?? 0;
+            $_POST["bicskeiexists"] = $_POST["bicskeiexists"] ?? 0;
 
             //echo "<pre>".print_r($_POST, true)."</pre>\n";
             //echo "update keltexmedweb.products p set aktiv=?, reservable=?, fehervariexists=?, bercsenyiexists=?, productname=?, alias=?, detailalias=?, description=?, extendeddescription=?, price=?, discount=?, discountprice=?, sorrend=?, reservationTypeId=? where id=?";
-            $this->keltexSql->sqlQuery("update keltexmedweb.products p set aktiv=?, reservable=?, fehervariexists=?, bercsenyiexists=?, productname=?, alias=?, detailalias=?, description=?, extendeddescription=?, price=?, discount=?, discountprice=?, sorrend=?, reservationTypeId=? where id=?",
-                [$_POST["aktiv"], $_POST["reservable"], $_POST["fehervariexists"], $_POST["bercsenyiexists"], $_POST["productname"], $_POST["alias"], $_POST["detailalias"], $_POST["description"], $_POST["extendeddescription"], $_POST["price"], $_POST["discount"], $_POST["discountprice"], $_POST["sorrend"], $_POST["reservationTypeId"], $_GET["szerk"]]);
+            $this->keltexSql->sqlQuery("update keltexmedweb.products p set aktiv=?, reservable=?, fehervariexists=?, bercsenyiexists=?, bicskeiexists=?, productname=?, alias=?, detailalias=?, description=?, extendeddescription=?, price=?, discount=?, discountprice=?, sorrend=?, reservationTypeId=? where id=?",
+                [$_POST["aktiv"], $_POST["reservable"], $_POST["fehervariexists"], $_POST["bercsenyiexists"], $_POST["bicskeiexists"], $_POST["productname"], $_POST["alias"], $_POST["detailalias"], $_POST["description"], $_POST["extendeddescription"], $_POST["price"], $_POST["discount"], $_POST["discountprice"], $_POST["sorrend"], $_POST["reservationTypeId"], $_GET["szerk"]]);
 
             header("location:index.php?page={$_GET["page"]}&szerk={$_GET["szerk"]}");
             die;
@@ -119,6 +120,10 @@ class AdminKeltexmedProductsPage extends AdminCorePage
 
         $html.= "<tr><td colspan='2' valign='top'>";
         $html.= "<input type='checkbox' value='1' name='bercsenyiexists'" . ($product["bercsenyiexists"] == 1 ? " checked" : "") . "> Bercsényi úton elérhető";
+        $html.= "</td></tr>";
+
+        $html.= "<tr><td colspan='2' valign='top'>";
+        $html.= "<input type='checkbox' value='1' name='bicskeiexists'" . ($product["bicskeiexists"] == 1 ? " checked" : "") . "> Bicskei úton elérhető";
         $html.= "</td></tr>";
 
         $services = sql_query("select id, megnev from szurestipusok order by megnev")->fetchAll(PDO::FETCH_ASSOC);

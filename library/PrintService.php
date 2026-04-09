@@ -1607,6 +1607,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
             $pdfLocation = "templates/szurovizsgalat_form_varsany.pdf";
         }
 
+        //echo $pdfLocation;die;
 
         //csak a beosztás
         /*
@@ -1632,9 +1633,10 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                         WHERE f.datum>=? and f.datum<? and (f.helyszinid=? or sz.webdoktor=1) and f.nev<>'nincs név'
                         GROUP BY f.id order by f.nev", [$timeFrom, $timeTo, $helyszinId])->fetchAll(PDO::FETCH_ASSOC);
 
+
         $savedPdfs = [];
         foreach ($reservations as $key => $reservation) {
-            $saveName = "templates/" . session_id() . "_{$key}.pdf";
+            $saveName = Booking_Constants::APP_PATH."public/admin/templates/" . session_id() . "_{$key}.pdf";
             $savedPdfs[] = $saveName;
 
             $neme = "";

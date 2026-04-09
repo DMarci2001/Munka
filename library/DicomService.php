@@ -187,7 +187,7 @@ class DicomService {
         $d = dir(self::STORAGE_DIR);
 
         while (false !== ($entry = $d->read())) {
-            if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX" || substr_count(strtolower($entry), ".dcm") > 0) {
+            if (substr($entry, 0, 2) == "CR" || substr($entry, 0, 2) == "DX" || substr($entry, 0, 2) == "SC" || substr_count(strtolower($entry), ".dcm") > 0) {
                 $entries[] = self::STORAGE_DIR."/".$entry;
             }
         }

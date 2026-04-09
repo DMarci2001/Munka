@@ -76,6 +76,7 @@ class SpektrumlabService {
         "000000679" => "Hungária Med-M Kft. (DRV)",
         "000000680" => "Hungária Med-M Kft. (Stellantis)",
         "000000681" => "Hungária Med-M Kft. (Segesd)",
+        "000000700" => "Hungaria Med-M Kft. (Kórház a terepen)",
     ];
 
     const BEKOLDO_KOD_MAP_KELTEXMED = [

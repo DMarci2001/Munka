@@ -7,8 +7,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExcelService {
     private $fileName;
-    private $spreadSheet;
-    private $sheet;
+    public $spreadSheet;
+    public $sheet;
     private $columnNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X", "Y", "Z"];
 
     private string $esztergomFilter = "f.helyszinid=532 and ";
@@ -19,7 +19,7 @@ class ExcelService {
 
     public function __construct() {
         if (session_id() == "ki5u8rlk1a0meas1moh9sqcq1d") {
-            $this->extraFilter = $this->jaszSuzukiFilter;
+            //$this->extraFilter = $this->jaszSuzukiFilter;
             //$this->extraFilter = $this->jaszAndEsztergomSuzukiFilter;
             //$this->extraFilter = $this->jaszSuzukiFilter;
         }
@@ -63,12 +63,12 @@ class ExcelService {
         return $this->spreadSheet;
     }
 
-    private function titleRow($cell, $text) {
+    public function titleRow($cell, $text) {
         $this->sheet->SetCellValue($cell, $text);
         $this->sheet->getStyle($cell)->getFont()->setBold(true)->setSize(16);
     }
 
-    private function headingRow($startColumn, $row, $values) {
+    public function headingRow($startColumn, $row, $values) {
         $columnId = array_search($startColumn, $this->columnNames);
         $column = $startColumn;
         foreach ($values as $value) {
@@ -81,7 +81,7 @@ class ExcelService {
         $this->sheet->getStyle("{$startColumn}{$row}:{$column}{$row}")->getFont()->setBold(true);
     }
 
-    private function dataRow($startColumn, $row, $values) {
+    public function dataRow($startColumn, $row, $values) {
         $columnId = array_search($startColumn, $this->columnNames);
         foreach ($values as $value) {
 
@@ -298,7 +298,7 @@ class ExcelService {
     }
 
 
-    private function setAutoWidth($range) {
+    public function setAutoWidth($range) {
         foreach($range as $columnID) {
             $this->sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
