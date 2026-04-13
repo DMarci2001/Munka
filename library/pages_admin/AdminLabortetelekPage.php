@@ -744,7 +744,7 @@ class AdminLabortetelekPage extends AdminCorePage
     private function showPackages($term = ""):string {
         $wterm = "";
         if ($term != "") {
-            $wterm = " AND slc.name LIKE '%{$term}%' ";
+            $wterm = " AND slc.hmm_name LIKE '%{$term}%' ";
         }
 
         $html = "";
@@ -760,7 +760,7 @@ class AdminLabortetelekPage extends AdminCorePage
         $rq = sql_query("SELECT slc.*,slk.name AS kerolap FROM synlab_labor_csomagok slc
                          LEFT JOIN synlab_labor_kerolapok slk ON slk.id=slc.appform
                          WHERE true {$wterm}
-                         ORDER BY slc.aktiv desc, name ASC");
+                         ORDER BY slc.aktiv desc, slc.hmm_name ASC");
 
         $qf = sql_query("SELECT id,name FROM synlab_labor_kerolapok ORDER BY name ASC");
 
