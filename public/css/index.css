@@ -1321,3 +1321,16 @@ form#astotec-registration-form label.checkbox{
     font-family: SuzukiProBold;
     src: url(/css/fonts/SuzukiPROBold.ttf);
 }
+
+.delete-reservation-button {
+    white-space: nowrap;
+    background-color: #b90000 !important;
+    border-color: #b90000 !important;
+    color: white;
+    font-weight: bold
+}
+.delete-reservation-button:hover {
+    background-color: #c73232 !important;
+    border-color: #c73232 !important;
+    color: white !important
+}
