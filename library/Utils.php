@@ -361,6 +361,11 @@ class Utils
             $htmlout .= "<script type='text/javascript' src='js/elsosegelyvizsga.js?v={$v}'></script>";
         }
 
+        if(isset($_GET["page"]) && $_GET["page"] == "bookingdelete"){
+            $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
+            $htmlout .= "<script src='/admin/bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js'></script>";
+        }
+
         if (CompanyService::isSuzukiGHC() || CompanyService::isFiFi() || CompanyService::isAstostecCompany()) {
             if (isset($_GET["page"]) && in_array($_GET["page"], array("registration", "login", "booking", "registrationsuccessful", "bookinglist", "documents", "profile", "bookingsuccessful", "bookingvalidate"))) {
                 $htmlout .= "<link href= '/admin/bootstrap-5.3.0-dist/css/bootstrap.css' rel='stylesheet' type='text/css'>";
@@ -1930,5 +1935,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             }    
         }
         return $checkForTypes;
+    }
+
+    public function showErrors($errors = []) {
+        $html = "";
+        if (!empty($errors)) {
+            $html.= "<div style='margin:0px 0px 20px 0px;background:#f77;color:#fff;border-radius:5px;padding:10px;'>".implode("<br/>", $errors)."</div>";
+        }
+        return $html;
     }
 }

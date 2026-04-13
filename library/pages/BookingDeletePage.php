@@ -3,11 +3,35 @@
 class BookingDeletePage extends CorePage {
     private $bookingService;
 
+    private $reservationId;
+    private $authCode;
+    private $reservationData;
+
     public function __construct()
     {
         parent::__construct();
 
+        $this->checkParameters();
+
         $this->bookingService = new BookingService();
+
+        if(isset($_POST["submitReservationDelete"])){
+            $captchaResult = $this->utils->checkCaptcha();
+            if (!empty($captchaResult)) {
+                $this->errors[] = $captchaResult;
+            }
+            if(empty($this->reservationData)) $this->errors[] = "Ez az időpont foglalás nem létezik, vagy időközben törölve lett.";
+
+            if(empty($this->errors)){
+                $service = new NotificationService();
+                $service->deleteUserMessage($this->reservationId);
+
+                $GLOBALS["extraloginfo"] = "felhasználó törölte a levél linkre kattintva";
+                $this->bookingService->deleteReservation($this->reservationId, $this->authCode);
+                header("location:index.php?page=bookingdeletesuccessful");
+                die();
+            }
+        }
 
         if (!isset($_GET["id"]) || !isset($_GET["rk"])) {
             die("error");
@@ -26,13 +50,23 @@ class BookingDeletePage extends CorePage {
 
     public function showPage() {
         $webText = $this->lang->webText;
+        $html = "";
 
         echo $this->displayFejlec();
+        echo $this->utils->showErrors($this->errors);
 
-        $id=round($_GET["id"]);
-        $rk=$_GET["rk"];
+        if(!empty($this->reservationData)){
+            $html = $this->deleteReservationForm();
+        }else{
+            $html = $this->undefinedReservation();
+        }
 
-        if ($row = sql_fetch_array(sql_query("SELECT ".$this->utils->cimLangQuery("helyszin").",sz.megnev AS szurestipus,f.* FROM foglalasok f
+        echo $html;
+    }
+
+    private function _oldDeleteCode(){
+        $webText = $this->lang->webText;
+         if ($row = sql_fetch_array(sql_query("SELECT ".$this->utils->cimLangQuery("helyszin").",sz.megnev AS szurestipus,f.* FROM foglalasok f
         LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
         LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
         WHERE f.id=? and (f.rkod=? or f.pass=?)",array($id, $rk, $rk)))) {
@@ -68,7 +102,6 @@ class BookingDeletePage extends CorePage {
             
             <a href='/'>{$webText["visszafooldal"]}</a>";
         }
-
     }
 
 
@@ -87,6 +120,57 @@ class BookingDeletePage extends CorePage {
         }
 
         return $data;
+    }
+
+    private function checkParameters(){
+        if(isset($_GET["id"]) && isset($_GET["rk"])){
+            $q = "SELECT ".$this->utils->cimLangQuery("helyszin").",sz.megnev AS szurestipus,f.* FROM foglalasok f
+                  LEFT JOIN helyszinek h ON h.id=f.`helyszinid`
+                  LEFT JOIN szurestipusok sz ON sz.id=f.`szurestipusid`
+                  WHERE f.id=? and (f.rkod=? or f.pass=?)";
+
+            if($reservationData = sql_query($q,[$_GET["id"],$_GET["rk"],$_GET["rk"]])->fetch(PDO::FETCH_ASSOC)){
+                $this->reservationId = $_GET["id"];
+                $this->authCode =      $_GET["rk"];
+                $this->reservationData = $reservationData;
+
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private function deleteReservationForm(){
+
+        if($this->reservationData["datum"]=="1900-01-01 00:00:01"){
+            $idopont = "Egyeztetés alatt";
+        }else{
+            $idopont = substr($this->reservationData["datum"],0,16);
+        }
+
+        $html = "";
+        $html.= "<form method='POST' name='reservationDeleteForm' id='reservationDeleteForm'>";
+        $html.= "<p>Amennyiben törölni szeretnéd a foglalásod, kattints a <strong>Foglalás törlése“</strong> gombra.</p><br>";
+
+        $html.= "<p><strong>{$this->lang->webText["szurestipus"]}:</strong> {$this->reservationData["szurestipus"]}<br>";
+        $html.= "<strong>{$this->lang->webText["idopont"]}:</strong> {$idopont}</p>";
+
+        $html.= "<div class='g-recaptcha' data-sitekey='6LfCaTIUAAAAAPRgI2ymhP9u8OJKc5DJSmCb9cjG' style='width:200px;'></div>";
+        
+        $html.= "<button type=\"submit\" class=\"btn btn-lg forced-font m-2 delete-reservation-button\" id=\"submitReservationDelete\" name=\"submitReservationDelete\" value=\"1\">Foglalás törlése</button>";
+        $html.= "</form>";
+        $html.= "<br><br><a href='/'>{$this->lang->webText["visszafooldal"]}</a>";
+        return $html;
+    }
+
+    private function undefinedReservation(){
+        $html = "";
+        $html.= "Sajnáljuk!<br>";
+        $html.= "Ez az időpont foglalás nem létezik, vagy időközben törölve lett.<br>";
+        $html.= "<br>";
+        $html.= "<a href='/'>{$this->lang->webText["visszafooldal"]}</a>";
+        return $html;
     }
 }
 
