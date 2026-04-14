@@ -331,6 +331,7 @@ class Utils
         }
 
         $htmlout .= "<link rel='shortcut icon' type='image/png' href='{$favicon}' />";
+        $htmlout .= "<meta name='robots' content='noindex, nofollow'>";
         $htmlout .= '<script type="text/javascript" src="/js/jquery/jquery-3.7.1.min.js"></script>';
         $htmlout .= '<script type="text/javascript" src="/js/jquery/jquery-ui.js"></script>';
         $htmlout .= '<link href="/js/air-datepicker-master/dist/css/datepicker.css" rel="stylesheet" type="text/css">';
