@@ -1098,6 +1098,10 @@ class BookingService
                 $dist = "0 hour";
             }
 
+            if(in_array($cegId,[43]) && Booking_Constants::SQL_DB == "hungariamed"){
+                $dist = "0 hour";
+            }
+
             if (in_array($cegId, [82, 664, 340, 347, 348]) && Booking_Constants::SQL_DB == "hungariamed") {
                 //0 órás cégek
                 $dist = "0 hour -2 hour";
