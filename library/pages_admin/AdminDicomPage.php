@@ -112,6 +112,42 @@ class AdminDicomPage extends AdminCorePage
             die;
         }
 
+        if(isset($_GET["forwardtopartner"])){
+            $dicomData = $this->dicomService->getDicomEntry($_GET["forwardtopartner"]);
+            $dicomFile = $dicomData["fileName"];
+
+            $storescu = 'storescu';   // DCMTK storescu útvonala
+            $host = '81.0.104.18';
+            $port = 104;
+            $callingAet = 'ICWS';
+            $calledAet  = 'PBQUANTUM';
+
+            if (!is_file($dicomFile)) {
+                throw new RuntimeException('A DICOM fájl nem található.');
+            }
+
+            $cmd = sprintf(
+                '%s -d -aec %s -aet %s %s %d %s 2>&1',
+                escapeshellcmd($storescu),
+                escapeshellarg($calledAet),
+                escapeshellarg($callingAet),
+                escapeshellarg($host),
+                $port,
+                escapeshellarg($dicomFile)
+            );
+
+            exec($cmd, $output, $exitCode);
+            
+            /*Debug*/
+            //echo "Exit code: $exitCode\n";
+            //echo implode("\n", $output);
+
+            if ($exitCode !== 0) {
+                throw new RuntimeException("A küldés sikertelen.");
+            }
+            sql_query("UPDATE dicom SET senttopartner=? WHERE uid=?",[date("Y-m-d H:i:s"),$_GET["forwardtopartner"]]);
+        }
+
 
         if (isset($_GET["downloaddicomfile"])) {
             $content = $this->dicomService->getRawDicomFile($_GET["downloaddicomfile"]);
@@ -425,7 +461,7 @@ class AdminDicomPage extends AdminCorePage
 
 
     public function showImageList($patientId):string {
-        $html = "";
+        $html = $sendButton = "";
 
         $images = $this->dicomService->getImages($patientId);
 
@@ -435,6 +471,13 @@ class AdminDicomPage extends AdminCorePage
                 $html.= "<div style='font-weight: bold;font-size: 16px;margin-bottom: 10px;'>Régebbi képek</div>";
                 $oldSign = true;
             }
+
+            if(!empty($row["senttopartner"])){
+                $sendButton = "<a title='Továbbítva: {$row["senttopartner"]}' style='color:green' ><i class='fa-solid fa-share-from-square'></i></a>";
+            }else{
+                $sendButton = "<a title='DICOM file továbbítása partner felé' style='' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
+            }
+
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
             $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
 
@@ -448,7 +491,9 @@ class AdminDicomPage extends AdminCorePage
             $html.= "<div style='text-align: center;padding-top: 5px;font-size: 16px;'>";
             //$html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&displayimage={$row["uid"]}'><i class='fas fa-eye'></i></a>&nbsp;";
             $html.= "<a title='DICOM file letöltése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&downloaddicomfile={$row["uid"]}'><i class='fas fa-cloud-download-alt'></i></a>&nbsp;";
-            $html.= "<a title='DICOM file törlése' style='' target='_blank' onclick='return confirm(\"Biztos törlöd ezt a képet?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&deletedicomfile={$row["uid"]}'><i class='fas fa-trash-can'></i></a>";
+            $html.= "<a title='DICOM file törlése' style='' target='_blank' onclick='return confirm(\"Biztos törlöd ezt a képet?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&deletedicomfile={$row["uid"]}'><i class='fas fa-trash-can'></i></a>&nbsp;";
+            $html.= $sendButton;
+            
             $html.= "</div>";
             $html.= "</div>";
         }
