@@ -117,6 +117,7 @@ class AdminDicomPage extends AdminCorePage
             $dicomFile = $dicomData["fileName"];
 
             $storescu = 'storescu';   // DCMTK storescu útvonala
+            $dcmodify = '/usr/bin/dcmodify'; // Modalitás útvonala
             $host = '81.0.104.18';
             $port = 104;
             $callingAet = 'ICWS';
@@ -126,7 +127,35 @@ class AdminDicomPage extends AdminCorePage
                 throw new RuntimeException('A DICOM fájl nem található.');
             }
 
-            $cmd = sprintf(
+            /**
+             * Modality átállítása DX-re
+             */
+
+            $modifyCmd = sprintf(
+                '%s ' .
+                '-i %s ' .
+                '-i %s ' .
+                '%s 2>&1',
+                escapeshellcmd($dcmodify),
+                escapeshellarg('(0008,0060)=DX'),
+                escapeshellarg('(0008,0016)=1.2.840.10008.5.1.4.1.1.1.1'),
+                escapeshellarg($dicomFile)
+            );
+
+            exec($modifyCmd, $modifyOutput, $modifyExit);
+
+            if ($modifyExit !== 0) {
+                throw new RuntimeException(
+                    "Modality módosítás sikertelen:\n" .
+                    implode("\n", $modifyOutput)
+                );
+            }
+
+            /**
+             * DICOM küldés
+             */
+
+            $storeCmd = sprintf(
                 '%s -d -xs -aec %s -aet %s %s %d %s 2>&1',
                 escapeshellcmd($storescu),
                 escapeshellarg($calledAet),
@@ -136,7 +165,7 @@ class AdminDicomPage extends AdminCorePage
                 escapeshellarg($dicomFile)
             );
 
-            exec($cmd, $output, $exitCode);
+            exec($storeCmd, $output, $exitCode);
             
             /*Debug*/
             //echo "Exit code: $exitCode\n";
@@ -147,7 +176,7 @@ class AdminDicomPage extends AdminCorePage
             }
             sql_query("UPDATE dicom SET senttopartner=? WHERE uid=?",[date("Y-m-d H:i:s"),$_GET["forwardtopartner"]]);
 
-            header("location:index.php?page={$_GET["page"]}");
+            //header("location:index.php?page={$_GET["page"]}");
         }
 
 
