@@ -504,7 +504,7 @@ class AdminDicomPage extends AdminCorePage
             }
 
             if(!empty($row["senttopartner"])){
-                $sendButton = "<a title='Továbbítva: {$row["senttopartner"]}' style='color:green' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
+                $sendButton = "<a title='Továbbítva: {$row["senttopartner"]}' style='color:green' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}' ><i class='fa-solid fa-share-from-square'></i></a>";
             }else{
                 $sendButton = "<a title='DICOM file továbbítása partner felé' style='' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
             }
