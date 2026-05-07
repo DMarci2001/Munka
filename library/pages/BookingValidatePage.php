@@ -188,6 +188,7 @@ class BookingValidatePage extends CorePage {
                     <br/>
                     ";
                 }
+                
                 echo "<h2 ".(CompanyService::isSuzukiGHC()?"style=\"text-align:center\"":"").">{$webText["sikeresidopontreg"]}</h2>";
                 echo "{$webText["kedves"]} ".$this->foglalasData["nev"]."!<br>
                 <br>

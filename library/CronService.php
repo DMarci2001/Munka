@@ -128,6 +128,7 @@ class CronService {
             $this->checkCollisions();
             $this->seemeBalanceCheck();
             $this->sendManagerStatusEmail();
+            $this->utils->lighttechReminder();
 
             //$laborKeroService = new LaborKeroService();
             //$laborKeroService->storeLaborKeroFromLabShopData();
@@ -150,7 +151,6 @@ class CronService {
             //napi cronok
             //$this->dokirexPaciensDump();
             $this->readEmailReports();
-            $this->utils->lighttechReminder();
         }
 
         if ($this->interval == "teszt") {

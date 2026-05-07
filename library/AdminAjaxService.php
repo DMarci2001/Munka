@@ -1416,6 +1416,141 @@ class AdminAjaxService {
             die();
         }
 
+        if (isset($_POST["uploadFGSZExcelFile"])) {
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            $result = $fgszCostumeFunctions->processExcelList();
+            die($result);
+        }
+
+        if(isset($_POST["saveFgszMailSample"])){
+            if($currentVersion = sql_query("SELECT * FROM fgsz_level_sablonok WHERE cegid=? AND type=?",[$_POST["cegid"],$_POST["type"]])->fetch(PDO::FETCH_ASSOC)){
+                //log létrehozása:
+                sql_query("INSERT INTO fgsz_level_sablonok_log SET cegid=?, type=?, content=?, subject=?, og_ver_created_at=?",
+                    [$currentVersion["cegid"],$currentVersion["type"],$currentVersion["content"],$currentVersion["subject"],$currentVersion["created_at"]]
+                );
+                //Sablon frissitése
+                sql_query("UPDATE fgsz_level_sablonok SET content=?, subject=?, created_at=NOW() WHERE cegid=? AND type=?",
+                    [$_POST["content"],$_POST["subject"],$_POST["cegid"],$_POST["type"]]
+                );
+
+                $html ="<option value=\"0\" selected>Jelenlegi sablon</option>";
+                if($doctorMailSampleLogs=sql_query("SELECT * FROM fgsz_level_sablonok_log WHERE cegid=? AND type=? ORDER BY og_ver_created_at DESC",[$_POST["cegid"],$_POST["type"]])->fetchAll(PDO::FETCH_ASSOC)){
+                    foreach($doctorMailSampleLogs as $mailLog){
+                        $html.="<option value=\"{$mailLog["id"]}\">{$mailLog["og_ver_created_at"]}</option>";
+                    }
+                }
+                die($html);
+            }else{//Még nem lett létrehozva sablon a cégnek
+                sql_query("INSERT INTO fgsz_level_sablonok SET cegid=?, type=?, content=?, subject=?",
+                    [$_POST["cegid"],$_POST["type"],$_POST["content"],$_POST["subject"]]
+                );
+                $html ="<option value=\"0\" selected>Jelenlegi sablon</option>";
+                die($html);
+            }
+            
+            die();
+        }
+
+        if(isset($_POST["loadFgszMailSample"])){
+            if($_POST["logId"]=="0"){
+                if($logData=sql_query("SELECT * FROM fgsz_level_sablonok WHERE cegid=? AND type=?",[$_POST["cegid"],$_POST["type"]])->fetch(PDO::FETCH_ASSOC)){
+                    //Ha létezik a log elem akkor visszaküldöm annak a kontentjét.
+                    die(json_encode(array("content"=>$logData["content"],"subject"=>$logData["subject"])));
+                    //die($logData["content"]);
+                }
+            }
+            if($logData=sql_query("SELECT * FROM fgsz_level_sablonok_log WHERE id=?",[$_POST["logId"]])->fetch(PDO::FETCH_ASSOC)){
+                //Ha létezik a log elem akkor visszaküldöm annak a kontentjét.
+                die(json_encode(array("content"=>$logData["content"],"subject"=>$logData["subject"])));
+            } 
+            die();
+        }
+
+        if(isset($_POST["filterWorkforceList"])){
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $year = date("Y", strtotime($_POST["selector"]));
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            $html = $fgszCostumeFunctions->showDataFromSQL("referal-list",$statement,$year);
+
+
+            //die(json_encode(array("referrals" => $referralList, "arrays" => asd)));
+            die($html);
+        }
+
+        if(isset($_POST["filterDoctorsAndLeadersList"])){
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $yearMonth = date("Y-m", strtotime($_POST["selector"]));
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            $html = $fgszCostumeFunctions->generateListForReferralArrays($statement,$yearMonth);
+
+            //die(json_encode(array("referrals" => $referralList, "arrays" => asd)));
+            die($html);
+        }
+
+        if(isset($_POST["generateReferalPdfByFilterSelector"])){
+            $html = "";
+            $year = date("Y", strtotime($_POST["selector"]));
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            if($data=sql_query("SELECT * FROM temp_fgsz_workforce {$statement}")->fetchAll(PDO::FETCH_ASSOC)){
+                foreach($data as $each){
+                    $fgszCostumeFunctions->createReferalPDF($each);
+                }
+                $html = $fgszCostumeFunctions->showDataFromSQL("referal-list",$statement, $year);
+            }
+            die($html);
+        }
+
+        if(isset($_POST["generateReferralPdfArrays"])){
+            /*Itt le kell kérdeznem 2 loopban az adatokat, egyszer a orvosokra kategorizálva és egyszer a vezetőkre. 
+              Végig futok a páciensken, meg keresem, hogy van-e fájljuk az adott évre és bele rakom a tmp könyvtárba. 
+              Ha a ciklus végére értem, az egészet átmozgatom egy zip-be és letitkositom a tömöritett fájlt.
+              Ezután át mozgatom a docAgent-el. És done.
+            */
+            $year = date("Y", strtotime($_POST["selector"]));
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $serviceLocations=sql_query("SELECT * FROM temp_fgsz_workforce {$statement} GROUP BY service_location")->fetchAll(PDO::FETCH_ASSOC);
+            $leaders=sql_query("SELECT * FROM temp_fgsz_workforce {$statement} GROUP BY superior_name")->fetchAll(PDO::FETCH_ASSOC);
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            foreach($serviceLocations as $serviceLocation){
+                $data = sql_query("SELECT * FROM temp_fgsz_workforce {$statement} AND service_location=?",[$serviceLocation["service_location"]])->fetchAll(PDO::FETCH_ASSOC);
+                echo $fgszCostumeFunctions->createReferralPdfArrays($data,"service_location");
+            }
+
+            foreach($leaders as $leader){
+                $data = sql_query("SELECT * FROM temp_fgsz_workforce {$statement} AND superior_email=?",[$leader["superior_email"]])->fetchAll(PDO::FETCH_ASSOC);
+                echo $fgszCostumeFunctions->createReferralPdfArrays($data,"superior_email");
+            }
+
+            $html = $fgszCostumeFunctions->generateListForReferralArrays($statement,$year);
+            die($html);
+        }
+
+        /**
+         * Ki kell listázzam ismét az orvosokat és a vezetőket, viszont itt egyszerűbben egy kicsit hány érintett dolgozó lesz mindegyikhez.
+         * név, email cim, páciens szám
+         * most egyenlőre nem csinálok semmit a lenyiló menübe.
+         * lentebb pedig rögzitem a logokat és megjelenitem a korábbi értesitéseket.
+        */
+        if(isset($_POST["filterNotificationList"])){
+            $html = "";
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $html = $fgszCostumeFunctions->generateListForNotificationEvent($statement,$_POST["selector"]);
+
+            die($html);
+        }
+
+        if(isset($_POST["sendNotifications"])){
+            $html = "";
+            $yearMonth = date("Y-m", strtotime($_POST["selector"]));
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+            $statement = "WHERE next_exam_date BETWEEN '".$_POST["selector"]."-01' AND '".$_POST["selector"]."-31'";
+            $fgszCostumeFunctions->sendNotifications($statement,$yearMonth);
+            $html = $fgszCostumeFunctions->generateListForNotificationEvent($statement,$_POST["selector"]);
+            die($html);
+        }
+
         new LaborKeroService();
         new InvoiceService();
     }

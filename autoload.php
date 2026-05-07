@@ -102,6 +102,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_workschedule/WorkScheduleService.php");
     require_once(__DIR__ . "/library/salary/SalaryCalculator.php");
     require_once(__DIR__ . "/library/pages_admin/DailyStat/MonthlyStatService.php");
+    require_once(__DIR__ . "/library/fgszCostumeFunctions.php");
+    require_once(__DIR__ . "/library/PatientFollowUpService.php");
     
 
     require_once(__DIR__ . "/library/pages_admin/AdminCorePage.php");
@@ -165,8 +167,8 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminCancelsPage.php");
     //require_once(__DIR__ . "/library/pages_admin/AdminBeutalokKezelesePage.php");
     
-
     
+
 }
 
 function getConfigFile() {
@@ -185,7 +187,7 @@ function getConfigFile() {
                 $config = "demo";
             }
             if (substr_count($host, "marciteszt.hungariamed.hu")) {
-                $config = "marciteszt";
+                $config = "hmm";
             }
         }
         if (substr_count($host, "keltexmed.")) {
