@@ -34,6 +34,9 @@ class PrintService
         "tmszcsetalolap" => "tmszc_setalolap.pdf",
         "genetika" => "genetikai_teljes_dokumentum.pdf",
         "mikrobi" => "genetikai_teljes_dokumentum.pdf",
+        "medicaregenetika" => "MedicareLabor-genetikai-beleegyezo_nyilatkozat.pdf",
+        "spektrummolekularis" => "Spektrum-Lab_kerolap-Genetikai_v3.pdf",
+        "spektrumaborhd" => "Spektrum-Lab_kerolap-Vercsoport_es_ellenanyag_v2.pdf",
         "generate_aldi_vv" => "generate_aldi_vv",
         "generateAszKartyak" => "generateAszKartyak",
         "vercsoport" => "spektrum_vercsoport_v1-1.pdf",
@@ -219,6 +222,21 @@ class PrintService
         }
 
         if ($this->templateId == "szuloibeleegyezo") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+
+        if ($this->templateId == "medicaregenetika") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+        
+        if ($this->templateId == "spektrummolekularis") {
+            $this->printGenetikaiPdf();
+            return;
+        }
+
+        if ($this->templateId == "spektrumaborhd") {
             $this->printGenetikaiPdf();
             return;
         }
@@ -537,9 +555,9 @@ class PrintService
 
             "BekuldoKod" => $this->laborRequestData["bekuldokod"],
             "BekuldoNev" => $bekuldoNev,
-            "Gyogyszerek" => $vkData["vkgyogyszerek"],
-            "TerhessegSzam" => $vkData["vkterhessegszam"],
-            "TerhessegiHet" => $vkData["vkterhesseghet"],
+            "Gyogyszerek" => isset($vkData["vkgyogyszerek"])?$vkData["vkgyogyszerek"]:"",
+            "TerhessegSzam" => isset($vkData["vkterhessegszam"])?$vkData["vkterhessegszam"]:"",
+            "TerhessegiHet" => isset($vkData["vkterhesseghet"])?$vkData["vkterhesseghet"]:"",
             "GenderMale" => $this->reservationData["neme"] == 1 ? "x" : "",
             "GenderFemale" => $this->reservationData["neme"] == 2 ? "x" : "",
             "OrvosNev" => $spektrumlabService->params["orvosNev"],
@@ -559,6 +577,18 @@ class PrintService
 
         if ($this->templateId == "szuloibeleegyezo") {
             $fileName = "Szuloi_beleegyezo({$input["PaciensNev"]})(" . date("YmdHis") . ").pdf";
+        }
+
+        if ($this->templateId == "medicaregenetika") {
+            $fileName = "MedicareLabor-genetikai-beleegyezo_nyilatkozat({$input["PaciensNev"]})(" . date("YmdHis") . ").pdf";
+        }
+
+        if ($this->templateId == "spektrummolekularis") {
+            $fileName = "Spektrum-Lab_kerolap-Genetikai_v3({$input["PaciensNev"]})(" . date("YmdHis") . ").pdf";
+        }
+
+        if ($this->templateId == "spektrumaborhd") {
+            $fileName = "Spektrum-Lab_kerolap-Vercsoport_es_ellenanyag_v2({$input["PaciensNev"]})(" . date("YmdHis") . ").pdf";
         }
 
         $pdf = new Pdf("templates/{$this->templateFileName}");
