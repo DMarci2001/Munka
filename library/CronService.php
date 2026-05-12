@@ -150,7 +150,7 @@ class CronService {
             //napi cronok
             //$this->dokirexPaciensDump();
             $this->readEmailReports();
-            $this->utils->lighttechReminder();
+            //$this->utils->lighttechReminder();
         }
 
         if ($this->interval == "teszt") {
