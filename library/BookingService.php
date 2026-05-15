@@ -2913,6 +2913,11 @@ class BookingService
             } else {
                 //$this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
             }
+            if ($reservationData["kieg_szemeszet"] == 1) {
+                $status .= $this->replicateReservationToAnotherService($reservationData, Booking_Constants::TORV_SZEMESZET_ID);
+            } else {
+                //$this->deleteKiegeszitoVizsgalat($reservationData, Booking_Constants::HALLASVIZSGALAT_ID);
+            }
         }
         return $status;
     }
