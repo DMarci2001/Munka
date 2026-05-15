@@ -76,6 +76,7 @@ class Booking_Constants {
 
     const TUDOSZURES_ID             = 58;
     const LABOR_ID                  = 48;
+    const TORV_SZEMESZET_ID        = 318;
     const HALLASVIZSGALAT_ID        = 0;
     const COVID_ID                  = 0;
 

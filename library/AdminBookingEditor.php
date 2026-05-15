@@ -106,6 +106,7 @@ class AdminBookingEditor {
             if (!isset($_POST["tudoszuro"])) $_POST["tudoszuro"]=0;
             if (!isset($_POST["kieg_labor"])) $_POST["kieg_labor"]=0;
             if (!isset($_POST["kieg_hallas"])) $_POST["kieg_hallas"]=0;
+            if (!isset($_POST["kieg_szemeszet"])) $_POST["kieg_szemeszet"]=0;
             if (!isset($_POST["torzsszam"])) $_POST["torzsszam"] = "";
             if (!isset($_POST["adoszam"])) $_POST["adoszam"] = "";
             if (!isset($_POST["neme"])) $_POST["neme"]=0;
@@ -153,11 +154,12 @@ class AdminBookingEditor {
                 tudoszuro=?,
                 kieg_labor=?,
                 kieg_hallas=?,
+                kieg_szemeszet=?,
                 eljottidopont=?,
                 dokirexmunkakorid=?,
                 dokirexcegid=?
             where id=?", [$this->user->user["username"], intval($_POST["orvosassigned"]), intval($_POST["cegid"]), intval($_POST["telephelyid"]), $_POST["taj"], $_POST["nszam"], $_POST["torzsszam"], $_POST["nev"], $_POST["munkakor"], $_POST["adoszam"], $_POST["email"], $_POST["telefon"], $_POST["szuldatum"], $_POST["szulhely"], $_POST["anyjaneve"],$_POST["neme"],$_POST["testalkat"],
-                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],
+                $_POST["irsz"], $_POST["varos"], $_POST["utca"], $_POST["voltnalunk"], $_POST["tudoszuroervenyesseg"], $_POST["tudoszuro"], $_POST["kieg_labor"],$_POST["kieg_hallas"],$_POST["kieg_szemeszet"],
                 $eljottIdopont, $_POST["dokirexmunkakorid"], $_POST["dokirexcegid"], $fid]);
 
 
@@ -773,6 +775,7 @@ class AdminBookingEditor {
         $html .= "<div style='display:inline-block;" . ($row["tudoszuro"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='tudoszuro' value='1' " . ($row["tudoszuro"] == 1 ? "checked" : "") . " /> tüdőszűrés kell&nbsp;&nbsp;</div>";
         $html .= "<div style='display:inline-block;" . ($row["kieg_labor"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_labor' value='1' " . ($row["kieg_labor"] == 1 ? "checked" : "") . " /> labor&nbsp;&nbsp;</div>";
         $html .= "<div style='display:inline-block;" . ($row["kieg_hallas"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_hallas' value='1' " . ($row["kieg_hallas"] == 1 ? "checked" : "") . " /> hallás vizsgálat</div>";
+        $html .= "<div style='display:inline-block;" . ($row["kieg_szemeszet"] == 1 ? "background:#f00;color:#fff;" : "") . "'><input type='checkbox' name='kieg_szemeszet' value='1' " . ($row["kieg_szemeszet"] == 1 ? "checked" : "") . " /> szemészet vizsgálat</div>";
         $html .= "</div>";
 
         /*
