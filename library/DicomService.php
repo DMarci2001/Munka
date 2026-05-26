@@ -29,7 +29,7 @@ class DicomService {
 
     public function addFile($uploadedFile):string {
         if (is_uploaded_file($uploadedFile["tmp_name"])) {
-            $tempFile = self::STORAGE_DIR."/manual_".$uploadedFile["name"];
+            $tempFile = self::STORAGE_DIR."/manual_".str_replace(" ", "", $uploadedFile["name"]);
             @move_uploaded_file($uploadedFile["tmp_name"], $tempFile);
 
             $output = `dcm2xml +Ca latin-1 {$tempFile}`;
@@ -163,7 +163,7 @@ class DicomService {
 
             $patientUniqueId= md5(trim($patientName).trim($patientBirthDate).trim($patientOtherIDs));
 
-            if ($institutionName == "Az intézet neve") {
+            if ($institutionName == "Az intézet neve" || $institutionName == "Initial Hospital Name") {
                 $institutionName = "KeltexMed";
             }
 
@@ -179,10 +179,9 @@ class DicomService {
                 [$fileDate, $contentDate, $dicomEntry, utf8_encode($output), $patientName, $patientUniqueId, $patientBirthDate, $patientSex, $patientOtherIDs, $studyDescription, $seriesDescription, $manufacturer, $manufacturerModelName, $institutionName]);
 
         }
-
     }
 
-    private function readDir() {
+    private function readDir():array {
         $entries = [];
         $d = dir(self::STORAGE_DIR);
 
@@ -208,11 +207,6 @@ class DicomService {
                 $wDateRestrict = "";
             }
         }
-
-        /*if (in_array($this->adminUser->user["username"], ["drkizman", "kizman", "drosvai@t-online.hu"])) {
-            $w.= " and institutionName<>'Veszprém Mobil'";
-            //$w.= " and leletcreatedby<>'Dr. Dánielisz Zsuzsanna'";
-        }*/
 
         if (!empty($params["search"])) {
             $w .= " and instr(concat(patientName,patientBirthDate,patientOtherIDs), ?)";

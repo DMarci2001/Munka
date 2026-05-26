@@ -1752,6 +1752,16 @@ class BookingPage extends CorePage
            
         }
 
+        if ($_SESSION["helyszindata"]["id"] == Booking_Constants::DEFAULT_COMPANY_ID) {
+            if (Booking_Constants::SQL_DB == "keltexmed") {
+                echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='hirlevelfel' value='1' " . (isset($_POST["hirlevelfel"]) ? "checked" : "") . "/> Kér hírlevelet és 10% kedvezményt?</div></td></tr>";
+            } else {
+                echo "<tr class='datarow'><td></td><td><div style='margin-top:10px;max-width: 800px;'><input type='checkbox' name='hirlevelfel' value='1' " . (isset($_POST["hirlevelfel"]) ? "checked" : "") . "/> Kér hírlevelet?</div></td></tr>";
+            }
+        }
+
+
+
         if (CompanyService::isUniqa()) {
             $webText["aszfelf"] = "Az <a href=\"#adatvedelmilink#\" target=\"_blank\">Adatvédelmi tájékoztatót</a> elolvastam, a fenti adatkezeléshez hozzájárulok, valamint a foglalás elküldésével elfogadom, hogy tudomásom van arról, hogy a Biztosító a Rendezvény megszervezése, a Rendezvényre történő regisztráció lebonyolítása és az általam kért vizsgálatok elvégzése céljából igénybe veszi a Hungária-Med M Kft. (HUNGÁRIA-MED M Kereskedelmi és Szolgáltató Korlátolt Felelősségű Társaság, székhely: 1132 Budapest, Csanády u. 6. B. ép. V. em. 2., a továbbiakban: „Hungária-Med M” vagy „Adatfeldolgozó”) orvosi szolgáltatásait.";
         }

@@ -94,7 +94,7 @@ class AdminContentsPage extends AdminCorePage
         echo "<table style='font-size:12px;'>";
 
         echo "<tr><td width='100'>Cím:</td><td><input class='inputbox' style='width:400px;' type='text' name='title' value='{$content["title"]}'></td></tr>";
-        echo "<tr><td width='100'>Alias:</td><td><input class='inputbox' style='width:400px;' type='text' name='alias' value='{$content["alias"]}'></td></tr>";
+        echo "<tr><td width='100'>Alias:</td><td><input class='inputbox' style='width:400px;' type='text' name='alias' id='alias' value='{$content["alias"]}'></td></tr>";
         echo "<tr><td width='100'>Created:</td><td><input class='inputbox' style='width:400px;' type='text' name='created' value='{$content["created"]}'></td></tr>";
         echo "<tr><td width='100'>Publish up:</td><td><input class='inputbox' style='width:400px;' type='text' name='publish_up' value='{$content["publish_up"]}'></td></tr>";
         echo "<tr><td width='100'>Publish down:</td><td><input class='inputbox' style='width:400px;' type='text' name='publish_down' value='{$content["publish_down"]}'></td></tr>";
@@ -138,8 +138,8 @@ class AdminContentsPage extends AdminCorePage
 
         echo "</table>";
 
-        echo "<br><input type='submit' name='contentmentes' value='Mentés'> ";
-        echo "<input type='submit' name='scancel' value='Vissza'> ";
+        echo "<br><input type='submit' name='contentmentes' value='Mentés' /> ";
+        echo "<input type='submit' name='scancel' value='Vissza' /> ";
         echo "</form>";
 
         echo "</div>";
@@ -197,7 +197,7 @@ class AdminContentsPage extends AdminCorePage
             $html .= "<td nowrap valign='top'><div class='{$tc}'>&nbsp;" . date("Y-m-d H:i", strtotime($row["created"])) . "</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>{$category}</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>{$active}</div></td>";
-            $html .= "<td nowrap valign='top'><div class='{$tc}'><a href='index.php?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["title"]}</a></div></td>";
+            $html .= "<td nowrap valign='top'><div class='{$tc}'><a href='index.php?page={$_GET["page"]}&szerk={$row["id"]}'>{$row["title"]}</a><div>{$row["alias"]}</div></div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>".implode(", ", $services)."</div></td>";
             $html .= "<td nowrap valign='top'><div class='{$tc}'>{$row["tags"]}</div></td>";
 

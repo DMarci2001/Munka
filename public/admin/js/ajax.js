@@ -5605,3 +5605,12 @@ function removeOpenedPatientFollowUp(id){
     $("#data-tab-pane").addClass("show active");
 }
 
+
+function validateWebContentForm() {
+    if ($("#alias").val() === "") {
+        alert("Töltsd ki az alias mezőt!");
+        return false;
+    }
+
+    return false;
+}

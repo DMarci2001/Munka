@@ -2592,6 +2592,7 @@ class BookingService
         if (!isset($data["exportdata"])) $data["exportdata"] = "";
         if (!isset($data["currency"])) $data["currency"] = 0;
         if (!isset($data["lang"])) $data["lang"] = "hu";
+        if (!isset($data["hirlevelfel"])) $data["hirlevelfel"] = 0;
         if (!isset($data["paid"])) $data["paid"] = 0;
         if (!isset($data["expire"])) $data["expire"] = "0000-00-00 00:00:00";
         if (!isset($data["rn"])) $data["rn"] = rand(1000000, 9999999);
@@ -2650,6 +2651,7 @@ class BookingService
 			paid=?,
 			expire=?,
 			pass=?,
+			hirlevel=?,
             jarat=?,
             companytext=?,
             dokirexcegid=?",
@@ -2695,6 +2697,7 @@ class BookingService
                 $data["paid"],
                 $data["expire"],
                 $data["pass"],
+                $data["hirlevelfel"],
                 $data["jarat"],
                 $data["companytext"],
                 $data["dokirexcegid"]

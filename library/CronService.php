@@ -150,7 +150,7 @@ class CronService {
         if ($this->interval == "napi") {
             //napi cronok
             //$this->dokirexPaciensDump();
-            $this->readEmailReports();
+            //$this->readEmailReports();
             //$this->utils->lighttechReminder();
         }
 
@@ -200,8 +200,8 @@ class CronService {
         //$service = new AdminAjaxService();
         //$service->addCsvUsers();
 
-        $this->sendRawWeeklyStat();
-        die;
+        //$this->sendRawWeeklyStat();
+        //die;
 
         //$this->saveResultPdfs();
 
@@ -213,30 +213,31 @@ class CronService {
 
         /*
 
-        <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
             <MESSAGE>
                 <MSGINFO
-                    IFCNAME="HUNGARIA_MED_M"
+                    IFCNAME="KELTEXMED_BICSKEI"
                     MESSAGETYPE="CONSULTATION"
-                    ACTION="MOD"
-                    ROTATE_HASH="2c3e3e2db23fed868be9ac35c6cf59f5" />
+                    ACTION="NEW"
+                    ROTATE_HASH="a104d0a50f0fb3d929c8e1b2e1567ec4" />
                 <DOCTOR
-                    OWN_ID="1052"
-                    OUTERSYS_ID="13699" />
+                    OWN_ID="463"
+                    OUTERSYS_ID="17977" />
                 <CONSULTATION
-                    OWN_ID="34573"
-                    OUTERSYS_ID="14104892"
+                    OWN_ID="23564"
+                    OUTERSYS_ID="0"
                     WEEK="2"
-                    STARTDATETIME="2024-11-18 08:30:00"
-                    STOPDATETIME="2024-11-18 13:30:00" />
+                    STARTDATETIME="2026-05-05 09:00:00"
+                    STOPDATETIME="2026-05-05 12:00:00" />
             </MESSAGE>
         */
 
+        //die("mukodik\n");
 
         //$foService = new FoglaljOrvostService();
-        //$result = $foService->deleteConsultationFix(34573, 14104892, 1052, 13699, "2024-11-18");
+        //$result = $foService->deleteConsultationFix(23564, 42648312, 463, 17977, "2026-05-05");
         //echo $result;
-        //die("itt2");
+        die("itt2\n");
 
         //$service = new SpektrumlabService();
         //$service->processPdfFromMessages();

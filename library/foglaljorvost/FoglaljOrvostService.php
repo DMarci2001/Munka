@@ -48,7 +48,8 @@ class FoglaljOrvostService extends FoGeneral {
     }
 
 
-    public array $bercsenyiDoctorIds = [461, 454, 468, 463, 458, 480, 479, 489];
+    public array $bercsenyiDoctorIds = [461, 454, 468, 458, 480, 479];
+    //463 Dr. Mauks kiszedve, 489 Dr Tímár is
 
     private function setPlaceByDoctorId($doctorId):void {
         //bercsényi előkészítése
