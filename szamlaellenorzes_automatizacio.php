@@ -42,13 +42,13 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  *  Havonta csak ezt a blokkot kell átírni.                                    */
 $CONFIG = [
     // A nyers számlaszám-export. Tartalmaznia kell a 'raw_sheet' munkalapot.
-    'input'  => __DIR__ . '/25_09_szamlaszamok.xlsx',
+    'input'  => __DIR__ . '/25_08_szamlaszamok.xlsx',
 
     // A feldolgozott munkafüzet mentési helye (a nyers fájl érintetlen marad).
-    'output' => __DIR__ . '/25_09_szamlaszamok_nyers.xlsx',
+    'output' => __DIR__ . '/25_08_szamlaszamok_nyers.xlsx',
 
     // Munkalapnevek
-    'raw_sheet'       => 'Szamlaszamok',               // nyers adatok (1. tábla)
+    'raw_sheet'       => 'Sheet1',               // nyers adatok (1. tábla)
     'dedup_sheet'     => 'Szamlaszamok_nonduplicate',  // generált 2. tábla
     'artetelek_sheet' => 'Vizsgalati_artetelek',       // generált 3. tábla
 ];
@@ -57,12 +57,12 @@ $CONFIG = [
 /* ===================== BEÁLLÍTÁSOK — STEP 2 (Vizsgálatok) ================== */
 $CFG_VIZSGALATOK = [
     // A kombinált nyers vizsgálat-export (egyetlen munkalap: RTG + Fogleü + egyéb).
-    'vizsgalatok_input' => __DIR__ . '/25_09_vizsgalatok.xlsx',
+    'vizsgalatok_input' => __DIR__ . '/25_08_vizsgalatok.xlsx',
     'vizsgalatok_sheet' => 'Vizsgálatok',
 
     // A számlaszám-fájl — ebből épül a Számla-ellenőrzés (Paciens/Azonosito halmaz).
-    'szamla_lookup_file'  => __DIR__ . '/25_09_szamlaszamok_nyers.xlsx',
-    'szamla_lookup_sheet' => 'Szamlaszamok',
+    'szamla_lookup_file'  => __DIR__ . '/25_08_szamlaszamok_nyers.xlsx',
+    'szamla_lookup_sheet' => 'Sheet1',
 
     // A Menedzser-tábla és az aktuális havi munkalap (nevek a B oszlopban, 3. sortól).
     'menedzser_file'  => __DIR__ . '/Menedzser táblázat 2025 12 DECEMBER.xlsx',
@@ -346,7 +346,7 @@ function processVizsgalatok(array $cfg): void
     $lastColIdx = Coordinate::columnIndexFromString($sheet->getHighestColumn());
     $lastRow    = $sheet->getHighestRow();
 
-    // Fejléc beolvasása + oszlopnév -> index térkép.
+    // Fejléc beolvasása + oszlopnév -> forrás-index térkép.
     $header = [];
     for ($c = 1; $c <= $lastColIdx; $c++) {
         $header[$c] = $sheet->getCell(Coordinate::stringFromColumnIndex($c) . '1')->getValue();
@@ -358,24 +358,50 @@ function processVizsgalatok(array $cfg): void
             exit(1);
         }
     }
-    $iSzak = $colOf['Szakrendelés'];
-    $iTel  = $colOf['Egyedi/Telephely'];
-    $iNev  = $colOf['Paciens/Nev'];
-    $iAz   = $colOf['Paciens/Azonosito'];
 
-    // Adatsorok beolvasása (az üres sorokat kihagyjuk).
+    // A riport oszlopai — csak a lényeges adatok. A PII-t (e-mail, telefon, cím,
+    // anyja neve stb.) és a Fogleü-specifikus mezőket (Alkalmasság, Érvényesség,
+    // Korlátozás stb.) szándékosan kihagyjuk. Ha az exportod más fejlécet
+    // használ, itt kell igazítani.
+    $reportHeaders = [
+        'Vizsgalat/UtolsoModositasDatuma',
+        'Paciens/Nev',
+        'Szakrendelés',
+        'Felhasználó',
+        'Paciens/Azonosito',
+        'Paciens/SzuletesiDatum',
+        'Egyedi/Telephely',
+        'Egyedi/Munkakör',
+        'Vizsgalat/FelvetelDatuma',
+    ];
+    // Forrás oszlop-index minden riport-fejléchez (a hiányzókat üresen hagyjuk).
+    $reportColIdx = [];
+    foreach ($reportHeaders as $h) {
+        if (isset($colOf[$h])) $reportColIdx[$h] = $colOf[$h];
+    }
+
+    // Adatsorok beolvasása — CSAK a riport-oszlopokat (üres sor kimarad).
     $rows = [];
     for ($r = 2; $r <= $lastRow; $r++) {
         $row = [];
         $blank = true;
-        for ($c = 1; $c <= $lastColIdx; $c++) {
-            $v = $sheet->getCell(Coordinate::stringFromColumnIndex($c) . $r)->getValue();
+        foreach ($reportHeaders as $h) {
+            $idx = $reportColIdx[$h] ?? null;
+            $v = $idx === null
+                ? null
+                : $sheet->getCell(Coordinate::stringFromColumnIndex($idx) . $r)->getValue();
             if ($v !== null && $v !== '') $blank = false;
-            $row[$c] = $v;
+            $row[] = $v;
         }
         if (!$blank) $rows[] = $row;
     }
     echo "  Beolvasott adatsor: " . count($rows) . "\n";
+
+    // A projektált (riport-rendű) sor 0-alapú pozíciói az ellenőrzéshez.
+    $pSzak = array_search('Szakrendelés',      $reportHeaders, true);
+    $pTel  = array_search('Egyedi/Telephely',  $reportHeaders, true);
+    $pNev  = array_search('Paciens/Nev',       $reportHeaders, true);
+    $pAz   = array_search('Paciens/Azonosito', $reportHeaders, true);
 
     // --- Keresőhalmazok a Számla- és Menedzser-ellenőrzéshez ---
     $invoiceIds   = buildLookupSet($cfg['szamla_lookup_file'],
@@ -387,24 +413,26 @@ function processVizsgalatok(array $cfg): void
     // --- Szétválasztás + ellenőrzés ---
     $rtg = []; $fogleu = []; $restEnriched = []; $maganUres = []; $hianyzo = [];
     $missSzamla = $missMenedzser = $missBoth = 0;
+    $nMag = $nUres = $nCeg = 0;
 
     foreach ($rows as $row) {
-        $cat  = categorize((string) ($row[$iSzak] ?? ''),
-                           $cfg['rtg_keywords'], $cfg['fogleu_keywords']);
-        $base = array_values($row);            // 1-alapú -> 0-alapú tömb
+        $cat = categorize((string) ($row[$pSzak] ?? ''),
+                          $cfg['rtg_keywords'], $cfg['fogleu_keywords']);
 
-        if ($cat === 'RTG')    { $rtg[]    = $base; continue; }
-        if ($cat === 'Fogleü') { $fogleu[] = $base; continue; }
+        if ($cat === 'RTG')    { $rtg[]    = $row; continue; }
+        if ($cat === 'Fogleü') { $fogleu[] = $row; continue; }
 
-        // "egyéb" sor — Telephely-kategória.
-        $tel = trim((string) ($row[$iTel] ?? ''));
-        if ($tel === '')                                $telKat = 'Üres';
-        elseif (mb_strtolower($tel) === 'magánszemély') $telKat = 'Magánszemély';
-        else                                            $telKat = 'Cég';
+        // "egyéb" sor — Telephely-kategória számolása (külön oszlop nem kerül a riportba).
+        $tel = trim((string) ($row[$pTel] ?? ''));
+        $isEmpty = ($tel === '');
+        $isMagan = (!$isEmpty && mb_strtolower($tel) === 'magánszemély');
+        if ($isEmpty)     $nUres++;
+        elseif ($isMagan) $nMag++;
+        else              $nCeg++;
 
         // Számla- és Menedzser-ellenőrzés.
-        $azKey  = normKey($row[$iAz]  ?? null);
-        $nevKey = normKey($row[$iNev] ?? null);
+        $azKey  = normKey($row[$pAz]  ?? null);
+        $nevKey = normKey($row[$pNev] ?? null);
         $szMiss = ($azKey  === '') || !isset($invoiceIds[$azKey]);
         $mzMiss = ($nevKey === '') || !isset($managerNames[$nevKey]);
 
@@ -412,31 +440,34 @@ function processVizsgalatok(array $cfg): void
         if ($mzMiss) $missMenedzser++;
         if ($szMiss && $mzMiss) $missBoth++;
 
-        $enriched = array_merge($base, [
-            $telKat,
+        $enriched = array_merge($row, [
             $szMiss ? 'HIÁNYZIK' : 'OK',
             $mzMiss ? 'HIÁNYZIK' : 'OK',
         ]);
         $restEnriched[] = $enriched;
-        if ($telKat !== 'Cég')  $maganUres[] = $enriched;   // Magánszemély vagy Üres
-        if ($szMiss || $mzMiss) $hianyzo[]   = $enriched;
+        if ($isEmpty || $isMagan) $maganUres[] = $enriched;
+        if ($szMiss  || $mzMiss)  $hianyzo[]   = $enriched;
     }
 
     echo "  RTG: " . count($rtg) . "  |  Fogleü: " . count($fogleu)
         . "  |  egyéb: " . count($restEnriched) . "\n";
 
     // --- Riport összeállítása ---
-    $inHeader   = array_values(array_map('strval', $header));
-    $restHeader = array_merge($inHeader, ['Telephely kategória', 'Számla', 'Menedzser']);
+    $inHeader   = $reportHeaders;                                  // 9 oszlop
+    $restHeader = array_merge($inHeader, ['Számla', 'Menedzser']); // 9 + 2 oszlop
 
     $report = new Spreadsheet();
     $report->getProperties()->setTitle('Számlaellenőrzés riport');
 
     // 1) Összesítés munkalap
+    $iSt1 = count($inHeader);        // Számla státusz pozíciója az enriched sorban
+    $iSt2 = count($inHeader) + 1;    // Menedzser státusz pozíciója
     $maganUresMiss = 0;
     foreach ($maganUres as $e) {
-        $n = count($e);
-        if ($e[$n - 2] === 'HIÁNYZIK' || $e[$n - 1] === 'HIÁNYZIK') $maganUresMiss++;
+        if (($e[$iSt1] ?? null) === 'HIÁNYZIK'
+            || ($e[$iSt2] ?? null) === 'HIÁNYZIK') {
+            $maganUresMiss++;
+        }
     }
     $summary = $report->getActiveSheet();
     $summary->setTitle('Összesítés');
@@ -447,9 +478,9 @@ function processVizsgalatok(array $cfg): void
         ['Fogleü sorok', count($fogleu)],
         ['Egyéb (a többi) sor', count($restEnriched)],
         ['', ''],
-        ['Egyéb — Magánszemély', countTel($restEnriched, 'Magánszemély')],
-        ['Egyéb — Üres telephely', countTel($restEnriched, 'Üres')],
-        ['Egyéb — Céges telephely', countTel($restEnriched, 'Cég')],
+        ['Egyéb — Magánszemély', $nMag],
+        ['Egyéb — Üres telephely', $nUres],
+        ['Egyéb — Céges telephely', $nCeg],
         ['', ''],
         ['Egyéb — hiányzó Számla', $missSzamla],
         ['Egyéb — hiányzó Menedzser', $missMenedzser],
@@ -586,18 +617,4 @@ function buildManagerNames(string $file, string $sheetName): array
         if ($k !== '') $set[$k] = true;
     }
     return $set;
-}
-
-
-/**
- * Adott Telephely-kategóriájú sorok darabszáma az enriched (12 oszlopos) tömbben.
- * A Telephely-kategória a sor utolsó előtti előtti eleme (count - 3).
- */
-function countTel(array $rows, string $kat): int
-{
-    $n = 0;
-    foreach ($rows as $row) {
-        if (($row[count($row) - 3] ?? null) === $kat) $n++;
-    }
-    return $n;
 }
