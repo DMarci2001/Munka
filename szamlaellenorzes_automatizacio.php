@@ -45,7 +45,7 @@ $CONFIG = [
     'input'  => __DIR__ . '/25_08_szamlaszamok.xlsx',
 
     // A feldolgozott munkafüzet mentési helye (a nyers fájl érintetlen marad).
-    'output' => __DIR__ . '/25_08_szamlaszamok_nyers.xlsx',
+    'output' => __DIR__ . '/25_08_szamlaszamok_szurt.xlsx',
 
     // Munkalapnevek
     'raw_sheet'       => 'Sheet1',               // nyers adatok (1. tábla)
@@ -61,7 +61,7 @@ $CFG_VIZSGALATOK = [
     'vizsgalatok_sheet' => 'Vizsgálatok',
 
     // A számlaszám-fájl — ebből épül a Számla-ellenőrzés (Paciens/Azonosito halmaz).
-    'szamla_lookup_file'  => __DIR__ . '/25_08_szamlaszamok_nyers.xlsx',
+    'szamla_lookup_file'  => __DIR__ . '/25_08_szamlaszamok_szurt.xlsx',
     'szamla_lookup_sheet' => 'Sheet1',
 
     // A Menedzser-tábla és az aktuális havi munkalap (nevek a B oszlopban, 3. sortól).
@@ -69,7 +69,7 @@ $CFG_VIZSGALATOK = [
     'menedzser_sheet' => 'Augusztus',
 
     // A riport mentési helye.
-    'report_output' => __DIR__ . '/ellenorzes_riport.xlsx',
+    'report_output' => __DIR__ . '/25_08_vizsgalati_riport.xlsx',
 
     // Szétválasztási kulcsszavak a 'Szakrendelés' oszlopra
     // (kisbetűs, ékezetes, részlet-egyezés — bővíthető, ha új érték jelenik meg).
@@ -158,10 +158,12 @@ function processSzamlaszamok(array $cfg): void
  */
 function dedupColumn(Worksheet $sheet, string $col, int $lastRow): array
 {
+    // Bulk olvasás — egy hívás sok ezer getCell helyett.
+    $rows = $sheet->rangeToArray("{$col}2:{$col}{$lastRow}", null, false, false, false);
     $seen   = [];
     $result = [];
-    for ($r = 2; $r <= $lastRow; $r++) {
-        $value = $sheet->getCell($col . $r)->getValue();
+    foreach ($rows as $r) {
+        $value = $r[0] ?? null;
         $key   = ($value === null || $value === '') ? "\0EMPTY\0" : (string) $value;
         if (!array_key_exists($key, $seen)) {
             $seen[$key] = true;
@@ -318,12 +320,10 @@ function findHeaderColumn(Worksheet $sheet, string $headerName): string
 
 /**
  * A kombinált vizsgálat-export feldolgozása:
- *   1. a sorok szétválasztása a 'Szakrendelés' oszlop alapján: RTG / Fogleü /
- *      egyéb ("a többi");
- *   2. az "egyéb" halmazon: Telephely-kategória (Cég / Magánszemély / Üres),
- *      Számla-ellenőrzés (a páciens azonosítója szerepel-e a számlaszám-fájlban)
- *      és Menedzser-ellenőrzés (a páciens neve szerepel-e a Menedzser-táblában);
- *   3. riport-munkafüzet (ellenorzes_riport.xlsx) előállítása több munkalappal.
+ *   1. besorolás a 'Szakrendelés' oszlop alapján: RTG / Fogleü / egyéb;
+ *   2. az "egyéb" halmazból csak a Magánszemély vagy üres telephelyű sorokat
+ *      tartjuk meg, kiegészítve Számla- és Menedzser-státusszal;
+ *   3. riport (ellenorzes_riport.xlsx) 3 munkalappal: RTG, Fogleü, Magánszemély_üres.
  */
 function processVizsgalatok(array $cfg): void
 {
@@ -346,12 +346,12 @@ function processVizsgalatok(array $cfg): void
     $lastColIdx = Coordinate::columnIndexFromString($sheet->getHighestColumn());
     $lastRow    = $sheet->getHighestRow();
 
-    // Fejléc beolvasása + oszlopnév -> forrás-index térkép.
-    $header = [];
+    // Fejlécek -> 1-alapú forrás-oszlop indexek.
+    $colOf = [];
     for ($c = 1; $c <= $lastColIdx; $c++) {
-        $header[$c] = $sheet->getCell(Coordinate::stringFromColumnIndex($c) . '1')->getValue();
+        $h = $sheet->getCell(Coordinate::stringFromColumnIndex($c) . '1')->getValue();
+        if ($h !== null) $colOf[(string) $h] = $c;
     }
-    $colOf = array_flip(array_map('strval', $header));
     foreach (['Szakrendelés', 'Egyedi/Telephely', 'Paciens/Nev', 'Paciens/Azonosito'] as $need) {
         if (!isset($colOf[$need])) {
             fwrite(STDERR, "HIBA: hiányzó oszlop a vizsgálat-exportban: '{$need}'\n");
@@ -359,10 +359,7 @@ function processVizsgalatok(array $cfg): void
         }
     }
 
-    // A riport oszlopai — csak a lényeges adatok. A PII-t (e-mail, telefon, cím,
-    // anyja neve stb.) és a Fogleü-specifikus mezőket (Alkalmasság, Érvényesség,
-    // Korlátozás stb.) szándékosan kihagyjuk. Ha az exportod más fejlécet
-    // használ, itt kell igazítani.
+    // A riport 9 lényeges oszlopa (a PII és Fogleü-specifikus mezők kimaradnak).
     $reportHeaders = [
         'Vizsgalat/UtolsoModositasDatuma',
         'Paciens/Nev',
@@ -374,180 +371,97 @@ function processVizsgalatok(array $cfg): void
         'Egyedi/Munkakör',
         'Vizsgalat/FelvetelDatuma',
     ];
-    // Forrás oszlop-index minden riport-fejléchez (a hiányzókat üresen hagyjuk).
-    $reportColIdx = [];
+    // 0-alapú forrás-indexek a $reportHeaders sorrendjében (null = nincs az exportban).
+    $srcIdx = [];
     foreach ($reportHeaders as $h) {
-        if (isset($colOf[$h])) $reportColIdx[$h] = $colOf[$h];
+        $srcIdx[] = isset($colOf[$h]) ? $colOf[$h] - 1 : null;
     }
+    // Fix pozíciók a projektált sorban — a $reportHeaders sorrendje rögzített.
+    [$pNev, $pSzak, $pAz, $pTel] = [1, 2, 4, 6];
 
-    // Adatsorok beolvasása — CSAK a riport-oszlopokat (üres sor kimarad).
-    $rows = [];
-    for ($r = 2; $r <= $lastRow; $r++) {
-        $row = [];
-        $blank = true;
-        foreach ($reportHeaders as $h) {
-            $idx = $reportColIdx[$h] ?? null;
-            $v = $idx === null
-                ? null
-                : $sheet->getCell(Coordinate::stringFromColumnIndex($idx) . $r)->getValue();
-            if ($v !== null && $v !== '') $blank = false;
-            $row[] = $v;
-        }
-        if (!$blank) $rows[] = $row;
-    }
-    echo "  Beolvasott adatsor: " . count($rows) . "\n";
-
-    // A projektált (riport-rendű) sor 0-alapú pozíciói az ellenőrzéshez.
-    $pSzak = array_search('Szakrendelés',      $reportHeaders, true);
-    $pTel  = array_search('Egyedi/Telephely',  $reportHeaders, true);
-    $pNev  = array_search('Paciens/Nev',       $reportHeaders, true);
-    $pAz   = array_search('Paciens/Azonosito', $reportHeaders, true);
-
-    // --- Keresőhalmazok a Számla- és Menedzser-ellenőrzéshez ---
+    // --- Keresőhalmazok ---
     $invoiceIds   = buildLookupSet($cfg['szamla_lookup_file'],
                                    $cfg['szamla_lookup_sheet'], 'Paciens/Azonosito');
     $managerNames = buildManagerNames($cfg['menedzser_file'], $cfg['menedzser_sheet']);
     echo "  Számlázott azonosítók: " . count($invoiceIds)
         . "  |  Menedzserszűrés-nevek: " . count($managerNames) . "\n";
 
-    // --- Szétválasztás + ellenőrzés ---
-    $rtg = []; $fogleu = []; $restEnriched = []; $maganUres = []; $hianyzo = [];
-    $missSzamla = $missMenedzser = $missBoth = 0;
-    $nMag = $nUres = $nCeg = 0;
+    // --- Bulk beolvasás (rangeToArray jóval gyorsabb, mint a cellánkénti getCell) ---
+    $endLetter = Coordinate::stringFromColumnIndex($lastColIdx);
+    $allRows   = $sheet->rangeToArray("A2:{$endLetter}{$lastRow}", null, false, false, false);
 
-    foreach ($rows as $row) {
-        $cat = categorize((string) ($row[$pSzak] ?? ''),
-                          $cfg['rtg_keywords'], $cfg['fogleu_keywords']);
+    // Kisbetűs kulcsszavak az ismétlődő mb_strtolower elkerüléséhez.
+    $rtgKw = array_map('mb_strtolower', $cfg['rtg_keywords']);
+    $fogKw = array_map('mb_strtolower', $cfg['fogleu_keywords']);
+
+    // --- Besorolás + szűrés egy menetben ---
+    $rtg = []; $fogleu = []; $maganUres = [];
+
+    foreach ($allRows as $src) {
+        // 9-oszlopos riport-sor projekció.
+        $row = [];
+        $blank = true;
+        foreach ($srcIdx as $i) {
+            $v = ($i === null) ? null : ($src[$i] ?? null);
+            if ($v !== null && $v !== '') $blank = false;
+            $row[] = $v;
+        }
+        if ($blank) continue;
+
+        // Besorolás a Szakrendelés kulcsszavak alapján.
+        $s = mb_strtolower(trim((string) $row[$pSzak]));
+        $cat = 'rest';
+        foreach ($rtgKw as $kw) {
+            if ($kw !== '' && mb_strpos($s, $kw) !== false) { $cat = 'RTG'; break; }
+        }
+        if ($cat === 'rest') {
+            foreach ($fogKw as $kw) {
+                if ($kw !== '' && mb_strpos($s, $kw) !== false) { $cat = 'Fogleü'; break; }
+            }
+        }
 
         if ($cat === 'RTG')    { $rtg[]    = $row; continue; }
         if ($cat === 'Fogleü') { $fogleu[] = $row; continue; }
 
-        // "egyéb" sor — Telephely-kategória számolása (külön oszlop nem kerül a riportba).
-        $tel = trim((string) ($row[$pTel] ?? ''));
-        $isEmpty = ($tel === '');
-        $isMagan = (!$isEmpty && mb_strtolower($tel) === 'magánszemély');
-        if ($isEmpty)     $nUres++;
-        elseif ($isMagan) $nMag++;
-        else              $nCeg++;
+        // "egyéb" — csak akkor kell, ha Magánszemély vagy üres a telephely.
+        $tel = trim((string) $row[$pTel]);
+        if ($tel !== '' && mb_strtolower($tel) !== 'magánszemély') continue;
 
-        // Számla- és Menedzser-ellenőrzés.
-        $azKey  = normKey($row[$pAz]  ?? null);
-        $nevKey = normKey($row[$pNev] ?? null);
-        $szMiss = ($azKey  === '') || !isset($invoiceIds[$azKey]);
-        $mzMiss = ($nevKey === '') || !isset($managerNames[$nevKey]);
-
-        if ($szMiss) $missSzamla++;
-        if ($mzMiss) $missMenedzser++;
-        if ($szMiss && $mzMiss) $missBoth++;
-
-        $enriched = array_merge($row, [
-            $szMiss ? 'HIÁNYZIK' : 'OK',
-            $mzMiss ? 'HIÁNYZIK' : 'OK',
-        ]);
-        $restEnriched[] = $enriched;
-        if ($isEmpty || $isMagan) $maganUres[] = $enriched;
-        if ($szMiss  || $mzMiss)  $hianyzo[]   = $enriched;
+        // Számla/Menedzser státusz hozzáfűzése.
+        $azKey  = mb_strtolower(trim((string) $row[$pAz]));
+        $nevKey = mb_strtolower(trim((string) $row[$pNev]));
+        $row[] = ($azKey  === '' || !isset($invoiceIds[$azKey]))    ? 'HIÁNYZIK' : 'OK';
+        $row[] = ($nevKey === '' || !isset($managerNames[$nevKey])) ? 'HIÁNYZIK' : 'OK';
+        $maganUres[] = $row;
     }
 
     echo "  RTG: " . count($rtg) . "  |  Fogleü: " . count($fogleu)
-        . "  |  egyéb: " . count($restEnriched) . "\n";
+        . "  |  Magánszemély/Üres: " . count($maganUres) . "\n";
 
-    // --- Riport összeállítása ---
-    $inHeader   = $reportHeaders;                                  // 9 oszlop
-    $restHeader = array_merge($inHeader, ['Számla', 'Menedzser']); // 9 + 2 oszlop
-
+    // --- Riport: 3 munkalap (RTG, Fogleü, Magánszemély_üres) ---
+    $maganHeader = array_merge($reportHeaders, ['Számla', 'Menedzser']);
     $report = new Spreadsheet();
-    $report->getProperties()->setTitle('Számlaellenőrzés riport');
-
-    // 1) Összesítés munkalap
-    $iSt1 = count($inHeader);        // Számla státusz pozíciója az enriched sorban
-    $iSt2 = count($inHeader) + 1;    // Menedzser státusz pozíciója
-    $maganUresMiss = 0;
-    foreach ($maganUres as $e) {
-        if (($e[$iSt1] ?? null) === 'HIÁNYZIK'
-            || ($e[$iSt2] ?? null) === 'HIÁNYZIK') {
-            $maganUresMiss++;
-        }
+    $first  = true;
+    foreach ([
+        ['RTG',               $reportHeaders, $rtg],
+        ['Fogleü',            $reportHeaders, $fogleu],
+        ['Magánszemély_üres', $maganHeader,   $maganUres],
+    ] as [$title, $hdr, $data]) {
+        $ws = $first ? $report->getActiveSheet() : $report->createSheet();
+        $first = false;
+        $ws->setTitle($title);
+        $ws->fromArray([$hdr], null, 'A1');
+        if ($data) $ws->fromArray($data, null, 'A2');
+        $lastCol = Coordinate::stringFromColumnIndex(count($hdr));
+        $ws->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+        $ws->freezePane('A2');
+        $ws->setAutoFilter("A1:{$lastCol}" . (count($data) + 1));
     }
-    $summary = $report->getActiveSheet();
-    $summary->setTitle('Összesítés');
-    $summary->fromArray([
-        ['Mutató', 'Érték'],
-        ['Összes vizsgálati sor', count($rows)],
-        ['RTG sorok', count($rtg)],
-        ['Fogleü sorok', count($fogleu)],
-        ['Egyéb (a többi) sor', count($restEnriched)],
-        ['', ''],
-        ['Egyéb — Magánszemély', $nMag],
-        ['Egyéb — Üres telephely', $nUres],
-        ['Egyéb — Céges telephely', $nCeg],
-        ['', ''],
-        ['Egyéb — hiányzó Számla', $missSzamla],
-        ['Egyéb — hiányzó Menedzser', $missMenedzser],
-        ['Egyéb — hiányzó Számla VAGY Menedzser', count($hianyzo)],
-        ['Egyéb — hiányzó Számla ÉS Menedzser', $missBoth],
-        ['', ''],
-        ['Magánszemély/Üres sor összesen', count($maganUres)],
-        ['Magánszemély/Üres ÉS hiányzó tétel', $maganUresMiss],
-    ], null, 'A1');
-    $summary->getStyle('A1:B1')->getFont()->setBold(true);
-    $summary->getColumnDimension('A')->setWidth(44);
-    $summary->getColumnDimension('B')->setWidth(14);
-
-    // 2-6) Adat-munkalapok
-    addReportSheet($report, 'RTG',                      $inHeader,   $rtg);
-    addReportSheet($report, 'Fogleü',                   $inHeader,   $fogleu);
-    addReportSheet($report, 'Egyéb',                    $restHeader, $restEnriched);
-    addReportSheet($report, 'Magánszemély_üres',        $restHeader, $maganUres);
-    addReportSheet($report, 'Hiányzó_Számla_Menedzser', $restHeader, $hianyzo);
-
     $report->setActiveSheetIndex(0);
 
     echo "Mentés: {$cfg['report_output']}\n";
-    $writer = IOFactory::createWriter($report, 'Xlsx');
-    $writer->save($cfg['report_output']);
+    IOFactory::createWriter($report, 'Xlsx')->save($cfg['report_output']);
     echo "STEP 2 KÉSZ.\n";
-}
-
-
-/**
- * Egy munkalap hozzáadása a riporthoz: fejléc + adatsorok, félkövér fejléccel,
- * rögzített fejlécsorral és automatikus szűrővel.
- */
-function addReportSheet(Spreadsheet $book, string $title,
-                        array $header, array $dataRows): void
-{
-    $ws = $book->createSheet();
-    $ws->setTitle($title);
-    $ws->fromArray([$header], null, 'A1');
-    if (!empty($dataRows)) {
-        $ws->fromArray($dataRows, null, 'A2');
-    }
-    $lastCol = Coordinate::stringFromColumnIndex(max(1, count($header)));
-    $ws->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
-    $ws->freezePane('A2');
-    $ws->setAutoFilter("A1:{$lastCol}" . (count($dataRows) + 1));
-    for ($c = 1; $c <= count($header); $c++) {
-        $ws->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setAutoSize(true);
-    }
-    echo "  '{$title}' munkalap: " . count($dataRows) . " sor.\n";
-}
-
-
-/**
- * Egy 'Szakrendelés'-érték besorolása kulcsszavak alapján.
- * Először az RTG-, majd a Fogleü-kulcsszavakat vizsgálja; egyébként 'rest'.
- */
-function categorize(string $szakrendeles, array $rtgKw, array $fogleuKw): string
-{
-    $s = mb_strtolower(trim($szakrendeles));
-    foreach ($rtgKw as $kw) {
-        if ($kw !== '' && mb_strpos($s, mb_strtolower($kw)) !== false) return 'RTG';
-    }
-    foreach ($fogleuKw as $kw) {
-        if ($kw !== '' && mb_strpos($s, mb_strtolower($kw)) !== false) return 'Fogleü';
-    }
-    return 'rest';
 }
 
 
@@ -584,11 +498,12 @@ function buildLookupSet(string $file, string $sheetName, string $headerName): ar
         exit(1);
     }
 
-    $set    = [];
     $letter = Coordinate::stringFromColumnIndex($col);
     $last   = $sheet->getHighestRow();
-    for ($r = 2; $r <= $last; $r++) {
-        $k = normKey($sheet->getCell($letter . $r)->getValue());
+    $rows   = $sheet->rangeToArray("{$letter}2:{$letter}{$last}", null, false, false, false);
+    $set = [];
+    foreach ($rows as $r) {
+        $k = normKey($r[0] ?? null);
         if ($k !== '') $set[$k] = true;
     }
     return $set;
@@ -610,10 +525,11 @@ function buildManagerNames(string $file, string $sheetName): array
         fwrite(STDERR, "HIBA: nincs '{$sheetName}' munkalap a Menedzser-táblában.\n");
         exit(1);
     }
-    $set  = [];
     $last = $sheet->getHighestRow();
-    for ($r = 3; $r <= $last; $r++) {
-        $k = normKey($sheet->getCell('B' . $r)->getValue());
+    $rows = $sheet->rangeToArray("B3:B{$last}", null, false, false, false);
+    $set = [];
+    foreach ($rows as $r) {
+        $k = normKey($r[0] ?? null);
         if ($k !== '') $set[$k] = true;
     }
     return $set;
