@@ -42,10 +42,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  *  Havonta csak ezt a blokkot kell átírni.                                    */
 $CONFIG = [
     // A nyers számlaszám-export. Tartalmaznia kell a 'raw_sheet' munkalapot.
-    'input'  => __DIR__ . '/25_08_szamlaszamok.xlsx',
+    'input'  => __DIR__ . '/26_01_szamlaszamok.xlsx',
 
     // A feldolgozott munkafüzet mentési helye (a nyers fájl érintetlen marad).
-    'output' => __DIR__ . '/25_08_szamlaszamok_szurt.xlsx',
+    'output' => __DIR__ . '/26_01_szamlaszamok_szurt.xlsx',
 
     // Munkalapnevek
     'raw_sheet'       => 'Sheet1',               // nyers adatok (1. tábla)
@@ -56,20 +56,21 @@ $CONFIG = [
 
 /* ===================== BEÁLLÍTÁSOK — STEP 2 (Vizsgálatok) ================== */
 $CFG_VIZSGALATOK = [
+    'target_month' => '2026-01',
     // A kombinált nyers vizsgálat-export (egyetlen munkalap: RTG + Fogleü + egyéb).
-    'vizsgalatok_input' => __DIR__ . '/25_08_vizsgalatok.xlsx',
+    'vizsgalatok_input' => __DIR__ . '/26_01_vizsgalatok.xlsx',
     'vizsgalatok_sheet' => 'Vizsgálatok',
 
     // A számlaszám-fájl — ebből épül a Számla-ellenőrzés (Paciens/Azonosito halmaz).
-    'szamla_lookup_file'  => __DIR__ . '/25_08_szamlaszamok.xlsx',
+    'szamla_lookup_file'  => __DIR__ . '/26_01_szamlaszamok.xlsx',
     'szamla_lookup_sheet' => 'Sheet1',
 
     // A Menedzser-tábla és az aktuális havi munkalap (nevek a B oszlopban, 3. sortól).
     'menedzser_file'  => __DIR__ . '/Menedzser táblázat 2025 12 DECEMBER.xlsx',
-    'menedzser_sheet' => 'Augusztus',
+    'menedzser_sheet' => 'Január',
 
     // A riport mentési helye.
-    'report_output' => __DIR__ . '/25_08_vizsgalati_riport.xlsx',
+    'report_output' => __DIR__ . '/26_01_vizsgalati_riport.xlsx',
 
     // Szétválasztási kulcsszavak a 'Szakrendelés' oszlopra
     // (kisbetűs, ékezetes, részlet-egyezés — bővíthető, ha új érték jelenik meg).
@@ -425,6 +426,9 @@ function processVizsgalatok(array $cfg): void
 
     // --- Besorolás + szűrés egy menetben ---
     $rtg = []; $fogleu = []; $maganUres = [];
+    $synthRtg = $synthFog = $synthMag = 0;  // hány pótkulcs került mindegyik buckét-be
+    $targetMonth = (string) ($cfg['target_month'] ?? '');
+    $droppedMonth = 0;  // hány sor maradt ki idegen FelvetelDatuma miatt
 
     foreach ($allRows as $src) {
         // 9-oszlopos riport-sor projekció.
@@ -437,12 +441,26 @@ function processVizsgalatok(array $cfg): void
         }
         if ($blank) continue;
 
+        if ($targetMonth !== '') {
+            $felvYm = substr(dateToYmd($row[$pFelv]), 0, 7);
+                if ($felvYm !== $targetMonth) { $droppedMonth++; continue; }
+   }
+
         // Üres Azonosító -> generált pótkulcs (név + FelvetelDatuma).
         // Ugyanezt a sémát használja a buildLookupSet a számla-fájlon, így a
         // két oldal össze tud párosulni azonosító nélkül is.
         if (normKey($row[$pAz]) === '') {
             $synth = makePatientKey($row[$pNev], $row[$pFelv]);
             if ($synth !== '') $row[$pAz] = $synth;
+        }
+
+        $wasBlank = false;
+        if (normKey($row[$pAz]) === '') {
+            $synth = makePatientKey($row[$pNev], $row[$pFelv]);
+            if ($synth !== '') {
+                $row[$pAz] = $synth;
+                $wasBlank  = true;
+            }
         }
 
         // Besorolás a Szakrendelés kulcsszavak alapján.
@@ -457,8 +475,8 @@ function processVizsgalatok(array $cfg): void
             }
         }
 
-        if ($cat === 'RTG')    { $rtg[]    = $row; continue; }
-        if ($cat === 'Fogleü') { $fogleu[] = $row; continue; }
+        if ($cat === 'RTG')    { $rtg[]    = $row; if ($wasBlank) $synthRtg++; continue; }
+        if ($cat === 'Fogleü') { $fogleu[] = $row; if ($wasBlank) $synthFog++; continue; }
 
         // "egyéb" — csak akkor kell, ha Magánszemély vagy üres a telephely.
         $tel = trim((string) $row[$pTel]);
