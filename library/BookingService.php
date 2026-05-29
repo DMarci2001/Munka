@@ -2337,6 +2337,7 @@ class BookingService
         $this->replicateKiegeszitoVizsgalatok($fid); //kiegészítő vizsgálatok, pl tüdőszűrő hozzáadása
         $this->doAuchanExceptions($fid);
         $this->doOIFExceptions($fid);
+        $this->doFogleuExceptions($fid);
         $this->doBudapestBrandExceptions($fid);
         $this->doKREExceptions($fid);
         $this->doEONExceptions($fid);
@@ -3079,6 +3080,10 @@ class BookingService
         [137, 0, "Szemészet", "Képernyő előtti munkavégzéshez szükséges szemészeti szűrővizsgálat, 2 évente szükséges megismételni.", []],
     ];
 
+     const fogleu_extrak = [
+        [137, 0, "Szemészet", "Képernyő előtti munkavégzéshez szükséges szemészeti szűrővizsgálat, 2 évente szükséges megismételni.", []],
+    ];
+
     const BudapestBrand_SZURESEK = [
         [48, 0, "Laborvizsgálat", "", []],
         [15,0,"Hasi-és kismedencei ultrahang","",[], 1],
@@ -3244,6 +3249,20 @@ class BookingService
         if (CompanyService::isOIF() && $szurestipusid == 1) {
             $options = "";
             foreach (self::OIF_SZURESEK as $key => $szures) {
+                $onChange = "clearIdopontValasztoOnly();";
+                $options .= "<div style='margin-top:10px;'>";
+                $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
+                if (!empty($szures[3])) {
+                    $options .= "<div style='padding-left:25px;font-size:12px;color:#999;'>{$szures[3]}</div>";
+                }
+                $options .= "</div>";
+            }
+            $text = "<div style='margin:5px 0px;font-weight: bold;'>Kérjük válassza ki az igényelt vizsgálatokat:</div><div style='margin-bottom: 10px;'>{$options}</div>";
+        }
+
+        if (CompanyService::isFogleu() && $szurestipusid == 1) {
+            $options = "";
+            foreach (self::fogleu_extrak as $key => $szures) {
                 $onChange = "clearIdopontValasztoOnly();";
                 $options .= "<div style='margin-top:10px;'>";
                 $options .= "<div><input onchange='{$onChange}' id='kiegoption{$key}' name='kiegoption{$key}' type='checkbox' ".(isset($_POST["kiegoption{$key}"]) ? "checked":"")." value='{$szures[0]}'/><label for='kiegoption{$key}'> {$szures[2]}</label></div>";
@@ -3786,6 +3805,40 @@ class BookingService
 
     }
 
+    public function doFogleuExceptions($reservationId):void {
+        if (!CompanyService::isFogleu()) {
+            return;
+        }
+
+        if (!$reservationData = sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id = ?", [$reservationId]))) {
+            return;
+        }
+
+        $reservedTipusok = [];
+        foreach (self::fogleu_extrak as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        $reservedTipusok = $reservationTipusMap = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::fogleu_extrak as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $this->replicateReservationToAnotherService($reservationData, $tipusId);
+                    $reservationTipusMap[$tipusId] = $this->lastSubReservationId;
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+    }
+
     public function doBudapestBrandExceptions($reservationId):void {
         if (!CompanyService::isBudapestBrand()) {
             return;
@@ -3966,6 +4019,32 @@ class BookingService
         $reservedTipusok = [];
         $this->replicateDuplicateCheck = false;
         foreach (self::OIF_SZURESEK as $key => $szures) {
+            if (isset($_POST["kiegoption{$key}"])) {
+                $tipusId = $szures[0];
+                if (!in_array($tipusId, $reservedTipusok)) {
+                    $result = $this->replicateReservationToAnotherService($_POST, $tipusId, true);
+                    if (!empty($result)) {
+                        $results[] = $result;
+                    }
+                    $reservedTipusok[] = $tipusId;
+                }
+            }
+        }
+
+        return implode("<br/>", $results);
+    }
+
+    public function doFogleuServicesTest():string {
+        if (!CompanyService::isFogleu() || empty($_POST["helyszin"]) || empty($_POST["datum"])) {
+            return "";
+        }
+
+        $_POST["helyszinid"] = $_POST["helyszin"];
+
+        $results = [];
+        $reservedTipusok = [];
+        $this->replicateDuplicateCheck = false;
+        foreach (self::fogleu_extrak as $key => $szures) {
             if (isset($_POST["kiegoption{$key}"])) {
                 $tipusId = $szures[0];
                 if (!in_array($tipusId, $reservedTipusok)) {

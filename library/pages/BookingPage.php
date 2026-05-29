@@ -373,6 +373,25 @@ class BookingPage extends CorePage
                 }
             }
 
+            //fogleu esetén ellenőrzések
+            if (CompanyService::isFogleu()) {
+                $selectedKiegVizsgalat = [];
+                foreach (BookingService::fogleu_extrak as $key => $szures) {
+                    if (isset($_POST["kiegoption{$key}"])) {
+                        $selectedKiegVizsgalat[] = $_POST["kiegoption{$key}"];
+                    }
+                }
+                /*$selectedKiegVizsgalat = array_unique($selectedKiegVizsgalat);
+                if (empty($selectedKiegVizsgalat)) {
+                    $this->errors[] = "Válasszon legalább 1 kiegészítő vizsgálatot!";
+                }*/
+
+                $result = $this->bookingService->doFogleuServicesTest();
+                if (!empty($result)) {
+                    $this->errors[] = $result;
+                }
+            }
+
              //BudapestBrand esetén ellenőrzések
              if (CompanyService::isBudapestBrand()) {
                 $selectedKiegVizsgalat = [];
