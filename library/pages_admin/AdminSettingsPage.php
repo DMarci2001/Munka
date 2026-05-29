@@ -310,6 +310,21 @@ class AdminSettingsPage extends AdminCorePage
 
     public function showPage()
     {
+
+        if(isset($_GET["patientfollowup"])){
+            $patientFollowUpService = new PatientFollowUpService();
+
+            $patientFollowUpService->showUI();
+            echo "<br><br>";
+        }
+
+        if(isset($_GET["fgszWorkForceProcessing"])){
+            $fgszCostumeFunctions = new fgszCostumeFunctions();
+
+            $fgszCostumeFunctions->showUI();
+            echo "<br><br>";
+        }
+
         if (!$this->adminUser->beallitasMunkaszunetinapokAccess()) {
             echo $this->noPermissionMessage();
             return;

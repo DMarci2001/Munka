@@ -119,10 +119,10 @@ class ElsosegelyVizsgaPage extends CorePage {
             "validuntil" => "2025-12-31 00:00:00"
         ],
         [
-            "username" => "teszt",
-            "password" => "teszt2",
+            "username" => "teszt3",
+            "password" => "teszt4",
             "validfrom" => "2021-08-30 00:00:00",
-            "validuntil" => "2022-10-22 00:00:00"
+            "validuntil" => "2027-10-22 00:00:00"
         ],
         [
             "username" => "teszt2",
@@ -219,6 +219,12 @@ class ElsosegelyVizsgaPage extends CorePage {
             "password" => "poloPass88",
             "validfrom" => "2025-08-25 07:00:00",
             "validuntil" => "2025-08-29 19:00:00"
+        ],
+        [
+            "username" => "polomania",
+            "password" => "poloPass88",
+            "validfrom" => "2026-06-03 08:00:00",
+            "validuntil" => "2026-06-03 16:00:00"
         ],
     ];
 

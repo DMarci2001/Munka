@@ -38,6 +38,9 @@ class BookingDeletePage extends CorePage {
         }
 
         if (isset($_GET["dodeletereservation"])) {
+            echo "Foglalás törlés ideiglenesen letiltva.. Kérjük foglalás lemondás ügyben hívja az ügyfélszolgálatot!";
+            die;
+
             $service = new NotificationService();
             $service->deleteUserMessage($_GET["id"]);
 

@@ -509,6 +509,8 @@ class AdminDicomPage extends AdminCorePage
                 $sendButton = "<a title='DICOM file továbbítása partner felé' style='' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
             }
 
+            $sendButton = "<a title='DICOM file továbbítása partner felé' style='' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
+
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
             $html.= "<a title='kép megtekintése' style='' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
 

@@ -649,7 +649,7 @@ class AdminDoctorsPage extends AdminCorePage {
             echo "<form name='iform' id='iform' method='post' enctype='multipart/form-data'><input type='hidden' name='orvosform' value='1'/><input type='hidden' id='orvosid' name='orvosid' value='{$_POST["id"]}'/>";
 
             echo "<table style='font-size:12px;width: 100%;'>";
-
+            echo "<tr><td><a class='generali-button' style='margin-bottom:5px' href='#' onClick='showGeneraliDocSetup({$_GET["szerk"]});return false'><i class='fa-solid fa-plug'></i>&nbsp;Generali kapcsolat</a></td></tr>";
             echo "<tr><td width='100'>Név:</td><td><input class='inputbox' style='width:400px;' type='text' name='nev' value='{$_POST["nev"]}'></td></tr>";
             echo "<tr><td>Pecsétszám:</td><td><input class='inputbox' style='width:200px;' type='text' name='pecsetszam' value='{$_POST["pecsetszam"]}'> <span id='fosyncbutton'>".$this->foglaljOrvostSyncButton($oid)."</span></td></tr>";
             echo "<tr><td></td><td><div id='fodatadiv'></div></td></tr>";

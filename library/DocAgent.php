@@ -14,6 +14,7 @@ class DocAgent {
     const ASSET_CHAT_UPLOAD_IMAGE           = "chatuploadimage";
     const ASSET_LABOR_RESULT                = "laborresult";
     const ASSET_PERSONA_REFERAL_PDF         = "personalreferalpdf";
+    const ASSET_REFERRAL_ARRAY              = "referralarray";
 
     const ASSET_SERVICE_DEFAULT_IMAGE       = "/images/szakter_default.jpg";
     const ASSET_DOCTOR_DEFAULT_IMAGE_MALE   = "/images/doctor_male.png";
@@ -239,10 +240,14 @@ class DocAgent {
         die();
     }
 
-    public static function getDocURL($docData) {
+    public static function getDocURL($docData,$forcedDomain) {
         $domain = "{$_SESSION["helyszindata"]["domain"]}.".Booking_Constants::SITE_DOMAIN;
         if (isset($_SERVER["HTTP_HOST"])) {
             $domain = $_SERVER["HTTP_HOST"];
+        }
+
+        if($forcedDomain){
+            $domain = $forcedDomain;
         }
 
         $docURL = "//{$domain}/?downloaddoc&f={$docData["id"]}&k={$docData["kod"]}";
@@ -387,7 +392,7 @@ class DocAgent {
         if ($tipus == self::ASSET_COVIDPASS_IMAGE || $tipus == self::ASSET_COVIDEGS_IMAGE) {
             foreach ($images as $imageData) {
                 $html.= "<div style='display:inline-block;'>";
-                $html.= "<div><a target='_blank' href='index.php?showfoto={$imageData["id"]}&c={$imageData["kod"]}'>Fotó megtekintése</a></div>";
+                $html.= "<div><a target='_blank' href='https://bejelentkezes.hungariamed.hu/admin/index.php?showfoto={$imageData["id"]}&c={$imageData["kod"]}'>Fotó megtekintése</a></div>";
                 $html.= "<div style='margin-top:5px;text-align: center;'><a href='#' onclick='deleteAsset(\"{$tipus}\", {$imageData["id"]}, {$imageData["dataid"]});return false;'>Fotó törlése</a></div>";
                 $html.= "</div>";
 
@@ -474,6 +479,13 @@ class DocAgent {
 
     public function getDocByType($tipus, $dataId):string {
         if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and dataid=? order by datum desc limit 1", [$tipus, $dataId])->fetch(PDO::FETCH_ASSOC)) {
+            return $this->getDoc($docData["id"]);
+        }
+        return "";
+    }
+
+    public function getDocByCustomId($tipus, $id, $customId):string {
+        if ($docData = sql_query("select id, assetid, tipus, filename from dokumentumok where assetid=? and id=? and customid=? order by datum desc limit 1", [$tipus, $id, $customId])->fetch(PDO::FETCH_ASSOC)) {
             return $this->getDoc($docData["id"]);
         }
         return "";

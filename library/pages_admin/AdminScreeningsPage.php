@@ -307,6 +307,46 @@ class AdminScreeningsPage extends AdminCorePage
             echo "</select>";
             echo "<br>";
             echo "</td></tr>";
+            echo "<tr><td colspan='2'><div class='tdsepdiv'>Generali kapcsolat</div></td></tr>";
+            echo "<tr><td colsapn='2'>";
+            $generaliService = New GeneraliApiService();
+
+            $specialities = $generaliService->retrieveSpecialities();
+            echo "<table>";
+            echo "<tr><td><select id='generali_sepciality_selector'>";
+            echo "<option>Válassz szakvizsgálatot!</option>";
+            foreach($specialities as $speciality){
+                
+                $selected="";
+                if(!empty($speciality["partner_speciality_id"]) && $speciality["partner_speciality_id"]==$_POST["generaliId"]){
+                    $selected="selected=true";
+                }
+                echo "<option {$selected} value='{$speciality["id"]}'>{$speciality["name"]}</option>";
+            }
+            echo "</select></td>";
+            echo "<td><a class='generali-button' href='#' onClick='storeGeneraliScreening({$_GET["szerk"]},$(\"#generali_sepciality_selector\").find(\":selected\").val());return false'><i class='fa-solid fa-plug'></i>&nbsp;Generali kapcsolat</a></td></tr>";
+            if($_POST["generaliId"]!=""){
+                echo "<tr><td><select id='generali_examination_selector'>";
+                $examinations = $generaliService->retrieveExaminationsOfSpeciality($_POST["generaliId"]);
+                foreach($examinations as $examination){
+                    echo "<option value='{$examination["id"]}'>{$examination["name"]}</option>";
+                }
+                echo "</select></td>";
+                echo "<td><a class='generali-button' href='#' onClick='setExaminationOfSpeciality({$_GET["szerk"]},$(\"#generali_examination_selector\").find(\":selected\").val());return false'>Vizsgálat hozzáadása</a></td>";
+                echo "</tr>";
+            }
+            if($_POST["generaliId"]!=""){
+                echo "<tr><td colspan='2'>&nbsp;</td></tr>";
+                echo "<tr><td colspan='2'><span style='margin-top:20px'><strong>Hozzárendelt vizsgálatok</strong></span></td></tr>";
+                $examinations = $generaliService->retrieveExaminationsOfSpeciality($_POST["generaliId"]);
+                foreach($examinations as $examination){
+                    if(!empty($examination["partner_examination_id"])){
+                        echo "<tr><td colspan='2'>{$examination["name"]}&nbsp;<i style='color:red;cursor:pointer'class='fa-solid fa-circle-xmark'></i></td></tr>";
+                    }
+                }
+            }
+            echo "</table>";
+            echo "</div></td></tr>";
             echo "<tr><td colspan='2'><div class='tdsepdiv'>Figyelmeztetések</div></td></tr>";
             echo "<tr><td colspan='2' valign=top><input type='submit' name='addtipmegj' value='+ figyelmeztetés hozzáadása'></td></tr>";
 

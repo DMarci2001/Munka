@@ -3,15 +3,13 @@
 class BookingSyncApi {
     const LOG_ID = 30;
 
-    private $utils;
-
     private array $placeSyncMap = [
-        "hungariamed" => [[100, 644, 1,1238], 292, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
-        "keltexmed"   => [[292, 328, 357,372], 100, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
+        "hungariamed" => [[100, 644, 1, 1238], 372, "https://bejelentkezes.keltexmed.hu/syncApi.php?key=e23f8b75-9d88-4ad1-8149-12ece3ff9ce9"],
+        "keltexmed"   => [[292, 328, 357, 372], 1238, "https://bejelentkezes.hungariamed.hu/syncApi.php?key=04ab0c03-7e9f-468f-8d37-edc1a639d013"]
     ];
 
     public function __construct() {
-        $this->utils = new Utils();
+
     }
 
     public function start() {

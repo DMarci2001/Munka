@@ -887,10 +887,10 @@ class AdminBookingPage extends AdminCorePage
                         LEFT JOIN felhasznalok felh ON felh.taj=lista.taj
                         WHERE felh.id IS NULL");*/
         $params = array();
-        $datum = date("Y-m-d H:i:s", strtotime("2025-02-28 07:30:00"));
+        $datum = date("Y-m-d H:i:s", strtotime("2026-01-26 08:30:00"));
         $orvosid=377;
         $helyszinid=282;
-        $rinterval=10;
+        $rinterval=5;
         $szurestipusid=48;
         $cegId=220;
         while ($r = sql_fetch_array($q)) {

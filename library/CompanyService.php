@@ -51,7 +51,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="tesco";
+            $d="bejelentkezes";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");

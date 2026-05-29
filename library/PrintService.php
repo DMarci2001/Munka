@@ -31,6 +31,7 @@ class PrintService
         "ghcstandard" => "ghc-szures-2024-standard.pdf",
         "nkfihsetalolap" => "NKFIH_setalolap_2024.pdf",
         "mende_adatkezeles" => "mende_adatkezeles.pdf",
+        "tmszcsetalolap" => "tmszc_setalolap.pdf",
         "genetika" => "genetikai_teljes_dokumentum.pdf",
         "mikrobi" => "genetikai_teljes_dokumentum.pdf",
         "medicaregenetika" => "MedicareLabor-genetikai-beleegyezo_nyilatkozat.pdf",
@@ -245,6 +246,13 @@ class PrintService
             return;
         }
 
+        if ($this->templateId == "tmszcsetalolap") {
+            $this->printTMSZCSetalo();
+            return;
+        }
+
+        
+
         //HTML alapú dokumentumok:
         if (strpos($this->templateFileName, ".html") !== false) {
             header("Content-type: text/html; charset=UTF-8");
@@ -431,6 +439,46 @@ class PrintService
     }
 
     private function printMendeAdatkezeles()
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $cim = $this->reservationData["irsz"] . " " . $this->reservationData["varos"] . ", " . $this->reservationData["utca"];
+
+        $input = [
+            "nev" => $this->pdfChars($this->reservationData["nev"]),
+            "szuldatum" => date("Y. m. d.", strtotime($this->reservationData["szuldatum"])),
+            "taj" => $this->pdfChars($this->reservationData["taj"]),
+            "cim" => $this->pdfChars($cim),
+            "levelezesicim" => $this->pdfChars($cim),
+            "telefon" => $this->pdfChars($this->reservationData["telefon"]),
+            "email" => $this->pdfChars($this->reservationData["email"]),
+        ];
+
+        $fileName = "Mende_Adatkezeles_" . date("Y_m_d", strtotime($this->reservationData["datum"])) . "_{$this->reservationData["nev"]}.pdf";
+
+        $pdf = new Pdf("templates/{$this->templateFileName}");
+
+        $raw = $pdf->needAppearances()->fillForm($input)->flatten()->toString();
+
+        if ($raw === false) {
+            $error = $pdf->getError();
+            var_dump($error);
+        } else {
+            header("Pragma: no-cache");
+            header("Cache-Control: no-store, no-cache");
+            header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must-revalidate");
+            header('Content-transfer-encoding: binary');
+            header("Content-Type: application/octet-stream");
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            //header("Content-Type: application/pdf");
+            echo $raw;
+        }
+    }
+
+    private function printTMSZCSetalo()
     {
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
@@ -1697,7 +1745,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
                 "eletkor" => $age,
                 "neme" => $this->pdfChars($neme),
                 "szurestipus" => $this->pdfChars($reservation["szurestipusnev"]),
-                "keltezes" => $this->pdfChars($reservation["helyszin"]).", ".$this->pdfChars($reservation["datum"])
+                "keltezes" => $this->pdfChars($reservation["helyszin"]).", ".date("Y.m.d", strtotime($reservation["datum"]))
             ];
             $pdf = new Pdf($pdfLocation);
             $pdf->fillForm($input)->needAppearances()->flatten()->saveAs($saveName);
@@ -1724,7 +1772,7 @@ copy /B txt.txt \\\\127.0.0.1\zebra1
     public function generate_aldi_vv(){
         //$laborRequestData = sql_query("SELECT * FROM labrequests WHERE bekuldokod='000000477' AND INSTR(created,'2024') and status='done';")->fetchAll(PDO::FETCH_ASSOC);
         //$laborRequestData = sql_query("SELECT * FROM asz_vv_table;")->fetchAll(PDO::FETCH_ASSOC);
-        $laborRequestData = sql_query("SELECT * FROM obh_laborok_2;")->fetchAll(PDO::FETCH_ASSOC);
+        $laborRequestData = sql_query("SELECT * FROM bme_laborok;")->fetchAll(PDO::FETCH_ASSOC);
         $path = __DIR__."/pages_admin/other/tmp/";
 
         //echo count($laborRequestData)." db sor.";
