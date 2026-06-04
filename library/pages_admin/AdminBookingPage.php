@@ -601,6 +601,8 @@ class AdminBookingPage extends AdminCorePage
     public function showPage()
     {
 
+        $notificationService = New NotificationService();
+
         /*$ferfi = $no = 0;
         $utvonalak = [];
         $utvonalak[1] = array("ultrahang"=>1,"labor"=>2,"eszkozos"=>3,"belgyogyaszat"=>4,"borgyogyaszat"=>5,"mrtg"=>6,"emlo"=>null,"mammo"=>null);

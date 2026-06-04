@@ -332,6 +332,10 @@ class AdminSettingsPage extends AdminCorePage
         echo $this->showErrors();
         echo $this->showSuccess();
 
+        $patientFollowUpService = new PatientFollowUpService();
+
+        echo $patientFollowUpService->uiFrame();
+
         $row = sql_fetch_array(sql_query("select * from settings"));
 
         echo "<form name='iform' method='post' enctype='multipart/form-data'>";

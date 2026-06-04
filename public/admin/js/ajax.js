@@ -5589,12 +5589,482 @@ function openPatientFollowUp(taj){
         url: "index.php",
         data: {openPatientFollowUp:true,taj:taj},
         success: function(response){
+            console.log(response);
             if(response){
                 const $container = $("#patient-follow-up-tab-container");
                 html+="    <li class=\"nav-item\" role=\"presentation\" id=\"012345678-li\">";
                 html+="        <button class=\"nav-link\" id=\"012345678-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#012345678-tab-pane\" type=\"button\" role=\"tab\" aria-controls=\"012345678-tab-pane\" aria-selected=\"true\">Teszt Elek&nbsp;<i onClick='removeOpenedPatientFollowUp(\"012345678-li\")' style=\"cursor:pointer\" class=\"fa-solid fa-circle-xmark\"></i></button>";
                 html+="    </li>";
                 $container.append(html);
+            }
+        }
+    })
+}
+
+function removeOpenedPatientFollowUp(id){
+    $("#"+id).remove();
+    $("#data-tab-pane").addClass("active show");
+}
+
+var loadingSpinner = "<button class=\"btn btn-primary\" type=\"button\" disabled>";
+    loadingSpinner+= "<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>";
+    loadingSpinner+= "Loading...";
+    loadingSpinner+= "</button>";
+
+function isEmpty( el ){
+    return !$. trim(el. html())
+}
+
+function uploadFGSZExcelFile() {
+
+    $("#excel-list-container").html(loadingSpinner);
+
+    var formData = new FormData();
+    formData.append("excel-list", $("#excelList").get(0).files[0]);
+    formData.append("uploadFGSZExcelFile", true);
+
+    $.ajax({
+        url: "index.php",
+        type: "POST",
+        processData: false,
+        cache: false,
+        async: true,
+        data: formData,
+        contentType: false,
+        success: function (data) {
+            $("#excel-list-container").html(data);
+            checkForSummit();
+        }
+    });
+}
+
+function checkForSummit(){
+    var labs = list = 0;
+    if(!isEmpty($('#excel-list-container'))){
+        list++;
+    }
+    if(!isEmpty($('#lab-document-container'))){
+        labs++;
+    }
+    if((labs+list)>1){
+
+        $("#summit-data-structures").html(loadingSpinner);
+
+        var formData = new FormData();
+        formData.append("summit-data-structures", true);
+
+        $.ajax({
+            url: "index.php",
+            type: "POST",
+            processData: false,
+            cache: false,
+            async: true,
+            data: formData,
+            contentType: false,
+            success: function (data) {
+                $("#summit-data-structures").html(data);
+            }
+        });
+    }
+}
+
+function saveFgszMailSample(type,tinymceId,subject,cegid,selectorId){
+    var content = tinymce.get(tinymceId).getContent();
+
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {saveFgszMailSample:true,type:type,subject:subject,content:content,cegid:cegid},
+        success: function(response){
+        console.log(response);
+        $(selectorId).html(response);
+         $.toast({
+                text: "Sikeres mentés!",
+                icon: "success"
+            });
+        }
+    })
+}
+
+function loadFgszMailSample(type,tinymceId,subject,cegid,selectorId){
+    var logId = $(selectorId).val()
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        dataType:'json',
+        data: {loadFgszMailSample:true,type:type,subject:subject,cegid:cegid,logId:logId},
+        success: function(response){
+            if(response){
+                tinymce.get(tinymceId).setContent(response.content);
+                $("#"+type+"s_mail_subject").val(response.subject);
+            }
+            
+        }
+    })
+}
+
+function filterWorkforceList(selector,cegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        //dataType:'json',
+        data: {filterWorkforceList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                $("#actual-referral-list-container").html(response);
+                $("#actual-referral-list-container").html(response);
+            }
+        }
+    })
+}
+
+function filterDoctorsAndLeadersList(selector,cegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        //dataType:'json',
+        data: {filterDoctorsAndLeadersList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                $("#actual-referral-arrays-container").html(response);
+                $("#generateReferralPdfArraysButton").show();
+                //$("#actual-referral-list-container").html(response);
+            }
+        }
+    })
+}
+
+function generateReferralPdfArrays(selector,cegid){
+    $("#actual-referral-arrays-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {generateReferralPdfArrays:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-referral-arrays-container");
+                $container.html(response);
+            }
+        }
+    })
+}
+
+function filterNotificationList(selector,cegid){
+    $("#actual-sending-notifications-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {filterNotificationList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-sending-notifications-container");
+                $container.html(response);
+                $("#sendNotificationsButton").show();
+            }
+        }
+    })
+}
+
+function sendNotifications(selector,cegid){
+    $("#actual-sending-notifications-container").html(loadingSpinner);
+    $("#sendNotificationsButton").hide();
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {sendNotifications:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-sending-notifications-container");
+                $container.html(response);
+                $("#sendNotificationsButton").show();
+                $.toast({
+                    text: "Sikeres küldés!",
+                    icon: "success"
+                });
+            }
+        }
+    })
+}
+
+function generateReferalPdfByFilterSelector(selector,cegid){
+    $("#actual-referal-list-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {generateReferalPdfByFilterSelector:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-referal-list-container");
+                $container.html(response);
+            }
+        }
+    })
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-bs-toggle="popover"]');
+  if (!el) return;
+
+  // ha még nincs példány, létrehozzuk
+  let inst = bootstrap.Popover.getInstance(el);
+  if (!inst) {
+    inst = new bootstrap.Popover(el);
+  }
+
+  inst.toggle();
+});
+
+function openPatientFollowUp(taj){
+    var html = "";
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {openPatientFollowUp:true,taj:taj},
+        success: function(response){
+            console.log(response);
+            if(response){
+                const $container = $("#patient-follow-up-tab-container");
+                html+="    <li class=\"nav-item\" role=\"presentation\" id=\"012345678-li\">";
+                html+="        <button class=\"nav-link\" id=\"012345678-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#012345678-tab-pane\" type=\"button\" role=\"tab\" aria-controls=\"012345678-tab-pane\" aria-selected=\"true\">Teszt Elek&nbsp;<i onClick='removeOpenedPatientFollowUp(\"012345678-li\")' style=\"cursor:pointer\" class=\"fa-solid fa-circle-xmark\"></i></button>";
+                html+="    </li>";
+                $container.append(html);
+            }
+        }
+    })
+}
+
+function removeOpenedPatientFollowUp(id){
+    $("#"+id).remove();
+    $("#data-tab-pane").addClass("active show");
+}
+
+var loadingSpinner = "<button class=\"btn btn-primary\" type=\"button\" disabled>";
+    loadingSpinner+= "<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>";
+    loadingSpinner+= "Loading...";
+    loadingSpinner+= "</button>";
+
+function isEmpty( el ){
+    return !$. trim(el. html())
+}
+
+function uploadFGSZExcelFile() {
+
+    $("#excel-list-container").html(loadingSpinner);
+
+    var formData = new FormData();
+    formData.append("excel-list", $("#excelList").get(0).files[0]);
+    formData.append("uploadFGSZExcelFile", true);
+
+    $.ajax({
+        url: "index.php",
+        type: "POST",
+        processData: false,
+        cache: false,
+        async: true,
+        data: formData,
+        contentType: false,
+        success: function (data) {
+            $("#excel-list-container").html(data);
+            checkForSummit();
+        }
+    });
+}
+
+function checkForSummit(){
+    var labs = list = 0;
+    if(!isEmpty($('#excel-list-container'))){
+        list++;
+    }
+    if(!isEmpty($('#lab-document-container'))){
+        labs++;
+    }
+    if((labs+list)>1){
+
+        $("#summit-data-structures").html(loadingSpinner);
+
+        var formData = new FormData();
+        formData.append("summit-data-structures", true);
+
+        $.ajax({
+            url: "index.php",
+            type: "POST",
+            processData: false,
+            cache: false,
+            async: true,
+            data: formData,
+            contentType: false,
+            success: function (data) {
+                $("#summit-data-structures").html(data);
+            }
+        });
+    }
+}
+
+function saveFgszMailSample(type,tinymceId,subject,cegid,selectorId){
+    var content = tinymce.get(tinymceId).getContent();
+
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {saveFgszMailSample:true,type:type,subject:subject,content:content,cegid:cegid},
+        success: function(response){
+        console.log(response);
+        $(selectorId).html(response);
+         $.toast({
+                text: "Sikeres mentés!",
+                icon: "success"
+            });
+        }
+    })
+}
+
+function loadFgszMailSample(type,tinymceId,subject,cegid,selectorId){
+    var logId = $(selectorId).val()
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        dataType:'json',
+        data: {loadFgszMailSample:true,type:type,subject:subject,cegid:cegid,logId:logId},
+        success: function(response){
+            if(response){
+                tinymce.get(tinymceId).setContent(response.content);
+                $("#"+type+"s_mail_subject").val(response.subject);
+            }
+            
+        }
+    })
+}
+
+function filterWorkforceList(selector,cegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        //dataType:'json',
+        data: {filterWorkforceList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                $("#actual-referral-list-container").html(response);
+                $("#actual-referral-list-container").html(response);
+            }
+        }
+    })
+}
+
+function filterDoctorsAndLeadersList(selector,cegid){
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        //dataType:'json',
+        data: {filterDoctorsAndLeadersList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                $("#actual-referral-arrays-container").html(response);
+                $("#generateReferralPdfArraysButton").show();
+                //$("#actual-referral-list-container").html(response);
+            }
+        }
+    })
+}
+
+function generateReferralPdfArrays(selector,cegid){
+    $("#actual-referral-arrays-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {generateReferralPdfArrays:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-referral-arrays-container");
+                $container.html(response);
+            }
+        }
+    })
+}
+
+function filterNotificationList(selector,cegid){
+    $("#actual-sending-notifications-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {filterNotificationList:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-sending-notifications-container");
+                $container.html(response);
+                $("#sendNotificationsButton").show();
+            }
+        }
+    })
+}
+
+function sendNotifications(selector,cegid){
+    $("#actual-sending-notifications-container").html(loadingSpinner);
+    $("#sendNotificationsButton").hide();
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {sendNotifications:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-sending-notifications-container");
+                $container.html(response);
+                $("#sendNotificationsButton").show();
+                $.toast({
+                    text: "Sikeres küldés!",
+                    icon: "success"
+                });
+            }
+        }
+    })
+}
+
+function generateReferalPdfByFilterSelector(selector,cegid){
+    $("#actual-referal-list-container").html(loadingSpinner);
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {generateReferalPdfByFilterSelector:true,selector:selector,cegid:cegid},
+        success: function(response){
+            if(response){
+                const $container = $("#actual-referal-list-container");
+                $container.html(response);
+            }
+        }
+    })
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-bs-toggle="popover"]');
+  if (!el) return;
+
+  // ha még nincs példány, létrehozzuk
+  let inst = bootstrap.Popover.getInstance(el);
+  if (!inst) {
+    inst = new bootstrap.Popover(el);
+  }
+
+  inst.toggle();
+});
+
+function openPatientFollowUp(taj){
+    var html = "";
+    $.ajax({
+        type: "POST",
+        url: "index.php",
+        data: {openPatientFollowUp:true,taj:taj},
+        success: function(response){
+            if(response){
+                const $tabContainer = $("#patient-follow-up-tab-container");
+                html+="    <li class=\"nav-item\" role=\"presentation\" id=\"012345678-li\">";
+                html+="        <button class=\"nav-link\" id=\"012345678-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#012345678-tab-pane\" type=\"button\" role=\"tab\" aria-controls=\"012345678-tab-pane\" aria-selected=\"true\">Teszt Elek&nbsp;<i onClick='removeOpenedPatientFollowUp(\"012345678-li\")' style=\"cursor:pointer\" class=\"fa-solid fa-circle-xmark\"></i></button>";
+                html+="    </li>";
+                $tabContainer.append(html);
+
+                const $tableContainer = $("#patient-follow-up-table-container");
+                html ="    <div class=\"tab-pane fade show active\" id=\"012345678-tab-pane\" role=\"tabpanel\" aria-labelledby=\"data-tab\" tabindex=\"0\">";
+                html+=         response;
+                html+="    </div>";
+                $tableContainer.append(html);
             }
         }
     })

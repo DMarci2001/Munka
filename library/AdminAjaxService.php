@@ -1551,6 +1551,12 @@ class AdminAjaxService {
             die($html);
         }
 
+        if(isset($_POST["openPatientFollowUp"])){
+            $patientFollowUpService = New PatientFollowUpService();
+            $patientFollowUpService->openPatientFollowUp($_POST["openPatientFollowUp"]);
+            die();
+        }
+
         new LaborKeroService();
         new InvoiceService();
     }
