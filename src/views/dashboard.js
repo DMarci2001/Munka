@@ -32,28 +32,15 @@ export function renderDashboard(el) {
   el.innerHTML = `
     <div class="content">
       <div class="stat-grid">
-        <div class="stat accent"><div class="num">${total}</div><div class="lbl">Összes eszköz</div></div>
-        <div class="stat"><div class="num">${ready}</div><div class="lbl">Kiadható</div></div>
-        <div class="stat"><div class="num">${deployed}</div><div class="lbl">Kihelyezve</div></div>
-        <div class="stat"><div class="num">${reserved}</div><div class="lbl">Lefoglalva</div></div>
+        <button class="stat accent"><div class="num">${total}</div><div class="lbl">Összes eszköz</div></button>
+        <button class="stat"><div class="num">${ready}</div><div class="lbl">Kiadható</div></button>
+        <button class="stat"><div class="num">${deployed}</div><div class="lbl">Kihelyezve</div></button>
+        <button class="stat"><div class="num">${reserved}</div><div class="lbl">Lefoglalva</div></button>
         ${isStore
-          ? `<div class="stat ${pendingCount ? 'warn' : ''}"><div class="num">${pendingCount}</div><div class="lbl">Leadott</div></div>`
-          : `<div class="stat"><div class="num">${myCount}</div><div class="lbl">Nálam van</div></div>`}
-        <div class="stat ${overdueCal ? 'danger' : ''}"><div class="num">${overdueCal}</div><div class="lbl">Lejárt kalibráció</div></div>
+          ? `<button class="stat ${pendingCount ? 'warn' : ''}"><div class="num">${pendingCount}</div><div class="lbl">Leadott</div></button>`
+          : `<button class="stat"><div class="num">${myCount}</div><div class="lbl">Nálam van</div></button>`}
+        <button class="stat ${overdueCal ? 'danger' : ''}"><div class="num">${overdueCal}</div><div class="lbl">Lejárt kalibráció</div></button>
       </div>
-
-      <div class="detail-grid">
-        <div class="panel">
-          <div class="panel-head">Gyors műveletek</div>
-          <div class="panel-body">
-            <div style="display:flex; flex-wrap:wrap; gap:10px">
-              <button class="btn btn-primary" data-go="/inventory">${icons.inventory} Eszközök böngészése</button>
-              <button class="btn btn-outline" data-go="/my">${icons.my} Nálam lévő eszközök</button>
-              ${isStore ? `<button class="btn btn-outline" data-go="/pending">${icons.pending} Ellenőrzésre vár${pendingCount ? ` (${pendingCount})` : ''}</button>` : ''}
-              ${isStore ? `<button class="btn btn-outline" data-go="/register">${icons.register} Új eszköz</button>` : ''}
-            </div>
-          </div>
-        </div>
 
         <div class="panel">
           <div class="panel-head">Figyelendő — kalibráció</div>
@@ -63,7 +50,7 @@ export function renderDashboard(el) {
               <tbody>
                 ${calRows.map((v) => `
                   <tr data-dev="${v.dev.device_id}">
-                    <td><span class="tag-mono">${esc(v.dev.asset_tag)}</span><div class="cell-sub">${esc(v.typeName)}</div></td>
+                    <td><span class="tag-mono">${esc(v.dev.model)}</span><div class="cell-sub">${esc(v.typeName)}</div></td>
                     <td>${statusBadge(v.status)}</td>
                     <td style="text-align:right">
                       <span class="attr-flag ${v.calibrationFlag}">${v.calibrationFlag === 'overdue' ? 'Lejárt' : 'Hamarosan'}</span>

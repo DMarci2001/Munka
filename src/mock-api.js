@@ -37,10 +37,6 @@ function buildShell() {
   document.getElementById('app').innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
-        <div class="sidebar-brand">
-          <span class="logo">${icons.inventory}</span>
-          <span>Eszköznyilvántartás<small>Hungária Med-M Kft.</small></span>
-        </div>
         <nav class="nav-section" id="nav"></nav>
       </aside>
       <main class="main">

@@ -27,7 +27,7 @@ export function deviceVM(dev) {
   return {
     dev,
     type,
-    typeName: type?.name || '—',
+    typeName: type?.type || '—',
     status: effectiveStatus,
     holderId: cur.holder,
     holder: cur.holder ? getUser(cur.holder) : null,

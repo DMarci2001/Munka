@@ -58,6 +58,15 @@ Három szint, a legalacsonyabbtól a legmagasabbig (`auth` enum):
 
 Ökölszabály, amelyet a kezelő alkalmaz: a `user` csak olyan eszközön hajthat végre műveletet, **amely éppen nála van** (vagy egy raktárból szabadon elérhetőt vehet ki); más eszközén végzett művelethez, vagy bármilyen raktár-raktár mozgatáshoz `storekeeper` vagy magasabb szerepkör kell.
 
+### 3.1 Navigációs láthatóság (UI)
+
+A szerepkör a felületi navigációt is szűri:
+
+- **Mindenki** (≥ `user`): *Összes készülék* (a teljes eszközlista) és *Készülékek nálam*.
+- **Csak `storekeeper` / `it_admin`**: az *Eszközkezelő* irányítópult, valamint a *Leadott készülékek*, *Új készülék* és *Adatbevitel* nézetek.
+
+A rendes felhasználó tehát az operátori irányítópultot (*Eszközkezelő*) nem látja — számára a böngészés az eszközlistára és a nála lévő eszközökre korlátozódik. Ez csak láthatósági (menü-) szűrés; az érdemi engedélyezést továbbra is a fenti mátrix és a `move_asset` kapuzza.
+
 ---
 
 ## 4. Alapműveletek
@@ -194,6 +203,8 @@ function move_asset($actor, $device_id, $event_type, $to_user_id = null, $to_dep
 
 Minden esetben rögzül az `actor_user_id` — a raktár-raktár mozgatásnál is, ahol mindkét oldali oszlop osztály, de a végrehajtó raktáros így is naplózva van.
 
+> **Cél-részleg kiválasztása az átadási űrlapon:** a cél-helyszín kiválasztásakor a cél-részleg legördülő automatikusan a kiválasztott helyszínhez tartozó részlegekre szűkül (`departments.locations_id = kiválasztott helyszín`), és alapértelmezetten a helyszín raktárát (`type = 'raktár'`) ajánlja fel. Ha az adott helyszínen nincs részleg, az űrlap ezt jelzi és üres marad. Így a beküldött `to_departments_id` mindig konzisztens a választott helyszínnel.
+
 ---
 
 ## 6. Űrlapgenerálás és értékellenőrzés
@@ -223,6 +234,8 @@ A `devices.status` szinkronban marad a birtoklással, így a felhasználók ritk
 | `send_to_repair`                                     | `In repair`       |
 | `mark_lost`                                          | `Lost`            |
 | `retire_device`                                      | `Retired`         |
+
+> A táblázat a `devices.status` **adatbázis-értékeit** mutatja; a felület ezeket magyar címkékkel jeleníti meg — pl. `Ready to deploy` → „Kivehető", `Deployed` → „Kiadva", `Reserved` → „Lefoglalva", `Pending return` → „Visszavétel folyamatban".
 
 A `Reserved` állapotot a **felhasználói foglalás** állítja be automatikusan (`reserve_device`, §10): foglaláskor `Reserved`, elviteltől `Deployed`, lemondás/lejárat után vissza `Ready to deploy`. (A raktáros továbbra is állíthatja kézzel is.)
 
