@@ -7,7 +7,7 @@ import { getDepartment, getLocation, getUser, getDeviceType } from '../state/sto
 // ---- Státusz: DB-érték → magyar címke + badge szín ----------
 const STATUS = {
   'Deployed':        { label: 'Kiadva',        cls: 'status-deployed' },
-  'Ready to deploy': { label: 'Kiadható',          cls: 'status-ready' },
+  'Ready to deploy': { label: 'Kivehető',          cls: 'status-ready' },
   'Reserved':        { label: 'Lefoglalva',        cls: 'status-reserved' },
   'Pending return':  { label: 'Visszavétel folyamatban', cls: 'status-pending' },
   'In repair':       { label: 'Javítás alatt',     cls: 'status-repair' },

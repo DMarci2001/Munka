@@ -73,11 +73,11 @@ function renderNav() {
   const cur = PAGES[active.key]?.nav;
 
   const items = [
-    { key: 'dashboard', path: '/',          label: 'Eszközkezelő', ico: icons.dashboard },
-    { key: 'inventory', path: '/inventory', label: 'Készülékek',     ico: icons.inventory },
+    { key: 'inventory', path: '/inventory', label: 'Összes készülék',     ico: icons.inventory },
     { key: 'my',        path: '/my',        label: 'Készülékek nálam',        ico: icons.my },
   ];
   const storeItems = [
+    { key: 'dashboard', path: '/',          label: 'Eszközkezelő', ico: icons.dashboard },
     { key: 'pending',       path: '/pending',       label: 'Leadott készülékek', ico: icons.pending,   badge: pendingCount || null },
     { key: 'register',      path: '/register',      label: 'Új készülék',  ico: icons.register },
     { key: 'register-data', path: '/register-data', label: 'Adatbevitel', ico: icons.building },

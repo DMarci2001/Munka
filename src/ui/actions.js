@@ -164,6 +164,19 @@ export function dlgTransfer(deviceId) {
         <input type="text" class="form-control" name="notes" />
       </div>`,
     confirmText: 'Átadás',
+    onMount: (root) => {
+      const locSel = root.querySelector('[name=to_location]');
+      const deptSel = root.querySelector('[name=to_dept]');
+      const fillDepts = () => {
+        const locId = Number(locSel.value);
+        const list = allDepts.filter((d) => d.locations_id === locId);
+        deptSel.innerHTML = list.length
+          ? list.map((d) => `<option value="${d.id}" ${d.type === 'raktár' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
+          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
+      };
+      locSel.addEventListener('change', fillDepts);
+      fillDepts();
+    },
     onConfirm: (root) => {
       const to_user_id = Number(root.querySelector('[name=to_user]').value);
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
