@@ -62,8 +62,8 @@ Három szint, a legalacsonyabbtól a legmagasabbig (`auth` enum):
 
 A szerepkör a felületi navigációt is szűri:
 
-- **Mindenki** (≥ `user`): *Összes készülék* (a teljes eszközlista) és *Készülékek nálam*.
-- **Csak `storekeeper` / `it_admin`**: az *Eszközkezelő* irányítópult, valamint a *Leadott készülékek*, *Új készülék* és *Adatbevitel* nézetek.
+- **Mindenki** (≥ `user`): *Összes eszköz* (a teljes eszközlista) és *Nálam*.
+- **Csak `storekeeper` / `it_admin`**: az *Eszközkezelő* irányítópult, valamint a *Leadott eszközök*, *Új eszköz* és *Adatbevitel* nézetek.
 
 A rendes felhasználó tehát az operátori irányítópultot (*Eszközkezelő*) nem látja — számára a böngészés az eszközlistára és a nála lévő eszközökre korlátozódik. Ez csak láthatósági (menü-) szűrés; az érdemi engedélyezést továbbra is a fenti mátrix és a `move_asset` kapuzza.
 

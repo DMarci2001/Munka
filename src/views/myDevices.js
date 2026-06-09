@@ -17,7 +17,7 @@ export function renderMyDevices(el) {
 
   el.innerHTML = `
     <div class="content">
-      <h3 class="section-title">Készülékek a birtokomban</h3>
+      <h3 class="section-title">Eszközök a birtokomban</h3>
       ${held.length ? `
       <div class="table-wrap" style="margin-bottom:26px">
         <table class="grid">

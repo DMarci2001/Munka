@@ -11,7 +11,6 @@ import {
 import { roleLabel, esc } from './lib/format.js';
 import { icons } from './ui/components.js';
 
-import { renderDashboard } from './views/dashboard.js';
 import { renderInventory } from './views/inventory.js';
 import { renderDevice } from './views/device.js';
 import { renderMyDevices } from './views/myDevices.js';
@@ -21,12 +20,11 @@ import { renderRegisterData } from './views/register_data.js';
 
 // ---- Route-tábla --------------------------------------------
 const PAGES = {
-  '/':          { title: 'Eszközkezelő',                    nav: 'dashboard', render: renderDashboard },
-  '/inventory': { title: 'Összes készülék',                        nav: 'inventory', render: renderInventory },
-  '/my':        { title: 'Készülékek nálam',             nav: 'my',        render: renderMyDevices },
+  '/inventory': { title: 'Eszközlista',                        nav: 'inventory', render: renderInventory },
+  '/my':        { title: 'Nálam',             nav: 'my',        render: renderMyDevices },
   '/pending':   { title: 'Ellenőrzésre vár', nav: 'pending',   render: renderPending, role: 'storekeeper' },
-  '/register':       { title: 'Új készülék',        nav: 'register',      render: renderRegister,     role: 'storekeeper' },
   '/register-data':  { title: 'Adatbevitel',      nav: 'register-data', render: renderRegisterData, role: 'storekeeper' },
+  '/register':  { title: 'Új eszköz bevitele', nav: 'register', render: renderRegister, role: 'storekeeper' },
   '/device/:id':{ title: 'Készüék részletei',                nav: 'inventory', render: renderDevice },
 };
 
@@ -69,13 +67,11 @@ function renderNav() {
   const cur = PAGES[active.key]?.nav;
 
   const items = [
-    { key: 'inventory', path: '/inventory', label: 'Összes készülék',     ico: icons.inventory },
-    { key: 'my',        path: '/my',        label: 'Készülékek nálam',        ico: icons.my },
+    { key: 'inventory', path: '/inventory', label: 'Eszközlista',     ico: icons.inventory },
+    { key: 'my',        path: '/my',        label: 'Nálam',        ico: icons.my },
   ];
   const storeItems = [
-    { key: 'dashboard', path: '/',          label: 'Eszközkezelő', ico: icons.dashboard },
-    { key: 'pending',       path: '/pending',       label: 'Leadott készülékek', ico: icons.pending,   badge: pendingCount || null },
-    { key: 'register',      path: '/register',      label: 'Új készülék',  ico: icons.register },
+    { key: 'pending',       path: '/pending',       label: 'Leadott eszközök', ico: icons.pending,   badge: pendingCount || null },
     { key: 'register-data', path: '/register-data', label: 'Adatbevitel', ico: icons.building },
   ];
 
@@ -87,7 +83,7 @@ function renderNav() {
 
   const nav = document.getElementById('nav');
   nav.innerHTML =
-    `<div class="nav-label">Készülékek</div>` + items.map(itemHTML).join('') +
+    `<div class="nav-label">Eszközök</div>` + items.map(itemHTML).join('') +
     (isStore ? `<div class="nav-label">Raktárkezelés</div>` + storeItems.map(itemHTML).join('') : '');
   nav.querySelectorAll('[data-path]').forEach((a) =>
     a.addEventListener('click', () => navigate(a.dataset.path)));

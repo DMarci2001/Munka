@@ -524,6 +524,7 @@ export function subscribe(fn) {
   return () => subscribers.delete(fn);
 }
 function notify() {
+  persist();
   for (const fn of subscribers) fn();
 }
 

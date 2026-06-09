@@ -38,12 +38,12 @@ export const users = [
 
 // ---- Eszköztípusok ------------------------------------------
 export const deviceTypes = [
-  { id: 1, type: 'Ultrahang', description: 'Hordozható ultrahang készülék' },
+  { id: 1, type: 'Ultrahang', description: 'Hordozható ultrahang eszköz' },
   { id: 2, type: 'Laptop', description: 'Hordozható számítógép' },
   { id: 3, type: 'Nyomtató', description: 'Hordozható / asztali nyomtató' },
   { id: 4, type: 'Router', description: 'Hálózati router' },
   { id: 5, type: 'Vérnyomásmérő', description: 'Digitális vérnyomásmérő' },
-  { id: 6, type: 'EKG', description: 'Hordozható EKG készülék' },
+  { id: 6, type: 'EKG', description: 'Hordozható EKG eszköz' },
   { id: 7, type: 'USB meghajtó', description: 'Titkosítható USB tároló' },
 ];
 
