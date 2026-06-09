@@ -25,7 +25,7 @@ const PAGES = {
   '/pending':   { title: 'Ellenőrzésre vár', nav: 'pending',   render: renderPending, role: 'storekeeper' },
   '/register-data':  { title: 'Adatbevitel',      nav: 'register-data', render: renderRegisterData, role: 'storekeeper' },
   '/register':  { title: 'Új eszköz bevitele', nav: 'register', render: renderRegister, role: 'storekeeper' },
-  '/device/:id':{ title: 'Készüék részletei',                nav: 'inventory', render: renderDevice },
+  '/device/:id':{ title: 'Készülék részletei',                nav: 'inventory', render: renderDevice },
 };
 
 let active = { key: '/', params: {} };

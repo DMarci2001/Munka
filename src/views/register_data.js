@@ -79,7 +79,7 @@ export function renderRegisterData(el) {
             </div>
             <div class="field">
               <label class="form-label">Leírás</label>
-              <input class="form-control" id="dtype-desc" placeholder="pl. Pulzoximeter eszköz" />
+              <input class="form-control" id="dtype-desc" placeholder="pl. Pulzoximeter készülék" />
             </div>
             ${saveBar('Eszköztípus mentése')}
           </div>

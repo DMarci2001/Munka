@@ -2,14 +2,15 @@
 // Eszközlista — keresés, szűrés, böngészés
 // ============================================================
 
-import { getDevices, getDeviceTypes, getLocations, getDepartments, currentRole, roleAtLeast } from '../state/store.js';
+import { getDevices, getDeviceTypes, getLocations, getDepartments, currentRole, roleAtLeast, getUsers } from '../state/store.js';
 import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
 import { statusBadge, statusLabel, locationLabel, holderLabel, esc } from '../lib/format.js';
 import { icons } from '../ui/components.js';
 
 // szűrőállapot (megőrződik nézetváltáskor)
-const filters = { q: '', type: '', status: '', dept: '', loc: '' };
+const filters = { q: '', date: '', type: '', status: '', dept: '', loc: '', holder: ''
+};
 
 const STATUSES = ['Ready to deploy', 'Deployed', 'Reserved', 'Pending return', 'In repair', 'Lost', 'Retired'];
 
@@ -45,6 +46,12 @@ export function renderInventory(el) {
           <option value="">Minden helyiség</option>
           ${getDepartments().map((d) => `<option value="${d.id}" ${String(d.id) === filters.dept ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
         </select>
+        <select class="form-select" id="f-holder" style="max-width:180px">
+          <option value="">Minden birtokos</option>
+          ${getUsers().filter((u) => getDevices().map(deviceVM).some((v) => v.holderId === u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
+        </select>
+
+
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
       ${isStore ? `
@@ -76,6 +83,7 @@ export function renderInventory(el) {
   el.querySelector('#f-status').addEventListener('change', (e) => { filters.status = e.target.value; paint(el); });
   el.querySelector('#f_loc').addEventListener('change', (e) => { filters.loc = e.target.value; paint(el); });
   el.querySelector('#f-dept').addEventListener('change', (e) => { filters.dept = e.target.value; paint(el); });
+  el.querySelector('#f-holder').addEventListener('change', (e) => { filters.holder = e.target.value; paint(el); });
   const btnNew = el.querySelector('#btn-new-device');
   if (btnNew) btnNew.addEventListener('click', () => navigate('/register'));
   el.querySelectorAll('.panel [data-dev]').forEach((r) =>
@@ -91,11 +99,12 @@ function paint(el) {
   if (q) vms = vms.filter((v) =>
     [v.dev.asset_tag, v.dev.model, v.dev.manufacturer, v.dev.serial_number, v.typeName]
       .filter(Boolean).some((s) => s.toLowerCase().includes(q)));
+  if (filters.date) vms = vms.filter((v) => v.lastModified && v.lastModified.includes(filters.date));
   if (filters.type) vms = vms.filter((v) => String(v.dev.device_type_id) === filters.type);
   if (filters.status) vms = vms.filter((v) => v.status === filters.status);
   if (filters.loc) vms = vms.filter((v) => String(v.locationId) === filters.loc);
   if (filters.dept) vms = vms.filter((v) => String(v.departmentId) === filters.dept);
-
+  if (filters.holder) vms = vms.filter((v) => String(v.holderId) === filters.holder);
   if (!vms.length) {
     wrap.innerHTML = `<div class="table-wrap"><div class="empty"><div class="big">${icons.search}</div><div>Nincs a szűrőnek megfelelő eszköz.</div></div></div>`;
     return;
@@ -107,7 +116,7 @@ function paint(el) {
       <table class="grid">
         <thead>
           <tr>
-            <th>Azonosító</th><th>Típus / modell</th><th>Státusz</th>
+            <th>Utoljára módosítva</th><th>Típus / modell</th><th>Státusz</th>
             <th>Birtokos</th><th>Hely</th><th></th>
           </tr>
         </thead>
@@ -126,7 +135,7 @@ function rowHTML(v) {
   const resvNote = v.reservation ? `<div class="cell-sub">Foglalta: ${esc(v.reservedBy?.full_name || '')}</div>` : '';
   return `
     <tr data-dev="${v.dev.device_id}">
-      <td><span class="tag-mono">${esc(v.dev.asset_tag)}</span></td>
+      <td><span class="tag-mono">${esc(v.lastModified) || '—'}</span></td>
       <td>${esc(v.typeName)}<div class="cell-sub">${esc(v.dev.manufacturer)} ${esc(v.dev.model)}</div></td>
       <td>${statusBadge(v.status)}${resvNote}</td>
       <td>${holder}</td>
