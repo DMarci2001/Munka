@@ -138,7 +138,7 @@ function paint(el) {
 
   const q = filters.q.trim().toLowerCase();
   if (q) vms = vms.filter((v) =>
-    [v.dev.asset_tag, v.dev.model, v.dev.manufacturer, v.dev.serial_number, v.typeName]
+    [v.dev.asset_tag, v.dev.model, v.dev.manufacturer, v.dev.serial_number, v.typeName, holderLabel(v.holderId), locationLabel(v.locationId, v.departmentId)]
       .filter(Boolean).some((s) => s.toLowerCase().includes(q)));
   if (filters.type) vms = vms.filter((v) => String(v.dev.device_type_id) === filters.type);
   if (filters.status) vms = vms.filter((v) => v.status === filters.status);
