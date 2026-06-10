@@ -152,8 +152,8 @@ function renderActions(container, v, role, isStore, me) {
   const heldByMe = v.holderId === me.id;
   const reservedByMe = v.reservation && v.reservation.reserved_by === me.id;
   const reservedByOther = v.reservation && v.reservation.reserved_by !== me.id;
-  const retired = dev.status === 'Retired';
-  const lost = dev.status === 'Lost';
+  const retired = dev.status === 'Selejtezve';
+  const lost = dev.status === 'Elveszett';
 
   if (!retired && !lost) {
     // Kivétel: szabad eszköz (vagy nekem foglalt), vagy raktáros bármikor szabadra

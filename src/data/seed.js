@@ -88,7 +88,7 @@ export const attributeDefinitions = [
 ];
 
 // ---- Eszközök -----------------------------------------------
-// status: Deployed | Pending return | Ready to deploy | Reserved |
+// status: Kiadva | Visszavétel folyamatban | Ready to deploy | Lefoglalva |
 //         In repair | Lost | Retired
 //
 // A `_holder` / `_dept` mezők csak a kezdeti custody-események
@@ -98,126 +98,126 @@ export const devices = [
   {
     device_id: 1, device_type_id: 1,
     model: 'Logiq E10', manufacturer: 'GE Healthcare', serial_number: 'GE-LE10-77231',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-09-15', last_service: '2026-03-10', probe_count: 3, reg_class: 'IIb', software_version: 'R2.4.1' },
     _holder: 1, _loc: 1, _dept: 2,
   },
   {
     device_id: 2, device_type_id: 1,
     model: 'Vivid iq', manufacturer: 'GE Healthcare', serial_number: 'GE-VIQ-55102',
-    status: 'Ready to deploy', condition: 'Jó', notes: '',
+    status: 'Kivehető', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-06-20', probe_count: 2, reg_class: 'IIa', software_version: 'R1.8' },
     _holder: null, _loc: 1, _dept: 1,
   },
   {
     device_id: 3, device_type_id: 1,
     model: 'Sonosite Edge II', manufacturer: 'Fujifilm', serial_number: 'FS-EDG2-31188',
-    status: 'Reserved', condition: 'Jó', notes: 'Kardiológiai kihelyezésre tervezve.',
+    status: 'Lefoglalva', condition: 'Jó', notes: 'Kardiológiai kihelyezésre tervezve.',
     attrs: { calibration_due: '2026-05-28', last_service: '2026-02-01', probe_count: 4, reg_class: 'IIb', software_version: 'v3.2' },
     _holder: null, _loc: 2, _dept: 1, _reservedBy: 1,
   },
   {
     device_id: 4, device_type_id: 2,
     model: 'ThinkPad T14', manufacturer: 'Lenovo', serial_number: 'LN-T14-902311',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { os: 'Windows 11', cpu: 'Intel i5-1335U', ram_gb: 16, encrypted: true, domain_joined: true },
     _holder: 2, _loc: 1, _dept: 4,
   },
   {
     device_id: 5, device_type_id: 2,
     model: 'ThinkPad T14', manufacturer: 'Lenovo', serial_number: 'LN-T14-902312',
-    status: 'Pending return', condition: 'Jó', notes: '',
+    status: 'Visszavétel folyamatban', condition: 'Jó', notes: '',
     attrs: { os: 'Windows 11', cpu: 'Intel i5-1335U', ram_gb: 16, encrypted: true, domain_joined: true },
     _holder: 5, _loc: 1, _dept: 7, _pendingReturnTo: 6,
   },
   {
     device_id: 6, device_type_id: 2,
     model: 'EliteBook 840', manufacturer: 'HP', serial_number: 'HP-EB840-44120',
-    status: 'Ready to deploy', condition: 'Jó', notes: '',
+    status: 'Kivehető', condition: 'Jó', notes: '',
     attrs: { os: 'Windows 10', cpu: 'Intel i7-1165G7', ram_gb: 32, encrypted: true, domain_joined: false },
     _holder: null, _loc: 2, _dept: 1,
   },
   {
     device_id: 7, device_type_id: 3,
     model: 'LaserJet Pro M404', manufacturer: 'HP', serial_number: 'HP-M404-11023',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { connection: 'Hálózati', toner_model: 'CF259A', network_address: '10.0.4.21' },
     _holder: null, _loc: 1, _dept: 4,
   },
   {
     device_id: 8, device_type_id: 4,
     model: 'RB4011', manufacturer: 'MikroTik', serial_number: 'MT-4011-88210',
-    status: 'In repair', condition: 'Hibás', notes: 'Túlmelegedés, szerviz alatt.',
+    status: 'Javítás alatt', condition: 'Hibás', notes: 'Túlmelegedés, szerviz alatt.',
     attrs: { ip_address: '10.0.0.1', mac_address: '64:D1:54:AA:BB:01', firmware: '7.13.2' },
     _holder: null, _loc: 2, _dept: 8,
   },
   {
     device_id: 9, device_type_id: 5,
     model: 'M3 Comfort', manufacturer: 'Omron', serial_number: 'OM-M3-77001',
-    status: 'Ready to deploy', condition: 'Jó', notes: '',
+    status: 'Kivehető', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-07-30', cuff_size: 'Felnőtt' },
     _holder: null, _loc: 1, _dept: 1,
   },
   {
     device_id: 10, device_type_id: 5,
     model: 'M6 Comfort', manufacturer: 'Omron', serial_number: 'OM-M6-77044',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-04-15', cuff_size: 'Nagy' },
     _holder: 1, _loc: 1, _dept: 2,
   },
   {
     device_id: 11, device_type_id: 6,
     model: 'PageWriter TC30', manufacturer: 'Philips', serial_number: 'PH-TC30-22115',
-    status: 'Reserved', condition: 'Jó', notes: '',
+    status: 'Lefoglalva', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-08-10', channels: 12, last_service: '2026-01-20' },
     _holder: null, _loc: 1, _dept: 1, _reservedBy: 5,
   },
   {
     device_id: 12, device_type_id: 6,
     model: 'CardioPerfect', manufacturer: 'Welch Allyn', serial_number: 'WA-CP-33010',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-06-09', channels: 12, last_service: '2025-12-05' },
     _holder: 6, _loc: 2, _dept: 3,
   },
   {
     device_id: 13, device_type_id: 7,
     model: 'DataTraveler 64GB', manufacturer: 'Kingston', serial_number: 'KN-DT64-90021',
-    status: 'Ready to deploy', condition: 'Jó', notes: '',
+    status: 'Kivehető', condition: 'Jó', notes: '',
     attrs: { capacity_gb: 64, encrypted: true, phi_approved: true },
     _holder: null, _loc: 2, _dept: 1,
   },
   {
     device_id: 14, device_type_id: 2,
     model: 'Latitude 5440', manufacturer: 'Dell', serial_number: 'DL-L5440-12001',
-    status: 'Ready to deploy', condition: 'Jó', notes: '',
+    status: 'Kivehető', condition: 'Jó', notes: '',
     attrs: { os: 'Windows 11', cpu: 'Intel i5-1345U', ram_gb: 16, encrypted: true, domain_joined: true },
     _holder: null, _loc: 1
   },
   {
     device_id: 15, device_type_id: 5,
     model: 'M3 Comfort', manufacturer: 'Omron', serial_number: 'OM-M3-77099',
-    status: 'Deployed', condition: 'Jó', notes: '',
+    status: 'Kiadva', condition: 'Jó', notes: '',
     attrs: { calibration_due: '2026-10-01', cuff_size: 'Felnőtt' },
     _holder: null, _loc: 2
   },
   {
     device_id: 16, device_type_id: 1,
     model: 'Acuson P500', manufacturer: 'Siemens', serial_number: 'SM-P500-66012',
-    status: 'Retired', condition: 'Selejt', notes: 'Selejtezve: nem javítható tápegység-hiba.',
+    status: 'Selejtezve', condition: 'Selejt', notes: 'Selejtezve: nem javítható tápegység-hiba.',
     attrs: { calibration_due: '2025-03-01', probe_count: 2, reg_class: 'IIa', software_version: 'v2.0' },
     _holder: null, _loc: 2, _dept: 8, _retired: true,
   },
   {
     device_id: 17, device_type_id: 7,
     model: 'DataTraveler 32GB', manufacturer: 'Kingston', serial_number: 'KN-DT32-90050',
-    status: 'Lost', condition: 'Ismeretlen', notes: 'Elveszett bejelentés 2026-05-20.',
+    status: 'Elveszett', condition: 'Ismeretlen', notes: 'Elveszett bejelentés 2026-05-20.',
     attrs: { capacity_gb: 32, encrypted: false, phi_approved: false },
     _holder: null, _loc: 1, _dept: 4, _lost: true,
   },
   {
     device_id: 18, device_type_id: 3,
     model: 'OfficeJet 250', manufacturer: 'HP', serial_number: 'HP-OJ250-55001',
-    status: 'Ready to deploy', condition: 'Jó', notes: 'Hordozható, mobil rendelésekhez.',
+    status: 'Kivehető', condition: 'Jó', notes: 'Hordozható, mobil rendelésekhez.',
     attrs: { connection: 'WiFi', toner_model: 'CZ101AE', network_address: '—' },
     _holder: null, _loc: 1, _dept: 1,
   },

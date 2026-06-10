@@ -24,11 +24,11 @@ export function deviceVM(dev) {
 
   // Effektív státusz a tényleges birtoklásból/foglalásból (a tárolt dev.status elcsúszhat).
   let effectiveStatus;
-  if (['Retired', 'Lost', 'In repair'].includes(dev.status)) effectiveStatus = dev.status;
-  else if (resv) effectiveStatus = 'Reserved';
-  else if (pending) effectiveStatus = 'Pending return';
-  else if (cur.holder !== null) effectiveStatus = 'Deployed';
-  else effectiveStatus = 'Ready to deploy';
+  if (['Selejtezve', 'Elveszett', 'Javítás alatt'].includes(dev.status)) effectiveStatus = dev.status;
+  else if (resv) effectiveStatus = 'Lefoglalva';
+  else if (pending) effectiveStatus = 'Visszavétel folyamatban';
+  else if (cur.holder !== null) effectiveStatus = 'Kiadva';
+  else effectiveStatus = 'Kivehető';
 
   return {
     dev,
@@ -47,6 +47,6 @@ export function deviceVM(dev) {
     calibrationFlag: calibrationFlag(calDue),
     lastModified,
     // Kiadható, ha nincs birtokosa és valahol van — a tárolt státusztól függetlenül.
-    isFree: effectiveStatus === 'Ready to deploy' && (cur.department !== null || cur.location !== null),
+    isFree: effectiveStatus === 'Kivehető' && (cur.department !== null || cur.location !== null),
   };
 }

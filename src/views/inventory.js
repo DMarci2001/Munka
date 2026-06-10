@@ -12,7 +12,7 @@ import { icons } from '../ui/components.js';
 const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: ''
 };
 
-const STATUSES = ['Ready to deploy', 'Deployed', 'Reserved', 'Pending return', 'In repair', 'Lost', 'Retired'];
+const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Javítás alatt', 'Elveszett', 'Selejtezve'];
 
 // rendezési állapot
 let sortCol = null;
@@ -43,7 +43,7 @@ export function renderInventory(el) {
   const isStore = roleAtLeast(currentRole(), 'storekeeper');
   const calRows = isStore
     ? getDevices().map(deviceVM)
-        .filter((v) => (v.calibrationFlag === 'overdue' || v.calibrationFlag === 'soon') && v.status !== 'Retired')
+        .filter((v) => (v.calibrationFlag === 'overdue' || v.calibrationFlag === 'soon') && v.status !== 'Selejtezve')
         .sort((a, b) => new Date(a.calibrationDue) - new Date(b.calibrationDue))
         .slice(0, 6)
     : [];
@@ -131,13 +131,9 @@ function paint(el) {
   if (filters.holder) vms = vms.filter((v) => String(v.holderId) === filters.holder);
 
   if (sortCol) {
-    vms = [...vms].sort((a, b) => {
-      const av = sortValue(a, sortCol).toLowerCase();
-      const bv = sortValue(b, sortCol).toLowerCase();
-      if (av < bv) return -sortDir;
-      if (av > bv) return sortDir;
-      return 0;
-    });
+    vms = [...vms].sort((a, b) =>
+      sortDir * sortValue(a, sortCol).localeCompare(sortValue(b, sortCol), 'hu', { sensitivity: 'base' })
+    );
   }
 
   if (!vms.length) {

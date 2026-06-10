@@ -31,7 +31,7 @@ let _deviceId = 0;
 const subscribers = new Set();
 
 // ---- Megőrzés (localStorage) --------------------------------
-const STORAGE_KEY = 'eszkoznyilvantarto_state_v1';
+const STORAGE_KEY = 'eszkoznyilvantarto_state_v2';
 const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 
 function persist() {
@@ -275,9 +275,9 @@ export function moveAsset({
   // státusz
   const dev = getDevice(device_id);
   if (confirmation === 'pending') {
-    dev.status = 'Pending return';
+    dev.status = 'Visszavétel folyamatban';
   } else if (toStorage) {
-    dev.status = 'Ready to deploy';
+    dev.status = 'Kivehető';
   } else {
     dev.status = statusFromEvent(event_type);
   }
@@ -287,13 +287,13 @@ export function moveAsset({
 
 function statusFromEvent(eventType) {
   switch (eventType) {
-    case 'check_out': return 'Deployed';
-    case 'check_in': return 'Ready to deploy';
-    case 'transfer': return 'Deployed';
-    case 'stock_transfer': return 'Ready to deploy';
-    case 'send_to_repair': return 'In repair';
-    case 'mark_lost': return 'Lost';
-    default: return 'Ready to deploy';
+    case 'check_out': return 'Kiadva';
+    case 'check_in': return 'Kivehető';
+    case 'transfer': return 'Kiadva';
+    case 'stock_transfer': return 'Kivehető';
+    case 'send_to_repair': return 'Javítás alatt';
+    case 'mark_lost': return 'Elveszett';
+    default: return 'Kivehető';
   }
 }
 
@@ -307,7 +307,7 @@ export function confirmCheckIn(event_id) {
   ev.confirmed_by = state.currentUserId;
   ev.confirmed_at = now();
   const dev = getDevice(ev.device_id);
-  dev.status = 'Ready to deploy';
+  dev.status = 'Kivehető';
   touch(dev);
   notify();
 }
@@ -323,7 +323,7 @@ export function rejectCheckIn(event_id, reason) {
   ev.confirmed_at = now();
   ev.notes = (ev.notes ? ev.notes + ' ' : '') + `ELUTASÍTVA: ${reason || 'nincs indok'}`;
   const dev = getDevice(ev.device_id);
-  dev.status = 'Deployed'; // visszaáll a check_in előtti birtoklásra
+  dev.status = 'Kiadva'; // visszaáll a check_in előtti birtoklásra
   touch(dev);
   notify();
 }
@@ -337,7 +337,7 @@ export function reserveDevice(device_id, notes = null) {
   );
   const cur = currentState(device_id);
   const dev = getDevice(device_id);
-  if (!(cur.holder === null && (cur.department !== null || cur.location !== null) && dev.status === 'Ready to deploy'))
+  if (!(cur.holder === null && (cur.department !== null || cur.location !== null) && dev.status === 'Kivehető'))
     throw new OpError('Csak szabad, raktárban lévő eszköz foglalható.');
   if (activeReservation(device_id))
     throw new OpError('Az eszköz már le van foglalva.');
@@ -345,7 +345,7 @@ export function reserveDevice(device_id, notes = null) {
     reservation_id: ++_resvId, device_id, reserved_by: actor,
     reserved_at: now(), expires_at: daysFromNow(3), notes,
   });
-  dev.status = 'Reserved';
+  dev.status = 'Lefoglalva';
   touch(dev);
   notify();
 }
@@ -359,7 +359,7 @@ export function cancelReservation(device_id) {
     throw new OpError('Csak a foglaló vagy raktáros mondhatja le a foglalást.');
   deleteReservation(device_id);
   const dev = getDevice(device_id);
-  dev.status = 'Ready to deploy';
+  dev.status = 'Kivehető';
   touch(dev);
   notify();
 }
@@ -409,7 +409,7 @@ export function registerDevice({ device_type_id, model, manufacturer, serial_num
   const dev = {
     device_id: id, asset_tag, device_type_id,
     model, manufacturer, serial_number,
-    status: 'Ready to deploy', condition: condition || 'Jó',
+    status: 'Kivehető', condition: condition || 'Jó',
     notes: notes || '', attrs: attrs || {},
     created_by: state.currentUserId, updated_by: state.currentUserId,
     created_at: now(), updated_at: now(),
@@ -445,7 +445,7 @@ export function retireDevice(device_id, reason) {
   requireStorekeeper();
   const dev = getDevice(device_id);
   if (!dev) throw new OpError('Eszköz nem található.');
-  dev.status = 'Retired';
+  dev.status = 'Selejtezve';
   dev.retired_date = now();
   dev.notes = (dev.notes ? dev.notes + ' ' : '') + `Selejtezve: ${reason || 'nincs indok'}`;
   deleteReservation(device_id);
@@ -533,12 +533,12 @@ if (!loadPersisted()) {
   bootstrap();
   // Tárolt státusz összhangba hozása a tényleges birtoklással (seed/elcsúszás javítása).
   for (const dev of state.devices) {
-    if (['Retired', 'Lost', 'In repair'].includes(dev.status)) continue;
+    if (['Selejtezve', 'Elveszett', 'Javítás alatt'].includes(dev.status)) continue;
     const cur = currentState(dev.device_id);
-    if (activeReservation(dev.device_id)) dev.status = 'Reserved';
-    else if (pendingCheckinFor(dev.device_id)) dev.status = 'Pending return';
-    else if (cur.holder !== null) dev.status = 'Deployed';
-    else dev.status = 'Ready to deploy';
+    if (activeReservation(dev.device_id)) dev.status = 'Lefoglalva';
+    else if (pendingCheckinFor(dev.device_id)) dev.status = 'Visszavétel folyamatban';
+    else if (cur.holder !== null) dev.status = 'Kiadva';
+    else dev.status = 'Kivehető';
   }
   persist();
 }

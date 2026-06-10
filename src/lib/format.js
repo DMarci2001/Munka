@@ -6,13 +6,13 @@ import { getDepartment, getLocation, getUser, getDeviceType } from '../state/sto
 
 // ---- Státusz: DB-érték → magyar címke + badge szín ----------
 const STATUS = {
-  'Deployed':        { label: 'Kiadva',        cls: 'status-deployed' },
-  'Ready to deploy': { label: 'Kivehető',          cls: 'status-ready' },
-  'Reserved':        { label: 'Lefoglalva',        cls: 'status-reserved' },
-  'Pending return':  { label: 'Visszavétel folyamatban', cls: 'status-pending' },
-  'In repair':       { label: 'Javítás alatt',     cls: 'status-repair' },
-  'Lost':            { label: 'Elveszett',          cls: 'status-lost' },
-  'Retired':         { label: 'Selejtezve',         cls: 'status-retired' },
+  'Kiadva':        { label: 'Kiadva',        cls: 'status-deployed' },
+  'Kivehető': { label: 'Kivehető',          cls: 'status-ready' },
+  'Lefoglalva':        { label: 'Lefoglalva',        cls: 'status-reserved' },
+  'Visszavétel folyamatban':  { label: 'Visszavétel folyamatban', cls: 'status-pending' },
+  'Javítás alatt':       { label: 'Javítás alatt',     cls: 'status-repair' },
+  'Elveszett':            { label: 'Elveszett',          cls: 'status-lost' },
+  'Selejtezve':         { label: 'Selejtezve',         cls: 'status-retired' },
 };
 
 export const statusLabel = (s) => STATUS[s]?.label || s || '—';

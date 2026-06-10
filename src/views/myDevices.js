@@ -31,7 +31,7 @@ export function renderMyDevices(el) {
                 <td>${statusBadge(v.status)}</td>
                 <td style="text-align:right">
                   <div class="row-actions" style="justify-content:flex-end">
-                    ${v.status === 'Deployed' ? `<button class="btn btn-primary btn-sm" data-act="checkin" data-id="${v.dev.device_id}">Leadás</button>
+                    ${v.status === 'Kiadva' ? `<button class="btn btn-primary btn-sm" data-act="checkin" data-id="${v.dev.device_id}">Leadás</button>
                     <button class="btn btn-outline btn-sm" data-act="transfer" data-id="${v.dev.device_id}">Átadás</button>` : ''}
                   </div>
                 </td>
