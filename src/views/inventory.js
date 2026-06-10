@@ -55,28 +55,38 @@ export function renderInventory(el) {
           <span class="ico">${icons.search}</span>
           <input class="form-control" id="f-q" placeholder="Keresés: azonosító, modell, gyártó, sorozatszám…" value="${esc(filters.q)}" />
         </div>
-        <select class="form-select" id="f-type" style="max-width:170px">
-          <option value="">Minden típus</option>
-          ${getDeviceTypes().map((t) => `<option value="${t.id}" ${String(t.id) === filters.type ? 'selected' : ''}>${esc(t.type)}</option>`).join('')}
-        </select>
-        <select class="form-select" id="f-status" style="max-width:180px">
-          <option value="">Minden státusz</option>
-          ${STATUSES.map((s) => `<option value="${s}" ${s === filters.status ? 'selected' : ''}>${esc(statusLabel(s))}</option>`).join('')}
-        </select>
-        <select class="form-select" id="f_loc" style="max-width:180px">
-          <option value="">Minden helyszín</option>
-          ${getLocations().map((l) => `<option value="${l.id}" ${String(l.id) === filters.loc ? 'selected' : ''}>${esc(l.address)}</option>`).join('')}
-        </select>
-        <select class="form-select" id="f-dept" style="max-width:180px">
-          <option value="">Minden helyiség</option>
-          ${getDepartments().map((d) => `<option value="${d.id}" ${String(d.id) === filters.dept ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
-        </select>
-        <select class="form-select" id="f-holder" style="max-width:180px">
-          <option value="">Minden birtokos</option>
-          ${getUsers().filter((u) => getDevices().map(deviceVM).some((v) => v.holderId === u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
-        </select>
+        <div class="select-wrap" style="max-width:170px">
+          <select class="form-select" id="f-type">
+            <option value="">Minden típus</option>
+            ${getDeviceTypes().map((t) => `<option value="${t.id}" ${String(t.id) === filters.type ? 'selected' : ''}>${esc(t.type)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="select-wrap" style="max-width:180px">
+          <select class="form-select" id="f-status">
+            <option value="">Minden státusz</option>
+            ${STATUSES.map((s) => `<option value="${s}" ${s === filters.status ? 'selected' : ''}>${esc(statusLabel(s))}</option>`).join('')}
+          </select>
+        </div>
+        <div class="select-wrap" style="max-width:180px">
+          <select class="form-select" id="f_loc">
+            <option value="">Minden helyszín</option>
+            ${getLocations().map((l) => `<option value="${l.id}" ${String(l.id) === filters.loc ? 'selected' : ''}>${esc(l.address)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="select-wrap" style="max-width:180px">
+          <select class="form-select" id="f-dept">
+            <option value="">Minden helyiség</option>
+            ${getDepartments().map((d) => `<option value="${d.id}" ${String(d.id) === filters.dept ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="select-wrap" style="max-width:180px">
+          <select class="form-select" id="f-holder">
+            <option value="">Minden birtokos</option>
+            ${getUsers().filter((u) => getDevices().map(deviceVM).some((v) => v.holderId === u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
+          </select>
+        </div>
 
-        <button class="btn btn-secondary" id="btn-reset-filters">Szűrők törlése</button>
+        <button class="btn btn-reset-filters-custom" id="btn-reset-filters">Szűrők törlése</button>
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
       ${isStore ? `
