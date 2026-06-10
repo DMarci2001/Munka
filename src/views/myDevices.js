@@ -21,11 +21,11 @@ export function renderMyDevices(el) {
       ${held.length ? `
       <div class="table-wrap" style="margin-bottom:26px">
         <table class="grid">
-          <thead><tr><th>Azonosító</th><th>Típus / modell</th><th>Hely</th><th>Státusz</th><th style="text-align:right">Művelet</th></tr></thead>
+          <thead><tr><th>Kivétel időpontja</th><th>Típus / modell</th><th>Hely</th><th>Státusz</th><th style="text-align:right"> </th></tr></thead>
           <tbody>
             ${held.map((v) => `
               <tr data-dev="${v.dev.device_id}">
-                <td><span class="tag-mono">${esc(v.dev.asset_tag)}</span></td>
+                <td><span class="tag-mono">${esc(v.lastCheckout ? new Date(v.lastCheckout.event_timestamp).toISOString().slice(0, 10) : null)}</span></td>
                 <td>${esc(v.typeName)}<div class="cell-sub">${esc(v.dev.manufacturer)} ${esc(v.dev.model)}</div></td>
                 <td>${esc(locationLabel(v.locationId, v.departmentId))}</td>
                 <td>${statusBadge(v.status)}</td>
@@ -44,11 +44,11 @@ export function renderMyDevices(el) {
       ${reserved.length ? `
       <div class="table-wrap">
         <table class="grid">
-          <thead><tr><th>Azonosító</th><th>Típus / modell</th><th>Lejár</th><th style="text-align:right">Művelet</th></tr></thead>
+          <thead><tr><th>Foglalás időpontja</th><th>Típus / modell</th><th>Lejár</th><th style="text-align:right"> </th></tr></thead>
           <tbody>
             ${reserved.map((v) => `
               <tr data-dev="${v.dev.device_id}">
-                <td><span class="tag-mono">${esc(v.dev.asset_tag)}</span></td>
+                <td><span class="tag-mono">${esc(v.lastReserved ? new Date(v.lastReserved.event_timestamp).toISOString().slice(0, 10) : null)}</span></td>
                 <td>${esc(v.typeName)}<div class="cell-sub">${esc(v.dev.manufacturer)} ${esc(v.dev.model)}</div></td>
                 <td>${fmtRelative(v.reservation.expires_at)}</td>
                 <td style="text-align:right">

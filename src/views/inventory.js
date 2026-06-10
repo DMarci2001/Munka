@@ -76,7 +76,7 @@ export function renderInventory(el) {
           ${getUsers().filter((u) => getDevices().map(deviceVM).some((v) => v.holderId === u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
         </select>
 
-
+        <button class="btn btn-secondary" id="btn-reset-filters">Szűrők törlése</button>
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
       ${isStore ? `
@@ -109,8 +109,24 @@ export function renderInventory(el) {
   el.querySelector('#f_loc').addEventListener('change', (e) => { filters.loc = e.target.value; paint(el); });
   el.querySelector('#f-dept').addEventListener('change', (e) => { filters.dept = e.target.value; paint(el); });
   el.querySelector('#f-holder').addEventListener('change', (e) => { filters.holder = e.target.value; paint(el); });
-  const btnNew = el.querySelector('#btn-new-device');
-  if (btnNew) btnNew.addEventListener('click', () => navigate('/register'));
+  const btnNewDevice = el.querySelector('#btn-new-device');
+  if (btnNewDevice) btnNewDevice.addEventListener('click', () => navigate('/register'));
+  const btnResetFilters = el.querySelector('#btn-reset-filters');
+  if (btnResetFilters) btnResetFilters.addEventListener('click', () => {
+    filters.q = '';
+    filters.type = '';
+    filters.status = '';
+    filters.loc = '';
+    filters.dept = '';
+    filters.holder = '';
+    q.value = '';
+    el.querySelector('#f-type').value = '';
+    el.querySelector('#f-status').value = '';
+    el.querySelector('#f_loc').value = '';
+    el.querySelector('#f-dept').value = '';
+    el.querySelector('#f-holder').value = '';
+    paint(el);
+  });
   el.querySelectorAll('.panel [data-dev]').forEach((r) =>
     r.addEventListener('click', () => navigate('/device/' + r.dataset.dev)));
   paint(el);

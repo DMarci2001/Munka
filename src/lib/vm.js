@@ -21,10 +21,19 @@ export function deviceVM(dev) {
   const lastModified = lastEvent
   ? new Date(lastEvent.event_timestamp).toISOString().slice(0, 10)
   : null;
+  // Legutóbbi megerősített kivétel (a „Kivétel időpontja" oszlophoz).
+  const lastCheckout = getEvents()
+    .filter((e) => e.device_id === dev.device_id && e.event_type === 'check_out' && e.confirmation_status === 'confirmed')
+    .sort((a, b) => new Date(b.event_timestamp) - new Date(a.event_timestamp))[0] || null;
+  // Foglalás dátuma a foglalási rekordból (nincs külön „reserve" esemény).
+  const lastReserved = resv ? { event_timestamp: resv.reserved_at } : null;
 
   // Effektív státusz a tényleges birtoklásból/foglalásból (a tárolt dev.status elcsúszhat).
+  // A „manuális" státuszokat (selejt, elveszett, javítás, foglalás) a tárolt dev.status
+  // adja — ezeket nem lehet a custody-naplóból levezetni, és a foglalás lejárta sem
+  // írhatja felül a megjelenített státuszt. A többit a tényleges birtoklásból vezetjük le.
   let effectiveStatus;
-  if (['Selejtezve', 'Elveszett', 'Javítás alatt'].includes(dev.status)) effectiveStatus = dev.status;
+  if (['Selejtezve', 'Elveszett', 'Javítás alatt', 'Lefoglalva'].includes(dev.status)) effectiveStatus = dev.status;
   else if (resv) effectiveStatus = 'Lefoglalva';
   else if (pending) effectiveStatus = 'Visszavétel folyamatban';
   else if (cur.holder !== null) effectiveStatus = 'Kiadva';
@@ -46,6 +55,8 @@ export function deviceVM(dev) {
     calibrationDue: calDue,
     calibrationFlag: calibrationFlag(calDue),
     lastModified,
+    lastCheckout,
+    lastReserved,
     // Kiadható, ha nincs birtokosa és valahol van — a tárolt státusztól függetlenül.
     isFree: effectiveStatus === 'Kivehető' && (cur.department !== null || cur.location !== null),
   };

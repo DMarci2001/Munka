@@ -307,7 +307,7 @@ export function confirmCheckIn(event_id) {
   ev.confirmed_by = state.currentUserId;
   ev.confirmed_at = now();
   const dev = getDevice(ev.device_id);
-  dev.status = 'Kivehető';
+  dev.status = 'Kivehető'; // check_in után mindig kivehető lesz, függetlenül a check_in céljától
   touch(dev);
   notify();
 }
