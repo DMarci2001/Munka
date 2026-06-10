@@ -9,6 +9,20 @@ import { locationLabel, fmtDateTime, esc } from '../lib/format.js';
 import { icons } from '../ui/components.js';
 import * as A from '../ui/actions.js';
 
+// rendezési állapot
+let sortCol = null;
+let sortDir = 1; // 1 = növekvő, -1 = csökkenő
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+}
+
+function thHTML(col, label) {
+  const arrow = sortCol !== col ? '<span style="opacity:.99">↕</span>' : sortDir === 1 ? '↑' : '↓';
+  return `<th data-col="${col}" style="cursor:pointer;user-select:none">${label} ${arrow}</th>`;
+}
+
 export function renderPending(el) {
   const items = pendingCheckins();
 
@@ -19,7 +33,7 @@ export function renderPending(el) {
       ${items.length ? `
       <div class="table-wrap">
         <table class="grid">
-          <thead><tr><th>Azonosító</th><th>Leadta</th><th>Állítása szerint ide</th><th>Mikor</th><th>Állapot</th><th style="text-align:right">Döntés</th></tr></thead>
+          <thead><tr>${thHTML('asset_tag', 'Azonosító')}${thHTML('submitter', 'Leadta')}${thHTML('to_location', 'Helyiség')}${thHTML('event_timestamp', 'Leadás időpontja')}${thHTML('condition_at_event', 'Állapot')}<th style="text-align:right">Döntés</th></tr></thead>
           <tbody>
             ${items.map(rowHTML).join('')}
           </tbody>
@@ -33,6 +47,8 @@ export function renderPending(el) {
     b.addEventListener('click', (e) => { e.stopPropagation(); A.doConfirmCheckIn(Number(b.dataset.confirm)); }));
   el.querySelectorAll('[data-reject]').forEach((b) =>
     b.addEventListener('click', (e) => { e.stopPropagation(); A.dlgRejectCheckIn(Number(b.dataset.reject)); }));
+  el.querySelectorAll('th[data-col]').forEach((th) =>
+    th.addEventListener('click', () => { sortBy(th.dataset.col); paint(el); }));
 }
 
 function rowHTML(ev) {

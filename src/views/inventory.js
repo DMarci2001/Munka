@@ -9,10 +9,35 @@ import { statusBadge, statusLabel, locationLabel, holderLabel, esc } from '../li
 import { icons } from '../ui/components.js';
 
 // szűrőállapot (megőrződik nézetváltáskor)
-const filters = { q: '', date: '', type: '', status: '', dept: '', loc: '', holder: ''
+const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: ''
 };
 
 const STATUSES = ['Ready to deploy', 'Deployed', 'Reserved', 'Pending return', 'In repair', 'Lost', 'Retired'];
+
+// rendezési állapot
+let sortCol = null;
+let sortDir = 1; // 1 = növekvő, -1 = csökkenő
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+}
+
+function thHTML(col, label) {
+  const arrow = sortCol !== col ? '<span style="opacity:.99">↕</span>' : sortDir === 1 ? '↑' : '↓';
+  return `<th data-col="${col}" style="cursor:pointer;user-select:none">${label} ${arrow}</th>`;
+}
+
+function sortValue(v, col) {
+  switch (col) {
+    case 'lastModified': return v.lastModified || '';
+    case 'typeName':     return (v.typeName || '') + ' ' + (v.dev.model || '');
+    case 'status':       return v.status || '';
+    case 'holder':       return v.holder ? v.holder.full_name : '';
+    case 'location':     return String(v.locationId || '') + String(v.departmentId || '');
+    default:             return '';
+  }
+}
 
 export function renderInventory(el) {
   const isStore = roleAtLeast(currentRole(), 'storekeeper');
@@ -99,12 +124,22 @@ function paint(el) {
   if (q) vms = vms.filter((v) =>
     [v.dev.asset_tag, v.dev.model, v.dev.manufacturer, v.dev.serial_number, v.typeName]
       .filter(Boolean).some((s) => s.toLowerCase().includes(q)));
-  if (filters.date) vms = vms.filter((v) => v.lastModified && v.lastModified.includes(filters.date));
   if (filters.type) vms = vms.filter((v) => String(v.dev.device_type_id) === filters.type);
   if (filters.status) vms = vms.filter((v) => v.status === filters.status);
   if (filters.loc) vms = vms.filter((v) => String(v.locationId) === filters.loc);
   if (filters.dept) vms = vms.filter((v) => String(v.departmentId) === filters.dept);
   if (filters.holder) vms = vms.filter((v) => String(v.holderId) === filters.holder);
+
+  if (sortCol) {
+    vms = [...vms].sort((a, b) => {
+      const av = sortValue(a, sortCol).toLowerCase();
+      const bv = sortValue(b, sortCol).toLowerCase();
+      if (av < bv) return -sortDir;
+      if (av > bv) return sortDir;
+      return 0;
+    });
+  }
+
   if (!vms.length) {
     wrap.innerHTML = `<div class="table-wrap"><div class="empty"><div class="big">${icons.search}</div><div>Nincs a szűrőnek megfelelő eszköz.</div></div></div>`;
     return;
@@ -116,8 +151,8 @@ function paint(el) {
       <table class="grid">
         <thead>
           <tr>
-            <th>Utoljára módosítva</th><th>Típus / modell</th><th>Státusz</th>
-            <th>Birtokos</th><th>Hely</th><th></th>
+            ${thHTML('lastModified', 'Utoljára módosítva')}${thHTML('typeName', 'Típus / modell')}${thHTML('status', 'Státusz')}
+            ${thHTML('holder', 'Birtokos')}${thHTML('location', 'Hely')}<th></th>
           </tr>
         </thead>
         <tbody>
@@ -126,8 +161,12 @@ function paint(el) {
       </table>
     </div>`;
 
+  
   wrap.querySelectorAll('tbody tr').forEach((r) =>
     r.addEventListener('click', () => navigate('/device/' + r.dataset.dev)));
+
+  wrap.querySelectorAll('th[data-col]').forEach((th) =>
+    th.addEventListener('click', () => { sortBy(th.dataset.col); paint(el); }));
 }
 
 function rowHTML(v) {
