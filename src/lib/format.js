@@ -10,7 +10,7 @@ const STATUS = {
   'Kivehető': { label: 'Kivehető',          cls: 'status-ready' },
   'Lefoglalva':        { label: 'Lefoglalva',        cls: 'status-reserved' },
   'Visszavétel folyamatban':  { label: 'Visszavétel folyamatban', cls: 'status-pending' },
-  'Javítás alatt':       { label: 'Javítás alatt',     cls: 'status-repair' },
+  'Szerviz alatt':       { label: 'Szerviz alatt',     cls: 'status-repair' },
   'Elveszett':            { label: 'Elveszett',          cls: 'status-lost' },
   'Selejtezve':         { label: 'Selejtezve',         cls: 'status-retired' },
 };
@@ -31,7 +31,8 @@ const EVENT = {
   check_in: 'Leadás',
   transfer: 'Átadás',
   stock_transfer: 'Raktármozgatás',
-  send_to_repair: 'Javításba küldés',
+  send_to_repair: 'Szervizbe küldés',
+  return_from_repair: 'Szervizből visszahelyezés',
   mark_lost: 'Elveszettnek jelölés',
 };
 export const eventLabel = (e) => EVENT[e] || e;
