@@ -33,7 +33,7 @@ export function deviceVM(dev) {
   // adja — ezeket nem lehet a custody-naplóból levezetni, és a foglalás lejárta sem
   // írhatja felül a megjelenített státuszt. A többit a tényleges birtoklásból vezetjük le.
   let effectiveStatus;
-  if (['Selejtezve', 'Elveszett', 'Javítás alatt', 'Lefoglalva'].includes(dev.status)) effectiveStatus = dev.status;
+  if (['Selejtezve', 'Elveszett', 'Szerviz alatt', 'Lefoglalva'].includes(dev.status)) effectiveStatus = dev.status;
   else if (resv) effectiveStatus = 'Lefoglalva';
   else if (pending) effectiveStatus = 'Visszavétel folyamatban';
   else if (cur.holder !== null) effectiveStatus = 'Kiadva';
@@ -59,6 +59,6 @@ export function deviceVM(dev) {
     lastReserved,
     // Kiadható, ha nincs birtokosa és valahol van — a tárolt státusztól függetlenül.
     isFree: effectiveStatus === 'Kivehető' && (cur.department !== null || cur.location !== null),
-    inRepair: dev.status === 'Javítás alatt',
+    inRepair: dev.status === 'Szerviz alatt',
   };
 }

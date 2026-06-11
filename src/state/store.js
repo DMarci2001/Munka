@@ -45,12 +45,27 @@ function persist() {
   } catch (e) { /* localStorage nem elérhető / megtelt */ }
 }
 
+// Régi → új státusz-elnevezések migrációja a korábban mentett adatokhoz.
+const STATUS_MIGRATIONS = {
+  'Javítás alatt': 'Szerviz alatt',
+};
+
+function migrateStatuses(data) {
+  let changed = false;
+  for (const dev of data.devices || []) {
+    const next = STATUS_MIGRATIONS[dev.status];
+    if (next) { dev.status = next; changed = true; }
+  }
+  return changed;
+}
+
 function loadPersisted() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
     // ISO dátum-stringeket visszaalakítjuk Date objektummá
     const data = JSON.parse(raw, (k, v) => (typeof v === 'string' && ISO_RE.test(v) ? new Date(v) : v));
+    const migrated = migrateStatuses(data);
     Object.assign(state, {
       locations: data.locations, departments: data.departments, users: data.users,
       deviceTypes: data.deviceTypes, attributeDefinitions: data.attributeDefinitions,
@@ -60,6 +75,7 @@ function loadPersisted() {
     _eventId = data._eventId || 0;
     _resvId = data._resvId || 0;
     _deviceId = data._deviceId || 0;
+    if (migrated) persist();
     return true;
   } catch (e) { return false; }
 }
@@ -291,8 +307,7 @@ function statusFromEvent(eventType) {
     case 'check_in': return 'Kivehető';
     case 'transfer': return 'Kiadva';
     case 'stock_transfer': return 'Kivehető';
-    case 'send_to_repair': return 'Javítás alatt';
-    case 'return_from_repair': return 'Kivehető';
+    case 'send_to_repair': return 'Szerviz alatt';
     case 'mark_lost': return 'Elveszett';
     default: return 'Kivehető';
   }
@@ -370,26 +385,26 @@ function deleteReservation(device_id) {
 }
 
 // send_to_repair / mark_lost — storekeeper+
-export function sendToRepair(device_id, to_locations_id = null, to_departments_id = null, notes = null) {
+export function sendToRepair(device_id, notes = null) {
   requireStorekeeper();
-  if (!to_departments_id) {
-    const repairDept = state.departments.find((d) => d.kind === 'műhely');
-    to_departments_id = repairDept ? repairDept.id : null;
-  }
+  const repairDept = state.departments.find((d) => d.kind === 'műhely');
   moveAssetInternal({
     device_id, event_type: 'send_to_repair',
-    to_locations_id, to_departments_id, notes,
+    to_departments_id: repairDept ? repairDept.id : null, notes,
   });
 }
-export function returnFromRepair(device_id, to_locations_id = null, to_departments_id = null, notes = null) {
+
+export function returnFromRepair(device_id, to_location_id, to_department_id, notes = null) {
   requireStorekeeper();
-  if (getDevice(device_id)?.status !== 'Javítás alatt')
-    throw new OpError('Csak javítás alatt lévő eszköz helyezhető vissza.');
+  const cur = currentState(device_id);
+  if (cur.department === null)
+    throw new OpError('Szervizből csak osztályra vagy helyszínre lehet visszahelyezni.');
   moveAssetInternal({
-    device_id, event_type: 'return_from_repair',
-    to_locations_id, to_departments_id, to_user_id: null, notes,
+    device_id, event_type: 'check_in',
+    to_locations_id: to_location_id, to_departments_id: to_department_id, notes,
   });
 }
+
 export function markLost(device_id, notes = null) {
   requireStorekeeper();
   const cur = currentState(device_id);
@@ -546,7 +561,7 @@ if (!loadPersisted()) {
   bootstrap();
   // Tárolt státusz összhangba hozása a tényleges birtoklással (seed/elcsúszás javítása).
   for (const dev of state.devices) {
-    if (['Selejtezve', 'Elveszett', 'Javítás alatt'].includes(dev.status)) continue;
+    if (['Selejtezve', 'Elveszett', 'Szerviz alatt'].includes(dev.status)) continue;
     const cur = currentState(dev.device_id);
     if (activeReservation(dev.device_id)) dev.status = 'Lefoglalva';
     else if (pendingCheckinFor(dev.device_id)) dev.status = 'Visszavétel folyamatban';

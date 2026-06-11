@@ -147,7 +147,7 @@ export const devices = [
   {
     device_id: 8, device_type_id: 4,
     model: 'RB4011', manufacturer: 'MikroTik', serial_number: 'MT-4011-88210',
-    status: 'Javítás alatt', condition: 'Hibás', notes: 'Túlmelegedés, szerviz alatt.',
+    status: 'Szerviz alatt', condition: 'Hibás', notes: 'Túlmelegedés, szerviz alatt.',
     attrs: { ip_address: '10.0.0.1', mac_address: '64:D1:54:AA:BB:01', firmware: '7.13.2' },
     _holder: null, _loc: 2, _dept: 8,
   },
