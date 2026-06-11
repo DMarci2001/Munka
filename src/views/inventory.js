@@ -146,6 +146,8 @@ function paint(el) {
   const wrap = el.querySelector('#inv-table');
   let vms = getDevices().map(deviceVM);
 
+  if (!roleAtLeast(currentRole(), 'storekeeper')) vms = vms.filter((v) => v.status === 'Kivehető');
+
   const q = filters.q.trim().toLowerCase();
   if (q) vms = vms.filter((v) =>
     [v.dev.asset_tag, v.dev.model, v.dev.manufacturer, v.dev.serial_number, v.typeName, holderLabel(v.holderId), locationLabel(v.locationId, v.departmentId)]

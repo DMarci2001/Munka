@@ -172,7 +172,7 @@ function renderActions(container, v, role, isStore, me) {
       btns.push(`<button class="btn btn-outline" data-act="cancel-resv">Foglalás lemondása</button>`);
     }
     // Birtokosi műveletek
-    if (heldByMe) {
+    if (heldByMe && !v.pending) {
       btns.push(`<button class="btn btn-primary" data-act="checkin">${icons.back} Leadás</button>`);
       btns.push(`<button class="btn btn-outline" data-act="transfer">Átadás</button>`);
     }
