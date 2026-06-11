@@ -386,22 +386,24 @@ function deleteReservation(device_id) {
 }
 
 // send_to_repair / mark_lost — storekeeper+
-export function sendToRepair(device_id, notes = null) {
+export function sendToRepair(device_id, to_locations_id = null, to_departments_id = null, notes = null) {
   requireStorekeeper();
-  const repairDept = state.departments.find((d) => d.kind === 'műhely');
+  if (!to_departments_id) {
+    const repairDept = state.departments.find((d) => d.type === 'műhely');
+    to_departments_id = repairDept ? repairDept.id : null;
+  }
   moveAssetInternal({
     device_id, event_type: 'send_to_repair',
-    to_departments_id: repairDept ? repairDept.id : null, notes,
+    to_locations_id, to_departments_id, notes,
   });
 }
 
 export function returnFromRepair(device_id, to_location_id, to_department_id, notes = null) {
   requireStorekeeper();
-  const cur = currentState(device_id);
-  if (cur.department === null)
-    throw new OpError('Szervizből csak osztályra vagy helyszínre lehet visszahelyezni.');
+  if (getDevice(device_id)?.status !== 'Szerviz alatt')
+    throw new OpError('Csak szerviz alatt lévő eszköz helyezhető vissza.');
   moveAssetInternal({
-    device_id, event_type: 'check_in',
+    device_id, event_type: 'return_from_repair',
     to_locations_id: to_location_id, to_departments_id: to_department_id, notes,
   });
 }
