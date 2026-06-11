@@ -98,6 +98,11 @@ class AdminPage {
     public function showPage() {
         $pageContent = $this->_getPageContent();
 
+        if (isset($GLOBALS["fullscreen_react"])) {
+            echo $pageContent;
+            return;
+        }
+
         if (!isset($_SESSION["mainmenuwidth"])) {
             $_SESSION["mainmenuwidth"] = "180px";
         }
