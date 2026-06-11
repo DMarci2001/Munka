@@ -12,7 +12,7 @@ import { icons } from '../ui/components.js';
 const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: ''
 };
 
-const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Javítás alatt', 'Elveszett', 'Selejtezve'];
+const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Szerviz alatt', 'Elveszett', 'Selejtezve'];
 
 // rendezési állapot
 let sortCol = null;

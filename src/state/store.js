@@ -292,6 +292,7 @@ function statusFromEvent(eventType) {
     case 'transfer': return 'Kiadva';
     case 'stock_transfer': return 'Kivehető';
     case 'send_to_repair': return 'Javítás alatt';
+    case 'return_from_repair': return 'Kivehető';
     case 'mark_lost': return 'Elveszett';
     default: return 'Kivehető';
   }
@@ -369,12 +370,24 @@ function deleteReservation(device_id) {
 }
 
 // send_to_repair / mark_lost — storekeeper+
-export function sendToRepair(device_id, notes = null) {
+export function sendToRepair(device_id, to_locations_id = null, to_departments_id = null, notes = null) {
   requireStorekeeper();
-  const repairDept = state.departments.find((d) => d.kind === 'műhely');
+  if (!to_departments_id) {
+    const repairDept = state.departments.find((d) => d.kind === 'műhely');
+    to_departments_id = repairDept ? repairDept.id : null;
+  }
   moveAssetInternal({
     device_id, event_type: 'send_to_repair',
-    to_departments_id: repairDept ? repairDept.id : null, notes,
+    to_locations_id, to_departments_id, notes,
+  });
+}
+export function returnFromRepair(device_id, to_locations_id = null, to_departments_id = null, notes = null) {
+  requireStorekeeper();
+  if (getDevice(device_id)?.status !== 'Javítás alatt')
+    throw new OpError('Csak javítás alatt lévő eszköz helyezhető vissza.');
+  moveAssetInternal({
+    device_id, event_type: 'return_from_repair',
+    to_locations_id, to_departments_id, to_user_id: null, notes,
   });
 }
 export function markLost(device_id, notes = null) {

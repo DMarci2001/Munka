@@ -5,7 +5,7 @@
 
 import {
   moveAsset, reserveDevice, cancelReservation, confirmCheckIn, rejectCheckIn,
-  sendToRepair, markLost, retireDevice,
+  sendToRepair, returnFromRepair, markLost, retireDevice,
   getDepartments, getLocations, getUsers, getDevice, getDeviceType, currentUser, currentRole,
   currentState, roleAtLeast, activeReservation,
 } from '../state/store.js';
@@ -279,12 +279,77 @@ export function dlgRejectCheckIn(eventId) {
 // --- Javítás / elveszett / selejt — storekeeper --------------
 export function dlgSendToRepair(deviceId) {
   openModal({
-    title: 'Javításba küldés',
-    bodyHTML: `<div class="field"><label class="form-label">Hibaleírás</label><input class="form-control" name="notes" placeholder="pl. nem kapcsol be" /></div>`,
-    confirmText: 'Javításba',
-    onConfirm: (root) => { sendToRepair(deviceId, root.querySelector('[name=notes]').value.trim() || null); toast('Javításba küldve.', 'success'); },
+    title: 'Szervizbe küldés',
+    bodyHTML: `
+      <div class="field">
+        <label class="form-label">Hibaleírás</label>
+        <input class="form-control" name="notes" placeholder="pl. nem kapcsol be" />
+      </div>
+      <div class="field">
+        <label class="form-label">Hová — helyszín</label>
+        <select class="form-select" name="to_location">${locOptions()}</select>
+      </div>
+      <div class="field">
+        <label class="form-label">Hová — részleg</label>
+        <select class="form-select" name="to_dept"></select>
+      </div>`,
+    confirmText: 'Szervizbe',
+    onMount: (root) => {
+      const allDepts = getDepartments();
+      const locSel = root.querySelector('[name=to_location]');
+      const deptSel = root.querySelector('[name=to_dept]');
+      const fillDepts = () => {
+        const locId = Number(locSel.value);
+        const list = allDepts.filter((d) => d.locations_id === locId);
+        deptSel.innerHTML = list.length
+          ? list.map((d) => `<option value="${d.id}" ${d.kind === 'műhely' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
+          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
+      };
+      locSel.addEventListener('change', fillDepts);
+      fillDepts();
+    },
+    onConfirm: (root) => {
+      const to_location_id = Number(root.querySelector('[name=to_location]').value);
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
+      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const notes = root.querySelector('[name=notes]').value.trim() || null;
+      sendToRepair(deviceId, to_location_id, to_department_id, notes);
+      toast('Szervizbe küldve.', 'success');
+    },
   });
 }
+
+export function dlgReturnFromRepair(deviceId) {
+  openModal({
+    title: 'Szervizelve',
+    bodyHTML: `
+      <div class="field">
+        <label class="form-label">Helyszín</label>
+        <select class="form-control" name="to_location">
+          ${getLocations().map((l) => `<option value="${l.id}">${esc(l.address)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="form-label">Részleg</label>
+        <select class="form-control" name="to_department">
+          ${getDepartments().map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="form-label">Megjegyzés</label>
+        <input class="form-control" name="notes" placeholder="pl. javítva" />
+      </div>`,
+    confirmText: 'Visszahelyezés',
+    onConfirm: (root) => {
+      const to_location_id = Number(root.querySelector('[name=to_location]').value);
+      const to_department_id = Number(root.querySelector('[name=to_department]').value);
+      const notes = root.querySelector('[name=notes]').value.trim() || null;
+      returnFromRepair(deviceId, to_location_id, to_department_id, notes);
+      toast('Javítva visszahelyezve.', 'success');
+    },
+  });
+}
+
 export function dlgMarkLost(deviceId) {
   openModal({
     title: 'Elveszettnek jelölés',

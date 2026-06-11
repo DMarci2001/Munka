@@ -39,7 +39,7 @@ export function renderDevice(el, { id }) {
       <div class="detail-head">
         <div class="titleblock">
           <h2>${esc(v.typeName)} — ${esc(dev.manufacturer)} ${esc(dev.model)}</h2>
-          <div class="pill-info"><span class="tag-mono" style="font-size:.95rem">${esc(dev.asset_tag)}</span> · ${statusBadge(v.status)}</div>
+          <div class="pill-info"><span class="tag-mono" style="font-size:.95rem">${esc(dev.asset_tag)}</span>${statusBadge(v.status)}</div>
         </div>
         <div class="actions" id="actions"></div>
       </div>
@@ -184,8 +184,11 @@ function renderActions(container, v, role, isStore, me) {
     if (isStore && v.isFree) {
       btns.push(`<button class="btn btn-outline" data-act="stock">${icons.building} Raktármozgatás</button>`);
     }
-    if (isStore) {
-      btns.push(`<button class="btn btn-outline" data-act="repair">${icons.repair} Javításba</button>`);
+    if (isStore && v.inRepair) {
+      btns.push(`<button class="btn btn-outline" data-act="return-from-repair">${icons.back} Visszahelyezés</button>`);
+    }
+    if (isStore && !v.inRepair) {
+      btns.push(`<button class="btn btn-outline" data-act="repair">${icons.repair} Szervizbe</button>`);
       btns.push(`<button class="btn btn-outline" data-act="edit">${icons.edit} Szerkesztés</button>`);
       btns.push(`<button class="btn btn-danger" data-act="more">⋯</button>`);
     }
@@ -204,6 +207,7 @@ function renderActions(container, v, role, isStore, me) {
     'cancel-resv': () => A.doCancelReservation(id),
     stock: () => A.dlgStockTransfer(id),
     repair: () => A.dlgSendToRepair(id),
+    'return-from-repair': () => A.dlgReturnFromRepair(id),
     edit: () => import('./register_device.js').then((m) => m.dlgEditDevice(id)),
     more: () => showMore(container, id),
   };
