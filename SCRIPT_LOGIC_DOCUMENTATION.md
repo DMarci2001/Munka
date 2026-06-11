@@ -65,24 +65,29 @@ A szerepkörök rangsora: `user` (1) < `storekeeper` (2) < `it_admin` (3). A `ro
 ## 4. Alapműveletek
 
 ### 4.1 `register_device(actor, payload)` — storekeeper / it_admin
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. Egy `devices` sor beszúrása (közös mezők; `status = 'Kivehető'`, `created_by = updated_by = actor`).
 3. A típusspecifikus értékek mentése (`device_attribute_values`, a demóban `attrs`-objektum) az `attribute_definitions` szerint ellenőrizve (§6).
 4. A **kezdeti elhelyezés** rögzítése: egy `check_in` esemény `to_locations_id = payload.initial_location`, `to_departments_id = payload.initial_department` (jellemzően a központi raktár), „Regisztrációs elhelyezés." megjegyzéssel, `confirmed` állapotban. Ez garantálja, hogy az eszköznek a létrehozástól van ismert helye.
 
 ### 4.2 `edit_device(actor, device_id, changes)` — storekeeper / it_admin
+
 Frissíti a közös mezőket és/vagy a típusspecifikus értékeket; beállítja: `updated_by = actor`, `updated_at = now()`. A birtoklást nem érinti.
 
 ### 4.3 `retire_device(actor, device_id, reason)` — storekeeper / it_admin
+
 Beállítja: `status = 'Selejtezve'`, `retired_date = ma`, az okot a `notes`-hoz fűzi („Selejtezve: …"). Töröl minden aktív foglalást. Lágy törlés: sort nem távolít el.
 
 ### 4.4 Törzsadat-műveletek
+
 - `add_location` — élesben **nincs**: a telephelyeket (`locations`) a klinika weboldala adja, a modul csak olvassa. *(A demó még tartalmaz egy beágyazott telephely-listát és egy kényelmi `add_location`-t — élesben elhagyandó.)*
 - `add_department({locations_id, name, type})` — **storekeeper**: új helyiség (`type` alapért. `'osztály'`).
 - `add_device_type({type, description})` — **it_admin**: új eszköztípus.
 - `add_attr_def({device_type_id, attribute_key, label, data_type, is_required, options, sort_order})` — **it_admin**: új típusspecifikus mező. `enum` esetén az `options` kötelező; `device_type_id = NULL` globális mezőt jelent.
 
 ### 4.5 Birtoklási és életciklus-műveletek
+
 Felhasználó által is hívható (a `move_asset` kapun át, §5): `check_out`, `check_in`, `transfer`. Csak raktáros+ (a `move_asset_internal` belső kapun át, §11): `stock_transfer`, `send_to_repair`, `return_from_repair`, `mark_lost`, `mark_found`. A felhasználói `check_in` `pending` állapotban keletkezik, és raktáros-megerősítésre vár (checkpoint, §9).
 
 ---
@@ -92,6 +97,7 @@ Felhasználó által is hívható (a `move_asset` kapun át, §5): `check_out`, 
 Ez a felhasználó-facing birtoklási műveletek (`check_out`, `check_in`, `transfer`) egyetlen kapuja, így a szabályok egy helyen élnek.
 
 ### 5.1 Bemenetek
+
 ```text
 move_asset(
     device_id,
@@ -107,13 +113,16 @@ move_asset(
 ```
 
 ### 5.2 Mit csinál a kezelő
+
 1. **Aktuális állapot feloldása** a `device_current_state`-ből, hogy automatikusan kitöltse a `from_*` oldalt — a hívó soha nem adja meg:
+
    ```text
    cur = current_state(device_id)        # {holder, location, department}
    from_user_id        = cur.holder
    from_locations_id   = cur.location
    from_departments_id = cur.department
    ```
+
 2. **Engedélyezés** szerepkör és aktuális birtokos alapján (csak `user`-re korlátoz):
    - `check_out`: csak ha az eszköz szabad (nincs birtokosa, de van helye) **és** magához veszi (`to_user_id = actor`).
    - `check_in` / `transfer`: csak ha az eszköz éppen az aktornál van (`cur.holder = actor`).
@@ -129,6 +138,7 @@ move_asset(
 10. **A `devices.status` frissítése** (§7): `pending` → `'Visszavétel folyamatban'`; raktárba (`toStorage`) → `'Kivehető'`; egyébként a `status_from_event` leképezés.
 
 ### 5.3 Pszeudokód
+
 ```php
 function move_asset($device_id, $event_type, $to_user_id = null,
                     $to_locations_id = null, $to_departments_id = null,
@@ -270,21 +280,25 @@ A birtokost és a helyet maga a `devices` nem tárolja; ezek a legújabb `device
 A felhasználói visszavétel kétfázisú: a `move_asset` leadja `pending` állapotban (§5), majd a raktáros itt zárja le. Mindkét kezelő `storekeeper`+ szerepkört igényel, és **csak `pending`, `check_in` típusú** eseményt érinthet. Ez az egyetlen engedélyezett mutáció a `device_custody_events` táblán — a birtoklási mezők (`event_type`, `from_*`, `to_*`, `event_timestamp`) sosem módosulnak.
 
 ### 9.1 A raktáros munkalistája
+
 A `device_pending_checkins` nézet adja a függőben lévő visszavételeket (melyik eszköz, ki adta le, hova állítása szerint, mikor).
 
 ### 9.2 `confirm_check_in(actor, event_id)` — storekeeper / it_admin
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. Az esemény betöltése; ellenőrzés: `confirmation_status = 'pending'` és `event_type = 'check_in'`.
 3. Frissítés: `confirmation_status = 'confirmed'`, `confirmed_by = actor`, `confirmed_at = now()`.
 4. Mostantól a `device_current_state` ezt látja → az eszköz a raktárban/célhelyen. `devices.status = 'Kivehető'`.
 
 ### 9.3 `reject_check_in(actor, event_id, reason)` — storekeeper / it_admin
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. Ugyanaz az ellenőrzés (`pending` + `check_in`).
 3. Frissítés: `confirmation_status = 'rejected'`, `confirmed_by = actor`, `confirmed_at = now()`; a `reason` a `notes`-hoz fűzve („ELUTASÍTVA: …").
 4. Az esemény sosem érvényesül: a nézet a check_in **előtti** állapotot tartja (az eszköz a felhasználónál marad). `devices.status = 'Kiadva'`.
 
 ### 9.4 Pszeudokód
+
 ```php
 function confirm_check_in($actor, $event_id) {
     require_role($actor, 'storekeeper');
@@ -309,6 +323,7 @@ function reject_check_in($actor, $event_id, $reason) {
 ```
 
 ### 9.5 Peremesetek
+
 - **Dupla leadás** — eszközönként legfeljebb egy nyitott (`pending`) check_in; a `move_asset` előzetesen ellenőrzi, a `uq_one_pending_checkin_per_device` index DB-szinten is kikényszeríti.
 - **Raktáros saját visszavétele** — a raktáros/it_admin `check_in`-je azonnal `confirmed` (ő maga az ellenőrző).
 
@@ -319,6 +334,7 @@ function reject_check_in($actor, $event_id, $reason) {
 A felhasználók maguk foglalhatnak le egy szabad eszközt; a foglalás az elvitelig (`check_out`) fenntartja nekik. A `device_reservations` tábla mindig csak az aktív foglalásokat tartalmazza (a megszűnt sor törlődik). Lásd `DATABASE_DOCUMENTATION.md` §10.
 
 ### 10.1 `reserve_device(actor, device_id, notes=null)` — bármely bejelentkezett felhasználó
+
 1. **Lejárt sor takarítása** az adott eszközre, hogy egy be nem söpört lejárt foglalás ne blokkoljon.
 2. Ellenőrzés: az eszköz **szabad** — nincs birtokosa (van helye), és `status = 'Kivehető'`. Ha nem → barátságos hiba.
 3. Ellenőrzés: nincs aktív foglalása (`active_reservation`).
@@ -326,20 +342,24 @@ A felhasználók maguk foglalhatnak le egy szabad eszközt; a foglalás az elvit
 5. `devices.status = 'Lefoglalva'`.
 
 ### 10.2 `cancel_reservation(actor, device_id)` — a foglaló vagy storekeeper / it_admin
+
 1. Engedélyezés: az aktor a `reserved_by`, vagy szerepkör ≥ storekeeper.
 2. A sor törlése.
 3. `devices.status = 'Kivehető'`.
 
 ### 10.3 Elvitel — `check_out` interplay (a `move_asset`-ben)
+
 1. Ha van **aktív foglalás**: az elvitel engedélyezett, ha az aktor a `reserved_by` **vagy** szerepköre ≥ `storekeeper`; egyébként elutasítva.
 2. Sikeres `check_out` után a foglalás **teljesült**: a sor törlődik.
 
 ### 10.4 Lejárat — `expire_reservations()` (ütemezett)
+
 1. Egy ütemezett job: `DELETE FROM device_reservations WHERE expires_at <= now()`.
 2. Minden érintett eszköz `status`-a `'Kivehető'`-re áll (ha közben nem vitték el).
 3. A `device_active_reservations` nézet a takarítás között is helyes (`expires_at > now()` szűr).
 
 ### 10.5 Peremesetek
+
 - **Foglalás + checkpoint** — egy `pending` visszavétel alatt az eszköz a nézet szerint még a felhasználónál van, tehát nem foglalható, amíg a raktáros meg nem erősíti.
 - **Versenyhelyzet** — két egyidejű foglalás esetén az UNIQUE(`device_id`) az egyiket elutasítja; az alkalmazás „már lefoglalva" hibára fordítja.
 
@@ -350,20 +370,24 @@ A felhasználók maguk foglalhatnak le egy szabad eszközt; a foglalás az elvit
 Ezek a műveletek a **belső** birtoklási kapun (`move_asset_internal`) mennek át, amely megkerüli a felhasználói korlátozást, mindig `confirmed` eseményt ír, levezeti a `from_*` oldalt az aktuális állapotból, és frissíti a `devices.status`-t a `status_from_event` szerint.
 
 ### 11.1 `send_to_repair(actor, device_id, to_location_id=null, to_department_id=null, notes=null)`
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. Ha nincs megadva cél-helyiség, a rendszer a `type = 'műhely'` helyiséget választja.
 3. `move_asset_internal(event_type='send_to_repair', …)` → `devices.status = 'Szerviz alatt'`.
 
 ### 11.2 `return_from_repair(actor, device_id, to_location_id, to_department_id, notes=null)`
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. Ellenőrzés: az eszköz `status = 'Szerviz alatt'`; különben hiba („Csak szerviz alatt lévő eszköz helyezhető vissza.").
 3. `move_asset_internal(event_type='return_from_repair', …)` → `devices.status = 'Kivehető'`. A `from_*` a műhely lesz, a `to_*` a választott telephely + helyiség, így a napló mutatja, **honnan** érkezett vissza.
 
 ### 11.3 `mark_lost(actor, device_id, notes=null)`
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. `move_asset_internal(event_type='mark_lost', …)` az **utolsó ismert** birtokost/helyet megőrizve a cél oldalon → `devices.status = 'Elveszett'`.
 
 ### 11.4 `mark_found(actor, device_id, to_location_id, to_department_id, notes=null)`
+
 1. Engedélyezés: szerepkör ≥ storekeeper.
 2. `move_asset_internal(event_type='mark_found', …)` a választott helyre (forrás nélkül — nem ismert, honnan került elő) → `devices.status = 'Kivehető'`.
 

@@ -28,6 +28,7 @@ A legtöbb tábla **ehhez az adatbázishoz tartozik**, két kivétellel: a `user
 Egy eszköz *aktuális birtokosa és helye* **nincs** az eszköz során tárolva; ezeket a `device_custody_events` legújabb **megerősített** sorából vezetjük le, és a `device_current_state` nézet teszi elérhetővé (lásd §7).
 
 **Kétszintű hely.** A fizikai elhelyezkedés két szinten értelmezett:
+
 - `locations` — telephely (épület/cím), pl. „1095 Budapest, Soroksári út 12." — **külső**, a klinika weboldaláról;
 - `departments` — a telephelyen belüli helyiség/szervezeti egység (raktár, osztály, recepció, műhely) — **ehhez** az adatbázishoz tartozik.
 
@@ -54,7 +55,7 @@ Ha a nyilvántartási táblák **ugyanabban** az adatbázisban élnek, mint a we
 
 ## 4. Felsorolt típusok (enum)
 
-```
+```text
 device_status       : 'Kivehető' | 'Kiadva' | 'Lefoglalva' | 'Visszavétel folyamatban'
                       | 'Szerviz alatt' | 'Elveszett' | 'Selejtezve'
 custody_event_type  : 'check_out' | 'check_in' | 'transfer' | 'stock_transfer'
@@ -281,7 +282,7 @@ WHERE e.confirmation_status = 'confirmed';
 ```
 
 > **Raktár sosem birtokos:** ha a legújabb esemény cél-helyisége `type = 'raktár'`, az eszköznek **nincs** birtokosa (a `current_holder_user_id` effektíve NULL), és `Kivehető` marad. Az alkalmazásréteg ezt a `device_current_state` olvasásakor érvényesíti.
-
+>
 > **Checkpoint:** a `WHERE confirmation_status = 'confirmed'` szűrő miatt egy függőben lévő (`pending`) felhasználói visszavétel nem változtatja meg az aktuális állapotot — a nézet a check_in *előtti* birtokost/helyet mutatja, amíg a raktáros meg nem erősíti. Az elutasított (`rejected`) esemény sosem érvényesül. Lásd §9.
 
 | Nézet oszlop             | Forrás                                    | Jelentés                                         |
