@@ -5,7 +5,7 @@
 
 import {
   moveAsset, reserveDevice, cancelReservation, confirmCheckIn, rejectCheckIn,
-  sendToRepair, returnFromRepair, markLost, retireDevice,
+  sendToRepair, returnFromRepair, markLost, markFound, retireDevice,
   getDepartments, getLocations, getUsers, getDevice, getDeviceType, currentUser, currentRole,
   currentState, roleAtLeast, activeReservation,
 } from '../state/store.js';
@@ -357,6 +357,35 @@ export function dlgMarkLost(deviceId) {
     confirmText: 'Elveszett',
     confirmClass: 'btn-danger',
     onConfirm: (root) => { markLost(deviceId, root.querySelector('[name=notes]').value.trim() || null); toast('Elveszettnek jelölve.', 'success'); },
+  });
+}
+
+export function dlgMarkFound(deviceId) {
+  openModal({
+    title: 'Találtnak jelölés',
+    bodyHTML: `<div class="field">
+        <label class="form-label">Helyszín</label>
+        <select class="form-control" name="to_location">
+          ${getLocations().map((l) => `<option value="${l.id}">${esc(l.address)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="form-label">Részleg</label>
+        <select class="form-control" name="to_department">
+          ${getDepartments().map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="form-label">Megjegyzés</label>
+        <input class="form-control" name="notes" placeholder="pl. javítva" />
+      </div>`,
+    confirmText: 'Visszahelyezés',
+    onConfirm: (root) => {
+      const to_location_id = Number(root.querySelector('[name=to_location]').value);
+      const to_department_id = Number(root.querySelector('[name=to_department]').value);
+      const notes = root.querySelector('[name=notes]').value.trim() || null;
+      markFound(deviceId, to_location_id, to_department_id, notes);
+      toast('Találtnak jelölve.', 'success'); },
   });
 }
 export function dlgRetire(deviceId) {

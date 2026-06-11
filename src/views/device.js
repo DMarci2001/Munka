@@ -129,9 +129,10 @@ function attrRow(def, value) {
 function tlItem(ev) {
   const actor = getUser(ev.actor_user_id);
   const dotCls = ev.confirmation_status === 'pending' ? 'pending' : ev.confirmation_status === 'rejected' ? 'rejected' : '';
+  const noFrom = ev.event_type === 'mark_lost' || ev.event_type === 'mark_found';
   const fromTo = [];
-  if (ev.from_user_id) fromTo.push(getUser(ev.from_user_id)?.full_name);
-  else if (ev.from_departments_id || ev.from_locations_id) fromTo.push(locationLabel(ev.from_locations_id, ev.from_departments_id));
+  if (!noFrom && ev.from_user_id) fromTo.push(getUser(ev.from_user_id)?.full_name);
+  else if (!noFrom && (ev.from_departments_id || ev.from_locations_id)) fromTo.push(locationLabel(ev.from_locations_id, ev.from_departments_id));
   const toLabel = ev.to_user_id ? getUser(ev.to_user_id)?.full_name : locationLabel(ev.to_locations_id, ev.to_departments_id);
   const confTag = ev.confirmation_status !== 'confirmed'
     ? ` · <span class="muted">${confLabel(ev.confirmation_status)}</span>` : '';
@@ -186,6 +187,7 @@ function renderActions(container, v, role, isStore, me) {
     }
     if (isStore && v.inRepair) {
       btns.push(`<button class="btn btn-outline" data-act="return-from-repair">${icons.back} Visszahelyezés</button>`);
+      btns.push(`<button class="btn btn-outline" data-act="edit">${icons.edit} Szerkesztés</button>`);
     }
     if (isStore && !v.inRepair) {
       btns.push(`<button class="btn btn-outline" data-act="repair">${icons.repair} Szervizbe</button>`);
@@ -193,6 +195,8 @@ function renderActions(container, v, role, isStore, me) {
       btns.push(`<button class="btn btn-danger" data-act="more">⋯</button>`);
     }
   } else if (isStore && !retired) {
+    if (v.isLost)
+      btns.push(`<button class="btn btn-primary" data-act="mark-found">${icons.back} Visszahelyezés</button>`);
     btns.push(`<button class="btn btn-outline" data-act="edit">${icons.edit} Szerkesztés</button>`);
   }
 
@@ -208,6 +212,7 @@ function renderActions(container, v, role, isStore, me) {
     stock: () => A.dlgStockTransfer(id),
     repair: () => A.dlgSendToRepair(id),
     'return-from-repair': () => A.dlgReturnFromRepair(id),
+    'mark-found': () => A.dlgMarkFound(id),
     edit: () => import('./register_device.js').then((m) => m.dlgEditDevice(id)),
     more: () => showMore(container, id),
   };

@@ -59,6 +59,7 @@ export function deviceVM(dev) {
     lastReserved,
     // Kiadható, ha nincs birtokosa és valahol van — a tárolt státusztól függetlenül.
     isFree: effectiveStatus === 'Kivehető' && (cur.department !== null || cur.location !== null),
+    isLost: dev.status === 'Elveszett',
     inRepair: dev.status === 'Szerviz alatt',
   };
 }

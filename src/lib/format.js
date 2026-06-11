@@ -34,6 +34,7 @@ const EVENT = {
   send_to_repair: 'Szervizbe küldés',
   return_from_repair: 'Szervizből visszahelyezés',
   mark_lost: 'Elveszettnek jelölés',
+  mark_found: 'Megtalálva',
 };
 export const eventLabel = (e) => EVENT[e] || e;
 

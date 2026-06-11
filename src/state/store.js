@@ -309,6 +309,7 @@ function statusFromEvent(eventType) {
     case 'stock_transfer': return 'Kivehető';
     case 'send_to_repair': return 'Szerviz alatt';
     case 'mark_lost': return 'Elveszett';
+    case 'mark_found': return 'Kivehető';
     default: return 'Kivehető';
   }
 }
@@ -411,6 +412,14 @@ export function markLost(device_id, notes = null) {
   moveAssetInternal({
     device_id, event_type: 'mark_lost',
     to_locations_id: cur.location, to_departments_id: cur.department, to_user_id: cur.holder, notes,
+  });
+}
+
+export function markFound(device_id, to_location_id, to_department_id, notes = null) {
+  requireStorekeeper();
+  moveAssetInternal({
+    device_id, event_type: 'mark_found',
+    to_locations_id: to_location_id, to_departments_id: to_department_id, notes,
   });
 }
 
