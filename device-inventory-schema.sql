@@ -5,9 +5,10 @@
 --  - A custody-eseménynapló (append-only) az egyetlen igazságforrás
 --    az aktuális birtokosra/helyre; a devices NEM tárolja ezeket.
 --  - Kétszintű hely: locations (telephely) + departments (helyiség).
---  - A clinic_users KÜLSŐ tábla (a klinikai webalkalmazásé) — itt csak
---    hivatkozunk rá. Ha külön adatbázisban él, hagyd el a rá mutató
---    FK-megszorításokat, és az alkalmazásrétegben ellenőrizz.
+--  - A users és a locations KÜLSŐ táblák (a klinikai webalkalmazásé/weboldaláé)
+--    — itt csak hivatkozunk rájuk. A departments és minden más EHHEZ az
+--    adatbázishoz tartozik. Ha a külső táblák külön adatbázisban élnek, hagyd
+--    el a rájuk mutató FK-megszorításokat, és az alkalmazásrétegben ellenőrizz.
 --
 -- Megjegyzés: a CHECK megszorításokat MySQL 8.0.16+ / MariaDB 10.2+
 -- kényszeríti ki; régebbi szervereken dokumentációként szolgálnak.
@@ -26,37 +27,44 @@ DROP TABLE IF EXISTS devices;
 DROP TABLE IF EXISTS attribute_definitions;
 DROP TABLE IF EXISTS device_types;
 DROP TABLE IF EXISTS departments;
-DROP TABLE IF EXISTS locations;
--- DROP TABLE IF EXISTS clinic_users;   -- KÜLSŐ: nem mi kezeljük
+-- KÜLSŐ táblák (a klinikai webalkalmazásé) — nem mi kezeljük:
+-- DROP TABLE IF EXISTS locations;
+-- DROP TABLE IF EXISTS users;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------
--- KÜLSŐ tábla (a klinikai webalkalmazásé) — csak hivatkozási minta.
--- Éles rendszerben NE hozd létre itt; a webalkalmazás birtokolja.
+-- KÜLSŐ táblák (a klinikai webalkalmazásé/weboldaláé) — csak hivatkozási minta.
+-- Éles rendszerben NE hozd létre itt; a webalkalmazás birtokolja (users +
+-- locations). A demó kedvéért IF NOT EXISTS-szel létrehozzuk, hogy az FK-k
+-- feloldódjanak és a szkript önállóan lefusson.
 -- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS clinic_users (
+CREATE TABLE IF NOT EXISTS users (
   id         INT          NOT NULL AUTO_INCREMENT,
   username   VARCHAR(64)  NOT NULL,
   full_name  VARCHAR(128) NOT NULL,
   auth       VARCHAR(16)  NOT NULL DEFAULT 'user',   -- user | storekeeper | it_admin
   title      VARCHAR(64)  NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_clinic_users_username (username),
-  CONSTRAINT chk_clinic_users_auth CHECK (auth IN ('user','storekeeper','it_admin'))
+  UNIQUE KEY uq_users_username (username),
+  CONSTRAINT chk_users_auth CHECK (auth IN ('user','storekeeper','it_admin'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------
--- locations — telephelyek (épület/cím)
+-- locations — telephelyek (épület/cím). KÜLSŐ: a klinikai weboldalé.
+-- Éles rendszerben NE hozd létre itt; csak hivatkozunk rá. A departments FK
+-- ezért átível a külső határon (külön adatbázisban hagyd el a megszorítást).
 -- ------------------------------------------------------------
-CREATE TABLE locations (
+CREATE TABLE IF NOT EXISTS locations (
   id       INT          NOT NULL AUTO_INCREMENT,
   address  VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------
--- departments — helyiségek / szervezeti egységek egy telephelyen
+-- departments — helyiségek / szervezeti egységek egy telephelyen.
+-- EHHEZ az adatbázishoz tartozik: a klinika weboldala nem tárol helyiségeket,
+-- ezeket itt vezetjük. (A locations_id a KÜLSŐ locations táblára mutat.)
 -- A type='raktár' helyiség SOHA nem birtokos (lásd device_current_state).
 -- ------------------------------------------------------------
 CREATE TABLE departments (
@@ -123,8 +131,8 @@ CREATE TABLE devices (
   UNIQUE KEY uq_devices_asset_tag (asset_tag),
   KEY idx_devices_type (device_type_id),
   CONSTRAINT fk_devices_type       FOREIGN KEY (device_type_id) REFERENCES device_types (id),
-  CONSTRAINT fk_devices_created_by FOREIGN KEY (created_by)     REFERENCES clinic_users (id),
-  CONSTRAINT fk_devices_updated_by FOREIGN KEY (updated_by)     REFERENCES clinic_users (id),
+  CONSTRAINT fk_devices_created_by FOREIGN KEY (created_by)     REFERENCES users (id),
+  CONSTRAINT fk_devices_updated_by FOREIGN KEY (updated_by)     REFERENCES users (id),
   CONSTRAINT chk_devices_status CHECK (status IN
     ('Kivehető','Kiadva','Lefoglalva','Visszavétel folyamatban',
      'Szerviz alatt','Elveszett','Selejtezve'))
@@ -178,14 +186,14 @@ CREATE TABLE device_custody_events (
   KEY idx_custody_status (confirmation_status, event_timestamp),
   UNIQUE KEY uq_one_pending_checkin_per_device (pending_device_id),
   CONSTRAINT fk_custody_device      FOREIGN KEY (device_id)           REFERENCES devices (device_id),
-  CONSTRAINT fk_custody_actor       FOREIGN KEY (actor_user_id)       REFERENCES clinic_users (id),
-  CONSTRAINT fk_custody_from_user   FOREIGN KEY (from_user_id)        REFERENCES clinic_users (id),
+  CONSTRAINT fk_custody_actor       FOREIGN KEY (actor_user_id)       REFERENCES users (id),
+  CONSTRAINT fk_custody_from_user   FOREIGN KEY (from_user_id)        REFERENCES users (id),
   CONSTRAINT fk_custody_from_loc    FOREIGN KEY (from_locations_id)   REFERENCES locations (id),
   CONSTRAINT fk_custody_from_dept   FOREIGN KEY (from_departments_id) REFERENCES departments (id),
-  CONSTRAINT fk_custody_to_user     FOREIGN KEY (to_user_id)          REFERENCES clinic_users (id),
+  CONSTRAINT fk_custody_to_user     FOREIGN KEY (to_user_id)          REFERENCES users (id),
   CONSTRAINT fk_custody_to_loc      FOREIGN KEY (to_locations_id)     REFERENCES locations (id),
   CONSTRAINT fk_custody_to_dept     FOREIGN KEY (to_departments_id)   REFERENCES departments (id),
-  CONSTRAINT fk_custody_confirmedby FOREIGN KEY (confirmed_by)        REFERENCES clinic_users (id),
+  CONSTRAINT fk_custody_confirmedby FOREIGN KEY (confirmed_by)        REFERENCES users (id),
   CONSTRAINT chk_custody_event_type CHECK (event_type IN
     ('check_out','check_in','transfer','stock_transfer',
      'send_to_repair','return_from_repair','mark_lost','mark_found')),
@@ -222,7 +230,7 @@ CREATE TABLE device_reservations (
   KEY idx_resv_expires (expires_at),
   KEY idx_resv_user (reserved_by),
   CONSTRAINT fk_resv_device FOREIGN KEY (device_id)   REFERENCES devices (device_id),
-  CONSTRAINT fk_resv_user   FOREIGN KEY (reserved_by) REFERENCES clinic_users (id),
+  CONSTRAINT fk_resv_user   FOREIGN KEY (reserved_by) REFERENCES users (id),
   CONSTRAINT chk_resv_expiry CHECK (expires_at > reserved_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

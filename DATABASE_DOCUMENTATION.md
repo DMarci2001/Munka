@@ -23,13 +23,13 @@ Az elsődleges kulcsok adatbázis által generált egész azonosítók (a demób
 
 Az időbélyegek dátum+idő típusúak (`timestamp`/`datetime`, UTC ajánlott). Az idő nélküli dátumok `date` típusúak.
 
-A táblák **ehhez az adatbázishoz tartoznak**, egyetlen kivétellel: a `clinic_users` **külső** tábla (a meglévő klinikai webalkalmazásé). Erre idegen kulccsal hivatkozunk, de ezt a rendszer soha nem írja (lásd §3).
+A legtöbb tábla **ehhez az adatbázishoz tartozik**, két kivétellel: a `users` és a `locations` **külső** táblák (a meglévő klinikai webalkalmazásé, illetve a klinika weboldaláé). Ezekre idegen kulccsal hivatkozunk, de a rendszer soha nem írja őket (lásd §3). A `departments` ezzel szemben **ehhez** az adatbázishoz tartozik — a klinika weboldala nem tárol helyiségeket.
 
 Egy eszköz *aktuális birtokosa és helye* **nincs** az eszköz során tárolva; ezeket a `device_custody_events` legújabb **megerősített** sorából vezetjük le, és a `device_current_state` nézet teszi elérhetővé (lásd §7).
 
 **Kétszintű hely.** A fizikai elhelyezkedés két szinten értelmezett:
-- `locations` — telephely (épület/cím), pl. „1095 Budapest, Soroksári út 12.";
-- `departments` — a telephelyen belüli helyiség/szervezeti egység (raktár, osztály, recepció, műhely).
+- `locations` — telephely (épület/cím), pl. „1095 Budapest, Soroksári út 12." — **külső**, a klinika weboldaláról;
+- `departments` — a telephelyen belüli helyiség/szervezeti egység (raktár, osztály, recepció, műhely) — **ehhez** az adatbázishoz tartozik.
 
 Ezért minden birtoklási esemény **mindkét** szintet rögzítheti: `to_locations_id` (telephely) **és** `to_departments_id` (helyiség).
 
@@ -37,13 +37,18 @@ Ezért minden birtoklási esemény **mindkét** szintet rögzítheti: `to_locati
 
 ## 3. Integráció a klinikai webalkalmazással
 
-| Tábla          | Használt kulcsoszlopok                  | Jelentés                                                                 |
-|----------------|------------------------------------------|--------------------------------------------------------------------------|
-| `clinic_users` | `id`, `username`, `full_name`, `auth`, `title` | Minden rendszerfelhasználó (orvosok, recepciósok, raktáros, IT). Az `auth` adja a jogosultsági szintet. |
+Két **külső** táblára hivatkozunk; ezeket nem ez a rendszer írja:
 
-A `clinic_users` táblát a webalkalmazás birtokolja: a bejelentkezést és a szerepkör (`auth`) kiosztását is az kezeli. Ez a modul az `auth`-ot csak **olvassa**, sosem írja — nincs `grant_role` művelete.
+| Tábla       | Tulajdonos             | Használt kulcsoszlopok                         | Jelentés                                                                                                |
+|-------------|------------------------|------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `users`     | klinikai webalkalmazás | `id`, `username`, `full_name`, `auth`, `title` | Minden rendszerfelhasználó (orvosok, recepciósok, raktáros, IT). Az `auth` adja a jogosultsági szintet. |
+| `locations` | klinika weboldala      | `id`, `address`                                | A klinika telephelyei (épület/cím). A törzsadatot a weboldal kezeli.                                    |
 
-Ha a nyilvántartási táblák **ugyanabban** az adatbázisban élnek, mint a webalkalmazás, a `clinic_users`-re mutató idegen kulcsok közvetlenül feloldódnak. Ha **külön** adatbázisban élnek, tárold az azonosítókat FK-megszorítás nélkül, és az alkalmazásrétegben ellenőrizd a hivatkozásokat.
+A `users` táblát a webalkalmazás birtokolja: a bejelentkezést és a szerepkör (`auth`) kiosztását is az kezeli. Ez a modul az `auth`-ot csak **olvassa**, sosem írja — nincs `grant_role` művelete. A `locations` törzsadatot hasonlóan csak olvassa: új telephelyet nem itt veszünk fel.
+
+A `departments` **nem** külső: mivel a klinika weboldala nem tárol helyiségeket, a raktárakat/osztályokat/műhelyeket ebben az adatbázisban vezetjük (a `departments.locations_id` a külső `locations`-re mutat).
+
+Ha a nyilvántartási táblák **ugyanabban** az adatbázisban élnek, mint a webalkalmazás, a `users`-re és `locations`-re mutató idegen kulcsok közvetlenül feloldódnak. Ha **külön** adatbázisban élnek, tárold az azonosítókat FK-megszorítás nélkül, és az alkalmazásrétegben ellenőrizd a hivatkozásokat.
 
 ---
 
@@ -62,28 +67,28 @@ department_type     : 'raktár' | 'osztály' | 'recepció' | 'műhely'
 
 **Eszközstátuszok jelentése:**
 
-| Státusz                    | Jelentés                                                                 |
-|----------------------------|--------------------------------------------------------------------------|
-| `Kivehető`                 | Szabad, raktárban/helyen van, nincs birtokosa — elvihető vagy foglalható. |
-| `Kiadva`                   | Éppen egy felhasználónál van.                                            |
-| `Lefoglalva`               | Egy felhasználó lefoglalta; az elvitelig fenntartva (lásd §10).         |
-| `Visszavétel folyamatban`  | Egy felhasználó leadta, de raktáros-megerősítésre vár (checkpoint, §9). |
-| `Szerviz alatt`            | Javításra/szervizbe küldve (lásd §11).                                  |
-| `Elveszett`                | Elveszettnek jelölve (lásd §11).                                        |
-| `Selejtezve`               | Kivonva (lágy törlés); az előzmény megmarad.                            |
+| Státusz                   | Jelentés                                                                  |
+|---------------------------|---------------------------------------------------------------------------|
+| `Kivehető`                | Szabad, raktárban/helyen van, nincs birtokosa — elvihető vagy foglalható. |
+| `Kiadva`                  | Éppen egy felhasználónál van.                                             |
+| `Lefoglalva`              | Egy felhasználó lefoglalta; az elvitelig fenntartva (lásd §10).           |
+| `Visszavétel folyamatban` | Egy felhasználó leadta, de raktáros-megerősítésre vár (checkpoint, §9).   |
+| `Szerviz alatt`           | Javításra/szervizbe küldve (lásd §11).                                    |
+| `Elveszett`               | Elveszettnek jelölve (lásd §11).                                          |
+| `Selejtezve`              | Kivonva (lágy törlés); az előzmény megmarad.                              |
 
 **Eseménytípusok jelentése:**
 
-| Eseménytípus         | Magyar címke               | Hatás                                              |
-|----------------------|----------------------------|----------------------------------------------------|
-| `check_out`          | Kivétel                    | Raktárból/helyről felhasználóhoz.                  |
-| `check_in`           | Leadás                     | Felhasználótól vissza raktárba/helyre.             |
-| `transfer`           | Átadás                     | Felhasználótól másik felhasználóhoz.               |
-| `stock_transfer`     | Raktármozgatás             | Raktár/hely → raktár/hely, birtokos nélkül.        |
-| `send_to_repair`     | Szervizbe küldés           | Műhelybe/szervizbe; státusz → `Szerviz alatt`.     |
-| `return_from_repair` | Szervizből visszahelyezés  | Szervizből vissza raktárba/helyre.                 |
-| `mark_lost`          | Elveszettnek jelölés       | Státusz → `Elveszett`; az utolsó ismert hely marad cél. |
-| `mark_found`         | Megtalálva                 | Elveszett eszköz visszavezetése egy helyre.        |
+| Eseménytípus         | Magyar címke              | Hatás                                                   |
+|----------------------|---------------------------|---------------------------------------------------------|
+| `check_out`          | Kivétel                   | Raktárból/helyről felhasználóhoz.                       |
+| `check_in`           | Leadás                    | Felhasználótól vissza raktárba/helyre.                  |
+| `transfer`           | Átadás                    | Felhasználótól másik felhasználóhoz.                    |
+| `stock_transfer`     | Raktármozgatás            | Raktár/hely → raktár/hely, birtokos nélkül.             |
+| `send_to_repair`     | Szervizbe küldés          | Műhelybe/szervizbe; státusz → `Szerviz alatt`.          |
+| `return_from_repair` | Szervizből visszahelyezés | Szervizből vissza raktárba/helyre.                      |
+| `mark_lost`          | Elveszettnek jelölés      | Státusz → `Elveszett`; az utolsó ismert hely marad cél. |
+| `mark_found`         | Megtalálva                | Elveszett eszköz visszavezetése egy helyre.             |
 
 ---
 
@@ -94,54 +99,54 @@ department_type     : 'raktár' | 'osztály' | 'recepció' | 'műhely'
 **„Kitölti" oszlop — ki adja az értéket.** A szerepkörök bővülő jogosultságúak: `it_admin` ⊇ `storekeeper` ⊇ `user`.
 
 - **Rendszer** — automatikusan generált/levezetett: azonosítók (PK), időbélyegek, naplóoszlopok, a `from_*` oldal, a bejelentkezett aktor.
-- **IT-admin** — a séma/katalógus (eszköztípusok, attribútum-definíciók) és a telephelyek.
+- **IT-admin** — a séma/katalógus (eszköztípusok, attribútum-definíciók). *(A telephelyeket — `locations` — a klinika weboldala adja, lásd §3.)*
 - **Raktáros** — eszközök regisztrálása/szerkesztése, helyiségek (`departments`) kezelése, bármilyen birtoklási mozgatás. (`it_admin` is megteheti.)
 - **Felhasználó** — **kizárólag birtoklási eseményeket** rögzít a saját jogosultsága keretein belül.
 
 Rövidítések: **PK** elsődleges kulcs, **FK** idegen kulcs, **UQ** egyedi, **alapért.** alapérték.
 
-### 5.1 `locations` — telephelyek
+### 5.1 `locations` — telephelyek *(külső)*
 
-Fizikai telephely (épület/cím). A demóban a törzsadatot az IT-admin kezeli (`addLocation`).
+Fizikai telephely (épület/cím). **Külső** tábla: a törzsadatot a klinika weboldala adja; ez a modul csak **olvassa** (lásd §3). *(A demó az egyszerűség kedvéért beágyazva tárol néhány telephelyet.)*
 
-| Oszlop     | Típus | Kötelező | Kitölti  | Megjegyzés                                  |
-|------------|-------|----------|----------|---------------------------------------------|
-| `id`       | int   | Igen     | Rendszer | **PK**.                                     |
-| `address`  | text  | Igen     | IT-admin | Teljes cím, pl. „1095 Budapest, Soroksári út 12.". |
+| Oszlop    | Típus | Kötelező | Kitölti         | Megjegyzés                                         |
+|-----------|-------|----------|-----------------|----------------------------------------------------|
+| `id`      | int   | Igen     | Klinika (külső) | **PK**.                                            |
+| `address` | text  | Igen     | Klinika (külső) | Teljes cím, pl. „1095 Budapest, Soroksári út 12.". |
 
 ### 5.2 `departments` — helyiségek / szervezeti egységek
 
-Egy telephelyen belüli hely: raktár, osztály, recepció vagy műhely. Ez a custody „hely" finomabb szintje. A `type = 'raktár'` helyiség **soha nem birtokos**: ha egy eszköz ide kerül, nincs birtokosa, és `Kivehető` marad (lásd §7).
+Egy telephelyen belüli hely: raktár, osztály, recepció vagy műhely. **Ehhez** az adatbázishoz tartozik (a klinika weboldala nem tárol helyiségeket); a `locations_id` a külső `locations` telephelyre mutat. Ez a custody „hely" finomabb szintje. A `type = 'raktár'` helyiség **soha nem birtokos**: ha egy eszköz ide kerül, nincs birtokosa, és `Kivehető` marad (lásd §7).
 
-| Oszlop         | Típus | Kötelező | Kitölti             | Megjegyzés                                                         |
-|----------------|-------|----------|---------------------|--------------------------------------------------------------------|
-| `id`           | int   | Igen     | Rendszer            | **PK**.                                                            |
-| `locations_id` | int   | Igen     | Raktáros / IT-admin | **FK** → `locations.id`. Melyik telephelyen van.                  |
-| `name`         | text  | Igen     | Raktáros / IT-admin | pl. „Központi raktár", „Kardiológia", „Szerviz / IT".             |
+| Oszlop         | Típus | Kötelező | Kitölti             | Megjegyzés                                                                |
+|----------------|-------|----------|---------------------|---------------------------------------------------------------------------|
+| `id`           | int   | Igen     | Rendszer            | **PK**.                                                                   |
+| `locations_id` | int   | Igen     | Raktáros / IT-admin | **FK** → `locations.id`. Melyik telephelyen van.                          |
+| `name`         | text  | Igen     | Raktáros / IT-admin | pl. „Központi raktár", „Kardiológia", „Szerviz / IT".                     |
 | `type`         | text  | Igen     | Raktáros / IT-admin | CHECK in (`raktár`, `osztály`, `recepció`, `műhely`). Alapért. `osztály`. |
 
 ### 5.3 `device_types` — eszköztípusok katalógusa
 
-| Oszlop        | Típus | Kötelező | Kitölti  | Megjegyzés                                  |
-|---------------|-------|----------|----------|---------------------------------------------|
-| `id`          | int   | Igen     | Rendszer | **PK**.                                     |
+| Oszlop        | Típus | Kötelező | Kitölti  | Megjegyzés                                       |
+|---------------|-------|----------|----------|--------------------------------------------------|
+| `id`          | int   | Igen     | Rendszer | **PK**.                                          |
 | `type`        | text  | Igen     | IT-admin | A típus neve, pl. „Ultrahang", „Router". **UQ**. |
-| `description` | text  | Nem      | IT-admin | Opcionális leírás.                          |
+| `description` | text  | Nem      | IT-admin | Opcionális leírás.                               |
 
 ### 5.4 `attribute_definitions` — típusonkénti mezősablonok
 
 Egy sor egy típusspecifikus mezőt definiál. Ez *konfigurációs adat*, amelyet az IT hoz létre a típus beállításakor, és minden ilyen típusú eszközhöz újrahasznosul. Lásd §6.
 
-| Oszlop           | Típus          | Kötelező | Kitölti  | Megjegyzés                                                                  |
-|------------------|----------------|----------|----------|-----------------------------------------------------------------------------|
-| `id`             | int            | Igen     | Rendszer | **PK**.                                                                     |
+| Oszlop           | Típus          | Kötelező | Kitölti  | Megjegyzés                                                                                                |
+|------------------|----------------|----------|----------|-----------------------------------------------------------------------------------------------------------|
+| `id`             | int            | Igen     | Rendszer | **PK**.                                                                                                   |
 | `device_type_id` | int            | Nem      | IT-admin | **FK** → `device_types.id`. Melyik típushoz tartozik. **NULL = minden típusra érvényes** (globális mező). |
-| `attribute_key`  | text           | Igen     | IT-admin | Gépi kulcs, pl. `calibration_due`. Típuson belül egyedi.                    |
-| `label`          | text           | Igen     | IT-admin | Emberi olvasásra szánt felirat az űrlapon.                                  |
-| `data_type`      | attr_data_type | Igen     | IT-admin | A beviteli mezőt és az ellenőrzést vezérli. Alapért. `'text'`.             |
-| `is_required`    | boolean        | Igen     | IT-admin | Kötelező-e a mező regisztrációkor. Alapért. `false`.                       |
-| `options`        | text           | Nem      | IT-admin | `enum` mezők megengedett értékei vesszővel (pl. `I,IIa,IIb,III`); egyébként NULL. |
-| `sort_order`     | integer        | Nem      | IT-admin | A mező sorrendje az űrlapon.                                                |
+| `attribute_key`  | text           | Igen     | IT-admin | Gépi kulcs, pl. `calibration_due`. Típuson belül egyedi.                                                  |
+| `label`          | text           | Igen     | IT-admin | Emberi olvasásra szánt felirat az űrlapon.                                                                |
+| `data_type`      | attr_data_type | Igen     | IT-admin | A beviteli mezőt és az ellenőrzést vezérli. Alapért. `'text'`.                                            |
+| `is_required`    | boolean        | Igen     | IT-admin | Kötelező-e a mező regisztrációkor. Alapért. `false`.                                                      |
+| `options`        | text           | Nem      | IT-admin | `enum` mezők megengedett értékei vesszővel (pl. `I,IIa,IIb,III`); egyébként NULL.                         |
+| `sort_order`     | integer        | Nem      | IT-admin | A mező sorrendje az űrlapon.                                                                              |
 
 Megszorítás: **UNIQUE (`device_type_id`, `attribute_key`)**.
 
@@ -149,22 +154,22 @@ Megszorítás: **UNIQUE (`device_type_id`, `attribute_key`)**.
 
 A minden eszközre közös tényeket tartalmazza. Szándékosan **nem** tárolja az aktuális birtokost vagy helyet — azok a birtoklási naplóból származnak (§7). Az itteni adatokat az eszközpéldányt regisztráló **Raktáros/IT-admin** viszi be (`register_device` / `edit_device`).
 
-| Oszlop           | Típus         | Kötelező | Kitölti             | Megjegyzés                                                                         |
-|------------------|---------------|----------|---------------------|-------------------------------------------------------------------------------------|
-| `device_id`      | int           | Igen     | Rendszer            | **PK**. Megváltoztathatatlan belső azonosító.                                      |
-| `asset_tag`      | text          | Igen     | Raktáros / IT-admin | **UQ**. A QR-kódba kódolt leltári azonosító.                                        |
-| `device_type_id` | int           | Igen     | Raktáros / IT-admin | **FK** → `device_types.id`. Vezérli a típusspecifikus mezőket.                     |
-| `manufacturer`   | text          | Nem      | Raktáros / IT-admin | pl. GE Healthcare, HP, MikroTik.                                                   |
-| `model`          | text          | Nem      | Raktáros / IT-admin | Modellnév/-szám.                                                                   |
-| `serial_number`  | text          | Nem      | Raktáros / IT-admin | Gyári sorozatszám.                                                                 |
+| Oszlop           | Típus         | Kötelező | Kitölti             | Megjegyzés                                                                              |
+|------------------|---------------|----------|---------------------|-----------------------------------------------------------------------------------------|
+| `device_id`      | int           | Igen     | Rendszer            | **PK**. Megváltoztathatatlan belső azonosító.                                           |
+| `asset_tag`      | text          | Igen     | Raktáros / IT-admin | **UQ**. A QR-kódba kódolt leltári azonosító.                                            |
+| `device_type_id` | int           | Igen     | Raktáros / IT-admin | **FK** → `device_types.id`. Vezérli a típusspecifikus mezőket.                          |
+| `manufacturer`   | text          | Nem      | Raktáros / IT-admin | pl. GE Healthcare, HP, MikroTik.                                                        |
+| `model`          | text          | Nem      | Raktáros / IT-admin | Modellnév/-szám.                                                                        |
+| `serial_number`  | text          | Nem      | Raktáros / IT-admin | Gyári sorozatszám.                                                                      |
 | `status`         | device_status | Igen     | Rendszer / Raktáros | Életciklus-állapot (§4). A rendszer karbantartja a birtoklásból. Alapért. `'Kivehető'`. |
-| `condition`      | text          | Nem      | Raktáros / IT-admin | Állapotjelző, pl. Jó / Kopott / Hibás / Ismeretlen.                                |
-| `notes`          | text          | Nem      | Raktáros / IT-admin | Szabad szöveg (a selejtezés/elutasítás okát is ide fűzi a rendszer).               |
-| `created_at`     | timestamp     | Igen     | Rendszer            | Napló. Alapért. `now()`.                                                           |
-| `updated_at`     | timestamp     | Igen     | Rendszer            | Napló. Minden módosításkor frissül.                                                |
-| `created_by`     | int           | Nem      | Rendszer            | **FK** → `clinic_users.id`. A regisztráló, automatikusan.                          |
-| `updated_by`     | int           | Nem      | Rendszer            | **FK** → `clinic_users.id`. Az utolsó szerkesztő, automatikusan.                   |
-| `retired_date`   | date          | Nem      | Rendszer            | Selejtezéskor beállítva (lágy törlés; az előzmény megmarad).                       |
+| `condition`      | text          | Nem      | Raktáros / IT-admin | Állapotjelző, pl. Jó / Kopott / Hibás / Ismeretlen.                                     |
+| `notes`          | text          | Nem      | Raktáros / IT-admin | Szabad szöveg (a selejtezés/elutasítás okát is ide fűzi a rendszer).                    |
+| `created_at`     | timestamp     | Igen     | Rendszer            | Napló. Alapért. `now()`.                                                                |
+| `updated_at`     | timestamp     | Igen     | Rendszer            | Napló. Minden módosításkor frissül.                                                     |
+| `created_by`     | int           | Nem      | Rendszer            | **FK** → `users.id`. A regisztráló, automatikusan.                                      |
+| `updated_by`     | int           | Nem      | Rendszer            | **FK** → `users.id`. Az utolsó szerkesztő, automatikusan.                               |
+| `retired_date`   | date          | Nem      | Rendszer            | Selejtezéskor beállítva (lágy törlés; az előzmény megmarad).                            |
 
 Index: `idx_devices_type` a `device_type_id`-n.
 
@@ -172,11 +177,11 @@ Index: `idx_devices_type` a `device_type_id`-n.
 
 Egy sor egy eszköz egy kitöltött típusspecifikus mezőjéhez. A tényleges érték `text`-ként tárolódik; valódi típusát a hozzá tartozó definíció `data_type`-ja rögzíti.
 
-| Oszlop                    | Típus | Kötelező   | Kitölti             | Megjegyzés                                                      |
-|---------------------------|-------|------------|---------------------|------------------------------------------------------------------|
-| `id`                      | int   | Igen       | Rendszer            | **PK**.                                                         |
-| `device_id`               | int   | Igen       | Rendszer            | **FK** → `devices.device_id` (ON DELETE CASCADE).              |
-| `attribute_definition_id` | int   | Igen       | Rendszer            | **FK** → `attribute_definitions.id`. Melyik mezőre válaszol.    |
+| Oszlop                    | Típus | Kötelező   | Kitölti             | Megjegyzés                                                        |
+|---------------------------|-------|------------|---------------------|-------------------------------------------------------------------|
+| `id`                      | int   | Igen       | Rendszer            | **PK**.                                                           |
+| `device_id`               | int   | Igen       | Rendszer            | **FK** → `devices.device_id` (ON DELETE CASCADE).                 |
+| `attribute_definition_id` | int   | Igen       | Rendszer            | **FK** → `attribute_definitions.id`. Melyik mezőre válaszol.      |
 | `value`                   | text  | Feltételes | Raktáros / IT-admin | A bevitt érték szövegként. Kötelezősége az `is_required` szerint. |
 
 Megszorítás: **UNIQUE (`device_id`, `attribute_definition_id`)**.
@@ -187,25 +192,25 @@ Megszorítás: **UNIQUE (`device_id`, `attribute_definition_id`)**.
 
 Az egyetlen igazságforrás arra, hogy hol és kinél van az egyes eszköz. Egy sor egy mozgáshoz. A sorok soha nem módosulnak és nem törlődnek (kivétel: a `confirmation_status` lezárása, lásd §9); az aktuális állapot az eszközönkénti legújabb **megerősített** sor. **Ezt a táblát írja a `user` szerepkör is** — a felhasználó adja a mozgás típusát és célját, a `from_*` oldalt és az aktort a rendszer tölti ki.
 
-| Oszlop                 | Típus               | Kötelező   | Kitölti                | Megjegyzés                                                                                                |
-|------------------------|---------------------|------------|------------------------|-----------------------------------------------------------------------------------------------------------|
-| `event_id`             | int                 | Igen       | Rendszer               | **PK**.                                                                                                   |
-| `device_id`            | int                 | Igen       | Felhasználó / Raktáros | **FK** → `devices.device_id`.                                                                            |
-| `event_type`           | custody_event_type  | Igen       | Felhasználó / Raktáros | Lásd §4.                                                                                                  |
-| `actor_user_id`        | int                 | Igen       | Rendszer               | **FK** → `clinic_users.id`. Ki végezte/naplózta a mozgást. **Mindig kitöltve**, a raktár→raktár esetben is. |
-| `from_user_id`         | int                 | Nem        | Rendszer               | **FK** → `clinic_users.id`. Korábbi birtokos, ha személy. Levezetett.                                    |
-| `from_locations_id`    | int                 | Nem        | Rendszer               | **FK** → `locations.id`. Forrás telephely. Levezetett.                                                   |
-| `from_departments_id`  | int                 | Nem        | Rendszer               | **FK** → `departments.id`. Forrás helyiség. Levezetett.                                                  |
-| `to_user_id`           | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `clinic_users.id`. Új birtokos, ha személy.                                                     |
-| `to_locations_id`      | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `locations.id`. Cél telephely.                                                                  |
-| `to_departments_id`    | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `departments.id`. Cél helyiség.                                                                 |
-| `event_timestamp`      | timestamp           | Igen       | Rendszer               | Mikor történt. Alapért. `now()`.                                                                          |
-| `expected_return_date` | date                | Nem        | Felhasználó / Raktáros | Opcionális határidő → lejárt tételek riportja.                                                            |
-| `condition_at_event`   | text                | Nem        | Felhasználó / Raktáros | Átadáskor/leadáskor megállapított állapot.                                                                |
-| `notes`                | text                | Nem        | Felhasználó / Raktáros | Szabad szöveg.                                                                                            |
-| `confirmation_status`  | confirmation_status | Igen       | Rendszer / Raktáros    | `pending` \| `confirmed` \| `rejected`. **Alapért. `confirmed`.** Csak a felhasználói `check_in` indul `pending`-ként. Lásd §9. |
-| `confirmed_by`         | int                 | Feltételes | Rendszer / Raktáros    | **FK** → `clinic_users.id`. Aki megerősítette/elutasította. `pending` alatt NULL; automatikus `confirmed` esetén NULL. |
-| `confirmed_at`         | timestamp           | Feltételes | Rendszer               | A megerősítés/elutasítás időbélyege. A `confirmed_by`-jal együtt mozog.                                  |
+| Oszlop                 | Típus               | Kötelező   | Kitölti                | Megjegyzés                                                                                                      |
+|------------------------|---------------------|------------|------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `event_id`             | int                 | Igen       | Rendszer               | **PK**.                                                                                                         |
+| `device_id`            | int                 | Igen       | Felhasználó / Raktáros | **FK** → `devices.device_id`.                                                                                   |
+| `event_type`           | custody_event_type  | Igen       | Felhasználó / Raktáros | Lásd §4.                                                                                                        |
+| `actor_user_id`        | int                 | Igen       | Rendszer               | **FK** → `users.id`. Ki végezte/naplózta a mozgást. **Mindig kitöltve**, a raktár→raktár esetben is.            |
+| `from_user_id`         | int                 | Nem        | Rendszer               | **FK** → `users.id`. Korábbi birtokos, ha személy. Levezetett.                                                  |
+| `from_locations_id`    | int                 | Nem        | Rendszer               | **FK** → `locations.id`. Forrás telephely. Levezetett.                                                          |
+| `from_departments_id`  | int                 | Nem        | Rendszer               | **FK** → `departments.id`. Forrás helyiség. Levezetett.                                                         |
+| `to_user_id`           | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `users.id`. Új birtokos, ha személy.                                                                   |
+| `to_locations_id`      | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `locations.id`. Cél telephely.                                                                         |
+| `to_departments_id`    | int                 | Feltételes | Felhasználó / Raktáros | **FK** → `departments.id`. Cél helyiség.                                                                        |
+| `event_timestamp`      | timestamp           | Igen       | Rendszer               | Mikor történt. Alapért. `now()`.                                                                                |
+| `expected_return_date` | date                | Nem        | Felhasználó / Raktáros | Opcionális határidő → lejárt tételek riportja.                                                                  |
+| `condition_at_event`   | text                | Nem        | Felhasználó / Raktáros | Átadáskor/leadáskor megállapított állapot.                                                                      |
+| `notes`                | text                | Nem        | Felhasználó / Raktáros | Szabad szöveg.                                                                                                  |
+| `confirmation_status`  | confirmation_status | Igen       | Rendszer / Raktáros    | `pending` \                                                                                                     |
+| `confirmed_by`         | int                 | Feltételes | Rendszer / Raktáros    | **FK** → `users.id`. Aki megerősítette/elutasította. `pending` alatt NULL; automatikus `confirmed` esetén NULL. |
+| `confirmed_at`         | timestamp           | Feltételes | Rendszer               | A megerősítés/elutasítás időbélyege. A `confirmed_by`-jal együtt mozog.                                         |
 
 Megszorítások:
 
@@ -227,12 +232,12 @@ A foglalás **nem** birtoklási mozgás (az eszköz nem mozdul), és lejár — 
 
 | Oszlop           | Típus     | Kötelező | Kitölti     | Megjegyzés                                                              |
 |------------------|-----------|----------|-------------|-------------------------------------------------------------------------|
-| `reservation_id` | int       | Igen     | Rendszer    | **PK**.                                                                |
+| `reservation_id` | int       | Igen     | Rendszer    | **PK**.                                                                 |
 | `device_id`      | int       | Igen     | Felhasználó | **FK** → `devices.device_id`. **UQ** — eszközönként egy aktív foglalás. |
-| `reserved_by`    | int       | Igen     | Rendszer    | **FK** → `clinic_users.id`. A foglaló (a bejelentkezett aktor).        |
-| `reserved_at`    | timestamp | Igen     | Rendszer    | A foglalás időpontja. Alapért. `now()`.                                |
-| `expires_at`     | timestamp | Igen     | Rendszer    | Lejárat. Alapért. `reserved_at + 3 nap`. Lejárat után a sor törlendő.  |
-| `notes`          | text      | Nem      | Felhasználó | Szabad szöveg.                                                         |
+| `reserved_by`    | int       | Igen     | Rendszer    | **FK** → `users.id`. A foglaló (a bejelentkezett aktor).                |
+| `reserved_at`    | timestamp | Igen     | Rendszer    | A foglalás időpontja. Alapért. `now()`.                                 |
+| `expires_at`     | timestamp | Igen     | Rendszer    | Lejárat. Alapért. `reserved_at + 3 nap`. Lejárat után a sor törlendő.   |
+| `notes`          | text      | Nem      | Felhasználó | Szabad szöveg.                                                          |
 
 Megszorítások:
 
@@ -279,28 +284,28 @@ WHERE e.confirmation_status = 'confirmed';
 
 > **Checkpoint:** a `WHERE confirmation_status = 'confirmed'` szűrő miatt egy függőben lévő (`pending`) felhasználói visszavétel nem változtatja meg az aktuális állapotot — a nézet a check_in *előtti* birtokost/helyet mutatja, amíg a raktáros meg nem erősíti. Az elutasított (`rejected`) esemény sosem érvényesül. Lásd §9.
 
-| Nézet oszlop             | Forrás                                       | Jelentés                                              |
-|--------------------------|-----------------------------------------------|------------------------------------------------------|
-| `device_id`              | esemény                                       | Az eszköz.                                           |
-| `current_holder_user_id` | a legújabb esemény `to_user_id`-ja            | Kinél van most (NULL, ha raktárban / helyen ül).     |
-| `current_location_id`    | a legújabb esemény `to_locations_id`-ja       | Melyik telephelyen van.                              |
-| `current_department_id`  | a legújabb esemény `to_departments_id`-ja     | Melyik helyiségben van.                              |
-| `since`                  | `event_timestamp`                             | Mikor érte el ezt az állapotot.                      |
+| Nézet oszlop             | Forrás                                    | Jelentés                                         |
+|--------------------------|-------------------------------------------|--------------------------------------------------|
+| `device_id`              | esemény                                   | Az eszköz.                                       |
+| `current_holder_user_id` | a legújabb esemény `to_user_id`-ja        | Kinél van most (NULL, ha raktárban / helyen ül). |
+| `current_location_id`    | a legújabb esemény `to_locations_id`-ja   | Melyik telephelyen van.                          |
+| `current_department_id`  | a legújabb esemény `to_departments_id`-ja | Melyik helyiségben van.                          |
+| `since`                  | `event_timestamp`                         | Mikor érte el ezt az állapotot.                  |
 
 Mivel a „to" oldal **egyszerre** hordozhat felhasználót és helyet is, egy személyhez kiadott eszköz továbbra is jelenthet helyet: amikor egy orvos ultrahangot visz a Kardiológiára, az esemény `to_user_id = orvos`, `to_locations_id = Budapest`, `to_departments_id = Kardiológia` — így a nézet azt mutatja, hogy az orvosnál van *és* a Kardiológián található.
 
 A napló által támogatott mozgásformák:
 
-| Folyamat                  | from_*                          | to_*                                          | event_type           | actor                          |
-|---------------------------|----------------------------------|-----------------------------------------------|----------------------|--------------------------------|
-| Raktár → felhasználó      | `from_departments_id`           | `to_user_id` (+ telephely + helyiség)         | `check_out`          | felhasználó / raktáros         |
-| Felhasználó → raktár      | `from_user_id`                  | `to_departments_id` (+ telephely)             | `check_in`           | felhasználó / raktáros         |
-| Felhasználó → felhasználó | `from_user_id`                  | `to_user_id` (+ telephely + helyiség)         | `transfer`           | felhasználó / raktáros         |
-| Raktár → raktár           | `from_departments_id`           | `to_departments_id` (+ telephely)             | `stock_transfer`     | **raktáros (mindig naplózva)** |
-| Szervizbe                 | aktuális hely                   | műhely (`to_departments_id`)                  | `send_to_repair`     | raktáros                       |
-| Szervizből vissza         | műhely                          | `to_departments_id` (+ telephely)             | `return_from_repair` | raktáros                       |
-| Elveszettnek jelölés      | aktuális hely                   | utolsó ismert hely (változatlanul)            | `mark_lost`          | raktáros                       |
-| Megtalálva                | (üres — nincs forrás)           | `to_departments_id` (+ telephely)             | `mark_found`         | raktáros                       |
+| Folyamat                  | from_*                | to_*                                  | event_type           | actor                          |
+|---------------------------|-----------------------|---------------------------------------|----------------------|--------------------------------|
+| Raktár → felhasználó      | `from_departments_id` | `to_user_id` (+ telephely + helyiség) | `check_out`          | felhasználó / raktáros         |
+| Felhasználó → raktár      | `from_user_id`        | `to_departments_id` (+ telephely)     | `check_in`           | felhasználó / raktáros         |
+| Felhasználó → felhasználó | `from_user_id`        | `to_user_id` (+ telephely + helyiség) | `transfer`           | felhasználó / raktáros         |
+| Raktár → raktár           | `from_departments_id` | `to_departments_id` (+ telephely)     | `stock_transfer`     | **raktáros (mindig naplózva)** |
+| Szervizbe                 | aktuális hely         | műhely (`to_departments_id`)          | `send_to_repair`     | raktáros                       |
+| Szervizből vissza         | műhely                | `to_departments_id` (+ telephely)     | `return_from_repair` | raktáros                       |
+| Elveszettnek jelölés      | aktuális hely         | utolsó ismert hely (változatlanul)    | `mark_lost`          | raktáros                       |
+| Megtalálva                | (üres — nincs forrás) | `to_departments_id` (+ telephely)     | `mark_found`         | raktáros                       |
 
 ---
 
@@ -381,12 +386,12 @@ WHERE expires_at > now();
 
 A három „manuális" állapotot (`Szerviz alatt`, `Elveszett`, `Selejtezve`) a raktáros állítja be, és ezeket a custody-naplóból nem lehet levezetni — ezért a tárolt `devices.status` adja őket. A megfelelő események:
 
-| Művelet                  | event_type           | from_*           | to_*                              | Eredő státusz   |
-|--------------------------|----------------------|------------------|-----------------------------------|-----------------|
-| Szervizbe küldés         | `send_to_repair`     | aktuális hely    | műhely-helyiség (alapért. `type='műhely'`) | `Szerviz alatt` |
-| Szervizből visszahelyezés| `return_from_repair` | műhely           | választott telephely + helyiség   | `Kivehető`      |
-| Elveszettnek jelölés     | `mark_lost`          | aktuális hely    | az utolsó ismert hely (változatlanul) | `Elveszett` |
-| Megtalálva               | `mark_found`         | (nincs forrás)   | választott telephely + helyiség   | `Kivehető`      |
+| Művelet                   | event_type           | from_*         | to_*                                       | Eredő státusz   |
+|---------------------------|----------------------|----------------|--------------------------------------------|-----------------|
+| Szervizbe küldés          | `send_to_repair`     | aktuális hely  | műhely-helyiség (alapért. `type='műhely'`) | `Szerviz alatt` |
+| Szervizből visszahelyezés | `return_from_repair` | műhely         | választott telephely + helyiség            | `Kivehető`      |
+| Elveszettnek jelölés      | `mark_lost`          | aktuális hely  | az utolsó ismert hely (változatlanul)      | `Elveszett`     |
+| Megtalálva                | `mark_found`         | (nincs forrás) | választott telephely + helyiség            | `Kivehető`      |
 
 - **Szervizbe küldés** csak `Szerviz alatt`-on kívüli eszközre értelmes. Ha a hívó nem ad meg cél-helyiséget, a rendszer a `type = 'műhely'` helyiséget választja.
 - **Szervizből visszahelyezés** kizárólag `Szerviz alatt` státuszú eszközre engedélyezett; ezt a kezelő ellenőrzi.

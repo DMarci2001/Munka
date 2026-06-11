@@ -509,6 +509,11 @@ function requireAdmin() {
 
 // ---- Törzsadat műveletek ------------------------------------
 
+// MEGJEGYZÉS: a `locations` (telephelyek) KÜLSŐ törzsadat — a klinika
+// weboldala birtokolja, ez a modul élesben csak olvassa. Ez a függvény
+// kizárólag a demó kényelméért hozhat létre telephelyet; éles integrációban
+// elhagyandó (a telephelyek a klinikai rendszerből szinkronizálódnak).
+// (A `departments` ezzel szemben ehhez az adatbázishoz tartozik — lásd lent.)
 export function addLocation({ address }) {
   requireAdmin();
   if (!address?.trim()) throw new OpError('Add meg a helyszín címét.');

@@ -25,7 +25,7 @@ export const departments = [
   { id: 8, locations_id: 1, name: 'Szerviz / IT', type: 'műhely' },
 ];
 
-// ---- Felhasználók (külső clinic_users tábla) ----------------
+// ---- Felhasználók (külső users tábla — a klinikai webalkalmazásé) ----
 // auth: user | storekeeper | it_admin
 export const users = [
   { id: 1, username: 'kovacs.anna',    full_name: 'Dr. Kovács Anna',    auth: 'user',        title: 'Kardiológus' },
