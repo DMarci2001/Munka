@@ -126,29 +126,59 @@ class AdminDicomPage extends AdminCorePage
             if (!is_file($dicomFile)) {
                 throw new RuntimeException('A DICOM fájl nem található.');
             }
-
-            /**
-             * Modality átállítása DX-re
-             */
-
-            $modifyCmd = sprintf(
-                '%s ' .
-                '-i %s ' .
-                '-i %s ' .
-                '%s 2>&1',
-                escapeshellcmd($dcmodify),
-                escapeshellarg('(0008,0060)=DX'),
-                escapeshellarg('(0008,0016)=1.2.840.10008.5.1.4.1.1.1.1'),
-                escapeshellarg($dicomFile)
-            );
-
-            exec($modifyCmd, $modifyOutput, $modifyExit);
-
-            if ($modifyExit !== 0) {
-                throw new RuntimeException(
-                    "Modality módosítás sikertelen:\n" .
-                    implode("\n", $modifyOutput)
+           
+            if($dicomData["manufacturerModelName"]=="Essenta DR"){
+                /**
+                 * Modality átállítása DX-re
+                 */
+                $modifyCmd = sprintf(
+                    '%s ' .
+                    '-i %s ' .
+                    '-i %s ' .
+                    '-i %s ' .
+                    '%s 2>&1',
+                    escapeshellcmd($dcmodify),
+                    escapeshellarg('(0008,0060)=DX'),
+                    escapeshellarg('(0008,0016)=1.2.840.10008.5.1.4.1.1.1.1'),
+                    escapeshellarg('(0008,0068)=FOR PRESENTATION'),
+                    escapeshellarg($dicomFile)
                 );
+
+                exec($modifyCmd, $modifyOutput, $modifyExit);
+
+                if ($modifyExit !== 0) {
+                    throw new RuntimeException(
+                        "Modality módosítás sikertelen:\n" .
+                        implode("\n", $modifyOutput)
+                    );
+                }
+            }
+
+            if($dicomData["manufacturer"]=="FUJIFILM Corporation"){
+                /**
+                 * Modality átállítása MG-re
+                 */
+                $modifyCmd = sprintf(
+                    '%s ' .
+                    '-i %s ' .
+                    '-i %s ' .
+                    '-i %s ' .
+                    '%s 2>&1',
+                    escapeshellcmd($dcmodify),
+                    escapeshellarg('(0008,0060)=MG'),
+                    escapeshellarg('(0008,0016)=1.2.840.10008.5.1.4.1.1.1.2'),
+                    escapeshellarg('(0008,0068)=FOR PRESENTATION'),
+                    escapeshellarg($dicomFile)
+                );
+
+                exec($modifyCmd, $modifyOutput, $modifyExit);
+
+                if ($modifyExit !== 0) {
+                    throw new RuntimeException(
+                        "Modality módosítás sikertelen:\n" .
+                        implode("\n", $modifyOutput)
+                    );
+                }
             }
 
             /**
@@ -512,7 +542,7 @@ class AdminDicomPage extends AdminCorePage
             $sendButton = "<a title='DICOM file továbbítása partner felé' style='' onclick='return confirm(\"Biztos továbbítod a Quantumdoktor felé?\");' href='{$_SERVER["PHP_SELF"]}?page={$_GET["page"]}&forwardtopartner={$row["uid"]}'><i class='fa-solid fa-share-from-square'></i></a>";
 
             $html.= "<div style='display:inline-block;margin:0px 10px 10px 0px;'>";
-            $html.= "<a title='kép megtekintése' style='' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
+            $html.= "<a title='kép megtekintése' style='' target='_blank' href='{$_SERVER["PHP_SELF"]}?page=dicom&displayimage={$row["uid"]}'><img src='https://{$_SERVER['HTTP_HOST']}/admin/index.php?page=dicom&getimage={$row["uid"]}&thumb' style='width:175px;height:175px;object-fit: cover;' alt='' /></a>";
 
             $html.= "<div style='margin:5px 0px 0px 0px;text-align: center'>";
             $html.= "<div style='display:table-cell;'><a title='Lelet pozitív' onclick='setLeletStatus(\"{$row["patientID"]}\", \"{$row["uid"]}\", 2);return false;' href='#' class='dicompozitivbutton".($row["leletstatus"] == 2 ?"_aktiv":"")."'>Pozítív</a>&nbsp;</div>";
