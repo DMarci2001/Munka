@@ -573,19 +573,19 @@ function notify() {
 }
 
 // ---- Init ----------------------------------------------------
-if (!loadPersisted()) {
-  bootstrap();
-  // Tárolt státusz összhangba hozása a tényleges birtoklással (seed/elcsúszás javítása).
-  for (const dev of state.devices) {
-    if (['Selejtezve', 'Elveszett', 'Szerviz alatt'].includes(dev.status)) continue;
-    const cur = currentState(dev.device_id);
-    if (activeReservation(dev.device_id)) dev.status = 'Lefoglalva';
-    else if (pendingCheckinFor(dev.device_id)) dev.status = 'Visszavétel folyamatban';
-    else if (cur.holder !== null) dev.status = 'Kiadva';
-    else dev.status = 'Kivehető';
-  }
-  persist();
+if (!loadPersisted()) bootstrap();
+
+// Státusz-összhang minden betöltéskor: a foglalás lejárata lusta (now()-alapú), ezért
+// localStorage-ból visszatöltve a 'Lefoglalva' státusz elcsúszhat az aktív foglalástól.
+for (const dev of state.devices) {
+  if (['Selejtezve', 'Elveszett', 'Szerviz alatt'].includes(dev.status)) continue;
+  const cur = currentState(dev.device_id);
+  if (activeReservation(dev.device_id)) dev.status = 'Lefoglalva';
+  else if (pendingCheckinFor(dev.device_id)) dev.status = 'Visszavétel folyamatban';
+  else if (cur.holder !== null) dev.status = 'Kiadva';
+  else dev.status = 'Kivehető';
 }
+persist();
 
 // Visszaállítás a kiinduló mintaadatokra (törli a mentést).
 export function resetToSeed() {
