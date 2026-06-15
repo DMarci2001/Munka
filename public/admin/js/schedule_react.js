@@ -30,6 +30,11 @@ const weekRange = (year, week) => {
   const fmt = (d) => `${HU_MON_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}.`;
   return `${fmt(mon)} – ${fmt(sun)}`;
 };
+const datesBetween = (start, end) => {
+  const out = []; let d = new Date(start+"T00:00:00Z"); const last = new Date(end+"T00:00:00Z");
+  while (d<=last) { out.push(iso(d)); d.setUTCDate(d.getUTCDate()+1); }
+  return out;
+};
 const dur = (from, to) => { const m = toMin(to)-toMin(from); if (m<=0) return "—"; const h=Math.floor(m/60),mm=m%60; return `${h?h+" óra":""}${h&&mm?" ":""}${mm?mm+" perc":""}`.trim()||"0 perc"; };
 const EMPTY_BOARD = [[], [], [], [], [], [], []];
 
@@ -326,13 +331,16 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
   const [titleInput, setTitleInput]     = useState("");
   const [addressInput, setAddressInput] = useState(b ? (b.address||"") : "");
+  const [dateStart, setDateStart] = useState(() => iso(dayDates[ctx.day]));
+  const [dateEnd,   setDateEnd]   = useState(() => iso(dayDates[ctx.day]));
 
   const title    = b ? b.title    : titleInput;
   const address  = addressInput;
   const dateStr  = b ? b.date     : (ctx.date || iso(dayDates[ctx.day]));
   const badTime  = toMin(from) >= toMin(to);
+  const badRange = !b && cat==="kiszallas" && dateStart > dateEnd;
   const noDoc    = cat!=="kiszallas" && docs.length === 0;
-  const blocked  = badTime || (!b && title.trim()==="");
+  const blocked  = badTime || badRange || (!b && title.trim()==="");
   const locSug   = useMemo(() => cat==="belso"
     ? Array.from(new Set(FLOORS.flatMap((f)=>f.rooms)))
     : Array.from(new Set((places||[]).map((p)=>p.megnev).filter(Boolean))), [cat, places]);
@@ -353,7 +361,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
 
   const save = () => {
     const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
-    const dates = b ? [dateStr] : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di]));
+    const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
     const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, title, address, staff, from, to, note };
     onSave(rec);
   };
@@ -405,7 +413,18 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 </Field>
               </>
             )}
-            {!b && (
+            {!b && cat==="kiszallas" && (
+              <div className="rounded-xl p-3" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                <div className="flex items-center gap-1.5 mb-2" style={{ fontSize:12.5, fontWeight:700 }}><span style={{ color:"var(--purple)" }}>{Ico.repeat()}</span> Ismétlődő időszak</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Kezdő dátum"><input type="date" value={dateStart} onChange={(e)=>setDateStart(e.target.value)} className="mb-in px-3 py-2.5 mb-mono" style={{ fontSize:13, borderColor:badRange?"var(--danger)":"var(--border)" }}/></Field>
+                  <Field label="Záró dátum"><input type="date" value={dateEnd} onChange={(e)=>setDateEnd(e.target.value)} className="mb-in px-3 py-2.5 mb-mono" style={{ fontSize:13, borderColor:badRange?"var(--danger)":"var(--border)" }}/></Field>
+                </div>
+                <p style={{ fontSize:11.5, color:"var(--muted)", marginTop:6 }}>Az időszak minden napján megjelenik (hétvégén is). Pl. {fmtShortISO(dateStart)} – {fmtShortISO(dateEnd)}.</p>
+                {badRange && <p style={{ fontSize:11.5, color:"var(--danger-ink)", marginTop:4 }}>A záró dátum legyen későbbi.</p>}
+              </div>
+            )}
+            {!b && cat!=="kiszallas" && (
               <Field label="Napok">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {HU_DAYS_1.map((d, di) => (
@@ -439,8 +458,10 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
             <div className="flex flex-col gap-3.5">
-              <Row icon={Ico.calendar({width:15,height:15})} label="Dátum">
-                {b ? (<>{fmtShortISO(dateStr)} · {HU_DAYS[ctx.day]}</>) : (
+              <Row icon={Ico.calendar({width:15,height:15})} label={(!b && cat==="kiszallas") ? "Időszak" : "Dátum"}>
+                {b ? (<>{fmtShortISO(dateStr)} · {HU_DAYS[ctx.day]}</>) : cat==="kiszallas" ? (
+                  dateStart===dateEnd ? fmtShortISO(dateStart) : <>{fmtShortISO(dateStart)} – {fmtShortISO(dateEnd)} (minden nap)</>
+                ) : (
                   <input type="date" value={iso(dayDates[pickedDi])} min={iso(dayDates[0])} max={iso(dayDates[6])} onChange={(e)=>pickDate(e.target.value)} className="mb-mono mb-in px-2 py-1.5" style={{ fontSize:12.5, fontWeight:600 }}/>
                 )}
               </Row>
@@ -584,57 +605,74 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
-function ListView({ weekDays, conf, matches, onOpenCard, onMap }) {
-  const rows = [];
-  weekDays.forEach((day, di) => {
-    day.forEach((b) => { if (matches(b, di)) rows.push({ b, di }); });
-  });
-  rows.sort((a,b) => (a.di-b.di) || (toMin(a.b.from)-toMin(b.b.from)));
-
+function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap }) {
   const Th = ({ children }) => <th className="mb-display" style={{ textAlign:"left", padding:"9px 12px", fontSize:11, fontWeight:700, letterSpacing:".04em", color:"var(--faint)", textTransform:"uppercase", borderBottom:"1px solid var(--border)", whiteSpace:"nowrap" }}>{children}</th>;
   const Td = ({ children, mono, style }) => <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>;
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
-      <div className="rounded-xl overflow-hidden" style={{ border:"1px solid var(--border-soft)", background:"var(--surface)" }}>
-        <table className="w-full" style={{ borderCollapse:"collapse" }}>
-          <thead><tr>
-            <Th>Nap</Th><Th>Időpont</Th><Th>Kategória</Th><Th>Helyszín</Th><Th>Orvos(ok)</Th><Th>Asszisztens(ek)</Th><Th>Megjegyzés</Th>
-          </tr></thead>
-          <tbody>
-            {rows.map(({ b, di }) => {
-              const docs   = (b.staff||[]).filter((s)=>s.role==="d");
-              const nurses = (b.staff||[]).filter((s)=>s.role==="n");
-              const noDoc  = docs.length===0;
-              const isConf = conf.set.has(`${di}:${b.id}`);
-              const overlap = conf.det[`${di}:${b.id}`]||[];
-              const hasDouble = overlap.some((o)=>!o.vac);
-              const hasVac    = overlap.some((o)=>o.vac);
-              const red    = noDoc || isConf;
-              return (
-                <tr key={`${di}-${b.id}`} onClick={()=>onOpenCard(b,di)} style={{ borderBottom:"1px solid var(--border-soft)", background:red?"color-mix(in srgb,var(--danger) 10%,transparent)":"transparent", cursor:"pointer" }}>
-                  <Td><div style={{ fontWeight:700 }}>{HU_DAYS[di]}</div><div className="mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{fmtShortISO(b.date)}</div></Td>
-                  <Td mono>{b.from} – {b.to}</Td>
-                  <Td><Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/></Td>
-                  <Td>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span style={{ fontWeight:600 }}>{b.title}</span>
-                      <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
-                      {hasDouble && <RedBadge text="Ütközés"/>}
-                      {hasVac && <RedBadge text="Szabadságon"/>}
-                      {noDoc && <RedBadge text="Nincs orvos"/>}
-                    </div>
-                  </Td>
-                  <Td>{docs.length ? docs.map((d)=>d.name).join(", ") : <span style={{ color:"var(--faint)" }}>—</span>}</Td>
-                  <Td>{nurses.length ? nurses.map((n)=>n.name).join(", ") : <span style={{ color:"var(--faint)" }}>—</span>}</Td>
-                  <Td style={{ color:"var(--faint)" }}>{b.note||""}</Td>
-                </tr>
-              );
-            })}
-            {rows.length===0 && <tr><td colSpan={7} style={{ padding:"24px 12px", textAlign:"center", color:"var(--faint)", fontSize:12.5 }}>Nincs találat.</td></tr>}
-          </tbody>
-        </table>
-      </div>
+    <div className="mb-scroll px-4 lg:px-6 py-4 flex flex-col gap-3" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
+      {HU_DAYS.map((_, di) => {
+        const rows = weekDays[di].filter((b)=>matches(b,di)).sort((a,b)=>toMin(a.from)-toMin(b.from));
+        const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
+        const hol  = holidayOf(iso(dayDates[di]));
+        const rest = di===6 || !!hol;
+        const key  = `list:${di}`;
+        const isCollapsed = !!collapsed[key];
+        return (
+          <div key={di} className="rounded-xl overflow-hidden" style={{ border:"1px solid var(--border-soft)", background:"var(--surface)" }}>
+            <button onClick={()=>onToggle(key)} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:isCollapsed?"none":"1px solid var(--border-soft)", background:(di>=5||hol)?"var(--weekend)":"transparent" }}>
+              <div className="flex items-baseline gap-2">
+                <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:rest?"var(--danger)":"var(--ink)" }}>{HU_DAYS_UP[di]}</span>
+                <span className="flex items-center justify-center rounded-md" style={{ minWidth:18, height:18, padding:"0 4px", fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{rows.length}</span>
+                {hol && <span style={{ fontSize:11, fontWeight:700, color:"var(--danger-ink)" }}>{hol}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                {dayConflict && <span className="mb-pulse" style={{ color:"var(--danger)" }} title="Ütközés">{Ico.alert({width:14,height:14})}</span>}
+                <span className="mb-mono" style={{ fontSize:11, color:rest?"var(--danger-ink)":"var(--faint)", textTransform:"uppercase" }}>{HU_MON_SHORT[dayDates[di].getUTCMonth()]} {dayDates[di].getUTCDate()}.</span>
+                <span style={{ color:"var(--faint)" }}>{isCollapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+              </div>
+            </button>
+            {!isCollapsed && (
+              <table className="w-full" style={{ borderCollapse:"collapse" }}>
+                <thead><tr>
+                  <Th>Időpont</Th><Th>Kategória</Th><Th>Helyszín</Th><Th>Orvos(ok)</Th><Th>Asszisztens(ek)</Th><Th>Megjegyzés</Th>
+                </tr></thead>
+                <tbody>
+                  {rows.map((b) => {
+                    const docs   = (b.staff||[]).filter((s)=>s.role==="d");
+                    const nurses = (b.staff||[]).filter((s)=>s.role==="n");
+                    const noDoc  = docs.length===0;
+                    const isConf = conf.set.has(`${di}:${b.id}`);
+                    const overlap = conf.det[`${di}:${b.id}`]||[];
+                    const hasDouble = overlap.some((o)=>!o.vac);
+                    const hasVac    = overlap.some((o)=>o.vac);
+                    const red    = noDoc || isConf;
+                    return (
+                      <tr key={b.id} onClick={()=>onOpenCard(b,di)} style={{ borderBottom:"1px solid var(--border-soft)", background:red?"color-mix(in srgb,var(--danger) 10%,transparent)":"transparent", cursor:"pointer" }}>
+                        <Td mono>{b.from} – {b.to}</Td>
+                        <Td><Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/></Td>
+                        <Td>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span style={{ fontWeight:600 }}>{b.title}</span>
+                            <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+                            {hasDouble && <RedBadge text="Ütközés"/>}
+                            {hasVac && <RedBadge text="Szabadságon"/>}
+                            {noDoc && <RedBadge text="Nincs orvos"/>}
+                          </div>
+                        </Td>
+                        <Td>{docs.length ? docs.map((d)=>d.name).join(", ") : <span style={{ color:"var(--faint)" }}>—</span>}</Td>
+                        <Td>{nurses.length ? nurses.map((n)=>n.name).join(", ") : <span style={{ color:"var(--faint)" }}>—</span>}</Td>
+                        <Td style={{ color:"var(--faint)" }}>{b.note||""}</Td>
+                      </tr>
+                    );
+                  })}
+                  {rows.length===0 && <tr><td colSpan={6} style={{ padding:"24px 12px", textAlign:"center", color:"var(--faint)", fontSize:12.5 }}>Nincs találat.</td></tr>}
+                </tbody>
+              </table>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1653,7 +1691,7 @@ function MunkaidoBeosztas() {
                 </div>
               </div>
             ) : nav==="list" ? (
-              <ListView weekDays={weekDays} conf={conf} matches={matches} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
+              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
