@@ -1516,13 +1516,13 @@ function MunkaidoBeosztas() {
     try {
       let tipusId = rec.tipusId;
       if (!tipusId) {
-        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org:"HMM", megnev: rec.title||"", cim: rec.address||"" });
+        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org:"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"" });
         const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const result = await resp.json();
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"" });
         await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
       }
       let allOk = true;

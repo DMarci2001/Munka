@@ -1192,8 +1192,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $org       = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
         $megnev    = trim($_POST["megnev"] ?? "") ?: ($kiszallas ? "_Új kiszállás" : "_Új helyszín");
         $cim       = trim($_POST["cim"] ?? "");
+        $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1", [$megnev, $cim, $roleid, $kulso, $kiszallas, $org]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1", [$megnev, $cim, $megj, $roleid, $kulso, $kiszallas, $org]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1203,14 +1204,15 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
         }
 
-        $id  = intval($_POST["id"] ?? 0);
-        $cim = trim($_POST["cim"] ?? "");
+        $id   = intval($_POST["id"] ?? 0);
+        $cim  = trim($_POST["cim"] ?? "");
+        $megj = substr(trim($_POST["megj"] ?? ""), 0, 200);
 
         if (!$id) {
             $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó azonosító!"]);
         }
 
-        sql_query("UPDATE schedule_tipusok SET cim=? WHERE id=?", [$cim, $id]);
+        sql_query("UPDATE schedule_tipusok SET cim=?, megj=? WHERE id=?", [$cim, $megj, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
