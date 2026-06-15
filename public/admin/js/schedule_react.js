@@ -194,13 +194,13 @@ function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
     const slots = [];
-    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to })));
+    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title })));
     for (let i=0; i<slots.length; i++) for (let j=i+1; j<slots.length; j++) {
       const x=slots[i], y=slots[j];
       if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e) {
         set.add(x.key); set.add(y.key);
-        (det[x.key]||=[]).push({ p:y.p, from:y.from, to:y.to });
-        (det[y.key]||=[]).push({ p:x.p, from:x.from, to:x.to });
+        (det[x.key]||=[]).push({ p:y.p, from:y.from, to:y.to, title:y.title, key:y.key });
+        (det[y.key]||=[]).push({ p:x.p, from:x.from, to:x.to, title:x.title, key:x.key });
       }
     }
     const vacs = (vacationsByDay && vacationsByDay[di]) || [];
@@ -492,6 +492,8 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
 
 function Field({ label, children }) { return (<label className="block"><span className="block mb-1.5" style={{ fontSize:12.5, fontWeight:500, color:"var(--muted)" }}>{label}</span>{children}</label>); }
 function Badge({ text, color }) { return <span className="inline-block rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:700, color, background:`color-mix(in srgb, ${color} 16%, transparent)` }}>{text}</span>; }
+function Th({ children }) { return <th className="mb-display" style={{ textAlign:"left", padding:"9px 12px", fontSize:11, fontWeight:700, letterSpacing:".04em", color:"var(--faint)", textTransform:"uppercase", borderBottom:"1px solid var(--border)", whiteSpace:"nowrap" }}>{children}</th>; }
+function Td({ children, mono, style }) { return <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>; }
 function Tag({ color, label }) { return (<span className="flex items-center gap-2" style={{ fontSize:12.5, color:"var(--muted)" }}><span style={{ width:11, height:11, borderRadius:3, background:color, display:"inline-block" }}/>{label}</span>); }
 
 /* ---- HétMásolás Modal ---------------------------------------------- */
@@ -606,9 +608,6 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 
 /* ---- Listás nézet ---------------------------------------------------- */
 function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap }) {
-  const Th = ({ children }) => <th className="mb-display" style={{ textAlign:"left", padding:"9px 12px", fontSize:11, fontWeight:700, letterSpacing:".04em", color:"var(--faint)", textTransform:"uppercase", borderBottom:"1px solid var(--border)", whiteSpace:"nowrap" }}>{children}</th>;
-  const Td = ({ children, mono, style }) => <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>;
-
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
@@ -678,53 +677,121 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
 }
 
 /* ---- Ütközés nézet ---------------------------------------------------- */
-function ConflictView({ weekDays, conf, catFilter, onOpenCard, onMap }) {
-  const items = [];
+function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
+  const docs   = (b.staff||[]).filter((s)=>s.role==="d");
+  const nurses = (b.staff||[]).filter((s)=>s.role==="n");
+  return (
+    <div onClick={()=>onOpenCard(b,di)} className="mb-tcard rounded-xl" style={{ background:"color-mix(in srgb, var(--danger) 10%, var(--surface))", border:"1px solid var(--danger)", padding:"12px 14px" }}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap" style={{ fontWeight:700, fontSize:13.5 }}>
+          <span style={{ color:"var(--danger)" }}>{Ico.alert({width:15,height:15})}</span>
+          {b.title}
+          <Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/>
+          <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+        </div>
+        <span className="mb-mono" style={{ fontSize:12, color:"var(--muted)" }}>{HU_DAYS[di]}, {fmtShortISO(b.date)} · {b.from}–{b.to}</span>
+      </div>
+      <div className="flex items-center gap-3 flex-wrap" style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>
+        <span>Orvos(ok): {docs.length ? docs.map((d)=>d.name).join(", ") : "—"}</span>
+        <span>Asszisztens(ek): {nurses.length ? nurses.map((n)=>n.name).join(", ") : "—"}</span>
+      </div>
+      <div style={{ fontSize:12, color:"var(--danger-ink)", marginTop:4, fontWeight:600 }}>
+        {overlaps.map((o,i) => o.vac
+          ? <div key={i}>{o.p} szabadságon van{o.status===0?" (függő kérelem)":""}</div>
+          : <div key={i}>Időbeli átfedés: {o.p} ({o.from}–{o.to})</div>
+        )}
+        {sectionKey==="noDoc" && <div>Nincs orvos hozzárendelve</div>}
+      </div>
+    </div>
+  );
+}
+
+function ConflictView({ weekDays, conf, catFilter, collapsed, onToggle, onOpenCard, onMap }) {
+  const groups = { double: [], vac: [], noDoc: [] };
   weekDays.forEach((day, di) => {
     day.forEach((b) => {
       if (catFilter!=="all" && b.cat!==catFilter) return;
-      const key = `${di}:${b.id}`;
-      if (conf.set.has(key)) items.push({ b, di, overlaps: conf.det[key]||[] });
+      const key      = `${di}:${b.id}`;
+      const overlaps = conf.det[key] || [];
+      const hasDouble = overlaps.some((o)=>!o.vac);
+      const hasVac    = overlaps.some((o)=>o.vac);
+      const noDoc     = b.cat!=="kiszallas" && (b.staff||[]).filter((s)=>s.role==="d").length===0;
+      const entry = { b, di, key, overlaps };
+      if (hasDouble) groups.double.push(entry);
+      if (hasVac)    groups.vac.push(entry);
+      if (noDoc)     groups.noDoc.push(entry);
     });
   });
-  items.sort((a,b) => (a.di-b.di) || (toMin(a.b.from)-toMin(b.b.from)));
 
-  if (items.length===0) {
+  // a "Ütközés" csoportban az egymással ütköző rendeléseket egy klaszterbe gyűjtjük,
+  // hogy egymás alatt jelenjenek meg
+  const byKey = new Map(groups.double.map((e)=>[e.key, e]));
+  const visited = new Set();
+  const doubleClusters = [];
+  groups.double.forEach((entry) => {
+    if (visited.has(entry.key)) return;
+    const cluster = []; const queue = [entry.key];
+    while (queue.length) {
+      const k = queue.shift();
+      if (visited.has(k)) continue;
+      visited.add(k);
+      const e = byKey.get(k);
+      if (!e) continue;
+      cluster.push(e);
+      e.overlaps.forEach((o) => { if (!o.vac && o.key && !visited.has(o.key)) queue.push(o.key); });
+    }
+    cluster.sort((a,b) => (a.di-b.di) || (toMin(a.b.from)-toMin(b.b.from)));
+    doubleClusters.push(cluster);
+  });
+  doubleClusters.sort((a,b) => (a[0].di-b[0].di) || (toMin(a[0].b.from)-toMin(b[0].b.from)));
+
+  const sections = [
+    { key:"double", label:"Ütközés",     count:groups.double.length, items:groups.double },
+    { key:"vac",     label:"Szabadságon", count:groups.vac.length,     items:groups.vac },
+    { key:"noDoc",   label:"Nincs orvos", count:groups.noDoc.length,   items:groups.noDoc },
+  ];
+
+  if (sections.every((sec)=>sec.items.length===0)) {
     return (
-      <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
-        <div className="flex flex-col items-center gap-3">
-          <span style={{ color:"var(--green)" }}>{Ico.alert({width:32,height:32})}</span>
-          <div style={{ fontSize:14, fontWeight:600 }}>Nincs ütközés ezen a héten.</div>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-3" style={{ color:"var(--muted)", padding:"80px 20px" }}>
+        <span style={{ color:"var(--green)" }}>{Ico.alert({width:32,height:32})}</span>
+        <div style={{ fontSize:14, fontWeight:600 }}>Nincs ütközés ezen a héten.</div>
       </div>
     );
   }
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4 flex flex-col gap-2.5" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto", maxWidth:760 }}>
-      {items.map(({ b, di, overlaps }) => {
-        const hasDouble = overlaps.some((o)=>!o.vac);
-        const hasVac    = overlaps.some((o)=>o.vac);
+    <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
+      {sections.map((sec) => {
+        if (sec.items.length===0) return null;
+        const key  = `conf:${sec.key}`;
+        const isCollapsed = !!collapsed[key];
+        const rows = sec.key==="double" ? null : sec.items.slice().sort((a,b) => (a.di-b.di) || (toMin(a.b.from)-toMin(b.b.from)));
         return (
-        <div key={`${di}-${b.id}`} onClick={()=>onOpenCard(b,di)} className="mb-tcard rounded-lg p-3" style={{ background:"color-mix(in srgb,var(--danger) 13%,var(--card))", border:"1px solid var(--danger)" }}>
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              {hasDouble && <RedBadge text="Ütközés"/>}
-              {hasVac && <RedBadge text="Szabadságon"/>}
-              <Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/>
-              <span style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>{HU_DAYS[di]}, {fmtShortISO(b.date)}</span>
-              <span className="mb-mono" style={{ fontSize:12, color:"var(--muted)" }}>{b.from}–{b.to}</span>
-            </div>
-            <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
-          </div>
-          <div style={{ fontSize:14, fontWeight:700, marginTop:5 }}>{b.title}</div>
-          <div className="flex flex-col gap-0.5 mt-1.5">
-            {overlaps.map((o,i) => o.vac
-              ? <div key={i} style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>{o.p} szabadságon van{o.status===0?" (függő kérelem)":""}</div>
-              : <div key={i} style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {o.p} ({o.from}–{o.to})</div>
+          <div key={sec.key} className="rounded-xl overflow-hidden" style={{ border:"1px solid var(--border-soft)", background:"var(--surface)" }}>
+            <button onClick={()=>onToggle(key)} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:isCollapsed?"none":"1px solid var(--border-soft)" }}>
+              <div className="flex items-baseline gap-2">
+                <span className="mb-pulse" style={{ color:"var(--danger)" }}>{Ico.alert({width:14,height:14})}</span>
+                <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:"var(--danger-ink)" }}>{sec.label.toUpperCase()}</span>
+                <span className="flex items-center justify-center rounded-md" style={{ minWidth:18, height:18, padding:"0 4px", fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{sec.count}</span>
+              </div>
+              <span style={{ color:"var(--faint)" }}>{isCollapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+            </button>
+            {!isCollapsed && sec.key==="double" && (
+              <div className="flex flex-col gap-2.5 p-2.5">
+                {doubleClusters.map((cluster, ci) => (
+                  <div key={ci} className="flex flex-col gap-1.5">
+                    {cluster.map(({ b, di, overlaps }) => <ConflictCard key={`${di}-${b.id}`} b={b} di={di} overlaps={overlaps} sectionKey={sec.key} onOpenCard={onOpenCard} onMap={onMap}/>)}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!isCollapsed && sec.key!=="double" && (
+              <div className="flex flex-col gap-1.5 p-2.5">
+                {rows.map(({ b, di, overlaps }) => <ConflictCard key={`${di}-${b.id}`} b={b} di={di} overlaps={overlaps} sectionKey={sec.key} onOpenCard={onOpenCard} onMap={onMap}/>)}
+              </div>
             )}
           </div>
-        </div>
         );
       })}
     </div>
@@ -1682,7 +1749,7 @@ function MunkaidoBeosztas() {
           </div>
 
           {/* TÁBLA */}
-          <div className="mb-board flex-1 mb-scroll" style={(nav==="board"||nav==="list") ? { overflow:"auto" } : { display:"flex", flexDirection:"column", overflowX:"hidden", overflowY:"hidden", minHeight:0 }}>
+          <div className="mb-board flex-1 mb-scroll" style={(nav==="board"||nav==="list"||nav==="conflicts") ? { overflow:"auto" } : { display:"flex", flexDirection:"column", overflowX:"hidden", overflowY:"hidden", minHeight:0 }}>
             {loading ? (
               <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
                 <div className="flex flex-col items-center gap-3">
@@ -1693,7 +1760,7 @@ function MunkaidoBeosztas() {
             ) : nav==="list" ? (
               <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="conflicts" ? (
-              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
+              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
               <StaffView setToast={setToast} newSignal={staffNewSignal}/>
             ) : nav==="workplaces" ? (
