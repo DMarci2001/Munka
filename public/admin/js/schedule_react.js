@@ -24,6 +24,12 @@ function isoWeekMonday(year, week) {
 }
 const iso = (dt) => `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`;
 const fmtShortISO = (s) => { if (!s) return ""; const [,m,d] = s.split("-").map(Number); return `${HU_MON_SHORT[m-1]} ${d}.`; };
+const weekRange = (year, week) => {
+  const mon = isoWeekMonday(year, week);
+  const sun = new Date(mon); sun.setUTCDate(sun.getUTCDate()+6);
+  const fmt = (d) => `${HU_MON_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}.`;
+  return `${fmt(mon)} – ${fmt(sun)}`;
+};
 const dur = (from, to) => { const m = toMin(to)-toMin(from); if (m<=0) return "—"; const h=Math.floor(m/60),mm=m%60; return `${h?h+" óra":""}${h&&mm?" ":""}${mm?mm+" perc":""}`.trim()||"0 perc"; };
 const EMPTY_BOARD = [[], [], [], [], [], [], []];
 
@@ -38,10 +44,20 @@ const holidayOf = (dateStr) => HOLIDAYS[dateStr] || null;
 
 /* ---- kategóriák ----------------------------------------------------- */
 const CATS = {
-  belso:  { label:"Belső rendelések", color:"var(--brand)",  type:"Rendelés",       icon:"users"    },
-  kulso:  { label:"Külső rendelések", color:"var(--green)",  type:"Külső rendelés", icon:"building" },
+  belso:     { label:"Belső rendelések", color:"var(--brand)",  type:"Rendelés",       icon:"users"    },
+  kulso:     { label:"Külső rendelések", color:"var(--green)",  type:"Külső rendelés", icon:"building" },
+  kiszallas: { label:"Kiszállások",      color:"var(--purple)", type:"Kiszállás",      icon:"truck"    },
 };
-const CAT_ORDER = ["belso","kulso"];
+const CAT_ORDER = ["belso","kulso","kiszallas"];
+
+/* ---- szabadság típusok ------------------------------------------------ */
+const VACATION_TYPES = ["Szabadság","Betegszabadság","Képzés","Egyéb"];
+const VACATION_TYPE_COLORS = {
+  "Szabadság":      "var(--brand)",
+  "Betegszabadság": "var(--danger)",
+  "Képzés":         "var(--blue)",
+  "Egyéb":          "var(--purple)",
+};
 
 /* ---- alaprajz ------------------------------------------------------- */
 const FLOORS = [
@@ -54,7 +70,7 @@ const isInternalRoom = (t) => FLOORS.some((f) => f.rooms.includes(t));
 /* ---- stílusok ------------------------------------------------------- */
 const Styles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
     .mb-root{
       --blue:#3b82f6; --blue-soft:rgba(59,130,246,.16);
       --purple:#a855f7; --purple-soft:rgba(168,85,247,.16);
@@ -129,6 +145,7 @@ const Ico = {
   doctor:   S(<><path d="M6 4v5a4 4 0 0 0 8 0V4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M10 17v1a4 4 0 0 0 8 0v-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><circle cx="18" cy="13" r="2.2" stroke="currentColor" strokeWidth="1.7"/></>),
   users:    S(<><circle cx="9" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.7"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 20a5.5 5.5 0 0 0-3-4.9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
   building: S(<><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-2.5h4V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>),
+  truck:    S(<><path d="M3 6.5h10v9H3zM13 9.5h4l3 3v3h-7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="7" cy="17.5" r="1.8" stroke="currentColor" strokeWidth="1.6"/><circle cx="17" cy="17.5" r="1.8" stroke="currentColor" strokeWidth="1.6"/></>),
   sun:      S(<><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
   moon:     S(<><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></>),
   chart:    S(<><path d="M4 20V10M10 20V4M16 20v-6M20 20H4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></>),
@@ -150,6 +167,7 @@ const Ico = {
   clock:    S(<><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.7"/><path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 14),
   ext:      S(<><path d="M14 5h5v5M19 5l-8 8M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></>, 13),
   send:     S(<><path d="M4 11.5 20 4l-7.5 16-2.2-6.3L4 11.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></>, 15),
+  cmd:      S(<><path d="M9 6a2 2 0 1 0-2 2h10a2 2 0 1 0-2-2v12a2 2 0 1 0 2-2H7a2 2 0 1 0 2 2V6Z" stroke="currentColor" strokeWidth="1.5"/></>, 12),
   info:     S(<><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/><path d="M12 11v5M12 8h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 14),
   repeat:   S(<><path d="M4 8a5 5 0 0 1 5-5h7l-2.5-2.5M20 16a5 5 0 0 1-5 5H8l2.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" transform="translate(0,1)"/></>, 13),
   save:     S(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 15),
@@ -297,25 +315,46 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, saving }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, places, saving }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
   const [note, setNote]     = useState(b ? b.note : "");
   const [docs, setDocs]     = useState(b ? (b.staff||[]).filter((s)=>s.role==="d") : []);
   const [nurses, setNurses] = useState(b ? (b.staff||[]).filter((s)=>s.role==="n") : []);
+  const [selectedDays, setSelectedDays] = useState(() => new Set([ctx.day]));
+  const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
+  const [titleInput, setTitleInput]     = useState("");
+  const [addressInput, setAddressInput] = useState(b ? (b.address||"") : "");
 
-  const title    = b ? b.title    : "Névtelen";
-  const cat      = b ? b.cat      : ctx.cat || "belso";
+  const title    = b ? b.title    : titleInput;
+  const address  = addressInput;
   const dateStr  = b ? b.date     : (ctx.date || iso(dayDates[ctx.day]));
   const badTime  = toMin(from) >= toMin(to);
-  const noDoc    = docs.length === 0;
+  const noDoc    = cat!=="kiszallas" && docs.length === 0;
+  const blocked  = badTime || (!b && title.trim()==="");
+  const locSug   = useMemo(() => cat==="belso"
+    ? Array.from(new Set(FLOORS.flatMap((f)=>f.rooms)))
+    : Array.from(new Set((places||[]).map((p)=>p.megnev).filter(Boolean))), [cat, places]);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
+  const toggleDay = (di) => setSelectedDays((prev) => {
+    const next = new Set(prev);
+    if (next.has(di)) { if (next.size>1) next.delete(di); } else next.add(di);
+    return next;
+  });
+  const selectAllDays = () => setSelectedDays(new Set([0,1,2,3,4,5,6]));
+  const pickedDi = Array.from(selectedDays).sort((a,b2)=>a-b2)[0] ?? ctx.day;
+  const pickDate = (val) => {
+    const di = dayDates.findIndex((d)=>iso(d)===val);
+    if (di!==-1) setSelectedDays(new Set([di]));
+  };
+
   const save = () => {
     const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, cat, title, staff, from, to, note };
+    const dates = b ? [dateStr] : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di]));
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, title, address, staff, from, to, note };
     onSave(rec);
   };
 
@@ -332,7 +371,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
       <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:840, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:16, marginBottom:16 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
           <div>
-            <h2 className="mb-display" style={{ fontSize:19, fontWeight:700 }}>{title}</h2>
+            <h2 className="mb-display" style={{ fontSize:19, fontWeight:700 }}>{title || "Új rendelés"}</h2>
             <div className="flex items-center gap-2 mt-1">
               <Badge text={CATS[cat]?.type||cat} color={CATS[cat]?.color||"var(--muted)"}/>
               <span className="mb-mono" style={{ fontSize:11.5, color:"var(--faint)" }}>{fmtShortISO(dateStr)}</span>
@@ -342,9 +381,40 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
         </div>
         <div className="grid gap-7 px-6 py-5 mb-scroll" style={{ gridTemplateColumns:"minmax(0,1.85fr) minmax(0,1fr)", maxHeight:"74vh", overflowY:"auto" }}>
           <div className="flex flex-col gap-4">
-            <Field label={cat==="kulso"?"Külső rendelés neve":"Helyiség"}>
-              <div className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", borderStyle:"dashed" }}>{title}</div>
-            </Field>
+            {b ? (
+              <>
+                <Field label={cat==="kulso"?"Külső rendelés neve":"Helyiség"}>
+                  <div className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", borderStyle:"dashed" }}>{title}</div>
+                </Field>
+                <Field label="Rendelő">
+                  <input list="mb-loc-list" value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="Válassz a helyiségek közül vagy írd be…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
+                  <datalist id="mb-loc-list">{locSug.map((l)=><option key={l} value={l}/>)}</datalist>
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="Rendelés">
+                  <input value={titleInput} onChange={(e)=>setTitleInput(e.target.value)} placeholder="pl. Szemészeti szűrés" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
+                </Field>
+                <Field label="Rendelő">
+                  <input list="mb-loc-list" value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="Válassz a helyiségek közül vagy írd be…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
+                  <datalist id="mb-loc-list">{locSug.map((l)=><option key={l} value={l}/>)}</datalist>
+                </Field>
+                <Field label="Kategória">
+                  <MiniSelect value={cat} onChange={setCat} options={CAT_ORDER.map((c)=>({ v:c, l:CATS[c].label }))}/>
+                </Field>
+              </>
+            )}
+            {!b && (
+              <Field label="Napok">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {HU_DAYS_1.map((d, di) => (
+                    <button key={di} type="button" onClick={()=>toggleDay(di)} className="rounded-lg px-2.5 py-1.5" style={{ fontSize:12.5, fontWeight:700, color:selectedDays.has(di)?"#fff":"var(--muted)", background:selectedDays.has(di)?"var(--brand)":"var(--surface-2)", border:`1px solid ${selectedDays.has(di)?"var(--brand)":"var(--border)"}` }}>{d}</button>
+                  ))}
+                  <button type="button" onClick={selectAllDays} className="mb-btn rounded-lg px-2.5 py-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>Minden nap</button>
+                </div>
+              </Field>
+            )}
             <Field label="Időpont (teljes idősáv)">
               <div className="flex items-center gap-2.5">
                 <div className="relative flex-1"><span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.clock()}</span><input type="time" value={from} onChange={(e)=>setFrom(e.target.value)} className="mb-mono mb-in py-2.5 pl-9 pr-2" style={{ fontSize:13.5, borderColor:badTime?"var(--danger)":"var(--border)" }}/></div>
@@ -369,11 +439,16 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
             <div className="flex flex-col gap-3.5">
-              <Row icon={Ico.calendar({width:15,height:15})} label="Dátum">{fmtShortISO(dateStr)} · {HU_DAYS[ctx.day]}</Row>
+              <Row icon={Ico.calendar({width:15,height:15})} label="Dátum">
+                {b ? (<>{fmtShortISO(dateStr)} · {HU_DAYS[ctx.day]}</>) : (
+                  <input type="date" value={iso(dayDates[pickedDi])} min={iso(dayDates[0])} max={iso(dayDates[6])} onChange={(e)=>pickDate(e.target.value)} className="mb-mono mb-in px-2 py-1.5" style={{ fontSize:12.5, fontWeight:600 }}/>
+                )}
+              </Row>
               <Row icon={Ico.clock({width:15,height:15})} label="Időtartam">{dur(from,to)}</Row>
               <Row icon={Ico.users({width:15,height:15})} label="Személyzet">{docs.length} orvos · {nurses.length} asszisztens</Row>
               <Row icon={Ico.place({width:15,height:15})} label="Helyszín">
                 <div>{title||"—"}</div>
+                {!!address && <div style={{ color:"var(--muted)", fontWeight:500, marginTop:1 }}>{address}</div>}
                 {title && b && <button onClick={()=>onMap({cat,title})} className="flex items-center gap-1 mt-0.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)" }}>Hely megtekintése {Ico.ext()}</button>}
               </Row>
               <Row icon={Ico.alert({width:15,height:15})} label="Státusz"><Badge text={noDoc?"Hiányos":"Aktív"} color={noDoc?"var(--danger)":"var(--green)"}/></Row>
@@ -384,8 +459,8 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
           <div>{b && <button onClick={()=>onDelete(b.id)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Beosztás törlése</button>}</div>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
-            <button disabled={badTime||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(badTime||saving)?"var(--faint)":"var(--brand)", cursor:(badTime||saving)?"not-allowed":"pointer" }}>
-              {saving ? "Mentés…" : <>{Ico.save()} Mentés</>}
+            <button disabled={blocked||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(blocked||saving)?"var(--faint)":"var(--brand)", cursor:(blocked||saving)?"not-allowed":"pointer" }}>
+              {saving ? "Mentés…" : <>{Ico.save()} {b ? "Mentés" : "Hozzáadás"}</>}
             </button>
           </div>
         </div>
@@ -415,14 +490,14 @@ function CopyWeekModal({ year, week, monday, onClose, onCopy }) {
         <div className="px-6 py-5 flex flex-col gap-5">
           <div className="flex items-center justify-between gap-4">
             <span style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)" }}>Forrás hét</span>
-            <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}><span style={{ color:"var(--faint)" }}>{Ico.calendar({width:15,height:15})}</span><span style={{ fontSize:13.5, fontWeight:700 }}>{year}. {week}. hét</span></div>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}><span style={{ color:"var(--faint)" }}>{Ico.calendar({width:15,height:15})}</span><span style={{ fontSize:13.5, fontWeight:700 }}>{year}. {week}. hét</span><span className="mb-mono" style={{ fontSize:11.5, color:"var(--faint)" }}>{weekRange(year,week)}</span></div>
           </div>
           <div>
             <div style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", marginBottom:8 }}>Célhetek</div>
             <div className="rounded-xl overflow-hidden" style={{ border:"1px solid var(--border)" }}>
               <div className="relative p-2" style={{ borderBottom:"1px solid var(--border)" }}><span className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span><input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Keresés…" className="mb-in py-2 pl-9 pr-3" style={{ fontSize:13 }}/></div>
               <div className="mb-scroll" style={{ maxHeight:160, overflowY:"auto", padding:8 }}>
-                {filtered.map((w) => (<div key={w} className="px-1 py-1.5"><Check checked={targets.has(w)} onChange={()=>toggle(targets,w,setTargets)} label={`${year}. ${w}. hét`}/></div>))}
+                {filtered.map((w) => (<div key={w} className="px-1 py-1.5"><Check checked={targets.has(w)} onChange={()=>toggle(targets,w,setTargets)} label={`${year}. ${w}. hét  ·  ${weekRange(year,w)}`}/></div>))}
               </div>
             </div>
             {targets.size>0 && <div className="flex flex-wrap gap-1.5 mt-2">{Array.from(targets).sort((a,b)=>a-b).map((w)=>(<span key={w} className="flex items-center gap-1 rounded-md px-2 py-1" style={{ fontSize:12, fontWeight:600, background:"var(--brand-soft)", color:"var(--brand-ink)" }}>{w}. hét <button onClick={()=>toggle(targets,w,setTargets)} style={{ color:"var(--brand-ink)" }}>{Ico.x({width:12,height:12})}</button></span>))}</div>}
@@ -479,6 +554,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter }) {
       <button onClick={(e)=>{e.stopPropagation();onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-6" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
       <div className="truncate mt-0.5" style={{ fontSize:13.5, fontWeight:700 }}>{b.title}</div>
+      {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{b.address}</div>}
       <div className="flex flex-wrap gap-1.5 mt-1.5">
         {roleFilter!=="n"&&docs.map((s,i)  => <StaffChip key={"d"+i} s={s} color="var(--blue)"   soft="var(--blue-soft)"   icon={Ico.doctor({width:12,height:12})}/>)}
         {roleFilter!=="d"&&nurses.map((s,i) => <StaffChip key={"n"+i} s={s} color="var(--purple)" soft="var(--purple-soft)" icon={Ico.person({width:12,height:12})}/>)}
@@ -501,7 +577,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
         {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)}/>)}
-        {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs beosztás.</div>}
+        {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
   );
@@ -519,7 +595,7 @@ function ListView({ weekDays, conf, matches, onOpenCard, onMap }) {
   const Td = ({ children, mono, style }) => <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>;
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ height:"100%", overflowY:"auto" }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="rounded-xl overflow-hidden" style={{ border:"1px solid var(--border-soft)", background:"var(--surface)" }}>
         <table className="w-full" style={{ borderCollapse:"collapse" }}>
           <thead><tr>
@@ -577,7 +653,7 @@ function ConflictView({ weekDays, conf, catFilter, onOpenCard, onMap }) {
 
   if (items.length===0) {
     return (
-      <div className="flex items-center justify-center h-full" style={{ color:"var(--muted)" }}>
+      <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
         <div className="flex flex-col items-center gap-3">
           <span style={{ color:"var(--green)" }}>{Ico.alert({width:32,height:32})}</span>
           <div style={{ fontSize:14, fontWeight:600 }}>Nincs ütközés ezen a héten.</div>
@@ -587,7 +663,7 @@ function ConflictView({ weekDays, conf, catFilter, onOpenCard, onMap }) {
   }
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4 flex flex-col gap-2.5" style={{ height:"100%", overflowY:"auto", maxWidth:760 }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4 flex flex-col gap-2.5" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto", maxWidth:760 }}>
       {items.map(({ b, di, overlaps }) => {
         const hasDouble = overlaps.some((o)=>!o.vac);
         const hasVac    = overlaps.some((o)=>o.vac);
@@ -620,7 +696,7 @@ function ConflictView({ weekDays, conf, catFilter, onOpenCard, onMap }) {
 /* ---- LoadingBlock ---------------------------------------------------- */
 function LoadingBlock({ label }) {
   return (
-    <div className="flex items-center justify-center h-full" style={{ color:"var(--muted)" }}>
+    <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
       <div className="flex flex-col items-center gap-3">
         <div className="mb-pulse">{Ico.refresh({width:32,height:32})}</div>
         <div style={{ fontSize:14, fontWeight:600 }}>{label}</div>
@@ -630,7 +706,7 @@ function LoadingBlock({ label }) {
 }
 
 /* ---- StaffView / StaffModal (Munkatársak) ---------------------------- */
-function StaffView({ setToast }) {
+function StaffView({ setToast, newSignal }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery]     = useState("");
@@ -642,6 +718,8 @@ function StaffView({ setToast }) {
     fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => { if (newSignal) setModal({ worker:null, roleid:(data?.roles||[])[0]?.id }); }, [newSignal]);
 
   const post = async (params) => {
     const body = new URLSearchParams(params);
@@ -655,6 +733,7 @@ function StaffView({ setToast }) {
       const result = await post({
         savestaff:"1", id:rec.id||"0", roleid:rec.roleid, nev:rec.nev, teljesnev:rec.teljesnev,
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
+        efo:rec.efo?"1":"", beouserid:rec.beouserid||"0",
       });
       if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -681,7 +760,7 @@ function StaffView({ setToast }) {
   }));
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ height:"100%", overflowY:"auto" }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="relative max-w-xs mb-3">
         <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
         <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés…" className="mb-in py-2 pl-9 pr-3" style={{ fontSize:13 }}/>
@@ -708,6 +787,8 @@ function StaffView({ setToast }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
+                    {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
                     {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
                     {!!w.emailert && <Badge text="Email" color="var(--green)"/>}
                   </div>
@@ -718,12 +799,12 @@ function StaffView({ setToast }) {
           </div>
         ))}
       </div>
-      {modal && <StaffModal ctx={modal} roles={data.roles} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
+      {modal && <StaffModal ctx={modal} roles={data.roles} users={data.users} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
     </div>
   );
 }
 
-function StaffModal({ ctx, roles, onClose, onSave, onDelete, saving }) {
+function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const w = ctx.worker;
   const [nev, setNev]             = useState(w ? w.nev : "");
   const [teljesnev, setTeljesnev] = useState(w ? w.teljesnev : "");
@@ -732,11 +813,13 @@ function StaffModal({ ctx, roles, onClose, onSave, onDelete, saving }) {
   const [tel, setTel]             = useState(w ? w.tel : "");
   const [smsert, setSmsert]       = useState(w ? !!w.smsert : true);
   const [emailert, setEmailert]   = useState(w ? !!w.emailert : true);
+  const [efo, setEfo]             = useState(w ? !!w.efo : false);
+  const [beouserid, setBeouserid] = useState(() => (users||[]).find((u)=>u.beouserid===(w?w.id:-1))?.id || 0);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -760,9 +843,16 @@ function StaffModal({ ctx, roles, onClose, onSave, onDelete, saving }) {
             <Field label="Telefon"><input value={tel} onChange={(e)=>setTel(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
             <Field label="Email"><input value={email} onChange={(e)=>setEmail(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
           </div>
+          <Field label="Rendszerfelhasználó">
+            <MiniSelect value={String(beouserid)} onChange={(v)=>setBeouserid(Number(v))} options={[{ v:"0", l:"Nincs összekapcsolva" }, ...(users||[]).map((u)=>({ v:String(u.id), l:u.nev }))]}/>
+          </Field>
           <div className="flex items-center gap-5 mt-1">
             <Check checked={smsert} onChange={setSmsert} label="SMS értesítés"/>
             <Check checked={emailert} onChange={setEmailert} label="Email értesítés"/>
+          </div>
+          <div className="flex items-center justify-between rounded-lg px-3 py-2.5" style={{ background:"var(--surface-2)" }}>
+            <span style={{ fontSize:13, fontWeight:500 }}>EFO (egyszerűsített foglalkoztatás)</span>
+            <Toggle on={efo} onChange={setEfo}/>
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
@@ -778,7 +868,7 @@ function StaffModal({ ctx, roles, onClose, onSave, onDelete, saving }) {
 }
 
 /* ---- PlacesView / LocationModal (Munkahelyek) ------------------------ */
-function PlacesView({ setToast }) {
+function PlacesView({ setToast, newSignal }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal]     = useState(null);
@@ -789,6 +879,8 @@ function PlacesView({ setToast }) {
     fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => { if (newSignal) void addNew("1","0"); }, [newSignal]);
 
   const post = async (params) => {
     const body = new URLSearchParams(params);
@@ -821,6 +913,12 @@ function PlacesView({ setToast }) {
     if (result.status==="ok") await load();
   };
 
+  const addKiszallas = async ({ megnev, cim, org }) => {
+    const result = await post({ addplace:"1", roleid:"1", kulso:"0", kiszallas:"1", megnev, cim, org });
+    if (result.status==="ok") { await load(); setModal(null); setToast("Kiszállás létrehozva!"); }
+    else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+  };
+
   const reorder = async (id, direction) => {
     await post({ orderplace:"1", id, direction });
     await load();
@@ -830,34 +928,40 @@ function PlacesView({ setToast }) {
 
   const groupsMap = new Map();
   (data.places||[]).forEach((p) => {
-    const key = p.kulso===0 ? `belso-${p.roleid}` : "kulso";
-    if (!groupsMap.has(key)) groupsMap.set(key, { kulso:p.kulso, roleid:p.roleid, places:[] });
+    const key = p.kiszallas===1 ? "kiszallas" : (p.kulso===0 ? `belso-${p.roleid}` : "kulso");
+    if (!groupsMap.has(key)) groupsMap.set(key, { kulso:p.kulso, kiszallas:p.kiszallas||0, roleid:p.roleid, places:[] });
     groupsMap.get(key).places.push(p);
   });
+  if (!groupsMap.has("kiszallas")) groupsMap.set("kiszallas", { kulso:0, kiszallas:1, roleid:1, places:[] });
+  const groups = Array.from(groupsMap.values()).sort((a,b) => (a.kiszallas||0) - (b.kiszallas||0));
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ height:"100%", overflowY:"auto" }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
-        {Array.from(groupsMap.values()).map((g) => {
-          let label = g.kulso===0 ? "Belső" : "Külső";
-          if (g.kulso===0 && g.roleid===1) label += " - Orvos";
-          if (g.kulso===0 && g.roleid===3) label += " - Egyéb";
-          const accent = g.kulso===0 ? "var(--brand)" : "var(--green)";
+        {groups.map((g) => {
+          let label = g.kiszallas ? "Kiszállások" : (g.kulso===0 ? "Belső" : "Külső");
+          if (!g.kiszallas && g.kulso===0 && g.roleid===1) label += " - Orvos";
+          if (!g.kiszallas && g.kulso===0 && g.roleid===3) label += " - Egyéb";
+          const accent = g.kiszallas ? "var(--purple)" : (g.kulso===0 ? "var(--brand)" : "var(--green)");
+          const groupIcon = g.kiszallas ? "truck" : "building";
           return (
-            <div key={`${g.kulso}-${g.roleid}`} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+            <div key={g.kiszallas?"kiszallas":`${g.kulso}-${g.roleid}`} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
               <div className="flex items-center justify-between px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:`color-mix(in srgb,${accent} 8%,transparent)` }}>
                 <span className="flex items-center gap-2">
-                  <span style={{ color:accent }}>{Ico.building({width:15,height:15})}</span>
+                  <span style={{ color:accent }}>{Ico[groupIcon]({width:15,height:15})}</span>
                   <span style={{ fontSize:13, fontWeight:700 }}>{label}</span>
                   <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{g.places.length}</span>
                 </span>
-                <button onClick={()=>addNew(g.roleid, g.kulso)} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
+                <button onClick={()=>g.kiszallas ? setModal({ kiszallas:true }) : addNew(g.roleid, g.kulso)} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
               </div>
               <div className="flex flex-col gap-1.5 p-2">
                 {g.places.map((p, idx) => (
                   <div key={p.id} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
                     <div className="min-w-0 flex-1" onClick={()=>setModal({ place:p })} style={{ cursor:"pointer" }}>
-                      <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
+                        {(g.kiszallas || g.kulso===1) && <Badge text={p.org||"HMM"} color={p.org==="Keltexmed"?"var(--purple)":"var(--brand)"}/>}
+                      </div>
                       {!!p.cim && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)" }}>{p.cim}</div>}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -866,13 +970,14 @@ function PlacesView({ setToast }) {
                     </div>
                   </div>
                 ))}
-                {g.places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs helyszín.</div>}
+                {g.places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>{g.kiszallas ? "Nincs kiszállás." : "Nincs helyszín."}</div>}
               </div>
             </div>
           );
         })}
       </div>
-      {modal && <LocationModal ctx={modal} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
+      {modal && modal.place && <LocationModal ctx={modal} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
+      {modal && modal.kiszallas && <NewKiszallasModal places={data.places||[]} onClose={()=>setModal(null)} onSave={addKiszallas} saving={saving}/>}
     </div>
   );
 }
@@ -881,11 +986,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const p = ctx.place;
   const [megnev, setMegnev] = useState(p.megnev||"");
   const [cim, setCim]       = useState(p.cim||"");
+  const [org, setOrg]       = useState(p.org||"HMM");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id, megnev, cim, sorrend:p.sorrend });
+  const save = () => onSave({ id:p.id, megnev, cim, sorrend:p.sorrend, org });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -899,12 +1005,17 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           <Field label="Megnevezés">
             <input value={megnev} onChange={(e)=>setMegnev(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
           </Field>
-          {p.kulso===1 && (
+          {(p.kulso===1 || p.kiszallas===1) && (
             <Field label="Cím">
               <div className="flex items-center gap-2">
                 <input value={cim} onChange={(e)=>setCim(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
                 {!!cim && <a href={`https://www.google.com/maps/place/${encodeURIComponent(cim)}`} target="_blank" rel="noreferrer" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.place({width:16,height:16})}</a>}
               </div>
+            </Field>
+          )}
+          {(p.kulso===1 || p.kiszallas===1) && (
+            <Field label="Szervező">
+              <MiniSelect value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
             </Field>
           )}
         </div>
@@ -914,6 +1025,49 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
             <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
             <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>{saving?"Mentés…":<>{Ico.save()} Mentés</>}</button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewKiszallasModal({ places, onClose, onSave, saving }) {
+  const [megnev, setMegnev] = useState("");
+  const [cim, setCim]       = useState("");
+  const [org, setOrg]       = useState("HMM");
+
+  useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
+
+  const suggestions = useMemo(() => Array.from(new Set(
+    (places||[]).filter((p)=>p.kiszallas===1 || p.kulso===1).map((p)=>p.megnev)
+  )), [places]);
+
+  const invalid = megnev.trim()==="";
+  const save = () => onSave({ megnev:megnev.trim(), cim:cim.trim(), org });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
+      <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
+      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:460, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
+        <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
+          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>Új kiszállás</h2>
+          <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
+        </div>
+        <div className="flex flex-col gap-3.5 px-6 py-5">
+          <Field label="Kiszállás neve">
+            <Combobox value={megnev||null} onChange={(v)=>setMegnev(v||"")} options={suggestions} placeholder="pl. Mentőállomás – Szeged" kind="n"/>
+            <input value={megnev} onChange={(e)=>setMegnev(e.target.value)} placeholder="Vagy írd be a nevet…" className="mb-in px-3 py-2.5 mt-1.5" style={{ fontSize:13.5 }}/>
+          </Field>
+          <Field label="Cím">
+            <input value={cim} onChange={(e)=>setCim(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+          </Field>
+          <Field label="Szervező">
+            <MiniSelect value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
+          </Field>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
+          <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
+          <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>{saving?"Mentés…":<>{Ico.save()} Létrehozás</>}</button>
         </div>
       </div>
     </div>
@@ -940,7 +1094,7 @@ function VacationsView({ setToast }) {
   };
 
   const addVacation = async (rec) => {
-    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig });
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus });
     if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
@@ -971,7 +1125,7 @@ function VacationsView({ setToast }) {
   ];
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ height:"100%", overflowY:"auto" }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="flex items-center justify-between gap-3 mb-3" style={{ maxWidth:760 }}>
         <div style={{ fontSize:12.5, color:"var(--muted)" }}>Munkatársak szabadságkérelmeinek kezelése.</div>
         <button onClick={()=>setModalOpen(true)} className="mb-add flex items-center gap-1 rounded-lg px-3 py-2" style={{ fontSize:12.5, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új szabadság</button>
@@ -988,7 +1142,10 @@ function VacationsView({ setToast }) {
               {sec.items.map((v) => (
                 <div key={v.groupid} className="flex items-center justify-between gap-3 rounded-lg flex-wrap" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
                   <div className="min-w-0">
-                    <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{v.workerName}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{v.workerName}</div>
+                      <Badge text={v.tipus||"Szabadság"} color={VACATION_TYPE_COLORS[v.tipus]||VACATION_TYPE_COLORS["Szabadság"]}/>
+                    </div>
                     <div className="mb-mono" style={{ fontSize:11.5, color:"var(--muted)" }}>
                       {fmtShortISO(v.from)}{v.to!==v.from?` – ${fmtShortISO(v.to)}`:""} · {v.days} nap{v.status===-1?" · vegyes állapot":""}
                     </div>
@@ -1025,12 +1182,13 @@ function VacationModal({ workers, onClose, onSave }) {
   const [workerid, setWorkerid] = useState(workers?.[0]?.id ? String(workers[0].id) : "");
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
+  const [tipus, setTipus]       = useState("Szabadság");
   const [saving, setSaving]     = useState(false);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = !workerid || !tol || !ig || tol > ig;
-  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig }); setSaving(false); };
+  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig, tipus }); setSaving(false); };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1054,6 +1212,9 @@ function VacationModal({ workers, onClose, onSave }) {
             <Field label="Kezdő nap"><input type="date" value={tol} onChange={(e)=>setTol(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
             <Field label="Utolsó nap"><input type="date" value={ig} onChange={(e)=>setIg(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
           </div>
+          <Field label="Típus">
+            <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+          </Field>
           {tol && ig && tol > ig && <p style={{ fontSize:11.5, color:"var(--danger-ink)" }}>A kezdő nap nem lehet később, mint az utolsó nap.</p>}
         </div>
         <div className="flex items-center justify-end gap-2 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
@@ -1071,6 +1232,8 @@ function NotifyView({ setToast }) {
   const [loading, setLoading] = useState(true);
   const [checks, setChecks]   = useState({});
   const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState("");
+  const [naplo, setNaplo]     = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -1084,7 +1247,22 @@ function NotifyView({ setToast }) {
   }, []);
   useEffect(() => { load(); }, [load]);
 
+  const loadNaplo = useCallback(() => {
+    fetch(`${HMM_CONFIG.url}&getnaplo=1`).then((r)=>r.json()).then((d)=>setNaplo(d.items||[])).catch(()=>setNaplo([]));
+  }, []);
+  useEffect(() => { loadNaplo(); }, [loadNaplo]);
+
   const toggle = (id, field) => setChecks((c) => ({ ...c, [id]: { ...c[id], [field]: !c[id]?.[field] } }));
+
+  const setAll = (field, value) => setChecks((c) => {
+    const next = { ...c };
+    (data.items||[]).forEach((it) => {
+      if (value && field==="sms"   && !it.phone) return;
+      if (value && field==="email" && !it.email) return;
+      next[it.id] = { ...next[it.id], [field]: value };
+    });
+    return next;
+  });
 
   const send = async () => {
     setSending(true);
@@ -1102,6 +1280,21 @@ function NotifyView({ setToast }) {
     setSending(false);
     setToast(sent>0 ? `${sent} munkatárs értesítve.` : "Nem történt küldés.");
     await load();
+    loadNaplo();
+  };
+
+  const sendBulk = async () => {
+    const recipients = (data.items||[]).map((it)=>{ const c=checks[it.id]||{}; return { workerId:it.id, sms:!!c.sms, email:!!c.email }; }).filter((r)=>r.sms||r.email);
+    if (!message.trim() || recipients.length===0) return;
+    setSending(true);
+    try {
+      const body = new URLSearchParams({ sendbulknotify:"1", message, recipients:JSON.stringify(recipients) });
+      const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+      const result = await resp.json();
+      if (result.status==="ok") { setToast(`Üzenet kiküldve (${result.sent} címzés).`); setMessage(""); }
+      else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+    } catch(e) { setToast("Hálózati hiba!"); }
+    finally { setSending(false); loadNaplo(); }
   };
 
   if (loading || !data) return <LoadingBlock label="Értesítések betöltése…"/>;
@@ -1109,17 +1302,28 @@ function NotifyView({ setToast }) {
   const items = data.items || [];
   const hasSelection = items.some((it) => { const c=checks[it.id]||{}; return c.sms||c.email; });
 
+  const NAPLO_ICON = { send:"send", copy:"copy", vacation:"sun" };
+
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ height:"100%", overflowY:"auto" }}>
-      <div style={{ maxWidth:760 }}>
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
+      <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
+        <Field label="Egyéni üzenet (a kijelölt munkatársaknak)">
+          <textarea value={message} onChange={(e)=>setMessage(e.target.value)} rows={3} placeholder="Írd ide az üzenetet…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/>
+        </Field>
         {items.length===0 ? (
           <div className="rounded-xl px-4 py-6 text-center" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)", color:"var(--muted)", fontSize:13.5 }}>Nem történt változás a beosztásban.</div>
         ) : (<>
           <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-            <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
-              <span style={{ color:"var(--brand)" }}>{Ico.bell({width:15,height:15})}</span>
-              <span style={{ fontSize:13, fontWeight:700 }}>Beosztás-változás miatt értesítendő munkatársak</span>
-              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span>
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5 flex-wrap" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
+              <span className="flex items-center gap-2">
+                <span style={{ color:"var(--brand)" }}>{Ico.bell({width:15,height:15})}</span>
+                <span style={{ fontSize:13, fontWeight:700 }}>Beosztás-változás miatt értesítendő munkatársak</span>
+                <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span>
+              </span>
+              <div className="flex items-center gap-3 flex-wrap" style={{ fontSize:11.5, fontWeight:600, color:"var(--muted)" }}>
+                <span className="flex items-center gap-1.5">SMS: <button onClick={()=>setAll("sms",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("sms",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
+                <span className="flex items-center gap-1.5">Email: <button onClick={()=>setAll("email",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("email",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5 p-2">
               {items.map((it) => { const c = checks[it.id]||{}; return (
@@ -1133,8 +1337,28 @@ function NotifyView({ setToast }) {
               ); })}
             </div>
           </div>
-          <button onClick={send} disabled={!hasSelection||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5 mt-3" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||sending)?"var(--faint)":"var(--brand)", cursor:(!hasSelection||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Kijelölt értesítések kiküldése</>}</button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={send} disabled={!hasSelection||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||sending)?"var(--faint)":"var(--brand)", cursor:(!hasSelection||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Beosztás-értesítés kiküldése</>}</button>
+            <button onClick={sendBulk} disabled={!hasSelection||!message.trim()||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||!message.trim()||sending)?"var(--faint)":"var(--purple)", cursor:(!hasSelection||!message.trim()||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Egyéni üzenet kiküldése</>}</button>
+          </div>
         </>)}
+
+        <div className="rounded-xl overflow-hidden mt-2" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+          <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--muted) 8%,transparent)" }}>
+            <span style={{ color:"var(--muted)" }}>{Ico.clock({width:15,height:15})}</span>
+            <span style={{ fontSize:13, fontWeight:700 }}>Napló</span>
+          </div>
+          <div className="flex flex-col gap-1.5 p-2">
+            {(naplo||[]).map((n,i) => (
+              <div key={i} className="flex items-center gap-2.5 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+                <span style={{ color:"var(--faint)", flexShrink:0 }}>{Ico[NAPLO_ICON[n.tipus]||"bell"]({width:14,height:14})}</span>
+                <div className="min-w-0 flex-1 truncate" style={{ fontSize:12.5, fontWeight:600 }}>{n.cim}</div>
+                <div className="mb-mono flex-shrink-0" style={{ fontSize:11, color:"var(--faint)" }}>{n.letrehozva}</div>
+              </div>
+            ))}
+            {(naplo||[]).length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Még nincs napló-bejegyzés.</div>}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1144,15 +1368,11 @@ function NotifyView({ setToast }) {
 function IconBtn({ children, onClick, badge, title }) {
   return (<button onClick={onClick} title={title} className="mb-btn relative flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)" }}>{children}{badge>0&&<span className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full" style={{ minWidth:16, height:16, padding:"0 4px", fontSize:10, fontWeight:700, color:"#fff", background:"var(--danger)", border:"2px solid var(--surface)" }}>{badge}</span>}</button>);
 }
-function Segmented({ value, onChange, options }) {
-  return (<div className="flex rounded-lg p-0.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>{options.map((o)=>(<button key={o.v} onClick={()=>onChange(o.v)} className="flex-1 rounded-md px-2 py-1.5" style={{ fontSize:12.5, fontWeight:600, background:value===o.v?"var(--card)":"transparent", color:value===o.v?"var(--brand-ink)":"var(--muted)", boxShadow:value===o.v?"0 1px 2px rgba(0,0,0,.2)":"none" }}>{o.l}</button>))}</div>);
-}
-
 /* ================================================================
  *  FŐ KOMPONENS
  * ================================================================ */
 function MunkaidoBeosztas() {
-  const [theme,        setTheme]        = useState("dark");
+  const [theme,        setTheme]        = useState("light");
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [weekOffset,   setWeekOffset]   = useState(HMM_CONFIG.offset || 0);
   const [weekData,     setWeekData]     = useState(null);
@@ -1161,10 +1381,9 @@ function MunkaidoBeosztas() {
   const [doctors,      setDoctors]      = useState([]);   // [{id, nev}]
   const [assistants,   setAssistants]   = useState([]);   // [{id, nev}]
   const [query,        setQuery]        = useState("");
-  const [roleFilter,   setRoleFilter]   = useState("all");
+  const roleFilter = "all";
   const [catFilter,    setCatFilter]    = useState("all");
-  const [onlyConflicts,setOnlyConflicts]= useState(false);
-  const [showFilters,  setShowFilters]  = useState(false);
+  const onlyConflicts = false;
   const [showCatMenu,  setShowCatMenu]  = useState(false);
   const [nav,          setNav]          = useState("board");
   const [collapsed,    setCollapsed]    = useState({});
@@ -1172,6 +1391,8 @@ function MunkaidoBeosztas() {
   const [mapBk,        setMapBk]        = useState(null);
   const [copyOpen,     setCopyOpen]     = useState(false);
   const [toast,        setToast]        = useState(null);
+  const [staffNewSignal, setStaffNewSignal] = useState(0);
+  const [placeNewSignal, setPlaceNewSignal] = useState(0);
 
   /* ---- adatlekérés ---- */
   const fetchWeek = useCallback((offset) => {
@@ -1199,6 +1420,30 @@ function MunkaidoBeosztas() {
     if (!monday) return HU_DAYS.map(() => new Date(Date.UTC(2026,0,1)));
     return HU_DAYS.map((_,i) => { const d=new Date(monday+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+i); return d; });
   }, [monday]);
+
+  /* ---- mini havi naptár (oldalsáv) ---- */
+  const [calCursor, setCalCursor] = useState(() => { const d=new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); });
+  useEffect(() => {
+    if (!monday) return;
+    const d = new Date(monday+"T00:00:00Z");
+    setCalCursor(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
+  }, [monday]);
+  const shiftCalMonth = (delta) => setCalCursor((c)=> new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth()+delta, 1)));
+  const calCells = useMemo(() => {
+    const first = new Date(Date.UTC(calCursor.getUTCFullYear(), calCursor.getUTCMonth(), 1));
+    const dow = (first.getUTCDay()+6)%7;
+    const start = new Date(first); start.setUTCDate(start.getUTCDate()-dow);
+    return Array.from({length:42},(_,i)=>{ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); return d; });
+  }, [calCursor]);
+  const selectedWeekSet = useMemo(() => new Set(dayDates.map(iso)), [dayDates]);
+  const todayIso = iso(new Date());
+  const gotoDate = (dt) => {
+    if (!monday) return;
+    const baseMonday = new Date(monday+"T00:00:00Z");
+    baseMonday.setUTCDate(baseMonday.getUTCDate() - weekOffset*7);
+    const diffDays = Math.round((dt.getTime() - baseMonday.getTime()) / 86400000);
+    setWeekOffset(Math.floor(diffDays/7));
+  };
 
   const weekDays = useMemo(() => {
     if (!weekData) return EMPTY_BOARD;
@@ -1228,17 +1473,31 @@ function MunkaidoBeosztas() {
   /* ---- mentés ---- */
   const saveBooking = useCallback(async (rec) => {
     const staff = (rec.staff||[]).filter((s)=>s.name && s.workerId);
+    const dates = (rec.dates && rec.dates.length) ? rec.dates : [rec.date];
     setSaving(true);
     try {
-      const body = new URLSearchParams({ savebooking:"1", tipusid:rec.tipusId||"", datum:rec.date||"", staff:JSON.stringify(staff) });
-      const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-      const result = await resp.json();
-      if (result.status==="ok") {
+      let tipusId = rec.tipusId;
+      if (!tipusId) {
+        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org:"HMM", megnev: rec.title||"", cim: rec.address||"" });
+        const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+        const result = await resp.json();
+        if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
+        tipusId = result.id;
+      } else if (rec.id) {
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"" });
+        await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+      }
+      let allOk = true;
+      for (const datum of dates) {
+        const body = new URLSearchParams({ savebooking:"1", tipusid:tipusId||"", datum:datum||"", staff:JSON.stringify(staff) });
+        const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+        const result = await resp.json();
+        if (result.status!=="ok") { allOk = false; setToast("Hiba: "+(result.message||"Ismeretlen hiba")); break; }
+      }
+      if (allOk) {
         await fetchWeek(weekOffset);
         setModal(null);
-        setToast("Beosztás mentve!");
-      } else {
-        setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+        setToast(dates.length>1 ? `Beosztás mentve ${dates.length} napra.` : "Beosztás mentve!");
       }
     } catch(e) { setToast("Hálózati hiba a mentés során!"); }
     finally { setSaving(false); }
@@ -1260,7 +1519,7 @@ function MunkaidoBeosztas() {
       const targetDate = iso(isoWeekMonday(year, targetWeek));
       if (targetDate===sourceMonday) continue;
       try {
-        const resp = await fetch(`${HMM_CONFIG.url}&copyweekjson=1&copyfrom=${sourceMonday}&copyto=${targetDate}`);
+        const resp = await fetch(`${HMM_CONFIG.url}&copyweekjson=1&copyfrom=${sourceMonday}&copyto=${targetDate}&overwrite=${overwrite?1:0}`);
         const result = await resp.json();
         if (result.status==="ok") done++;
       } catch(e) { console.error("copyWeek error:", e); }
@@ -1275,10 +1534,10 @@ function MunkaidoBeosztas() {
     { id:"board",     icon:Ico.board,    label:"Tábla nézet" },
     { id:"list",      icon:Ico.list,     label:"Listás nézet" },
     { id:"conflicts", icon:Ico.alert,    label:"Ütközések", badge:conf.set.size },
-    { id:"copy",      icon:Ico.copy,     label:"Hét másolása" },
+    { id:"workplaces",icon:Ico.building, label:"Munkahelyek" },
     { id:"workers",   icon:Ico.doctor,   label:"Munkatársak" },
     { id:"vacations", icon:Ico.sun,      label:"Szabadságok" },
-    { id:"workplaces",icon:Ico.building, label:"Munkahelyek" },
+    { id:"copy",      icon:Ico.copy,     label:"Hét másolása" },
     { id:"notify",    icon:Ico.bell,     label:"Értesítések" },
     { id:"print",     icon:Ico.list,     label:"Nyomtatás" },
   ];
@@ -1289,7 +1548,6 @@ function MunkaidoBeosztas() {
       return;
     }
     setNav(id);
-    if (id==="conflicts") setOnlyConflicts(false);
   };
 
   /* ------------------------------------------------------------------ */
@@ -1305,36 +1563,53 @@ function MunkaidoBeosztas() {
               <div style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}>Munkaidő beosztás</div>
             </div>
             <nav className="flex-1 overflow-y-auto mb-scroll px-2.5 py-3 flex flex-col gap-0.5">
+              <a href="index.php" className="mb-nav flex items-center gap-3 rounded-lg px-3 py-2 mb-1.5" style={{ fontSize:13.5, fontWeight:500, color:"var(--muted)", textDecoration:"none", borderBottom:"1px solid var(--border)", paddingBottom:10 }}><span style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.left({width:18,height:18})}</span><span className="flex-1 truncate">Vissza az adminba</span></a>
               {NAV.map((n) => { const active=nav===n.id; return (<button key={n.id} onClick={()=>onNav(n.id)} className="mb-nav flex items-center gap-3 rounded-lg px-3 py-2 text-left" style={{ fontSize:13.5, fontWeight:active?700:500, color:active?"var(--brand-ink)":"var(--muted)", background:active?"var(--brand-soft)":"transparent", boxShadow:active?"inset 2px 0 0 var(--brand)":"none" }}><span style={{ color:active?"var(--brand)":"var(--faint)", flexShrink:0 }}>{n.icon({width:18,height:18})}</span><span className="flex-1 truncate">{n.label}</span>{n.badge>0&&<span className="rounded-full px-1.5" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{n.badge}</span>}</button>); })}
             </nav>
             <div className="px-3 py-3" style={{ borderTop:"1px solid var(--border)" }}>
               <div className="flex items-center justify-between mb-2">
-                <button onClick={()=>setWeekOffset((w)=>w-1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left({width:14,height:14})}</button>
-                <span style={{ fontSize:12.5, fontWeight:700 }}>{year}. {week}. hét</span>
-                <button onClick={()=>setWeekOffset((w)=>w+1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.right({width:14,height:14})}</button>
+                <button onClick={()=>shiftCalMonth(-1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left({width:14,height:14})}</button>
+                <span style={{ fontSize:12.5, fontWeight:700 }}>{HU_MONTHS[calCursor.getUTCMonth()]} {calCursor.getUTCFullYear()}</span>
+                <button onClick={()=>shiftCalMonth(1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.right({width:14,height:14})}</button>
               </div>
               <div className="grid grid-cols-7 gap-1 text-center">
                 {HU_DAYS_1.map((dd)=><div key={dd} style={{ fontSize:10.5, color:"var(--faint)", fontWeight:600 }}>{dd}</div>)}
-                {dayDates.map((dt,i)=>{ const hol=!!holidayOf(iso(dt)); const rest=i===6||hol; return <div key={i} className="mx-auto flex items-center justify-center rounded-full" style={{ width:24, height:24, fontSize:12, fontWeight:700, color:rest?"var(--danger-ink)":(i===5?"var(--faint)":"var(--muted)"), background:"transparent" }}>{dt.getUTCDate()}</div>; })}
+                {calCells.map((dt,i)=>{
+                  const ds = iso(dt);
+                  const inMonth = dt.getUTCMonth()===calCursor.getUTCMonth();
+                  const hol = !!holidayOf(ds);
+                  const rest = dt.getUTCDay()===0 || hol;
+                  const isToday = ds===todayIso;
+                  const inSelWeek = selectedWeekSet.has(ds);
+                  return (
+                    <button key={i} type="button" onClick={()=>gotoDate(dt)} className="mx-auto flex items-center justify-center rounded-full" style={{
+                      width:24, height:24, fontSize:12, fontWeight:isToday?800:700,
+                      color: isToday ? "#fff" : !inMonth ? "var(--faint)" : rest ? "var(--danger-ink)" : "var(--muted)",
+                      background: isToday ? "var(--brand)" : inSelWeek ? "var(--brand-soft)" : "transparent",
+                      opacity: inMonth?1:.45
+                    }}>{dt.getUTCDate()}</button>
+                  );
+                })}
               </div>
             </div>
           </div>
         </aside>
 
         {/* FŐ TARTALOM */}
-        <div className="flex-1 flex flex-col" style={{ minWidth:0 }}>
+        <div className="flex-1 flex flex-col" style={{ minWidth:0, minHeight:0 }}>
           {/* FEJLÉC */}
           <header className="mb-no-print flex items-center gap-4 px-4 lg:px-6" style={{ height:56, borderBottom:"1px solid var(--border)", background:"var(--surface)", flexShrink:0 }}>
             <IconBtn onClick={()=>setSidebarOpen((v)=>!v)} title={sidebarOpen?"Menü elrejtése":"Menü megnyitása"}>{Ico.menu({width:19,height:19})}</IconBtn>
             <div className="md:hidden"><LogoMark size={28}/></div>
             <div className="relative flex-1 max-w-xl mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
-              <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés orvosra, asszisztensre, helyiségre…" className="mb-in py-2 pl-10 pr-4" style={{ fontSize:13.5 }}/>
+              <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés orvosra, asszisztensre, helyiségre…" className="mb-in py-2 pl-10 pr-16" style={{ fontSize:13.5 }}/>
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md px-1.5 py-0.5" style={{ fontSize:11, color:"var(--faint)", border:"1px solid var(--border)" }}>{Ico.cmd()} K</span>
             </div>
             <div className="flex items-center gap-1.5">
               <IconBtn onClick={()=>setTheme((t)=>t==="dark"?"light":"dark")} title="Téma váltása">{theme==="dark"?Ico.sun({width:18,height:18}):Ico.moon({width:18,height:18})}</IconBtn>
               <IconBtn onClick={()=>onNav("conflicts")} badge={conf.set.size}>{Ico.bell()}</IconBtn>
-              <IconBtn onClick={()=>fetchWeek(weekOffset)} title="Frissítés">{loading?<span className="mb-pulse">{Ico.refresh()}</span>:Ico.refresh()}</IconBtn>
+              <IconBtn title="Súgó">{Ico.help()}</IconBtn>
               <div className="flex items-center gap-2 pl-2 ml-1" style={{ borderLeft:"1px solid var(--border)" }}>
                 <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background:"var(--brand)", color:"#fff", fontSize:12, fontWeight:700 }}>{(HMM_CONFIG.adminName||"A").charAt(0).toUpperCase()}</div>
                 <div className="hidden lg:block leading-tight"><div style={{ fontSize:12.5, fontWeight:700 }}>{HMM_CONFIG.adminName||"Admin"}</div><div style={{ fontSize:11, color:"var(--muted)" }}>Adminisztrátor</div></div>
@@ -1355,25 +1630,23 @@ function MunkaidoBeosztas() {
               {weekOffset!==0 && <button onClick={()=>setWeekOffset(0)} className="rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:600, color:"var(--brand-ink)", background:"var(--brand-soft)" }}>Aktuális</button>}
             </div>
             <div className="flex items-center gap-2 ml-auto">
-              {/* Szűrők */}
-              <div className="relative">
-                <button onClick={()=>{ setShowFilters((v)=>!v); setShowCatMenu(false); }} className="mb-btn flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:(roleFilter!=="all"||onlyConflicts)?"var(--brand-ink)":"var(--muted)", border:`1px solid ${(roleFilter!=="all"||onlyConflicts)?"var(--brand)":"var(--border)"}` }}>{Ico.filter()} Szűrők</button>
-                {showFilters && (<><div className="fixed inset-0 z-40" onClick={()=>setShowFilters(false)}/><div className="mb-pop absolute right-0 z-50 mt-1.5 rounded-xl p-3" style={{ width:250, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 20px 44px -16px rgba(0,0,0,.5)" }}><div style={{ fontSize:11.5, fontWeight:700, color:"var(--muted)", marginBottom:6 }}>SZEREPKÖR</div><Segmented value={roleFilter} onChange={setRoleFilter} options={[{v:"all",l:"Mind"},{v:"d",l:"Orvos"},{v:"n",l:"Asszisztens"}]}/><div className="flex items-center justify-between rounded-lg px-3 py-2.5 mt-3" style={{ background:onlyConflicts?"var(--danger-soft)":"var(--surface-2)", border:`1px solid ${onlyConflicts?"var(--danger)":"var(--border)"}` }}><span className="flex items-center gap-1.5" style={{ fontSize:13, fontWeight:600, color:onlyConflicts?"var(--danger-ink)":"var(--muted)" }}>{Ico.alert({width:14,height:14})} Csak ütközések</span><Toggle on={onlyConflicts} onChange={setOnlyConflicts}/></div></div></>)}
-              </div>
               {/* Kategória */}
               <div className="relative">
-                <button onClick={()=>{ setShowCatMenu((v)=>!v); setShowFilters(false); }} className="mb-btn flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Kategória: <span style={{ color:"var(--ink)" }}>{catFilter==="all"?"Összes":CATS[catFilter]?.label}</span> {Ico.chevDown({width:14,height:14})}</button>
+                <button onClick={()=>setShowCatMenu((v)=>!v)} className="mb-btn flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Kategória: <span style={{ color:"var(--ink)" }}>{catFilter==="all"?"Összes":CATS[catFilter]?.label}</span> {Ico.chevDown({width:14,height:14})}</button>
                 {showCatMenu && (<><div className="fixed inset-0 z-40" onClick={()=>setShowCatMenu(false)}/><div className="mb-pop absolute right-0 z-50 mt-1.5 rounded-xl p-1.5" style={{ width:210, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 20px 44px -16px rgba(0,0,0,.5)" }}>{[{v:"all",l:"Összes"},...CAT_ORDER.map((c)=>({v:c,l:CATS[c].label}))].map((o)=>(<button key={o.v} onClick={()=>{ setCatFilter(o.v); setShowCatMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left" style={{ fontSize:13, fontWeight:catFilter===o.v?700:500, color:catFilter===o.v?"var(--brand-ink)":"var(--ink)", background:catFilter===o.v?"var(--brand-soft)":"transparent" }}>{o.v!=="all"&&<span style={{ width:8, height:8, borderRadius:2, background:CATS[o.v].color }}/>}{o.l}</button>))}</div></>)}
               </div>
               <button onClick={()=>setCopyOpen(true)} className="mb-btn flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }} title="Hét másolása">{Ico.copy({width:16,height:16})}</button>
+              {nav==="board" && <button onClick={()=>setModal({day:0, cat:"belso", booking:null})} className="mb-prim flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
             </div>
             </>)}
+            {nav==="workers" && <button onClick={()=>setStaffNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új munkatárs</button>}
+            {nav==="workplaces" && <button onClick={()=>setPlaceNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új helyszín</button>}
           </div>
 
           {/* TÁBLA */}
-          <div className="mb-board flex-1 mb-scroll" style={{ overflowX:nav==="board"?"auto":"hidden", overflowY:"hidden" }}>
+          <div className="mb-board flex-1 mb-scroll" style={nav==="board" ? { overflow:"auto" } : { display:"flex", flexDirection:"column", overflowX:"hidden", overflowY:"hidden", minHeight:0 }}>
             {loading ? (
-              <div className="flex items-center justify-center h-full" style={{ color:"var(--muted)" }}>
+              <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
                 <div className="flex flex-col items-center gap-3">
                   <div className="mb-pulse">{Ico.refresh({width:32,height:32})}</div>
                   <div style={{ fontSize:14, fontWeight:600 }}>Beosztás betöltése…</div>
@@ -1384,21 +1657,21 @@ function MunkaidoBeosztas() {
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
-              <StaffView setToast={setToast}/>
+              <StaffView setToast={setToast} newSignal={staffNewSignal}/>
             ) : nav==="workplaces" ? (
-              <PlacesView setToast={setToast}/>
+              <PlacesView setToast={setToast} newSignal={placeNewSignal}/>
             ) : nav==="vacations" ? (
               <VacationsView setToast={setToast}/>
             ) : nav==="notify" ? (
               <NotifyView setToast={setToast}/>
             ) : (
-              <div className="flex gap-3 px-4 lg:px-6 py-4" style={{ height:"100%", minWidth:"min-content" }}>
+              <div className="flex items-start gap-3 px-4 lg:px-6 py-4" style={{ minWidth:"min-content", minHeight:"min-content" }}>
                 {HU_DAYS.map((day, di) => {
                   const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
                   const hol  = holidayOf(iso(dayDates[di]));
                   const rest = di===6 || !!hol;
                   return (
-                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:(di>=5||hol)?"var(--weekend)":"var(--bg)", border:"1px solid var(--border-soft)", maxHeight:"100%" }}>
+                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:(di>=5||hol)?"var(--weekend)":"var(--bg)", border:"1px solid var(--border-soft)" }}>
                       <div className="px-3 py-2.5" style={{ borderBottom:"1px solid var(--border)" }}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-baseline gap-2">
@@ -1412,7 +1685,7 @@ function MunkaidoBeosztas() {
                         </div>
                         {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
-                      <div className="mb-colbody mb-scroll flex-1 overflow-y-auto flex flex-col gap-2.5 p-2.5">
+                      <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
                         {CAT_ORDER.filter((c)=>catFilter==="all"||c===catFilter).map((cat) => {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
@@ -1431,7 +1704,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} saving={saving}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} places={weekData?.places||[]} saving={saving}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 

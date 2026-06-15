@@ -67,6 +67,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiAddPlace();
         }
 
+        if (isset($_POST["updateplaceaddress"])) {
+            $this->_apiUpdatePlaceAddress();
+        }
+
         if (isset($_POST["saveplace"])) {
             $this->_apiSavePlace();
         }
@@ -101,6 +105,14 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         if (isset($_POST["sendnotify"])) {
             $this->_apiSendNotify();
+        }
+
+        if (isset($_POST["sendbulknotify"])) {
+            $this->_apiSendBulkNotify();
+        }
+
+        if (isset($_GET["getnaplo"])) {
+            $this->_apiGetNaplo();
         }
 
         if (isset($_POST["showcollisions"])) {
@@ -548,6 +560,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
             return;
         }
 
+        if ($this->subPage == "beosztasok") {
+            $GLOBALS["fullscreen_react"] = true;
+            $this->_showReactPage();
+            return;
+        }
+
         echo "<div id='menusor'>";
         echo "<a href='index.php?page={$_GET["page"]}'>Beosztások</a> &bull; ";
         echo "<a href='index.php?page={$_GET["page"]}&subpage=workers'>Munkatársak</a> &bull; ";
@@ -556,12 +574,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "<a href='index.php?page={$_GET["page"]}&subpage=notify'>Értesítések</a> &bull; ";
         echo "<a href='index.php'>Vissza az adminba</a>";
         echo "</div>";
-
-        if ($this->subPage == "beosztasok") {
-            $GLOBALS["fullscreen_react"] = true;
-            $this->_showReactPage();
-            return;
-        }
 
         if ($this->subPage == "workers") {
             echo "<div id='workersubpage' style='margin-top:20px;'>";
@@ -914,7 +926,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 $bookings[] = [
                     "id"      => "tip_{$tipus["id"]}_{$date}",
                     "tipusId" => (int)$tipus["id"],
-                    "cat"     => $tipus["kulso"] == 0 ? "belso" : "kulso",
+                    "cat"     => !empty($tipus["kiszallas"]) ? "kiszallas" : ($tipus["kulso"] == 0 ? "belso" : "kulso"),
                     "title"   => $tipus["megnev"],
                     "address" => $tipus["cim"]  ?? "",
                     "note"    => $tipus["megj"] ?? "",
@@ -936,6 +948,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "SELECT id, IF(TRIM(teljesnev) <> '', teljesnev, nev) AS nev FROM schedule_workers WHERE roleid=2 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
 
+        $places = array_values(array_map(
+            fn($t) => ["megnev" => $t["megnev"], "cim" => $t["cim"] ?? "", "org" => $t["org"] ?: "HMM"],
+            array_filter($allTipusok, fn($t) => !empty($t["kiszallas"]) || !empty($t["kulso"]))
+        ));
+
         $this->utils->jsonOut([
             "year"             => $year,
             "week"             => $week,
@@ -946,6 +963,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "assistants"       => array_column($assistantRows, "nev"),
             "doctorsWithId"    => $doctorRows,
             "assistantsWithId" => $assistantRows,
+            "places"           => $places,
         ]);
         die;
     }
@@ -994,8 +1012,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
             die;
         }
 
-        $copyFrom = $_GET["copyfrom"] ?? "";
-        $copyTo   = $_GET["copyto"]   ?? "";
+        $copyFrom  = $_GET["copyfrom"] ?? "";
+        $copyTo    = $_GET["copyto"]   ?? "";
+        $overwrite = intval($_GET["overwrite"] ?? $_POST["overwrite"] ?? 0);
 
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $copyFrom) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $copyTo)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Érvénytelen dátum!"]);
@@ -1004,6 +1023,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         $distance = strtotime($copyTo) - strtotime($copyFrom);
         if ($distance > 0) {
+            if ($overwrite) {
+                $targetFrom = date("Y-m-d H:i:s", strtotime($copyFrom . " 00:00:00") + $distance);
+                sql_query(
+                    "DELETE m FROM schedule_mapping m
+                     LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
+                     WHERE m.datumfrom>=? AND m.datumfrom<DATE_ADD(?, INTERVAL 7 DAY) AND t.forday='0000-00-00'",
+                    [$targetFrom, $targetFrom]
+                );
+            }
+
             $copyDatas = sql_query(
                 "SELECT m.* FROM schedule_mapping m
                  LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
@@ -1019,6 +1048,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     [$newFrom, $newTo, $row["napszak"], $row["tipusid"], $row["roleid"], $row["workerid"], $row["noverid"], $row["megj"], $this->adminUser->user["id"]]
                 );
             }
+
+            sql_query("INSERT INTO schedule_naplo SET tipus='copy', cim=?, letrehozva=now(), userid=?",
+                ["Hét másolva: {$copyFrom} → {$copyTo}" . ($overwrite ? " (felülírással)" : ""), $this->adminUser->user["id"]]);
         }
 
         $this->utils->jsonOut(["status" => "ok"]);
@@ -1036,22 +1068,29 @@ class AdminWorkSchedulePage extends AdminCorePage {
              LEFT JOIN schedule_roles r ON r.id=w.roleid
              ORDER BY w.roleid, w.nev"
         )->fetchAll(PDO::FETCH_ASSOC);
+        $users = sql_query("SELECT id, nev, beouserid FROM users ORDER BY nev")->fetchAll(PDO::FETCH_ASSOC);
+        $onVacationIds = sql_query(
+            "SELECT DISTINCT oid FROM schedule_szabadsag WHERE status=1 AND CURDATE() BETWEEN datumtol AND datumig"
+        )->fetchAll(PDO::FETCH_COLUMN);
 
         $this->utils->jsonOut([
             "roles"   => $roles,
-            "workers" => array_map(function ($w) {
+            "workers" => array_map(function ($w) use ($onVacationIds) {
                 return [
-                    "id"        => (int)$w["id"],
-                    "nev"       => $w["nev"],
-                    "teljesnev" => $w["teljesnev"],
-                    "roleid"    => (int)$w["roleid"],
-                    "rolenev"   => $w["rolenev"],
-                    "email"     => $w["email"],
-                    "tel"       => $w["tel"],
-                    "smsert"    => (int)$w["smsert"],
-                    "emailert"  => (int)$w["emailert"],
+                    "id"         => (int)$w["id"],
+                    "nev"        => $w["nev"],
+                    "teljesnev"  => $w["teljesnev"],
+                    "roleid"     => (int)$w["roleid"],
+                    "rolenev"    => $w["rolenev"],
+                    "email"      => $w["email"],
+                    "tel"        => $w["tel"],
+                    "smsert"     => (int)$w["smsert"],
+                    "emailert"   => (int)$w["emailert"],
+                    "efo"        => (int)($w["efo"] ?? 0),
+                    "onVacation" => in_array((int)$w["id"], $onVacationIds, true),
                 ];
             }, $workers),
+            "users" => array_map(fn($u) => ["id" => (int)$u["id"], "nev" => $u["nev"], "beouserid" => (int)$u["beouserid"]], $users),
         ]);
     }
 
@@ -1068,6 +1107,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $tel       = trim($_POST["tel"] ?? "");
         $smsert    = empty($_POST["smsert"])   ? 0 : 1;
         $emailert  = empty($_POST["emailert"]) ? 0 : 1;
+        $efo       = empty($_POST["efo"]) ? 0 : 1;
+        $beouserid = intval($_POST["beouserid"] ?? 0);
 
         if ($nev === "" || !$roleid) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a nevet és a típust!"]);
@@ -1075,15 +1116,20 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         if ($id) {
             sql_query(
-                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=? WHERE id=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $id]
+                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=? WHERE id=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $id]
             );
         } else {
             sql_query(
-                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert]
+                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo]
             );
             $id = (int)sql_insert_id();
+        }
+
+        sql_query("UPDATE users SET beouserid=0 WHERE beouserid=?", [$id]);
+        if ($beouserid > 0) {
+            sql_query("UPDATE users SET beouserid=? WHERE id=?", [$id, $beouserid]);
         }
 
         $this->utils->jsonOut(["status" => "ok", "id" => $id]);
@@ -1120,14 +1166,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "roles"  => $roles,
             "places" => array_map(function ($r) {
                 return [
-                    "id"      => (int)$r["id"],
-                    "megnev"  => $r["megnev"],
-                    "cim"     => $r["cim"],
-                    "megj"    => $r["megj"],
-                    "kulso"   => (int)$r["kulso"],
-                    "roleid"  => (int)$r["roleid"],
-                    "sorrend" => (int)$r["sorrend"],
-                    "aktiv"   => (int)$r["aktiv"],
+                    "id"        => (int)$r["id"],
+                    "megnev"    => $r["megnev"],
+                    "cim"       => $r["cim"],
+                    "megj"      => $r["megj"],
+                    "kulso"     => (int)$r["kulso"],
+                    "kiszallas" => (int)($r["kiszallas"] ?? 0),
+                    "org"       => $r["org"] ?: "HMM",
+                    "roleid"    => (int)$r["roleid"],
+                    "sorrend"   => (int)$r["sorrend"],
+                    "aktiv"     => (int)$r["aktiv"],
                 ];
             }, $rows),
         ]);
@@ -1138,12 +1186,33 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
         }
 
-        $roleid = intval($_POST["roleid"] ?? 0);
-        $kulso  = intval($_POST["kulso"]  ?? 0);
+        $roleid    = intval($_POST["roleid"]    ?? 0);
+        $kulso     = intval($_POST["kulso"]     ?? 0);
+        $kiszallas = intval($_POST["kiszallas"] ?? 0);
+        $org       = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
+        $megnev    = trim($_POST["megnev"] ?? "") ?: ($kiszallas ? "_Új kiszállás" : "_Új helyszín");
+        $cim       = trim($_POST["cim"] ?? "");
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev='_Új helyszín', roleid=?, kulso=?, aktiv=1", [$roleid, $kulso]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1", [$megnev, $cim, $roleid, $kulso, $kiszallas, $org]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
+    }
+
+    private function _apiUpdatePlaceAddress(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $id  = intval($_POST["id"] ?? 0);
+        $cim = trim($_POST["cim"] ?? "");
+
+        if (!$id) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó azonosító!"]);
+        }
+
+        sql_query("UPDATE schedule_tipusok SET cim=? WHERE id=?", [$cim, $id]);
+
+        $this->utils->jsonOut(["status" => "ok"]);
     }
 
     private function _apiSavePlace(): void {
@@ -1155,12 +1224,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $megnev  = trim($_POST["megnev"] ?? "");
         $cim     = trim($_POST["cim"] ?? "");
         $sorrend = intval($_POST["sorrend"] ?? 0);
+        $org     = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
 
         if (!$id || $megnev === "") {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a megnevezést!"]);
         }
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, sorrend=? WHERE id=?", [$megnev, $cim, $sorrend, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, sorrend=?, org=? WHERE id=?", [$megnev, $cim, $sorrend, $org, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1229,6 +1299,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $rows = sql_query(
             "SELECT sz.groupid, sz.oid AS workerid, MIN(sz.datumtol) AS datumtol, MAX(sz.datumig) AS datumig,
                     MIN(sz.status) AS minstatus, MAX(sz.status) AS maxstatus, COUNT(*) AS napok,
+                    MIN(sz.tipus) AS tipus,
                     IF(TRIM(w.teljesnev)<>'', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id=sz.oid
@@ -1251,6 +1322,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "to"         => $r["datumig"],
                     "days"       => (int)$r["napok"],
                     "status"     => $minStatus === $maxStatus ? $minStatus : -1,
+                    "tipus"      => $r["tipus"] ?: "Szabadság",
                 ];
             }, $rows),
         ]);
@@ -1264,6 +1336,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $workerId = intval($_POST["workerid"] ?? 0);
         $tol      = $_POST["tol"] ?? "";
         $ig       = $_POST["ig"]  ?? "";
+        $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb"]) ? $_POST["tipus"] : "Szabadság";
 
         if (!$workerId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a munkatársat és a szabadság kezdő/vég napját!"]);
@@ -1278,12 +1351,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $groupId = 0;
         $cur = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
-            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?", [$cur, $cur, $workerId]);
+            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?", [$cur, $cur, $workerId, $tipus]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
             sql_query("UPDATE schedule_szabadsag SET groupid=? WHERE id=?", [$groupId, $newId]);
             $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
         }
+
+        $workerName = sql_query("SELECT IF(TRIM(teljesnev)<>'',teljesnev,nev) AS n FROM schedule_workers WHERE id=?", [$workerId])->fetchColumn();
+        sql_query("INSERT INTO schedule_naplo SET tipus='vacation', cim=?, letrehozva=now(), userid=?",
+            ["Szabadság felvéve: {$workerName} ({$tol} – {$ig})", $this->adminUser->user["id"]]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1370,6 +1447,54 @@ class AdminWorkSchedulePage extends AdminCorePage {
         sql_query("UPDATE schedule_mapping SET notifyhash=md5(concat(datumfrom, datumto)) WHERE datumfrom>NOW() AND workerid=?", [$workerId]);
 
         $this->utils->jsonOut(["status" => "ok"]);
+    }
+
+    private function _apiSendBulkNotify(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $message    = trim($_POST["message"] ?? "");
+        $recipients = json_decode($_POST["recipients"] ?? "[]", true) ?: [];
+
+        if ($message === "" || !$recipients) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Adj meg üzenetet és legalább egy címzettet!"]);
+        }
+
+        $utils = new Utils();
+        $sent  = 0;
+        foreach ($recipients as $r) {
+            $w = sql_query("SELECT * FROM schedule_workers WHERE id=?", [intval($r["workerId"] ?? 0)])->fetch(PDO::FETCH_ASSOC);
+            if (!$w) continue;
+
+            if (!empty($r["sms"]) && $w["tel"]) {
+                $utils->sendSMS($w["tel"], $message);
+                $sent++;
+            }
+            if (!empty($r["email"]) && $w["email"]) {
+                $mail = NotificationService::getDefaultMailer();
+                $mail->AddAddress($w["email"]);
+                $mail->Subject = "[" . Booking_Constants::COMPANY_NAME_SHORT . "] Értesítés";
+                $mail->Body    = nl2br(htmlspecialchars($message));
+                $mail->Send();
+                $sent++;
+            }
+        }
+
+        sql_query("INSERT INTO schedule_naplo SET tipus='send', cim=?, letrehozva=now(), userid=?",
+            ["Értesítés kiküldve ({$sent} címzés)", $this->adminUser->user["id"]]);
+
+        $this->utils->jsonOut(["status" => "ok", "sent" => $sent]);
+    }
+
+    private function _apiGetNaplo(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $rows = sql_query("SELECT tipus, cim, letrehozva FROM schedule_naplo ORDER BY letrehozva DESC LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->utils->jsonOut(["items" => $rows]);
     }
 
 }
