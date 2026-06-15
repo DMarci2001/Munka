@@ -51,7 +51,9 @@ A single focused "scan or type code" input serves the gun, manual entry, and eve
   route('/scan/:tag', (params) => { active = { key:'/scan/:tag', params }; renderCurrent(); });
   // PAGES: '/scan' and '/scan/:tag' → { title:'Beolvasás', nav:'scan', render:renderScan }
   ```
-  Add a nav item `{ key:'scan', path:'/scan', label:'Beolvasás', ico: icons.qr }` (nav path has no tag; `:tag` is only hit from QR/deep-links).
+  **No nav item** — access is via the "Beolvasás" button on the inventory page (see below) or QR deep-link. The `:tag` route is only hit from QR/deep-links.
+
+- **`src/views/inventory.js`** — add a "Beolvasás" button (visible to all users, after the reset-filters button) that navigates to `#/scan`. This is the only manual entry point for scanner-gun users who need the scan input focused.
 
 - **`src/views/device.js`** (optional) — in `renderActions`, add a `QR címke` button → handler `qr: () => import('../ui/qrLabel.js').then((m) => m.dlgQrLabel(id))` (lazy import keeps `qrcode` out of the main bundle).
 
