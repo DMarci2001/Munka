@@ -610,7 +610,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
   const Td = ({ children, mono, style }) => <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>;
 
   return (
-    <div className="mb-scroll px-4 lg:px-6 py-4 flex flex-col gap-3" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
+    <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
         const rows = weekDays[di].filter((b)=>matches(b,di)).sort((a,b)=>toMin(a.from)-toMin(b.from));
         const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
@@ -1682,7 +1682,7 @@ function MunkaidoBeosztas() {
           </div>
 
           {/* TÁBLA */}
-          <div className="mb-board flex-1 mb-scroll" style={nav==="board" ? { overflow:"auto" } : { display:"flex", flexDirection:"column", overflowX:"hidden", overflowY:"hidden", minHeight:0 }}>
+          <div className="mb-board flex-1 mb-scroll" style={(nav==="board"||nav==="list") ? { overflow:"auto" } : { display:"flex", flexDirection:"column", overflowX:"hidden", overflowY:"hidden", minHeight:0 }}>
             {loading ? (
               <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
                 <div className="flex flex-col items-center gap-3">
