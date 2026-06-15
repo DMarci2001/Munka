@@ -2,16 +2,16 @@
 
 ## Context
 
-**The need.** A non-technical colleague needs to move medical devices in/out of custody quickly. Typing or clicking through the inventory per device is slow and error-prone. The request: a user "shoots" a device's QR code, lands on a screen where they can add more of their devices, then check the whole set **out** (Kivétel) or **in** (Leadás) in one action.
+**The need.** A non-technical colleague needs to move medical devices in/out of custody quickly. Typing or clicking through the inventory per device is slow and error-prone. The request: a user "shoots" a device's QR code and the app — reading the device's **live state** — opens the right flow (check-out or check-in), lets them keep scanning to build a batch, and confirms in one pass. It must feel like a commercial asset-management app (Snipe-IT / EZOfficeInventory): scan-driven, minimal typing, unambiguous steps.
 
 **Feasibility verdict: yes, and it's a good fit.** These are interactive, decision-driven, multi-user operations — exactly what a UI is for, not something to fully automate. The design below needs **only one new runtime dependency** (`qrcode`, for *generating* labels — not scanning), because the two chosen scan methods need no scanner library:
 
 - **Phone native camera** reads a **deep-link QR** encoding a URL (`…/#/scan/ESZ-0001`). The phone OS does the decoding; tapping the popup opens the app. Zero scanner code.
 - **Handheld USB/Bluetooth scanner gun** in keyboard-wedge mode just *types* the code + Enter into a focused input. Zero scanner code.
 
-A single focused "scan or type code" input serves the gun **and** the optional re-scan **and** manual entry; the held-devices checklist covers phones. No in-app camera library in the MVP.
+A single focused "scan or type code" input serves the gun, manual entry, and every follow-up scan; phones enter via the deep-link and then tick rows or keep scanning. No in-app camera library in the MVP.
 
-**Confirmed decisions:** both scan methods (phone deep-link + scanner gun); add-more via checklist **and** optional re-scan; deployment on the clinic network over HTTPS.
+**Confirmed decisions:** both scan methods (phone deep-link + scanner gun); deployment on the clinic network over HTTPS; **the scan resolves live state and opens a single-mode session** (check-out *or* check-in, never mixed) — see *Scan Session*. The QR holds only a static ID; current state is always looked up fresh. Role-aware throughout: storekeeper/admin get the same flow with widened authority (cancel others' reservations, force-return others' devices).
 
 ## Hardware & Deployment Requirements
 
@@ -31,7 +31,7 @@ A single focused "scan or type code" input serves the gun **and** the optional r
 
 ### New files
 
-- **`src/views/scan.js`** — `export function renderScan(el, { tag })`. `tag` is undefined (nav entry) or an asset_tag (deep-link). Module-scoped `let basket = []` (device_id numbers). Helpers: `addByTag`, `addById`, `removeFromBasket`, `paintBasket`, `paintHeld`, `wireScanInput`.
+- **`src/views/scan.js`** — `export function renderScan(el, { tag })`. `tag` is undefined (nav entry) or an asset_tag (deep-link). Module-scoped `let session = { mode, picks, scopeDeptId, scopeUserId }` (see *Scan Session*). Helpers: `resolveScan`, `openSession`, `startCheckout`, `startCheckin`, `scanIntoCheckout`, `scanIntoCheckin`, `paintList`, `refreshConfirm`, `wireScanInput`.
 - **`src/ui/bulkActions.js`** — `dlgBulkCheckOut(deviceIds, { onDone })`, `dlgBulkCheckIn(deviceIds, { onDone })`, internal `runBulk(deviceIds, buildPayload)`, `summaryToast(results, label)`.
 - **`src/ui/formBits.js`** — `destFieldsHTML(opts)` + `wireDestFields(root, opts)`: extract the dependent location→dept dropdown logic (currently copy-pasted in `dlgCheckOut`/`dlgCheckIn`/`dlgTransfer`, filtering depts by `locations_id`, preselecting `type === 'raktár'`). Bulk dialogs consume these.
 - **`src/ui/qrLabel.js`** — `export async function dlgQrLabel(deviceId)`; lazy-loads `qrcode`.
@@ -55,42 +55,96 @@ A single focused "scan or type code" input serves the gun **and** the optional r
 
 - **`src/views/device.js`** (optional) — in `renderActions`, add a `QR címke` button → handler `qr: () => import('../ui/qrLabel.js').then((m) => m.dlgQrLabel(id))` (lazy import keeps `qrcode` out of the main bundle).
 
-## Scan Landing View (`scan.js`)
+## How QR + live state works (read first)
 
-**DOM** inside `<div class="content">`: section title; a `.search` wrapping `#scan-input` (`${icons.qr}`, placeholder `"Olvasd be vagy gépeld az azonosítót (pl. ESZ-0001) és nyomj Entert"`); a "Kosár (`#basket-count`)" heading + `#basket`; a "Nálam lévő eszközök hozzáadása" heading + `#held-list`; `.row-actions` with `#btn-checkout` and `#btn-checkin`.
+A printed QR is a **static image** — it can only hold a fixed string. We encode a permanent pointer: the deep-link URL with the asset tag (`…/#/scan/ESZ-0001`). **The device's current state is never in the QR**; the app looks it up live on every scan (`getDeviceByAssetTag → deviceVM → currentState/activeReservation`). So a label never goes stale, and *the scan decides what happens by reading live state*, exactly like commercial asset apps (the barcode is an ID; the DB holds the truth). In today's localStorage demo "live" = this browser; with the backend it's global.
 
-**Keyboard-wedge input** (serves gun + manual + re-scan) — capture on Enter, no timing heuristics:
+`asset_tag` is a **required, unique** device field (`devices.asset_tag VARCHAR(64) NOT NULL`, `uq_devices_asset_tag`), captured + validated at registration. It's documented in `DATABASE_DOCUMENTATION.md` (§1 + devices field table) and `SCRIPT_LOGIC_DOCUMENTATION.md` (§3.1 register_device). The scan resolves devices by this tag, case-insensitively (`getDeviceByAssetTag`).
+
+## Scan Session — the core UX (`scan.js`)
+
+The scan is the steering wheel. One scan opens a **session** in exactly one **mode** — `checkout` or `checkin` — chosen from the scanned device's live state and the user's role. Further scans add rows or (with a confirm) switch mode. This replaces the earlier "one mixed basket" idea: a session's list is **homogeneous** (all check-out-able, or all check-in-able), so confirmation is always one clean operation — the commercial-app feel.
+
+**Session state** (module-scoped in `scan.js`; survives `notify()` re-renders, never reset on re-entry):
+```js
+let session = { mode: null, picks: new Set(), scopeDeptId: null, scopeUserId: null };
+// mode: null (empty) | 'checkout' | 'checkin'
+// picks: device_ids currently ticked
+// scopeDeptId: checkout → the department whose available devices we list
+// scopeUserId: checkin  → the holder whose out-devices we list (me, or another user for storekeeper+)
+```
+
+**DOM** inside `<div class="content">`: a **mode header** (empty → "Olvass be egy eszközt a kezdéshez"; else a badge "Kivétel" / "Visszavétel" + scope label, e.g. dept name or holder name); the always-focused `.search` `#scan-input` (`${icons.qr}`, placeholder `"Olvasd be vagy gépeld az azonosítót…"`); a `#list` tick-list (the scope's devices, scanned/added ones pre-ticked); a sticky footer with the primary button (`Kivétel (N)` / `Visszavétel (N)`, live count, disabled at 0) and a "Mégse" (reset session) button.
+
+**Keyboard-wedge input** (gun + manual + deep-link all funnel through one resolver):
 ```js
 input.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   e.preventDefault();
   const raw = input.value.trim(); input.value = '';
-  if (raw) addByTag(raw, el);
-  input.focus();                       // refocus so the next scan lands here
+  if (raw) resolveScan(raw, el);
+  input.focus();                       // refocus so the next shot lands here
 });
-function addByTag(tag, el) {
+function resolveScan(tag, el) {
   const dev = getDeviceByAssetTag(tag);
   if (!dev) return toast(`Ismeretlen azonosító: ${tag}`, 'error');
-  addById(dev.device_id, el);
-}
-function addById(id, el) {
-  if (basket.includes(id)) return toast('Ez az eszköz már a kosárban van.', 'default');
-  basket.push(id); paintBasket(el); paintHeld(el);
-  toast('Hozzáadva a kosárhoz.', 'success');
+  (session.mode === null) ? openSession(dev, el)
+  : (session.mode === 'checkout') ? scanIntoCheckout(dev, el)
+  : scanIntoCheckin(dev, el);
 }
 ```
 
-**Held checklist** reuses the myDevices filter: `getDevices().map(deviceVM).filter(v => v.holderId === me.id)`. Render rows with a checkbox `data-add="${id}"` (`checked` when in basket) + asset_tag (`tag-mono`) + type/model + `statusBadge`. `change`: checked → `addById`, unchecked → `removeFromBasket`.
+### Entry — `openSession(dev)` (mode === null), role-aware
 
-**Basket list**: `basket.map(id => deviceVM(getDevice(id)))` → asset_tag, type/model, status, remove button `data-rm="${id}"` (`${icons.x}`). Empty state = muted hint.
+Compute `v = deviceVM(dev)`, `isStore = roleAtLeast(role,'storekeeper')`, `resv = activeReservation(dev.device_id)`. Branch on live state:
 
-**Deep-link pre-select**: in `renderScan(el, { tag })`, after wiring, if `tag` → `addByTag(tag, el)` once.
+| Scanned device is… | `user` | `storekeeper` / `it_admin` |
+|---|---|---|
+| Selejtezve / Elveszett / Szerviz alatt / pending | toast error (status) | toast error (status) |
+| **Reserved by someone else** | toast `Lefoglalva: <name>.` | modal "Más foglalása — lemondod és folytatod kivétellel?" → `cancelReservation` → `startCheckout(dev)` |
+| **Reserved by me** | modal: **[Kivétel]** `startCheckout(dev)` · **[Foglalás lemondása]** `cancelReservation(dev)` (checkout also auto-clears it) | same |
+| **Free** | `startCheckout(dev)` | `startCheckout(dev)` |
+| **Held by me** | `startCheckin(dev)` | `startCheckin(dev)` |
+| **Held by someone else** | toast `Másnál: <name>.` | `startCheckin(dev)` scoped to that holder (force-return their kit) |
 
-**Basket state = in-module `let basket = []`.** Rejected alternatives: store (its `notify()` re-render would wipe input focus) and URL hash (brittle for a list). Caveat: the app does `subscribe(() => renderCurrent())` and every `moveAsset` calls `notify()`, so the view re-renders after a bulk op — `renderScan` must read the existing module `basket`, **not** reset it to `[]` on entry. After a successful bulk op, `onDone(results)` clears succeeded ids (keeps failures visible) and repaints. Provide a "Kosár ürítése" button too.
+- `startCheckout(dev)`: `mode='checkout'`, `scopeDeptId = v.departmentId`, `picks = {dev.id}`, list = **all available devices in that department** (`getDevices().map(deviceVM).filter(x => x.departmentId === scopeDeptId && x.isFree && !reservedByOther(x))`), the scanned one pre-ticked. This is the fix to "you could only see your own devices" — check-out now shows the whole department.
+- `startCheckin(dev)`: `mode='checkin'`, `scopeUserId = v.holderId`, `picks = {dev.id}`, list = **all check-in-eligible devices that user holds** (`filter(x => x.holderId === scopeUserId && !x.pending && !x.inRepair)`). **Only the scanned device is pre-ticked**; the rest are listed **unticked** so the user opts each one in (by ticking or by scanning it). (Check-in inherently lists only held devices — you can't return what you don't hold; that's correct, not a limitation.) Same rule for `startCheckout`: only the scanned device starts ticked.
+
+### In-session scans
+
+`scanIntoCheckout(dev)`:
+- reserved by other → `user`: toast error · `storekeeper+`: offer cancel then tick.
+- reserved by me / free → **tick** (`picks.add`); if not already in the listed scope, add the row too (cross-department scans are allowed — they just join the cart). toast "Hozzáadva."
+- **held by me** → modal *"Folyamatban lévő kivételt elveted és visszavételt indítasz?"* → confirm → `startCheckin(dev)`.
+- held by other → `user`: toast error · `storekeeper+`: same discard→checkin modal scoped to that holder.
+- blocked status → toast error.
+
+`scanIntoCheckin(dev)`:
+- held by scope user & eligible & **not yet ticked** → **tick**.
+- held by scope user & **already ticked** → notify "Ez az eszköz már a listán van." (no change) — re-scanning something already in the batch should tell the user, not silently no-op.
+- **free** → modal *"Folyamatban lévő visszavételt elveted és kivételt indítasz?"* → confirm → `startCheckout(dev)`.
+- reserved / held by other → `user`: toast error · `storekeeper+`: expanded (cancel / force) per the entry table.
+- blocked → toast error.
+
+(`scanIntoCheckout` applies the same already-ticked notification.)
+
+### Tick-list + confirm
+
+`paintList(el)` renders the scope's devices as rows: **selection checkbox `data-pick` (default ticked for `picks` members)**, asset_tag (`tag-mono`), type/model, `statusBadge`. A row toggle just mutates `picks`. The footer button shows the live `picks.size` and is disabled at 0:
+```js
+const btn = el.querySelector('[data-confirm]');
+btn.textContent = `${session.mode === 'checkout' ? 'Kivétel' : 'Visszavétel'} (${session.picks.size})`;
+btn.disabled = session.picks.size === 0;
+```
+Confirm → `session.mode === 'checkout' ? dlgBulkCheckOut([...picks], {onDone}) : dlgBulkCheckIn([...picks], {onDone})`. `onDone(results)` drops succeeded ids from `picks`; if `picks` empties, reset `session` to `{mode:null,…}` (back to the idle prompt). "Mégse" resets the session immediately.
+
+**Deep-link entry**: `renderScan(el,{tag})` → if `tag`, call `resolveScan(tag, el)` once after wiring, so a phone-camera scan lands directly in the right mode.
 
 ## Bulk Actions (`bulkActions.js` + `formBits.js`)
 
-**Shared destination form** via `destFieldsHTML({ withCondition, withReturn })` + `onMount: wireDestFields`. The loop relies on `moveAsset` to enforce eligibility, so mixed baskets need no pre-filtering.
+**Shared destination form** via `destFieldsHTML({ withCondition, withReturn })` + `onMount: wireDestFields`. Each dialog receives only the ticked ids of a single-mode session, so in normal use every device succeeds. `runBulk` still collects per-device failures as a **safety net** for races (e.g. another tab moved a device between scan and confirm) — survivors stay in `picks` and re-render with their refreshed status.
+
+**One destination per confirm is intentional** (commercial-standard): a batch goes to one location/department in one pass. Returning items to two different places = two passes. The destination form is a single dependent location→dept pair, reused for both modes.
 
 ```js
 function runBulk(deviceIds, buildPayload) {
@@ -122,7 +176,7 @@ if (!failed.length)  toast(`${label}: ${ok.length} eszköz kész.`, 'success');
 else if (!ok.length) toast(`${label} sikertelen (${failed.length}): ${failed.map(f=>f.tag).join(', ')}`, 'error');
 else                 toast(`${label}: ${ok.length} kész, ${failed.length} kihagyva (${failed.map(f=>f.tag).join(', ')}).`, 'default');
 ```
-No rollback — successes persist (append-only event log). Eligibility asymmetry: held-checklist devices are check-**in** candidates; check-**out** for role `user` only works on free devices (`vm.isFree`) and to self.
+No rollback — successes persist (append-only event log). The session mode already guarantees a homogeneous list, so failures here are race-only.
 
 ## QR Label Generation (`qrLabel.js`)
 
@@ -137,11 +191,13 @@ Add **`qrcode`** (npm), **lazy-loaded** inside the dialog (`const { default: QRC
 
 ## Edge Cases & Risks
 
-- Unknown asset_tag → error toast, input cleared+refocused, basket unchanged.
-- Already in basket → guard + info toast.
-- Device held by someone else → still added; eligibility enforced at action time (role `user` → lands in `failed` with the Hungarian OpError). Consider greying such rows.
-- Empty basket → action buttons guard with `'A kosár üres.'`.
-- Partial failure → `runBulk` collects per-device `OpError`; summary reports `X kész, Y kihagyva`.
+- Unknown asset_tag → error toast, input cleared+refocused, session unchanged.
+- Reserved by other → `user` toast `Lefoglalva: <name>`; `storekeeper+` offered cancel.
+- Reserved by me → modal with **Kivétel** / **Foglalás lemondása**.
+- Scan that contradicts the current mode (held-by-me during checkout, or free during checkin) → explicit **discard-and-switch** confirm modal; never silently mixes operations.
+- Already ticked → idempotent (re-scan keeps it ticked; toast "Már a listán").
+- Blocked status (Selejtezve/Elveszett/Szerviz alatt/pending) → toast error, never enters a session.
+- Partial failure (rare, race only) → `runBulk` collects per-device `OpError`; summary reports `X kész, Y kihagyva`; survivors stay in `picks`.
 - Scanner-gun focus stealing → refocus `#scan-input` after each Enter and on view mount.
 - iOS Safari + hash URLs → `hashchange` routing works on iOS; verify no redirect strips the hash. Test on a real iPhone.
 - Secure context → deep-link needs none; only a future in-app `getUserMedia` camera would. HTTPS already planned.
@@ -152,7 +208,7 @@ Add **`qrcode`** (npm), **lazy-loaded** inside the dialog (`const { default: QRC
 1. `store.js`: add `getDeviceByAssetTag` (pure addition).
 2. `formBits.js`: `destFieldsHTML`, `wireDestFields`.
 3. `bulkActions.js`: `dlgBulkCheckOut`, `dlgBulkCheckIn`, `runBulk`, `summaryToast` (console-testable with a hardcoded id array).
-4. `scan.js`: `renderScan` + basket helpers + wedge input.
+4. `scan.js`: `renderScan` + session state machine (`resolveScan`, `openSession`, `startCheckout`, `startCheckin`, `scanIntoCheckout`, `scanIntoCheckin`, `paintList`) + wedge input. Role-aware branches reuse `activeReservation`/`cancelReservation`/`roleAtLeast` from store.
 5. `mock-api.js`: import + both routes + both PAGES + nav item.
 6. `npm i qrcode`; `qrLabel.js` + device.js button (independent, parallelizable).
 7. *(Optional)* fix `dlgCheckOut` plural-key bug; refactor the 3 existing dialogs onto `formBits`.
@@ -161,12 +217,13 @@ Add **`qrcode`** (npm), **lazy-loaded** inside the dialog (`const { default: QRC
 ## Verification — Manual End-to-End
 
 1. `npm run dev`; open app.
-2. **Deep-link:** append `#/scan/ESZ-0003` → scan view with ESZ-0003 in basket + success toast.
-3. **Simulate gun:** click `#scan-input`; type `ESZ-0005`+Enter → added; `ESZ-9999`+Enter → "Ismeretlen azonosító"; `ESZ-0005` again → "már a kosárban van".
-4. **Checklist:** switch to a user who holds devices; tick → in basket; untick → removed.
-5. **Bulk check-in:** held devices in basket → `Leadás (kosár)` → location→dept dependent fill (raktár preselected), condition, confirm → as `user`: "Leadás: N kész"; devices show "Visszavétel folyamatban"; verify in `/pending` as storekeeper.
-6. **Bulk check-out:** empty basket; scan a FREE (Kivehető) device → `Kivétel (kosár)` → pick dest + optional return date → "Kivétel: 1 kész"; device Kiadva, holder = me; **verify destination location/dept actually applied** (validates plural-key usage).
-7. **Mixed/partial:** one free + one held in basket → `Kivétel` as `user` → free succeeds, held "kihagyva" with tag.
-8. **Empty basket:** clear → either action → "A kosár üres."
-9. **QR label:** device detail → `QR címke` → modal QR decodes to `…/#/scan/ESZ-xxxx`; `Nyomtatás` opens print dialog.
-10. **iOS:** from an iPhone on the clinic HTTPS network, camera-scan a printed label → Safari opens the scan landing with the device pre-added.
+2. **Deep-link → checkout:** as a plain `user`, visit `#/scan/ESZ-0003` where ESZ-0003 is **free** → session opens in **Kivétel** mode, scoped to its department, with the dept's other available devices listed and ESZ-0003 pre-ticked.
+3. **Scan to add (gun sim):** focus `#scan-input`; type another free dept device + Enter → ticked, count rises; `ESZ-9999`+Enter → "Ismeretlen azonosító"; a reserved-by-other device → "Lefoglalva: <name>".
+4. **Subset:** untick one row → count drops, row stays; untick all → button disabled.
+5. **Confirm checkout:** button `Kivétel (N)` → destination location→dept (dependent fill, raktár preselected) + optional return date → "Kivétel: N kész"; devices Kiadva, holder = me; **verify destination dept actually applied** (plural-key fix).
+6. **Deep-link → checkin:** scan a device **you hold** → session opens in **Visszavétel** mode listing all devices you hold; pre-ticked; confirm → as `user` they go "Visszavétel folyamatban"; verify in `/pending` as storekeeper.
+7. **Mode switch:** in a checkout session, scan a device you hold → "elveted és visszavételt indítasz?" modal → confirm → session flips to Visszavétel with your held devices. Reverse: in checkin, scan a free device → symmetric switch prompt.
+8. **Reservation branches:** scan a device **you reserved** → modal **Kivétel / Foglalás lemondása**; as `user` scan a device **reserved by someone else** → error toast.
+9. **Storekeeper expansion:** as `storekeeper`, scan a device **held by another user** → opens Visszavétel scoped to that holder (force-return); scan another's reservation → offered cancel.
+10. **QR label:** device detail → `QR címke` → modal QR decodes to `…/#/scan/ESZ-xxxx`; `Nyomtatás` opens print dialog.
+11. **iOS:** from an iPhone on the clinic HTTPS network, camera-scan a printed label → Safari opens the scan session in the correct mode.
