@@ -13,7 +13,7 @@ backend — this is a frontend demo/prototype of an asset-inventory system.
 
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
-| App shell | `src/mock-api.js` | Builds topbar/sidebar, registers routes, global store subscriber + re-render loop |
+| App shell | `src/appshell.js` | Builds topbar/sidebar, registers routes, global store subscriber + re-render loop |
 | Routing | `src/lib/router.js` | Hash-based client router (`#/inventory`, `#/device/:id`) |
 | State | `src/state/store.js` | Single `state` object, append-only custody event log, persistence, pub/sub, all mutations |
 | View-model | `src/lib/vm.js` | `deviceVM(dev)` enriches raw device records for rendering |
@@ -25,7 +25,7 @@ backend — this is a frontend demo/prototype of an asset-inventory system.
 
 ## Data Flow
 
-1. `index.html` loads `src/mock-api.js` as an ES module.
+1. `index.html` loads `src/appshell.js` as an ES module.
 2. The shell builds chrome, sets up hash routes, and subscribes to the store.
 3. A route resolves → the matching `renderXxx(el, params)` runs, calling
    `deviceVM()` to project store state into render-ready view-models.
@@ -52,12 +52,12 @@ from the latest events; `deviceVM()` exposes it as `effectiveStatus`.
 
 ## Entry Points
 
-- `index.html` → `src/mock-api.js` (app bootstrap).
+- `index.html` → `src/appshell.js` (app bootstrap).
 - Router resolves hash routes to `src/views/*.js` render functions.
 
 ## Notable Anti-Pattern
 
-Global re-render on every `notify()` (`src/mock-api.js` ~line 133) re-renders the
+Global re-render on every `notify()` (`src/appshell.js` ~line 133) re-renders the
 whole current view, discarding DOM state (focus, scroll) on any action. Acceptable
 for a demo, but the main scaling/UX concern if this grows.
 

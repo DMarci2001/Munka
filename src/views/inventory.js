@@ -87,6 +87,7 @@ export function renderInventory(el) {
         </div>
 
         <button class="btn btn-reset-filters-custom" id="btn-reset-filters">Szűrők törlése</button>
+        <button class="btn btn-outline" id="btn-scan">${icons.qr} Beolvasás</button>
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
       ${isStore ? `
@@ -121,6 +122,8 @@ export function renderInventory(el) {
   el.querySelector('#f-holder').addEventListener('change', (e) => { filters.holder = e.target.value; paint(el); });
   const btnNewDevice = el.querySelector('#btn-new-device');
   if (btnNewDevice) btnNewDevice.addEventListener('click', () => navigate('/register'));
+  const btnScan = el.querySelector('#btn-scan');
+  if (btnScan) btnScan.addEventListener('click', () => navigate('/scan'));
   const btnResetFilters = el.querySelector('#btn-reset-filters');
   if (btnResetFilters) btnResetFilters.addEventListener('click', () => {
     filters.q = '';

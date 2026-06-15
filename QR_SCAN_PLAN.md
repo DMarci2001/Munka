@@ -47,7 +47,7 @@ Because the scan flow now routes the common case *into* `dlgCheckOut`, this bug 
   export const getDeviceByAssetTag = (tag) =>
     state.devices.find((d) => d.asset_tag?.toLowerCase() === String(tag).trim().toLowerCase()) || null;
   ```
-- **`src/mock-api.js`** — `import { renderScan }`; register both routes + PAGES entries (shared `nav:'scan'`). **No nav item** — see *Entry points*.
+- **`src/appshell.js`** — `import { renderScan }`; register both routes + PAGES entries (shared `nav:'scan'`). **No nav item** — see *Entry points*.
   ```js
   route('/scan', () => { active = { key:'/scan', params:{} }; renderCurrent(); });
   route('/scan/:tag', (params) => { active = { key:'/scan/:tag', params }; renderCurrent(); });
@@ -193,7 +193,7 @@ Add **`qrcode`** (npm), **lazy-loaded** inside the dialog (`const { default: QRC
 1. `store.js`: add `getDeviceByAssetTag` (pure addition).
 2. `actions.js`: **fix** `dlgCheckOut`/`dlgTransfer` plural-key + `allDepts` bugs (the scan path depends on `dlgCheckOut` being correct).
 3. `scan.js`: `renderScan` + `resolveScan` + `wireScanInput`. Reuses `A.dlgCheckOut`/`A.dlgCheckIn` and `deviceVM`/`roleAtLeast`/`activeReservation` — small, no session.
-4. `mock-api.js`: import + both routes + both PAGES (no nav item).
+4. `appshell.js`: import + both routes + both PAGES (no nav item).
 5. `inventory.js`: "Beolvasás" button → `/scan`.
 6. `formBits.js` + `bulkActions.js`: shared dest fields + `dlgBulkCheckOut`/`dlgBulkCheckIn`/`runBulk` (console-testable with a hardcoded id array).
 7. `inventory.js`: row checkboxes + sticky action bar wired to the bulk dialogs.

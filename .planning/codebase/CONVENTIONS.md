@@ -7,7 +7,7 @@
 **Files:**
 - Views use camelCase or snake_case `.js`: `myDevices.js`, `register_device.js`, `register_data.js`
 - Non-view source files use camelCase: `store.js`, `vm.js`, `format.js`, `router.js`
-- Main entry point: `mock-api.js` (kebab-case, app shell + router init)
+- Main entry point: `appshell.js` (kebab-case, app shell + router init)
 - Seed data: `seed.js`
 - No TypeScript; all source files are plain `.js` ES modules
 

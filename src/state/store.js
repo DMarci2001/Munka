@@ -158,6 +158,9 @@ export const getDeviceTypes = () => state.deviceTypes;
 export const getDeviceType = (id) => state.deviceTypes.find((t) => t.id === id) || null;
 export const getDevices = () => state.devices;
 export const getDevice = (id) => state.devices.find((d) => d.device_id === id) || null;
+export const getDeviceByAssetTag = (tag) =>
+  state.devices.find(d => d.asset_tag?.toLowerCase() ===
+   String(tag).trim().toLowerCase()) || null;
 export const getEvents = () => state.events;
 export const getAttrDefs = (typeId) =>
   state.attributeDefinitions

@@ -7,7 +7,7 @@ import {
   moveAsset, reserveDevice, cancelReservation, confirmCheckIn, rejectCheckIn,
   sendToRepair, returnFromRepair, markLost, markFound, retireDevice,
   getDepartments, getLocations, getUsers, getDevice, getDeviceType, currentUser, currentRole,
-  currentState, roleAtLeast, activeReservation,
+  currentState, roleAtLeast, activeReservation, isStorageDept,
 } from '../state/store.js';
 import { openModal, toast } from './components.js';
 import { locationLabel, holderLabel, statusLabel, esc } from '../lib/format.js';
@@ -41,6 +41,7 @@ export function dlgCheckOut(deviceId) {
   const role = currentRole();
   const onBehalf = roleAtLeast(role, 'storekeeper');
   const me = currentUser();
+  const allDepts = getDepartments();
   openModal({
     title: `Eszköz kivétele · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
@@ -71,8 +72,12 @@ export function dlgCheckOut(deviceId) {
       const fillDepts = () => {
         const locId = Number(locSel.value);
         const list = allDepts.filter((d) => d.locations_id === locId);
+        // Kivételkor használati helyre kerül az eszköz, birtokossal — NEM raktárba.
+        // Ha raktárt választanánk előre, a moveAsset készletbe rakná (birtokos nélkül),
+        // és az eszköz tévesen „Kivehető" maradna.
+        const preferred = list.find((d) => d.type !== 'raktár') || list[0];
         deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.type === 'raktár' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
+          ? list.map((d) => `<option value="${d.id}" ${preferred && d.id === preferred.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
           : '<option value="">— nincs részleg ezen a helyszínen —</option>';
       };
       locSel.addEventListener('change', fillDepts);
@@ -82,9 +87,13 @@ export function dlgCheckOut(deviceId) {
       const to_user_id = onBehalf ? Number(root.querySelector('[name=to_user]').value) : me.id;
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
+      if (isStorageDept(to_department_id)) {
+        toast('Kivételkor használati helyet (nem raktárt) válassz — a raktár a készletet jelenti.', 'error');
+        return false;
+      }
       const ret = root.querySelector('[name=ret]').value;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'check_out', to_user_id, to_location_id, to_department_id, expected_return_date: ret ? new Date(ret) : null, notes });
+      moveAsset({ device_id: deviceId, event_type: 'check_out', to_user_id, to_locations_id: to_location_id, to_departments_id: to_department_id, expected_return_date: ret ? new Date(ret) : null, notes });
       toast('Eszköz kivéve.', 'success');
     },
   });
@@ -182,7 +191,7 @@ export function dlgTransfer(deviceId) {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_location_id, to_department_id, notes });
+      moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: to_location_id, to_departments_id: to_department_id, notes });
       toast('Eszköz átadva.', 'success');
     },
   });

@@ -51,7 +51,7 @@
 **Auth Provider:**
 - None — authentication is explicitly out of scope for this module
 - Design intent (documented in `SCRIPT_LOGIC_DOCUMENTATION.md` §2): authentication is handled by an external clinic web application which passes an authenticated `user_id` and `auth` role
-- Demo substitute: `index.html` renders a `<select>` dropdown (`#user-select`) to simulate switching users; `src/mock-api.js` manages this via `setCurrentUser()` from `src/state/store.js`
+- Demo substitute: `index.html` renders a `<select>` dropdown (`#user-select`) to simulate switching users; `src/appshell.js` manages this via `setCurrentUser()` from `src/state/store.js`
 
 **Role system (internal, not an external provider):**
 - Three roles: `user` (1), `storekeeper` (2), `it_admin` (3)

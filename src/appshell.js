@@ -17,6 +17,7 @@ import { renderMyDevices } from './views/myDevices.js';
 import { renderPending } from './views/pending.js';
 import { renderRegister } from './views/register_device.js';
 import { renderRegisterData } from './views/register_data.js';
+import { renderScan } from './views/scan.js';
 
 // ---- Route-tábla --------------------------------------------
 const PAGES = {
@@ -26,6 +27,9 @@ const PAGES = {
   '/register-data':  { title: 'Adatbevitel',      nav: 'register-data', render: renderRegisterData, role: 'storekeeper' },
   '/register':  { title: 'Új eszköz bevitele', nav: 'register', render: renderRegister, role: 'storekeeper' },
   '/device/:id':{ title: 'Készülék részletei',                nav: 'inventory', render: renderDevice },
+  '/scan':           { title: 'Beolvasás',            nav: 'scan',         render: renderScan },        // ← új
+  '/scan/:tag':      { title: 'Beolvasás',            nav: 'scan',         render: renderScan },        // ← új
+
 };
 
 let active = { key: '/', params: {} };
@@ -126,6 +130,8 @@ function setupRoutes() {
   route('/register', () => { active = { key: '/register', params: {} }; renderCurrent(); });
   route('/register-data', () => { active = { key: '/register-data', params: {} }; renderCurrent(); });
   route('/device/:id', (params) => { active = { key: '/device/:id', params }; renderCurrent(); });
+  route('/scan', () => { active = { key: '/scan', params: {} }; renderCurrent(); });
+  route('/scan/:tag', (params) => { active = { key: '/scan/:tag', params }; renderCurrent(); });
   setNotFound(() => navigate('/'));
 }
 

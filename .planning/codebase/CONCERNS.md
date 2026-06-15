@@ -29,7 +29,7 @@ demo SPA with all state in `localStorage` and no backend.
 - No `asset_tag` uniqueness check on device registration — duplicates allowed.
 - O(n × events) custody scan per render; three redundant `deviceVM` passes per
   inventory render (no memoization).
-- Global re-render on every `notify()` (`src/mock-api.js` ~line 133) destroys DOM
+- Global re-render on every `notify()` (`src/appshell.js` ~line 133) destroys DOM
   state (focus, scroll position) on any action.
 - `persist()` silently swallows `localStorage` quota / serialization errors.
 - Bootstrap version mismatch: CDN 5.3.3 (`index.html`) vs npm 5.3.8 (`package.json`).

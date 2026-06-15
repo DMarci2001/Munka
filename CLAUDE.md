@@ -33,7 +33,7 @@ Fully client-side demo (no backend yet). All state lives in browser memory, pers
 
 ```
 src/
-  mock-api.js       — app shell + router init (entry point)
+  appshell.js       — app shell + router init (entry point)
   data/seed.js      — seed data bootstrapped into store on first load
   state/store.js    — single source of truth; append-only custody event log
   lib/

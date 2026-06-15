@@ -6,11 +6,11 @@
 
 ```
 webapp/
-├── index.html                    # SPA entry; Bootstrap CDN + src/mock-api.js
+├── index.html                    # SPA entry; Bootstrap CDN + src/appshell.js
 ├── package.json                  # Vite; type="module"; dev/build/preview scripts
 ├── _t.mjs                        # Ad-hoc Node debug script (not a test)
 ├── src/
-│   ├── mock-api.js               # App shell: routes, sidebar, topbar, re-render loop
+│   ├── appshell.js               # App shell: routes, sidebar, topbar, re-render loop
 │   ├── styles.css                # All CSS (Bootstrap overrides + components)
 │   ├── data/
 │   │   └── seed.js               # Static demo fixtures (18 devices, 6 users, etc.)
@@ -41,7 +41,7 @@ webapp/
 
 ## Key Locations
 
-- **App bootstrap:** `src/mock-api.js`
+- **App bootstrap:** `src/appshell.js`
 - **State & business logic:** `src/state/store.js`
 - **Routing:** `src/lib/router.js`
 - **Per-route UI:** `src/views/*.js`
@@ -60,7 +60,7 @@ webapp/
 
 ## Where to Add New Code
 
-- **New page:** create `src/views/newPage.js`, add to `PAGES` in `src/mock-api.js`,
+- **New page:** create `src/views/newPage.js`, add to `PAGES` in `src/appshell.js`,
   register the route in `setupRoutes()`, add a nav item in `renderNav()`.
 - **New action modal:** add `dlgXxx()` to `src/ui/actions.js`, call it from
   `src/views/device.js` (or the relevant view).
