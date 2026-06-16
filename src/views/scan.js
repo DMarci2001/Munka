@@ -50,7 +50,7 @@ export function renderScan(el, { tag } = {}) {
         <input id="scan-input" class="form-control"
           autocomplete="off" spellcheck="false"
           placeholder="Olvasd be vagy gépeld az azonosítót…" />
-        <p class="scan-hint">Nyomd Enter-t vagy olvasd be a vonalkódot.</p>
+        <p class="scan-hint">Nyomj 'Enter'-t, vagy olvasd be a vonalkódot.</p>
       </div>
     </div>`;
   wireScanInput(el);

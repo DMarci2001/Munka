@@ -107,7 +107,7 @@ export function dlgCheckIn(deviceId) {
   const pending = role === 'user';
   const allDepts = getDepartments();
   openModal({
-    title: `Eszköz visszavétele · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
+    title: `Eszköz leadása · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
       <div class="field">
         <label class="form-label">Hová — helyszín</label>
