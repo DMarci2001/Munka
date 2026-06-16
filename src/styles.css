@@ -170,7 +170,7 @@ body {
 .btn-reset-filters-custom:hover { background: #dc3545; border-color: #b02030; color: #fff; }
 
 /* ---- Table ---- */
-.table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; overflow-y: hidden; }
 table.grid { width: 100%; border-collapse: collapse; font-size: .88rem; }
 table.grid th {
   text-align: left; font-weight: 700; font-size: .72rem; text-transform: uppercase;
@@ -295,6 +295,107 @@ a.devlink:hover { text-decoration: underline; }
 .hint { font-size: .8rem; color: var(--ink-soft); margin-top: 5px; }
 .alert-soft { background: var(--brand-soft); border: 1px solid #c7e8c7; border-radius: 2px; padding: 10px 13px; font-size: .85rem; color: var(--brand-dark); }
 .alert-warn-soft { background: #fdf3d6; border: 1px solid #f0dca0; border-radius: 2px; padding: 10px 13px; font-size: .85rem; color: #8a6100; }
+
+/* ============================================================
+   Reszponzív / mobil
+   ============================================================ */
+
+/* Hamburger gomb — asztali gépen rejtett */
+.btn-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+.btn-hamburger:hover { background: #f0f0f0; }
+.btn-hamburger span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--ink);
+  border-radius: 2px;
+}
+
+/* Átlátszó overlay a sidebar mögött */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 199;
+}
+
+@media (max-width: 767px) {
+  /* Hamburger megjelenik */
+  .btn-hamburger { display: flex; }
+
+  /* Oldalsáv: alapból elcsúsztatva a képernyőn kívülre */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    box-shadow: none;
+  }
+
+  /* Megnyitott állapot */
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,.18);
+  }
+  .app-shell.sidebar-open .sidebar-overlay { display: block; }
+
+  /* Main terület: teljes szélességben */
+  .main { width: 100%; }
+
+  /* Toast: képernyő közepén jelenik meg */
+  .toast-stack {
+    bottom: 50%;
+    right: 50%;
+    transform: translate(50%, 50%);
+    align-items: center;
+    max-width: 90vw;
+  }
+  .toast-c { text-align: center; max-width: 80vw; }
+
+  /* Tartalom-panel: nincs külső margó, minimális padding */
+  .content {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px;
+  }
+
+  /* Topbar: ne legyen túl széles a cím */
+  .topbar h1 { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+
+  /* Felhasználó-választó: csak avatar + szerepkör */
+  .user-switch select { max-width: 110px; font-size: .78rem; }
+
+  /* Szűrősáv: minden elem teljes szélességben verem */
+  .toolbar { gap: 6px; }
+  .toolbar .search { min-width: 0; width: 100%; }
+  .select-wrap { max-width: 100% !important; width: 100%; }
+  .toolbar .btn { width: 100%; justify-content: center; }
+  .btn-reset-filters-custom { width: 100%; justify-content: center; }
+
+  /* Táblázat: vízszintesen görgethető */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Részletlap grid: egyhasábos */
+  .detail-head .actions { margin-left: 0; width: 100%; }
+}
 
 /* ============================================================
    Fehér téma — a böngésző alapállapotának felülírása

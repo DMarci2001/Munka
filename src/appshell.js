@@ -38,11 +38,15 @@ let active = { key: '/', params: {} };
 function buildShell() {
   document.getElementById('app').innerHTML = `
     <div class="app-shell">
-      <aside class="sidebar">
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+      <aside class="sidebar" id="sidebar">
         <nav class="nav-section" id="nav"></nav>
       </aside>
       <main class="main">
         <div class="topbar">
+          <button class="btn-hamburger" id="btn-hamburger" aria-label="Menü">
+            <span></span><span></span><span></span>
+          </button>
           <h1 id="page-title">Irányítópult</h1>
           <div class="spacer"></div>
           <div class="user-switch" title="Demó: válts felhasználót a szerepkörök kipróbálásához">
@@ -62,6 +66,16 @@ function buildShell() {
     const page = PAGES[active.key];
     if (page?.role && !roleAtLeast(currentRole(), page.role)) navigate('/');
   });
+
+  // Hamburger — mobil oldalsáv megnyitás/zárás
+  const hamburger = document.getElementById('btn-hamburger');
+  const overlay = document.getElementById('sidebar-overlay');
+  const sidebar = document.getElementById('sidebar');
+  function closeSidebar() { document.getElementById('app').querySelector('.app-shell').classList.remove('sidebar-open'); }
+  hamburger.addEventListener('click', () => {
+    document.getElementById('app').querySelector('.app-shell').classList.toggle('sidebar-open');
+  });
+  overlay.addEventListener('click', closeSidebar);
 }
 
 // ---- Sidebar navigáció --------------------------------------
@@ -90,7 +104,11 @@ function renderNav() {
     `<div class="nav-label">Eszközök</div>` + items.map(itemHTML).join('') +
     (isStore ? `<div class="nav-label">Raktárkezelés</div>` + storeItems.map(itemHTML).join('') : '');
   nav.querySelectorAll('[data-path]').forEach((a) =>
-    a.addEventListener('click', () => navigate(a.dataset.path)));
+    a.addEventListener('click', () => {
+      navigate(a.dataset.path);
+      // mobil: navigáció után zárjuk be az oldalsávot
+      document.getElementById('app').querySelector('.app-shell').classList.remove('sidebar-open');
+    }));
 }
 
 // ---- Topbar -------------------------------------------------
