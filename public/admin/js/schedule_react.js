@@ -632,40 +632,6 @@ function MapPopover({ booking, onClose }) {
   );
 }
 
-/* ---- Előjegyzés szekció -------------------------------------------- */
-function BeoSection({ entries }) {
-  const [open, setOpen] = useState(true);
-  if (!entries || entries.length === 0) return null;
-  const totalPaciens = entries.reduce((s, e) => s + e.paciensszam, 0);
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-      <button onClick={()=>setOpen(o=>!o)} className="flex w-full items-center justify-between px-3 py-2" style={{ borderBottom: open ? "1px solid var(--border-soft)" : "none", background:"color-mix(in srgb,#0ea5e9 12%,transparent)" }}>
-        <span className="flex items-center gap-2">
-          <span style={{ color:"#0ea5e9", flexShrink:0 }}>{Ico.calendar({width:13,height:13})}</span>
-          <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"#0ea5e9" }}>Előjegyzések</span>
-          <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{entries.length}</span>
-          {totalPaciens > 0 && <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"#0369a1", background:"#e0f2fe" }}>{totalPaciens} beteg</span>}
-        </span>
-        <span style={{ color:"var(--faint)", fontSize:9 }}>{open?"▼":"▶"}</span>
-      </button>
-      {open && (
-        <div className="flex flex-col gap-1.5 p-2">
-          {entries.map((e, i) => (
-            <div key={i} className="rounded-lg px-2.5 py-1.5" style={{ background:"var(--card)", border:"1px solid var(--border)" }}>
-              <div className="flex items-center justify-between gap-1">
-                <span className="truncate" style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>{e.orvosnev}</span>
-                <span className="flex-shrink-0 rounded-md px-2 py-0.5" style={{ fontSize:11, fontWeight:700, color: e.paciensszam > 0 ? "#0369a1" : "var(--muted)", background: e.paciensszam > 0 ? "#e0f2fe" : "var(--surface-2)" }}>{e.paciensszam} beteg</span>
-              </div>
-              <div className="mb-mono" style={{ fontSize:11, color:"var(--faint)", fontWeight:500 }}>{e.tol} – {e.ig}{e.tipusnev ? " · " + e.tipusnev : ""}</div>
-              {e.helyszin && <div className="truncate" style={{ fontSize:11, color:"var(--faint)" }}>{e.helyszin}</div>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
@@ -1866,7 +1832,6 @@ function MunkaidoBeosztas() {
   const [vacNewSignal,   setVacNewSignal]   = useState(0);
   const [monthHours,     setMonthHours]     = useState({});
   const [staffSavedSignal, setStaffSavedSignal] = useState(0);
-  const [beoData,        setBeoData]        = useState([]);
 
   /* ---- adatlekérés ---- */
   const fetchWeek = useCallback((offset) => {
@@ -1903,14 +1868,6 @@ function MunkaidoBeosztas() {
   const dayDates = useMemo(() => {
     if (!monday) return HU_DAYS.map(() => new Date(Date.UTC(2026,0,1)));
     return HU_DAYS.map((_,i) => { const d=new Date(monday+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+i); return d; });
-  }, [monday]);
-
-  useEffect(() => {
-    if (!monday) return;
-    fetch(`${HMM_CONFIG.url}&getbeodata=1&monday=${monday}`)
-      .then((r) => r.json())
-      .then((d) => setBeoData(d.days || []))
-      .catch(() => {});
   }, [monday]);
 
   /* ---- mini havi naptár (oldalsáv) ---- */
@@ -2223,7 +2180,6 @@ function MunkaidoBeosztas() {
                         {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
                       <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
-                        <BeoSection entries={beoData[di] || []}/>
                         {CAT_ORDER.filter((c)=>catFilter==="all"||c===catFilter).map((cat) => {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;

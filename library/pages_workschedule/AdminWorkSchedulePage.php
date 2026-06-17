@@ -122,10 +122,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiExportStatistics();
         }
 
-        if (isset($_GET["getbeodata"])) {
-            $this->_apiGetBeoData();
-        }
-
         // DB migration: munkaora + munkaora_tipus columns
         $hasMunkaora = sql_query(
             "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_workers' AND column_name='munkaora'"
@@ -1088,63 +1084,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }, $workers);
 
         $this->utils->jsonOut(["workers" => $result]);
-        die;
-    }
-
-    private function _apiGetBeoData(): void {
-        if (!$this->adminUser->beosztasPageAccess()) {
-            $this->utils->jsonOut(["days" => []]); die;
-        }
-        $monday = $_GET["monday"] ?? date("Y-m-d", strtotime("monday this week"));
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $monday)) {
-            $this->utils->jsonOut(["days" => []]); die;
-        }
-
-        $days = [];
-        for ($i = 0; $i < 7; $i++) {
-            $day     = date("Y-m-d", strtotime($monday . " +" . $i . " days"));
-            $weekday = (int)date("N", strtotime($day));
-
-            $rows = sql_query(
-                "SELECT b.id, b.orvosid, b.helyszinid, b.tol, b.ig,
-                        o.nev AS orvosnev,
-                        h.cim AS helyszin,
-                        t.megnev AS tipusnev,
-                        COUNT(DISTINCT f.id) AS paciensszam
-                 FROM orvos_beosztas_new b
-                 LEFT JOIN orvosok o ON o.id = b.orvosid
-                 LEFT JOIN helyszinek h ON h.id = b.helyszinid
-                 LEFT JOIN szurestipusok t ON t.id = ROUND(SUBSTRING(b.tipusok, 2))
-                 LEFT JOIN foglalasok f ON f.orvosassigned = b.orvosid
-                     AND f.helyszinid = b.helyszinid
-                     AND DATE(f.datum) = :day
-                     AND f.aktiv = 1
-                     AND f.parentid = 0
-                 WHERE b.aktiv = 1
-                     AND b.tol <> 0 AND b.ig <> 0
-                     AND (b.nap = :weekday OR (b.nap = 10 AND b.beonap = :day))
-                     AND (b.validfrom = '0000-00-00' OR b.validfrom <= :day)
-                     AND (b.validto = '0000-00-00' OR b.validto >= :day)
-                     AND (b.hetek = 0 OR (WEEK(:day,3)%2=0 AND b.hetek=2) OR (WEEK(:day,3)%2=1 AND b.hetek=1))
-                 GROUP BY b.orvosid, b.helyszinid, b.tol, b.ig
-                 ORDER BY b.tol, o.nev",
-                ["day" => $day, "weekday" => $weekday]
-            )->fetchAll(PDO::FETCH_ASSOC);
-
-            $days[] = array_map(function ($r) {
-                return [
-                    "id"          => (int)$r["id"],
-                    "orvosnev"    => $r["orvosnev"] ?? "",
-                    "helyszin"    => $r["helyszin"] ?? "",
-                    "tol"         => $r["tol"] ?? "",
-                    "ig"          => $r["ig"] ?? "",
-                    "tipusnev"    => $r["tipusnev"] ?? "",
-                    "paciensszam" => (int)$r["paciensszam"],
-                ];
-            }, $rows);
-        }
-
-        $this->utils->jsonOut(["days" => $days]);
         die;
     }
 
