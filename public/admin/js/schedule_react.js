@@ -470,6 +470,10 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 </div>
               </Field>
             )}
+            {overWorkers.length>0 && <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 12%,transparent)", border:"1px solid color-mix(in srgb,var(--danger) 30%,transparent)" }}>
+              <span style={{ color:"var(--danger)", flexShrink:0 }}>{Ico.alert({width:14,height:14})}</span>
+              <span style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Kvótát túllépi: {overWorkers.map((s)=>s.name).join(", ")}</span>
+            </div>}
             <Field label="Időpont (teljes idősáv)">
               <div className="flex items-center gap-2.5">
                 <div className="relative flex-1"><span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.clock()}</span><input type="time" value={from} onChange={(e)=>setFrom(e.target.value)} className="mb-mono mb-in py-2.5 pl-9 pr-2" style={{ fontSize:13.5, borderColor:badTime?"var(--danger)":"var(--border)" }}/></div>
@@ -489,10 +493,6 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
             {(egyebList||[]).length>0 && <div>
               <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--green)" }}>{Ico.building({width:13,height:13})}</span> Irodai munkatársak</div>
               <StaffEditor role="e" items={egyebek} onChange={setEgyebek} slotFrom={from} slotTo={to} workerList={availEgyebek}/>
-            </div>}
-            {overWorkers.length>0 && <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 12%,transparent)", border:"1px solid color-mix(in srgb,var(--danger) 30%,transparent)" }}>
-              <span style={{ color:"var(--danger)", flexShrink:0 }}>{Ico.alert({width:14,height:14})}</span>
-              <span style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Kvótát túllépi: {overWorkers.map((s)=>s.name).join(", ")}</span>
             </div>}
             <Field label="Megjegyzés (nem kötelező)">
               <div className="relative"><textarea value={note} maxLength={200} onChange={(e)=>setNote(e.target.value)} rows={2} placeholder="pl. EKG, terheléses vizsgálat" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/><span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{note.length} / 200</span></div>
@@ -909,7 +909,7 @@ const ROLE_DISPLAY = {
 };
 const getRoleDisplay = (role) => ROLE_DISPLAY[role.id] || { label:role.megnev, icon:"truck", color:"var(--faint)" };
 
-function StaffView({ setToast, newSignal, query: searchQuery }) {
+function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const [data, setData]           = useState(null);
   const [loading, setLoading]     = useState(true);
   const [query, setQuery]         = useState("");
@@ -940,7 +940,7 @@ function StaffView({ setToast, newSignal, query: searchQuery }) {
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
         efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"", munkaora_tipus:rec.munkaora_tipus||"havi",
       });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); }
+      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1824,6 +1824,7 @@ function MunkaidoBeosztas() {
   const [placeNewSignal, setPlaceNewSignal] = useState(0);
   const [vacNewSignal,   setVacNewSignal]   = useState(0);
   const [monthHours,     setMonthHours]     = useState({});
+  const [staffSavedSignal, setStaffSavedSignal] = useState(0);
 
   /* ---- adatlekérés ---- */
   const fetchWeek = useCallback((offset) => {
@@ -1849,7 +1850,7 @@ function MunkaidoBeosztas() {
       .then((r)=>r.json())
       .then((d)=>{ const map={}; (d.workers||[]).forEach((w)=>{ map[w.id]=w; }); setMonthHours(map); })
       .catch(()=>{});
-  }, [weekData]);
+  }, [weekData, staffSavedSignal]);
 
   /* ---- derivált értékek ---- */
   const year   = weekData?.year   ?? new Date().getFullYear();
@@ -2141,7 +2142,7 @@ function MunkaidoBeosztas() {
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
-              <StaffView setToast={setToast} newSignal={staffNewSignal} query={query}/>
+              <StaffView setToast={setToast} newSignal={staffNewSignal} query={query} onStaffSaved={()=>setStaffSavedSignal(s=>s+1)}/>
             ) : nav==="workplaces" ? (
               <PlacesView setToast={setToast} newSignal={placeNewSignal} query={query}/>
             ) : nav==="vacations" ? (
