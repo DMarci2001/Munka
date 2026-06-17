@@ -380,7 +380,8 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
     const mh = monthHours && monthHours[s.workerId];
     if (!mh || mh.quota == null) return false;
     if (mh.munkaora_tipus === "heti") {
-      return ((weekWorkerHours && weekWorkerHours[s.workerId]) || 0) + bookingHours > mh.quota;
+      const weekH = (weekWorkerHours && weekWorkerHours[s.workerId]) || 0;
+      return weekH >= mh.quota || (weekH + bookingHours) > mh.quota;
     }
     return (mh.booked + bookingHours) > mh.quota;
   });
@@ -491,7 +492,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
             </div>}
             {overWorkers.length>0 && <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 12%,transparent)", border:"1px solid color-mix(in srgb,var(--danger) 30%,transparent)" }}>
               <span style={{ color:"var(--danger)", flexShrink:0 }}>{Ico.alert({width:14,height:14})}</span>
-              <span style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Havi kvótát túllépi: {overWorkers.map((s)=>s.name).join(", ")}</span>
+              <span style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Kvótát túllépi: {overWorkers.map((s)=>s.name).join(", ")}</span>
             </div>}
             <Field label="Megjegyzés (nem kötelező)">
               <div className="relative"><textarea value={note} maxLength={200} onChange={(e)=>setNote(e.target.value)} rows={2} placeholder="pl. EKG, terheléses vizsgálat" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/><span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{note.length} / 200</span></div>

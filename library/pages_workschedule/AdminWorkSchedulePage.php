@@ -123,12 +123,18 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }
 
         // DB migration: munkaora + munkaora_tipus columns
-        try {
+        $hasMunkaora = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_workers' AND column_name='munkaora'"
+        )->fetchColumn();
+        if (!$hasMunkaora) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora DECIMAL(4,1) DEFAULT NULL");
-        } catch (\Exception $e) { /* already exists */ }
-        try {
+        }
+        $hasMunkaoraTipus = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_workers' AND column_name='munkaora_tipus'"
+        )->fetchColumn();
+        if (!$hasMunkaoraTipus) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora_tipus ENUM('havi','heti') NOT NULL DEFAULT 'havi'");
-        } catch (\Exception $e) { /* already exists */ }
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1062,7 +1068,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         foreach ($hourRows as $r) { $bookedMap[(int)$r["workerid"]] = (float)$r["hours"]; }
 
         $workers = sql_query(
-            "SELECT id, nev, teljesnev, roleid, munkaora FROM schedule_workers ORDER BY roleid, nev"
+            "SELECT id, nev, teljesnev, roleid, munkaora, munkaora_tipus FROM schedule_workers ORDER BY roleid, nev"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $result = array_map(function ($w) use ($bookedMap) {
