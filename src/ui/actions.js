@@ -147,7 +147,7 @@ export function dlgCheckIn(deviceId) {
       const condition_at_event = root.querySelector('[name=condition]').value;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       moveAsset({ device_id: deviceId, event_type: 'check_in', to_locations_id: to_location_id, to_departments_id: to_department_id, condition_at_event, notes });
-      toast(pending ? 'Leadva — raktáros megerősítésére vár.' : 'Eszköz visszavéve.', 'success');
+      toast(pending ? 'Visszavétel folyamatban — raktáros megerősítésére vár.' : 'Eszköz visszavéve.', 'success');
     },
   });
 }
@@ -162,36 +162,19 @@ export function dlgTransfer(deviceId) {
       <div class="field">
         <label class="form-label">Kinek</label>
         <select class="form-select" name="to_user">${userOptions(cur.holder)}</select>
-      </div>
-      <div class="field">
-        <label class="form-label">Hol (osztály)</label>
-        <select class="form-select" name="to_location">${locOptions(cur.location)}</select>
-        <select class="form-select" name="to_dept">${deptOptions(cur.department)}</select>
+        <div class="hint">Az eszköz közvetlenül az új birtokoshoz kerül; a helye változatlan marad.</div>
       </div>
       <div class="field">
         <label class="form-label">Megjegyzés (opcionális)</label>
         <input type="text" class="form-control" name="notes" />
       </div>`,
     confirmText: 'Átadás',
-    onMount: (root) => {
-      const locSel = root.querySelector('[name=to_location]');
-      const deptSel = root.querySelector('[name=to_dept]');
-      const fillDepts = () => {
-        const locId = Number(locSel.value);
-        const list = allDepts.filter((d) => d.locations_id === locId);
-        deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.type === 'raktár' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
-      };
-      locSel.addEventListener('change', fillDepts);
-      fillDepts();
-    },
     onConfirm: (root) => {
       const to_user_id = Number(root.querySelector('[name=to_user]').value);
-      const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: to_location_id, to_departments_id: to_department_id, notes });
+      // Átadás = birtokosváltás: a hely/részleg az aktuális állapotból öröklődik (nem raktár),
+      // így a moveAsset megőrzi a birtokost és „Kiadva" marad — nem esik vissza „Kivehető"-re.
+      moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: cur.location, to_departments_id: cur.department, notes });
       toast('Eszköz átadva.', 'success');
     },
   });
@@ -311,7 +294,7 @@ export function dlgSendToRepair(deviceId) {
         const locId = Number(locSel.value);
         const list = allDepts.filter((d) => d.locations_id === locId);
         deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.kind === 'műhely' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
+          ? list.map((d) => `<option value="${d.id}" ${d.type === 'műhely' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
           : '<option value="">— nincs részleg ezen a helyszínen —</option>';
       };
       locSel.addEventListener('change', fillDepts);
@@ -334,13 +317,13 @@ export function dlgReturnFromRepair(deviceId) {
     bodyHTML: `
       <div class="field">
         <label class="form-label">Helyszín</label>
-        <select class="form-control" name="to_location">
+        <select class="form-select" name="to_location">
           ${getLocations().map((l) => `<option value="${l.id}">${esc(l.address)}</option>`).join('')}
         </select>
       </div>
       <div class="field">
         <label class="form-label">Részleg</label>
-        <select class="form-control" name="to_department">
+        <select class="form-select" name="to_department">
           ${getDepartments().map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}
         </select>
       </div>
@@ -374,13 +357,13 @@ export function dlgMarkFound(deviceId) {
     title: 'Találtnak jelölés',
     bodyHTML: `<div class="field">
         <label class="form-label">Helyszín</label>
-        <select class="form-control" name="to_location">
+        <select class="form-select" name="to_location">
           ${getLocations().map((l) => `<option value="${l.id}">${esc(l.address)}</option>`).join('')}
         </select>
       </div>
       <div class="field">
         <label class="form-label">Részleg</label>
-        <select class="form-control" name="to_department">
+        <select class="form-select" name="to_department">
           ${getDepartments().map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}
         </select>
       </div>

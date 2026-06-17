@@ -54,7 +54,7 @@ export function locationLabel(locationId, departmentId) {
 
 // ---- Aktuális hely/birtokos olvashatóan ---------------------
 export function holderLabel(holderId) {
-  if (!holderId) return null;
+  if (!holderId) return '—';
   const u = getUser(holderId);
   return u ? u.full_name : '—';
 }
@@ -78,6 +78,7 @@ export function fmtDateTime(d) {
 export function fmtRelative(d) {
   if (!d) return '—';
   const date = d instanceof Date ? d : new Date(d);
+  if (isNaN(date)) return '—';
   const diffMs = date - Date.now();
   const hours = Math.round(diffMs / 3600000);
   if (hours <= 0) return 'lejárt';

@@ -131,6 +131,7 @@ function initials(name) {
 // ---- Aktuális nézet -----------------------------------------
 function renderCurrent() {
   const page = PAGES[active.key];
+  if (!page) { navigate('/inventory'); return; }   // ismeretlen route → fő nézet (sosem fehér képernyő)
   if (page?.role && !roleAtLeast(currentRole(), page.role)) { navigate('/'); return; }
   renderNav();
   renderTopbar();
@@ -141,7 +142,7 @@ function renderCurrent() {
 
 // ---- Route-ok -----------------------------------------------
 function setupRoutes() {
-  route('/', () => { active = { key: '/', params: {} }; renderCurrent(); });
+  route('/', () => navigate('/inventory'));
   route('/inventory', () => { active = { key: '/inventory', params: {} }; renderCurrent(); });
   route('/my', () => { active = { key: '/my', params: {} }; renderCurrent(); });
   route('/pending', () => { active = { key: '/pending', params: {} }; renderCurrent(); });

@@ -2,6 +2,7 @@ import { getDeviceByAssetTag, currentUser, currentRole, roleAtLeast } from '../s
 import { deviceVM } from '../lib/vm.js';
 import { esc } from '../lib/format.js';
 import { icons, toast } from '../ui/components.js';
+import { navigate } from '../lib/router.js';
 import * as A from '../ui/actions.js';
 
 function wireScanInput(el) {
@@ -54,5 +55,12 @@ export function renderScan(el, { tag } = {}) {
       </div>
     </div>`;
   wireScanInput(el);
-  if (tag) resolveScan(decodeURIComponent(tag));
+  if (tag) {
+    // Deep-link feloldás egyszer fut le, majd eldobjuk a :tag-et a /scan-re váltva.
+    // Így a store-változásra történő újrarajzolás (notify → renderCurrent) nem
+    // futtatja újra a resolveScan-t — különben pl. a Leadás után kettős toast
+    // (zöld „Leadva" + piros „Visszavétel folyamatban") jelenne meg.
+    resolveScan(decodeURIComponent(tag));
+    navigate('/scan');
+  }
 }

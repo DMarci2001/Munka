@@ -447,6 +447,8 @@ function moveAssetInternal({ device_id, event_type, to_user_id = null, to_locati
 // register_device — storekeeper / it_admin
 export function registerDevice({ device_type_id, model, manufacturer, serial_number, asset_tag, condition, notes, attrs, initial_location, initial_department }) {
   requireStorekeeper();
+  if (getDeviceByAssetTag(asset_tag))
+    throw new OpError(`Ez a leltári azonosító már létezik: ${asset_tag}`);
   const id = ++_deviceId;
   const dev = {
     device_id: id, asset_tag, device_type_id,
@@ -475,6 +477,11 @@ export function editDevice(device_id, changes) {
   requireStorekeeper();
   const dev = getDevice(device_id);
   if (!dev) throw new OpError('Eszköz nem található.');
+  if (changes.asset_tag) {
+    const existing = getDeviceByAssetTag(changes.asset_tag);
+    if (existing && existing.device_id !== device_id)
+      throw new OpError(`Ez a leltári azonosító már létezik: ${changes.asset_tag}`);
+  }
   const { attrs, ...common } = changes;
   Object.assign(dev, common);
   if (attrs) dev.attrs = { ...dev.attrs, ...attrs };
