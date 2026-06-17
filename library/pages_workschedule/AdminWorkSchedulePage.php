@@ -107,6 +107,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiToggleBookingAktiv();
         }
 
+        if (isset($_POST["clearweek"])) {
+            $this->_apiClearWeek();
+        }
+
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
         }
@@ -989,6 +993,29 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "egyebWithId"      => $egyebRows,
             "places"           => $places,
         ]);
+        die;
+    }
+
+    private function _apiClearWeek(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+            die;
+        }
+
+        $monday = $_POST["monday"] ?? "";
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $monday)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Érvénytelen dátum!"]);
+            die;
+        }
+
+        sql_query(
+            "DELETE m FROM schedule_mapping m
+             LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
+             WHERE m.datumfrom>=:from AND m.datumfrom<DATE_ADD(:from, INTERVAL 7 DAY) AND t.forday='0000-00-00'",
+            ["from" => $monday . " 00:00:00"]
+        );
+
+        $this->utils->jsonOut(["status" => "ok"]);
         die;
     }
 

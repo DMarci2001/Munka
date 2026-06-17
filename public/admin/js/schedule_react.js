@@ -1813,6 +1813,18 @@ function MunkaidoBeosztas() {
     await fetchWeek(weekOffset);
   }, [weekOffset, fetchWeek]);
 
+  /* ---- hét törlése ---- */
+  const clearWeek = useCallback(async () => {
+    if (!monday) return;
+    if (!window.confirm(`Biztosan törlöd a ${week}. hét teljes beosztását?`)) return;
+    if (!window.confirm("Egészen biztos? Ez nem vonható vissza.")) return;
+    const body = new URLSearchParams({ clearweek:"1", monday });
+    const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    const result = await resp.json();
+    if (result.status==="ok") { await fetchWeek(weekOffset); setToast("Hét törölve."); }
+    else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+  }, [monday, week, weekOffset, fetchWeek]);
+
   /* ---- hét másolása ---- */
   const copyWeek = useCallback(async (sourceWeek, targets, overwrite) => {
     const sourceMonday = monday;
@@ -1940,6 +1952,7 @@ function MunkaidoBeosztas() {
                 {showCatMenu && (<><div className="fixed inset-0 z-40" onClick={()=>setShowCatMenu(false)}/><div className="mb-pop absolute right-0 z-50 mt-1.5 rounded-xl p-1.5" style={{ width:210, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 20px 44px -16px rgba(0,0,0,.5)" }}>{[{v:"all",l:"Összes"},...CAT_ORDER.map((c)=>({v:c,l:CATS[c].label}))].map((o)=>(<button key={o.v} onClick={()=>{ setCatFilter(o.v); setShowCatMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left" style={{ fontSize:13, fontWeight:catFilter===o.v?700:500, color:catFilter===o.v?"var(--brand-ink)":"var(--ink)", background:catFilter===o.v?"var(--brand-soft)":"transparent" }}>{o.v!=="all"&&<span style={{ width:8, height:8, borderRadius:2, background:CATS[o.v].color }}/>}{o.l}</button>))}</div></>)}
               </div>
               <button onClick={()=>setCopyOpen(true)} className="mb-btn flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }} title="Hét másolása">{Ico.copy({width:16,height:16})}</button>
+              <button onClick={clearWeek} className="mb-btn flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--danger-ink)", border:"1px solid var(--border)" }} title="Hét törlése">{Ico.trash({width:16,height:16})}</button>
               {nav==="board" && <button onClick={()=>setModal({day:0, cat:"belso", booking:null})} className="mb-prim flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
             </div>
             </>)}
