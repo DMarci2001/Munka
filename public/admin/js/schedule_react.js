@@ -49,11 +49,12 @@ const holidayOf = (dateStr) => HOLIDAYS[dateStr] || null;
 
 /* ---- kategóriák ----------------------------------------------------- */
 const CATS = {
-  belso:     { label:"Belső rendelések", color:"var(--brand)",  type:"Rendelés",       icon:"users"    },
-  kulso:     { label:"Külső rendelések", color:"var(--green)",  type:"Külső rendelés", icon:"building" },
-  kiszallas: { label:"Kiszállások",      color:"var(--purple)", type:"Kiszállás",      icon:"truck"    },
+  belso:       { label:"Belső rendelések",       color:"var(--brand)",  type:"Rendelés",       icon:"users"    },
+  belso_egyeb: { label:"Belső - Irodai / egyéb", color:"var(--brand)",  type:"Irodai",         icon:"home"     },
+  kulso:       { label:"Külső rendelések",       color:"var(--green)",  type:"Külső rendelés", icon:"building" },
+  kiszallas:   { label:"Kiszállások",            color:"var(--purple)", type:"Kiszállás",      icon:"truck"    },
 };
-const CAT_ORDER = ["belso","kulso","kiszallas"];
+const CAT_ORDER = ["belso","belso_egyeb","kulso","kiszallas"];
 const KELTEX_COLOR = "#21D2DC";
 const orgColor = (org) => org === "Keltexmed" ? KELTEX_COLOR : "var(--brand)";
 
@@ -155,6 +156,7 @@ const Ico = {
   building: S(<><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-2.5h4V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>),
   truck:    S(<><path d="M3 6.5h10v9H3zM13 9.5h4l3 3v3h-7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="7" cy="17.5" r="1.8" stroke="currentColor" strokeWidth="1.6"/><circle cx="17" cy="17.5" r="1.8" stroke="currentColor" strokeWidth="1.6"/></>),
   sun:      S(<><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
+  home:     S(<><path d="M3 11.5 12 3l9 8.5V20a1 1 0 0 1-1 1H15v-5h-6v5H4a1 1 0 0 1-1-1V11.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></>),
   moon:     S(<><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></>),
   chart:    S(<><path d="M4 20V10M10 20V4M16 20v-6M20 20H4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></>),
   gear:     S(<><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M18.4 18.4l-2.1-2.1M7.7 7.7 5.6 5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
@@ -262,13 +264,13 @@ function RoomMap({ booking }) {
 function Combobox({ value, onChange, options, placeholder, kind, compact }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const color  = kind==="d" ? "var(--blue)"   : "var(--purple)";
-  const soft   = kind==="d" ? "var(--blue-soft)" : "var(--purple-soft)";
+  const color  = kind==="d" ? "var(--blue)"   : kind==="e" ? "var(--green)"  : "var(--purple)";
+  const soft   = kind==="d" ? "var(--blue-soft)" : kind==="e" ? "var(--green-soft)" : "var(--purple-soft)";
   const list   = options.filter((o) => o.toLowerCase().includes(q.toLowerCase()));
   return (
     <div className="relative">
       <button type="button" onClick={() => { setOpen((v)=>!v); setQ(""); }} className="mb-in flex items-center justify-between gap-1.5 text-left" style={{ padding:compact?"7px 8px":"10px 12px", borderColor:open?"var(--brand)":"var(--border)" }}>
-        <span className="flex items-center gap-1.5 min-w-0"><span style={{ color, flexShrink:0 }}>{kind==="d"?Ico.doctor({width:13,height:13}):Ico.person({width:13,height:13})}</span><span className="truncate" style={{ fontSize:13, fontWeight:value?600:400, color:value?"var(--ink)":"var(--faint)" }}>{value||placeholder}</span></span>
+        <span className="flex items-center gap-1.5 min-w-0"><span style={{ color, flexShrink:0 }}>{kind==="d"?Ico.doctor({width:13,height:13}):kind==="e"?Ico.building({width:13,height:13}):Ico.person({width:13,height:13})}</span><span className="truncate" style={{ fontSize:13, fontWeight:value?600:400, color:value?"var(--ink)":"var(--faint)" }}>{value||placeholder}</span></span>
         <span style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.chevDown({width:13,height:13})}</span>
       </button>
       {open && (<>
@@ -278,7 +280,7 @@ function Combobox({ value, onChange, options, placeholder, kind, compact }) {
           <div className="mb-scroll" style={{ maxHeight:190, overflowY:"auto", padding:4 }}>
             {value && <button type="button" onClick={() => { onChange(null); setOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left" style={{ fontSize:12.5, color:"var(--faint)" }}>{Ico.x()} Eltávolítás</button>}
             {list.length===0 && <div className="px-3 py-3" style={{ fontSize:12.5, color:"var(--faint)" }}>Nincs találat.</div>}
-            {list.map((o) => (<button key={o} type="button" onClick={() => { onChange(o); setOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left" style={{ fontSize:13.5, fontWeight:o===value?700:500, background:o===value?soft:"transparent", color:o===value?color:"var(--ink)" }}><span style={{ color, flexShrink:0 }}>{kind==="d"?Ico.doctor({width:13,height:13}):Ico.person({width:13,height:13})}</span><span className="truncate">{o}</span></button>))}
+            {list.map((o) => (<button key={o} type="button" onClick={() => { onChange(o); setOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left" style={{ fontSize:13.5, fontWeight:o===value?700:500, background:o===value?soft:"transparent", color:o===value?color:"var(--ink)" }}><span style={{ color, flexShrink:0 }}>{kind==="d"?Ico.doctor({width:13,height:13}):kind==="e"?Ico.building({width:13,height:13}):Ico.person({width:13,height:13})}</span><span className="truncate">{o}</span></button>))}
           </div>
         </div>
       </>)}
@@ -302,7 +304,7 @@ function Toggle({ on, onChange }) { return (<button type="button" onClick={()=>o
 /* ---- StaffEditor (workerId-t is kezel) ------------------------------ */
 function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
   const nameOptions = (workerList || []).map((w) => w.nev || w.name || "");
-  const accent = role==="d" ? "var(--blue)" : "var(--purple)";
+  const accent = role==="d" ? "var(--blue)" : role==="e" ? "var(--green)" : "var(--purple)";
   const add = () => onChange([...items, { role, name:null, workerId:null, from:slotFrom, to:slotTo }]);
   const upd = (i, patch) => onChange(items.map((x,j) => j===i ? { ...x, ...patch } : x));
   const del2 = (i) => onChange(items.filter((_,j) => j!==i));
@@ -314,24 +316,25 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
     <div className="flex flex-col gap-2">
       {items.map((s, i) => { const bad = toMin(s.from)>=toMin(s.to); return (
         <div key={i} className="flex items-center gap-1.5">
-          <div className="flex-1 min-w-0"><Combobox compact value={s.name} onChange={(v)=>handleNameChange(i,v)} options={nameOptions} placeholder={role==="d"?"Orvos…":"Asszisztens…"} kind={role}/></div>
+          <div className="flex-1 min-w-0"><Combobox compact value={s.name} onChange={(v)=>handleNameChange(i,v)} options={nameOptions} placeholder={role==="d"?"Orvos…":role==="e"?"Irodai munkatárs…":"Asszisztens…"} kind={role}/></div>
           <TimeBox value={s.from} onChange={(v)=>upd(i,{from:v})}/><span style={{ color:bad?"var(--danger)":"var(--faint)", fontWeight:700 }}>–</span><TimeBox value={s.to} onChange={(v)=>upd(i,{to:v})}/>
           <button onClick={()=>del2(i)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.trash()}</button>
         </div>); })}
       {items.length===0 && <div style={{ fontSize:12, color:"var(--faint)" }}>Nincs hozzárendelve.</div>}
-      <button onClick={add} className="mb-add flex items-center justify-center gap-1 rounded-lg py-2" style={{ fontSize:12.5, fontWeight:600, color:accent, border:`1px dashed ${accent}`, transition:"all .12s" }}>{Ico.plus()} {role==="d"?"Orvos":"Asszisztens"} hozzáadása</button>
+      <button onClick={add} className="mb-add flex items-center justify-center gap-1 rounded-lg py-2" style={{ fontSize:12.5, fontWeight:600, color:accent, border:`1px dashed ${accent}`, transition:"all .12s" }}>{Ico.plus()} {role==="d"?"Orvos":role==="e"?"Irodai munkatárs":"Asszisztens"} hozzáadása</button>
     </div>
   );
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, places, saving, onToggleAktiv }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
   const [note, setNote]     = useState(b ? b.note : "");
   const [docs, setDocs]     = useState(b ? (b.staff||[]).filter((s)=>s.role==="d") : []);
   const [nurses, setNurses] = useState(b ? (b.staff||[]).filter((s)=>s.role==="n") : []);
+  const [egyebek, setEgyebek] = useState(b ? (b.staff||[]).filter((s)=>s.role==="e") : []);
   const [aktiv, setAktiv]   = useState(b ? (b.aktiv !== 0) : true);
   const [selectedDays, setSelectedDays] = useState(() => new Set([ctx.day]));
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
@@ -372,7 +375,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   };
 
   const save = () => {
-    const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
+    const staff = [...docs, ...nurses, ...egyebek].filter((s)=>s.name && s.workerId);
     const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
     const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note };
     onSave(rec);
@@ -467,6 +470,10 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--purple)" }}>{Ico.person({width:13,height:13})}</span> Asszisztensek</div>
               <StaffEditor role="n" items={nurses} onChange={setNurses} slotFrom={from} slotTo={to} workerList={assistantList}/>
             </div>
+            {(egyebList||[]).length>0 && <div>
+              <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--green)" }}>{Ico.building({width:13,height:13})}</span> Irodai munkatársak</div>
+              <StaffEditor role="e" items={egyebek} onChange={setEgyebek} slotFrom={from} slotTo={to} workerList={egyebList}/>
+            </div>}
             <Field label="Megjegyzés (nem kötelező)">
               <div className="relative"><textarea value={note} maxLength={200} onChange={(e)=>setNote(e.target.value)} rows={2} placeholder="pl. EKG, terheléses vizsgálat" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/><span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{note.length} / 200</span></div>
             </Field>
@@ -613,7 +620,8 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
-  const noDoc  = !inactive && b.cat!=="kiszallas" && docs.length===0;
+  const egyebs = (b.staff||[]).filter((s)=>s.role==="e");
+  const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && docs.length===0;
   const red    = noDoc||conflict;
   const accent = inactive?"var(--faint)":(red?"var(--danger)":(CATS[b.cat]?.color||"var(--muted)"));
   const names  = (b.staff||[]).map((s)=>s.name).filter(Boolean);
@@ -637,8 +645,9 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
       </div>
       {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--faint)", fontWeight:600 }}>{b.address}</div>}
       {!inactive && <div className="flex flex-wrap gap-1.5 mt-1.5">
-        {roleFilter!=="n"&&docs.map((s,i)  => <StaffChip key={"d"+i} s={s} color="var(--blue)"   soft="var(--blue-soft)"   icon={Ico.doctor({width:12,height:12})}/>)}
-        {roleFilter!=="d"&&nurses.map((s,i) => <StaffChip key={"n"+i} s={s} color="var(--purple)" soft="var(--purple-soft)" icon={Ico.person({width:12,height:12})}/>)}
+        {roleFilter!=="n"&&docs.map((s,i)   => <StaffChip key={"d"+i} s={s} color="var(--blue)"   soft="var(--blue-soft)"   icon={Ico.doctor({width:12,height:12})}/>)}
+        {roleFilter!=="d"&&nurses.map((s,i)  => <StaffChip key={"n"+i} s={s} color="var(--purple)" soft="var(--purple-soft)" icon={Ico.person({width:12,height:12})}/>)}
+        {egyebs.map((s,i)                    => <StaffChip key={"e"+i} s={s} color="var(--green)"  soft="var(--green-soft)"  icon={Ico.building({width:12,height:12})}/>)}
       </div>}
       {b.note&&!conflict&&!inactive&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
       {!inactive&&overlapDouble[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {overlapDouble[0].p} {overlapDouble[0].from}–{overlapDouble[0].to}</div>}
@@ -775,7 +784,7 @@ function ConflictView({ weekDays, conf, catFilter, collapsed, onToggle, onOpenCa
       const overlaps = conf.det[key] || [];
       const hasDouble = overlaps.some((o)=>!o.vac);
       const hasVac    = overlaps.some((o)=>o.vac);
-      const noDoc     = b.cat!=="kiszallas" && (b.staff||[]).filter((s)=>s.role==="d").length===0;
+      const noDoc     = b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && (b.staff||[]).filter((s)=>s.role==="d").length===0;
       const entry = { b, di, key, overlaps };
       if (hasDouble) groups.double.push(entry);
       if (hasVac)    groups.vac.push(entry);
@@ -871,20 +880,29 @@ function LoadingBlock({ label }) {
 }
 
 /* ---- StaffView / StaffModal (Munkatársak) ---------------------------- */
+const ROLE_DISPLAY = {
+  1: { label:"Orvosok",            icon:"doctor",   color:"var(--blue)"   },
+  2: { label:"Asszisztensek",      icon:"person",   color:"var(--purple)" },
+  3: { label:"Irodai munkatársak", icon:"building", color:"var(--green)"  },
+};
+const getRoleDisplay = (role) => ROLE_DISPLAY[role.id] || { label:role.megnev, icon:"truck", color:"var(--faint)" };
+
 function StaffView({ setToast, newSignal }) {
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery]     = useState("");
-  const [modal, setModal]     = useState(null);
-  const [saving, setSaving]   = useState(false);
+  const [data, setData]           = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [query, setQuery]         = useState("");
+  const [modal, setModal]         = useState(null);
+  const [saving, setSaving]       = useState(false);
+  const [secCollapsed, setSecCollapsed] = useState({});
+
+  const initialSignal = useRef(newSignal);
+  useEffect(() => { if (newSignal > initialSignal.current) setModal({ worker:null, roleid:1 }); }, [newSignal]);
 
   const load = useCallback(() => {
     setLoading(true);
     fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => { if (newSignal) setModal({ worker:null, roleid:(data?.roles||[])[0]?.id }); }, [newSignal]);
 
   const post = async (params) => {
     const body = new URLSearchParams(params);
@@ -919,10 +937,7 @@ function StaffView({ setToast, newSignal }) {
   if (loading || !data) return <LoadingBlock label="Munkatársak betöltése…"/>;
 
   const q = query.trim().toLowerCase();
-  const groups = (data.roles||[]).map((role) => ({
-    role,
-    workers: (data.workers||[]).filter((w) => w.roleid===role.id && (!q || `${w.teljesnev} ${w.nev} ${w.email} ${w.tel}`.toLowerCase().includes(q))),
-  }));
+  const allWorkers = (data.workers||[]).filter((w) => !q || `${w.teljesnev} ${w.nev} ${w.email} ${w.tel}`.toLowerCase().includes(q));
 
   return (
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
@@ -931,38 +946,50 @@ function StaffView({ setToast, newSignal }) {
         <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés…" className="mb-in py-2 pl-9 pr-3" style={{ fontSize:13 }}/>
       </div>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
-        {groups.map(({ role, workers }) => (
-          <div key={role.id} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-            <div className="flex items-center justify-between px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
-              <span className="flex items-center gap-2">
-                <span style={{ color:"var(--brand)" }}>{Ico.users({width:15,height:15})}</span>
-                <span style={{ fontSize:13, fontWeight:700 }}>{role.megnev}</span>
-                <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{workers.length}</span>
-              </span>
-              <button onClick={()=>setModal({ worker:null, roleid:role.id })} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
-            </div>
-            <div className="flex flex-col gap-1.5 p-2">
-              {workers.map((w) => (
-                <div key={w.id} onClick={()=>setModal({ worker:w })} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
-                  <div className="min-w-0">
-                    <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{w.teljesnev||w.nev}</div>
-                    <div className="flex flex-wrap gap-x-3" style={{ fontSize:11.5, color:"var(--muted)" }}>
-                      {w.email && <span>{w.email}</span>}
-                      {w.tel && <span>{w.tel}</span>}
+        {(data.roles||[]).map((role) => {
+          const rid = Number(role.id);
+          const disp = getRoleDisplay({ ...role, id: rid });
+          const workers = allWorkers.filter((w) => w.roleid === rid);
+          const collapsed = !!secCollapsed[rid];
+          const SectionIcon = Ico[disp.icon];
+          return (
+            <div key={rid} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+              <button onClick={()=>setSecCollapsed(p=>({...p,[rid]:!p[rid]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${disp.color} 15%,transparent)` }}>
+                <span className="flex items-center gap-2">
+                  <span style={{ color:disp.color, flexShrink:0 }}>{SectionIcon({width:15,height:15})}</span>
+                  <span className="mb-display" style={{ fontSize:13, fontWeight:700, letterSpacing:".04em", color:disp.color }}>{disp.label}</span>
+                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{workers.length}</span>
+                </span>
+                <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+              </button>
+              {!collapsed && (
+                <div className="flex flex-col gap-1.5 p-2">
+                  {workers.map((w) => (
+                    <div key={w.id} onClick={()=>setModal({ worker:w })} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{w.teljesnev||w.nev}</div>
+                          {w.teljesnev && w.nev && <span style={{ fontSize:11.5, color:"var(--faint)" }}>({w.nev})</span>}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3" style={{ fontSize:11.5, color:"var(--muted)" }}>
+                          {w.email && <span>{w.email}</span>}
+                          {w.tel && <span>{w.tel}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
+                        {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
+                        {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
+                        {!!w.emailert && <Badge text="Email" color="var(--green)"/>}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
-                    {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
-                    {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
-                    {!!w.emailert && <Badge text="Email" color="var(--green)"/>}
-                  </div>
+                  ))}
+                  {workers.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs munkatárs.</div>}
                 </div>
-              ))}
-              {workers.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs munkatárs.</div>}
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {modal && <StaffModal ctx={modal} roles={data.roles} users={data.users} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
     </div>
@@ -1613,6 +1640,7 @@ function MunkaidoBeosztas() {
   const [saving,       setSaving]       = useState(false);
   const [doctors,      setDoctors]      = useState([]);   // [{id, nev}]
   const [assistants,   setAssistants]   = useState([]);   // [{id, nev}]
+  const [egyebs,       setEgyebs]       = useState([]);   // [{id, nev}]
   const [query,        setQuery]        = useState("");
   const roleFilter = "all";
   const [catFilter,    setCatFilter]    = useState("all");
@@ -1636,6 +1664,7 @@ function MunkaidoBeosztas() {
         setWeekData(data);
         setDoctors(data.doctorsWithId    || []);
         setAssistants(data.assistantsWithId || []);
+        setEgyebs(data.egyebWithId || []);
         setLoading(false);
       })
       .catch((err) => { console.error("fetchWeek:", err); setLoading(false); });
@@ -1947,7 +1976,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 

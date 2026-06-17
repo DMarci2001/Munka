@@ -851,13 +851,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $week    = (int)date("W", strtotime($monday));
 
         $allTipusok = sql_query(
-            "SELECT * FROM schedule_tipusok WHERE aktiv=1 ORDER BY kulso, sorrend"
+            "SELECT * FROM schedule_tipusok WHERE forday='0000-00-00' ORDER BY kulso, sorrend"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $mondayStart = $monday . " 00:00:00";
         $mappings = sql_query(
             "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv,
-                    IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
+                    w.nev AS workernev
              FROM schedule_mapping m
              LEFT JOIN schedule_workers w ON m.workerid = w.id
              WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
@@ -916,7 +916,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 $maxTo   = null;
 
                 foreach ($staffRows as $m) {
-                    $role = ($m["roleid"] == 2) ? "n" : "d";
+                    $role = ($m["roleid"] == 2) ? "n" : ($m["roleid"] == 3 ? "e" : "d");
                     $from = date("H:i", strtotime($m["datumfrom"]));
                     $to   = date("H:i", strtotime($m["datumto"]));
 
@@ -938,7 +938,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 $bookings[] = [
                     "id"      => "tip_{$tipus["id"]}_{$date}",
                     "tipusId" => (int)$tipus["id"],
-                    "cat"     => !empty($tipus["kiszallas"]) ? "kiszallas" : ($tipus["kulso"] == 0 ? "belso" : "kulso"),
+                    "cat"     => !empty($tipus["kiszallas"]) ? "kiszallas" : ($tipus["kulso"] == 0 ? ($tipus["roleid"] == 3 ? "belso_egyeb" : "belso") : "kulso"),
+                    "roleid"  => (int)($tipus["roleid"] ?? 0),
                     "title"   => $tipus["megnev"],
                     "address"     => $tipus["cim"]    ?? "",
                     "rendelo"     => $tipus["rendelo"] ?? "",
@@ -961,10 +962,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         }
 
         $doctorRows = sql_query(
-            "SELECT id, IF(TRIM(teljesnev) <> '', teljesnev, nev) AS nev FROM schedule_workers WHERE roleid=1 ORDER BY nev"
+            "SELECT id, nev FROM schedule_workers WHERE roleid=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
         $assistantRows = sql_query(
-            "SELECT id, IF(TRIM(teljesnev) <> '', teljesnev, nev) AS nev FROM schedule_workers WHERE roleid=2 ORDER BY nev"
+            "SELECT id, nev FROM schedule_workers WHERE roleid=2 ORDER BY nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $egyebRows = sql_query(
+            "SELECT id, nev FROM schedule_workers WHERE roleid=3 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $places = array_values(array_map(
@@ -982,6 +986,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "assistants"       => array_column($assistantRows, "nev"),
             "doctorsWithId"    => $doctorRows,
             "assistantsWithId" => $assistantRows,
+            "egyebWithId"      => $egyebRows,
             "places"           => $places,
         ]);
         die;
@@ -1010,7 +1015,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $from  = $s["from"] ?? "08:00";
             $to    = $s["to"]   ?? "16:00";
             if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) continue;
-            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : 1;
+            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : 1);
             $megj    = substr($s["megj"] ?? "", 0, 200);
             sql_query(
                 "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, createdat=now(), createdby=?",
