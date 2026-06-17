@@ -251,6 +251,35 @@ a.devlink, table.grid tbody tr td a { color: var(--link); }
 .tl-meta { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
 .tl-time { font-size: .74rem; color: #999; }
 
+/* ---- CSS lapozó (radio + :has()) ---- */
+.page-radio { display: none; }
+.page-section { display: none; }
+.pager-nav {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: .82rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  background: #fff;
+  transition: background .1s, border-color .1s, color .1s;
+  user-select: none;
+}
+.pager-btn:hover { background: #f2f7f2; border-color: var(--brand); color: var(--brand-dark); }
+
 /* ---- Empty state ---- */
 .empty { text-align: center; padding: 48px 20px; color: var(--ink-soft); }
 .empty .big { font-size: 2.2rem; margin-bottom: 10px; opacity: .4; display: flex; justify-content: center; }

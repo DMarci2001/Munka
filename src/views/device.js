@@ -75,8 +75,7 @@ export function renderDevice(el, { id }) {
         <div class="panel">
           <div class="panel-head">Birtoklási előzmény</div>
           <div class="panel-body">
-            ${hist.length ? `<div class="timeline">${hist.map(tlItem).join('')}</div>`
-              : `<div class="muted">Nincs előzmény.</div>`}
+            ${historyHTML(hist)}
           </div>
         </div>
       </div>
@@ -123,6 +122,26 @@ function attrRow(def, value) {
     else if (f === 'soon') flag = `<span class="attr-flag soon">Hamarosan</span>`;
   }
   return `<dt>${esc(def.label)}</dt><dd>${esc(fmtAttrValue(def, value))}${flag}</dd>`;
+}
+
+// --- Custody history lapozó ----------------------------------
+function historyHTML(hist) {
+  if (!hist.length) return `<div class="muted">Nincs előzmény.</div>`;
+  const PS = 8;
+  const pages = [];
+  for (let i = 0; i < hist.length; i += PS) pages.push(hist.slice(i, i + PS));
+  if (pages.length === 1) return `<div class="timeline">${hist.map(tlItem).join('')}</div>`;
+  const style = pages.map((_, i) =>
+    `.hist-pager:has(#hist-p${i+1}:checked) .page-section[data-page="${i+1}"]{display:block}` +
+    `.hist-pager:has(#hist-p${i+1}:checked) label[for="hist-p${i+1}"]{background:var(--brand);color:#fff;border-color:var(--brand-dark)}`
+  ).join('');
+  return `
+    <div class="hist-pager pager-root">
+      <style>${style}</style>
+      ${pages.map((_, i) => `<input type="radio" name="hist-page" id="hist-p${i+1}" class="page-radio"${i === 0 ? ' checked' : ''}>`).join('')}
+      ${pages.map((evs, i) => `<div class="page-section" data-page="${i+1}"><div class="timeline">${evs.map(tlItem).join('')}</div></div>`).join('')}
+      <div class="pager-nav">${pages.map((_, i) => `<label for="hist-p${i+1}" class="pager-btn">${i+1}</label>`).join('')}</div>
+    </div>`;
 }
 
 // --- Timeline elem -------------------------------------------

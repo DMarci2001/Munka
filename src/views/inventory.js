@@ -172,26 +172,37 @@ function paint(el) {
     return;
   }
 
-  wrap.innerHTML = `
-    <div class="muted" style="font-size:.82rem; margin-bottom:10px">${vms.length} eszköz</div>
+  const PS = 25;
+  const pages = [];
+  for (let i = 0; i < vms.length; i += PS) pages.push(vms.slice(i, i + PS));
+
+  const tableHTML = (pageVms) => `
     <div class="table-wrap">
       <table class="grid">
-        <thead>
-          <tr>
-            ${thHTML('lastModified', 'Utoljára módosítva')}${thHTML('typeName', 'Típus / modell')}${thHTML('status', 'Státusz')}
-            ${thHTML('holder', 'Birtokos')}${thHTML('location', 'Hely')}<th></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${vms.map(rowHTML).join('')}
-        </tbody>
+        <thead><tr>
+          ${thHTML('lastModified', 'Utoljára módosítva')}${thHTML('typeName', 'Típus / modell')}${thHTML('status', 'Státusz')}
+          ${thHTML('holder', 'Birtokos')}${thHTML('location', 'Hely')}<th></th>
+        </tr></thead>
+        <tbody>${pageVms.map(rowHTML).join('')}</tbody>
       </table>
     </div>`;
 
-  
+  const style = pages.map((_, i) =>
+    `.inv-pager:has(#inv-p${i+1}:checked) .page-section[data-page="${i+1}"]{display:block}` +
+    `.inv-pager:has(#inv-p${i+1}:checked) label[for="inv-p${i+1}"]{background:var(--brand);color:#fff;border-color:var(--brand-dark)}`
+  ).join('');
+
+  wrap.innerHTML = `
+    <div class="muted" style="font-size:.82rem;margin-bottom:10px">${vms.length} eszköz</div>
+    <div class="inv-pager pager-root">
+      <style>${style}</style>
+      ${pages.map((_, i) => `<input type="radio" name="inv-page" id="inv-p${i+1}" class="page-radio"${i === 0 ? ' checked' : ''}>`).join('')}
+      ${pages.map((pVms, i) => `<div class="page-section" data-page="${i+1}">${tableHTML(pVms)}</div>`).join('')}
+      ${pages.length > 1 ? `<div class="pager-nav">${pages.map((_, i) => `<label for="inv-p${i+1}" class="pager-btn">${i+1}</label>`).join('')}</div>` : ''}
+    </div>`;
+
   wrap.querySelectorAll('tbody tr').forEach((r) =>
     r.addEventListener('click', () => navigate('/device/' + r.dataset.dev)));
-
   wrap.querySelectorAll('th[data-col]').forEach((th) =>
     th.addEventListener('click', () => { sortBy(th.dataset.col); paint(el); }));
 }
