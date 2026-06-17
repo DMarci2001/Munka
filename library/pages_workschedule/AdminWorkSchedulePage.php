@@ -83,6 +83,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiOrderPlace();
         }
 
+        if (isset($_POST["saveplaceorder"])) {
+            $this->_apiSavePlaceOrder();
+        }
+
         if (isset($_GET["getvacations"])) {
             $this->_apiGetVacations();
         }
@@ -1329,6 +1333,20 @@ class AdminWorkSchedulePage extends AdminCorePage {
             }
         }
 
+        $this->utils->jsonOut(["status" => "ok"]);
+    }
+
+    private function _apiSavePlaceOrder(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $ids = array_values(array_filter(array_map('intval', explode(',', trim($_POST['ids'] ?? '')))));
+        foreach ($ids as $i => $id) {
+            if ($id > 0) {
+                sql_query("UPDATE schedule_tipusok SET sorrend=? WHERE id=?", [$i + 1, $id]);
+            }
+        }
         $this->utils->jsonOut(["status" => "ok"]);
     }
 

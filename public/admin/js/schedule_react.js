@@ -1069,18 +1069,22 @@ function SegBtn({ options, value, onChange }) {
 
 /* ---- PlacesView / LocationModal (Rendelések) ------------------------- */
 function PlacesView({ setToast, newSignal }) {
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal]     = useState(null);
-  const [saving, setSaving]   = useState(false);
+  const [data, setData]               = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [modal, setModal]             = useState(null);
+  const [saving, setSaving]           = useState(false);
+  const [orderedPlaces, setOrderedPlaces] = useState([]);
+  const [dragId, setDragId]           = useState(null);
+  const [dragGroup, setDragGroup]     = useState(null);
+  const [dragOverId, setDragOverId]   = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
     fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => { if (newSignal) void addNew("1","0"); }, [newSignal]);
+  useEffect(() => { if (data?.places) setOrderedPlaces([...data.places].sort((a,b)=>a.sorrend-b.sorrend)); }, [data]);
+  useEffect(() => { if (newSignal) openNew(); }, [newSignal]);
 
   const post = async (params) => {
     const body = new URLSearchParams(params);
@@ -1115,64 +1119,82 @@ function PlacesView({ setToast, newSignal }) {
     finally { setSaving(false); }
   };
 
-  const openNew = (kulso, kiszallas, roleid) => {
-    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso, kiszallas:kiszallas||0, roleid:roleid||1, org:"HMM", sorrend:0, aktiv:1, napok:31 } });
+  const openNew = () => {
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31 } });
   };
 
-  const reorder = async (id, direction) => {
-    await post({ orderplace:"1", id, direction });
-    await load();
+  const getSectionKey = (p) => p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso");
+
+  const handleDrop = async (group, targetId) => {
+    if (!dragId || dragId === targetId || dragGroup !== group) {
+      setDragId(null); setDragGroup(null); setDragOverId(null);
+      return;
+    }
+    const sectionPlaces = orderedPlaces.filter(p => getSectionKey(p) === group);
+    const from = sectionPlaces.findIndex(p => p.id === dragId);
+    const to   = sectionPlaces.findIndex(p => p.id === targetId);
+    if (from === -1 || to === -1) { setDragId(null); setDragGroup(null); setDragOverId(null); return; }
+    const newOrder = [...sectionPlaces];
+    const [moved]  = newOrder.splice(from, 1);
+    newOrder.splice(to, 0, moved);
+    setOrderedPlaces([...orderedPlaces.filter(p => getSectionKey(p) !== group), ...newOrder]);
+    setDragId(null); setDragGroup(null); setDragOverId(null);
+    try { await post({ saveplaceorder:"1", ids: newOrder.map(p => p.id).join(",") }); }
+    catch(e) { setToast("Hálózati hiba!"); }
   };
 
   if (loading || !data) return <LoadingBlock label="Rendelések betöltése…"/>;
 
-  const groupsMap = new Map();
-  (data.places||[]).forEach((p) => {
-    const key = p.kiszallas===1 ? "kiszallas" : (p.kulso===0 ? `belso-${p.roleid}` : "kulso");
-    if (!groupsMap.has(key)) groupsMap.set(key, { kulso:p.kulso, kiszallas:p.kiszallas||0, roleid:p.roleid, places:[] });
-    groupsMap.get(key).places.push(p);
-  });
-  if (!groupsMap.has("kiszallas")) groupsMap.set("kiszallas", { kulso:0, kiszallas:1, roleid:1, places:[] });
-  const groups = Array.from(groupsMap.values()).sort((a,b) => (a.kiszallas||0) - (b.kiszallas||0));
+  const SECTIONS = [
+    { key:"belso",     label:"Belső rendelések", accent:CATS.belso.color     },
+    { key:"kulso",     label:"Külső rendelések", accent:CATS.kulso.color     },
+    { key:"kiszallas", label:"Kiszállások",      accent:CATS.kiszallas.color },
+  ];
 
   return (
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
-        {groups.map((g) => {
-          let label = g.kiszallas ? "Kiszállások" : (g.kulso===0 ? "Belső" : "Külső");
-          if (!g.kiszallas && g.kulso===0 && g.roleid===1) label += " - Orvos";
-          if (!g.kiszallas && g.kulso===0 && g.roleid===3) label += " - Egyéb";
-          const accent = g.kiszallas ? "var(--purple)" : (g.kulso===0 ? "var(--brand)" : "var(--green)");
-          const groupIcon = g.kiszallas ? "truck" : "building";
+        {SECTIONS.map((sec) => {
+          const places = orderedPlaces.filter(p => getSectionKey(p) === sec.key);
+          const SectionIcon = sec.key === "kiszallas" ? Ico.truck : Ico.building;
           return (
-            <div key={g.kiszallas?"kiszallas":`${g.kulso}-${g.roleid}`} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-              <div className="flex items-center justify-between px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:`color-mix(in srgb,${accent} 8%,transparent)` }}>
+            <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+              <div className="flex items-center px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.accent} 8%,transparent)` }}>
                 <span className="flex items-center gap-2">
-                  <span style={{ color:accent }}>{Ico[groupIcon]({width:15,height:15})}</span>
-                  <span style={{ fontSize:13, fontWeight:700 }}>{label}</span>
-                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{g.places.length}</span>
+                  <span style={{ color:sec.accent }}>{SectionIcon({width:15,height:15})}</span>
+                  <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
+                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{places.length}</span>
                 </span>
-                <button onClick={()=>openNew(g.kulso, g.kiszallas||0, g.roleid||1)} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
               </div>
-              <div className="flex flex-col gap-1.5 p-2">
-                {g.places.map((p, idx) => (
-                  <div key={p.id} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+              <div className="flex flex-col gap-1.5 p-2" onDragOver={(e)=>e.preventDefault()}>
+                {places.map((p) => (
+                  <div key={p.id}
+                    draggable
+                    onDragStart={()=>{ setDragId(p.id); setDragGroup(sec.key); }}
+                    onDragOver={(e)=>{ e.preventDefault(); if (dragOverId !== p.id) setDragOverId(p.id); }}
+                    onDragEnd={()=>{ setDragId(null); setDragGroup(null); setDragOverId(null); }}
+                    onDrop={(e)=>{ e.preventDefault(); e.stopPropagation(); handleDrop(sec.key, p.id); }}
+                    className="mb-tcard flex items-center gap-2 rounded-lg"
+                    style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px", opacity:dragId===p.id?.4:1, outline:dragOverId===p.id&&dragGroup===sec.key?`2px solid ${sec.accent}`:"none", transition:"opacity .15s", cursor:"default" }}>
+                    <div style={{ color:"var(--faint)", flexShrink:0, cursor:"grab" }}>
+                      <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+                        <circle cx="3.5" cy="3" r="1.3"/><circle cx="8.5" cy="3" r="1.3"/>
+                        <circle cx="3.5" cy="8" r="1.3"/><circle cx="8.5" cy="8" r="1.3"/>
+                        <circle cx="3.5" cy="13" r="1.3"/><circle cx="8.5" cy="13" r="1.3"/>
+                      </svg>
+                    </div>
                     <div className="min-w-0 flex-1" onClick={()=>setModal({ place:p })} style={{ cursor:"pointer" }}>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
-                        {(g.kiszallas || g.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
-                        {(p.napok??127) !== 127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
+                        {(p.kiszallas===1||p.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
+                        {(p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
                       </div>
                       {!!p.rendelo && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{p.rendelo}</div>}
                       {!!p.cim && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)" }}>{p.cim}</div>}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={()=>reorder(p.id,"up")} disabled={idx===0} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:idx===0?"var(--faint)":"var(--muted)", border:"1px solid var(--border)", opacity:idx===0?.4:1 }}>{Ico.chevUp({width:14,height:14})}</button>
-                      <button onClick={()=>reorder(p.id,"down")} disabled={idx===g.places.length-1} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:idx===g.places.length-1?"var(--faint)":"var(--muted)", border:"1px solid var(--border)", opacity:idx===g.places.length-1?.4:1 }}>{Ico.chevDown({width:14,height:14})}</button>
-                    </div>
                   </div>
                 ))}
-                {g.places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
+                {places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
               </div>
             </div>
           );
@@ -1208,53 +1230,63 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
       <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
-      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:480, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
+      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:700, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:16, marginBottom:16 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
-          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>{isNew ? "Új rendelés" : (p.megnev||"Rendelés szerkesztése")}</h2>
-          <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
-        </div>
-        <div className="flex flex-col gap-3.5 px-6 py-5">
-          <Field label="Megnevezés">
-            <input autoFocus={isNew} value={megnev} onChange={(e)=>setMegnev(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:700 }}/>
-          </Field>
-          <div className="flex gap-4 flex-wrap">
-            <Field label="Típus">
-              <SegBtn value={cat} onChange={setCat} options={CAT_OPTS}/>
-            </Field>
-            {cat !== "belso" && (
-              <Field label="Rendelő / cég">
-                <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
-              </Field>
+          <div>
+            <h2 className="mb-display" style={{ fontSize:19, fontWeight:700 }}>{isNew ? "Új rendelés" : (p.megnev||"Rendelés szerkesztése")}</h2>
+            {!isNew && (
+              <div className="flex items-center gap-2 mt-1">
+                <Badge text={CATS[cat]?.type||cat} color={CATS[cat]?.color||"var(--muted)"}/>
+              </div>
             )}
           </div>
-          <Field label="Rendelő / szoba">
-            <input value={rendelo} onChange={(e)=>setRendelo(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
-          </Field>
-          <Field label="Cím (Google Maps)">
-            <div className="flex items-center gap-2">
-              <input value={cim} onChange={(e)=>setCim(e.target.value)} placeholder="pl. Budapest, Váci út 45" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
-              {!!cim && <a href={`https://www.google.com/maps/search/${encodeURIComponent(cim)}`} target="_blank" rel="noreferrer" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.place({width:16,height:16})}</a>}
-            </div>
-          </Field>
-          <Field label="Aktív napok">
-            <NapokSelector value={napok} onChange={setNapok}/>
-          </Field>
-          {cat !== "belso" && (
-            <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
-              <div style={{ fontSize:12.5, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>
-              <Field label="Név">
-                <input value={ktartoNev} onChange={(e)=>setKtartoNev(e.target.value)} placeholder="pl. Kovács Péter" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+          <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
+        </div>
+        <div className="grid gap-6 px-6 py-5 mb-scroll" style={{ gridTemplateColumns:"minmax(0,1.4fr) minmax(0,1fr)", maxHeight:"72vh", overflowY:"auto" }}>
+          <div className="flex flex-col gap-4">
+            <Field label="Megnevezés">
+              <input autoFocus={isNew} value={megnev} onChange={(e)=>setMegnev(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:700 }}/>
+            </Field>
+            <div className="flex gap-4 flex-wrap">
+              <Field label="Típus">
+                <SegBtn value={cat} onChange={setCat} options={CAT_OPTS}/>
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              {cat !== "belso" && (
+                <Field label="Szervező">
+                  <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
+                </Field>
+              )}
+            </div>
+            <Field label="Rendelő / szoba">
+              <input value={rendelo} onChange={(e)=>setRendelo(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+            </Field>
+            <Field label="Cím (Google Maps)">
+              <div className="flex items-center gap-2">
+                <input value={cim} onChange={(e)=>setCim(e.target.value)} placeholder="pl. Budapest, Váci út 45" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+                {!!cim && <a href={`https://www.google.com/maps/search/${encodeURIComponent(cim)}`} target="_blank" rel="noreferrer" title="Megnyitás Google Maps-ben" style={{ color:"var(--brand-ink)", flexShrink:0 }}>{Ico.place({width:17,height:17})}</a>}
+              </div>
+            </Field>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
+            <Field label="Aktív napok">
+              <NapokSelector value={napok} onChange={setNapok}/>
+            </Field>
+            {cat !== "belso" && (
+              <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>
+                <Field label="Név">
+                  <input value={ktartoNev} onChange={(e)=>setKtartoNev(e.target.value)} placeholder="pl. Kovács Péter" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
+                </Field>
                 <Field label="Telefon">
-                  <input value={ktartoTel} onChange={(e)=>setKtartoTel(e.target.value)} placeholder="+36 30 123 4567" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+                  <input value={ktartoTel} onChange={(e)=>setKtartoTel(e.target.value)} placeholder="+36 30 123 4567" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
                 </Field>
                 <Field label="E-mail">
-                  <input value={ktartoEmail} onChange={(e)=>setKtartoEmail(e.target.value)} placeholder="pelda@email.hu" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+                  <input value={ktartoEmail} onChange={(e)=>setKtartoEmail(e.target.value)} placeholder="pelda@email.hu" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
                 </Field>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
           {!isNew ? (
@@ -1845,7 +1877,7 @@ function MunkaidoBeosztas() {
             </div>
             </>)}
             {nav==="workers" && <button onClick={()=>setStaffNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új munkatárs</button>}
-            {nav==="workplaces" && <button onClick={()=>setPlaceNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új helyszín</button>}
+            {nav==="workplaces" && <button onClick={()=>setPlaceNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
           </div>
 
           {/* TÁBLA */}
