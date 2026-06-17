@@ -1,5 +1,8 @@
 <?php
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 class AdminWorkSchedulePage extends AdminCorePage {
     private WorkScheduleService $workScheduleService;
     private WorkersSubPage $workersSubPage;
@@ -110,6 +113,19 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (isset($_POST["clearweek"])) {
             $this->_apiClearWeek();
         }
+
+        if (isset($_GET["getmonthhours"])) {
+            $this->_apiGetMonthHours();
+        }
+
+        if (isset($_GET["exportstatistics"])) {
+            $this->_apiExportStatistics();
+        }
+
+        // DB migration: munkaora column
+        try {
+            sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora DECIMAL(4,1) DEFAULT NULL");
+        } catch (\Exception $e) { /* already exists */ }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1019,6 +1035,131 @@ class AdminWorkSchedulePage extends AdminCorePage {
         die;
     }
 
+    private function _apiGetMonthHours(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $month = $_GET["month"] ?? date("Y-m");
+        if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Érvénytelen hónap!"]); die;
+        }
+        $monthStart = $month . "-01 00:00:00";
+        $monthEnd   = date("Y-m-01 00:00:00", strtotime($monthStart . " +1 month"));
+
+        $hourRows = sql_query(
+            "SELECT m.workerid, ROUND(SUM(TIMESTAMPDIFF(MINUTE, m.datumfrom, m.datumto)) / 60.0, 2) AS hours
+             FROM schedule_mapping m
+             LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
+             WHERE m.datumfrom >= :start AND m.datumfrom < :end AND t.forday='0000-00-00'
+             GROUP BY m.workerid",
+            ["start" => $monthStart, "end" => $monthEnd]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $bookedMap = [];
+        foreach ($hourRows as $r) { $bookedMap[(int)$r["workerid"]] = (float)$r["hours"]; }
+
+        $workers = sql_query(
+            "SELECT id, nev, teljesnev, roleid, munkaora FROM schedule_workers ORDER BY roleid, nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = array_map(function ($w) use ($bookedMap) {
+            return [
+                "id"       => (int)$w["id"],
+                "nev"      => $w["nev"],
+                "teljesnev"=> $w["teljesnev"],
+                "roleid"   => (int)$w["roleid"],
+                "quota"    => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
+                "booked"   => $bookedMap[(int)$w["id"]] ?? 0.0,
+            ];
+        }, $workers);
+
+        $this->utils->jsonOut(["workers" => $result]);
+        die;
+    }
+
+    private function _apiExportStatistics(): void {
+        if (!$this->adminUser->beosztasPageAccess()) { die("Nincs jogosultságod!"); }
+        $month = $_GET["month"] ?? date("Y-m");
+        if (!preg_match('/^\d{4}-\d{2}$/', $month)) { die("Érvénytelen hónap!"); }
+        $monthStart = $month . "-01 00:00:00";
+        $monthEnd   = date("Y-m-01 00:00:00", strtotime($monthStart . " +1 month"));
+
+        $HU_DAYS  = ["Hétfő","Kedd","Szerda","Csütörtök","Péntek","Szombat","Vasárnap"];
+        $HU_MONTHS = ["január","február","március","április","május","június","július","augusztus","szeptember","október","november","december"];
+        $monthLabel = date("Y", strtotime($monthStart)).". ".$HU_MONTHS[(int)date("m", strtotime($monthStart))-1];
+
+        $rows = sql_query(
+            "SELECT m.workerid, DATE(m.datumfrom) AS datum, t.megnev AS tipusnev,
+                    DATE_FORMAT(m.datumfrom,'%H:%i') AS kezdes,
+                    DATE_FORMAT(m.datumto,'%H:%i') AS veges,
+                    ROUND(TIMESTAMPDIFF(MINUTE,m.datumfrom,m.datumto)/60.0,2) AS ora
+             FROM schedule_mapping m
+             LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
+             WHERE m.datumfrom >= :start AND m.datumfrom < :end AND t.forday='0000-00-00'
+             ORDER BY m.workerid, m.datumfrom",
+            ["start" => $monthStart, "end" => $monthEnd]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $workers = sql_query(
+            "SELECT id, nev, teljesnev, munkaora FROM schedule_workers ORDER BY roleid, nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $byWorker = [];
+        foreach ($rows as $r) { $byWorker[(int)$r["workerid"]][] = $r; }
+
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->removeSheetByIndex(0);
+        $sheetIdx = 0;
+
+        foreach ($workers as $w) {
+            $wid   = (int)$w["id"];
+            $wrows = $byWorker[$wid] ?? [];
+            $name  = trim($w["teljesnev"]) ?: $w["nev"];
+
+            $sheet = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, mb_substr($name, 0, 31));
+            $spreadsheet->addSheet($sheet, $sheetIdx++);
+
+            $sheet->setCellValue("A1", "{$name} — {$monthLabel} jelenléti");
+            $sheet->mergeCells("A1:F1");
+            $sheet->getStyle("A1")->getFont()->setBold(true)->setSize(13);
+            $quota = isset($w["munkaora"]) && $w["munkaora"] !== null ? ((float)$w["munkaora"]." óra/hó") : "—";
+            $sheet->setCellValue("A2", "Kvóta: {$quota}");
+
+            foreach (["A4"=>"Dátum","B4"=>"Nap","C4"=>"Rendelés","D4"=>"Kezdés","E4"=>"Befejezés","F4"=>"Óra"] as $cell=>$label) {
+                $sheet->setCellValue($cell, $label);
+            }
+            $sheet->getStyle("A4:F4")->getFont()->setBold(true);
+
+            $row = 5; $totalHours = 0.0;
+            foreach ($wrows as $r) {
+                $dayNum = (int)date("N", strtotime($r["datum"])) - 1;
+                $sheet->setCellValue("A{$row}", $r["datum"]);
+                $sheet->setCellValue("B{$row}", $HU_DAYS[$dayNum]);
+                $sheet->setCellValue("C{$row}", $r["tipusnev"]);
+                $sheet->setCellValue("D{$row}", $r["kezdes"]);
+                $sheet->setCellValue("E{$row}", $r["veges"]);
+                $sheet->setCellValue("F{$row}", (float)$r["ora"]);
+                $totalHours += (float)$r["ora"];
+                $row++;
+            }
+            $sheet->setCellValue("E{$row}", "Összesen:");
+            $sheet->setCellValue("F{$row}", round($totalHours, 2));
+            $sheet->getStyle("E{$row}:F{$row}")->getFont()->setBold(true);
+            foreach (["A","B","C","D","E","F"] as $col) { $sheet->getColumnDimension($col)->setAutoSize(true); }
+        }
+
+        if ($spreadsheet->getSheetCount() === 0) {
+            $spreadsheet->createSheet()->setTitle("Nincs adat");
+        }
+
+        $fileName = "jelenleti_{$month}.xlsx";
+        header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        header("Content-Disposition: attachment;filename=\"{$fileName}\"");
+        header("Cache-Control: max-age=0");
+        (new Xlsx($spreadsheet))->save("php://output");
+        die;
+    }
+
     private function _apiSaveBooking(): void {
         if (!$this->adminUser->beosztasPageAccess()) {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
@@ -1139,6 +1280,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "emailert"   => (int)$w["emailert"],
                     "efo"        => (int)($w["efo"] ?? 0),
                     "onVacation" => in_array((int)$w["id"], $onVacationIds, true),
+                    "munkaora"   => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
                 ];
             }, $workers),
             "users" => array_map(fn($u) => ["id" => (int)$u["id"], "nev" => $u["nev"], "beouserid" => (int)$u["beouserid"]], $users),
@@ -1160,6 +1302,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $emailert  = empty($_POST["emailert"]) ? 0 : 1;
         $efo       = empty($_POST["efo"]) ? 0 : 1;
         $beouserid = intval($_POST["beouserid"] ?? 0);
+        $munkaora  = (isset($_POST["munkaora"]) && $_POST["munkaora"] !== "") ? floatval($_POST["munkaora"]) : null;
 
         if ($nev === "" || !$roleid) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a nevet és a típust!"]);
@@ -1167,13 +1310,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         if ($id) {
             sql_query(
-                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=? WHERE id=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $id]
+                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=? WHERE id=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $id]
             );
         } else {
             sql_query(
-                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo]
+                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora]
             );
             $id = (int)sql_insert_id();
         }

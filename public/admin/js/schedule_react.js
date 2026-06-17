@@ -328,7 +328,7 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv, vacPerDay, monthHours }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
@@ -370,6 +370,16 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   });
   const selectAllDays = () => setSelectedDays(new Set([0,1,2,3,4,5,6]));
   const pickedDi = Array.from(selectedDays).sort((a,b2)=>a-b2)[0] ?? ctx.day;
+  const onVacToday = (vacPerDay||[])[pickedDi] || new Set();
+  const availDoctors  = (doctorList||[]).filter((w) => !onVacToday.has(w.id));
+  const availNurses   = (assistantList||[]).filter((w) => !onVacToday.has(w.id));
+  const availEgyebek  = (egyebList||[]).filter((w) => !onVacToday.has(w.id));
+  const bookingHours  = toMin(to) > toMin(from) ? (toMin(to) - toMin(from)) / 60.0 : 0;
+  const overWorkers   = [...docs, ...nurses, ...egyebek].filter((s) => {
+    if (!s.workerId) return false;
+    const mh = monthHours && monthHours[s.workerId];
+    return mh && mh.quota != null && (mh.booked + bookingHours) > mh.quota;
+  });
   const pickDate = (val) => {
     const di = dayDates.findIndex((d)=>iso(d)===val);
     if (di!==-1) setSelectedDays(new Set([di]));
@@ -464,16 +474,20 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               {badTime && <p style={{ fontSize:11.5, color:"var(--danger-ink)", marginTop:4 }}>A befejezés legyen későbbi a kezdésnél.</p>}
             </Field>
             <div>
-              <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--blue)" }}>{Ico.doctor({width:13,height:13})}</span> Orvosok</div>
-              <StaffEditor role="d" items={docs} onChange={setDocs} slotFrom={from} slotTo={to} workerList={doctorList}/>
+              <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--blue)" }}>{Ico.doctor({width:13,height:13})}</span> Orvosok {onVacToday.size>0&&<span style={{ fontSize:11, color:"var(--muted)" }}>({onVacToday.size} szabadságon)</span>}</div>
+              <StaffEditor role="d" items={docs} onChange={setDocs} slotFrom={from} slotTo={to} workerList={availDoctors}/>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--purple)" }}>{Ico.person({width:13,height:13})}</span> Asszisztensek</div>
-              <StaffEditor role="n" items={nurses} onChange={setNurses} slotFrom={from} slotTo={to} workerList={assistantList}/>
+              <StaffEditor role="n" items={nurses} onChange={setNurses} slotFrom={from} slotTo={to} workerList={availNurses}/>
             </div>
             {(egyebList||[]).length>0 && <div>
               <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--green)" }}>{Ico.building({width:13,height:13})}</span> Irodai munkatársak</div>
-              <StaffEditor role="e" items={egyebek} onChange={setEgyebek} slotFrom={from} slotTo={to} workerList={egyebList}/>
+              <StaffEditor role="e" items={egyebek} onChange={setEgyebek} slotFrom={from} slotTo={to} workerList={availEgyebek}/>
+            </div>}
+            {overWorkers.length>0 && <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 12%,transparent)", border:"1px solid color-mix(in srgb,var(--danger) 30%,transparent)" }}>
+              <span style={{ color:"var(--danger)", flexShrink:0 }}>{Ico.alert({width:14,height:14})}</span>
+              <span style={{ fontSize:12, fontWeight:600, color:"var(--danger-ink)" }}>Havi kvótát túllépi: {overWorkers.map((s)=>s.name).join(", ")}</span>
             </div>}
             <Field label="Megjegyzés (nem kötelező)">
               <div className="relative"><textarea value={note} maxLength={200} onChange={(e)=>setNote(e.target.value)} rows={2} placeholder="pl. EKG, terheléses vizsgálat" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/><span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{note.length} / 200</span></div>
@@ -919,7 +933,7 @@ function StaffView({ setToast, newSignal, query: searchQuery }) {
       const result = await post({
         savestaff:"1", id:rec.id||"0", roleid:rec.roleid, nev:rec.nev, teljesnev:rec.teljesnev,
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
-        efo:rec.efo?"1":"", beouserid:rec.beouserid||"0",
+        efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"",
       });
       if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1010,11 +1024,12 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const [emailert, setEmailert]   = useState(w ? !!w.emailert : true);
   const [efo, setEfo]             = useState(w ? !!w.efo : false);
   const [beouserid, setBeouserid] = useState(() => (users||[]).find((u)=>u.beouserid===(w?w.id:-1))?.id || 0);
+  const [munkaora, setMunkaora]   = useState(w && w.munkaora != null ? String(w.munkaora) : "");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1049,6 +1064,9 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
             <span style={{ fontSize:13, fontWeight:500 }}>EFO (egyszerűsített foglalkoztatás)</span>
             <Toggle on={efo} onChange={setEfo}/>
           </div>
+          <Field label="Havi munkaidő kvóta (óra)">
+            <input type="number" min="0" step="0.5" value={munkaora} onChange={(e)=>setMunkaora(e.target.value)} placeholder="pl. 28" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+          </Field>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
           <div>{w && <button onClick={()=>onDelete(w.id)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Törlés</button>}</div>
@@ -1462,6 +1480,106 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   );
 }
 
+/* ---- StatisticsView -------------------------------------------------- */
+function StatisticsView({ setToast }) {
+  const [data,    setData]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [month,   setMonth]   = useState(() => new Date().toISOString().slice(0,7));
+
+  const load = useCallback(() => {
+    setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getmonthhours=1&month=${month}`)
+      .then((r)=>r.json())
+      .then((d)=>{ setData(d); setLoading(false); })
+      .catch(()=>setLoading(false));
+  }, [month]);
+  useEffect(() => { load(); }, [load]);
+
+  const shiftMonth = (delta) => {
+    const d = new Date(month+"-01"); d.setMonth(d.getMonth()+delta);
+    setMonth(d.toISOString().slice(0,7));
+  };
+
+  if (loading || !data) return <LoadingBlock label="Statisztika betöltése…"/>;
+
+  const workers = data.workers || [];
+  const grouped = { 1:[], 2:[], 3:[] };
+  workers.forEach((w) => { if (grouped[w.roleid]) grouped[w.roleid].push(w); });
+
+  const ROLE_ICONS  = { 1:"doctor", 2:"person", 3:"building" };
+  const ROLE_COLORS = { 1:"var(--blue)", 2:"var(--purple)", 3:"var(--green)" };
+  const ROLE_LABELS = { 1:"Orvosok", 2:"Asszisztensek", 3:"Irodai munkatársak" };
+
+  const statusInfo = (w) => {
+    if (w.quota == null) return null;
+    const pct = w.booked / w.quota;
+    if (pct > 1.0)  return { color:"var(--danger)",  label:"Túlóra" };
+    if (pct >= 0.9) return { color:"var(--orange,#f59e0b)", label:"Közel" };
+    return { color:"var(--green)", label:"OK" };
+  };
+
+  const exportUrl = `${HMM_CONFIG.url}&exportstatistics=1&month=${month}`;
+
+  return (
+    <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <button onClick={()=>shiftMonth(-1)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left()}</button>
+          <span style={{ fontSize:15, fontWeight:700 }}>{month}</span>
+          <button onClick={()=>shiftMonth(1)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.right()}</button>
+        </div>
+        <a href={exportUrl} className="flex items-center gap-1.5 rounded-lg px-4 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--green)", textDecoration:"none" }}>{Ico.ext({width:14,height:14})} Jelenléti export (.xlsx)</a>
+      </div>
+      <div className="flex flex-col gap-3" style={{ maxWidth:820 }}>
+        {[1,2,3].map((rid) => {
+          const ws = (grouped[rid]||[]).filter((w) => w.booked > 0 || w.quota != null);
+          if (!ws.length) return null;
+          const RoleIcon = Ico[ROLE_ICONS[rid]];
+          return (
+            <div key={rid} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+              <div className="flex items-center gap-2 px-3 py-2.5" style={{ background:`color-mix(in srgb,${ROLE_COLORS[rid]} 10%,transparent)`, borderBottom:"1px solid var(--border-soft)" }}>
+                <span style={{ color:ROLE_COLORS[rid] }}>{RoleIcon({width:15,height:15})}</span>
+                <span style={{ fontSize:13, fontWeight:700, color:ROLE_COLORS[rid] }}>{ROLE_LABELS[rid]}</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                  <thead>
+                    <tr style={{ borderBottom:"1px solid var(--border-soft)" }}>
+                      {["Munkatárs","Kvóta","Beosztott","Különbség","Állapot"].map((h,i)=>(
+                        <th key={i} style={{ padding:"7px 10px", textAlign:i===0?"left":"right", fontWeight:600, color:"var(--muted)", fontSize:11.5, whiteSpace:"nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ws.map((w) => {
+                      const st   = statusInfo(w);
+                      const diff = w.quota != null ? w.booked - w.quota : null;
+                      return (
+                        <tr key={w.id} style={{ borderBottom:"1px solid var(--border-soft)" }}>
+                          <td style={{ padding:"8px 10px", fontWeight:600 }}>{w.teljesnev||w.nev}</td>
+                          <td style={{ padding:"8px 10px", textAlign:"right", color:"var(--muted)" }}>{w.quota!=null?`${w.quota} h`:"—"}</td>
+                          <td style={{ padding:"8px 10px", textAlign:"right", fontWeight:700 }}>{w.booked.toFixed(1)} h</td>
+                          <td style={{ padding:"8px 10px", textAlign:"right", color:diff>0?"var(--danger)":diff<0?"var(--green)":"var(--muted)" }}>
+                            {diff!=null?`${diff>0?"+":""}${diff.toFixed(1)} h`:"—"}
+                          </td>
+                          <td style={{ padding:"8px 10px", textAlign:"right" }}>
+                            {st ? <span className="rounded-md px-2 py-0.5" style={{ fontSize:11, fontWeight:700, color:st.color, background:`color-mix(in srgb,${st.color} 15%,transparent)` }}>{st.label}</span> : <span style={{ color:"var(--muted)" }}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+        {workers.every((w)=>w.booked===0) && <div className="text-center py-10" style={{ fontSize:13.5, color:"var(--muted)" }}>Ebben a hónapban még nincs beosztás.</div>}
+      </div>
+    </div>
+  );
+}
+
 function VacationModal({ workers, onClose, onSave }) {
   const grouped = useMemo(() => {
     const m = new Map();
@@ -1685,6 +1803,7 @@ function MunkaidoBeosztas() {
   const [staffNewSignal, setStaffNewSignal] = useState(0);
   const [placeNewSignal, setPlaceNewSignal] = useState(0);
   const [vacNewSignal,   setVacNewSignal]   = useState(0);
+  const [monthHours,     setMonthHours]     = useState({});
 
   /* ---- adatlekérés ---- */
   const fetchWeek = useCallback((offset) => {
@@ -1703,6 +1822,14 @@ function MunkaidoBeosztas() {
 
   useEffect(() => { fetchWeek(weekOffset); }, [weekOffset, fetchWeek]);
   useEffect(() => { if (nav==="board"||nav==="list"||nav==="conflicts") fetchWeek(weekOffset); }, [nav]);
+
+  useEffect(() => {
+    const month = new Date().toISOString().slice(0,7);
+    fetch(`${HMM_CONFIG.url}&getmonthhours=1&month=${month}`)
+      .then((r)=>r.json())
+      .then((d)=>{ const map={}; (d.workers||[]).forEach((w)=>{ map[w.id]=w; }); setMonthHours(map); })
+      .catch(()=>{});
+  }, [weekData]);
 
   /* ---- derivált értékek ---- */
   const year   = weekData?.year   ?? new Date().getFullYear();
@@ -1743,6 +1870,10 @@ function MunkaidoBeosztas() {
     if (!weekData) return EMPTY_BOARD;
     return weekData.days.map((d) => d.bookings);
   }, [weekData]);
+
+  const vacPerDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => new Set((d.vacations||[]).map((v) => v.workerId))),
+  [weekData]);
 
   const vacationsByDay = useMemo(() => {
     if (!weekData) return EMPTY_BOARD;
@@ -1851,8 +1982,9 @@ function MunkaidoBeosztas() {
     { id:"conflicts", icon:Ico.alert,    label:"Ütközések", badge:conf.set.size },
     { id:"workplaces",icon:Ico.building, label:"Rendelések" },
     { id:"workers",   icon:Ico.doctor,   label:"Munkatársak" },
-    { id:"vacations", icon:Ico.sun,      label:"Szabadságok" },
-    { id:"copy",      icon:Ico.copy,     label:"Hét másolása" },
+    { id:"vacations",  icon:Ico.sun,      label:"Szabadságok" },
+    { id:"statistics", icon:Ico.chart,   label:"Statisztika" },
+    { id:"copy",       icon:Ico.copy,    label:"Hét másolása" },
     { id:"notify",    icon:Ico.bell,     label:"Értesítések" },
     { id:"print",     icon:Ico.list,     label:"Nyomtatás" },
   ];
@@ -1935,8 +2067,8 @@ function MunkaidoBeosztas() {
 
           {/* ESZKÖZTÁR */}
           <div className="flex flex-wrap items-center gap-3 px-4 lg:px-6 py-3" style={{ borderBottom:"1px solid var(--border)", flexShrink:0 }}>
-            <h1 className="mb-display" style={{ fontSize:20, fontWeight:700 }}>{nav==="workers"?"Munkatársak":nav==="workplaces"?"Rendelések":nav==="vacations"?"Szabadságok":nav==="notify"?"Értesítések":"Munkaidő beosztás"}</h1>
-            {!["workers","workplaces","vacations","notify"].includes(nav) && (<>
+            <h1 className="mb-display" style={{ fontSize:20, fontWeight:700 }}>{nav==="workers"?"Munkatársak":nav==="workplaces"?"Rendelések":nav==="vacations"?"Szabadságok":nav==="notify"?"Értesítések":nav==="statistics"?"Statisztika":"Munkaidő beosztás"}</h1>
+            {!["workers","workplaces","vacations","notify","statistics"].includes(nav) && (<>
             <div className="flex items-center gap-2 ml-1">
               <button onClick={()=>setWeekOffset((w)=>w-1)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left()}</button>
               <button onClick={()=>setWeekOffset((w)=>w+1)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.right()}</button>
@@ -1980,6 +2112,8 @@ function MunkaidoBeosztas() {
               <PlacesView setToast={setToast} newSignal={placeNewSignal} query={query}/>
             ) : nav==="vacations" ? (
               <VacationsView setToast={setToast} newSignal={vacNewSignal} query={query}/>
+            ) : nav==="statistics" ? (
+              <StatisticsView setToast={setToast}/>
             ) : nav==="notify" ? (
               <NotifyView setToast={setToast}/>
             ) : (
@@ -2022,7 +2156,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
