@@ -936,11 +936,14 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "tipusId" => (int)$tipus["id"],
                     "cat"     => !empty($tipus["kiszallas"]) ? "kiszallas" : ($tipus["kulso"] == 0 ? "belso" : "kulso"),
                     "title"   => $tipus["megnev"],
-                    "address" => $tipus["cim"]    ?? "",
-                    "rendelo" => $tipus["rendelo"] ?? "",
-                    "note"    => $tipus["megj"]  ?? "",
-                    "napok"   => (int)($tipus["napok"] ?? 127),
-                    "org"     => $tipus["org"] ?: "HMM",
+                    "address"     => $tipus["cim"]    ?? "",
+                    "rendelo"     => $tipus["rendelo"] ?? "",
+                    "note"        => $tipus["megj"]  ?? "",
+                    "napok"       => (int)($tipus["napok"] ?? 127),
+                    "org"         => $tipus["org"] ?: "HMM",
+                    "ktarto_nev"  => $tipus["ktarto_nev"]   ?? "",
+                    "ktarto_tel"  => $tipus["ktarto_tel"]   ?? "",
+                    "ktarto_email"=> $tipus["ktarto_email"] ?? "",
                     "from"    => $minFrom ?? "08:00",
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
@@ -1178,18 +1181,21 @@ class AdminWorkSchedulePage extends AdminCorePage {
             "roles"  => $roles,
             "places" => array_map(function ($r) {
                 return [
-                    "id"        => (int)$r["id"],
-                    "megnev"    => $r["megnev"],
-                    "cim"       => $r["cim"],
-                    "rendelo"   => $r["rendelo"] ?? "",
-                    "megj"      => $r["megj"],
-                    "kulso"     => (int)$r["kulso"],
-                    "kiszallas" => (int)($r["kiszallas"] ?? 0),
-                    "org"       => $r["org"] ?: "HMM",
-                    "roleid"    => (int)$r["roleid"],
-                    "sorrend"   => (int)$r["sorrend"],
-                    "aktiv"     => (int)$r["aktiv"],
-                    "napok"     => (int)($r["napok"] ?? 127),
+                    "id"           => (int)$r["id"],
+                    "megnev"       => $r["megnev"],
+                    "cim"          => $r["cim"],
+                    "rendelo"      => $r["rendelo"] ?? "",
+                    "megj"         => $r["megj"],
+                    "kulso"        => (int)$r["kulso"],
+                    "kiszallas"    => (int)($r["kiszallas"] ?? 0),
+                    "org"          => $r["org"] ?: "HMM",
+                    "roleid"       => (int)$r["roleid"],
+                    "sorrend"      => (int)$r["sorrend"],
+                    "aktiv"        => (int)$r["aktiv"],
+                    "napok"        => (int)($r["napok"] ?? 127),
+                    "ktarto_nev"   => $r["ktarto_nev"]   ?? "",
+                    "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
+                    "ktarto_email" => $r["ktarto_email"] ?? "",
                 ];
             }, $rows),
         ]);
@@ -1231,8 +1237,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó azonosító!"]);
         }
 
-        $fields = "cim=?, megj=?, rendelo=?";
-        $params = [$cim, $megj, $rendelo];
+        $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
+        $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
+        $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
+
+        $fields = "cim=?, megj=?, rendelo=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?";
+        $params = [$cim, $megj, $rendelo, $ktarto_nev, $ktarto_tel, $ktarto_email];
         if ($napok >= 0 && $napok <= 127) { $fields .= ", napok=?"; $params[] = $napok; }
         if ($org !== null)                { $fields .= ", org=?";   $params[] = $org;   }
         $params[] = $id;
@@ -1246,14 +1256,17 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
         }
 
-        $id      = intval($_POST["id"] ?? 0);
-        $megnev  = trim($_POST["megnev"] ?? "");
-        $cim     = trim($_POST["cim"] ?? "");
-        $rendelo = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
-        $sorrend = intval($_POST["sorrend"] ?? 0);
-        $org     = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
-        $napok   = intval($_POST["napok"] ?? 127) & 0x7F;
-        $cat     = $_POST["cat"] ?? "";
+        $id           = intval($_POST["id"] ?? 0);
+        $megnev       = trim($_POST["megnev"] ?? "");
+        $cim          = trim($_POST["cim"] ?? "");
+        $rendelo      = substr(trim($_POST["rendelo"]      ?? ""), 0, 255);
+        $sorrend      = intval($_POST["sorrend"] ?? 0);
+        $org          = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
+        $napok        = intval($_POST["napok"] ?? 127) & 0x7F;
+        $cat          = $_POST["cat"] ?? "";
+        $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
+        $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
+        $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
 
         if (!$id || $megnev === "") {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a megnevezést!"]);
@@ -1263,8 +1276,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }

@@ -338,8 +338,11 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [org, setOrg]       = useState(b ? (b.org||"HMM") : "HMM");
   const [titleInput, setTitleInput]     = useState("");
   const [addressInput, setAddressInput] = useState(b ? (b.address||"") : "");
-  const [rendInput,   setRendInput]     = useState(b ? (b.rendelo||"") : "");
-  const [napok,       setNapok]         = useState(b ? (b.napok ?? 127) : 127);
+  const [rendInput,     setRendInput]     = useState(b ? (b.rendelo||"") : "");
+  const [napok,         setNapok]         = useState(b ? (b.napok ?? 127) : 127);
+  const [ktartoNev,     setKtartoNev]     = useState(b ? (b.ktarto_nev||"") : "");
+  const [ktartoTel,     setKtartoTel]     = useState(b ? (b.ktarto_tel||"") : "");
+  const [ktartoEmail,   setKtartoEmail]   = useState(b ? (b.ktarto_email||"") : "");
   const [dateStart, setDateStart] = useState(() => iso(dayDates[ctx.day]));
   const [dateEnd,   setDateEnd]   = useState(() => iso(dayDates[ctx.day]));
 
@@ -371,7 +374,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const save = () => {
     const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
     const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, staff, from, to, note };
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note };
     onSave(rec);
   };
 
@@ -492,6 +495,20 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 <Field label="Szervező">
                   <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
                 </Field>
+              )}
+              {(cat==="kulso"||cat==="kiszallas") && (
+                <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>
+                  <Field label="Név">
+                    <input value={ktartoNev} onChange={(e)=>setKtartoNev(e.target.value)} placeholder="pl. Kovács Péter" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
+                  </Field>
+                  <Field label="Telefon">
+                    <input value={ktartoTel} onChange={(e)=>setKtartoTel(e.target.value)} placeholder="+36 30 123 4567" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
+                  </Field>
+                  <Field label="E-mail">
+                    <input value={ktartoEmail} onChange={(e)=>setKtartoEmail(e.target.value)} placeholder="pelda@email.hu" className="mb-in px-3 py-2" style={{ fontSize:13 }}/>
+                  </Field>
+                </div>
               )}
               <Field label="Cím (Google Maps)">
                 <div className="flex items-center gap-1.5">
@@ -1078,9 +1095,9 @@ function PlacesView({ setToast, newSignal }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1171,17 +1188,20 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const isNew = !p.id;
   const catFromP = () => p.kiszallas===1 ? "kiszallas" : (p.kulso===0 ? "belso" : "kulso");
 
-  const [megnev,  setMegnev]  = useState(p.megnev||"");
-  const [cim,     setCim]     = useState(p.cim||"");
-  const [rendelo, setRendelo] = useState(p.rendelo||"");
-  const [org,     setOrg]     = useState(p.org||"HMM");
-  const [napok,   setNapok]   = useState(p.napok ?? 31);
-  const [cat,     setCat]     = useState(catFromP());
+  const [megnev,       setMegnev]      = useState(p.megnev||"");
+  const [cim,          setCim]         = useState(p.cim||"");
+  const [rendelo,      setRendelo]     = useState(p.rendelo||"");
+  const [org,          setOrg]         = useState(p.org||"HMM");
+  const [napok,        setNapok]       = useState(p.napok ?? 31);
+  const [cat,          setCat]         = useState(catFromP());
+  const [ktartoNev,    setKtartoNev]   = useState(p.ktarto_nev||"");
+  const [ktartoTel,    setKtartoTel]   = useState(p.ktarto_tel||"");
+  const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1219,6 +1239,22 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           <Field label="Aktív napok">
             <NapokSelector value={napok} onChange={setNapok}/>
           </Field>
+          {cat !== "belso" && (
+            <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+              <div style={{ fontSize:12.5, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>
+              <Field label="Név">
+                <input value={ktartoNev} onChange={(e)=>setKtartoNev(e.target.value)} placeholder="pl. Kovács Péter" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Telefon">
+                  <input value={ktartoTel} onChange={(e)=>setKtartoTel(e.target.value)} placeholder="+36 30 123 4567" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+                </Field>
+                <Field label="E-mail">
+                  <input value={ktartoEmail} onChange={(e)=>setKtartoEmail(e.target.value)} placeholder="pelda@email.hu" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+                </Field>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
           {!isNew ? (
@@ -1646,7 +1682,7 @@ function MunkaidoBeosztas() {
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
         await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
       }
       let allOk = true;
