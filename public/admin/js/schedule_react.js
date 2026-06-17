@@ -1335,11 +1335,15 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
 }
 
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
-function VacationsView({ setToast }) {
-  const [data, setData]           = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [busyId, setBusyId]       = useState(null);
+function VacationsView({ setToast, newSignal }) {
+  const [data, setData]             = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [modalOpen, setModalOpen]   = useState(false);
+  const [busyId, setBusyId]         = useState(null);
+  const [secCollapsed, setSecCollapsed] = useState({});
+
+  const initialSignal = useRef(newSignal);
+  useEffect(() => { if (newSignal > initialSignal.current) setModalOpen(true); }, [newSignal]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -1377,55 +1381,74 @@ function VacationsView({ setToast }) {
 
   if (loading || !data) return <LoadingBlock label="Szabadságok betöltése…"/>;
 
+  const today = new Date().toISOString().slice(0,10);
   const vacations = data.vacations || [];
+  const isFuture  = (v) => v.to >= today;
+  const isPast    = (v) => v.to < today;
+
   const sections = [
-    { key:"pending",  label:"Függő kérelmek",          color:"var(--brand)", items:vacations.filter((v)=>v.status===0||v.status===-1) },
-    { key:"approved", label:"Elfogadott szabadságok",  color:"var(--green)", items:vacations.filter((v)=>v.status===1) },
-    { key:"rejected", label:"Elutasított kérelmek",    color:"var(--danger)", items:vacations.filter((v)=>v.status===2) },
+    {
+      key:"pending",  label:"Függő szabadságok",   color:"var(--brand)",  icon:"clock",
+      items: vacations.filter((v) => (v.status===0||v.status===-1) && isFuture(v)),
+    },
+    {
+      key:"approved", label:"Elfogadott szabadság", color:"var(--green)",  icon:"sun",
+      items: vacations.filter((v) => v.status===1 && isFuture(v)),
+    },
+    {
+      key:"archived", label:"Archivált",            color:"var(--muted)",  icon:"calendar",
+      items: vacations.filter((v) => isPast(v) || v.status===2),
+    },
   ];
+
+  const VacCard = ({ v, secKey }) => (
+    <div className="flex items-center justify-between gap-3 rounded-lg flex-wrap" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{v.workerName}</div>
+          <Badge text={v.tipus||"Szabadság"} color={VACATION_TYPE_COLORS[v.tipus]||VACATION_TYPE_COLORS["Szabadság"]}/>
+          {v.status===2 && <Badge text="Elutasítva" color="var(--danger)"/>}
+        </div>
+        <div className="mb-mono" style={{ fontSize:11.5, color:"var(--muted)" }}>
+          {fmtShortISO(v.from)}{v.to!==v.from?` – ${fmtShortISO(v.to)}`:""} · {v.days} nap{v.status===-1?" · vegyes állapot":""}
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {secKey==="pending" && (<>
+          <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,1)} className="rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"#fff", background:"var(--green)" }}>Elfogadás</button>
+          <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,2)} className="rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"#fff", background:"var(--danger)" }}>Elutasítás</button>
+        </>)}
+        {secKey==="approved" && (
+          <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,0)} className="mb-btn rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Visszavonás</button>
+        )}
+        <button disabled={busyId===v.groupid} onClick={()=>remove(v.groupid)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--danger-ink)" }}>{Ico.trash()}</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
-      <div className="flex items-center justify-between gap-3 mb-3" style={{ maxWidth:760 }}>
-        <div style={{ fontSize:12.5, color:"var(--muted)" }}>Munkatársak szabadságkérelmeinek kezelése.</div>
-        <button onClick={()=>setModalOpen(true)} className="mb-add flex items-center gap-1 rounded-lg px-3 py-2" style={{ fontSize:12.5, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új szabadság</button>
-      </div>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
-        {sections.map((sec) => (
-          <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-            <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
-              <span style={{ color:sec.color }}>{Ico.sun({width:15,height:15})}</span>
-              <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
-              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{sec.items.length}</span>
+        {sections.map((sec) => {
+          const SectionIcon = Ico[sec.icon];
+          const collapsed = !!secCollapsed[sec.key];
+          return (
+            <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+              <button onClick={()=>setSecCollapsed((p)=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
+                <span className="flex items-center gap-2">
+                  <span style={{ color:sec.color }}>{SectionIcon({width:15,height:15})}</span>
+                  <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
+                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{sec.items.length}</span>
+                </span>
+                <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+              </button>
+              {!collapsed && <div className="flex flex-col gap-1.5 p-2">
+                {sec.items.map((v) => <VacCard key={v.groupid} v={v} secKey={sec.key}/>)}
+                {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs ilyen szabadság.</div>}
+              </div>}
             </div>
-            <div className="flex flex-col gap-1.5 p-2">
-              {sec.items.map((v) => (
-                <div key={v.groupid} className="flex items-center justify-between gap-3 rounded-lg flex-wrap" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{v.workerName}</div>
-                      <Badge text={v.tipus||"Szabadság"} color={VACATION_TYPE_COLORS[v.tipus]||VACATION_TYPE_COLORS["Szabadság"]}/>
-                    </div>
-                    <div className="mb-mono" style={{ fontSize:11.5, color:"var(--muted)" }}>
-                      {fmtShortISO(v.from)}{v.to!==v.from?` – ${fmtShortISO(v.to)}`:""} · {v.days} nap{v.status===-1?" · vegyes állapot":""}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {sec.key==="pending" && (<>
-                      <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,1)} className="rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"#fff", background:"var(--green)" }}>Elfogadás</button>
-                      <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,2)} className="rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"#fff", background:"var(--danger)" }}>Elutasítás</button>
-                    </>)}
-                    {(sec.key==="approved"||sec.key==="rejected") && (
-                      <button disabled={busyId===v.groupid} onClick={()=>setStatus(v.groupid,0)} className="mb-btn rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Visszavonás</button>
-                    )}
-                    <button disabled={busyId===v.groupid} onClick={()=>remove(v.groupid)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--danger-ink)" }}>{Ico.trash()}</button>
-                  </div>
-                </div>
-              ))}
-              {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs ilyen szabadság.</div>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {modalOpen && <VacationModal workers={data.workers} onClose={()=>setModalOpen(false)} onSave={addVacation}/>}
     </div>
@@ -1654,6 +1677,7 @@ function MunkaidoBeosztas() {
   const [toast,        setToast]        = useState(null);
   const [staffNewSignal, setStaffNewSignal] = useState(0);
   const [placeNewSignal, setPlaceNewSignal] = useState(0);
+  const [vacNewSignal,   setVacNewSignal]   = useState(0);
 
   /* ---- adatlekérés ---- */
   const fetchWeek = useCallback((offset) => {
@@ -1911,8 +1935,9 @@ function MunkaidoBeosztas() {
               {nav==="board" && <button onClick={()=>setModal({day:0, cat:"belso", booking:null})} className="mb-prim flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
             </div>
             </>)}
-            {nav==="workers" && <button onClick={()=>setStaffNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új munkatárs</button>}
-            {nav==="workplaces" && <button onClick={()=>setPlaceNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
+            {nav==="workers"   && <button onClick={()=>setStaffNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új munkatárs</button>}
+            {nav==="workplaces"&& <button onClick={()=>setPlaceNewSignal((s)=>s+1)} className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új rendelés</button>}
+            {nav==="vacations" && <button onClick={()=>setVacNewSignal((s)=>s+1)}   className="mb-prim ml-auto flex items-center gap-1.5 rounded-lg px-3.5 py-2" style={{ fontSize:13, fontWeight:700, color:"#fff", background:"var(--brand)" }}>{Ico.plus()} Új szabadság</button>}
           </div>
 
           {/* TÁBLA */}
@@ -1933,7 +1958,7 @@ function MunkaidoBeosztas() {
             ) : nav==="workplaces" ? (
               <PlacesView setToast={setToast} newSignal={placeNewSignal}/>
             ) : nav==="vacations" ? (
-              <VacationsView setToast={setToast}/>
+              <VacationsView setToast={setToast} newSignal={vacNewSignal}/>
             ) : nav==="notify" ? (
               <NotifyView setToast={setToast}/>
             ) : (
