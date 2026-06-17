@@ -122,9 +122,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiExportStatistics();
         }
 
-        // DB migration: munkaora column
+        // DB migration: munkaora + munkaora_tipus columns
         try {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora DECIMAL(4,1) DEFAULT NULL");
+        } catch (\Exception $e) { /* already exists */ }
+        try {
+            sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora_tipus ENUM('havi','heti') NOT NULL DEFAULT 'havi'");
         } catch (\Exception $e) { /* already exists */ }
 
         if (isset($_GET["getnotifications"])) {
@@ -1068,8 +1071,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
                 "nev"      => $w["nev"],
                 "teljesnev"=> $w["teljesnev"],
                 "roleid"   => (int)$w["roleid"],
-                "quota"    => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
-                "booked"   => $bookedMap[(int)$w["id"]] ?? 0.0,
+                "quota"          => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
+                "munkaora_tipus" => $w["munkaora_tipus"] ?? "havi",
+                "booked"         => $bookedMap[(int)$w["id"]] ?? 0.0,
             ];
         }, $workers);
 
@@ -1280,7 +1284,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "emailert"   => (int)$w["emailert"],
                     "efo"        => (int)($w["efo"] ?? 0),
                     "onVacation" => in_array((int)$w["id"], $onVacationIds, true),
-                    "munkaora"   => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
+                    "munkaora"       => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
+                    "munkaora_tipus" => $w["munkaora_tipus"] ?? "havi",
                 ];
             }, $workers),
             "users" => array_map(fn($u) => ["id" => (int)$u["id"], "nev" => $u["nev"], "beouserid" => (int)$u["beouserid"]], $users),
@@ -1302,7 +1307,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $emailert  = empty($_POST["emailert"]) ? 0 : 1;
         $efo       = empty($_POST["efo"]) ? 0 : 1;
         $beouserid = intval($_POST["beouserid"] ?? 0);
-        $munkaora  = (isset($_POST["munkaora"]) && $_POST["munkaora"] !== "") ? floatval($_POST["munkaora"]) : null;
+        $munkaora       = (isset($_POST["munkaora"]) && $_POST["munkaora"] !== "") ? floatval($_POST["munkaora"]) : null;
+        $munkaora_tipus = in_array($_POST["munkaora_tipus"] ?? "", ["havi","heti"]) ? $_POST["munkaora_tipus"] : "havi";
 
         if ($nev === "" || !$roleid) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a nevet és a típust!"]);
@@ -1310,13 +1316,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         if ($id) {
             sql_query(
-                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=? WHERE id=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $id]
+                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=? WHERE id=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $id]
             );
         } else {
             sql_query(
-                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora]
+                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus]
             );
             $id = (int)sql_insert_id();
         }

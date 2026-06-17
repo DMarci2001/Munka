@@ -328,7 +328,7 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv, vacPerDay, monthHours }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv, vacPerDay, monthHours, weekWorkerHours }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
@@ -378,7 +378,11 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const overWorkers   = [...docs, ...nurses, ...egyebek].filter((s) => {
     if (!s.workerId) return false;
     const mh = monthHours && monthHours[s.workerId];
-    return mh && mh.quota != null && (mh.booked + bookingHours) > mh.quota;
+    if (!mh || mh.quota == null) return false;
+    if (mh.munkaora_tipus === "heti") {
+      return ((weekWorkerHours && weekWorkerHours[s.workerId]) || 0) + bookingHours > mh.quota;
+    }
+    return (mh.booked + bookingHours) > mh.quota;
   });
   const pickDate = (val) => {
     const di = dayDates.findIndex((d)=>iso(d)===val);
@@ -933,7 +937,7 @@ function StaffView({ setToast, newSignal, query: searchQuery }) {
       const result = await post({
         savestaff:"1", id:rec.id||"0", roleid:rec.roleid, nev:rec.nev, teljesnev:rec.teljesnev,
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
-        efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"",
+        efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"", munkaora_tipus:rec.munkaora_tipus||"havi",
       });
       if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1024,12 +1028,13 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const [emailert, setEmailert]   = useState(w ? !!w.emailert : true);
   const [efo, setEfo]             = useState(w ? !!w.efo : false);
   const [beouserid, setBeouserid] = useState(() => (users||[]).find((u)=>u.beouserid===(w?w.id:-1))?.id || 0);
-  const [munkaora, setMunkaora]   = useState(w && w.munkaora != null ? String(w.munkaora) : "");
+  const [munkaora,       setMunkaora]       = useState(w && w.munkaora != null ? String(w.munkaora) : "");
+  const [munkaora_tipus, setMunkaoraTipus] = useState(w ? (w.munkaora_tipus || "havi") : "havi");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1064,8 +1069,11 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
             <span style={{ fontSize:13, fontWeight:500 }}>EFO (egyszerűsített foglalkoztatás)</span>
             <Toggle on={efo} onChange={setEfo}/>
           </div>
-          <Field label="Havi munkaidő kvóta (óra)">
-            <input type="number" min="0" step="0.5" value={munkaora} onChange={(e)=>setMunkaora(e.target.value)} placeholder="pl. 28" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+          <Field label="Munkaidő kvóta">
+            <div className="flex items-center gap-2">
+              <input type="number" min="0" step="0.5" value={munkaora} onChange={(e)=>setMunkaora(e.target.value)} placeholder="pl. 28" className="mb-in px-3 py-2.5 flex-1" style={{ fontSize:13.5 }}/>
+              <MiniSelect value={munkaora_tipus} onChange={setMunkaoraTipus} options={[{v:"havi",l:"óra/hó"},{v:"heti",l:"óra/hét"}]}/>
+            </div>
           </Field>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
@@ -1510,9 +1518,18 @@ function StatisticsView({ setToast }) {
   const ROLE_COLORS = { 1:"var(--blue)", 2:"var(--purple)", 3:"var(--green)" };
   const ROLE_LABELS = { 1:"Orvosok", 2:"Asszisztensek", 3:"Irodai munkatársak" };
 
-  const statusInfo = (w) => {
+  const weeksInMonth = (m) => {
+    const d = new Date(m+"-01");
+    return Math.ceil(new Date(d.getFullYear(), d.getMonth()+1, 0).getDate() / 7);
+  };
+  const effectiveQuota = (w) => {
     if (w.quota == null) return null;
-    const pct = w.booked / w.quota;
+    return w.munkaora_tipus === "heti" ? w.quota * weeksInMonth(month) : w.quota;
+  };
+  const statusInfo = (w) => {
+    const eq = effectiveQuota(w);
+    if (eq == null) return null;
+    const pct = w.booked / eq;
     if (pct > 1.0)  return { color:"var(--danger)",  label:"Túlóra" };
     if (pct >= 0.9) return { color:"var(--orange,#f59e0b)", label:"Közel" };
     return { color:"var(--green)", label:"OK" };
@@ -1553,11 +1570,13 @@ function StatisticsView({ setToast }) {
                   <tbody>
                     {ws.map((w) => {
                       const st   = statusInfo(w);
-                      const diff = w.quota != null ? w.booked - w.quota : null;
+                      const eq   = effectiveQuota(w);
+                      const diff = eq != null ? w.booked - eq : null;
+                      const quotaLabel = w.quota != null ? `${w.quota} h/${w.munkaora_tipus==="heti"?"hét":"hó"}` : "—";
                       return (
                         <tr key={w.id} style={{ borderBottom:"1px solid var(--border-soft)" }}>
                           <td style={{ padding:"8px 10px", fontWeight:600 }}>{w.teljesnev||w.nev}</td>
-                          <td style={{ padding:"8px 10px", textAlign:"right", color:"var(--muted)" }}>{w.quota!=null?`${w.quota} h`:"—"}</td>
+                          <td style={{ padding:"8px 10px", textAlign:"right", color:"var(--muted)" }}>{quotaLabel}</td>
                           <td style={{ padding:"8px 10px", textAlign:"right", fontWeight:700 }}>{w.booked.toFixed(1)} h</td>
                           <td style={{ padding:"8px 10px", textAlign:"right", color:diff>0?"var(--danger)":diff<0?"var(--green)":"var(--muted)" }}>
                             {diff!=null?`${diff>0?"+":""}${diff.toFixed(1)} h`:"—"}
@@ -1875,6 +1894,20 @@ function MunkaidoBeosztas() {
     (weekData?.days||[]).map((d) => new Set((d.vacations||[]).map((v) => v.workerId))),
   [weekData]);
 
+  const weekWorkerHours = useMemo(() => {
+    const map = {};
+    (weekData?.days||[]).forEach((day) => {
+      (day.bookings||[]).forEach((b) => {
+        (b.staff||[]).forEach((s) => {
+          if (!s.workerId) return;
+          const h = (toMin(s.to) - toMin(s.from)) / 60.0;
+          map[s.workerId] = (map[s.workerId] || 0) + (h > 0 ? h : 0);
+        });
+      });
+    });
+    return map;
+  }, [weekData]);
+
   const vacationsByDay = useMemo(() => {
     if (!weekData) return EMPTY_BOARD;
     return weekData.days.map((d) => d.vacations || []);
@@ -2156,7 +2189,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
