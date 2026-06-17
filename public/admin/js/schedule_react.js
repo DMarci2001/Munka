@@ -184,6 +184,7 @@ const Ico = {
   refresh:  S(<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 3v5h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 16),
   eye:      S(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/></>, 16),
   eyeOff:   S(<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
+  logout:   S(<><path d="M16 17l5-5-5-5M21 12H9M13 7V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 16),
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
@@ -887,7 +888,7 @@ const ROLE_DISPLAY = {
 };
 const getRoleDisplay = (role) => ROLE_DISPLAY[role.id] || { label:role.megnev, icon:"truck", color:"var(--faint)" };
 
-function StaffView({ setToast, newSignal }) {
+function StaffView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]           = useState(null);
   const [loading, setLoading]     = useState(true);
   const [query, setQuery]         = useState("");
@@ -936,7 +937,7 @@ function StaffView({ setToast, newSignal }) {
 
   if (loading || !data) return <LoadingBlock label="Munkatársak betöltése…"/>;
 
-  const q = query.trim().toLowerCase();
+  const q = (searchQuery || query).trim().toLowerCase();
   const allWorkers = (data.workers||[]).filter((w) => !q || `${w.teljesnev} ${w.nev} ${w.email} ${w.tel}`.toLowerCase().includes(q));
 
   return (
@@ -1095,7 +1096,7 @@ function SegBtn({ options, value, onChange }) {
 }
 
 /* ---- PlacesView / LocationModal (Rendelések) ------------------------- */
-function PlacesView({ setToast, newSignal }) {
+function PlacesView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]               = useState(null);
   const [loading, setLoading]         = useState(true);
   const [modal, setModal]             = useState(null);
@@ -1174,6 +1175,8 @@ function PlacesView({ setToast, newSignal }) {
 
   if (loading || !data) return <LoadingBlock label="Rendelések betöltése…"/>;
 
+  const q = (searchQuery || "").trim().toLowerCase();
+
   const SECTIONS = [
     { key:"belso",     label:"Belső rendelések", accent:CATS.belso.color     },
     { key:"kulso",     label:"Külső rendelések", accent:CATS.kulso.color     },
@@ -1184,7 +1187,7 @@ function PlacesView({ setToast, newSignal }) {
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
         {SECTIONS.map((sec) => {
-          const places = orderedPlaces.filter(p => getSectionKey(p) === sec.key);
+          const places = orderedPlaces.filter(p => getSectionKey(p) === sec.key && (!q || `${p.megnev} ${p.rendelo||""} ${p.cim||""}`.toLowerCase().includes(q)));
           const SectionIcon = sec.key === "kiszallas" ? Ico.truck : Ico.building;
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -1335,7 +1338,7 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
 }
 
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
-function VacationsView({ setToast, newSignal }) {
+function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]             = useState(null);
   const [loading, setLoading]       = useState(true);
   const [modalOpen, setModalOpen]   = useState(false);
@@ -1385,19 +1388,21 @@ function VacationsView({ setToast, newSignal }) {
   const vacations = data.vacations || [];
   const isFuture  = (v) => v.to >= today;
   const isPast    = (v) => v.to < today;
+  const q = (searchQuery || "").trim().toLowerCase();
+  const filterVac = (v) => !q || `${v.workerName||""} ${v.tipus||""}`.toLowerCase().includes(q);
 
   const sections = [
     {
       key:"pending",  label:"Függő szabadságok",   color:"var(--brand)",  icon:"clock",
-      items: vacations.filter((v) => (v.status===0||v.status===-1) && isFuture(v)),
+      items: vacations.filter((v) => (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
     },
     {
       key:"approved", label:"Elfogadott szabadság", color:"var(--green)",  icon:"sun",
-      items: vacations.filter((v) => v.status===1 && isFuture(v)),
+      items: vacations.filter((v) => v.status===1 && isFuture(v) && filterVac(v)),
     },
     {
       key:"archived", label:"Archivált",            color:"var(--muted)",  icon:"calendar",
-      items: vacations.filter((v) => isPast(v) || v.status===2),
+      items: vacations.filter((v) => (isPast(v) || v.status===2) && filterVac(v)),
     },
   ];
 
@@ -1909,6 +1914,7 @@ function MunkaidoBeosztas() {
               <div className="flex items-center gap-2 pl-2 ml-1" style={{ borderLeft:"1px solid var(--border)" }}>
                 <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background:"var(--brand)", color:"#fff", fontSize:12, fontWeight:700 }}>{(HMM_CONFIG.adminName||"A").charAt(0).toUpperCase()}</div>
                 <div className="hidden lg:block leading-tight"><div style={{ fontSize:12.5, fontWeight:700 }}>{HMM_CONFIG.adminName||"Admin"}</div><div style={{ fontSize:11, color:"var(--muted)" }}>Adminisztrátor</div></div>
+                <a href="index.php?logoutadmin" title="Kijelentkezés" className="mb-btn flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)" }}>{Ico.logout({width:18,height:18})}</a>
               </div>
             </div>
           </header>
@@ -1954,11 +1960,11 @@ function MunkaidoBeosztas() {
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
-              <StaffView setToast={setToast} newSignal={staffNewSignal}/>
+              <StaffView setToast={setToast} newSignal={staffNewSignal} query={query}/>
             ) : nav==="workplaces" ? (
-              <PlacesView setToast={setToast} newSignal={placeNewSignal}/>
+              <PlacesView setToast={setToast} newSignal={placeNewSignal} query={query}/>
             ) : nav==="vacations" ? (
-              <VacationsView setToast={setToast} newSignal={vacNewSignal}/>
+              <VacationsView setToast={setToast} newSignal={vacNewSignal} query={query}/>
             ) : nav==="notify" ? (
               <NotifyView setToast={setToast}/>
             ) : (
