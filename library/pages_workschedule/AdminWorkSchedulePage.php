@@ -898,8 +898,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $bookings = [];
 
             foreach ($allTipusok as $tipus) {
-                $forDay = ($tipus["forday"] !== "0000-00-00");
+                $forDay  = ($tipus["forday"] !== "0000-00-00");
                 if ($forDay && $tipus["forday"] !== $date) continue;
+                $weekday = (int)date("N", strtotime($date));
+                $napok   = (int)($tipus["napok"] ?? 127);
+                if (!($napok & (1 << ($weekday - 1)))) continue;
 
                 $key      = "{$date}_{$tipus["id"]}";
                 $staffRows = $mappingIdx[$key] ?? [];
@@ -936,6 +939,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "address" => $tipus["cim"]    ?? "",
                     "rendelo" => $tipus["rendelo"] ?? "",
                     "note"    => $tipus["megj"]  ?? "",
+                    "napok"   => (int)($tipus["napok"] ?? 127),
+                    "org"     => $tipus["org"] ?: "HMM",
                     "from"    => $minFrom ?? "08:00",
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
@@ -1176,6 +1181,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "id"        => (int)$r["id"],
                     "megnev"    => $r["megnev"],
                     "cim"       => $r["cim"],
+                    "rendelo"   => $r["rendelo"] ?? "",
                     "megj"      => $r["megj"],
                     "kulso"     => (int)$r["kulso"],
                     "kiszallas" => (int)($r["kiszallas"] ?? 0),
@@ -1183,6 +1189,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "roleid"    => (int)$r["roleid"],
                     "sorrend"   => (int)$r["sorrend"],
                     "aktiv"     => (int)$r["aktiv"],
+                    "napok"     => (int)($r["napok"] ?? 127),
                 ];
             }, $rows),
         ]);
@@ -1193,15 +1200,17 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
         }
 
-        $roleid    = intval($_POST["roleid"]    ?? 0);
+        $roleid    = intval($_POST["roleid"]    ?? 1);
         $kulso     = intval($_POST["kulso"]     ?? 0);
         $kiszallas = intval($_POST["kiszallas"] ?? 0);
         $org       = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
-        $megnev    = trim($_POST["megnev"] ?? "") ?: ($kiszallas ? "_Új kiszállás" : "_Új helyszín");
+        $megnev    = trim($_POST["megnev"] ?? "") ?: ($kiszallas ? "_Új kiszállás" : "_Új rendelés");
         $cim       = trim($_POST["cim"] ?? "");
+        $rendelo   = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
         $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
+        $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1", [$megnev, $cim, $megj, $roleid, $kulso, $kiszallas, $org]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1215,12 +1224,19 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $cim     = trim($_POST["cim"] ?? "");
         $megj    = substr(trim($_POST["megj"] ?? ""), 0, 200);
         $rendelo = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
+        $napok   = intval($_POST["napok"] ?? -1);
+        $org     = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : null;
 
         if (!$id) {
             $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó azonosító!"]);
         }
 
-        sql_query("UPDATE schedule_tipusok SET cim=?, megj=?, rendelo=? WHERE id=?", [$cim, $megj, $rendelo, $id]);
+        $fields = "cim=?, megj=?, rendelo=?";
+        $params = [$cim, $megj, $rendelo];
+        if ($napok >= 0 && $napok <= 127) { $fields .= ", napok=?"; $params[] = $napok; }
+        if ($org !== null)                { $fields .= ", org=?";   $params[] = $org;   }
+        $params[] = $id;
+        sql_query("UPDATE schedule_tipusok SET {$fields} WHERE id=?", $params);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1233,14 +1249,22 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $id      = intval($_POST["id"] ?? 0);
         $megnev  = trim($_POST["megnev"] ?? "");
         $cim     = trim($_POST["cim"] ?? "");
+        $rendelo = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
         $sorrend = intval($_POST["sorrend"] ?? 0);
         $org     = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
+        $napok   = intval($_POST["napok"] ?? 127) & 0x7F;
+        $cat     = $_POST["cat"] ?? "";
 
         if (!$id || $megnev === "") {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a megnevezést!"]);
         }
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, sorrend=?, org=? WHERE id=?", [$megnev, $cim, $sorrend, $org, $id]);
+        $cur       = sql_query("SELECT kulso, kiszallas FROM schedule_tipusok WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
+        $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
+        $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
+
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }

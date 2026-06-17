@@ -54,6 +54,8 @@ const CATS = {
   kiszallas: { label:"Kiszállások",      color:"var(--purple)", type:"Kiszállás",      icon:"truck"    },
 };
 const CAT_ORDER = ["belso","kulso","kiszallas"];
+const KELTEX_COLOR = "#21D2DC";
+const orgColor = (org) => org === "Keltexmed" ? KELTEX_COLOR : "var(--brand)";
 
 /* ---- szabadság típusok ------------------------------------------------ */
 const VACATION_TYPES = ["Szabadság","Betegszabadság","Képzés","Egyéb"];
@@ -333,9 +335,11 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [aktiv, setAktiv]   = useState(b ? (b.aktiv !== 0) : true);
   const [selectedDays, setSelectedDays] = useState(() => new Set([ctx.day]));
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
+  const [org, setOrg]       = useState(b ? (b.org||"HMM") : "HMM");
   const [titleInput, setTitleInput]     = useState("");
   const [addressInput, setAddressInput] = useState(b ? (b.address||"") : "");
   const [rendInput,   setRendInput]     = useState(b ? (b.rendelo||"") : "");
+  const [napok,       setNapok]         = useState(b ? (b.napok ?? 127) : 127);
   const [dateStart, setDateStart] = useState(() => iso(dayDates[ctx.day]));
   const [dateEnd,   setDateEnd]   = useState(() => iso(dayDates[ctx.day]));
 
@@ -367,7 +371,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const save = () => {
     const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
     const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, title, address, rendelo:rendInput, staff, from, to, note };
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, staff, from, to, note };
     onSave(rec);
   };
 
@@ -411,9 +415,16 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 <Field label="Rendelő">
                   <input value={rendInput} onChange={(e)=>setRendInput(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
                 </Field>
-                <Field label="Kategória">
-                  <MiniSelect value={cat} onChange={setCat} options={CAT_ORDER.map((c)=>({ v:c, l:CATS[c].label }))}/>
-                </Field>
+                <div className="flex gap-4 flex-wrap">
+                  <Field label="Típus">
+                    <SegBtn value={cat} onChange={setCat} options={CAT_ORDER.map((c)=>({ v:c, l:CATS[c].label }))}/>
+                  </Field>
+                  {cat !== "belso" && (
+                    <Field label="Rendelő / cég">
+                      <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
+                    </Field>
+                  )}
+                </div>
               </>
             )}
             {!b && cat==="kiszallas" && (
@@ -471,15 +482,26 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               <Row icon={Ico.clock({width:15,height:15})} label="Időtartam">{dur(from,to)}</Row>
               <Row icon={Ico.users({width:15,height:15})} label="Személyzet">{docs.length} orvos · {nurses.length} asszisztens</Row>
               <Row icon={Ico.place({width:15,height:15})} label="Helyszín">
-                <div style={{ fontWeight:600 }}>{title||"—"}</div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span style={{ fontWeight:600 }}>{title||"—"}</span>
+                  {b && (b.cat==="kulso"||b.cat==="kiszallas") && <Badge text={org||"HMM"} color={orgColor(org)}/>}
+                </div>
                 {!!rendInput && <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>{rendInput}</div>}
               </Row>
+              {b && (b.cat==="kulso"||b.cat==="kiszallas") && (
+                <Field label="Szervező">
+                  <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
+                </Field>
+              )}
               <Field label="Cím (Google Maps)">
                 <div className="flex items-center gap-1.5">
                   <input value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="pl. Budapest, Váci út 45" className="mb-in px-3 py-2" style={{ fontSize:13, fontWeight:500 }}/>
                   {!!addressInput && <a href={`https://www.google.com/maps/search/${encodeURIComponent(addressInput)}`} target="_blank" rel="noreferrer" title="Megnyitás Google Maps-ben" style={{ color:"var(--brand-ink)", flexShrink:0 }}>{Ico.place({width:17,height:17})}</a>}
                 </div>
               </Field>
+              {b && <Field label="Aktív napok">
+                <NapokSelector value={napok} onChange={setNapok}/>
+              </Field>}
               <Row icon={Ico.alert({width:15,height:15})} label="Státusz">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
@@ -592,7 +614,10 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
       {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
-      <div className="truncate mt-0.5" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
+      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+        <div className="truncate" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
+        {(b.cat==="kulso"||b.cat==="kiszallas") && <Badge text={b.org||"HMM"} color={orgColor(b.org)}/>}
+      </div>
       {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--faint)", fontWeight:600 }}>{b.address}</div>}
       {!inactive && <div className="flex flex-wrap gap-1.5 mt-1.5">
         {roleFilter!=="n"&&docs.map((s,i)  => <StaffChip key={"d"+i} s={s} color="var(--blue)"   soft="var(--blue-soft)"   icon={Ico.doctor({width:12,height:12})}/>)}
@@ -990,7 +1015,42 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   );
 }
 
-/* ---- PlacesView / LocationModal (Munkahelyek) ------------------------ */
+/* ---- NapokSelector -------------------------------------------------- */
+const NAPOK_DAYS = [{bit:1,l:"H"},{bit:2,l:"K"},{bit:4,l:"Sze"},{bit:8,l:"Cs"},{bit:16,l:"P"},{bit:32,l:"Szo"},{bit:64,l:"V"}];
+function NapokSelector({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {NAPOK_DAYS.map(d => {
+        const on = !!(value & d.bit);
+        return <button key={d.bit} type="button" onClick={()=>onChange((value^d.bit)&127)}
+          className="rounded-md" style={{ fontSize:12, fontWeight:700, minWidth:30, padding:"4px 2px", textAlign:"center",
+            background:on?"var(--brand)":"var(--surface-2)", color:on?"#fff":"var(--muted)",
+            border:`1px solid ${on?"var(--brand)":"var(--border)"}` }}>
+          {d.l}
+        </button>;
+      })}
+    </div>
+  );
+}
+
+function SegBtn({ options, value, onChange }) {
+  return (
+    <div className="flex rounded-lg overflow-hidden" style={{ border:"1px solid var(--border)", display:"inline-flex" }}>
+      {options.map((o, i) => {
+        const sel = o.v === value;
+        return <button key={o.v} type="button" onClick={()=>onChange(o.v)}
+          style={{ fontSize:13, fontWeight:700, padding:"7px 16px",
+            background: sel ? "color-mix(in srgb,var(--brand) 12%,transparent)" : "transparent",
+            color: sel ? "var(--brand)" : "var(--muted)",
+            borderRight: i < options.length-1 ? "1px solid var(--border)" : "none" }}>
+          {o.l}
+        </button>;
+      })}
+    </div>
+  );
+}
+
+/* ---- PlacesView / LocationModal (Rendelések) ------------------------- */
 function PlacesView({ setToast, newSignal }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1014,8 +1074,15 @@ function PlacesView({ setToast, newSignal }) {
   const save = async (rec) => {
     setSaving(true);
     try {
-      const result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, sorrend:rec.sorrend });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Helyszín mentve!"); }
+      let result;
+      if (!rec.id) {
+        const kulso     = rec.cat === "kulso" ? 1 : 0;
+        const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok });
+      } else {
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat });
+      }
+      if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1025,21 +1092,14 @@ function PlacesView({ setToast, newSignal }) {
     setSaving(true);
     try {
       const result = await post({ deleteplace:"1", id });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Helyszín törölve."); }
+      if (result.status==="ok") { await load(); setModal(null); setToast("Rendelés törölve."); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
   };
 
-  const addNew = async (roleid, kulso) => {
-    const result = await post({ addplace:"1", roleid, kulso });
-    if (result.status==="ok") await load();
-  };
-
-  const addKiszallas = async ({ megnev, cim, org }) => {
-    const result = await post({ addplace:"1", roleid:"1", kulso:"0", kiszallas:"1", megnev, cim, org });
-    if (result.status==="ok") { await load(); setModal(null); setToast("Kiszállás létrehozva!"); }
-    else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+  const openNew = (kulso, kiszallas, roleid) => {
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso, kiszallas:kiszallas||0, roleid:roleid||1, org:"HMM", sorrend:0, aktiv:1, napok:31 } });
   };
 
   const reorder = async (id, direction) => {
@@ -1047,7 +1107,7 @@ function PlacesView({ setToast, newSignal }) {
     await load();
   };
 
-  if (loading || !data) return <LoadingBlock label="Helyszínek betöltése…"/>;
+  if (loading || !data) return <LoadingBlock label="Rendelések betöltése…"/>;
 
   const groupsMap = new Map();
   (data.places||[]).forEach((p) => {
@@ -1075,16 +1135,18 @@ function PlacesView({ setToast, newSignal }) {
                   <span style={{ fontSize:13, fontWeight:700 }}>{label}</span>
                   <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{g.places.length}</span>
                 </span>
-                <button onClick={()=>g.kiszallas ? setModal({ kiszallas:true }) : addNew(g.roleid, g.kulso)} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
+                <button onClick={()=>openNew(g.kulso, g.kiszallas||0, g.roleid||1)} className="mb-add flex items-center gap-1 rounded-lg px-2.5 py-1.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)", border:"1px dashed var(--brand)" }}>{Ico.plus()} Új</button>
               </div>
               <div className="flex flex-col gap-1.5 p-2">
                 {g.places.map((p, idx) => (
                   <div key={p.id} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
                     <div className="min-w-0 flex-1" onClick={()=>setModal({ place:p })} style={{ cursor:"pointer" }}>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
-                        {(g.kiszallas || g.kulso===1) && <Badge text={p.org||"HMM"} color={p.org==="Keltexmed"?"var(--purple)":"var(--brand)"}/>}
+                        {(g.kiszallas || g.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
+                        {(p.napok??127) !== 127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
                       </div>
+                      {!!p.rendelo && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{p.rendelo}</div>}
                       {!!p.cim && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)" }}>{p.cim}</div>}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -1093,104 +1155,81 @@ function PlacesView({ setToast, newSignal }) {
                     </div>
                   </div>
                 ))}
-                {g.places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>{g.kiszallas ? "Nincs kiszállás." : "Nincs helyszín."}</div>}
+                {g.places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
               </div>
             </div>
           );
         })}
       </div>
       {modal && modal.place && <LocationModal ctx={modal} onClose={()=>setModal(null)} onSave={save} onDelete={remove} saving={saving}/>}
-      {modal && modal.kiszallas && <NewKiszallasModal places={data.places||[]} onClose={()=>setModal(null)} onSave={addKiszallas} saving={saving}/>}
     </div>
   );
 }
 
 function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const p = ctx.place;
-  const [megnev, setMegnev] = useState(p.megnev||"");
-  const [cim, setCim]       = useState(p.cim||"");
-  const [org, setOrg]       = useState(p.org||"HMM");
+  const isNew = !p.id;
+  const catFromP = () => p.kiszallas===1 ? "kiszallas" : (p.kulso===0 ? "belso" : "kulso");
+
+  const [megnev,  setMegnev]  = useState(p.megnev||"");
+  const [cim,     setCim]     = useState(p.cim||"");
+  const [rendelo, setRendelo] = useState(p.rendelo||"");
+  const [org,     setOrg]     = useState(p.org||"HMM");
+  const [napok,   setNapok]   = useState(p.napok ?? 31);
+  const [cat,     setCat]     = useState(catFromP());
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id, megnev, cim, sorrend:p.sorrend, org });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat });
+
+  const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
       <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
-      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:460, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
+      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:480, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
-          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>{p.megnev||"Új helyszín"}</h2>
+          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>{isNew ? "Új rendelés" : (p.megnev||"Rendelés szerkesztése")}</h2>
           <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
         </div>
         <div className="flex flex-col gap-3.5 px-6 py-5">
           <Field label="Megnevezés">
-            <input value={megnev} onChange={(e)=>setMegnev(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+            <input autoFocus={isNew} value={megnev} onChange={(e)=>setMegnev(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:700 }}/>
           </Field>
-          {(p.kulso===1 || p.kiszallas===1) && (
-            <Field label="Cím">
-              <div className="flex items-center gap-2">
-                <input value={cim} onChange={(e)=>setCim(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
-                {!!cim && <a href={`https://www.google.com/maps/place/${encodeURIComponent(cim)}`} target="_blank" rel="noreferrer" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.place({width:16,height:16})}</a>}
-              </div>
+          <div className="flex gap-4 flex-wrap">
+            <Field label="Típus">
+              <SegBtn value={cat} onChange={setCat} options={CAT_OPTS}/>
             </Field>
-          )}
-          {(p.kulso===1 || p.kiszallas===1) && (
-            <Field label="Szervező">
-              <MiniSelect value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
-            </Field>
-          )}
+            {cat !== "belso" && (
+              <Field label="Rendelő / cég">
+                <SegBtn value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
+              </Field>
+            )}
+          </div>
+          <Field label="Rendelő / szoba">
+            <input value={rendelo} onChange={(e)=>setRendelo(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+          </Field>
+          <Field label="Cím (Google Maps)">
+            <div className="flex items-center gap-2">
+              <input value={cim} onChange={(e)=>setCim(e.target.value)} placeholder="pl. Budapest, Váci út 45" className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
+              {!!cim && <a href={`https://www.google.com/maps/search/${encodeURIComponent(cim)}`} target="_blank" rel="noreferrer" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.place({width:16,height:16})}</a>}
+            </div>
+          </Field>
+          <Field label="Aktív napok">
+            <NapokSelector value={napok} onChange={setNapok}/>
+          </Field>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
-          <button onClick={()=>onDelete(p.id)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Törlés</button>
+          {!isNew ? (
+            <button onClick={()=>{ if(confirm("Biztosan törlöd ezt a rendelést?")) onDelete(p.id); }} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Törlés</button>
+          ) : <span/>}
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
-            <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>{saving?"Mentés…":<>{Ico.save()} Mentés</>}</button>
+            <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>
+              {saving?"Mentés…":<>{Ico.save()} {isNew?"Létrehozás":"Mentés"}</>}
+            </button>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NewKiszallasModal({ places, onClose, onSave, saving }) {
-  const [megnev, setMegnev] = useState("");
-  const [cim, setCim]       = useState("");
-  const [org, setOrg]       = useState("HMM");
-
-  useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
-
-  const suggestions = useMemo(() => Array.from(new Set(
-    (places||[]).filter((p)=>p.kiszallas===1 || p.kulso===1).map((p)=>p.megnev)
-  )), [places]);
-
-  const invalid = megnev.trim()==="";
-  const save = () => onSave({ megnev:megnev.trim(), cim:cim.trim(), org });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
-      <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
-      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:460, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
-        <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
-          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>Új kiszállás</h2>
-          <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
-        </div>
-        <div className="flex flex-col gap-3.5 px-6 py-5">
-          <Field label="Kiszállás neve">
-            <Combobox value={megnev||null} onChange={(v)=>setMegnev(v||"")} options={suggestions} placeholder="pl. Mentőállomás – Szeged" kind="n"/>
-            <input value={megnev} onChange={(e)=>setMegnev(e.target.value)} placeholder="Vagy írd be a nevet…" className="mb-in px-3 py-2.5 mt-1.5" style={{ fontSize:13.5 }}/>
-          </Field>
-          <Field label="Cím">
-            <input value={cim} onChange={(e)=>setCim(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/>
-          </Field>
-          <Field label="Szervező">
-            <MiniSelect value={org} onChange={setOrg} options={[{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
-          </Field>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
-          <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
-          <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>{saving?"Mentés…":<>{Ico.save()} Létrehozás</>}</button>
         </div>
       </div>
     </div>
@@ -1601,13 +1640,13 @@ function MunkaidoBeosztas() {
     try {
       let tipusId = rec.tipusId;
       if (!tipusId) {
-        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org:"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"" });
+        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org: rec.org||"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"", napok: rec.napok??31 });
         const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const result = await resp.json();
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM" });
         await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
       }
       let allOk = true;
@@ -1664,7 +1703,7 @@ function MunkaidoBeosztas() {
     { id:"board",     icon:Ico.board,    label:"Tábla nézet" },
     { id:"list",      icon:Ico.list,     label:"Listás nézet" },
     { id:"conflicts", icon:Ico.alert,    label:"Ütközések", badge:conf.set.size },
-    { id:"workplaces",icon:Ico.building, label:"Munkahelyek" },
+    { id:"workplaces",icon:Ico.building, label:"Rendelések" },
     { id:"workers",   icon:Ico.doctor,   label:"Munkatársak" },
     { id:"vacations", icon:Ico.sun,      label:"Szabadságok" },
     { id:"copy",      icon:Ico.copy,     label:"Hét másolása" },
@@ -1749,7 +1788,7 @@ function MunkaidoBeosztas() {
 
           {/* ESZKÖZTÁR */}
           <div className="flex flex-wrap items-center gap-3 px-4 lg:px-6 py-3" style={{ borderBottom:"1px solid var(--border)", flexShrink:0 }}>
-            <h1 className="mb-display" style={{ fontSize:20, fontWeight:700 }}>{nav==="workers"?"Munkatársak":nav==="workplaces"?"Munkahelyek":nav==="vacations"?"Szabadságok":nav==="notify"?"Értesítések":"Munkaidő beosztás"}</h1>
+            <h1 className="mb-display" style={{ fontSize:20, fontWeight:700 }}>{nav==="workers"?"Munkatársak":nav==="workplaces"?"Rendelések":nav==="vacations"?"Szabadságok":nav==="notify"?"Értesítések":"Munkaidő beosztás"}</h1>
             {!["workers","workplaces","vacations","notify"].includes(nav) && (<>
             <div className="flex items-center gap-2 ml-1">
               <button onClick={()=>setWeekOffset((w)=>w-1)} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left()}</button>
