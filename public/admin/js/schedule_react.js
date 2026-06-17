@@ -1931,9 +1931,9 @@ function MunkaidoBeosztas() {
               <span style={{ color:"var(--faint)" }}>{Ico.calendar({width:16,height:16})}</span>
               <span className="mb-display" style={{ fontSize:15, fontWeight:700 }}>{year}. {week}. hét</span>
               <span className="rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:700, color:"var(--green)", background:"var(--green-soft)" }}>{parity}</span>
-              {weekOffset!==0 && <button onClick={()=>setWeekOffset(0)} className="rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:600, color:"var(--brand-ink)", background:"var(--brand-soft)" }}>Aktuális</button>}
             </div>
             <div className="flex items-center gap-2 ml-auto">
+              {weekOffset!==0 && <button onClick={()=>setWeekOffset(0)} className="mb-btn rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--brand-ink)", background:"var(--brand-soft)", border:"1px solid var(--border)" }}>Aktuális hét</button>}
               {/* Kategória */}
               <div className="relative">
                 <button onClick={()=>setShowCatMenu((v)=>!v)} className="mb-btn flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Kategória: <span style={{ color:"var(--ink)" }}>{catFilter==="all"?"Összes":CATS[catFilter]?.label}</span> {Ico.chevDown({width:14,height:14})}</button>
