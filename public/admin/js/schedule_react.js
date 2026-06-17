@@ -652,8 +652,8 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-      <button onClick={onToggle} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${c.color} 8%,transparent)` }}>
-        <span className="flex items-center gap-2"><span style={{ color:c.color, flexShrink:0 }}>{catIcon({width:15,height:15})}</span><span style={{ fontSize:13, fontWeight:700 }}>{c.label}</span><span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span></span>
+      <button onClick={onToggle} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${c.color} 15%,transparent)` }}>
+        <span className="flex items-center gap-2"><span style={{ color:c.color, flexShrink:0 }}>{catIcon({width:15,height:15})}</span><span className="mb-display" style={{ fontSize:13, fontWeight:700, letterSpacing:".04em", color:c.color }}>{c.label}</span><span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span></span>
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
@@ -1077,6 +1077,7 @@ function PlacesView({ setToast, newSignal }) {
   const [dragId, setDragId]           = useState(null);
   const [dragGroup, setDragGroup]     = useState(null);
   const [dragOverId, setDragOverId]   = useState(null);
+  const [secCollapsed, setSecCollapsed] = useState({});
 
   const load = useCallback(() => {
     setLoading(true);
@@ -1159,14 +1160,15 @@ function PlacesView({ setToast, newSignal }) {
           const SectionIcon = sec.key === "kiszallas" ? Ico.truck : Ico.building;
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-              <div className="flex items-center px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.accent} 8%,transparent)` }}>
+              <button onClick={()=>setSecCollapsed(p=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:secCollapsed[sec.key]?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.accent} 15%,transparent)` }}>
                 <span className="flex items-center gap-2">
                   <span style={{ color:sec.accent }}>{SectionIcon({width:15,height:15})}</span>
-                  <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
+                  <span className="mb-display" style={{ fontSize:13, fontWeight:700, letterSpacing:".04em", color:sec.accent }}>{sec.label}</span>
                   <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{places.length}</span>
                 </span>
-              </div>
-              <div className="flex flex-col gap-1.5 p-2" onDragOver={(e)=>e.preventDefault()}>
+                <span style={{ color:"var(--faint)" }}>{secCollapsed[sec.key]?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+              </button>
+              {!secCollapsed[sec.key] && <div className="flex flex-col gap-1.5 p-2" onDragOver={(e)=>e.preventDefault()}>
                 {places.map((p) => (
                   <div key={p.id}
                     draggable
@@ -1195,7 +1197,7 @@ function PlacesView({ setToast, newSignal }) {
                   </div>
                 ))}
                 {places.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
-              </div>
+              </div>}
             </div>
           );
         })}
