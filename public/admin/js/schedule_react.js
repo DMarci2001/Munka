@@ -1085,7 +1085,8 @@ function PlacesView({ setToast, newSignal }) {
   }, []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (data?.places) setOrderedPlaces([...data.places].sort((a,b)=>a.sorrend-b.sorrend)); }, [data]);
-  useEffect(() => { if (newSignal) openNew(); }, [newSignal]);
+  const initialSignal = useRef(newSignal);
+  useEffect(() => { if (newSignal > initialSignal.current) openNew(); }, [newSignal]);
 
   const post = async (params) => {
     const body = new URLSearchParams(params);
