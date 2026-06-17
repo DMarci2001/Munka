@@ -1173,13 +1173,13 @@ function PlacesView({ setToast, newSignal }) {
                 {places.map((p) => (
                   <div key={p.id}
                     draggable
-                    onDragStart={(e)=>{ const h=e.currentTarget.querySelector('[data-drag-handle]'); if(!h||!h.contains(e.target)){e.preventDefault();return;} setDragId(p.id); setDragGroup(sec.key); }}
+                    onDragStart={()=>{ setDragId(p.id); setDragGroup(sec.key); }}
                     onDragOver={(e)=>{ e.preventDefault(); if (dragOverId !== p.id) setDragOverId(p.id); }}
                     onDragEnd={()=>{ setDragId(null); setDragGroup(null); setDragOverId(null); }}
                     onDrop={(e)=>{ e.preventDefault(); e.stopPropagation(); handleDrop(sec.key, p.id); }}
                     className="mb-tcard flex items-center gap-2 rounded-lg"
                     style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px", opacity:dragId===p.id?.4:1, outline:dragOverId===p.id&&dragGroup===sec.key?`2px solid ${sec.accent}`:"none", transition:"opacity .15s", cursor:"default" }}>
-                    <div data-drag-handle style={{ color:"var(--faint)", flexShrink:0, cursor:"grab" }}>
+                    <div style={{ color:"var(--faint)", flexShrink:0, cursor:"grab" }}>
                       <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
                         <circle cx="3.5" cy="3" r="1.3"/><circle cx="8.5" cy="3" r="1.3"/>
                         <circle cx="3.5" cy="8" r="1.3"/><circle cx="8.5" cy="8" r="1.3"/>
