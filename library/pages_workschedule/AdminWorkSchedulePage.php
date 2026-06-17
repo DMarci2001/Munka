@@ -933,8 +933,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "tipusId" => (int)$tipus["id"],
                     "cat"     => !empty($tipus["kiszallas"]) ? "kiszallas" : ($tipus["kulso"] == 0 ? "belso" : "kulso"),
                     "title"   => $tipus["megnev"],
-                    "address" => $tipus["cim"]  ?? "",
-                    "note"    => $tipus["megj"] ?? "",
+                    "address" => $tipus["cim"]    ?? "",
+                    "rendelo" => $tipus["rendelo"] ?? "",
+                    "note"    => $tipus["megj"]  ?? "",
                     "from"    => $minFrom ?? "08:00",
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
@@ -1210,15 +1211,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
         }
 
-        $id   = intval($_POST["id"] ?? 0);
-        $cim  = trim($_POST["cim"] ?? "");
-        $megj = substr(trim($_POST["megj"] ?? ""), 0, 200);
+        $id      = intval($_POST["id"] ?? 0);
+        $cim     = trim($_POST["cim"] ?? "");
+        $megj    = substr(trim($_POST["megj"] ?? ""), 0, 200);
+        $rendelo = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
 
         if (!$id) {
             $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó azonosító!"]);
         }
 
-        sql_query("UPDATE schedule_tipusok SET cim=?, megj=? WHERE id=?", [$cim, $megj, $id]);
+        sql_query("UPDATE schedule_tipusok SET cim=?, megj=?, rendelo=? WHERE id=?", [$cim, $megj, $rendelo, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }

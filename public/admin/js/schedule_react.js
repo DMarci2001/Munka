@@ -335,6 +335,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
   const [titleInput, setTitleInput]     = useState("");
   const [addressInput, setAddressInput] = useState(b ? (b.address||"") : "");
+  const [rendInput,   setRendInput]     = useState(b ? (b.rendelo||"") : "");
   const [dateStart, setDateStart] = useState(() => iso(dayDates[ctx.day]));
   const [dateEnd,   setDateEnd]   = useState(() => iso(dayDates[ctx.day]));
 
@@ -366,7 +367,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const save = () => {
     const staff = [...docs, ...nurses].filter((s)=>s.name && s.workerId);
     const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, title, address, staff, from, to, note };
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, title, address, rendelo:rendInput, staff, from, to, note };
     onSave(rec);
   };
 
@@ -395,12 +396,11 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
           <div className="flex flex-col gap-4">
             {b ? (
               <>
-                <Field label={cat==="kulso"?"Külső rendelés neve":"Helyiség"}>
+                <Field label="Rendelés">
                   <div className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", borderStyle:"dashed" }}>{title}</div>
                 </Field>
                 <Field label="Rendelő">
-                  <input list="mb-loc-list" value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="Válassz a helyiségek közül vagy írd be…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
-                  <datalist id="mb-loc-list">{locSug.map((l)=><option key={l} value={l}/>)}</datalist>
+                  <input value={rendInput} onChange={(e)=>setRendInput(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
                 </Field>
               </>
             ) : (
@@ -409,8 +409,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                   <input value={titleInput} onChange={(e)=>setTitleInput(e.target.value)} placeholder="pl. Szemészeti szűrés" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
                 </Field>
                 <Field label="Rendelő">
-                  <input list="mb-loc-list" value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="Válassz a helyiségek közül vagy írd be…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
-                  <datalist id="mb-loc-list">{locSug.map((l)=><option key={l} value={l}/>)}</datalist>
+                  <input value={rendInput} onChange={(e)=>setRendInput(e.target.value)} placeholder="pl. Rendelő 1, Ultrahang szoba" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}/>
                 </Field>
                 <Field label="Kategória">
                   <MiniSelect value={cat} onChange={setCat} options={CAT_ORDER.map((c)=>({ v:c, l:CATS[c].label }))}/>
@@ -472,10 +471,15 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               <Row icon={Ico.clock({width:15,height:15})} label="Időtartam">{dur(from,to)}</Row>
               <Row icon={Ico.users({width:15,height:15})} label="Személyzet">{docs.length} orvos · {nurses.length} asszisztens</Row>
               <Row icon={Ico.place({width:15,height:15})} label="Helyszín">
-                <div>{title||"—"}</div>
-                {!!address && <div style={{ color:"var(--muted)", fontWeight:500, marginTop:1 }}>{address}</div>}
-                {title && b && <button onClick={()=>onMap({cat,title})} className="flex items-center gap-1 mt-0.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)" }}>Hely megtekintése {Ico.ext()}</button>}
+                <div style={{ fontWeight:600 }}>{title||"—"}</div>
+                {!!rendInput && <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>{rendInput}</div>}
               </Row>
+              <Field label="Cím (Google Maps)">
+                <div className="flex items-center gap-1.5">
+                  <input value={addressInput} onChange={(e)=>setAddressInput(e.target.value)} placeholder="pl. Budapest, Váci út 45" className="mb-in px-3 py-2" style={{ fontSize:13, fontWeight:500 }}/>
+                  {!!addressInput && <a href={`https://www.google.com/maps/search/${encodeURIComponent(addressInput)}`} target="_blank" rel="noreferrer" title="Megnyitás Google Maps-ben" style={{ color:"var(--brand-ink)", flexShrink:0 }}>{Ico.place({width:17,height:17})}</a>}
+                </div>
+              </Field>
               <Row icon={Ico.alert({width:15,height:15})} label="Státusz">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
@@ -586,7 +590,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   return (
     <div className="mb-tcard relative rounded-lg" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, borderLeft:`3px solid ${accent}`, padding:"8px 9px 9px 10px", boxShadow:hit?"0 0 0 2px var(--brand)":"none", opacity:inactive?.55:1 }}>
       {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
-      <button onClick={(e)=>{e.stopPropagation();onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
+      <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
       <div className="truncate mt-0.5" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
       {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--faint)", fontWeight:600 }}>{b.address}</div>}
@@ -666,7 +670,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                         <Td>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
-                            <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+                            <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
                             {(b.staff||[]).length>0 && <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>}
                             {!inactive&&hasDouble && <RedBadge text="Ütközés"/>}
                             {!inactive&&hasVac && <RedBadge text="Szabadságon"/>}
@@ -701,7 +705,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
           <span style={{ color:"var(--danger)" }}>{Ico.alert({width:15,height:15})}</span>
           {b.title}
           <Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/>
-          <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+          <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
         </div>
         <span className="mb-mono" style={{ fontSize:12, color:"var(--muted)" }}>{HU_DAYS[di]}, {fmtShortISO(b.date)} · {b.from}–{b.to}</span>
       </div>
@@ -1603,7 +1607,7 @@ function MunkaidoBeosztas() {
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"" });
         await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
       }
       let allOk = true;
