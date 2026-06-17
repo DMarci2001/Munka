@@ -627,7 +627,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     return (<span className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background:onVac?"var(--danger-soft)":soft, color:onVac?"var(--danger-ink)":color, fontSize:11.5, fontWeight:600, maxWidth:"100%" }}><span style={{ flexShrink:0 }}>{icon}</span><span className="truncate">{s.name}</span>{diff && <span className="mb-mono" style={{ fontSize:10, opacity:.85, flexShrink:0 }}>{s.from}–{s.to}</span>}</span>);
   };
   return (
-    <div className="mb-tcard relative rounded-lg" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, borderLeft:`3px solid ${accent}`, padding:"8px 9px 9px 10px", boxShadow:hit?"0 0 0 2px var(--brand)":"none", opacity:inactive?.55:1 }}>
+    <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
       {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
@@ -741,7 +741,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
   return (
-    <div onClick={()=>onOpenCard(b,di)} className="mb-tcard rounded-xl" style={{ background:"color-mix(in srgb, var(--danger) 10%, var(--surface))", border:"1px solid var(--danger)", padding:"12px 14px" }}>
+    <div onClick={()=>onOpenCard(b,di)} className="mb-tcard rounded-xl" style={{ background:"color-mix(in srgb, var(--danger) 10%, var(--surface))", border:"1px solid var(--danger)", padding:"12px 14px", cursor:"pointer" }}>
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap" style={{ fontWeight:700, fontSize:13.5 }}>
           <span style={{ color:"var(--danger)" }}>{Ico.alert({width:15,height:15})}</span>
