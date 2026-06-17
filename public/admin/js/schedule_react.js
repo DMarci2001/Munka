@@ -635,13 +635,20 @@ function MapPopover({ booking, onClose }) {
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
-function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv }) {
+function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
   const egyebs = (b.staff||[]).filter((s)=>s.role==="e");
   const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && docs.length===0;
+  const overQuota = !inactive && (b.staff||[]).some((s) => {
+    if (!s.workerId) return false;
+    const mh = monthHours && monthHours[s.workerId];
+    if (!mh || mh.quota == null) return false;
+    if (mh.munkaora_tipus === "heti") return ((weekWorkerHours && weekWorkerHours[s.workerId]) || 0) >= mh.quota;
+    return mh.booked >= mh.quota;
+  });
   const red    = noDoc||conflict;
   const accent = inactive?"var(--faint)":(red?"var(--danger)":(CATS[b.cat]?.color||"var(--muted)"));
   const names  = (b.staff||[]).map((s)=>s.name).filter(Boolean);
@@ -658,7 +665,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
       {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
-      <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
+      <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
         <div className="truncate" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
         {(b.cat==="kulso"||b.cat==="kiszallas") && <Badge text={b.org||"HMM"} color={orgColor(b.org)}/>}
@@ -677,7 +684,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
 }
 
 /* ---- Csoport -------------------------------------------------------- */
-function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv }) {
+function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -686,7 +693,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
-        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv}/>)}
+        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
         {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
@@ -2177,7 +2184,7 @@ function MunkaidoBeosztas() {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
                           if (filtering && items.length===0) return null;
-                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>);
+                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
                       </div>
