@@ -776,11 +776,13 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   );
 }
 
-function ConflictView({ weekDays, conf, catFilter, collapsed, onToggle, onOpenCard, onMap }) {
+function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, onOpenCard, onMap }) {
+  const q = (query||"").trim().toLowerCase();
   const groups = { double: [], vac: [], noDoc: [] };
   weekDays.forEach((day, di) => {
     day.forEach((b) => {
       if (catFilter!=="all" && b.cat!==catFilter) return;
+      if (q) { const names=(b.staff||[]).map((s)=>s.name); if (![b.title,...names].some((x)=>x&&x.toLowerCase().includes(q))) return; }
       const key      = `${di}:${b.id}`;
       const overlaps = conf.det[key] || [];
       const hasDouble = overlaps.some((o)=>!o.vac);
@@ -1958,7 +1960,7 @@ function MunkaidoBeosztas() {
             ) : nav==="list" ? (
               <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>
             ) : nav==="conflicts" ? (
-              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
+              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
               <StaffView setToast={setToast} newSignal={staffNewSignal} query={query}/>
             ) : nav==="workplaces" ? (
