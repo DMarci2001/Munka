@@ -99,6 +99,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiDeleteVacation();
         }
 
+        if (isset($_POST["togglebookingaktiv"])) {
+            $this->_apiToggleBookingAktiv();
+        }
+
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
         }
@@ -813,9 +817,9 @@ class AdminWorkSchedulePage extends AdminCorePage {
         echo "  <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n";
         echo "  <title>HMM – Munkaidő beosztás</title>\n";
         echo "  <script src='https://cdn.tailwindcss.com'></script>\n";
-        echo "  <script src='https://unpkg.com/react@18/umd/react.production.min.js' crossorigin></script>\n";
-        echo "  <script src='https://unpkg.com/react-dom@18/umd/react-dom.production.min.js' crossorigin></script>\n";
-        echo "  <script src='https://unpkg.com/@babel/standalone/babel.min.js'></script>\n";
+        echo "  <script src='https://unpkg.com/react@18.3.1/umd/react.production.min.js' crossorigin></script>\n";
+        echo "  <script src='https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js' crossorigin></script>\n";
+        echo "  <script src='https://unpkg.com/@babel/standalone@7.27.6/babel.min.js'></script>\n";
         echo "  <link href='https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap' rel='stylesheet'>\n";
         echo "</head>\n<body style='margin:0;padding:0;overflow:hidden;'>\n";
         echo "  <div id='hmm-schedule-root'></div>\n";
@@ -848,7 +852,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         $mondayStart = $monday . " 00:00:00";
         $mappings = sql_query(
-            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj,
+            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv,
                     IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
              FROM schedule_mapping m
              LEFT JOIN schedule_workers w ON m.workerid = w.id
@@ -916,7 +920,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
                         "workerId" => (int)$m["workerid"],
                         "from"     => $from,
                         "to"       => $to,
-                        "megj"     => $m["megj"] ?? ""
+                        "megj"     => $m["megj"] ?? "",
+                        "aktiv"    => (int)($m["aktiv"] ?? 1)
                     ];
 
                     if ($minFrom === null || $from < $minFrom) $minFrom = $from;
@@ -934,7 +939,8 @@ class AdminWorkSchedulePage extends AdminCorePage {
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
                     "staff"   => $staff,
-                    "forDay"  => $forDay
+                    "forDay"  => $forDay,
+                    "aktiv"   => empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0)
                 ];
             }
 
@@ -1396,6 +1402,19 @@ class AdminWorkSchedulePage extends AdminCorePage {
         sql_query("DELETE FROM schedule_szabadsag WHERE groupid=?", [$groupId]);
 
         $this->utils->jsonOut(["status" => "ok"]);
+    }
+
+    private function _apiToggleBookingAktiv(): void {
+        $tipusId = intval($_POST["tipusid"] ?? 0);
+        $datum   = $_POST["datum"] ?? "";
+        $aktiv   = intval($_POST["aktiv"] ?? 1) ? 1 : 0;
+        if (!$tipusId || !$datum) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok"]);
+            die;
+        }
+        sql_query("UPDATE schedule_mapping SET aktiv=? WHERE tipusid=? AND DATE(datumfrom)=?", [$aktiv, $tipusId, $datum]);
+        $this->utils->jsonOut(["status" => "ok"]);
+        die;
     }
 
     private function _apiGetNotifications(): void {

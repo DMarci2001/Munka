@@ -88,7 +88,7 @@ const Styles = () => (
       --bg:#0c0f15; --sidebar:#0a0d12; --surface:#151a23; --surface-2:#1b212c;
       --card:#171d27; --card-hover:#1c2330; --border:#262d39; --border-soft:#1d2330;
       --ink:#e8ecf2; --muted:#8b94a3; --faint:#5e6878;
-      --danger-ink:#fca5a5; --scroll:#2c3442; --weekend:#11161e;
+      --danger-ink:#fca5a5; --scroll:#2c3442; --weekend:#11161e; --board-bg:#060810;
       --brand:#b3473a; --brand-ink:#e09a90; --brand-soft:rgba(179,71,58,.20);
       --map-bg:#0f141c; --map-room:#181f2a; --map-room-stroke:#2a323e;
       --map-road:#222a36; --map-road2:#1a212c; --map-bldg:#161d27; --map-bldg-stroke:#252d39;
@@ -97,7 +97,7 @@ const Styles = () => (
       --bg:#f3f5f8; --sidebar:#ffffff; --surface:#ffffff; --surface-2:#f1f4f7;
       --card:#ffffff; --card-hover:#f7f9fc; --border:#e3e8ef; --border-soft:#eef1f5;
       --ink:#1a2230; --muted:#5c6675; --faint:#9aa3b1;
-      --danger-ink:#dc2626; --scroll:#cdd4dd; --weekend:#eef1f6;
+      --danger-ink:#dc2626; --scroll:#cdd4dd; --weekend:#eef1f6; --board-bg:#d6dae3;
       --brand:#9c3328; --brand-ink:#8e2f23; --brand-soft:rgba(156,51,40,.12);
       --map-bg:#eef1f5; --map-room:#ffffff; --map-room-stroke:#dde3ea;
       --map-road:#d2d8e0; --map-road2:#e6eaf0; --map-bldg:#eef1f5; --map-bldg-stroke:#dde3ea;
@@ -126,6 +126,7 @@ const Styles = () => (
     .mb-in{ width:100%; outline:none; background:var(--surface-2); border:1px solid var(--border); color:var(--ink); border-radius:9px; }
     .mb-in:focus{ border-color:var(--brand); }
     .mb-in::placeholder{ color:var(--faint); }
+    .mb-board{ background:var(--board-bg); }
     .mb-dark input[type=time]::-webkit-calendar-picker-indicator,.mb-dark input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.7); }
     @media print{
       @page{ size:landscape; margin:8mm; }
@@ -177,6 +178,8 @@ const Ico = {
   repeat:   S(<><path d="M4 8a5 5 0 0 1 5-5h7l-2.5-2.5M20 16a5 5 0 0 1-5 5H8l2.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" transform="translate(0,1)"/></>, 13),
   save:     S(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 15),
   refresh:  S(<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 3v5h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 16),
+  eye:      S(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/></>, 16),
+  eyeOff:   S(<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
@@ -284,7 +287,7 @@ function Combobox({ value, onChange, options, placeholder, kind, compact }) {
 function MiniSelect({ value, onChange, options }) {
   return (<div className="relative"><select value={value} onChange={(e)=>onChange(e.target.value)} className="mb-in appearance-none py-2.5 pl-3 pr-8" style={{ fontSize:13.5, fontWeight:600 }}>{options.map((o)=><option key={o.v} value={o.v}>{o.l}</option>)}</select><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.chevDown({width:14,height:14})}</span></div>);
 }
-function TimeBox({ value, onChange }) { return <input type="time" value={value} onChange={(e)=>onChange(e.target.value)} className="mb-mono mb-in py-2 px-1.5 text-center" style={{ width:74, fontSize:12.5 }}/>; }
+function TimeBox({ value, onChange }) { return <input type="time" value={value} onChange={(e)=>onChange(e.target.value)} className="mb-mono mb-in py-2 px-2 text-center" style={{ width:86, fontSize:12.5 }}/>; }
 
 function Check({ checked, onChange, label }) {
   return (<button type="button" onClick={()=>onChange(!checked)} className="flex items-center gap-2"><span className="flex items-center justify-center rounded" style={{ width:18, height:18, background:checked?"var(--brand)":"var(--surface-2)", border:`1px solid ${checked?"var(--brand)":"var(--border)"}`, flexShrink:0 }}>{checked && <svg viewBox="0 0 24 24" width="13" height="13" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}</span><span style={{ fontSize:13, fontWeight:500 }}>{label}</span></button>);
@@ -320,13 +323,14 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, places, saving }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, places, saving, onToggleAktiv }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
   const [note, setNote]     = useState(b ? b.note : "");
   const [docs, setDocs]     = useState(b ? (b.staff||[]).filter((s)=>s.role==="d") : []);
   const [nurses, setNurses] = useState(b ? (b.staff||[]).filter((s)=>s.role==="n") : []);
+  const [aktiv, setAktiv]   = useState(b ? (b.aktiv !== 0) : true);
   const [selectedDays, setSelectedDays] = useState(() => new Set([ctx.day]));
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
   const [titleInput, setTitleInput]     = useState("");
@@ -472,7 +476,12 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 {!!address && <div style={{ color:"var(--muted)", fontWeight:500, marginTop:1 }}>{address}</div>}
                 {title && b && <button onClick={()=>onMap({cat,title})} className="flex items-center gap-1 mt-0.5" style={{ fontSize:12, fontWeight:600, color:"var(--brand-ink)" }}>Hely megtekintése {Ico.ext()}</button>}
               </Row>
-              <Row icon={Ico.alert({width:15,height:15})} label="Státusz"><Badge text={noDoc?"Hiányos":"Aktív"} color={noDoc?"var(--danger)":"var(--green)"}/></Row>
+              <Row icon={Ico.alert({width:15,height:15})} label="Státusz">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
+                  {b && (b.staff||[]).length>0 && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
+                </div>
+              </Row>
             </div>
           </div>
         </div>
@@ -556,41 +565,44 @@ function MapPopover({ booking, onClose }) {
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
-function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter }) {
+function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv }) {
   const q = query.trim().toLowerCase();
+  const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
-  const noDoc  = b.cat!=="kiszallas" && docs.length===0;
+  const noDoc  = !inactive && b.cat!=="kiszallas" && docs.length===0;
   const red    = noDoc||conflict;
-  const accent = red?"var(--danger)":(CATS[b.cat]?.color||"var(--muted)");
+  const accent = inactive?"var(--faint)":(red?"var(--danger)":(CATS[b.cat]?.color||"var(--muted)"));
   const names  = (b.staff||[]).map((s)=>s.name).filter(Boolean);
   const hit    = q && [b.title,...names].some((x)=>x&&x.toLowerCase().includes(q));
   const overlapDouble = (overlap||[]).filter((o)=>!o.vac);
   const overlapVac    = (overlap||[]).filter((o)=>o.vac);
+  const hasStaff = (b.staff||[]).length > 0;
   const StaffChip = ({ s, color, soft, icon }) => {
     const diff = s.from!==b.from||s.to!==b.to;
     const onVac = overlapVac.some((o)=>o.p===s.name);
     return (<span className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background:onVac?"var(--danger-soft)":soft, color:onVac?"var(--danger-ink)":color, fontSize:11.5, fontWeight:600, maxWidth:"100%" }}><span style={{ flexShrink:0 }}>{icon}</span><span className="truncate">{s.name}</span>{diff && <span className="mb-mono" style={{ fontSize:10, opacity:.85, flexShrink:0 }}>{s.from}–{s.to}</span>}</span>);
   };
   return (
-    <div className="mb-tcard relative rounded-lg" onClick={onOpen} style={{ background:red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)", border:`1px solid ${red?"var(--danger)":"var(--border)"}`, borderLeft:`3px solid ${accent}`, padding:"8px 9px 9px 10px", boxShadow:hit?"0 0 0 2px var(--brand)":"none" }}>
+    <div className="mb-tcard relative rounded-lg" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, borderLeft:`3px solid ${accent}`, padding:"8px 9px 9px 10px", boxShadow:hit?"0 0 0 2px var(--brand)":"none", opacity:inactive?.55:1 }}>
+      {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
       <button onClick={(e)=>{e.stopPropagation();onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
-      <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-6" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
-      <div className="truncate mt-0.5" style={{ fontSize:13.5, fontWeight:700 }}>{b.title}</div>
-      {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{b.address}</div>}
-      <div className="flex flex-wrap gap-1.5 mt-1.5">
+      <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}</div>
+      <div className="truncate mt-0.5" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
+      {!!b.address && <div className="truncate" style={{ fontSize:11.5, color:"var(--faint)", fontWeight:600 }}>{b.address}</div>}
+      {!inactive && <div className="flex flex-wrap gap-1.5 mt-1.5">
         {roleFilter!=="n"&&docs.map((s,i)  => <StaffChip key={"d"+i} s={s} color="var(--blue)"   soft="var(--blue-soft)"   icon={Ico.doctor({width:12,height:12})}/>)}
         {roleFilter!=="d"&&nurses.map((s,i) => <StaffChip key={"n"+i} s={s} color="var(--purple)" soft="var(--purple-soft)" icon={Ico.person({width:12,height:12})}/>)}
-      </div>
-      {b.note&&!conflict&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
-      {overlapDouble[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {overlapDouble[0].p} {overlapDouble[0].from}–{overlapDouble[0].to}</div>}
-      {overlapVac[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>{overlapVac[0].p} szabadságon van{overlapVac[0].status===0?" (függő kérelem)":""}</div>}
+      </div>}
+      {b.note&&!conflict&&!inactive&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
+      {!inactive&&overlapDouble[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {overlapDouble[0].p} {overlapDouble[0].from}–{overlapDouble[0].to}</div>}
+      {!inactive&&overlapVac[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>{overlapVac[0].p} szabadságon van{overlapVac[0].status===0?" (függő kérelem)":""}</div>}
     </div>
   );
 }
 
 /* ---- Csoport -------------------------------------------------------- */
-function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter }) {
+function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -599,7 +611,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
-        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)}/>)}
+        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv}/>)}
         {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
@@ -607,7 +619,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
-function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap }) {
+function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv }) {
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
@@ -645,18 +657,20 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                     const overlap = conf.det[`${di}:${b.id}`]||[];
                     const hasDouble = overlap.some((o)=>!o.vac);
                     const hasVac    = overlap.some((o)=>o.vac);
-                    const red    = noDoc || isConf;
+                    const inactive = b.aktiv === 0;
+                    const red    = !inactive && (noDoc || isConf);
                     return (
-                      <tr key={b.id} onClick={()=>onOpenCard(b,di)} style={{ borderBottom:"1px solid var(--border-soft)", background:red?"color-mix(in srgb,var(--danger) 10%,transparent)":"transparent", cursor:"pointer" }}>
+                      <tr key={b.id} onClick={()=>onOpenCard(b,di)} style={{ borderBottom:"1px solid var(--border-soft)", background:inactive?"var(--surface-2)":(red?"color-mix(in srgb,var(--danger) 10%,transparent)":"transparent"), cursor:"pointer", opacity:inactive?.55:1 }}>
                         <Td mono>{b.from} – {b.to}</Td>
-                        <Td><Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/></Td>
+                        <Td><Badge text={CATS[b.cat]?.type||b.cat} color={inactive?"var(--faint)":(CATS[b.cat]?.color||"var(--muted)")}/></Td>
                         <Td>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
                             <button onClick={(e)=>{ e.stopPropagation(); onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
-                            {hasDouble && <RedBadge text="Ütközés"/>}
-                            {hasVac && <RedBadge text="Szabadságon"/>}
-                            {noDoc && <RedBadge text="Nincs orvos"/>}
+                            {(b.staff||[]).length>0 && <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>}
+                            {!inactive&&hasDouble && <RedBadge text="Ütközés"/>}
+                            {!inactive&&hasVac && <RedBadge text="Szabadságon"/>}
+                            {!inactive&&noDoc && <RedBadge text="Nincs orvos"/>}
                           </div>
                         </Td>
                         <Td>{docs.length ? docs.map((d)=>d.name).join(", ") : <span style={{ color:"var(--faint)" }}>—</span>}</Td>
@@ -1615,6 +1629,13 @@ function MunkaidoBeosztas() {
     await saveBooking({ ...booking, staff:[] });
   }, [weekData, saveBooking]);
 
+  const toggleAktiv = useCallback(async (b) => {
+    const newAktiv = b.aktiv === 0 ? 1 : 0;
+    const body = new URLSearchParams({ togglebookingaktiv:"1", tipusid:b.tipusId, datum:b.date, aktiv:newAktiv });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
   /* ---- hét másolása ---- */
   const copyWeek = useCallback(async (sourceWeek, targets, overwrite) => {
     const sourceMonday = monday;
@@ -1758,7 +1779,7 @@ function MunkaidoBeosztas() {
                 </div>
               </div>
             ) : nav==="list" ? (
-              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
+              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
@@ -1795,7 +1816,7 @@ function MunkaidoBeosztas() {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
                           if (filtering && items.length===0) return null;
-                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>);
+                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
                       </div>
@@ -1809,7 +1830,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} places={weekData?.places||[]} saving={saving}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
