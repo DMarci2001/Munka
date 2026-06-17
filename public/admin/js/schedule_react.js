@@ -1642,6 +1642,7 @@ function MunkaidoBeosztas() {
   }, []);
 
   useEffect(() => { fetchWeek(weekOffset); }, [weekOffset, fetchWeek]);
+  useEffect(() => { if (nav==="board"||nav==="list"||nav==="conflicts") fetchWeek(weekOffset); }, [nav]);
 
   /* ---- derivált értékek ---- */
   const year   = weekData?.year   ?? new Date().getFullYear();
@@ -1718,7 +1719,9 @@ function MunkaidoBeosztas() {
         tipusId = result.id;
       } else if (rec.id) {
         const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
-        await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+        const addrResp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+        const addrResult = await addrResp.json();
+        if (addrResult.status !== "ok") { setToast("Hiba: " + (addrResult.message||"Ismeretlen hiba")); setSaving(false); return; }
       }
       let allOk = true;
       for (const datum of dates) {
