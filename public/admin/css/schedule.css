@@ -132,3 +132,32 @@
     color:#888;
     overflow: hidden;
 }
+
+/* Public worker schedule cards */
+.pub-day-header {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2230;
+    padding: 16px 0 8px;
+    border-bottom: 1px solid #e3e8ef;
+    margin-bottom: 10px;
+    letter-spacing: .01em;
+}
+.pub-vac-list {
+    margin-bottom: 16px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.pub-vac-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+.pub-vac-item:last-child {
+    border-bottom: none;
+}

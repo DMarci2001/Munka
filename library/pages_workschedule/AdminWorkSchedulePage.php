@@ -38,6 +38,17 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->subPage = $_GET["subpage"];
         }
 
+        if (isset($_GET["scheduletoken"]) && isset($_POST["publicrequstvacation"])) {
+            $workerData = sql_query(
+                "select * from schedule_workers w where concat(sha1(concat(w.id, w.roleid, w.email, w.tel)), md5(concat(w.email, w.tel))) = ?",
+                [$_GET["scheduletoken"]]
+            )->fetch();
+            if (!$workerData) {
+                Utils::jsonOut(["status" => "error", "message" => "Érvénytelen azonosító!"]);
+            }
+            $this->_publicApiRequestVacation($workerData);
+        }
+
         if (isset($_GET["getweekdata"])) {
             $this->_apiGetWeekData();
         }
@@ -652,9 +663,185 @@ class AdminWorkSchedulePage extends AdminCorePage {
             return;
         }
 
-        echo "<div id='workerbeosztasdiv' style='margin:10px;'>";
-        echo $this->workScheduleService->workerScheduleList($workerData["id"]);
+        $workerId   = (int)$workerData["id"];
+        $workerName = trim($workerData["teljesnev"]) ?: $workerData["nev"];
+
+        echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
+
+        echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
+        echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
+        echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
+            . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
         echo "</div>";
+
+        echo $this->workScheduleService->workerPublicScheduleCards($workerId);
+
+        echo "</div>";
+
+        echo $this->_publicSzabiModal($token);
+    }
+
+    private function _publicApiRequestVacation(array $workerData): void {
+        $tol   = $_POST["tol"]   ?? "";
+        $ig    = $_POST["ig"]    ?? "";
+        $tipus = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Egyéb"])
+            ? $_POST["tipus"] : "Szabadság";
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
+            Utils::jsonOut(["status" => "error", "message" => "Add meg a szabadság kezdő és vég napját!"]);
+        }
+        if (strtotime($tol) > strtotime($ig)) {
+            Utils::jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
+        }
+        if (strtotime($ig) - strtotime($tol) > 86400 * 31) {
+            Utils::jsonOut(["status" => "error", "message" => "A szabadság nem lehet hosszabb, mint 1 hónap!"]);
+        }
+
+        $workerId = (int)$workerData["id"];
+        $groupId  = 0;
+        $cur      = $tol;
+        while (strtotime($cur) <= strtotime($ig)) {
+            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, status=0, tipus=?", [$cur, $cur, $workerId, $tipus]);
+            $newId = sql_insert_id();
+            if ($groupId === 0) $groupId = $newId;
+            sql_query("UPDATE schedule_szabadsag SET groupid=? WHERE id=?", [$groupId, $newId]);
+            $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
+        }
+
+        Utils::jsonOut(["status" => "ok", "message" => "Kérés sikeresen beküldve!"]);
+    }
+
+    private function _publicSzabiModal(string $token): string {
+        $safeToken = htmlspecialchars($token, ENT_QUOTES);
+        return <<<HTML
+<script>
+function pubToggleSec(id, btn) {
+    var body = document.getElementById(id);
+    var icon = btn.querySelector('.fa-chevron-up, .fa-chevron-down');
+    if (body.style.display === 'none') {
+        body.style.display = 'flex';
+        if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+    } else {
+        body.style.display = 'none';
+        if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    }
+}
+</script>
+
+<div id="pubSzabiOverlay" style="display:none;position:fixed;inset:0;background:rgba(4,6,10,.55);backdrop-filter:blur(4px);z-index:9999;overflow-y:auto;padding:16px 24px;">
+  <div style="max-width:460px;width:100%;background:#fff;border:1px solid #e3e8ef;border-radius:16px;box-shadow:0 50px 100px -28px rgba(0,0,0,.6);margin:40px auto 16px;overflow:hidden;font-family:Manrope,system-ui,sans-serif;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 24px;border-bottom:1px solid #e3e8ef;">
+      <h2 style="margin:0;font-size:18px;font-weight:700;color:#1a2230;">Új szabadság</h2>
+      <button onclick="pubCloseSzabiModal()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#f1f4f7;border:1px solid #e3e8ef;cursor:pointer;color:#5c6675;flex-shrink:0;padding:0;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <label style="display:block;">
+          <span style="display:block;font-size:12.5px;font-weight:500;color:#5c6675;margin-bottom:6px;">Kezdő nap</span>
+          <input type="date" id="pubSzabTol" style="width:100%;outline:none;background:#f1f4f7;border:1px solid #e3e8ef;color:#1a2230;border-radius:9px;padding:10px 12px;font-size:13.5px;box-sizing:border-box;font-family:monospace;" onfocus="this.style.borderColor='#9c3328'" onblur="this.style.borderColor='#e3e8ef'">
+        </label>
+        <label style="display:block;">
+          <span style="display:block;font-size:12.5px;font-weight:500;color:#5c6675;margin-bottom:6px;">Utolsó nap</span>
+          <input type="date" id="pubSzabIg" style="width:100%;outline:none;background:#f1f4f7;border:1px solid #e3e8ef;color:#1a2230;border-radius:9px;padding:10px 12px;font-size:13.5px;box-sizing:border-box;font-family:monospace;" onfocus="this.style.borderColor='#9c3328'" onblur="this.style.borderColor='#e3e8ef'">
+        </label>
+      </div>
+
+      <label style="display:block;">
+        <span style="display:block;font-size:12.5px;font-weight:500;color:#5c6675;margin-bottom:6px;">Típus</span>
+        <div style="position:relative;">
+          <select id="pubSzabTipus" style="width:100%;outline:none;background:#f1f4f7;border:1px solid #e3e8ef;color:#1a2230;border-radius:9px;padding:10px 32px 10px 12px;font-size:13.5px;font-weight:600;box-sizing:border-box;appearance:none;-webkit-appearance:none;cursor:pointer;font-family:inherit;" onfocus="this.style.borderColor='#9c3328'" onblur="this.style.borderColor='#e3e8ef'">
+            <option value="Szabadság">Szabadság</option>
+            <option value="Betegszabadság">Betegszabadság</option>
+            <option value="Egyéb">Egyéb</option>
+          </select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9aa3b1;display:flex;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </label>
+
+      <div id="pubSzabMsg" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid #e3e8ef;background:#f3f5f8;">
+      <button onclick="pubCloseSzabiModal()" style="border-radius:8px;padding:10px 16px;font-size:13.5px;font-weight:600;color:#5c6675;border:1px solid #e3e8ef;background:#fff;cursor:pointer;font-family:inherit;">Mégse</button>
+      <button id="pubSzabBtn" onclick="pubSubmitSzabi('{$safeToken}')" style="display:flex;align-items:center;gap:6px;border-radius:8px;padding:10px 20px;font-size:13.5px;font-weight:700;color:#fff;background:#9c3328;border:none;cursor:pointer;font-family:inherit;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Mentés
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function pubShowSzabiModal() {
+    document.getElementById('pubSzabiOverlay').style.display = 'block';
+    document.getElementById('pubSzabTipus').value = 'Szabadság';
+    var msg = document.getElementById('pubSzabMsg');
+    msg.style.display = 'none';
+    var btn = document.getElementById('pubSzabBtn');
+    btn.disabled = false;
+    btn.style.background = '#9c3328';
+    btn.style.cursor = 'pointer';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> Mentés';
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('pubSzabTol').min = today;
+    document.getElementById('pubSzabIg').min = today;
+    document.getElementById('pubSzabTol').value = '';
+    document.getElementById('pubSzabIg').value = '';
+}
+function pubCloseSzabiModal() {
+    document.getElementById('pubSzabiOverlay').style.display = 'none';
+}
+document.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('pubSzabiOverlay')) pubCloseSzabiModal();
+});
+function pubSzabShowMsg(msg, ok) {
+    var el = document.getElementById('pubSzabMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.background = ok ? '#dcfce7' : '#fee2e2';
+    el.style.color      = ok ? '#166534' : '#991b1b';
+    el.style.border     = '1px solid ' + (ok ? '#bbf7d0' : '#fecaca');
+}
+function pubSubmitSzabi(token) {
+    var tol   = document.getElementById('pubSzabTol').value;
+    var ig    = document.getElementById('pubSzabIg').value;
+    var tipus = document.getElementById('pubSzabTipus').value;
+    if (!tol || !ig) { pubSzabShowMsg('Add meg mindkét dátumot!', false); return; }
+    if (tol > ig)    { pubSzabShowMsg('A kezdő nap nem lehet később, mint az utolsó nap!', false); return; }
+    var btn = document.getElementById('pubSzabBtn');
+    btn.disabled = true;
+    btn.style.background = '#9aa3b1';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = 'Mentés…';
+    $.post(location.href, { publicrequstvacation: 1, scheduletoken: token, tol: tol, ig: ig, tipus: tipus }, function(data) {
+        if (data.status === 'ok') {
+            pubSzabShowMsg(data.message || 'Kérés elküldve!', true);
+            setTimeout(function() { location.reload(); }, 1800);
+        } else {
+            pubSzabShowMsg(data.message || 'Hiba történt!', false);
+            btn.disabled = false;
+            btn.style.background = '#9c3328';
+            btn.style.cursor = 'pointer';
+            btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> Mentés';
+        }
+    }, 'json').fail(function() {
+        pubSzabShowMsg('Hálózati hiba! Próbáld újra.', false);
+        btn.disabled = false;
+        btn.style.background = '#9c3328';
+        btn.style.cursor = 'pointer';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> Mentés';
+    });
+}
+</script>
+HTML;
     }
 
 

@@ -349,14 +349,18 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [ktartoEmail,   setKtartoEmail]   = useState(b ? (b.ktarto_email||"") : "");
   const [dateStart, setDateStart] = useState(() => iso(dayDates[ctx.day]));
   const [dateEnd,   setDateEnd]   = useState(() => iso(dayDates[ctx.day]));
+  const [multiApply, setMultiApply] = useState(false);
+  const [multiFrom, setMultiFrom] = useState(b ? b.date : iso(dayDates[ctx.day]));
+  const [multiTo,   setMultiTo]   = useState(b ? b.date : iso(dayDates[ctx.day]));
 
   const title    = b ? b.title    : titleInput;
   const address  = addressInput;
   const dateStr  = b ? b.date     : (ctx.date || iso(dayDates[ctx.day]));
   const badTime  = toMin(from) >= toMin(to);
   const badRange = !b && cat==="kiszallas" && dateStart > dateEnd;
+  const badMultiRange = !!(b && b.cat==="kiszallas" && multiApply && multiFrom > multiTo);
   const noDoc    = cat!=="kiszallas" && docs.length === 0;
-  const blocked  = badTime || badRange || (!b && title.trim()==="");
+  const blocked  = badTime || badRange || badMultiRange || (!b && title.trim()==="");
   const locSug   = useMemo(() => cat==="belso"
     ? Array.from(new Set(FLOORS.flatMap((f)=>f.rooms)))
     : Array.from(new Set((places||[]).map((p)=>p.megnev).filter(Boolean))), [cat, places]);
@@ -392,7 +396,9 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
 
   const save = () => {
     const staff = [...docs, ...nurses, ...egyebek].filter((s)=>s.name && s.workerId);
-    const dates = b ? [dateStr] : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
+    const dates = b
+      ? (multiApply && b.cat==="kiszallas" ? datesBetween(multiFrom, multiTo) : [dateStr])
+      : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
     const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note };
     onSave(rec);
   };
@@ -509,6 +515,22 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                   <input type="date" value={iso(dayDates[pickedDi])} min={iso(dayDates[0])} max={iso(dayDates[6])} onChange={(e)=>pickDate(e.target.value)} className="mb-mono mb-in px-2 py-1.5" style={{ fontSize:12.5, fontWeight:600 }}/>
                 )}
               </Row>
+              {b && b.cat==="kiszallas" && (
+                <div className="rounded-xl p-3 flex flex-col gap-2" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={multiApply} onChange={(e)=>setMultiApply(e.target.checked)} style={{ accentColor:"var(--purple)", width:14, height:14 }}/>
+                    <span className="flex items-center gap-1.5" style={{ fontSize:12.5, fontWeight:700 }}><span style={{ color:"var(--purple)" }}>{Ico.repeat()}</span> Alkalmaz más napokra is</span>
+                  </label>
+                  {multiApply && (<>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <Field label="Kezdő dátum"><input type="date" value={multiFrom} onChange={(e)=>setMultiFrom(e.target.value)} className="mb-in px-3 py-2 mb-mono" style={{ fontSize:13, borderColor:badMultiRange?"var(--danger)":"var(--border)" }}/></Field>
+                      <Field label="Záró dátum"><input type="date" value={multiTo} onChange={(e)=>setMultiTo(e.target.value)} className="mb-in px-3 py-2 mb-mono" style={{ fontSize:13, borderColor:badMultiRange?"var(--danger)":"var(--border)" }}/></Field>
+                    </div>
+                    {badMultiRange && <p style={{ fontSize:11.5, color:"var(--danger-ink)", margin:0 }}>A záró dátum legyen későbbi.</p>}
+                    {!badMultiRange && multiFrom && multiTo && <p style={{ fontSize:11.5, color:"var(--muted)", margin:0 }}>A személyzet {datesBetween(multiFrom,multiTo).length} napra kerül mentésre ({fmtShortISO(multiFrom)} – {fmtShortISO(multiTo)}).</p>}
+                  </>)}
+                </div>
+              )}
               <Row icon={Ico.clock({width:15,height:15})} label="Időtartam">{dur(from,to)}</Row>
               <Row icon={Ico.users({width:15,height:15})} label="Személyzet">{docs.length} orvos · {nurses.length} asszisztens</Row>
               <Row icon={Ico.place({width:15,height:15})} label="Helyszín">
