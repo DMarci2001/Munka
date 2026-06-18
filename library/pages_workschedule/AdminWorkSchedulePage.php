@@ -678,7 +678,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $workerId   = (int)$workerData["id"];
         $workerName = trim($workerData["teljesnev"]) ?: $workerData["nev"];
 
-        if (Booking_Constants::SITE_DOMAIN === 'hungariamed.hu') {
+        if (Booking_Constants::SQL_DB !== 'keltexmed') {
             echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
             echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
             echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
