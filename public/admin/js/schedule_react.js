@@ -359,7 +359,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const badTime  = toMin(from) >= toMin(to);
   const badRange = !b && cat==="kiszallas" && dateStart > dateEnd;
   const badMultiRange = !!(b && b.cat==="kiszallas" && multiApply && multiFrom > multiTo);
-  const noDoc    = cat!=="kiszallas" && docs.length === 0;
+  const noDoc    = cat!=="kiszallas" && (b ? b.orvosKell!==0 : true) && docs.length === 0;
   const blocked  = badTime || badRange || badMultiRange || (!b && title.trim()==="");
   const locSug   = useMemo(() => cat==="belso"
     ? Array.from(new Set(FLOORS.flatMap((f)=>f.rooms)))
@@ -663,7 +663,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
   const egyebs = (b.staff||[]).filter((s)=>s.role==="e");
-  const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && docs.length===0;
+  const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && b.orvosKell!==0 && docs.length===0;
   const overQuota = !inactive && (b.staff||[]).some((s) => {
     if (!s.workerId) return false;
     const mh = monthHours && monthHours[s.workerId];
@@ -756,7 +756,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                   {rows.map((b) => {
                     const docs   = (b.staff||[]).filter((s)=>s.role==="d");
                     const nurses = (b.staff||[]).filter((s)=>s.role==="n");
-                    const noDoc  = docs.length===0;
+                    const noDoc  = b.orvosKell!==0 && docs.length===0;
                     const isConf = conf.set.has(`${di}:${b.id}`);
                     const overlap = conf.det[`${di}:${b.id}`]||[];
                     const hasDouble = overlap.some((o)=>!o.vac);
@@ -835,7 +835,7 @@ function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, o
       const overlaps = conf.det[key] || [];
       const hasDouble = overlaps.some((o)=>!o.vac);
       const hasVac    = overlaps.some((o)=>o.vac);
-      const noDoc     = b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && (b.staff||[]).filter((s)=>s.role==="d").length===0;
+      const noDoc     = b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && b.orvosKell!==0 && (b.staff||[]).filter((s)=>s.role==="d").length===0;
       const entry = { b, di, key, overlaps };
       if (hasDouble) groups.double.push(entry);
       if (hasVac)    groups.vac.push(entry);
@@ -1205,9 +1205,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1328,11 +1328,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [ktartoNev,    setKtartoNev]   = useState(p.ktarto_nev||"");
   const [ktartoTel,    setKtartoTel]   = useState(p.ktarto_tel||"");
   const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
+  const [orvosKell,    setOrvosKell]   = useState((p.orvos_kell ?? 1) !== 0);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1381,6 +1382,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
             <Field label="Aktív napok">
               <NapokSelector value={napok} onChange={setNapok}/>
             </Field>
+            {cat !== "kiszallas" && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Toggle on={orvosKell} onChange={setOrvosKell}/>
+                <span style={{ fontSize:12.5, fontWeight:600 }}>Orvos szükséges</span>
+              </label>
+            )}
             {cat !== "belso" && (
               <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
                 <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>

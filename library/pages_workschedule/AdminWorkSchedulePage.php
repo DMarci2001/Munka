@@ -152,6 +152,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasAktiv) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN aktiv TINYINT(1) NOT NULL DEFAULT 1");
         }
+        $hasOrvosKell = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='orvos_kell'"
+        )->fetchColumn();
+        if (!$hasOrvosKell) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN orvos_kell TINYINT(1) NOT NULL DEFAULT 1");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -672,19 +678,21 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $workerId   = (int)$workerData["id"];
         $workerName = trim($workerData["teljesnev"]) ?: $workerData["nev"];
 
-        echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
-
-        echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
-        echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
-        echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
-            . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
-        echo "</div>";
-
-        echo $this->workScheduleService->workerPublicScheduleCards($workerId);
-
-        echo "</div>";
-
-        echo $this->_publicSzabiModal($token);
+        if (Booking_Constants::SITE_DOMAIN === 'hungariamed.hu') {
+            echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
+            echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
+            echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
+            echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
+                . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
+            echo "</div>";
+            echo $this->workScheduleService->workerPublicScheduleCards($workerId);
+            echo "</div>";
+            echo $this->_publicSzabiModal($token);
+        } else {
+            echo "<div id='workerbeosztasdiv' style='margin:10px;'>";
+            echo $this->workScheduleService->workerScheduleList($workerId);
+            echo "</div>";
+        }
     }
 
     private function _publicApiRequestVacation(array $workerData): void {
@@ -1168,6 +1176,7 @@ HTML;
                     "note"        => $tipus["megj"]  ?? "",
                     "napok"       => (int)($tipus["napok"] ?? 127),
                     "org"         => $tipus["org"] ?: "HMM",
+                    "orvosKell"   => (int)($tipus["orvos_kell"] ?? 1),
                     "ktarto_nev"  => $tipus["ktarto_nev"]   ?? "",
                     "ktarto_tel"  => $tipus["ktarto_tel"]   ?? "",
                     "ktarto_email"=> $tipus["ktarto_email"] ?? "",
@@ -1579,6 +1588,7 @@ HTML;
                     "sorrend"      => (int)$r["sorrend"],
                     "aktiv"        => (int)$r["aktiv"],
                     "napok"        => (int)($r["napok"] ?? 127),
+                    "orvos_kell"   => (int)($r["orvos_kell"] ?? 1),
                     "ktarto_nev"   => $r["ktarto_nev"]   ?? "",
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
@@ -1601,8 +1611,9 @@ HTML;
         $rendelo   = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
         $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
+        $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1650,6 +1661,7 @@ HTML;
         $org          = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
         $napok        = intval($_POST["napok"] ?? 127) & 0x7F;
         $cat          = $_POST["cat"] ?? "";
+        $orvosKell    = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
         $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
         $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
         $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
@@ -1662,8 +1674,8 @@ HTML;
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
