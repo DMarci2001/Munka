@@ -146,6 +146,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasMunkaoraTipus) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN munkaora_tipus ENUM('havi','heti') NOT NULL DEFAULT 'havi'");
         }
+        $hasAktiv = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_workers' AND column_name='aktiv'"
+        )->fetchColumn();
+        if (!$hasAktiv) {
+            sql_query("ALTER TABLE schedule_workers ADD COLUMN aktiv TINYINT(1) NOT NULL DEFAULT 1");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1178,13 +1184,13 @@ HTML;
         }
 
         $doctorRows = sql_query(
-            "SELECT id, nev FROM schedule_workers WHERE roleid=1 ORDER BY nev"
+            "SELECT id, nev FROM schedule_workers WHERE roleid=1 AND COALESCE(aktiv,1)=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
         $assistantRows = sql_query(
-            "SELECT id, nev FROM schedule_workers WHERE roleid=2 ORDER BY nev"
+            "SELECT id, nev FROM schedule_workers WHERE roleid=2 AND COALESCE(aktiv,1)=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
         $egyebRows = sql_query(
-            "SELECT id, nev FROM schedule_workers WHERE roleid=3 ORDER BY nev"
+            "SELECT id, nev FROM schedule_workers WHERE roleid=3 AND COALESCE(aktiv,1)=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $places = array_values(array_map(
@@ -1455,7 +1461,7 @@ HTML;
         $workers = sql_query(
             "SELECT w.*, r.megnev AS rolenev FROM schedule_workers w
              LEFT JOIN schedule_roles r ON r.id=w.roleid
-             ORDER BY w.roleid, w.nev"
+             ORDER BY w.roleid, COALESCE(w.aktiv,1) DESC, w.nev"
         )->fetchAll(PDO::FETCH_ASSOC);
         $users = sql_query("SELECT id, nev, beouserid FROM users ORDER BY nev")->fetchAll(PDO::FETCH_ASSOC);
         $onVacationIds = sql_query(
@@ -1479,6 +1485,7 @@ HTML;
                     "onVacation" => in_array((int)$w["id"], $onVacationIds, true),
                     "munkaora"       => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
                     "munkaora_tipus" => $w["munkaora_tipus"] ?? "havi",
+                    "aktiv"          => (int)($w["aktiv"] ?? 1),
                 ];
             }, $workers),
             "users" => array_map(fn($u) => ["id" => (int)$u["id"], "nev" => $u["nev"], "beouserid" => (int)$u["beouserid"]], $users),
@@ -1502,6 +1509,7 @@ HTML;
         $beouserid = intval($_POST["beouserid"] ?? 0);
         $munkaora       = (isset($_POST["munkaora"]) && $_POST["munkaora"] !== "") ? floatval($_POST["munkaora"]) : null;
         $munkaora_tipus = in_array($_POST["munkaora_tipus"] ?? "", ["havi","heti"]) ? $_POST["munkaora_tipus"] : "havi";
+        $aktiv          = isset($_POST["aktiv"]) ? (intval($_POST["aktiv"]) ? 1 : 0) : 1;
 
         if ($nev === "" || !$roleid) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a nevet és a típust!"]);
@@ -1509,12 +1517,12 @@ HTML;
 
         if ($id) {
             sql_query(
-                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=? WHERE id=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $id]
+                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=? WHERE id=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $aktiv, $id]
             );
         } else {
             sql_query(
-                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?",
+                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=1",
                 [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus]
             );
             $id = (int)sql_insert_id();

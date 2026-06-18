@@ -945,6 +945,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const [modal, setModal]         = useState(null);
   const [saving, setSaving]       = useState(false);
   const [secCollapsed, setSecCollapsed] = useState({});
+  const [showInactive, setShowInactive] = useState(false);
 
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModal({ worker:null, roleid:1 }); }, [newSignal]);
@@ -968,6 +969,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
         savestaff:"1", id:rec.id||"0", roleid:rec.roleid, nev:rec.nev, teljesnev:rec.teljesnev,
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
         efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"", munkaora_tipus:rec.munkaora_tipus||"havi",
+        aktiv: rec.aktiv===false||rec.aktiv===0 ? "0" : "1",
       });
       if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -988,13 +990,24 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   if (loading || !data) return <LoadingBlock label="Munkatársak betöltése…"/>;
 
   const q = (searchQuery || query).trim().toLowerCase();
-  const allWorkers = (data.workers||[]).filter((w) => !q || `${w.teljesnev} ${w.nev} ${w.email} ${w.tel}`.toLowerCase().includes(q));
+  const allWorkers = (data.workers||[]).filter((w) => {
+    if (!showInactive && w.aktiv === 0) return false;
+    return !q || `${w.teljesnev} ${w.nev} ${w.email} ${w.tel}`.toLowerCase().includes(q);
+  });
+  const inactiveCount = (data.workers||[]).filter((w) => w.aktiv === 0).length;
 
   return (
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
-      <div className="relative max-w-xs mb-3">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
-        <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés…" className="mb-in py-2 pl-9 pr-3" style={{ fontSize:13 }}/>
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="relative max-w-xs flex-1" style={{ minWidth:180 }}>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
+          <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés…" className="mb-in py-2 pl-9 pr-3" style={{ fontSize:13 }}/>
+        </div>
+        {inactiveCount > 0 && (
+          <button type="button" onClick={()=>setShowInactive(p=>!p)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:12.5, fontWeight:600, color:showInactive?"var(--brand-ink)":"var(--muted)", background:showInactive?"var(--brand-soft)":"var(--surface-2)", border:"1px solid var(--border)" }}>
+            {showInactive ? Ico.eye({width:13,height:13}) : Ico.eyeOff({width:13,height:13})} Inaktív munkatársak ({inactiveCount})
+          </button>
+        )}
       </div>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
         {(data.roles||[]).map((role) => {
@@ -1009,14 +1022,14 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
                 <span className="flex items-center gap-2">
                   <span style={{ color:disp.color, flexShrink:0 }}>{SectionIcon({width:15,height:15})}</span>
                   <span className="mb-display" style={{ fontSize:13, fontWeight:700, letterSpacing:".04em", color:disp.color }}>{disp.label}</span>
-                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{workers.length}</span>
+                  <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{workers.filter((w)=>w.aktiv!==0).length}</span>
                 </span>
                 <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
               </button>
               {!collapsed && (
                 <div className="flex flex-col gap-1.5 p-2">
                   {workers.map((w) => (
-                    <div key={w.id} onClick={()=>setModal({ worker:w })} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+                    <div key={w.id} onClick={()=>setModal({ worker:w })} className="mb-tcard flex items-center justify-between gap-3 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px", opacity:w.aktiv===0?0.5:1 }}>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{w.teljesnev||w.nev}</div>
@@ -1028,6 +1041,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {w.aktiv===0 && <Badge text="Inaktív" color="var(--faint)"/>}
                         {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
                         {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
                         {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
@@ -1060,11 +1074,12 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const [beouserid, setBeouserid] = useState(() => (users||[]).find((u)=>u.beouserid===(w?w.id:-1))?.id || 0);
   const [munkaora,       setMunkaora]       = useState(w && w.munkaora != null ? String(w.munkaora) : "");
   const [munkaora_tipus, setMunkaoraTipus] = useState(w ? (w.munkaora_tipus || "havi") : "havi");
+  const [aktiv,          setAktiv]         = useState(w ? (w.aktiv !== 0) : true);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus, aktiv });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1107,7 +1122,10 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
           </Field>
         </div>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
-          <div>{w && <button onClick={()=>onDelete(w.id)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Törlés</button>}</div>
+          <div className="flex items-center gap-1">
+            {w && <button onClick={()=>onDelete(w.id)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:"var(--danger-ink)" }}>{Ico.trash()} Törlés</button>}
+            {w && <button type="button" onClick={()=>setAktiv(!aktiv)} className="flex items-center gap-1.5 rounded-lg px-3 py-2" style={{ fontSize:13, fontWeight:600, color:aktiv?"var(--muted)":"var(--green)" }}>{aktiv ? <>{Ico.eyeOff({width:14,height:14})} Inaktiválás</> : <>{Ico.eye({width:14,height:14})} Aktiválás</>}</button>}
+          </div>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="mb-btn rounded-lg px-4 py-2.5" style={{ fontSize:13.5, fontWeight:600, color:"var(--muted)", border:"1px solid var(--border)" }}>Mégse</button>
             <button disabled={invalid||saving} onClick={save} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(invalid||saving)?"var(--faint)":"var(--brand)", cursor:(invalid||saving)?"not-allowed":"pointer" }}>{saving?"Mentés…":<>{Ico.save()} Mentés</>}</button>
