@@ -678,21 +678,15 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $workerId   = (int)$workerData["id"];
         $workerName = trim($workerData["teljesnev"]) ?: $workerData["nev"];
 
-        if (Booking_Constants::SQL_DB !== 'keltexmed') {
-            echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
-            echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
-            echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
-            echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
-                . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
-            echo "</div>";
-            echo $this->workScheduleService->workerPublicScheduleCards($workerId);
-            echo "</div>";
-            echo $this->_publicSzabiModal($token);
-        } else {
-            echo "<div id='workerbeosztasdiv' style='margin:10px;'>";
-            echo $this->workScheduleService->workerScheduleList($workerId);
-            echo "</div>";
-        }
+        echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
+        echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
+        echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
+        echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
+            . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
+        echo "</div>";
+        echo $this->workScheduleService->workerPublicScheduleCards($workerId);
+        echo "</div>";
+        echo $this->_publicSzabiModal($token);
     }
 
     private function _publicApiRequestVacation(array $workerData): void {
