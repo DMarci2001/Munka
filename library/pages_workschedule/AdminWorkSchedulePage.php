@@ -1052,7 +1052,9 @@ HTML;
         echo "</head>\n<body style='margin:0;padding:0;overflow:hidden;'>\n";
         echo "  <div id='hmm-schedule-root'></div>\n";
         echo "  <script>\n";
-        echo "    window.HMM_SCHEDULE_CONFIG = { url: {$pageUrl}, offset: {$offset}, adminName: {$adminName} };\n";
+        $tenant = Booking_Constants::SQL_DB === "keltexmed" ? "keltexmed" : "hmm";
+        $logo   = json_encode($tenant === "keltexmed" ? "/images/keltexmed_logo_v2.png" : "/images/hmm_logo_nagy.png");
+        echo "    window.HMM_SCHEDULE_CONFIG = { url: {$pageUrl}, offset: {$offset}, adminName: {$adminName}, tenant: '{$tenant}', logo: {$logo} };\n";
         echo "  </script>\n";
         echo "  <script type='text/babel' data-presets='react'>\n";
         if (is_file($jsFile)) {

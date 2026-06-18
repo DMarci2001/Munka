@@ -1,12 +1,14 @@
-"use strict";
+﻿"use strict";
 
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 const HMM_CONFIG = window.HMM_SCHEDULE_CONFIG || {
   url: "index.php?page=workschedule",
   offset: 0,
-  adminName: "Admin"
+  adminName: "Admin",
+  tenant: "hmm"
 };
+const IS_KELTEX = (HMM_CONFIG.tenant || "hmm") === "keltexmed";
 
 /* ---- segédek -------------------------------------------------------- */
 const toMin = (t) => { const [h, m] = (t || "0:0").split(":").map(Number); return h * 60 + m; };
@@ -104,6 +106,12 @@ const Styles = () => (
       --brand:#9c3328; --brand-ink:#8e2f23; --brand-soft:rgba(156,51,40,.12);
       --map-bg:#eef1f5; --map-room:#ffffff; --map-room-stroke:#dde3ea;
       --map-road:#d2d8e0; --map-road2:#e6eaf0; --map-bldg:#eef1f5; --map-bldg-stroke:#dde3ea;
+    }
+    .mb-root.mb-dark.mb-keltex{
+      --brand:#1ec8d4; --brand-ink:#6de8ef; --brand-soft:rgba(30,200,212,.20);
+    }
+    .mb-root.mb-light.mb-keltex{
+      --brand:#1598a4; --brand-ink:#0e7580; --brand-soft:rgba(21,152,164,.12);
     }
     .mb-root *{ box-sizing:border-box; }
     .mb-display{ font-family:'Bricolage Grotesque',sans-serif; letter-spacing:-.01em; }
@@ -2088,14 +2096,14 @@ function MunkaidoBeosztas() {
 
   /* ------------------------------------------------------------------ */
   return (
-    <div className={`mb-root mb-${theme} min-h-screen w-full`} style={{ height:"100vh", overflow:"hidden" }}>
+    <div className={`mb-root mb-${theme}${IS_KELTEX?" mb-keltex":""} min-h-screen w-full`} style={{ height:"100vh", overflow:"hidden" }}>
       <Styles/>
       <div className="flex" style={{ height:"100%" }}>
         {/* SIDEBAR */}
         <aside className="mb-sidebar mb-no-print flex" style={{ width:sidebarOpen?232:0, transition:"width .28s ease", flexShrink:0, overflow:"hidden", borderRight:sidebarOpen?"1px solid var(--border)":"none" }}>
           <div className="flex flex-col" style={{ width:232, height:"100%", background:"var(--sidebar)" }}>
             <div className="px-4 py-3.5 flex flex-col gap-2" style={{ borderBottom:"1px solid var(--border)" }}>
-              <div className="flex items-center gap-2.5"><LogoMark size={34}/><div className="leading-none"><div className="mb-display" style={{ fontSize:18, fontWeight:800, color:"var(--brand-ink)", letterSpacing:".02em" }}>HMM</div><div style={{ fontSize:8, fontWeight:700, letterSpacing:".22em", color:"var(--muted)", marginTop:3 }}>HUNGÁRIA&nbsp;MED-M</div></div></div>
+              <div className="flex items-center gap-2.5"><img src={HMM_CONFIG.logo} alt="logo" style={{height:34,width:"auto",flexShrink:0}}/></div>
               <div style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}>Munkaidő beosztás</div>
             </div>
             <nav className="flex-1 overflow-y-auto mb-scroll px-2.5 py-3 flex flex-col gap-0.5">
@@ -2136,7 +2144,7 @@ function MunkaidoBeosztas() {
           {/* FEJLÉC */}
           <header className="mb-no-print flex items-center gap-4 px-4 lg:px-6" style={{ height:56, borderBottom:"1px solid var(--border)", background:"var(--surface)", flexShrink:0 }}>
             <IconBtn onClick={()=>setSidebarOpen((v)=>!v)} title={sidebarOpen?"Menü elrejtése":"Menü megnyitása"}>{Ico.menu({width:19,height:19})}</IconBtn>
-            <div className="md:hidden"><LogoMark size={28}/></div>
+            <div className="md:hidden"><img src={HMM_CONFIG.logo} alt="logo" style={{height:28,width:"auto",flexShrink:0}}/></div>
             <div className="relative flex-1 max-w-xl mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
               <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés orvosra, asszisztensre, helyiségre…" className="mb-in py-2 pl-10 pr-16" style={{ fontSize:13.5 }}/>
