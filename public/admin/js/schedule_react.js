@@ -1662,6 +1662,54 @@ function StatisticsView({ setToast }) {
   );
 }
 
+function TriDateInput({ value, onChange, className, style }) {
+  const [y, setY] = useState('');
+  const [m, setM] = useState('');
+  const [d, setD] = useState('');
+  const mRef = useRef(null);
+  const dRef = useRef(null);
+
+  useEffect(() => {
+    if (value && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = value.split('-');
+      setY(parts[0]); setM(parts[1]); setD(parts[2]);
+    } else if (!value) {
+      setY(''); setM(''); setD('');
+    }
+  }, [value]);
+
+  const emit = (year, month, day) => {
+    if (year.length === 4 && month.length === 2 && day.length === 2) onChange(year + '-' + month + '-' + day);
+    else onChange('');
+  };
+
+  const handleY = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setY(v); emit(v, m, d);
+    if (v.length === 4) mRef.current?.focus();
+  };
+  const handleM = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setM(v); emit(y, v, d);
+    if (v.length === 2) dRef.current?.focus();
+  };
+  const handleD = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setD(v); emit(y, m, v);
+  };
+
+  const sharedStyle = { ...style, textAlign:'center', padding:'10px 6px' };
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+      <input type="text" inputMode="numeric" value={y} onChange={handleY} maxLength={4} placeholder="ÉÉÉÉ" className={className} style={{ ...sharedStyle, width:56 }}/>
+      <span style={{ color:'var(--muted)', fontWeight:700 }}>-</span>
+      <input type="text" inputMode="numeric" value={m} onChange={handleM} ref={mRef} maxLength={2} placeholder="HH" className={className} style={{ ...sharedStyle, width:36 }}/>
+      <span style={{ color:'var(--muted)', fontWeight:700 }}>-</span>
+      <input type="text" inputMode="numeric" value={d} onChange={handleD} ref={dRef} maxLength={2} placeholder="NN" className={className} style={{ ...sharedStyle, width:36 }}/>
+    </div>
+  );
+}
+
 function VacationModal({ workers, onClose, onSave }) {
   const [workerSearch, setWorkerSearch] = useState("");
 
@@ -1724,8 +1772,8 @@ function VacationModal({ workers, onClose, onSave }) {
             </select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Kezdő nap"><input type="date" value={tol} onChange={(e)=>setTol(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
-            <Field label="Utolsó nap"><input type="date" value={ig} onChange={(e)=>setIg(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
+            <Field label="Kezdő nap"><TriDateInput value={tol} onChange={setTol} className="mb-in" style={{ fontSize:13.5 }}/></Field>
+            <Field label="Utolsó nap"><TriDateInput value={ig} onChange={setIg} className="mb-in" style={{ fontSize:13.5 }}/></Field>
           </div>
           <Field label="Típus">
             <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
