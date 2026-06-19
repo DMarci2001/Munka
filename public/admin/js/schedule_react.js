@@ -1434,7 +1434,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(true);
   const [modalOpen, setModalOpen]         = useState(false);
-  const [elerheteOpen, setElerheteOpen]   = useState(false);
+  const [elerhetoOpen, setElerhetoOpen]   = useState(false);
   const [busyId, setBusyId]               = useState(null);
   const [secCollapsed, setSecCollapsed]   = useState({});
 
@@ -1459,9 +1459,9 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
-  const addElerhete = async (rec) => {
+  const addElerheto = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető" });
-    if (result.status==="ok") { await load(); setElerheteOpen(false); setToast("Elérhető nap rögzítve!"); }
+    if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
@@ -1505,7 +1505,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
     {
       key:"elerheto", label:"Elérhető napok", color:"#2563eb", icon:"calendar",
       emptyText: "Nincs rögzített elérhető nap.",
-      action: { label:"Hozzáadás", onClick: ()=>setElerheteOpen(true) },
+      action: { label:"Hozzáadás", onClick: ()=>setElerhetoOpen(true) },
       items: vacations.filter((v) => isElerheto(v) && filterVac(v)),
     },
     {
@@ -1573,7 +1573,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
       </div>
 
       {modalOpen && <VacationModal workers={data.workers} onClose={()=>setModalOpen(false)} onSave={addVacation}/>}
-      {elerheteOpen && <VacationModal workers={data.workers} onClose={()=>setElerheteOpen(false)} onSave={addElerhete} forceTipus="Elérhető"/>}
+      {elerhetoOpen && <VacationModal workers={data.workers} onClose={()=>setElerhetoOpen(false)} onSave={addElerheto} forceTipus="Elérhető"/>}
     </div>
   );
 }
@@ -2071,7 +2071,15 @@ function MunkaidoBeosztas() {
   }, [weekData]);
 
   const vacPerDay = useMemo(() =>
-    (weekData?.days||[]).map((d) => new Set((d.vacations||[]).map((v) => v.workerId))),
+    (weekData?.days||[]).map((d) => new Set((d.szabadsag||[]).map((v) => v.workerId))),
+  [weekData]);
+
+  const elerhetoByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.elerheto || []),
+  [weekData]);
+
+  const szabadsagByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
   const weekWorkerHours = useMemo(() => {
@@ -2090,7 +2098,7 @@ function MunkaidoBeosztas() {
 
   const vacationsByDay = useMemo(() => {
     if (!weekData) return EMPTY_BOARD;
-    return weekData.days.map((d) => d.vacations || []);
+    return weekData.days.map((d) => d.szabadsag || []);
   }, [weekData]);
 
   const conf = useMemo(() => analyzeDays(weekDays, vacationsByDay), [weekDays, vacationsByDay]);
@@ -2351,6 +2359,20 @@ function MunkaidoBeosztas() {
                         {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
                       <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
+                        {!conflictView && elerhetoByDay[di] && elerhetoByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,#2563eb 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"#2563eb" }}>{Ico.calendar({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"#2563eb" }}>Elérhető orvosok</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{elerhetoByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {elerhetoByDay[di].map((e, idx) => (
+                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>{e.name}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {CAT_ORDER.filter((c)=>catFilter==="all"||c===catFilter).map((cat) => {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
@@ -2358,6 +2380,22 @@ function MunkaidoBeosztas() {
                           return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
+                        {!conflictView && szabadsagByDay[di] && szabadsagByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"var(--danger)" }}>{Ico.sun({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"var(--danger)" }}>Szabadságok</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{szabadsagByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {szabadsagByDay[di].map((v, idx) => (
+                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>
+                                  {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

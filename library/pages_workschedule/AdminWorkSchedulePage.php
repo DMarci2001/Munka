@@ -870,6 +870,14 @@ HTML;
         $weekDay = date("N", strtotime($thisDay));
         $html = "";
 
+        $elerhetoData = sql_query("SELECT w.nev FROM schedule_szabadsag sz LEFT JOIN schedule_workers w ON sz.oid=w.id WHERE sz.datumtol=? AND sz.tipus=?", [$thisDay, "Elérhető"])->fetchAll();
+        if ($elerhetoData) {
+            $html .= "<div class='scheduledayhead' style='background:#2563eb;color:#fff;'>Elérhető orvosok</div>";
+            foreach ($elerhetoData as $data) {
+                $html .= "<div style='padding:2px 4px;'>{$data["nev"]}</div>";
+            }
+        }
+
         $html.= "<div class='scheduledayhead'>".$this->adminUtils->magyarDatum($this->thisDay).$this->collisionMark()."</div>";
         $html .= "<div style='display:table;width:100%;'>";
 
@@ -924,10 +932,11 @@ HTML;
 
         $html.= "</div>";
 
-        if ($szabiData = sql_query("select w.nev from schedule_szabadsag sz left join schedule_workers w on sz.oid = w.id where sz.datumtol=?", [$this->thisDay])->fetchAll()) {
+        if ($szabiData = sql_query("SELECT w.nev, sz.status FROM schedule_szabadsag sz LEFT JOIN schedule_workers w ON sz.oid=w.id WHERE sz.datumtol=? AND COALESCE(sz.tipus,'') != ?", [$this->thisDay, "Elérhető"])->fetchAll()) {
             $html .= "<div class='scheduledayhead' style='background:#ff6961;color:#fff;'>{$this->thisDay} " . $this->settings->hetnap[$weekDay] . "<br/>Szabadságok</div>";
             foreach ($szabiData as $data) {
-                $html.="<div style='padding:2px;'>{$data["nev"]}</div>";
+                $statusLabel = ((int)$data["status"] === 0) ? " <span style='font-size:11px;opacity:0.75;'>(elbírálás alatt)</span>" : "";
+                $html.="<div style='padding:2px;'>{$data["nev"]}{$statusLabel}</div>";
                 //$html.="<div style='padding:2px;display: table-cell;'>{$data["nev"]}</div>";
                 //$html.="<div style='padding:2px;display: table-cell;'>{$data["nev"]}</div>";
             }
@@ -1103,6 +1112,7 @@ HTML;
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
+                    COALESCE(sz.tipus,'') AS tipus,
                     IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id = sz.oid
@@ -1110,16 +1120,21 @@ HTML;
             ["monday" => $monday, "weekend" => $weekEnd]
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $vacByDate = [];
+        $elerhetoByDate  = [];
+        $szabadsagByDate = [];
         foreach ($vacationRows as $v) {
             $cur = max($v["datumtol"], $monday);
             $end = min($v["datumig"], $weekEnd);
             while ($cur <= $end) {
-                $vacByDate[$cur][] = [
-                    "workerId" => (int)$v["workerid"],
-                    "name"     => $v["workernev"],
-                    "status"   => (int)$v["status"],
-                ];
+                if ($v["tipus"] === "Elérhető") {
+                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"]];
+                } else {
+                    $szabadsagByDate[$cur][] = [
+                        "workerId" => (int)$v["workerid"],
+                        "name"     => $v["workernev"],
+                        "status"   => (int)$v["status"],
+                    ];
+                }
                 $cur = date("Y-m-d", strtotime($cur . " +1 day"));
             }
         }
@@ -1187,7 +1202,7 @@ HTML;
                 ];
             }
 
-            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "vacations" => $vacByDate[$date] ?? []];
+            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? []];
         }
 
         $doctorRows = sql_query(
