@@ -1666,8 +1666,9 @@ function TriDateInput({ value, onChange, className, style }) {
   const [y, setY] = useState('');
   const [m, setM] = useState('');
   const [d, setD] = useState('');
-  const mRef = useRef(null);
-  const dRef = useRef(null);
+  const mRef      = useRef(null);
+  const dRef      = useRef(null);
+  const pickerRef = useRef(null);
 
   useEffect(() => {
     if (value && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -1698,6 +1699,15 @@ function TriDateInput({ value, onChange, className, style }) {
     setD(v); emit(y, m, v);
   };
 
+  const handlePicker = (e) => {
+    const val = e.target.value;
+    if (val) {
+      const parts = val.split('-');
+      setY(parts[0]); setM(parts[1]); setD(parts[2]);
+      onChange(val);
+    }
+  };
+
   const sharedStyle = { ...style, textAlign:'center', padding:'10px 6px' };
   return (
     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
@@ -1706,6 +1716,10 @@ function TriDateInput({ value, onChange, className, style }) {
       <input type="text" inputMode="numeric" value={m} onChange={handleM} ref={mRef} maxLength={2} placeholder="HH" className={className} style={{ ...sharedStyle, width:36 }}/>
       <span style={{ color:'var(--muted)', fontWeight:700 }}>-</span>
       <input type="text" inputMode="numeric" value={d} onChange={handleD} ref={dRef} maxLength={2} placeholder="NN" className={className} style={{ ...sharedStyle, width:36 }}/>
+      <input type="date" ref={pickerRef} value={value || ''} onChange={handlePicker} tabIndex={-1} style={{ position:'absolute', opacity:0, width:0, height:0, pointerEvents:'none' }}/>
+      <button type="button" onClick={() => pickerRef.current?.showPicker()} className="mb-btn" style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border)', background:'var(--surface-2)', cursor:'pointer', color:'var(--muted)', flexShrink:0 }}>
+        {Ico.calendar({ width:16, height:16 })}
+      </button>
     </div>
   );
 }

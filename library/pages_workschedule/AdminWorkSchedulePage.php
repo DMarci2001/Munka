@@ -701,10 +701,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (strtotime($tol) > strtotime($ig)) {
             Utils::jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        $workerId = (int)$workerData["id"];
-        $groupId  = 0;
-        $cur      = $tol;
+        $workerId  = (int)$workerData["id"];
+        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
+        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
+        $groupId   = 0;
+        $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
+            if ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok)) {
+                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
+                continue;
+            }
             sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, status=0, tipus=?", [$cur, $cur, $workerId, $tipus]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
@@ -1795,9 +1801,15 @@ HTML;
         if (strtotime($tol) > strtotime($ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        $groupId = 0;
-        $cur = $tol;
+        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
+        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
+        $groupId   = 0;
+        $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
+            if ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok)) {
+                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
+                continue;
+            }
             sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?", [$cur, $cur, $workerId, $tipus]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
