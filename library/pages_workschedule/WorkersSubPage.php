@@ -53,10 +53,6 @@ class WorkersSubPage extends AdminCorePage {
                 $result["status"] = "A szabadság kezdő dátumának kisebbnek kell lennie mint a vég dátum!";
             }
 
-            if (strtotime($ig) - strtotime($tol) > 86400*31) {
-                $result["status"] = "A szabadság nem lehet hozsszabb mint 1 hónap!";
-            }
-
             if ($result["status"] == "ok") {
                 while (strtotime($startDate) <= strtotime($ig)) {
                     sql_query("insert into schedule_szabadsag set datumtol=?, datumig=?, oid=?", [$startDate, $startDate, $workerId]);

@@ -701,10 +701,6 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (strtotime($tol) > strtotime($ig)) {
             Utils::jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        if (strtotime($ig) - strtotime($tol) > 86400 * 31) {
-            Utils::jsonOut(["status" => "error", "message" => "A szabadság nem lehet hosszabb, mint 1 hónap!"]);
-        }
-
         $workerId = (int)$workerData["id"];
         $groupId  = 0;
         $cur      = $tol;
@@ -1799,10 +1795,6 @@ HTML;
         if (strtotime($tol) > strtotime($ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        if (strtotime($ig) - strtotime($tol) > 86400 * 31) {
-            $this->utils->jsonOut(["status" => "error", "message" => "A szabadság nem lehet hosszabb, mint 1 hónap!"]);
-        }
-
         $groupId = 0;
         $cur = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
