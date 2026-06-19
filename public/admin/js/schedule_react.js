@@ -1663,17 +1663,33 @@ function StatisticsView({ setToast }) {
 }
 
 function VacationModal({ workers, onClose, onSave }) {
+  const [workerSearch, setWorkerSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = workerSearch.trim().toLowerCase();
+    if (!q) return workers || [];
+    return (workers||[]).filter(w =>
+      w.nev.toLowerCase().includes(q) || (w.teljesnev||"").toLowerCase().includes(q)
+    );
+  }, [workers, workerSearch]);
+
   const grouped = useMemo(() => {
     const m = new Map();
-    (workers||[]).forEach((w) => { if (!m.has(w.rolenev)) m.set(w.rolenev, []); m.get(w.rolenev).push(w); });
+    filtered.forEach((w) => { if (!m.has(w.rolenev)) m.set(w.rolenev, []); m.get(w.rolenev).push(w); });
     return Array.from(m.entries());
-  }, [workers]);
+  }, [filtered]);
 
   const [workerid, setWorkerid] = useState(workers?.[0]?.id ? String(workers[0].id) : "");
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
   const [tipus, setTipus]       = useState("Szabadság");
   const [saving, setSaving]     = useState(false);
+
+  useEffect(() => {
+    if (workerid && !filtered.find(w => String(w.id) === workerid)) {
+      setWorkerid(filtered[0]?.id ? String(filtered[0].id) : "");
+    }
+  }, [filtered]);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
@@ -1690,6 +1706,15 @@ function VacationModal({ workers, onClose, onSave }) {
         </div>
         <div className="flex flex-col gap-3.5 px-6 py-5">
           <Field label="Munkatárs">
+            <input
+              type="text"
+              value={workerSearch}
+              onChange={(e)=>setWorkerSearch(e.target.value)}
+              placeholder="Keresés..."
+              className="mb-in px-3 py-2"
+              style={{ fontSize:13, marginBottom:4, display:"block", width:"100%", boxSizing:"border-box" }}
+              autoComplete="off"
+            />
             <select value={workerid} onChange={(e)=>setWorkerid(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}>
               {grouped.map(([rolenev, ws]) => (
                 <optgroup key={rolenev} label={rolenev}>
