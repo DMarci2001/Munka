@@ -1054,7 +1054,7 @@ HTML;
         echo "<!DOCTYPE html>\n<html lang='hu'>\n<head>\n";
         echo "  <meta charset='UTF-8'>\n";
         echo "  <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n";
-        echo "  <title>HMM – Munkaidő beosztás</title>\n";
+        echo "  <title>".(Booking_Constants::SQL_DB === "keltexmed" ? "Keltexmed" : "HMM")." – Munkaidő beosztás</title>\n";
         echo "  <script src='https://cdn.tailwindcss.com'></script>\n";
         echo "  <script src='https://unpkg.com/react@18.3.1/umd/react.production.min.js' crossorigin></script>\n";
         echo "  <script src='https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js' crossorigin></script>\n";
