@@ -1793,7 +1793,7 @@ HTML;
         $workerId = intval($_POST["workerid"] ?? 0);
         $tol      = $_POST["tol"] ?? "";
         $ig       = $_POST["ig"]  ?? "";
-        $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb"]) ? $_POST["tipus"] : "Szabadság";
+        $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb", "Elérhető"]) ? $_POST["tipus"] : "Szabadság";
 
         if (!$workerId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a munkatársat és a szabadság kezdő/vég napját!"]);
@@ -1806,7 +1806,7 @@ HTML;
         $groupId   = 0;
         $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
-            if ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok)) {
+            if ($tipus !== "Elérhető" && ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok))) {
                 $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
                 continue;
             }

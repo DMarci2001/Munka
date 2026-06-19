@@ -67,6 +67,7 @@ const VACATION_TYPE_COLORS = {
   "Betegszabadság": "var(--danger)",
   "Képzés":         "var(--blue)",
   "Egyéb":          "var(--purple)",
+  "Elérhető":       "#2563eb",
 };
 
 /* ---- alaprajz ------------------------------------------------------- */
@@ -1430,11 +1431,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
 
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
 function VacationsView({ setToast, newSignal, query: searchQuery }) {
-  const [data, setData]             = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [modalOpen, setModalOpen]   = useState(false);
-  const [busyId, setBusyId]         = useState(null);
-  const [secCollapsed, setSecCollapsed] = useState({});
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [modalOpen, setModalOpen]         = useState(false);
+  const [elerheteOpen, setElerheteOpen]   = useState(false);
+  const [busyId, setBusyId]               = useState(null);
+  const [secCollapsed, setSecCollapsed]   = useState({});
 
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModalOpen(true); }, [newSignal]);
@@ -1454,6 +1456,12 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const addVacation = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus });
     if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
+    else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+  };
+
+  const addElerhete = async (rec) => {
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető" });
+    if (result.status==="ok") { await load(); setElerheteOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
@@ -1482,18 +1490,27 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const q = (searchQuery || "").trim().toLowerCase();
   const filterVac = (v) => !q || `${v.workerName||""} ${v.tipus||""}`.toLowerCase().includes(q);
 
+  const isVac     = (v) => v.tipus !== "Elérhető";
+  const isElerheto = (v) => v.tipus === "Elérhető";
+
   const sections = [
     {
       key:"pending",  label:"Függő szabadságok",   color:"var(--brand)",  icon:"clock",
-      items: vacations.filter((v) => (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
     },
     {
       key:"approved", label:"Elfogadott szabadság", color:"var(--green)",  icon:"sun",
-      items: vacations.filter((v) => v.status===1 && isFuture(v) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && v.status===1 && isFuture(v) && filterVac(v)),
+    },
+    {
+      key:"elerheto", label:"Elérhető napok", color:"#2563eb", icon:"calendar",
+      emptyText: "Nincs rögzített elérhető nap.",
+      action: { label:"Hozzáadás", onClick: ()=>setElerheteOpen(true) },
+      items: vacations.filter((v) => isElerheto(v) && filterVac(v)),
     },
     {
       key:"archived", label:"Archivált",            color:"var(--muted)",  icon:"calendar",
-      items: vacations.filter((v) => (isPast(v) || v.status===2) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && (isPast(v) || v.status===2) && filterVac(v)),
     },
   ];
 
@@ -1528,25 +1545,35 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
         {sections.map((sec) => {
           const SectionIcon = Ico[sec.icon];
           const collapsed = !!secCollapsed[sec.key];
+          const toggle = () => setSecCollapsed((p)=>({...p,[sec.key]:!p[sec.key]}));
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-              <button onClick={()=>setSecCollapsed((p)=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
+              <button onClick={toggle} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
                 <span className="flex items-center gap-2">
                   <span style={{ color:sec.color }}>{SectionIcon({width:15,height:15})}</span>
                   <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
                   <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{sec.items.length}</span>
                 </span>
-                <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+                <span className="flex items-center gap-2">
+                  {sec.action && (
+                    <span onClick={(e)=>{ e.stopPropagation(); sec.action.onClick(); }} className="flex items-center gap-1 rounded-lg px-2.5 py-1" style={{ fontSize:12, fontWeight:700, color:"#fff", background:sec.color }}>
+                      {Ico.plus()} {sec.action.label}
+                    </span>
+                  )}
+                  <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+                </span>
               </button>
               {!collapsed && <div className="flex flex-col gap-1.5 p-2">
                 {sec.items.map((v) => <VacCard key={v.groupid} v={v} secKey={sec.key}/>)}
-                {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs ilyen szabadság.</div>}
+                {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>{sec.emptyText||"Nincs ilyen szabadság."}</div>}
               </div>}
             </div>
           );
         })}
       </div>
+
       {modalOpen && <VacationModal workers={data.workers} onClose={()=>setModalOpen(false)} onSave={addVacation}/>}
+      {elerheteOpen && <VacationModal workers={data.workers} onClose={()=>setElerheteOpen(false)} onSave={addElerhete} forceTipus="Elérhető"/>}
     </div>
   );
 }
@@ -1724,7 +1751,7 @@ function TriDateInput({ value, onChange, className, style }) {
   );
 }
 
-function VacationModal({ workers, onClose, onSave }) {
+function VacationModal({ workers, onClose, onSave, forceTipus }) {
   const [workerSearch, setWorkerSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -1744,7 +1771,7 @@ function VacationModal({ workers, onClose, onSave }) {
   const [workerid, setWorkerid] = useState(workers?.[0]?.id ? String(workers[0].id) : "");
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
-  const [tipus, setTipus]       = useState("Szabadság");
+  const [tipus, setTipus]       = useState(forceTipus || "Szabadság");
   const [saving, setSaving]     = useState(false);
 
   useEffect(() => {
@@ -1763,7 +1790,7 @@ function VacationModal({ workers, onClose, onSave }) {
       <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
       <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:460, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
-          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>Új szabadság</h2>
+          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>{forceTipus === "Elérhető" ? "Új elérhető nap" : "Új szabadság"}</h2>
           <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
         </div>
         <div className="flex flex-col gap-3.5 px-6 py-5">
@@ -1789,9 +1816,11 @@ function VacationModal({ workers, onClose, onSave }) {
             <Field label="Kezdő nap"><TriDateInput value={tol} onChange={setTol} className="mb-in" style={{ fontSize:13.5 }}/></Field>
             <Field label="Utolsó nap"><TriDateInput value={ig} onChange={setIg} className="mb-in" style={{ fontSize:13.5 }}/></Field>
           </div>
-          <Field label="Típus">
-            <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
-          </Field>
+          {!forceTipus && (
+            <Field label="Típus">
+              <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+            </Field>
+          )}
           {tol && ig && tol > ig && <p style={{ fontSize:11.5, color:"var(--danger-ink)" }}>A kezdő nap nem lehet később, mint az utolsó nap.</p>}
         </div>
         <div className="flex items-center justify-end gap-2 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
