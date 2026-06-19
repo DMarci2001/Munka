@@ -1,12 +1,14 @@
-"use strict";
+﻿"use strict";
 
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 const HMM_CONFIG = window.HMM_SCHEDULE_CONFIG || {
   url: "index.php?page=workschedule",
   offset: 0,
-  adminName: "Admin"
+  adminName: "Admin",
+  tenant: "hmm"
 };
+const IS_KELTEX = (HMM_CONFIG.tenant || "hmm") === "keltexmed";
 
 /* ---- segédek -------------------------------------------------------- */
 const toMin = (t) => { const [h, m] = (t || "0:0").split(":").map(Number); return h * 60 + m; };
@@ -65,6 +67,7 @@ const VACATION_TYPE_COLORS = {
   "Betegszabadság": "var(--danger)",
   "Képzés":         "var(--blue)",
   "Egyéb":          "var(--purple)",
+  "Elérhető":       "#2563eb",
 };
 
 /* ---- alaprajz ------------------------------------------------------- */
@@ -104,6 +107,12 @@ const Styles = () => (
       --brand:#9c3328; --brand-ink:#8e2f23; --brand-soft:rgba(156,51,40,.12);
       --map-bg:#eef1f5; --map-room:#ffffff; --map-room-stroke:#dde3ea;
       --map-road:#d2d8e0; --map-road2:#e6eaf0; --map-bldg:#eef1f5; --map-bldg-stroke:#dde3ea;
+    }
+    .mb-root.mb-dark.mb-keltex{
+      --brand:#1ec8d4; --brand-ink:#6de8ef; --brand-soft:rgba(30,200,212,.20);
+    }
+    .mb-root.mb-light.mb-keltex{
+      --brand:#1598a4; --brand-ink:#0e7580; --brand-soft:rgba(21,152,164,.12);
     }
     .mb-root *{ box-sizing:border-box; }
     .mb-display{ font-family:'Bricolage Grotesque',sans-serif; letter-spacing:-.01em; }
@@ -359,7 +368,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const badTime  = toMin(from) >= toMin(to);
   const badRange = !b && cat==="kiszallas" && dateStart > dateEnd;
   const badMultiRange = !!(b && b.cat==="kiszallas" && multiApply && multiFrom > multiTo);
-  const noDoc    = cat!=="kiszallas" && docs.length === 0;
+  const noDoc    = cat!=="kiszallas" && (b ? b.orvosKell!==0 : true) && docs.length === 0;
   const blocked  = badTime || badRange || badMultiRange || (!b && title.trim()==="");
   const locSug   = useMemo(() => cat==="belso"
     ? Array.from(new Set(FLOORS.flatMap((f)=>f.rooms)))
@@ -663,7 +672,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
   const egyebs = (b.staff||[]).filter((s)=>s.role==="e");
-  const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && docs.length===0;
+  const noDoc  = !inactive && b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && b.orvosKell!==0 && docs.length===0;
   const overQuota = !inactive && (b.staff||[]).some((s) => {
     if (!s.workerId) return false;
     const mh = monthHours && monthHours[s.workerId];
@@ -756,7 +765,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                   {rows.map((b) => {
                     const docs   = (b.staff||[]).filter((s)=>s.role==="d");
                     const nurses = (b.staff||[]).filter((s)=>s.role==="n");
-                    const noDoc  = docs.length===0;
+                    const noDoc  = b.orvosKell!==0 && docs.length===0;
                     const isConf = conf.set.has(`${di}:${b.id}`);
                     const overlap = conf.det[`${di}:${b.id}`]||[];
                     const hasDouble = overlap.some((o)=>!o.vac);
@@ -835,7 +844,7 @@ function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, o
       const overlaps = conf.det[key] || [];
       const hasDouble = overlaps.some((o)=>!o.vac);
       const hasVac    = overlaps.some((o)=>o.vac);
-      const noDoc     = b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && (b.staff||[]).filter((s)=>s.role==="d").length===0;
+      const noDoc     = b.cat!=="kiszallas" && b.cat!=="belso_egyeb" && b.orvosKell!==0 && (b.staff||[]).filter((s)=>s.role==="d").length===0;
       const entry = { b, di, key, overlaps };
       if (hasDouble) groups.double.push(entry);
       if (hasVac)    groups.vac.push(entry);
@@ -1205,9 +1214,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1328,11 +1337,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [ktartoNev,    setKtartoNev]   = useState(p.ktarto_nev||"");
   const [ktartoTel,    setKtartoTel]   = useState(p.ktarto_tel||"");
   const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
+  const [orvosKell,    setOrvosKell]   = useState((p.orvos_kell ?? 1) !== 0);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1381,6 +1391,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
             <Field label="Aktív napok">
               <NapokSelector value={napok} onChange={setNapok}/>
             </Field>
+            {cat !== "kiszallas" && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Toggle on={orvosKell} onChange={setOrvosKell}/>
+                <span style={{ fontSize:12.5, fontWeight:600 }}>Orvos szükséges</span>
+              </label>
+            )}
             {cat !== "belso" && (
               <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
                 <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>
@@ -1415,11 +1431,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
 
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
 function VacationsView({ setToast, newSignal, query: searchQuery }) {
-  const [data, setData]             = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [modalOpen, setModalOpen]   = useState(false);
-  const [busyId, setBusyId]         = useState(null);
-  const [secCollapsed, setSecCollapsed] = useState({});
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [modalOpen, setModalOpen]         = useState(false);
+  const [elerhetoOpen, setElerhetoOpen]   = useState(false);
+  const [busyId, setBusyId]               = useState(null);
+  const [secCollapsed, setSecCollapsed]   = useState({});
 
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModalOpen(true); }, [newSignal]);
@@ -1439,6 +1456,12 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const addVacation = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus });
     if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
+    else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
+  };
+
+  const addElerheto = async (rec) => {
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető" });
+    if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
@@ -1467,18 +1490,27 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const q = (searchQuery || "").trim().toLowerCase();
   const filterVac = (v) => !q || `${v.workerName||""} ${v.tipus||""}`.toLowerCase().includes(q);
 
+  const isVac     = (v) => v.tipus !== "Elérhető";
+  const isElerheto = (v) => v.tipus === "Elérhető";
+
   const sections = [
     {
       key:"pending",  label:"Függő szabadságok",   color:"var(--brand)",  icon:"clock",
-      items: vacations.filter((v) => (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
     },
     {
       key:"approved", label:"Elfogadott szabadság", color:"var(--green)",  icon:"sun",
-      items: vacations.filter((v) => v.status===1 && isFuture(v) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && v.status===1 && isFuture(v) && filterVac(v)),
+    },
+    {
+      key:"elerheto", label:"Elérhető napok", color:"#2563eb", icon:"calendar",
+      emptyText: "Nincs rögzített elérhető nap.",
+      action: { label:"Hozzáadás", onClick: ()=>setElerhetoOpen(true) },
+      items: vacations.filter((v) => isElerheto(v) && filterVac(v)),
     },
     {
       key:"archived", label:"Archivált",            color:"var(--muted)",  icon:"calendar",
-      items: vacations.filter((v) => (isPast(v) || v.status===2) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && (isPast(v) || v.status===2) && filterVac(v)),
     },
   ];
 
@@ -1513,25 +1545,35 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
         {sections.map((sec) => {
           const SectionIcon = Ico[sec.icon];
           const collapsed = !!secCollapsed[sec.key];
+          const toggle = () => setSecCollapsed((p)=>({...p,[sec.key]:!p[sec.key]}));
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-              <button onClick={()=>setSecCollapsed((p)=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
+              <button onClick={toggle} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:collapsed?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.color} 8%,transparent)` }}>
                 <span className="flex items-center gap-2">
                   <span style={{ color:sec.color }}>{SectionIcon({width:15,height:15})}</span>
                   <span style={{ fontSize:13, fontWeight:700 }}>{sec.label}</span>
                   <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{sec.items.length}</span>
                 </span>
-                <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+                <span className="flex items-center gap-2">
+                  {sec.action && (
+                    <span onClick={(e)=>{ e.stopPropagation(); sec.action.onClick(); }} className="flex items-center gap-1 rounded-lg px-2.5 py-1" style={{ fontSize:12, fontWeight:700, color:"#fff", background:sec.color }}>
+                      {Ico.plus()} {sec.action.label}
+                    </span>
+                  )}
+                  <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+                </span>
               </button>
               {!collapsed && <div className="flex flex-col gap-1.5 p-2">
                 {sec.items.map((v) => <VacCard key={v.groupid} v={v} secKey={sec.key}/>)}
-                {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs ilyen szabadság.</div>}
+                {sec.items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>{sec.emptyText||"Nincs ilyen szabadság."}</div>}
               </div>}
             </div>
           );
         })}
       </div>
+
       {modalOpen && <VacationModal workers={data.workers} onClose={()=>setModalOpen(false)} onSave={addVacation}/>}
+      {elerhetoOpen && <VacationModal workers={data.workers} onClose={()=>setElerhetoOpen(false)} onSave={addElerheto} forceTipus="Elérhető"/>}
     </div>
   );
 }
@@ -1647,18 +1689,96 @@ function StatisticsView({ setToast }) {
   );
 }
 
-function VacationModal({ workers, onClose, onSave }) {
+function TriDateInput({ value, onChange, className, style }) {
+  const [y, setY] = useState('');
+  const [m, setM] = useState('');
+  const [d, setD] = useState('');
+  const mRef      = useRef(null);
+  const dRef      = useRef(null);
+  const pickerRef = useRef(null);
+
+  useEffect(() => {
+    if (value && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = value.split('-');
+      setY(parts[0]); setM(parts[1]); setD(parts[2]);
+    } else if (!value) {
+      setY(''); setM(''); setD('');
+    }
+  }, [value]);
+
+  const emit = (year, month, day) => {
+    if (year.length === 4 && month.length === 2 && day.length === 2) onChange(year + '-' + month + '-' + day);
+    else onChange('');
+  };
+
+  const handleY = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setY(v); emit(v, m, d);
+    if (v.length === 4) mRef.current?.focus();
+  };
+  const handleM = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setM(v); emit(y, v, d);
+    if (v.length === 2) dRef.current?.focus();
+  };
+  const handleD = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setD(v); emit(y, m, v);
+  };
+
+  const handlePicker = (e) => {
+    const val = e.target.value;
+    if (val) {
+      const parts = val.split('-');
+      setY(parts[0]); setM(parts[1]); setD(parts[2]);
+      onChange(val);
+    }
+  };
+
+  const sharedStyle = { ...style, textAlign:'center', padding:'10px 6px' };
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+      <input type="text" inputMode="numeric" value={y} onChange={handleY} maxLength={4} placeholder="ÉÉÉÉ" className={className} style={{ ...sharedStyle, width:56 }}/>
+      <span style={{ color:'var(--muted)', fontWeight:700 }}>-</span>
+      <input type="text" inputMode="numeric" value={m} onChange={handleM} ref={mRef} maxLength={2} placeholder="HH" className={className} style={{ ...sharedStyle, width:36 }}/>
+      <span style={{ color:'var(--muted)', fontWeight:700 }}>-</span>
+      <input type="text" inputMode="numeric" value={d} onChange={handleD} ref={dRef} maxLength={2} placeholder="NN" className={className} style={{ ...sharedStyle, width:36 }}/>
+      <input type="date" ref={pickerRef} value={value || ''} onChange={handlePicker} tabIndex={-1} style={{ position:'absolute', opacity:0, width:0, height:0, pointerEvents:'none' }}/>
+      <button type="button" onClick={() => pickerRef.current?.showPicker()} className="mb-btn" style={{ padding:'6px 8px', borderRadius:6, border:'1px solid var(--border)', background:'var(--surface-2)', cursor:'pointer', color:'var(--muted)', flexShrink:0 }}>
+        {Ico.calendar({ width:16, height:16 })}
+      </button>
+    </div>
+  );
+}
+
+function VacationModal({ workers, onClose, onSave, forceTipus }) {
+  const [workerSearch, setWorkerSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = workerSearch.trim().toLowerCase();
+    if (!q) return workers || [];
+    return (workers||[]).filter(w =>
+      w.nev.toLowerCase().includes(q) || (w.teljesnev||"").toLowerCase().includes(q)
+    );
+  }, [workers, workerSearch]);
+
   const grouped = useMemo(() => {
     const m = new Map();
-    (workers||[]).forEach((w) => { if (!m.has(w.rolenev)) m.set(w.rolenev, []); m.get(w.rolenev).push(w); });
+    filtered.forEach((w) => { if (!m.has(w.rolenev)) m.set(w.rolenev, []); m.get(w.rolenev).push(w); });
     return Array.from(m.entries());
-  }, [workers]);
+  }, [filtered]);
 
   const [workerid, setWorkerid] = useState(workers?.[0]?.id ? String(workers[0].id) : "");
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
-  const [tipus, setTipus]       = useState("Szabadság");
+  const [tipus, setTipus]       = useState(forceTipus || "Szabadság");
   const [saving, setSaving]     = useState(false);
+
+  useEffect(() => {
+    if (workerid && !filtered.find(w => String(w.id) === workerid)) {
+      setWorkerid(filtered[0]?.id ? String(filtered[0].id) : "");
+    }
+  }, [filtered]);
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
@@ -1670,11 +1790,20 @@ function VacationModal({ workers, onClose, onSave }) {
       <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
       <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:460, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:40 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
-          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>Új szabadság</h2>
+          <h2 className="mb-display" style={{ fontSize:18, fontWeight:700 }}>{forceTipus === "Elérhető" ? "Új elérhető nap" : "Új szabadság"}</h2>
           <button onClick={onClose} className="mb-btn flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>{Ico.x()}</button>
         </div>
         <div className="flex flex-col gap-3.5 px-6 py-5">
           <Field label="Munkatárs">
+            <input
+              type="text"
+              value={workerSearch}
+              onChange={(e)=>setWorkerSearch(e.target.value)}
+              placeholder="Keresés..."
+              className="mb-in px-3 py-2"
+              style={{ fontSize:13, marginBottom:4, display:"block", width:"100%", boxSizing:"border-box" }}
+              autoComplete="off"
+            />
             <select value={workerid} onChange={(e)=>setWorkerid(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5, fontWeight:600 }}>
               {grouped.map(([rolenev, ws]) => (
                 <optgroup key={rolenev} label={rolenev}>
@@ -1684,12 +1813,14 @@ function VacationModal({ workers, onClose, onSave }) {
             </select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Kezdő nap"><input type="date" value={tol} onChange={(e)=>setTol(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
-            <Field label="Utolsó nap"><input type="date" value={ig} onChange={(e)=>setIg(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
+            <Field label="Kezdő nap"><TriDateInput value={tol} onChange={setTol} className="mb-in" style={{ fontSize:13.5 }}/></Field>
+            <Field label="Utolsó nap"><TriDateInput value={ig} onChange={setIg} className="mb-in" style={{ fontSize:13.5 }}/></Field>
           </div>
-          <Field label="Típus">
-            <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
-          </Field>
+          {!forceTipus && (
+            <Field label="Típus">
+              <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+            </Field>
+          )}
           {tol && ig && tol > ig && <p style={{ fontSize:11.5, color:"var(--danger-ink)" }}>A kezdő nap nem lehet később, mint az utolsó nap.</p>}
         </div>
         <div className="flex items-center justify-end gap-2 px-6 py-4" style={{ borderTop:"1px solid var(--border)", background:"var(--bg)" }}>
@@ -1940,7 +2071,15 @@ function MunkaidoBeosztas() {
   }, [weekData]);
 
   const vacPerDay = useMemo(() =>
-    (weekData?.days||[]).map((d) => new Set((d.vacations||[]).map((v) => v.workerId))),
+    (weekData?.days||[]).map((d) => new Set((d.szabadsag||[]).map((v) => v.workerId))),
+  [weekData]);
+
+  const elerhetoByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.elerheto || []),
+  [weekData]);
+
+  const szabadsagByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
   const weekWorkerHours = useMemo(() => {
@@ -1959,7 +2098,7 @@ function MunkaidoBeosztas() {
 
   const vacationsByDay = useMemo(() => {
     if (!weekData) return EMPTY_BOARD;
-    return weekData.days.map((d) => d.vacations || []);
+    return weekData.days.map((d) => d.szabadsag || []);
   }, [weekData]);
 
   const conf = useMemo(() => analyzeDays(weekDays, vacationsByDay), [weekDays, vacationsByDay]);
@@ -2081,14 +2220,14 @@ function MunkaidoBeosztas() {
 
   /* ------------------------------------------------------------------ */
   return (
-    <div className={`mb-root mb-${theme} min-h-screen w-full`} style={{ height:"100vh", overflow:"hidden" }}>
+    <div className={`mb-root mb-${theme}${IS_KELTEX?" mb-keltex":""} min-h-screen w-full`} style={{ height:"100vh", overflow:"hidden" }}>
       <Styles/>
       <div className="flex" style={{ height:"100%" }}>
         {/* SIDEBAR */}
         <aside className="mb-sidebar mb-no-print flex" style={{ width:sidebarOpen?232:0, transition:"width .28s ease", flexShrink:0, overflow:"hidden", borderRight:sidebarOpen?"1px solid var(--border)":"none" }}>
           <div className="flex flex-col" style={{ width:232, height:"100%", background:"var(--sidebar)" }}>
             <div className="px-4 py-3.5 flex flex-col gap-2" style={{ borderBottom:"1px solid var(--border)" }}>
-              <div className="flex items-center gap-2.5"><LogoMark size={34}/><div className="leading-none"><div className="mb-display" style={{ fontSize:18, fontWeight:800, color:"var(--brand-ink)", letterSpacing:".02em" }}>HMM</div><div style={{ fontSize:8, fontWeight:700, letterSpacing:".22em", color:"var(--muted)", marginTop:3 }}>HUNGÁRIA&nbsp;MED-M</div></div></div>
+              <div className="flex items-center gap-2.5"><img src={HMM_CONFIG.logo} alt="logo" style={{height:34,width:"auto",flexShrink:0}}/></div>
               <div style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}>Munkaidő beosztás</div>
             </div>
             <nav className="flex-1 overflow-y-auto mb-scroll px-2.5 py-3 flex flex-col gap-0.5">
@@ -2129,7 +2268,7 @@ function MunkaidoBeosztas() {
           {/* FEJLÉC */}
           <header className="mb-no-print flex items-center gap-4 px-4 lg:px-6" style={{ height:56, borderBottom:"1px solid var(--border)", background:"var(--surface)", flexShrink:0 }}>
             <IconBtn onClick={()=>setSidebarOpen((v)=>!v)} title={sidebarOpen?"Menü elrejtése":"Menü megnyitása"}>{Ico.menu({width:19,height:19})}</IconBtn>
-            <div className="md:hidden"><LogoMark size={28}/></div>
+            <div className="md:hidden"><img src={HMM_CONFIG.logo} alt="logo" style={{height:28,width:"auto",flexShrink:0}}/></div>
             <div className="relative flex-1 max-w-xl mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.search()}</span>
               <input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Keresés orvosra, asszisztensre, helyiségre…" className="mb-in py-2 pl-10 pr-16" style={{ fontSize:13.5 }}/>
@@ -2220,6 +2359,20 @@ function MunkaidoBeosztas() {
                         {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
                       <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
+                        {!conflictView && elerhetoByDay[di] && elerhetoByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,#2563eb 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"#2563eb" }}>{Ico.calendar({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"#2563eb" }}>Elérhető orvosok</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{elerhetoByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {elerhetoByDay[di].map((e, idx) => (
+                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>{e.name}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {CAT_ORDER.filter((c)=>catFilter==="all"||c===catFilter).map((cat) => {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
@@ -2227,6 +2380,22 @@ function MunkaidoBeosztas() {
                           return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
+                        {!conflictView && szabadsagByDay[di] && szabadsagByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,var(--danger) 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"var(--danger)" }}>{Ico.sun({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"var(--danger)" }}>Szabadságok</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{szabadsagByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {szabadsagByDay[di].map((v, idx) => (
+                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>
+                                  {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

@@ -152,6 +152,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasAktiv) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN aktiv TINYINT(1) NOT NULL DEFAULT 1");
         }
+        $hasOrvosKell = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='orvos_kell'"
+        )->fetchColumn();
+        if (!$hasOrvosKell) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN orvos_kell TINYINT(1) NOT NULL DEFAULT 1");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -673,17 +679,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
         $workerName = trim($workerData["teljesnev"]) ?: $workerData["nev"];
 
         echo "<div id='pubschedulewrap' style='max-width:960px;padding:10px;'>";
-
         echo "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;'>";
         echo "<div style='font-size:20px;font-weight:bold;'>" . htmlspecialchars($workerName) . " beosztása</div>";
         echo "<button onclick='pubShowSzabiModal()' style='background:#c00;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px;'>"
             . "<i class='fa-solid fa-umbrella-beach'></i>&nbsp; Szabadság kérése</button>";
         echo "</div>";
-
         echo $this->workScheduleService->workerPublicScheduleCards($workerId);
-
         echo "</div>";
-
         echo $this->_publicSzabiModal($token);
     }
 
@@ -699,14 +701,16 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (strtotime($tol) > strtotime($ig)) {
             Utils::jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        if (strtotime($ig) - strtotime($tol) > 86400 * 31) {
-            Utils::jsonOut(["status" => "error", "message" => "A szabadság nem lehet hosszabb, mint 1 hónap!"]);
-        }
-
-        $workerId = (int)$workerData["id"];
-        $groupId  = 0;
-        $cur      = $tol;
+        $workerId  = (int)$workerData["id"];
+        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
+        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
+        $groupId   = 0;
+        $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
+            if ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok)) {
+                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
+                continue;
+            }
             sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, status=0, tipus=?", [$cur, $cur, $workerId, $tipus]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
@@ -866,6 +870,14 @@ HTML;
         $weekDay = date("N", strtotime($thisDay));
         $html = "";
 
+        $elerhetoData = sql_query("SELECT w.nev FROM schedule_szabadsag sz LEFT JOIN schedule_workers w ON sz.oid=w.id WHERE sz.datumtol=? AND sz.tipus=?", [$thisDay, "Elérhető"])->fetchAll();
+        if ($elerhetoData) {
+            $html .= "<div class='scheduledayhead' style='background:#2563eb;color:#fff;'>Elérhető orvosok</div>";
+            foreach ($elerhetoData as $data) {
+                $html .= "<div style='padding:2px 4px;'>{$data["nev"]}</div>";
+            }
+        }
+
         $html.= "<div class='scheduledayhead'>".$this->adminUtils->magyarDatum($this->thisDay).$this->collisionMark()."</div>";
         $html .= "<div style='display:table;width:100%;'>";
 
@@ -920,10 +932,11 @@ HTML;
 
         $html.= "</div>";
 
-        if ($szabiData = sql_query("select w.nev from schedule_szabadsag sz left join schedule_workers w on sz.oid = w.id where sz.datumtol=?", [$this->thisDay])->fetchAll()) {
+        if ($szabiData = sql_query("SELECT w.nev, sz.status FROM schedule_szabadsag sz LEFT JOIN schedule_workers w ON sz.oid=w.id WHERE sz.datumtol=? AND COALESCE(sz.tipus,'') != ?", [$this->thisDay, "Elérhető"])->fetchAll()) {
             $html .= "<div class='scheduledayhead' style='background:#ff6961;color:#fff;'>{$this->thisDay} " . $this->settings->hetnap[$weekDay] . "<br/>Szabadságok</div>";
             foreach ($szabiData as $data) {
-                $html.="<div style='padding:2px;'>{$data["nev"]}</div>";
+                $statusLabel = ((int)$data["status"] === 0) ? " <span style='font-size:11px;opacity:0.75;'>(elbírálás alatt)</span>" : "";
+                $html.="<div style='padding:2px;'>{$data["nev"]}{$statusLabel}</div>";
                 //$html.="<div style='padding:2px;display: table-cell;'>{$data["nev"]}</div>";
                 //$html.="<div style='padding:2px;display: table-cell;'>{$data["nev"]}</div>";
             }
@@ -1041,7 +1054,7 @@ HTML;
         echo "<!DOCTYPE html>\n<html lang='hu'>\n<head>\n";
         echo "  <meta charset='UTF-8'>\n";
         echo "  <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n";
-        echo "  <title>HMM – Munkaidő beosztás</title>\n";
+        echo "  <title>".(Booking_Constants::SQL_DB === "keltexmed" ? "Keltexmed" : "HMM")." – Munkaidő beosztás</title>\n";
         echo "  <script src='https://cdn.tailwindcss.com'></script>\n";
         echo "  <script src='https://unpkg.com/react@18.3.1/umd/react.production.min.js' crossorigin></script>\n";
         echo "  <script src='https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js' crossorigin></script>\n";
@@ -1050,7 +1063,9 @@ HTML;
         echo "</head>\n<body style='margin:0;padding:0;overflow:hidden;'>\n";
         echo "  <div id='hmm-schedule-root'></div>\n";
         echo "  <script>\n";
-        echo "    window.HMM_SCHEDULE_CONFIG = { url: {$pageUrl}, offset: {$offset}, adminName: {$adminName} };\n";
+        $tenant = Booking_Constants::SQL_DB === "keltexmed" ? "keltexmed" : "hmm";
+        $logo   = json_encode($tenant === "keltexmed" ? "/images/keltexmed_logo_v2.png" : "/images/hmm_logo_nagy.png");
+        echo "    window.HMM_SCHEDULE_CONFIG = { url: {$pageUrl}, offset: {$offset}, adminName: {$adminName}, tenant: '{$tenant}', logo: {$logo} };\n";
         echo "  </script>\n";
         echo "  <script type='text/babel' data-presets='react'>\n";
         if (is_file($jsFile)) {
@@ -1097,6 +1112,7 @@ HTML;
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
+                    COALESCE(sz.tipus,'') AS tipus,
                     IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id = sz.oid
@@ -1104,16 +1120,21 @@ HTML;
             ["monday" => $monday, "weekend" => $weekEnd]
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $vacByDate = [];
+        $elerhetoByDate  = [];
+        $szabadsagByDate = [];
         foreach ($vacationRows as $v) {
             $cur = max($v["datumtol"], $monday);
             $end = min($v["datumig"], $weekEnd);
             while ($cur <= $end) {
-                $vacByDate[$cur][] = [
-                    "workerId" => (int)$v["workerid"],
-                    "name"     => $v["workernev"],
-                    "status"   => (int)$v["status"],
-                ];
+                if ($v["tipus"] === "Elérhető") {
+                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"]];
+                } else {
+                    $szabadsagByDate[$cur][] = [
+                        "workerId" => (int)$v["workerid"],
+                        "name"     => $v["workernev"],
+                        "status"   => (int)$v["status"],
+                    ];
+                }
                 $cur = date("Y-m-d", strtotime($cur . " +1 day"));
             }
         }
@@ -1168,6 +1189,7 @@ HTML;
                     "note"        => $tipus["megj"]  ?? "",
                     "napok"       => (int)($tipus["napok"] ?? 127),
                     "org"         => $tipus["org"] ?: "HMM",
+                    "orvosKell"   => (int)($tipus["orvos_kell"] ?? 1),
                     "ktarto_nev"  => $tipus["ktarto_nev"]   ?? "",
                     "ktarto_tel"  => $tipus["ktarto_tel"]   ?? "",
                     "ktarto_email"=> $tipus["ktarto_email"] ?? "",
@@ -1180,7 +1202,7 @@ HTML;
                 ];
             }
 
-            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "vacations" => $vacByDate[$date] ?? []];
+            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? []];
         }
 
         $doctorRows = sql_query(
@@ -1579,6 +1601,7 @@ HTML;
                     "sorrend"      => (int)$r["sorrend"],
                     "aktiv"        => (int)$r["aktiv"],
                     "napok"        => (int)($r["napok"] ?? 127),
+                    "orvos_kell"   => (int)($r["orvos_kell"] ?? 1),
                     "ktarto_nev"   => $r["ktarto_nev"]   ?? "",
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
@@ -1601,8 +1624,9 @@ HTML;
         $rendelo   = substr(trim($_POST["rendelo"] ?? ""), 0, 255);
         $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
+        $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1650,6 +1674,7 @@ HTML;
         $org          = in_array($_POST["org"] ?? "", ["HMM", "Keltexmed"]) ? $_POST["org"] : "HMM";
         $napok        = intval($_POST["napok"] ?? 127) & 0x7F;
         $cat          = $_POST["cat"] ?? "";
+        $orvosKell    = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
         $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
         $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
         $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
@@ -1662,8 +1687,8 @@ HTML;
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1783,7 +1808,7 @@ HTML;
         $workerId = intval($_POST["workerid"] ?? 0);
         $tol      = $_POST["tol"] ?? "";
         $ig       = $_POST["ig"]  ?? "";
-        $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb"]) ? $_POST["tipus"] : "Szabadság";
+        $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb", "Elérhető"]) ? $_POST["tipus"] : "Szabadság";
 
         if (!$workerId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a munkatársat és a szabadság kezdő/vég napját!"]);
@@ -1791,13 +1816,15 @@ HTML;
         if (strtotime($tol) > strtotime($ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        if (strtotime($ig) - strtotime($tol) > 86400 * 31) {
-            $this->utils->jsonOut(["status" => "error", "message" => "A szabadság nem lehet hosszabb, mint 1 hónap!"]);
-        }
-
-        $groupId = 0;
-        $cur = $tol;
+        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
+        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
+        $groupId   = 0;
+        $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
+            if ($tipus !== "Elérhető" && ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok))) {
+                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
+                continue;
+            }
             sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?", [$cur, $cur, $workerId, $tipus]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;

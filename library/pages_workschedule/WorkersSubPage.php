@@ -53,12 +53,14 @@ class WorkersSubPage extends AdminCorePage {
                 $result["status"] = "A szabadság kezdő dátumának kisebbnek kell lennie mint a vég dátum!";
             }
 
-            if (strtotime($ig) - strtotime($tol) > 86400*31) {
-                $result["status"] = "A szabadság nem lehet hozsszabb mint 1 hónap!";
-            }
-
             if ($result["status"] == "ok") {
+                $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
+                $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
                 while (strtotime($startDate) <= strtotime($ig)) {
+                    if ((int)date('N', strtotime($startDate)) >= 6 || in_array($startDate, $szunnapok)) {
+                        $startDate = date("Y-m-d", strtotime("{$startDate} +1 day"));
+                        continue;
+                    }
                     sql_query("insert into schedule_szabadsag set datumtol=?, datumig=?, oid=?", [$startDate, $startDate, $workerId]);
                     $newId = sql_insert_id();
                     if ($groupId == 0) {
