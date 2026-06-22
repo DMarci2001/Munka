@@ -1141,7 +1141,7 @@ class BookingService
                 }*/
             }
 
-            if(in_array($cegId, [373,374,376,933])){
+            if(in_array($cegId, [373,374,376,933,90])){
                 $dist = "0 hour";
             }
 
