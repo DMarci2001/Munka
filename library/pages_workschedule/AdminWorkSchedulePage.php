@@ -181,6 +181,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiGetNaplo();
         }
 
+        if (isset($_GET["getweekworkers"])) {
+            $this->_apiGetWeekWorkers();
+        }
+
         if (isset($_POST["showcollisions"])) {
             $message = "";
             foreach ($this->workScheduleService->collisionData as $collisionItem) {
@@ -1999,6 +2003,39 @@ HTML;
         $rows = sql_query("SELECT tipus, cim, letrehozva FROM schedule_naplo ORDER BY letrehozva DESC LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
 
         $this->utils->jsonOut(["items" => $rows]);
+    }
+
+    private function _apiGetWeekWorkers(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $monday = $_GET["monday"] ?? "";
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $monday)) {
+            $monday = date("Y-m-d", strtotime("this week monday"));
+        }
+        $mondayStart = $monday . " 00:00:00";
+
+        $rows = sql_query(
+            "SELECT DISTINCT w.id, w.nev, w.teljesnev, w.tel, w.email, w.smsert, w.emailert
+             FROM schedule_mapping m
+             JOIN schedule_workers w ON w.id = m.workerid
+             WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
+             AND COALESCE(w.aktiv, 1) = 1
+             ORDER BY w.roleid, w.nev",
+            ["from" => $mondayStart]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $items = array_map(fn($w) => [
+            "id"           => (int)$w["id"],
+            "name"         => !empty($w["teljesnev"]) ? $w["teljesnev"] : $w["nev"],
+            "phone"        => $w["tel"],
+            "email"        => $w["email"],
+            "smsDefault"   => $w["tel"]   !== "" && (int)$w["smsert"]   === 1,
+            "emailDefault" => $w["email"] !== "" && (int)$w["emailert"] === 1,
+        ], $rows);
+
+        $this->utils->jsonOut(["items" => $items, "monday" => $monday]);
     }
 
 }

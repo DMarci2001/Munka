@@ -32,6 +32,13 @@ const weekRange = (year, week) => {
   const fmt = (d) => `${HU_MON_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}.`;
   return `${fmt(mon)} – ${fmt(sun)}`;
 };
+const isoWeekFromDate = (dateStr) => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const dow = d.getUTCDay() || 7;
+  const thu = new Date(d); thu.setUTCDate(thu.getUTCDate() + 4 - dow);
+  const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+  return { year: thu.getUTCFullYear(), week: Math.ceil(((thu - yearStart) / 86400000 + 1) / 7) };
+};
 const datesBetween = (start, end) => {
   const out = []; let d = new Date(start+"T00:00:00Z"); const last = new Date(end+"T00:00:00Z");
   while (d<=last) { out.push(iso(d)); d.setUTCDate(d.getUTCDate()+1); }
@@ -1858,6 +1865,75 @@ function NotifyView({ setToast }) {
   const [message, setMessage] = useState("");
   const [naplo, setNaplo]     = useState(null);
 
+  const getMondayOfWeek = (offset) => {
+    const d = new Date();
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() - day + 1 + offset * 7);
+    return d.toISOString().slice(0, 10);
+  };
+  const [weekOffset,    setWeekOffset]    = useState(0);
+  const [weekWorkers,   setWeekWorkers]   = useState(null);
+  const [weekLoading,   setWeekLoading]   = useState(false);
+  const [weekChecks,    setWeekChecks]    = useState({});
+  const [weekSending,   setWeekSending]   = useState(false);
+  const [weekPickerOpen, setWeekPickerOpen] = useState(false);
+  const weekPickerRef = useRef(null);
+
+  useEffect(() => {
+    if (!weekPickerOpen) return;
+    const h = (e) => { if (weekPickerRef.current && !weekPickerRef.current.contains(e.target)) setWeekPickerOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [weekPickerOpen]);
+
+  const monday = getMondayOfWeek(weekOffset);
+  const sunday = (() => { const d = new Date(monday); d.setDate(d.getDate()+6); return d.toISOString().slice(0,10); })();
+  const fmtDate = (s) => { const [y,m,d]=s.split("-"); return `${d}.${m}.${y.slice(2)}`; };
+  const { year: selYear, week: selWeek } = isoWeekFromDate(monday);
+
+  const loadWeekWorkers = useCallback((mon) => {
+    setWeekLoading(true);
+    fetch(`${HMM_CONFIG.url}&getweekworkers=1&monday=${mon}`).then((r)=>r.json()).then((d)=>{
+      setWeekWorkers(d.items||[]);
+      const init = {};
+      (d.items||[]).forEach((it) => { init[it.id] = { sms: it.smsDefault, email: it.emailDefault }; });
+      setWeekChecks(init);
+      setWeekLoading(false);
+    }).catch(()=>setWeekLoading(false));
+  }, []);
+
+  useEffect(() => { loadWeekWorkers(monday); }, [monday]);
+
+  const weekToggle = (id, field) => setWeekChecks((c) => ({ ...c, [id]: { ...c[id], [field]: !c[id]?.[field] } }));
+  const weekSetAll = (field, value) => setWeekChecks((c) => {
+    const next = { ...c };
+    (weekWorkers||[]).forEach((it) => {
+      if (value && field==="sms"   && !it.phone) return;
+      if (value && field==="email" && !it.email) return;
+      next[it.id] = { ...next[it.id], [field]: value };
+    });
+    return next;
+  });
+
+  const sendWeek = async () => {
+    setWeekSending(true);
+    let sent = 0;
+    for (const it of (weekWorkers||[])) {
+      const c = weekChecks[it.id] || {};
+      if (!c.sms && !c.email) continue;
+      try {
+        const body = new URLSearchParams({ sendnotify:"1", workerid:it.id, sms:c.sms?"1":"", email:c.email?"1":"" });
+        const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+        const result = await resp.json();
+        if (result.status==="ok") sent++;
+      } catch(e) { /* continue */ }
+    }
+    setWeekSending(false);
+    setToast(sent>0 ? `${sent} munkatárs értesítve.` : "Nem történt küldés.");
+    loadNaplo();
+    load();
+  };
+
   const load = useCallback(() => {
     setLoading(true);
     fetch(`${HMM_CONFIG.url}&getnotifications=1`).then((r)=>r.json()).then((d)=>{
@@ -1920,33 +1996,101 @@ function NotifyView({ setToast }) {
     finally { setSending(false); loadNaplo(); }
   };
 
+  const [sec1Collapsed, setSec1Collapsed] = useState(false);
+  const [sec2Collapsed, setSec2Collapsed] = useState(false);
+  const [sec3Collapsed, setSec3Collapsed] = useState(false);
+
   if (loading || !data) return <LoadingBlock label="Értesítések betöltése…"/>;
 
   const items = data.items || [];
   const hasSelection = items.some((it) => { const c=checks[it.id]||{}; return c.sms||c.email; });
+  const weekHasSelection = (weekWorkers||[]).some((it) => { const c=weekChecks[it.id]||{}; return c.sms||c.email; });
 
   const NAPLO_ICON = { send:"send", copy:"copy", vacation:"sun" };
 
   return (
     <div className="mb-scroll px-4 lg:px-6 py-4" style={{ flex:"1 1 auto", minHeight:0, overflowY:"auto" }}>
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
-        <Field label="Egyéni üzenet (a kijelölt munkatársaknak)">
-          <textarea value={message} onChange={(e)=>setMessage(e.target.value)} rows={3} placeholder="Írd ide az üzenetet…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/>
-        </Field>
-        {items.length===0 ? (
-          <div className="rounded-xl px-4 py-6 text-center" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)", color:"var(--muted)", fontSize:13.5 }}>Nem történt változás a beosztásban.</div>
-        ) : (<>
-          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-            <div className="flex items-center justify-between gap-2 px-3 py-2.5 flex-wrap" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
-              <span className="flex items-center gap-2">
-                <span style={{ color:"var(--brand)" }}>{Ico.bell({width:15,height:15})}</span>
-                <span style={{ fontSize:13, fontWeight:700 }}>Beosztás-változás miatt értesítendő munkatársak</span>
-                <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span>
-              </span>
-              <div className="flex items-center gap-3 flex-wrap" style={{ fontSize:11.5, fontWeight:600, color:"var(--muted)" }}>
-                <span className="flex items-center gap-1.5">SMS: <button onClick={()=>setAll("sms",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("sms",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
-                <span className="flex items-center gap-1.5">Email: <button onClick={()=>setAll("email",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("email",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
-              </div>
+
+        {/* --- Heti beosztás szerint értesítendők --- */}
+        <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+          <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ borderBottom:sec1Collapsed?"none":"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
+            <button onClick={()=>setSec1Collapsed((v)=>!v)} className="flex items-center gap-2 min-w-0">
+              <span style={{ color:"var(--brand)", flexShrink:0 }}>{Ico.calendar({width:15,height:15})}</span>
+              <span className="mb-display" style={{ fontSize:13, fontWeight:700 }}>Heti beosztás szerint értesítendők</span>
+              {!weekLoading && <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)", flexShrink:0 }}>{(weekWorkers||[]).length}</span>}
+            </button>
+            <div className="flex items-center gap-1 relative" ref={weekPickerRef} style={{ flexShrink:0 }}>
+              <button onClick={()=>setWeekOffset((o)=>o-1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.left()}</button>
+              <button onClick={()=>setWeekPickerOpen((v)=>!v)} className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ border:"1px solid var(--border)", background:"var(--card)", color:"var(--ink)" }}>
+                <span style={{ color:"var(--brand)", flexShrink:0 }}>{Ico.calendar({width:13,height:13})}</span>
+                <span className="mb-display" style={{ fontSize:12, fontWeight:700 }}>{selYear}. {selWeek}. hét</span>
+                <span className="mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{weekRange(selYear, selWeek)}</span>
+              </button>
+              <button onClick={()=>setWeekOffset((o)=>o+1)} className="mb-btn flex h-7 w-7 items-center justify-center rounded-md" style={{ color:"var(--muted)", border:"1px solid var(--border)" }}>{Ico.right()}</button>
+              {weekPickerOpen && (
+                <div className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden" style={{ zIndex:200, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 8px 32px rgba(0,0,0,.22)", minWidth:230 }}>
+                  <div className="mb-scroll" style={{ maxHeight:240, overflowY:"auto" }}>
+                    {Array.from({length:24}, (_,i) => {
+                      const off = weekOffset - 6 + i;
+                      const mon = getMondayOfWeek(off);
+                      const { year: y, week: w } = isoWeekFromDate(mon);
+                      const active = off === weekOffset;
+                      return (
+                        <button key={off} onClick={()=>{ setWeekOffset(off); setWeekPickerOpen(false); }} className="flex w-full items-center justify-between gap-3 px-3 py-2" style={{ background:active?"var(--brand-soft)":"transparent", color:active?"var(--brand-ink)":"var(--ink)" }}>
+                          <span style={{ fontSize:13, fontWeight:700 }}>{y}. {w}. hét</span>
+                          <span className="mb-mono" style={{ fontSize:11, color:active?"var(--brand-ink)":"var(--faint)" }}>{weekRange(y, w)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <button onClick={()=>setSec1Collapsed((v)=>!v)} style={{ color:"var(--faint)", display:"flex", alignItems:"center", marginLeft:2 }}>{sec1Collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</button>
+            </div>
+          </div>
+          {!sec1Collapsed && (weekLoading ? (
+            <div className="px-4 py-4" style={{ fontSize:12.5, color:"var(--faint)" }}>Betöltés…</div>
+          ) : (weekWorkers||[]).length === 0 ? (
+            <div className="px-4 py-4" style={{ fontSize:12.5, color:"var(--faint)" }}>Erre a hétre nincs beosztva senki.</div>
+          ) : (<>
+            <div className="flex items-center gap-3 px-3 py-1.5 flex-wrap" style={{ borderBottom:"1px solid var(--border-soft)", fontSize:11.5, fontWeight:600, color:"var(--muted)" }}>
+              <span className="flex items-center gap-1.5">SMS: <button onClick={()=>weekSetAll("sms",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>weekSetAll("sms",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
+              <span className="flex items-center gap-1.5">Email: <button onClick={()=>weekSetAll("email",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>weekSetAll("email",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
+            </div>
+            <div className="flex flex-col gap-1.5 p-2">
+              {(weekWorkers||[]).map((it) => { const c = weekChecks[it.id]||{}; return (
+                <div key={it.id} className="flex items-center justify-between gap-4 rounded-lg flex-wrap" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
+                  <div style={{ fontSize:13.5, fontWeight:700 }}>{it.name}</div>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <Check checked={!!c.sms} onChange={()=>weekToggle(it.id,"sms")} label={it.phone ? `SMS (${it.phone})` : "SMS (nincs megadva)"}/>
+                    <Check checked={!!c.email} onChange={()=>weekToggle(it.id,"email")} label={it.email ? `Email (${it.email})` : "Email (nincs megadva)"}/>
+                  </div>
+                </div>
+              ); })}
+            </div>
+            <div className="px-3 pb-3">
+              <button onClick={sendWeek} disabled={!weekHasSelection||weekSending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!weekHasSelection||weekSending)?"var(--faint)":"var(--brand)", cursor:(!weekHasSelection||weekSending)?"not-allowed":"pointer" }}>{weekSending?"Küldés…":<>{Ico.send()} Heti beosztás értesítés kiküldése</>}</button>
+            </div>
+          </>))}
+        </div>
+
+        {/* --- Beosztás-változás miatt értesítendők --- */}
+        <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+          <button onClick={()=>setSec2Collapsed((v)=>!v)} className="flex w-full items-center justify-between gap-2 px-3 py-2.5 flex-wrap" style={{ borderBottom:sec2Collapsed?"none":"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--brand) 8%,transparent)" }}>
+            <span className="flex items-center gap-2">
+              <span style={{ color:"var(--brand)" }}>{Ico.bell({width:15,height:15})}</span>
+              <span className="mb-display" style={{ fontSize:13, fontWeight:700 }}>Beosztás-változás miatt értesítendők</span>
+              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{items.length}</span>
+            </span>
+            <span style={{ color:"var(--faint)" }}>{sec2Collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+          </button>
+          {!sec2Collapsed && (items.length === 0 ? (
+            <div className="px-4 py-4" style={{ fontSize:12.5, color:"var(--faint)" }}>Nem történt változás a beosztásban.</div>
+          ) : (<>
+            <div className="flex items-center gap-3 px-3 py-1.5 flex-wrap" style={{ borderBottom:"1px solid var(--border-soft)", fontSize:11.5, fontWeight:600, color:"var(--muted)" }}>
+              <span className="flex items-center gap-1.5">SMS: <button onClick={()=>setAll("sms",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("sms",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
+              <span className="flex items-center gap-1.5">Email: <button onClick={()=>setAll("email",true)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--brand-ink)", background:"var(--surface-2)" }}>Mind</button><button onClick={()=>setAll("email",false)} className="rounded-md px-1.5 py-0.5" style={{ color:"var(--muted)", background:"var(--surface-2)" }}>Egyik se</button></span>
             </div>
             <div className="flex flex-col gap-1.5 p-2">
               {items.map((it) => { const c = checks[it.id]||{}; return (
@@ -1959,19 +2103,28 @@ function NotifyView({ setToast }) {
                 </div>
               ); })}
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={send} disabled={!hasSelection||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||sending)?"var(--faint)":"var(--brand)", cursor:(!hasSelection||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Beosztás-értesítés kiküldése</>}</button>
-            <button onClick={sendBulk} disabled={!hasSelection||!message.trim()||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||!message.trim()||sending)?"var(--faint)":"var(--purple)", cursor:(!hasSelection||!message.trim()||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Egyéni üzenet kiküldése</>}</button>
-          </div>
-        </>)}
+            <div className="px-3 pb-3 flex flex-col gap-2.5">
+              <Field label="Egyéni üzenet (opcionális)">
+                <textarea value={message} onChange={(e)=>setMessage(e.target.value)} rows={2} placeholder="Írd ide az egyéni üzenetet…" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/>
+              </Field>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={send} disabled={!hasSelection||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||sending)?"var(--faint)":"var(--brand)", cursor:(!hasSelection||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Beosztás-értesítés kiküldése</>}</button>
+                <button onClick={sendBulk} disabled={!hasSelection||!message.trim()||sending} className="mb-prim flex items-center gap-1.5 rounded-lg px-5 py-2.5" style={{ fontSize:13.5, fontWeight:700, color:"#fff", background:(!hasSelection||!message.trim()||sending)?"var(--faint)":"var(--purple)", cursor:(!hasSelection||!message.trim()||sending)?"not-allowed":"pointer" }}>{sending?"Küldés…":<>{Ico.send()} Egyéni üzenet kiküldése</>}</button>
+              </div>
+            </div>
+          </>))}
+        </div>
 
-        <div className="rounded-xl overflow-hidden mt-2" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
-          <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom:"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--muted) 8%,transparent)" }}>
-            <span style={{ color:"var(--muted)" }}>{Ico.clock({width:15,height:15})}</span>
-            <span style={{ fontSize:13, fontWeight:700 }}>Napló</span>
-          </div>
-          <div className="flex flex-col gap-1.5 p-2">
+        {/* --- Napló --- */}
+        <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+          <button onClick={()=>setSec3Collapsed((v)=>!v)} className="flex w-full items-center justify-between gap-2 px-3 py-2.5" style={{ borderBottom:sec3Collapsed?"none":"1px solid var(--border-soft)", background:"color-mix(in srgb,var(--muted) 8%,transparent)" }}>
+            <span className="flex items-center gap-2">
+              <span style={{ color:"var(--muted)" }}>{Ico.clock({width:15,height:15})}</span>
+              <span className="mb-display" style={{ fontSize:13, fontWeight:700 }}>Napló</span>
+            </span>
+            <span style={{ color:"var(--faint)" }}>{sec3Collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
+          </button>
+          {!sec3Collapsed && <div className="flex flex-col gap-1.5 p-2">
             {(naplo||[]).map((n,i) => (
               <div key={i} className="flex items-center gap-2.5 rounded-lg" style={{ background:"var(--card)", border:"1px solid var(--border)", padding:"8px 10px" }}>
                 <span style={{ color:"var(--faint)", flexShrink:0 }}>{Ico[NAPLO_ICON[n.tipus]||"bell"]({width:14,height:14})}</span>
@@ -1980,8 +2133,9 @@ function NotifyView({ setToast }) {
               </div>
             ))}
             {(naplo||[]).length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Még nincs napló-bejegyzés.</div>}
-          </div>
+          </div>}
         </div>
+
       </div>
     </div>
   );
