@@ -1159,7 +1159,7 @@ HTML;
                 $maxTo   = null;
 
                 foreach ($staffRows as $m) {
-                    $role = ($m["roleid"] == 2) ? "n" : ($m["roleid"] == 3 ? "e" : "d");
+                    $role = ($m["roleid"] == 2) ? "n" : ($m["roleid"] == 3 ? "e" : ($m["roleid"] == 5 ? "v" : "d"));
                     $from = date("H:i", strtotime($m["datumfrom"]));
                     $to   = date("H:i", strtotime($m["datumto"]));
 
@@ -1214,6 +1214,9 @@ HTML;
         $egyebRows = sql_query(
             "SELECT id, nev FROM schedule_workers WHERE roleid=3 AND COALESCE(aktiv,1)=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
+        $vehicleRows = sql_query(
+            "SELECT id, nev FROM schedule_workers WHERE roleid=4 AND COALESCE(aktiv,1)=1 ORDER BY nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
 
         $places = array_values(array_map(
             fn($t) => ["megnev" => $t["megnev"], "cim" => $t["cim"] ?? "", "org" => $t["org"] ?: "HMM"],
@@ -1231,6 +1234,7 @@ HTML;
             "doctorsWithId"    => $doctorRows,
             "assistantsWithId" => $assistantRows,
             "egyebWithId"      => $egyebRows,
+            "vehiclesWithId"   => $vehicleRows,
             "places"           => $places,
         ]);
         die;
@@ -1408,12 +1412,15 @@ HTML;
             $from  = $s["from"] ?? "08:00";
             $to    = $s["to"]   ?? "16:00";
             if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) continue;
-            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : 1);
+            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
             $megj    = substr($s["megj"] ?? "", 0, 200);
             sql_query(
                 "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, createdat=now(), createdby=?",
                 ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $this->adminUser->user["id"]]
             );
+            if ($roleId === 4) {
+                $this->workScheduleService->notifyScheduleChange($workerId);
+            }
         }
 
         $this->workScheduleService->reloadScheduleMapping();

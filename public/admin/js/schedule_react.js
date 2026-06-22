@@ -337,7 +337,7 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, places, saving, onToggleAktiv, vacPerDay, monthHours, weekWorkerHours }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, vacPerDay, monthHours, weekWorkerHours }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
@@ -345,6 +345,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const [docs, setDocs]     = useState(b ? (b.staff||[]).filter((s)=>s.role==="d") : []);
   const [nurses, setNurses] = useState(b ? (b.staff||[]).filter((s)=>s.role==="n") : []);
   const [egyebek, setEgyebek] = useState(b ? (b.staff||[]).filter((s)=>s.role==="e") : []);
+  const [jarmu,  setJarmu]  = useState(b ? (b.staff||[]).filter((s)=>s.role==="v") : []);
   const [aktiv, setAktiv]   = useState(b ? (b.aktiv !== 0) : true);
   const [selectedDays, setSelectedDays] = useState(() => new Set([ctx.day]));
   const [cat, setCat]       = useState(b ? b.cat : ctx.cat || "belso");
@@ -387,6 +388,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   const availDoctors  = (doctorList||[]).filter((w) => !onVacToday.has(w.id));
   const availNurses   = (assistantList||[]).filter((w) => !onVacToday.has(w.id));
   const availEgyebek  = (egyebList||[]).filter((w) => !onVacToday.has(w.id));
+  const availVehicles = (vehicleList||[]);
   const bookingHours  = toMin(to) > toMin(from) ? (toMin(to) - toMin(from)) / 60.0 : 0;
   const overWorkers   = [...docs, ...nurses, ...egyebek].filter((s) => {
     if (!s.workerId) return false;
@@ -404,7 +406,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   };
 
   const save = () => {
-    const staff = [...docs, ...nurses, ...egyebek].filter((s)=>s.name && s.workerId);
+    const staff = [...docs, ...nurses, ...egyebek, ...jarmu].filter((s)=>s.name && s.workerId);
     const dates = b
       ? (multiApply && b.cat==="kiszallas" ? datesBetween(multiFrom, multiTo) : [dateStr])
       : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
@@ -508,6 +510,10 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
             {(egyebList||[]).length>0 && <div>
               <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--green)" }}>{Ico.building({width:13,height:13})}</span> Irodai munkatársak</div>
               <StaffEditor role="e" items={egyebek} onChange={setEgyebek} slotFrom={from} slotTo={to} workerList={availEgyebek}/>
+            </div>}
+            {cat==="kiszallas" && (vehicleList||[]).length>0 && <div>
+              <div className="flex items-center gap-1.5 mb-1.5" style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)" }}><span style={{ color:"var(--faint)" }}>{Ico.truck({width:13,height:13})}</span> Járművek</div>
+              <StaffEditor role="v" items={jarmu} onChange={setJarmu} slotFrom={from} slotTo={to} workerList={availVehicles}/>
             </div>}
             <Field label="Megjegyzés (nem kötelező)">
               <div className="relative"><textarea value={note} maxLength={200} onChange={(e)=>setNote(e.target.value)} rows={2} placeholder="pl. EKG, terheléses vizsgálat" className="mb-in px-3 py-2.5" style={{ fontSize:13.5, resize:"none", fontWeight:500 }}/><span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{note.length} / 200</span></div>
@@ -1987,6 +1993,7 @@ function MunkaidoBeosztas() {
   const [doctors,      setDoctors]      = useState([]);   // [{id, nev}]
   const [assistants,   setAssistants]   = useState([]);   // [{id, nev}]
   const [egyebs,       setEgyebs]       = useState([]);   // [{id, nev}]
+  const [vehicles,     setVehicles]     = useState([]);   // [{id, nev}]
   const [query,        setQuery]        = useState("");
   const roleFilter = "all";
   const [catFilter,    setCatFilter]    = useState("all");
@@ -2014,6 +2021,7 @@ function MunkaidoBeosztas() {
         setDoctors(data.doctorsWithId    || []);
         setAssistants(data.assistantsWithId || []);
         setEgyebs(data.egyebWithId || []);
+        setVehicles(data.vehiclesWithId || []);
         setLoading(false);
       })
       .catch((err) => { console.error("fetchWeek:", err); setLoading(false); });
@@ -2407,7 +2415,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} vehicleList={vehicles} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
