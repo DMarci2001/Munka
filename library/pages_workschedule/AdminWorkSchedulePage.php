@@ -164,6 +164,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasColor) {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN color VARCHAR(7) DEFAULT NULL");
         }
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_datum_aktiv (
+            tipusid INT NOT NULL,
+            datum   DATE NOT NULL,
+            aktiv   TINYINT(1) NOT NULL DEFAULT 0,
+            PRIMARY KEY (tipusid, datum)
+        )");
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1119,6 +1125,15 @@ HTML;
             $mappingIdx[$key][] = $m;
         }
 
+        $datumAktivRows = sql_query(
+            "SELECT tipusid, datum, aktiv FROM schedule_datum_aktiv WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $datumAktivIdx = [];
+        foreach ($datumAktivRows as $o) {
+            $datumAktivIdx[(int)$o["tipusid"] . "_" . $o["datum"]] = (int)$o["aktiv"];
+        }
+
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
@@ -1209,7 +1224,11 @@ HTML;
                     "date"    => $date,
                     "staff"   => $staff,
                     "forDay"  => $forDay,
-                    "aktiv"   => empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0)
+                    "aktiv"   => (function() use ($datumAktivIdx, $tipus, $date, $staffRows) {
+                        $overrideKey = (int)$tipus["id"] . "_" . $date;
+                        if (isset($datumAktivIdx[$overrideKey])) return $datumAktivIdx[$overrideKey];
+                        return empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0);
+                    })()
                 ];
             }
 
@@ -1900,6 +1919,11 @@ HTML;
             die;
         }
         sql_query("UPDATE schedule_mapping SET aktiv=? WHERE tipusid=? AND DATE(datumfrom)=?", [$aktiv, $tipusId, $datum]);
+        if ($aktiv === 0) {
+            sql_query("INSERT INTO schedule_datum_aktiv (tipusid, datum, aktiv) VALUES (?,?,0) ON DUPLICATE KEY UPDATE aktiv=0", [$tipusId, $datum]);
+        } else {
+            sql_query("DELETE FROM schedule_datum_aktiv WHERE tipusid=? AND datum=?", [$tipusId, $datum]);
+        }
         $this->utils->jsonOut(["status" => "ok"]);
         die;
     }
@@ -1917,7 +1941,14 @@ HTML;
         foreach ($workers as $w) {
             $changed = sql_query(
                 "SELECT 1 FROM schedule_mapping m
-                 WHERE m.datumfrom>=DATE(DATE_ADD(NOW(), INTERVAL 1 DAY)) AND m.notifyhash<>md5(concat(m.datumfrom, m.datumto)) AND m.workerid=:uid LIMIT 1",
+                 WHERE m.datumfrom>=DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))
+                   AND m.notifyhash<>md5(concat(m.datumfrom, m.datumto))
+                   AND m.aktiv=1
+                   AND m.workerid=:uid
+                   AND NOT EXISTS (
+                       SELECT 1 FROM schedule_datum_aktiv sda
+                       WHERE sda.tipusid=m.tipusid AND sda.datum=DATE(m.datumfrom) AND sda.aktiv=0
+                   ) LIMIT 1",
                 ["uid" => $w["id"]]
             )->fetch();
 
@@ -2022,6 +2053,11 @@ HTML;
              JOIN schedule_workers w ON w.id = m.workerid
              WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
              AND COALESCE(w.aktiv, 1) = 1
+             AND m.aktiv = 1
+             AND NOT EXISTS (
+                 SELECT 1 FROM schedule_datum_aktiv sda
+                 WHERE sda.tipusid = m.tipusid AND sda.datum = DATE(m.datumfrom) AND sda.aktiv = 0
+             )
              ORDER BY w.roleid, w.nev",
             ["from" => $mondayStart]
         )->fetchAll(PDO::FETCH_ASSOC);

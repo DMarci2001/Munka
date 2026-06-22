@@ -593,7 +593,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               <Row icon={Ico.alert({width:15,height:15})} label="Státusz">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
-                  {b && (b.staff||[]).length>0 && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
+                  {b && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
                 </div>
               </Row>
             </div>
@@ -709,7 +709,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   const cardBorder = inactive ? "var(--border-soft)" : red ? "var(--danger)" : (b.color ? `color-mix(in srgb,${b.color} 50%,var(--border))` : "var(--border)");
   return (
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
-      {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
+      <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
