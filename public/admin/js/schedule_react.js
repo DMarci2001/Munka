@@ -698,8 +698,10 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     const onVac = overlapVac.some((o)=>o.p===s.name);
     return (<span className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background:onVac?"var(--danger-soft)":soft, color:onVac?"var(--danger-ink)":color, fontSize:11.5, fontWeight:600, maxWidth:"100%" }}><span style={{ flexShrink:0 }}>{icon}</span><span className="truncate">{s.name}</span>{diff && <span className="mb-mono" style={{ fontSize:10, opacity:.85, flexShrink:0 }}>{s.from}–{s.to}</span>}</span>);
   };
+  const cardBg = inactive ? "var(--surface-2)" : red ? `color-mix(in srgb,var(--danger) 13%,var(--card))` : (b.color ? `color-mix(in srgb,${b.color} 18%,var(--card))` : "var(--card)");
+  const cardBorder = inactive ? "var(--border-soft)" : red ? "var(--danger)" : (b.color ? `color-mix(in srgb,${b.color} 50%,var(--border))` : "var(--border)");
   return (
-    <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:inactive?"var(--surface-2)":(red?`color-mix(in srgb,var(--danger) 13%,var(--card))`:"var(--card)"), border:`1px solid ${inactive?"var(--border-soft)":(red?"var(--danger)":"var(--border)")}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
+    <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
       {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
@@ -1220,9 +1222,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1307,6 +1309,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                         <circle cx="3.5" cy="13" r="1.3"/><circle cx="8.5" cy="13" r="1.3"/>
                       </svg>
                     </div>
+                    {p.color && <div style={{ width:14, height:14, borderRadius:3, background:p.color, flexShrink:0, border:"1px solid rgba(0,0,0,.15)" }}/>}
                     <div className="min-w-0 flex-1" onClick={()=>setModal({ place:p })} style={{ cursor:"pointer" }}>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
@@ -1344,11 +1347,12 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [ktartoTel,    setKtartoTel]   = useState(p.ktarto_tel||"");
   const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
   const [orvosKell,    setOrvosKell]   = useState((p.orvos_kell ?? 1) !== 0);
+  const [color,        setColor]       = useState(p.color||"");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1403,6 +1407,13 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
                 <span style={{ fontSize:12.5, fontWeight:600 }}>Orvos szükséges</span>
               </label>
             )}
+            <Field label="Kártya szín">
+              <div className="flex items-center gap-2">
+                <input type="color" value={color||"#ffffff"} onChange={(e)=>setColor(e.target.value)} style={{ width:36, height:32, padding:2, borderRadius:6, border:"1px solid var(--border)", cursor:"pointer", background:"var(--surface)" }}/>
+                <input value={color} onChange={(e)=>{ const v=e.target.value; if(v===""||/^#[0-9a-fA-F]{0,6}$/.test(v)) setColor(v); }} placeholder="#rrggbb (üres = nincs)" className="mb-in px-3 py-2" style={{ fontSize:13, fontFamily:"monospace", flex:1 }}/>
+                {color && <button onClick={()=>setColor("")} title="Szín törlése" style={{ color:"var(--faint)", flexShrink:0 }}>{Ico.x({width:14,height:14})}</button>}
+              </div>
+            </Field>
             {cat !== "belso" && (
               <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
                 <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Kapcsolattartó</div>

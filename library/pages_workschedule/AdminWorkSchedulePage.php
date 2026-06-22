@@ -158,6 +158,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasOrvosKell) {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN orvos_kell TINYINT(1) NOT NULL DEFAULT 1");
         }
+        $hasColor = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='color'"
+        )->fetchColumn();
+        if (!$hasColor) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN color VARCHAR(7) DEFAULT NULL");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1193,6 +1199,7 @@ HTML;
                     "ktarto_nev"  => $tipus["ktarto_nev"]   ?? "",
                     "ktarto_tel"  => $tipus["ktarto_tel"]   ?? "",
                     "ktarto_email"=> $tipus["ktarto_email"] ?? "",
+                    "color"       => $tipus["color"] ?? null,
                     "from"    => $minFrom ?? "08:00",
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
@@ -1612,6 +1619,7 @@ HTML;
                     "ktarto_nev"   => $r["ktarto_nev"]   ?? "",
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
+                    "color"        => $r["color"] ?? null,
                 ];
             }, $rows),
         ]);
@@ -1632,8 +1640,9 @@ HTML;
         $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
         $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
+        $color     = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1685,6 +1694,7 @@ HTML;
         $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
         $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
         $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
+        $color        = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
 
         if (!$id || $megnev === "") {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a megnevezést!"]);
@@ -1694,8 +1704,8 @@ HTML;
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
