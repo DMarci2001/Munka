@@ -218,13 +218,13 @@ function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
     const slots = [];
-    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title })));
+    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title, ac:!!s.acceptedConflict })));
     for (let i=0; i<slots.length; i++) for (let j=i+1; j<slots.length; j++) {
       const x=slots[i], y=slots[j];
-      if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e) {
+      if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e && !x.ac && !y.ac) {
         set.add(x.key); set.add(y.key);
-        (det[x.key]||=[]).push({ p:y.p, from:y.from, to:y.to, title:y.title, key:y.key });
-        (det[y.key]||=[]).push({ p:x.p, from:x.from, to:x.to, title:x.title, key:x.key });
+        (det[x.key]||=[]).push({ p:y.p, workerId:x.workerId, from:y.from, to:y.to, title:y.title, key:y.key });
+        (det[y.key]||=[]).push({ p:x.p, workerId:y.workerId, from:x.from, to:x.to, title:x.title, key:x.key });
       }
     }
     const vacs = (vacationsByDay && vacationsByDay[di]) || [];
@@ -679,7 +679,7 @@ function MapPopover({ booking, onClose }) {
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
-function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
+function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
@@ -723,14 +723,19 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
         {egyebs.map((s,i)                    => <StaffChip key={"e"+i} s={s} color="var(--green)"  soft="var(--green-soft)"  icon={Ico.building({width:12,height:12})}/>)}
       </div>}
       {b.note&&!conflict&&!inactive&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
-      {!inactive&&overlapDouble[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {overlapDouble[0].p} {overlapDouble[0].from}–{overlapDouble[0].to}</div>}
+      {!inactive&&overlapDouble.map((o,i)=>(
+        <div key={i} className="mt-1.5 flex items-center justify-between gap-2">
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {o.p} {o.from}–{o.to}</span>
+          <button onClick={(e)=>{e.stopPropagation();onDismissConflict&&onDismissConflict(b,o.workerId);}} className="rounded px-1.5 py-0.5" style={{ fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)", flexShrink:0 }}>Elfogad</button>
+        </div>
+      ))}
       {!inactive&&overlapVac[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>{overlapVac[0].p} szabadságon van{overlapVac[0].status===0?" (függő kérelem)":""}</div>}
     </div>
   );
 }
 
 /* ---- Csoport -------------------------------------------------------- */
-function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
+function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -739,7 +744,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
-        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
+        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} onDismissConflict={onDismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
         {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
@@ -747,7 +752,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
-function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv }) {
+function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv, onDismissConflict }) {
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
@@ -795,8 +800,13 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
                             <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
-                            {(b.staff||[]).length>0 && <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>}
-                            {!inactive&&hasDouble && <RedBadge text="Ütközés"/>}
+                            <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>
+                            {!inactive&&overlap.filter((o)=>!o.vac).map((o,i)=>(
+                              <span key={i} className="flex items-center gap-1">
+                                <RedBadge text={`Ütközés: ${o.p}`}/>
+                                <button onClick={(e)=>{e.stopPropagation();onDismissConflict&&onDismissConflict(b,o.workerId);}} className="rounded px-1.5 py-0.5" style={{ fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)", flexShrink:0 }}>Elfogad</button>
+                              </span>
+                            ))}
                             {!inactive&&hasVac && <RedBadge text="Szabadságon"/>}
                             {!inactive&&noDoc && <RedBadge text="Nincs orvos"/>}
                           </div>
@@ -2338,6 +2348,12 @@ function MunkaidoBeosztas() {
     await fetchWeek(weekOffset);
   }, [weekOffset, fetchWeek]);
 
+  const dismissConflict = useCallback(async (b, workerId) => {
+    const body = new URLSearchParams({ dismissconflict:"1", tipusid:b.tipusId, datum:b.date, workerid:workerId });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
   /* ---- hét törlése ---- */
   const clearWeek = useCallback(async () => {
     if (!monday) return;
@@ -2497,7 +2513,7 @@ function MunkaidoBeosztas() {
                 </div>
               </div>
             ) : nav==="list" ? (
-              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>
+              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict}/>
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
@@ -2550,7 +2566,7 @@ function MunkaidoBeosztas() {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
                           if (filtering && items.length===0) return null;
-                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
+                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
                         {!conflictView && szabadsagByDay[di] && szabadsagByDay[di].length > 0 && (

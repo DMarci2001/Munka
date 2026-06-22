@@ -121,6 +121,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiToggleBookingAktiv();
         }
 
+        if (isset($_POST["dismissconflict"])) {
+            $this->_apiDismissConflict();
+        }
+
         if (isset($_POST["clearweek"])) {
             $this->_apiClearWeek();
         }
@@ -163,6 +167,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         )->fetchColumn();
         if (!$hasColor) {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN color VARCHAR(7) DEFAULT NULL");
+        }
+        $hasMappingAccepted = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_mapping' AND column_name='accepted_conflict'"
+        )->fetchColumn();
+        if (!$hasMappingAccepted) {
+            sql_query("ALTER TABLE schedule_mapping ADD COLUMN accepted_conflict TINYINT(1) NOT NULL DEFAULT 0");
         }
         sql_query("CREATE TABLE IF NOT EXISTS schedule_datum_aktiv (
             tipusid INT NOT NULL,
@@ -1109,7 +1119,7 @@ HTML;
 
         $mondayStart = $monday . " 00:00:00";
         $mappings = sql_query(
-            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv,
+            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv, COALESCE(m.accepted_conflict, 0) AS accepted_conflict,
                     w.nev AS workernev
              FROM schedule_mapping m
              LEFT JOIN schedule_workers w ON m.workerid = w.id
@@ -1195,8 +1205,9 @@ HTML;
                         "workerId" => (int)$m["workerid"],
                         "from"     => $from,
                         "to"       => $to,
-                        "megj"     => $m["megj"] ?? "",
-                        "aktiv"    => (int)($m["aktiv"] ?? 1)
+                        "megj"             => $m["megj"] ?? "",
+                        "aktiv"            => (int)($m["aktiv"] ?? 1),
+                        "acceptedConflict" => (int)($m["accepted_conflict"] ?? 0),
                     ];
 
                     if ($minFrom === null || $from < $minFrom) $minFrom = $from;
@@ -1442,11 +1453,12 @@ HTML;
             $from  = $s["from"] ?? "08:00";
             $to    = $s["to"]   ?? "16:00";
             if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) continue;
-            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
-            $megj    = substr($s["megj"] ?? "", 0, 200);
+            $roleId           = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
+            $megj             = substr($s["megj"] ?? "", 0, 200);
+            $acceptedConflict = intval($s["acceptedConflict"] ?? 0) ? 1 : 0;
             sql_query(
-                "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, createdat=now(), createdby=?",
-                ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $this->adminUser->user["id"]]
+                "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, accepted_conflict=?, createdat=now(), createdby=?",
+                ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $acceptedConflict, $this->adminUser->user["id"]]
             );
             if ($roleId === 4) {
                 $this->workScheduleService->notifyScheduleChange($workerId);
@@ -1908,6 +1920,24 @@ HTML;
         sql_query("DELETE FROM schedule_szabadsag WHERE groupid=?", [$groupId]);
 
         $this->utils->jsonOut(["status" => "ok"]);
+    }
+
+    private function _apiDismissConflict(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $tipusId  = intval($_POST["tipusid"]  ?? 0);
+        $datum    = $_POST["datum"]   ?? "";
+        $workerId = intval($_POST["workerid"] ?? 0);
+        if (!$tipusId || !$datum || !$workerId) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok"]); die;
+        }
+        sql_query(
+            "UPDATE schedule_mapping SET accepted_conflict=1 WHERE tipusid=? AND DATE(datumfrom)=? AND workerid=?",
+            [$tipusId, $datum, $workerId]
+        );
+        $this->utils->jsonOut(["status" => "ok"]);
+        die;
     }
 
     private function _apiToggleBookingAktiv(): void {
