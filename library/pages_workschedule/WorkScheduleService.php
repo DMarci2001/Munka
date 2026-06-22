@@ -10,7 +10,8 @@ class WorkScheduleService {
     public array $roles = [
         1 => "orvos",
         2 => "nővér",
-        3 => "egyéb"
+        3 => "egyéb",
+        5 => "jármű"
     ];
 
     function __construct()

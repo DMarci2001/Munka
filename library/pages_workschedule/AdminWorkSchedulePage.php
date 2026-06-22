@@ -158,6 +158,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasOrvosKell) {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN orvos_kell TINYINT(1) NOT NULL DEFAULT 1");
         }
+        $hasColor = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='color'"
+        )->fetchColumn();
+        if (!$hasColor) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN color VARCHAR(7) DEFAULT NULL");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -173,6 +179,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
 
         if (isset($_GET["getnaplo"])) {
             $this->_apiGetNaplo();
+        }
+
+        if (isset($_GET["getweekworkers"])) {
+            $this->_apiGetWeekWorkers();
         }
 
         if (isset($_POST["showcollisions"])) {
@@ -1159,7 +1169,7 @@ HTML;
                 $maxTo   = null;
 
                 foreach ($staffRows as $m) {
-                    $role = ($m["roleid"] == 2) ? "n" : ($m["roleid"] == 3 ? "e" : "d");
+                    $role = ($m["roleid"] == 2) ? "n" : ($m["roleid"] == 3 ? "e" : ($m["roleid"] == 5 ? "v" : "d"));
                     $from = date("H:i", strtotime($m["datumfrom"]));
                     $to   = date("H:i", strtotime($m["datumto"]));
 
@@ -1193,6 +1203,7 @@ HTML;
                     "ktarto_nev"  => $tipus["ktarto_nev"]   ?? "",
                     "ktarto_tel"  => $tipus["ktarto_tel"]   ?? "",
                     "ktarto_email"=> $tipus["ktarto_email"] ?? "",
+                    "color"       => $tipus["color"] ?? null,
                     "from"    => $minFrom ?? "08:00",
                     "to"      => $maxTo   ?? "16:00",
                     "date"    => $date,
@@ -1214,6 +1225,9 @@ HTML;
         $egyebRows = sql_query(
             "SELECT id, nev FROM schedule_workers WHERE roleid=3 AND COALESCE(aktiv,1)=1 ORDER BY nev"
         )->fetchAll(PDO::FETCH_ASSOC);
+        $vehicleRows = sql_query(
+            "SELECT id, nev FROM schedule_workers WHERE roleid=4 AND COALESCE(aktiv,1)=1 ORDER BY nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
 
         $places = array_values(array_map(
             fn($t) => ["megnev" => $t["megnev"], "cim" => $t["cim"] ?? "", "org" => $t["org"] ?: "HMM"],
@@ -1231,6 +1245,7 @@ HTML;
             "doctorsWithId"    => $doctorRows,
             "assistantsWithId" => $assistantRows,
             "egyebWithId"      => $egyebRows,
+            "vehiclesWithId"   => $vehicleRows,
             "places"           => $places,
         ]);
         die;
@@ -1408,12 +1423,15 @@ HTML;
             $from  = $s["from"] ?? "08:00";
             $to    = $s["to"]   ?? "16:00";
             if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) continue;
-            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : 1);
+            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
             $megj    = substr($s["megj"] ?? "", 0, 200);
             sql_query(
                 "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, createdat=now(), createdby=?",
                 ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $this->adminUser->user["id"]]
             );
+            if ($roleId === 4) {
+                $this->workScheduleService->notifyScheduleChange($workerId);
+            }
         }
 
         $this->workScheduleService->reloadScheduleMapping();
@@ -1605,6 +1623,7 @@ HTML;
                     "ktarto_nev"   => $r["ktarto_nev"]   ?? "",
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
+                    "color"        => $r["color"] ?? null,
                 ];
             }, $rows),
         ]);
@@ -1625,8 +1644,9 @@ HTML;
         $megj      = substr(trim($_POST["megj"] ?? ""), 0, 200);
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
         $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
+        $color     = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1678,6 +1698,7 @@ HTML;
         $ktarto_nev   = substr(trim($_POST["ktarto_nev"]   ?? ""), 0, 255);
         $ktarto_tel   = substr(trim($_POST["ktarto_tel"]   ?? ""), 0, 50);
         $ktarto_email = substr(trim($_POST["ktarto_email"] ?? ""), 0, 255);
+        $color        = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
 
         if (!$id || $megnev === "") {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a megnevezést!"]);
@@ -1687,8 +1708,8 @@ HTML;
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1982,6 +2003,39 @@ HTML;
         $rows = sql_query("SELECT tipus, cim, letrehozva FROM schedule_naplo ORDER BY letrehozva DESC LIMIT 100")->fetchAll(PDO::FETCH_ASSOC);
 
         $this->utils->jsonOut(["items" => $rows]);
+    }
+
+    private function _apiGetWeekWorkers(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+        }
+
+        $monday = $_GET["monday"] ?? "";
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $monday)) {
+            $monday = date("Y-m-d", strtotime("this week monday"));
+        }
+        $mondayStart = $monday . " 00:00:00";
+
+        $rows = sql_query(
+            "SELECT DISTINCT w.id, w.nev, w.teljesnev, w.tel, w.email, w.smsert, w.emailert
+             FROM schedule_mapping m
+             JOIN schedule_workers w ON w.id = m.workerid
+             WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
+             AND COALESCE(w.aktiv, 1) = 1
+             ORDER BY w.roleid, w.nev",
+            ["from" => $mondayStart]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $items = array_map(fn($w) => [
+            "id"           => (int)$w["id"],
+            "name"         => !empty($w["teljesnev"]) ? $w["teljesnev"] : $w["nev"],
+            "phone"        => $w["tel"],
+            "email"        => $w["email"],
+            "smsDefault"   => $w["tel"]   !== "" && (int)$w["smsert"]   === 1,
+            "emailDefault" => $w["email"] !== "" && (int)$w["emailert"] === 1,
+        ], $rows);
+
+        $this->utils->jsonOut(["items" => $items, "monday" => $monday]);
     }
 
 }
