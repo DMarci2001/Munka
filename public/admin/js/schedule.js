@@ -67,7 +67,29 @@ Schedule = {
     DialogId: "",
     CopySourceDate: "",
 
+    InitWorkerSearch: function() {
+        let $select = $("#workerselector");
+        let $search = $("#workersearch");
+        if (!$search.length) return;
+
+        let allOptions = $select.find("option").clone();
+
+        $search.on("input", function() {
+            let search = $(this).val().toLowerCase();
+            $select.empty();
+            allOptions.each(function() {
+                if ($(this).text().toLowerCase().indexOf(search) >= 0) {
+                    $select.append($(this).clone());
+                }
+            });
+        });
+
+        $search.focus();
+    },
+
     Init: function(){
+        Schedule.InitWorkerSearch();
+
         $( "#dialogclose" ).click(function() {
             $(".sch_dialog").hide();
         });

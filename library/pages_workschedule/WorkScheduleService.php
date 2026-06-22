@@ -10,7 +10,8 @@ class WorkScheduleService {
     public array $roles = [
         1 => "orvos",
         2 => "nővér",
-        3 => "egyéb"
+        3 => "egyéb",
+        5 => "jármű"
     ];
 
     function __construct()
@@ -211,5 +212,241 @@ class WorkScheduleService {
         } else {
             return "páratlan";
         }
+    }
+
+    public function workerPublicScheduleCards(int $workerId): string {
+        $adminUtils = new AdminUtils();
+        $html = "";
+
+        $vacations = sql_query(
+            "SELECT MIN(datumtol) AS tol, MAX(datumig) AS ig, MIN(status) AS status, groupid
+             FROM schedule_szabadsag
+             WHERE oid = ? AND datumig >= CURDATE()
+             GROUP BY groupid
+             ORDER BY tol",
+            [$workerId]
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($vacations)) {
+            $html .= "<div class='pub-section-head' style='margin-bottom:0;border-radius:4px 4px 0 0;'>Szabadság kérések</div>";
+            $html .= "<div class='pub-vac-list'>";
+            foreach ($vacations as $vac) {
+                $status = (int)$vac["status"];
+                if ($status === 1) {
+                    $statusHtml = "<span style='color:#1a7a1a;font-weight:bold;'>Elfogadva</span>";
+                } elseif ($status === 2) {
+                    $statusHtml = "<span style='color:#a00;font-weight:bold;'>Elutasítva</span>";
+                } else {
+                    $statusHtml = "<span style='color:#666;'>Elbírálás folyamatban...</span>";
+                }
+                $html .= "<div class='pub-vac-item'>";
+                $html .= "<span><i class='fa-solid fa-umbrella-beach' style='color:#888;margin-right:5px;'></i>"
+                    . $adminUtils->magyarDatum($vac["tol"], false)
+                    . " – "
+                    . $adminUtils->magyarDatum($vac["ig"], false) . "</span>";
+                $html .= $statusHtml;
+                $html .= "</div>";
+            }
+            $html .= "</div>";
+        }
+
+        $res = sql_query(
+            "SELECT
+                DATE(m.datumfrom) AS datum,
+                m.datumfrom, m.datumto, m.tipusid, m.workerid, m.megj,
+                t.megnev AS tipusnev, t.kulso, t.kiszallas, t.roleid AS tipusroleid, t.cim, t.rendelo,
+                (
+                    SELECT GROUP_CONCAT(
+                        CONCAT(
+                            COALESCE(NULLIF(TRIM(pw.teljesnev),''), pw.nev),
+                            '|',
+                            DATE_FORMAT(pm2.datumfrom, '%H:%i'),
+                            '-',
+                            DATE_FORMAT(pm2.datumto, '%H:%i')
+                        )
+                        ORDER BY pm2.roleid
+                        SEPARATOR ';;'
+                    )
+                    FROM schedule_mapping pm2
+                    LEFT JOIN schedule_workers pw ON pw.id = pm2.workerid
+                    WHERE pm2.tipusid = m.tipusid
+                      AND DATE(pm2.datumfrom) = DATE(m.datumfrom)
+                      AND pm2.workerid != m.workerid
+                ) AS pairedDetails
+             FROM schedule_mapping m
+             LEFT JOIN schedule_tipusok t ON t.id = m.tipusid
+             WHERE m.workerid = ? AND m.datumfrom >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
+             ORDER BY m.datumfrom, t.kulso, t.kiszallas, t.sorrend",
+            [$workerId]
+        );
+
+        // 0=belső, 1=belső egyéb, 2=külső, 3=kiszállás — kiszallas ellenőrzése ELŐSZÖR (mint a React)
+        $bySec = [0 => [], 1 => [], 2 => [], 3 => []];
+        while ($row = sql_fetch_array($res)) {
+            $kulso     = (int)$row["kulso"];
+            $kiszallas = (int)$row["kiszallas"];
+            $roleid    = (int)$row["tipusroleid"];
+            if ($kiszallas) {
+                $section = 3;
+            } elseif ($kulso === 0) {
+                $section = ($roleid === 3) ? 1 : 0;
+            } else {
+                $section = 2;
+            }
+            $bySec[$section][] = $row;
+        }
+
+        if (empty($bySec[0]) && empty($bySec[1]) && empty($bySec[2]) && empty($bySec[3])) {
+            $html .= "<div style='color:#888;padding:20px 0;'>Nincs közelgő beosztás.</div>";
+            return $html;
+        }
+
+        // Kiszállások csoportosítása tipusid szerint: egy kártya per esemény, dátumtartománnyal
+        if (!empty($bySec[3])) {
+            $grouped = [];
+            foreach ($bySec[3] as $item) {
+                $tid = (int)$item["tipusid"];
+                if (!isset($grouped[$tid])) {
+                    $grouped[$tid] = $item;
+                    $grouped[$tid]["_maxDate"] = $item["datum"];
+                    $grouped[$tid]["_pairedByName"] = [];
+                }
+                if ($item["datum"] > $grouped[$tid]["_maxDate"]) {
+                    $grouped[$tid]["_maxDate"] = $item["datum"];
+                }
+                if (!empty($item["pairedDetails"])) {
+                    foreach (explode(";;", $item["pairedDetails"]) as $detail) {
+                        $parts = explode("|", $detail, 2);
+                        $name  = trim($parts[0]);
+                        if ($name && !isset($grouped[$tid]["_pairedByName"][$name])) {
+                            $grouped[$tid]["_pairedByName"][$name] = $parts[1] ?? "";
+                        }
+                    }
+                }
+            }
+            $bySec[3] = [];
+            foreach ($grouped as $gItem) {
+                $pairParts = [];
+                foreach ($gItem["_pairedByName"] as $name => $time) {
+                    $pairParts[] = "{$name}|{$time}";
+                }
+                $gItem["pairedDetails"] = empty($pairParts) ? null : implode(";;", $pairParts);
+                $bySec[3][] = $gItem;
+            }
+        }
+
+        $sections = [
+            0 => ["label" => "Belső rendelések",       "color" => "#9c3328", "bg" => "rgba(156,51,40,.10)",  "icon" => "fa-solid fa-users"],
+            1 => ["label" => "Belső - Irodai / egyéb", "color" => "#9c3328", "bg" => "rgba(156,51,40,.08)",  "icon" => "fa-solid fa-house"],
+            2 => ["label" => "Külső rendelések",        "color" => "#2a7c48", "bg" => "rgba(42,124,72,.10)",  "icon" => "fa-solid fa-building"],
+            3 => ["label" => "Kiszállások",             "color" => "#6b21a8", "bg" => "rgba(107,33,168,.10)", "icon" => "fa-solid fa-truck"],
+        ];
+
+        static $secIdx = 0;
+        foreach ($sections as $sKey => $sec) {
+            if (empty($bySec[$sKey])) continue;
+            $secIdx++;
+            $bodyId = "pubsec{$secIdx}";
+            $count  = count($bySec[$sKey]);
+            $html .= "<div style='background:#fff;border:1px solid #e3e8ef;border-radius:12px;overflow:hidden;margin-bottom:12px;'>";
+            // Header — kattintható, összecsukható
+            $html .= "<button onclick='pubToggleSec(\"{$bodyId}\",this)' style='width:100%;background:{$sec["bg"]};border:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:8px;text-align:left;'>";
+            $html .= "<i class='{$sec["icon"]}' style='color:{$sec["color"]};font-size:14px;flex-shrink:0;'></i>";
+            $html .= "<span style='font-size:13px;font-weight:700;color:{$sec["color"]};flex:1;'>{$sec["label"]}</span>";
+            $html .= "<span style='font-size:11px;font-weight:700;color:#888;background:#f1f4f7;padding:1px 7px;border-radius:4px;margin-right:6px;'>{$count}</span>";
+            $html .= "<i class='fa-solid fa-chevron-up' style='color:{$sec["color"]};font-size:12px;transition:transform .2s;'></i>";
+            $html .= "</button>";
+            // Body
+            $html .= "<div id='{$bodyId}' style='display:flex;flex-direction:column;gap:6px;padding:8px;'>";
+            foreach ($bySec[$sKey] as $item) {
+                $html .= $this->_publicCard($item, $adminUtils);
+            }
+            $html .= "</div>";
+            $html .= "</div>";
+        }
+
+        return $html;
+    }
+
+    private function _publicCard(array $item, AdminUtils $adminUtils): string {
+        $hasCim   = !empty($item["cim"]);
+        $mapUrl   = $hasCim ? "https://www.google.com/maps/search/" . urlencode($item["cim"]) : "";
+        $mapColor = $hasCim ? "#9c3328" : "#c8cdd5";
+        $mapStyle = "position:absolute;right:10px;top:10px;font-size:16px;text-decoration:none;color:{$mapColor};";
+        $mapTitle = $hasCim ? htmlspecialchars($item["cim"]) : "Nincs helyszín megadva";
+
+        $html = "<div style='background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:10px 12px;position:relative;'>";
+
+        // Map icon — mindig látható, piros ha van helyszín, szürke ha nincs
+        if ($hasCim) {
+            $html .= "<a href='" . htmlspecialchars($mapUrl) . "' target='_blank' title='{$mapTitle}' style='{$mapStyle}'>"
+                . "<i class='fas fa-map-marker-alt'></i></a>";
+        } else {
+            $html .= "<span title='{$mapTitle}' style='{$mapStyle}'>"
+                . "<i class='fas fa-map-marker-alt'></i></span>";
+        }
+
+        // Dátum (tartomány ha kiszállás és van _maxDate)
+        $isKiszallas = (int)($item["kiszallas"] ?? 0);
+        $maxDate     = $item["_maxDate"] ?? null;
+        $html .= "<div style='font-size:12px;font-weight:700;color:#5c6675;margin-bottom:2px;padding-right:26px;'>";
+        if ($isKiszallas && $maxDate && $maxDate !== $item["datum"]) {
+            $html .= $adminUtils->magyarDatum($item["datum"]) . " – " . $adminUtils->magyarDatum($maxDate);
+        } else {
+            $html .= $adminUtils->magyarDatum($item["datum"]);
+        }
+        $html .= "</div>";
+
+        // Idő intervallum
+        $interval = $this->workInterval($item);
+        if ($interval) {
+            $html .= "<div style='font-family:monospace;font-size:12px;color:#5c6675;margin-bottom:4px;'>{$interval}</div>";
+        }
+
+        // Rendelés neve
+        $html .= "<div style='font-size:14px;font-weight:700;color:#1a2230;margin-bottom:3px;'>"
+            . htmlspecialchars($item["tipusnev"] ?? "") . "</div>";
+
+        // Rendelő
+        if (!empty($item["rendelo"])) {
+            $html .= "<div style='font-size:12px;color:#5c6675;margin-bottom:2px;display:flex;align-items:center;gap:5px;'>"
+                . "<i class='fa-solid fa-house-medical' style='color:#9aa3b1;font-size:11px;flex-shrink:0;'></i>"
+                . htmlspecialchars($item["rendelo"]) . "</div>";
+        }
+
+        // Helyszín cím
+        if (!empty($item["cim"])) {
+            $html .= "<div style='font-size:11.5px;color:#9aa3b1;font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:2px;'>"
+                . "<i class='fa-solid fa-location-dot' style='font-size:10px;flex-shrink:0;'></i>"
+                . htmlspecialchars($item["cim"]) . "</div>";
+        }
+
+        // Kolléga
+        if (!empty($item["pairedDetails"])) {
+            $html .= "<div style='margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;'>";
+            foreach (explode(";;", $item["pairedDetails"]) as $detail) {
+                $parts = explode("|", $detail, 2);
+                $name  = trim($parts[0]);
+                $time  = $parts[1] ?? "";
+                $showTime = $isKiszallas && $time && $time !== "00:00-00:00";
+                $html .= "<span style='background:#fef2f2;color:#9c3328;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:5px;display:inline-flex;align-items:center;gap:4px;'>"
+                    . "<i class='fa-solid fa-user-doctor' style='font-size:10px;'></i>"
+                    . htmlspecialchars($name);
+                if ($showTime) {
+                    $html .= "<span style='font-family:monospace;font-size:10.5px;opacity:.75;margin-left:2px;'>{$time}</span>";
+                }
+                $html .= "</span>";
+            }
+            $html .= "</div>";
+        }
+
+        // Megjegyzés
+        if (!empty($item["megj"])) {
+            $html .= "<div style='font-size:11px;color:#9aa3b1;margin-top:5px;font-style:italic;'>"
+                . htmlspecialchars($item["megj"]) . "</div>";
+        }
+
+        $html .= "</div>";
+        return $html;
     }
 }
