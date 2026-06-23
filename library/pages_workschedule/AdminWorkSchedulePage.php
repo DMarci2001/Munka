@@ -133,6 +133,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiSaveDayNote();
         }
 
+        if (isset($_POST["toggledaylezart"])) {
+            $this->_apiToggleDayLezart();
+        }
+
         if (isset($_GET["getmonthhours"])) {
             $this->_apiGetMonthHours();
         }
@@ -196,6 +200,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
             datum   DATE NOT NULL,
             megj    TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (tipusid, datum)
+        )");
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_nap_lezart (
+            datum DATE NOT NULL,
+            megj  VARCHAR(200) NULL DEFAULT NULL,
+            PRIMARY KEY (datum)
         )");
         $hasVacMegj = sql_query(
             "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_szabadsag' AND column_name='megj'"
@@ -1167,6 +1176,15 @@ HTML;
             $datumAktivIdx[(int)$o["tipusid"] . "_" . $o["datum"]] = (int)$o["aktiv"];
         }
 
+        $lezartRows = sql_query(
+            "SELECT datum, megj FROM schedule_nap_lezart WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $lezartIdx = [];
+        foreach ($lezartRows as $r) {
+            $lezartIdx[$r["datum"]] = $r["megj"] ?? "";
+        }
+
         $dayNoteRows = sql_query(
             "SELECT tipusid, datum, megj FROM schedule_datum_megj WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
             ["mon" => $monday]
@@ -1282,7 +1300,8 @@ HTML;
                 ];
             }
 
-            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? []];
+            $lezart = isset($lezartIdx[$date]);
+            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? [], "lezart" => $lezart, "lezartMegj" => $lezart ? ($lezartIdx[$date] ?? "") : ""];
         }
 
         $doctorRows = sql_query(
@@ -1369,6 +1388,26 @@ HTML;
         }
 
         $this->utils->jsonOut(["status" => "ok"]);
+        die;
+    }
+
+    private function _apiToggleDayLezart(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $datum = trim($_POST["datum"] ?? "");
+        $megj  = substr(trim($_POST["megj"] ?? ""), 0, 200) ?: null;
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Érvénytelen dátum!"]); die;
+        }
+        $exists = sql_query("SELECT COUNT(*) FROM schedule_nap_lezart WHERE datum=?", [$datum])->fetchColumn();
+        if ($exists) {
+            sql_query("DELETE FROM schedule_nap_lezart WHERE datum=?", [$datum]);
+            $this->utils->jsonOut(["status" => "ok", "lezart" => false]);
+        } else {
+            sql_query("INSERT INTO schedule_nap_lezart (datum, megj) VALUES (?, ?)", [$datum, $megj]);
+            $this->utils->jsonOut(["status" => "ok", "lezart" => true]);
+        }
         die;
     }
 

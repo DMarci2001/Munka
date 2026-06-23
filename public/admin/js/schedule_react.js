@@ -201,6 +201,7 @@ const Ico = {
   eye:      S(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/></>, 16),
   eyeOff:   S(<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
   logout:   S(<><path d="M16 17l5-5-5-5M21 12H9M13 7V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 16),
+  lock:     S(<><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
@@ -2300,6 +2301,16 @@ function MunkaidoBeosztas() {
     (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
+  const lezartByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => ({ lezart: !!d.lezart, megj: d.lezartMegj||"" })),
+  [weekData]);
+
+  const toggleLezart = useCallback(async (date) => {
+    const body = new URLSearchParams({ toggledaylezart:"1", datum:date });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
   const weekWorkerHours = useMemo(() => {
     const map = {};
     (weekData?.days||[]).forEach((day) => {
@@ -2571,22 +2582,26 @@ function MunkaidoBeosztas() {
                   const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
                   const hol  = holidayOf(iso(dayDates[di]));
                   const rest = di===6 || !!hol;
+                  const { lezart, megj: lezartMegj } = lezartByDay[di] || {};
+                  const dateStr = iso(dayDates[di]);
                   return (
-                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:(di>=5||hol)?"var(--weekend)":"var(--bg)", border:"1px solid var(--border-soft)" }}>
+                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:lezart?"color-mix(in srgb,var(--danger) 6%,var(--bg))":(di>=5||hol)?"var(--weekend)":"var(--bg)", border:`1px solid ${lezart?"color-mix(in srgb,var(--danger) 35%,var(--border-soft))":"var(--border-soft)"}` }}>
                       <div className="px-3 py-2.5" style={{ borderBottom:"1px solid var(--border)" }}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-baseline gap-2">
-                            <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:rest?"var(--danger)":"var(--ink)" }}>{HU_DAYS_UP[di]}</span>
+                            <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:lezart?"var(--danger)":rest?"var(--danger)":"var(--ink)" }}>{HU_DAYS_UP[di]}</span>
                             <span className="flex items-center justify-center rounded-md" style={{ minWidth:18, height:18, padding:"0 4px", fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{weekDays[di].length}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            {dayConflict && <span className="mb-pulse" style={{ color:"var(--danger)" }} title="Ütközés">{Ico.alert({width:14,height:14})}</span>}
-                            <span className="mb-mono" style={{ fontSize:11, color:rest?"var(--danger-ink)":"var(--faint)", textTransform:"uppercase" }}>{HU_MON_SHORT[dayDates[di].getUTCMonth()]} {dayDates[di].getUTCDate()}.</span>
+                            {dayConflict && !lezart && <span className="mb-pulse" style={{ color:"var(--danger)" }} title="Ütközés">{Ico.alert({width:14,height:14})}</span>}
+                            <span className="mb-mono" style={{ fontSize:11, color:rest||lezart?"var(--danger-ink)":"var(--faint)", textTransform:"uppercase" }}>{HU_MON_SHORT[dayDates[di].getUTCMonth()]} {dayDates[di].getUTCDate()}.</span>
+                            <button onClick={()=>toggleLezart(dateStr)} title={lezart?"Leállás feloldása":"Nap lezárása (leállás)"} className="mb-btn flex items-center justify-center rounded-md" style={{ width:22, height:22, color:lezart?"var(--danger-ink)":"var(--faint)", background:lezart?"var(--danger-soft)":"var(--surface-2)", border:lezart?"1px solid color-mix(in srgb,var(--danger) 30%,transparent)":"1px solid var(--border)" }}>{Ico.lock({width:11,height:11})}</button>
                           </div>
                         </div>
-                        {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
+                        {lezart && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> Leállás{lezartMegj ? ` · ${lezartMegj}` : ""}</div>}
+                        {!lezart && hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
-                      <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
+                      <div className="mb-colbody flex flex-col gap-2.5 p-2.5" style={{ opacity:lezart?0.45:1, pointerEvents:lezart?"none":"auto" }}>
                         {!conflictView && elerhetoByDay[di] && elerhetoByDay[di].length > 0 && (
                           <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
                             <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,#2563eb 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
