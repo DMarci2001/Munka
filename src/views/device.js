@@ -5,7 +5,7 @@
 
 import {
   getDevice, getAttrDefs, currentUser, currentRole, roleAtLeast,
-  historyOf, getUser,
+  historyOf, isHistoryLoaded, ensureHistory, getUser,
 } from '../state/store.js';
 import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
@@ -30,6 +30,8 @@ export function renderDevice(el, { id }) {
   const role = currentRole();
   const isStore = roleAtLeast(role, 'storekeeper');
   const defs = getAttrDefs(dev.device_type_id);
+  ensureHistory(dev.device_id);   // igény szerinti betöltés → notify → újrarajzol
+  const histLoaded = isHistoryLoaded(dev.device_id);
   const hist = historyOf(dev.device_id);
 
   el.innerHTML = `
@@ -75,7 +77,7 @@ export function renderDevice(el, { id }) {
         <div class="panel">
           <div class="panel-head">Birtoklási előzmény</div>
           <div class="panel-body">
-            ${historyHTML(hist)}
+            ${histLoaded ? historyHTML(hist) : '<div class="muted">Előzmény betöltése…</div>'}
           </div>
         </div>
       </div>
@@ -219,6 +221,8 @@ function renderActions(container, v, role, isStore, me) {
     btns.push(`<button class="btn btn-outline" data-act="edit">${icons.edit} Szerkesztés</button>`);
   }
 
+  btns.push(`<button class="btn btn-ghost btn-sm" data-act="qr-label" style="margin-left:auto">${icons.qr} QR Címke</button>`);
+
   container.innerHTML = btns.join('') || `<span class="muted" style="font-size:.85rem">Nincs elérhető művelet ehhez az állapothoz.</span>`;
 
   const id = dev.device_id;
@@ -234,6 +238,7 @@ function renderActions(container, v, role, isStore, me) {
     'mark-found': () => A.dlgMarkFound(id),
     edit: () => import('./register_device.js').then((m) => m.dlgEditDevice(id)),
     more: () => showMore(container, id),
+    'qr-label': () => import('../ui/qrLabel.js').then((m) => m.dlgQrLabel(id)),
   };
   container.querySelectorAll('[data-act]').forEach((b) =>
     b.addEventListener('click', (e) => { e.stopPropagation(); handlers[b.dataset.act]?.(); }));

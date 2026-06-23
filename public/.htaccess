@@ -1,0 +1,31 @@
+# ============================================================
+# SPA cache-control — Hordozható Eszköznyilvántartás
+#
+# Probléma: az index.html a belépési pont, és minden build után más
+# hash-elt asset-fájlokra hivatkozik (pl. index-<hash>.js). Ha a böngésző
+# az index.html-t gyorsítótárazza, egy régi HTML-t szolgál ki, ami már
+# nem létező asset-hashre mutat → 404 → üres oldal (pl. QR-beolvasáskor).
+#
+# Megoldás: az index.html SOHA ne legyen cache-elve (mindig revalidál),
+# a hash-elt asset-ek viszont örökre cache-elhetők (a hash a cache-buster).
+# ============================================================
+
+# A belépési HTML mindig friss legyen
+<FilesMatch "index\.html$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </IfModule>
+</FilesMatch>
+
+# A hash-elt asset-ek tartalma sosem változik adott hash mellett → hosszú cache
+<FilesMatch "\.(js|css|woff2?|png|jpg|jpeg|svg|gif|ico)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </IfModule>
+</FilesMatch>
+
+# Hash nélküli deep-linkek (#/scan/:tag) a hash-router miatt mind az
+# index.html-en oldódnak fel — itt nincs szükség külön rewrite-ra,
+# mert a böngésző a fragmentet (#...) nem küldi el a szervernek.

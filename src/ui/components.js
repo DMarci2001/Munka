@@ -47,7 +47,8 @@ export function toast(message, type = 'default') {
 
 // ---- Modal --------------------------------------------------
 // openModal({ title, bodyHTML, confirmText, confirmClass, onConfirm, onMount })
-// onConfirm(rootEl) → return false to keep open; throw OpError → toast hiba
+// onConfirm(rootEl) → return false to keep open; throw/reject OpError → toast hiba
+// (onConfirm lehet async; futás közben a megerősítő gomb letiltva)
 export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmClass = 'btn-primary', onConfirm, onMount, wide = false }) {
   closeModal();
   const backdrop = document.createElement('div');
@@ -73,12 +74,16 @@ export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmCla
 
   const confirmBtn = backdrop.querySelector('[data-confirm]');
   if (confirmBtn && onConfirm) {
-    confirmBtn.addEventListener('click', () => {
+    confirmBtn.addEventListener('click', async () => {
+      if (confirmBtn.disabled) return;
+      confirmBtn.disabled = true;
       try {
-        const result = onConfirm(root);
+        const result = await onConfirm(root);
         if (result !== false) close();
+        else confirmBtn.disabled = false;   // validáció bukott → nyitva marad, újra próbálható
       } catch (err) {
         toast(err.message || 'Hiba történt', 'error');
+        confirmBtn.disabled = false;        // hiba → nyitva marad
       }
     });
   }

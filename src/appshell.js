@@ -1,11 +1,14 @@
 // ============================================================
 // Belépési pont — alkalmazás-héj, navigáció, route-kezelés
 // Hordozható Eszköznyilvántartás · Hungária Med-M Kft.
+//
+// Adatforrás: a PHP backend (store.hydrate). Az identitást a host oldal
+// munkamenete adja (/me). A demó felhasználóváltó CSAK fejlesztésben látszik.
 // ============================================================
 
 import { route, setNotFound, startRouter, navigate } from './lib/router.js';
 import {
-  subscribe, getUsers, currentUser, currentRole, roleAtLeast, setCurrentUser,
+  subscribe, hydrate, getUsers, currentUser, currentRole, roleAtLeast, setCurrentUser,
   pendingCheckins,
 } from './state/store.js';
 import { roleLabel, esc } from './lib/format.js';
@@ -19,6 +22,9 @@ import { renderRegister } from './views/register_device.js';
 import { renderRegisterData } from './views/register_data.js';
 import { renderScan } from './views/scan.js';
 
+const IS_DEV = import.meta.env.DEV;
+const DEV_DEFAULT_USER = 'szabo.julia';   // dev auto-login (raktáros)
+
 // ---- Route-tábla --------------------------------------------
 const PAGES = {
   '/inventory': { title: 'Eszközlista',                        nav: 'inventory', render: renderInventory },
@@ -27,9 +33,8 @@ const PAGES = {
   '/register-data':  { title: 'Adatbevitel',      nav: 'register-data', render: renderRegisterData, role: 'storekeeper' },
   '/register':  { title: 'Új eszköz bevitele', nav: 'register', render: renderRegister, role: 'storekeeper' },
   '/device/:id':{ title: 'Készülék részletei',                nav: 'inventory', render: renderDevice },
-  '/scan':           { title: 'Beolvasás',            nav: 'scan',         render: renderScan },        // ← új
-  '/scan/:tag':      { title: 'Beolvasás',            nav: 'scan',         render: renderScan },        // ← új
-
+  '/scan':           { title: 'Beolvasás',            nav: 'scan',         render: renderScan },
+  '/scan/:tag':      { title: 'Beolvasás',            nav: 'scan',         render: renderScan },
 };
 
 let active = { key: '/', params: {} };
@@ -49,9 +54,9 @@ function buildShell() {
           </button>
           <h1 id="page-title">Irányítópult</h1>
           <div class="spacer"></div>
-          <div class="user-switch" title="Demó: válts felhasználót a szerepkörök kipróbálásához">
+          <div class="user-switch" title="${IS_DEV ? 'Demó: válts felhasználót a szerepkörök kipróbálásához' : ''}">
             <span class="avatar" id="avatar"></span>
-            <select id="user-select"></select>
+            ${IS_DEV ? '<select id="user-select"></select>' : '<span class="user-name" id="user-name"></span>'}
             <span class="role-pill" id="role-pill"></span>
           </div>
         </div>
@@ -59,18 +64,22 @@ function buildShell() {
       </main>
     </div>`;
 
-  const sel = document.getElementById('user-select');
-  sel.innerHTML = getUsers().map((u) => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('');
-  sel.addEventListener('change', () => {
-    setCurrentUser(Number(sel.value)); // notify → re-render
-    const page = PAGES[active.key];
-    if (page?.role && !roleAtLeast(currentRole(), page.role)) navigate('/');
-  });
+  // Felhasználóváltó — CSAK fejlesztésben (éles: a host oldal kezeli az identitást)
+  if (IS_DEV) {
+    const sel = document.getElementById('user-select');
+    sel.innerHTML = getUsers().map((u) => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('');
+    sel.addEventListener('change', async () => {
+      try {
+        await setCurrentUser(Number(sel.value)); // hydrate → notify → re-render
+      } catch (e) { /* a hibát a store dobja; dev-ben elnyeljük */ }
+      const page = PAGES[active.key];
+      if (page?.role && !roleAtLeast(currentRole(), page.role)) navigate('/');
+    });
+  }
 
   // Hamburger — mobil oldalsáv megnyitás/zárás
   const hamburger = document.getElementById('btn-hamburger');
   const overlay = document.getElementById('sidebar-overlay');
-  const sidebar = document.getElementById('sidebar');
   function closeSidebar() { document.getElementById('app').querySelector('.app-shell').classList.remove('sidebar-open'); }
   hamburger.addEventListener('click', () => {
     document.getElementById('app').querySelector('.app-shell').classList.toggle('sidebar-open');
@@ -106,7 +115,6 @@ function renderNav() {
   nav.querySelectorAll('[data-path]').forEach((a) =>
     a.addEventListener('click', () => {
       navigate(a.dataset.path);
-      // mobil: navigáció után zárjuk be az oldalsávot
       document.getElementById('app').querySelector('.app-shell').classList.remove('sidebar-open');
     }));
 }
@@ -118,7 +126,9 @@ function renderTopbar() {
   document.getElementById('page-title').textContent = PAGES[active.key]?.title || 'Eszköz';
   document.getElementById('avatar').textContent = initials(u.full_name);
   const sel = document.getElementById('user-select');
-  if (sel.value !== String(u.id)) sel.value = String(u.id);
+  if (sel && sel.value !== String(u.id)) sel.value = String(u.id);
+  const nameEl = document.getElementById('user-name');
+  if (nameEl) nameEl.textContent = u.full_name;
   const pill = document.getElementById('role-pill');
   pill.textContent = roleLabel(role);
   pill.className = 'role-pill ' + role;
@@ -130,8 +140,9 @@ function initials(name) {
 
 // ---- Aktuális nézet -----------------------------------------
 function renderCurrent() {
+  if (!document.getElementById('content')) return;   // héj még nem áll
   const page = PAGES[active.key];
-  if (!page) { navigate('/inventory'); return; }   // ismeretlen route → fő nézet (sosem fehér képernyő)
+  if (!page) { navigate('/inventory'); return; }
   if (page?.role && !roleAtLeast(currentRole(), page.role)) { navigate('/'); return; }
   renderNav();
   renderTopbar();
@@ -154,10 +165,45 @@ function setupRoutes() {
   setNotFound(() => navigate('/'));
 }
 
-// ---- Store-változásra újrarajzolás --------------------------
-subscribe(() => renderCurrent());
+// ---- Egyszerű teljes-képernyős állapotok --------------------
+function fullScreen(html) {
+  document.getElementById('app').innerHTML =
+    `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+       <div style="text-align:center;max-width:420px;color:var(--ink,#333)">${html}</div>
+     </div>`;
+}
 
 // ---- Indítás ------------------------------------------------
-buildShell();
-setupRoutes();
-startRouter();
+async function init() {
+  fullScreen('<div class="muted">Betöltés…</div>');
+
+  try {
+    await hydrate();
+  } catch (e) {
+    fullScreen(`<div class="big">${icons.warning}</div>
+      <h2>A szerver nem érhető el</h2>
+      <p class="muted">Nem sikerült betölteni az adatokat. Ellenőrizd, hogy fut-e a backend.</p>`);
+    return;
+  }
+
+  // Dev: ha nincs munkamenet, automatikus bejelentkezés egy alapértelmezett seed userrel.
+  if (IS_DEV && !currentUser()) {
+    const def = getUsers().find((u) => u.username === DEV_DEFAULT_USER) || getUsers()[0];
+    if (def) { try { await setCurrentUser(def.id); } catch (e) { /* marad a login-üzenet */ } }
+  }
+
+  // Éles (vagy ha a dev auto-login nem sikerült): nincs bejelentkezett user.
+  if (!currentUser()) {
+    fullScreen(`<div class="big">${icons.my}</div>
+      <h2>Bejelentkezés szükséges</h2>
+      <p class="muted">Jelentkezz be a fő oldalon az eszköznyilvántartó használatához.</p>`);
+    return;
+  }
+
+  buildShell();
+  setupRoutes();
+  subscribe(() => renderCurrent());   // csak a héj felépítése UTÁN iratkozunk fel
+  startRouter();
+}
+
+init();

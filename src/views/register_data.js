@@ -123,17 +123,17 @@ export function renderRegisterData(el) {
     });
   });
 
-  el.querySelector('#form-location .btn-primary').addEventListener('click', () => {
+  el.querySelector('#form-location .btn-primary').addEventListener('click', async () => {
     try {
-      addLocation({ address: el.querySelector('#loc-address').value });
+      await addLocation({ address: el.querySelector('#loc-address').value });
       toast('Helyszín hozzáadva.', 'success');
       el.querySelector('#loc-address').value = '';
     } catch (e) { toast(e.message, 'error'); }
   });
 
-  el.querySelector('#form-department .btn-primary').addEventListener('click', () => {
+  el.querySelector('#form-department .btn-primary').addEventListener('click', async () => {
     try {
-      addDepartment({
+      await addDepartment({
         locations_id: Number(el.querySelector('#dept-loc').value),
         name: el.querySelector('#dept-name').value,
         type: el.querySelector('#dept-type').value,
@@ -143,9 +143,9 @@ export function renderRegisterData(el) {
     } catch (e) { toast(e.message, 'error'); }
   });
 
-  el.querySelector('#form-device_type .btn-primary').addEventListener('click', () => {
+  el.querySelector('#form-device_type .btn-primary').addEventListener('click', async () => {
     try {
-      addDeviceType({
+      await addDeviceType({
         type: el.querySelector('#dtype-name').value,
         description: el.querySelector('#dtype-desc').value,
       });
@@ -156,10 +156,10 @@ export function renderRegisterData(el) {
   });
 
   [['ag', null], ['at', 'attr-type-sel']].forEach(([pfx, typeSelId]) => {
-    el.querySelector(`#form-${pfx === 'ag' ? 'attr_general' : 'attr_type'} .btn-primary`).addEventListener('click', () => {
+    el.querySelector(`#form-${pfx === 'ag' ? 'attr_general' : 'attr_type'} .btn-primary`).addEventListener('click', async () => {
       try {
         const device_type_id = typeSelId ? Number(el.querySelector(`#${typeSelId}`).value) : null;
-        addAttrDef({
+        await addAttrDef({
           device_type_id,
           attribute_key: el.querySelector(`#${pfx}-key`).value,
           label: el.querySelector(`#${pfx}-label`).value,

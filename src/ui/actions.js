@@ -83,7 +83,7 @@ export function dlgCheckOut(deviceId) {
       locSel.addEventListener('change', fillDepts);
       fillDepts();
     },
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_user_id = onBehalf ? Number(root.querySelector('[name=to_user]').value) : me.id;
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
@@ -93,7 +93,7 @@ export function dlgCheckOut(deviceId) {
       }
       const ret = root.querySelector('[name=ret]').value;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'check_out', to_user_id, to_locations_id: to_location_id, to_departments_id: to_department_id, expected_return_date: ret ? new Date(ret) : null, notes });
+      await moveAsset({ device_id: deviceId, event_type: 'check_out', to_user_id, to_locations_id: to_location_id, to_departments_id: to_department_id, expected_return_date: ret || null, notes });
       toast('Eszköz kivéve.', 'success');
     },
   });
@@ -140,13 +140,13 @@ export function dlgCheckIn(deviceId) {
       locSel.addEventListener('change', fillDepts);
       fillDepts();
     },
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
       if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
       const condition_at_event = root.querySelector('[name=condition]').value;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'check_in', to_locations_id: to_location_id, to_departments_id: to_department_id, condition_at_event, notes });
+      await moveAsset({ device_id: deviceId, event_type: 'check_in', to_locations_id: to_location_id, to_departments_id: to_department_id, condition_at_event, notes });
       toast(pending ? 'Visszavétel folyamatban — raktáros megerősítésére vár.' : 'Eszköz visszavéve.', 'success');
     },
   });
@@ -169,12 +169,12 @@ export function dlgTransfer(deviceId) {
         <input type="text" class="form-control" name="notes" />
       </div>`,
     confirmText: 'Átadás',
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_user_id = Number(root.querySelector('[name=to_user]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       // Átadás = birtokosváltás: a hely/részleg az aktuális állapotból öröklődik (nem raktár),
       // így a moveAsset megőrzi a birtokost és „Kiadva" marad — nem esik vissza „Kivehető"-re.
-      moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: cur.location, to_departments_id: cur.department, notes });
+      await moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: cur.location, to_departments_id: cur.department, notes });
       toast('Eszköz átadva.', 'success');
     },
   });
@@ -218,34 +218,34 @@ export function dlgStockTransfer(deviceId) {
       locSel.addEventListener('change', fillDepts);
       fillDepts();
     },
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
       if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      moveAsset({ device_id: deviceId, event_type: 'stock_transfer', to_locations_id: to_location_id, to_departments_id: to_department_id, notes });
+      await moveAsset({ device_id: deviceId, event_type: 'stock_transfer', to_locations_id: to_location_id, to_departments_id: to_department_id, notes });
       toast('Készlet áthelyezve.', 'success');
     },
   });
 }
 
 // --- Foglalás ------------------------------------------------
-export function doReserve(deviceId) {
+export async function doReserve(deviceId) {
   try {
-    reserveDevice(deviceId);
+    await reserveDevice(deviceId);
     toast('Eszköz lefoglalva (3 napig).', 'success');
   } catch (e) { toast(e.message, 'error'); }
 }
-export function doCancelReservation(deviceId) {
+export async function doCancelReservation(deviceId) {
   try {
-    cancelReservation(deviceId);
+    await cancelReservation(deviceId);
     toast('Foglalás lemondva.', 'success');
   } catch (e) { toast(e.message, 'error'); }
 }
 
 // --- Checkpoint: megerősítés / elutasítás --------------------
-export function doConfirmCheckIn(eventId) {
-  try { confirmCheckIn(eventId); toast('Visszavétel megerősítve.', 'success'); }
+export async function doConfirmCheckIn(eventId) {
+  try { await confirmCheckIn(eventId); toast('Visszavétel megerősítve.', 'success'); }
   catch (e) { toast(e.message, 'error'); }
 }
 export function dlgRejectCheckIn(eventId) {
@@ -259,10 +259,10 @@ export function dlgRejectCheckIn(eventId) {
       </div>`,
     confirmText: 'Elutasítás',
     confirmClass: 'btn-danger',
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const reason = root.querySelector('[name=reason]').value.trim();
       if (!reason) { toast('Adj meg indokot.', 'error'); return false; }
-      rejectCheckIn(eventId, reason);
+      await rejectCheckIn(eventId, reason);
       toast('Visszavétel elutasítva.', 'success');
     },
   });
@@ -300,12 +300,12 @@ export function dlgSendToRepair(deviceId) {
       locSel.addEventListener('change', fillDepts);
       fillDepts();
     },
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
       if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      sendToRepair(deviceId, to_location_id, to_department_id, notes);
+      await sendToRepair(deviceId, to_location_id, to_department_id, notes);
       toast('Szervizbe küldve.', 'success');
     },
   });
@@ -332,11 +332,11 @@ export function dlgReturnFromRepair(deviceId) {
         <input class="form-control" name="notes" placeholder="pl. javítva" />
       </div>`,
     confirmText: 'Visszahelyezés',
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
       const to_department_id = Number(root.querySelector('[name=to_department]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      returnFromRepair(deviceId, to_location_id, to_department_id, notes);
+      await returnFromRepair(deviceId, to_location_id, to_department_id, notes);
       toast('Javítva visszahelyezve.', 'success');
     },
   });
@@ -348,7 +348,7 @@ export function dlgMarkLost(deviceId) {
     bodyHTML: `<div class="field"><label class="form-label">Megjegyzés</label><input class="form-control" name="notes" placeholder="pl. nem található 2 hete" /></div>`,
     confirmText: 'Elveszett',
     confirmClass: 'btn-danger',
-    onConfirm: (root) => { markLost(deviceId, root.querySelector('[name=notes]').value.trim() || null); toast('Elveszettnek jelölve.', 'success'); },
+    onConfirm: async (root) => { await markLost(deviceId, root.querySelector('[name=notes]').value.trim() || null); toast('Elveszettnek jelölve.', 'success'); },
   });
 }
 
@@ -372,11 +372,11 @@ export function dlgMarkFound(deviceId) {
         <input class="form-control" name="notes" placeholder="pl. javítva" />
       </div>`,
     confirmText: 'Visszahelyezés',
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
       const to_department_id = Number(root.querySelector('[name=to_department]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
-      markFound(deviceId, to_location_id, to_department_id, notes);
+      await markFound(deviceId, to_location_id, to_department_id, notes);
       toast('Találtnak jelölve.', 'success'); },
   });
 }
@@ -387,6 +387,6 @@ export function dlgRetire(deviceId) {
       <div class="field"><label class="form-label">Indok</label><input class="form-control" name="reason" placeholder="pl. nem javítható" /></div>`,
     confirmText: 'Selejtezés',
     confirmClass: 'btn-danger',
-    onConfirm: (root) => { retireDevice(deviceId, root.querySelector('[name=reason]').value.trim() || null); toast('Eszköz selejtezve.', 'success'); },
+    onConfirm: async (root) => { await retireDevice(deviceId, root.querySelector('[name=reason]').value.trim() || null); toast('Eszköz selejtezve.', 'success'); },
   });
 }

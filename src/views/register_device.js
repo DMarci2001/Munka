@@ -137,14 +137,14 @@ export function renderRegister(el) {
     attrsBox.innerHTML = getAttrDefs(tid).map((d) => attrFieldHTML(d, '')).join('') || '<div class="muted">Nincs típusattribútum.</div>';
   });
 
-  el.querySelector('#r-save').addEventListener('click', () => {
+  el.querySelector('#r-save').addEventListener('click', async () => {
     const tid = Number(typeSel.value);
     const asset_tag = el.querySelector('#r-tag').value.trim();
     if (!asset_tag) { toast('Adj meg leltári azonosítót.', 'error'); return; }
     const { attrs, error } = collectAttrs(attrsBox);
     if (error) { toast(error, 'error'); return; }
     try {
-      const dev = registerDevice({
+      const dev = await registerDevice({
         device_type_id: tid,
         asset_tag,
         serial_number: el.querySelector('#r-serial').value.trim(),
@@ -185,10 +185,10 @@ export function dlgEditDevice(deviceId) {
         ${defs.map((d) => attrFieldHTML(d, dev.attrs?.[d.attribute_key])).join('') || '<div class="muted">Nincs típusattribútum.</div>'}
       </div>`,
     confirmText: 'Mentés',
-    onConfirm: (root) => {
+    onConfirm: async (root) => {
       const { attrs, error } = collectAttrs(root.querySelector('#e-attrs'));
       if (error) { toast(error, 'error'); return false; }
-      editDevice(deviceId, {
+      await editDevice(deviceId, {
         manufacturer: root.querySelector('#e-manu').value.trim(),
         model: root.querySelector('#e-model').value.trim(),
         serial_number: root.querySelector('#e-serial').value.trim(),
