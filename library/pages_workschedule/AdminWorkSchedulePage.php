@@ -1957,15 +1957,9 @@ HTML;
         if (strtotime($tol) > strtotime($ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
-        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
         $groupId   = 0;
         $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
-            if ($tipus !== "Elérhető" && ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok))) {
-                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
-                continue;
-            }
             sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?, megj=?", [$cur, $cur, $workerId, $tipus, $megj]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
