@@ -129,6 +129,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiClearWeek();
         }
 
+        if (isset($_POST["savedaynote"])) {
+            $this->_apiSaveDayNote();
+        }
+
         if (isset($_GET["getmonthhours"])) {
             $this->_apiGetMonthHours();
         }
@@ -187,6 +191,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validfrom DATE NULL DEFAULT NULL");
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validto DATE NULL DEFAULT NULL");
         }
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_datum_megj (
+            tipusid INT NOT NULL,
+            datum   DATE NOT NULL,
+            megj    TEXT NOT NULL DEFAULT '',
+            PRIMARY KEY (tipusid, datum)
+        )");
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1151,6 +1161,15 @@ HTML;
             $datumAktivIdx[(int)$o["tipusid"] . "_" . $o["datum"]] = (int)$o["aktiv"];
         }
 
+        $dayNoteRows = sql_query(
+            "SELECT tipusid, datum, megj FROM schedule_datum_megj WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $dayNoteIdx = [];
+        foreach ($dayNoteRows as $r) {
+            $dayNoteIdx[(int)$r["tipusid"] . "_" . $r["datum"]] = $r["megj"];
+        }
+
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
@@ -1235,7 +1254,7 @@ HTML;
                     "title"   => $tipus["megnev"],
                     "address"     => $tipus["cim"]    ?? "",
                     "rendelo"     => $tipus["rendelo"] ?? "",
-                    "note"        => $tipus["megj"]  ?? "",
+                    "note"        => $dayNoteIdx[(int)$tipus["id"] . "_" . $date] ?? ($tipus["megj"] ?? ""),
                     "napok"       => (int)($tipus["napok"] ?? 127),
                     "org"         => $tipus["org"] ?: "HMM",
                     "orvosKell"   => (int)($tipus["orvos_kell"] ?? 1),
@@ -1312,6 +1331,35 @@ HTML;
              WHERE m.datumfrom>=:from AND m.datumfrom<DATE_ADD(:from, INTERVAL 7 DAY) AND t.forday='0000-00-00'",
             ["from" => $monday . " 00:00:00"]
         );
+
+        $this->utils->jsonOut(["status" => "ok"]);
+        die;
+    }
+
+    private function _apiSaveDayNote(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+            die;
+        }
+
+        $tipusId = intval($_POST["tipusid"] ?? 0);
+        $megj    = substr(trim($_POST["megj"] ?? ""), 0, 200);
+        $datums  = array_filter(
+            array_map('trim', explode(',', $_POST["datum"] ?? "")),
+            fn($d) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)
+        );
+
+        if (!$tipusId || empty($datums)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok!"]);
+            die;
+        }
+
+        foreach ($datums as $datum) {
+            sql_query(
+                "INSERT INTO schedule_datum_megj (tipusid, datum, megj) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE megj=VALUES(megj)",
+                [$tipusId, $datum, $megj]
+            );
+        }
 
         $this->utils->jsonOut(["status" => "ok"]);
         die;

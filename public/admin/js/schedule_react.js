@@ -2337,7 +2337,7 @@ function MunkaidoBeosztas() {
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
         const addrResp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const addrResult = await addrResp.json();
         if (addrResult.status !== "ok") { setToast("Hiba: " + (addrResult.message||"Ismeretlen hiba")); setSaving(false); return; }
@@ -2350,6 +2350,10 @@ function MunkaidoBeosztas() {
         if (result.status!=="ok") { allOk = false; setToast("Hiba: "+(result.message||"Ismeretlen hiba")); break; }
       }
       if (allOk) {
+        if (rec.note !== undefined) {
+          const noteBody = new URLSearchParams({ savedaynote:"1", tipusid:tipusId||"", datum:dates.join(","), megj:rec.note||"" });
+          await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:noteBody.toString() });
+        }
         await fetchWeek(weekOffset);
         setModal(null);
         setToast(dates.length>1 ? `Beosztás mentve ${dates.length} napra.` : "Beosztás mentve!");
