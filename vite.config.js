@@ -12,6 +12,10 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  // Relatív alapútvonal: a build bárhol kiszolgálható (pl. aldmappából,
+  // /eszkoznyilvantartas_frontend/webapp/dist/ alól), az asset-ek és a
+  // hash-alapú deep-linkek (QR: #/scan/:tag) így mindig feloldódnak.
+  base: './',
   server: {
     proxy: {
       '/api': {

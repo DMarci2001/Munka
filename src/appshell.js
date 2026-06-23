@@ -7,6 +7,7 @@
 // ============================================================
 
 import { route, setNotFound, startRouter, navigate } from './lib/router.js';
+import { apiSend } from './lib/api.js';
 import {
   subscribe, hydrate, getUsers, currentUser, currentRole, roleAtLeast, setCurrentUser,
   pendingCheckins,
@@ -177,6 +178,19 @@ function fullScreen(html) {
 async function init() {
   fullScreen('<div class="muted">Betöltés…</div>');
 
+  // SSO handoff from clinic website: ?sso=<token>&u=<username>&t=<timestamp>
+  const ssoParams = new URLSearchParams(location.search);
+  if (ssoParams.has('sso')) {
+    try {
+      await apiSend('POST', '/auth/sso', {
+        token: ssoParams.get('sso'),
+        username: ssoParams.get('u'),
+        timestamp: Number(ssoParams.get('t')),
+      });
+    } catch (e) { /* expired or invalid token — fall through to normal auth check */ }
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+
   try {
     await hydrate();
   } catch (e) {
@@ -196,7 +210,7 @@ async function init() {
   if (!currentUser()) {
     fullScreen(`<div class="big">${icons.my}</div>
       <h2>Bejelentkezés szükséges</h2>
-      <p class="muted">Jelentkezz be a fő oldalon az eszköznyilvántartó használatához.</p>`);
+      <p class="muted">Jelentkezz be a főoldalon az eszköznyilvántartó használatához.</p>`);
     return;
   }
 
