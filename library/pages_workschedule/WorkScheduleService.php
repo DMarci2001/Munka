@@ -129,8 +129,9 @@ class WorkScheduleService {
 
         $res = sql_query("SELECT date(datumfrom) as datum, m.*, t.megnev as tipusnev, t.kulso, t.cim
                     FROM schedule_mapping m
-                    LEFT JOIN schedule_tipusok t on t.id=m.tipusid
-                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)", [$workerId]);
+                    JOIN schedule_tipusok t on t.id=m.tipusid
+                    WHERE m.workerid=? AND m.`datumfrom`>DATE_SUB(NOW(), INTERVAL 40 DAY)
+                    AND NOT EXISTS (SELECT 1 FROM schedule_nap_lezart WHERE datum = DATE(m.datumfrom))", [$workerId]);
 
         while ($row = sql_fetch_array($res)) {
             $stat[$row["datum"]][] = $row;
@@ -274,8 +275,9 @@ class WorkScheduleService {
                       AND pm2.workerid != m.workerid
                 ) AS pairedDetails
              FROM schedule_mapping m
-             LEFT JOIN schedule_tipusok t ON t.id = m.tipusid
+             JOIN schedule_tipusok t ON t.id = m.tipusid
              WHERE m.workerid = ? AND m.datumfrom >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
+               AND NOT EXISTS (SELECT 1 FROM schedule_nap_lezart WHERE datum = DATE(m.datumfrom))
              ORDER BY m.datumfrom, t.kulso, t.kiszallas, t.sorrend",
             [$workerId]
         );

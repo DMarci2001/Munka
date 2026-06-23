@@ -212,6 +212,7 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasVacMegj) {
             sql_query("ALTER TABLE schedule_szabadsag ADD COLUMN megj VARCHAR(200) NULL DEFAULT NULL");
         }
+        sql_query("DELETE FROM schedule_mapping WHERE tipusid NOT IN (SELECT id FROM schedule_tipusok)");
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1882,6 +1883,9 @@ HTML;
         }
 
         sql_query("DELETE FROM schedule_tipusok WHERE id=?", [$id]);
+        sql_query("DELETE FROM schedule_mapping WHERE tipusid=?", [$id]);
+        sql_query("DELETE FROM schedule_datum_aktiv WHERE tipusid=?", [$id]);
+        sql_query("DELETE FROM schedule_datum_megj WHERE tipusid=?", [$id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -2093,6 +2097,7 @@ HTML;
         foreach ($workers as $w) {
             $changed = sql_query(
                 "SELECT 1 FROM schedule_mapping m
+                 JOIN schedule_tipusok t ON t.id = m.tipusid
                  WHERE m.datumfrom>=DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))
                    AND m.notifyhash<>md5(concat(m.datumfrom, m.datumto))
                    AND m.aktiv=1
@@ -2100,6 +2105,9 @@ HTML;
                    AND NOT EXISTS (
                        SELECT 1 FROM schedule_datum_aktiv sda
                        WHERE sda.tipusid=m.tipusid AND sda.datum=DATE(m.datumfrom) AND sda.aktiv=0
+                   )
+                   AND NOT EXISTS (
+                       SELECT 1 FROM schedule_nap_lezart WHERE datum=DATE(m.datumfrom)
                    ) LIMIT 1",
                 ["uid" => $w["id"]]
             )->fetch();
@@ -2203,12 +2211,16 @@ HTML;
             "SELECT DISTINCT w.id, w.nev, w.teljesnev, w.tel, w.email, w.smsert, w.emailert
              FROM schedule_mapping m
              JOIN schedule_workers w ON w.id = m.workerid
+             JOIN schedule_tipusok t ON t.id = m.tipusid
              WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
              AND COALESCE(w.aktiv, 1) = 1
              AND m.aktiv = 1
              AND NOT EXISTS (
                  SELECT 1 FROM schedule_datum_aktiv sda
                  WHERE sda.tipusid = m.tipusid AND sda.datum = DATE(m.datumfrom) AND sda.aktiv = 0
+             )
+             AND NOT EXISTS (
+                 SELECT 1 FROM schedule_nap_lezart WHERE datum = DATE(m.datumfrom)
              )
              ORDER BY w.roleid, w.nev",
             ["from" => $mondayStart]
