@@ -6,11 +6,11 @@
 import {
   moveAsset, reserveDevice, cancelReservation, confirmCheckIn, rejectCheckIn,
   sendToRepair, returnFromRepair, markLost, markFound, retireDevice,
-  getDepartments, getLocations, getUsers, getDevice, getDeviceType, currentUser, currentRole,
-  currentState, roleAtLeast, activeReservation, isStorageDept,
+  getDepartments, getLocations, getUsers, getDevice, currentUser, currentRole,
+  currentState, roleAtLeast, isStorageDept,
 } from '../state/store.js';
 import { openModal, toast } from './components.js';
-import { locationLabel, holderLabel, statusLabel, esc } from '../lib/format.js';
+import { locationLabel, esc } from '../lib/format.js';
 
 // --- Form mező-építők ----------------------------------------
 
@@ -19,20 +19,32 @@ function locOptions(selectedId = null) {
     .map((l) => `<option value="${l.id}" ${l.id === selectedId ? 'selected' : ''}>${esc(l.address)}</option>`)
     .join('');
 }
-function deptOptions(selectedId = null) {
-  return getDepartments()
-    .map((d) => `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${esc(d.name)}</option>`)
-    .join('');
-}
 function userOptions(excludeId = null, selectedId = null) {
   return getUsers()
     .filter((u) => u.id !== excludeId)
-    .map((u) => `<option value="${u.id}" ${u.id === selectedId ? 'selected' : ''}>${esc(u.full_name)} — ${esc(u.title)}</option>`)
+    .map((u) => `<option value="${u.id}" ${u.id === selectedId ? 'selected' : ''}>${esc(u.full_name)}</option>`)
     .join('');
 }
 function conditionField(value = 'Jó') {
   const opts = ['Jó', 'Kopott', 'Hibás', 'Ismeretlen'];
   return `<select class="form-select" name="condition">${opts.map((o) => `<option ${o === value ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+}
+
+// Helyszín→részleg kaszkád: a [name=to_location] változására feltölti a
+// [name=to_dept] listát az adott helyszín részlegeivel. A `prefer` predikátum
+// jelöli ki az alapértelmezett részleget (egyébként az első).
+function wireLocationDept(root, prefer = () => false) {
+  const locSel = root.querySelector('[name=to_location]');
+  const deptSel = root.querySelector('[name=to_dept]');
+  const fill = () => {
+    const list = getDepartments().filter((d) => d.locations_id === Number(locSel.value));
+    const pick = list.find(prefer) || list[0];
+    deptSel.innerHTML = list.length
+      ? list.map((d) => `<option value="${d.id}" ${pick && d.id === pick.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
+      : '<option value="">— nincs részleg ezen a helyszínen —</option>';
+  };
+  locSel.addEventListener('change', fill);
+  fill();
 }
 
 // --- Kivétel (check_out) -------------------------------------
@@ -41,7 +53,6 @@ export function dlgCheckOut(deviceId) {
   const role = currentRole();
   const onBehalf = roleAtLeast(role, 'storekeeper');
   const me = currentUser();
-  const allDepts = getDepartments();
   openModal({
     title: `Eszköz kivétele · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
@@ -55,7 +66,7 @@ export function dlgCheckOut(deviceId) {
       <div class="field">
         <label class="form-label">Hová (osztály / felhasználási hely)</label>
         <select class="form-select" name="to_location">${locOptions()}</select>
-        <select class="form-select" name="to_dept">${deptOptions()}</select>
+        <select class="form-select" name="to_dept"></select>
       </div>
       <div class="field">
         <label class="form-label">Várható visszahozatal (opcionális)</label>
@@ -66,23 +77,9 @@ export function dlgCheckOut(deviceId) {
         <input type="text" class="form-control" name="notes" placeholder="pl. kihelyezés a Kardiológiára" />
       </div>`,
     confirmText: 'Kivétel',
-    onMount: (root) => {
-      const locSel = root.querySelector('[name=to_location]');
-      const deptSel = root.querySelector('[name=to_dept]');
-      const fillDepts = () => {
-        const locId = Number(locSel.value);
-        const list = allDepts.filter((d) => d.locations_id === locId);
-        // Kivételkor használati helyre kerül az eszköz, birtokossal — NEM raktárba.
-        // Ha raktárt választanánk előre, a moveAsset készletbe rakná (birtokos nélkül),
-        // és az eszköz tévesen „Kivehető" maradna.
-        const preferred = list.find((d) => d.type !== 'raktár') || list[0];
-        deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${preferred && d.id === preferred.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
-      };
-      locSel.addEventListener('change', fillDepts);
-      fillDepts();
-    },
+    // Használati helyet (nem raktárt) választunk előre: raktárba téve a moveAsset
+    // birtokos nélkül készletbe rakná, és az eszköz tévesen „Kivehető" maradna.
+    onMount: (root) => wireLocationDept(root, (d) => d.type !== 'raktár'),
     onConfirm: async (root) => {
       const to_user_id = onBehalf ? Number(root.querySelector('[name=to_user]').value) : me.id;
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
@@ -103,9 +100,7 @@ export function dlgCheckOut(deviceId) {
 // --- Visszavétel / Leadás (check_in) -------------------------
 export function dlgCheckIn(deviceId) {
   const dev = getDevice(deviceId);
-  const role = currentRole();
-  const pending = role === 'user';
-  const allDepts = getDepartments();
+  const pending = currentRole() === 'user';
   openModal({
     title: `Eszköz leadása · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
@@ -127,19 +122,7 @@ export function dlgCheckIn(deviceId) {
       </div>
       ${pending ? `<div class="alert-warn-soft">A leadás <strong>raktáros megerősítésére</strong> vár, mielőtt az eszköz ismét kiadhatóvá válik.</div>` : ''}`,
     confirmText: 'Leadás',
-    onMount: (root) => {
-      const locSel = root.querySelector('[name=to_location]');
-      const deptSel = root.querySelector('[name=to_dept]');
-      const fillDepts = () => {
-        const locId = Number(locSel.value);
-        const list = allDepts.filter((d) => d.locations_id === locId);
-        deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.type === 'raktár' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
-      };
-      locSel.addEventListener('change', fillDepts);
-      fillDepts();
-    },
+    onMount: (root) => wireLocationDept(root, (d) => d.type === 'raktár'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
@@ -184,7 +167,6 @@ export function dlgTransfer(deviceId) {
 export function dlgStockTransfer(deviceId) {
   const dev = getDevice(deviceId);
   const cur = currentState(deviceId);
-  const allDepts = getDepartments();
   openModal({
     title: `Raktármozgatás · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
@@ -205,19 +187,7 @@ export function dlgStockTransfer(deviceId) {
         <input type="text" class="form-control" name="notes" />
       </div>`,
     confirmText: 'Mozgatás',
-    onMount: (root) => {
-      const locSel = root.querySelector('[name=to_location]');
-      const deptSel = root.querySelector('[name=to_dept]');
-      const fillDepts = () => {
-        const locId = Number(locSel.value);
-        const list = allDepts.filter((d) => d.locations_id === locId);
-        deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.type === 'raktár' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
-      };
-      locSel.addEventListener('change', fillDepts);
-      fillDepts();
-    },
+    onMount: (root) => wireLocationDept(root, (d) => d.type === 'raktár'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);
@@ -286,20 +256,7 @@ export function dlgSendToRepair(deviceId) {
         <select class="form-select" name="to_dept"></select>
       </div>`,
     confirmText: 'Szervizbe',
-    onMount: (root) => {
-      const allDepts = getDepartments();
-      const locSel = root.querySelector('[name=to_location]');
-      const deptSel = root.querySelector('[name=to_dept]');
-      const fillDepts = () => {
-        const locId = Number(locSel.value);
-        const list = allDepts.filter((d) => d.locations_id === locId);
-        deptSel.innerHTML = list.length
-          ? list.map((d) => `<option value="${d.id}" ${d.type === 'műhely' ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
-      };
-      locSel.addEventListener('change', fillDepts);
-      fillDepts();
-    },
+    onMount: (root) => wireLocationDept(root, (d) => d.type === 'műhely'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value);

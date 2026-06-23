@@ -1,5 +1,10 @@
 # QR-Scan Check-In / Check-Out
 
+> **Állapot (2026-06-23):** ez a terv megvalósult — a beolvasó folyamat a
+> `src/views/scan.js`-ben él (live-state, egy eszköz / beolvasás). A dokumentum
+> korábbi „localStorage/memória" utalásai elavultak: az alkalmazás a PHP API-t
+> használja. Az aktuális architektúráért lásd `CLAUDE.md` és `.planning/codebase/`.
+
 ## Context
 
 **The need.** A non-technical colleague needs to move medical devices in/out of custody quickly. The most common action by far is **one device at a time**: pick up a device, scan its QR, confirm. Bulk movement (several devices in one pass) happens occasionally and is a **nice-to-have**, not the daily path.

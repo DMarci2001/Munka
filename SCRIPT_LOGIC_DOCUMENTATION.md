@@ -2,7 +2,7 @@
 
 Hogyan viselkedik az adatbázisra épülő alkalmazásréteg: milyen szerepköröket érvényesít, milyen műveleteket tesz elérhetővé, és pontosan mely sorokat írják az egyes műveletek. A `DATABASE_DOCUMENTATION.md`-vel együtt olvasandó (a tábladefiníciók ott az §5-ben, a birtoklási nézet a §7-ben).
 
-> Ez a dokumentáció a tényleges, megvalósított logikát írja le (a `webapp/src/state/store.js` és a kapcsolódó kezelők alapján). A demó memóriában, localStorage-perzisztenciával fut; a leírt műveletnevek a kezelőfüggvényeknek felelnek meg.
+> Ez a dokumentáció a tényleges, megvalósított műveleti logikát írja le. A logika ma a PHP backendben (`eszkoznyilvantartas_api`: `lib/Ops.php` az írás, `lib/Repo.php` az olvasás és a származtatott állapot) fut, hitelesítve; a `webapp/src/state/store.js` ennek a kliensoldali tükre, amely az API-t hívja és minden mutáció után újratölti a változó szeleteket. A leírt műveletnevek a kezelőfüggvényeknek felelnek meg.
 
 ### GYAKORLATI IMPLEMENTÁCIÓ
 

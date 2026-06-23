@@ -1,6 +1,6 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-06-12
+**Analysis Date:** 2026-06-23
 
 ## Test Framework
 
@@ -8,7 +8,7 @@
 
 **Assertion Library:** None
 
-**Run Commands:** No test scripts defined in `package.json`
+**Run Commands:** No test scripts in `package.json`
 
 ```json
 "scripts": {
@@ -18,82 +18,67 @@
 }
 ```
 
-No `test` script is present.
-
 ## Test File Organization
 
-**Test files:** None found in the repository — no `.test.js`, `.spec.js`, or `__tests__` directories exist
-
-## Manual Debug Script
-
-The only test-like artifact is `_t.mjs` at the project root:
-
-```javascript
-// _t.mjs — ad-hoc dev debug script (not a test suite)
-const store = await import('./src/state/store.js');
-const { deviceVM } = await import('./src/lib/vm.js');
-const vms = store.getDevices().map(deviceVM);
-const counts = {};
-for (const v of vms) counts[v.status] = (counts[v.status]||0)+1;
-console.log('statuses in list:', counts);
-console.log('total:', vms.length);
-```
-
-This script is run manually with Node (`node _t.mjs`) to spot-check the in-memory state. It is not an automated test.
+**Test files:** None — no `.test.js`, `.spec.js`, or `__tests__` directories exist.
 
 ## Coverage
 
-**Requirements:** None enforced
-
-**Coverage tooling:** None configured
+- **Requirements:** None enforced
+- **Tooling:** None configured
 
 ## Test Types
 
-**Unit Tests:** Not present
-
-**Integration Tests:** Not present
-
-**E2E Tests:** Not present
+- **Unit / Integration / E2E:** Not present.
 
 ## What the Codebase Relies On Instead
 
-**Manual browser testing:**
-- The app runs entirely in the browser with Vite dev server (`npm run dev`)
-- A built-in user switcher in the top bar lets testers switch between `user`, `storekeeper`, and `it_admin` roles manually
-- `resetToSeed()` export in `src/state/store.js` provides one-click reset of all state to seed data: `localStorage.removeItem(STORAGE_KEY); location.reload()`
+**Manual browser testing against the live backend:**
+- Start XAMPP (Apache + MySQL) so the PHP API (`eszkoznyilvantartas_api`) and DB
+  are up, then run the SPA with `npm run dev`. The Vite proxy forwards `/api` to
+  the backend (same-origin, no CORS).
+- In dev, the app auto-logs-in a seed user and shows a top-bar user switcher to
+  exercise the `user` / `storekeeper` / `it_admin` roles.
+- Seed data is loaded into the database by the API repo's `db/seed_dev.php`;
+  re-running it restores a known state for manual reproduction.
 
-**In-memory determinism:**
-- All state is in-memory (no network calls); the store's `bootstrap()` function produces a fully deterministic initial state from `src/data/seed.js`
-- This makes the app manually reproducible: clearing localStorage always restores the seed state
-
-**Status migration smoke test:**
-- `src/state/store.js` includes a `migrateStatuses` function with a `STATUS_MIGRATIONS` map, used as a data-integrity guard on `loadPersisted()`
+**Suggested smoke flows (manual):**
+- Check-out → check-in (user → pending → storekeeper confirm/reject)
+- Reserve → cancel / check-out from reservation
+- Stock transfer, send-to-repair → return-from-repair, mark-lost → mark-found, retire
+- Register a device, edit it, scan its tag (`/scan`)
+- Role switch hides/show storekeeper + admin pages
+- Error flow: an API `OpError` (e.g. reserving a non-free device) shows an error toast
 
 ## Recommendations for Adding Tests
 
-**Highest-value test targets (pure functions with no DOM dependency):**
-- `src/lib/format.js` — all functions are pure: `statusLabel`, `statusClass`, `fmtDate`, `fmtDateTime`, `fmtRelative`, `fmtAttrValue`, `calibrationFlag`, `esc`
-- `src/lib/vm.js` — `deviceVM` is a pure projection of store state; testable by mocking store functions
-- `src/state/store.js` — `currentState`, `pendingCheckins`, `activeReservation`, `statusFromEvent`, `migrateStatuses` are pure or near-pure logic functions
-- Business rules in `moveAsset` — role enforcement, pending check-in guard, reservation interplay
+**Highest-value targets (pure functions, no DOM or network):**
+- `src/lib/format.js` — `statusLabel`, `statusClass`, `fmtDate`, `fmtDateTime`,
+  `fmtRelative`, `fmtAttrValue`, `calibrationFlag`, `esc`
+- `src/lib/vm.js` — `deviceVM` is a pure projection of an enriched device; testable
+  by stubbing the store lookups it imports
+- `src/lib/api.js` — `request()` response/`OpError` handling, testable with a mocked `fetch`
 
-**Suggested framework:** Vitest (already compatible with Vite, zero config needed — add `vitest` to devDependencies)
+**Backend (separate repo):** the business rules in `lib/Ops.php` (role enforcement,
+pending check-in guard, reservation interplay) are the highest-value targets there.
 
-**Suggested co-location pattern:**
+**Suggested framework:** Vitest (zero-config with Vite).
+
+**Suggested co-location:**
 ```
-src/lib/format.test.js      (alongside format.js)
+src/lib/format.test.js
 src/lib/vm.test.js
-src/state/store.test.js
+src/lib/api.test.js
 ```
 
 **Example first test (format.js):**
 ```javascript
 import { describe, it, expect } from 'vitest';
-import { esc, fmtDate, calibrationFlag } from './format.js';
+import { esc } from './format.js';
 
 describe('esc', () => {
   it('escapes HTML special chars', () => {
-    expect(esc('<b>"hello"</b>')).toBe('&lt;b&gt;&quot;hello&quot;&lt;/b&gt;');
+    expect(esc('<b>"x"</b>')).toBe('&lt;b&gt;&quot;x&quot;&lt;/b&gt;');
   });
   it('returns empty string for null', () => {
     expect(esc(null)).toBe('');
@@ -103,4 +88,4 @@ describe('esc', () => {
 
 ---
 
-*Testing analysis: 2026-06-12*
+*Testing analysis: 2026-06-23*

@@ -3,13 +3,20 @@
 ## Project Overview
 
 Medical device inventory management SPA for Hungária Med-M Kft.
-Fully client-side demo (no backend yet). All state lives in browser memory, persisted to `localStorage`. The SQL schema (`device-inventory-schema.sql`) describes the intended future backend.
+The SPA is backed by a **PHP + MySQL/MariaDB API** (separate repo
+`eszkoznyilvantartas_api`, served under `C:/xampp/htdocs/eszkoznyilvantartas_api`).
+The backend is the single source of truth; the browser store is an in-memory
+**mirror** that hydrates from `GET /bootstrap` and re-fetches the dynamic slices
+after every mutation. There is no `localStorage` persistence.
 
 ## Stack
 
 - **Vanilla JS** (ES Modules) — no UI framework
-- **Vite** (dev server + build) — run with `npm run dev`
-- **Bootstrap 5.3.3** — loaded from CDN in `index.html`; npm package present but not used at runtime
+- **Vite** (dev server + build) — `npm run dev`; config in `vite.config.js`
+  (dev proxy `/api → http://localhost/eszkoznyilvantartas_api`, base `./`)
+- **Bootstrap 5.3.x** — loaded from CDN in `index.html`; npm package present but
+  not used at runtime
+- **qrcode** — lazy-imported only by `src/ui/qrLabel.js`
 - **Hash-based SPA router** — `src/lib/router.js`
 - **No TypeScript, no test suite, no linter config**
 
@@ -27,36 +34,51 @@ Fully client-side demo (no backend yet). All state lives in browser memory, pers
 - Inline actions (no modal): `do<ActionName>`
 - Store reads: `get<Entity>()` / `get<Entity>(id)`
 - Module-level constants: `SCREAMING_SNAKE_CASE`
-- Private mutable counters: underscore prefix (`_eventId`, `_resvId`)
 
 ## Architecture
 
 ```
 src/
-  appshell.js       — app shell + router init (entry point)
-  data/seed.js      — seed data bootstrapped into store on first load
-  state/store.js    — single source of truth; append-only custody event log
+  appshell.js       — app shell + router init (entry point); SSO handoff + dev auto-login
   lib/
+    api.js          — thin fetch wrapper around the PHP API; exports OpError
     router.js       — hash-based SPA router
-    vm.js           — deviceVM() viewmodel builder
-    format.js       — pure display helpers (esc, fmtDate, etc.)
+    vm.js           — deviceVM() viewmodel builder (binds backend fields to lookups)
+    format.js       — pure display helpers (esc, fmtDate, statusBadge, …)
+  state/store.js    — in-memory mirror of the backend; async mutations + sync getters + pub/sub
   ui/
-    components.js   — toast, openModal, icons
+    components.js   — toast, openModal (async onConfirm), icons
     actions.js      — all dlg*/do* dialog/action functions; imported as `* as A`
+    qrLabel.js      — QR-label modal (lazy-loaded)
   views/            — one render<View> export per file
     inventory.js, device.js, pending.js, myDevices.js,
-    register_device.js, register_data.js
+    register_device.js, register_data.js, scan.js
 ```
 
-**Dependency direction:** views → store/lib/ui. Never import views from other views (except lazy: `import('./register_device.js')`). `format.js` may import from store.
+**Dependency direction:** views → store/lib/ui. Never import views from other
+views (except lazy: `import('./register_device.js')`). `format.js` and `vm.js`
+may import lookups from store. `store.js` → `lib/api.js`.
+
+## Data Flow
+
+1. `init()` runs the optional SSO handoff (`?sso=…`), then `hydrate()` → `GET /bootstrap`.
+2. A route resolves → the matching `render<View>(el, params)` runs, projecting
+   store state through `deviceVM()`.
+3. A user action opens a `dlg<Action>()` modal → `onConfirm` (async) calls a store
+   mutation (`moveAsset`, `confirmCheckIn`, `registerDevice`, …).
+4. The store mutation `await`s the API call, then `refresh()`es the changed slices
+   (devices + pending + reservations) and calls `notify()` → re-render.
 
 ## Domain Rules
 
-- All custody movements go through `moveAsset()` in store.js
-- `currentState(deviceId)` derives current holder/location from the latest **confirmed** event
-- User role hierarchy: `user < storekeeper < it_admin`
-- `OpError extends Error` for all business-rule violations — thrown by store, caught by `actions.js` and shown as error toast
-- A `user`-initiated `check_in` gets `confirmation_status: 'pending'`; storekeeper must confirm or reject
+- All custody movements go through `moveAsset()` (store → `POST /devices/move`)
+- The backend derives current holder/location/status from the latest **confirmed**
+  custody event; the store exposes those fields and `deviceVM()` binds them
+- User role hierarchy: `user < storekeeper < it_admin`. The API enforces roles;
+  the frontend's `roleAtLeast()` only gates what UI is shown
+- `OpError extends Error` (in `lib/api.js`) for all API/business-rule errors —
+  surfaced as an error toast by `actions.js` / `openModal`
+- A `user`-initiated `check_in` is `pending`; a storekeeper must confirm or reject
 - Storage departments (`type === 'raktár'`) never have a holder — device goes to stock
 
 ## Comments & Language
@@ -69,7 +91,7 @@ src/
 ## What to Avoid
 
 - Do not add a UI framework, TypeScript, or test runner unless explicitly asked
-- Do not mock the store or localStorage in fixes — the store is the single source of truth
+- Do not reintroduce `localStorage` persistence — the API is the source of truth
 - Do not create new files unless necessary; extend existing modules
 - Do not refactor code outside the scope of the current task
 - Never commit without being explicitly asked

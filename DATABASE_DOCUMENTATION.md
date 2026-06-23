@@ -3,7 +3,7 @@
 **Rendszer:** vagyonnyilvántartás a klinika hordozható eszközeihez (több telephely, központi raktár).
 **Adatbázis:** relációs (MySQL/PostgreSQL). **Kapcsolódó fájlok:** `device-inventory-schema.dbml` (ER-import), `view-device_current_state.sql` (nézetek), `SCRIPT_LOGIC_DOCUMENTATION.md` (kezelő-/szkriptlogika).
 
-> Ez a dokumentáció a tényleges, megvalósított modellt írja le (a `webapp/` demó-implementáció állapota szerint). A demó memóriában, localStorage-perzisztenciával fut, de a szerkezet a relációs sémát követi: minden táblanév, oszlopnév és felsorolt érték az itt leírtak szerint.
+> Ez a dokumentáció a tényleges, megvalósított relációs modellt írja le. Az adatmodellt a PHP + MySQL/MariaDB backend (`eszkoznyilvantartas_api`) valósítja meg; az authoritatív sémák a backend `db/` mappájában találhatók (`schema_dev.sql`, `schema_integration.sql`), itt a `device-inventory-schema.sql` referenciamásolat. A `webapp/` frontend a modellt az API-n keresztül éri el. Minden táblanév, oszlopnév és felsorolt érték az itt leírtak szerint.
 
 ---
 

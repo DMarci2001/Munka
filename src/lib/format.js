@@ -2,7 +2,7 @@
 // Megjelenítési segédek — címkék, badge-ek, dátumok
 // ============================================================
 
-import { getDepartment, getLocation, getUser, getDeviceType } from '../state/store.js';
+import { getDepartment, getLocation, getUser } from '../state/store.js';
 
 // ---- Státusz: DB-érték → magyar címke + badge szín ----------
 const STATUS = {
@@ -58,8 +58,6 @@ export function holderLabel(holderId) {
   const u = getUser(holderId);
   return u ? u.full_name : '—';
 }
-
-export const typeLabel = (typeId) => getDeviceType(typeId)?.name || '—';
 
 // ---- Dátum --------------------------------------------------
 export function fmtDate(d) {

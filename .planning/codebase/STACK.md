@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2026-06-12
+**Analysis Date:** 2026-06-23
 
 ## Languages
 
@@ -8,17 +8,18 @@
 - JavaScript (ES Modules) — all application code in `src/`
 
 **Secondary:**
-- SQL (MySQL/MariaDB dialect) — schema definition in `device-inventory-schema.sql`
+- SQL (MySQL/MariaDB dialect) — schema reference in `device-inventory-schema.sql`
+  (authoritative copies live in the API repo's `db/`)
 - CSS — custom theme in `src/styles.css`
 
 ## Runtime
 
 **Environment:**
-- Node.js v24.2.0 (development tooling only; app runs in browser)
+- Node.js (development tooling only; the app runs in the browser)
+- Backend: PHP 8.x + MySQL/MariaDB (separate repo `eszkoznyilvantartas_api`)
 
 **Package Manager:**
-- npm
-- Lockfile: `package-lock.json` present (lockfileVersion 3)
+- npm — lockfile `package-lock.json` (lockfileVersion 3)
 
 ## Frameworks
 
@@ -27,59 +28,47 @@
 - Custom hash-based SPA router in `src/lib/router.js`
 
 **CSS/UI:**
-- Bootstrap 5.3.3 — loaded via CDN (`https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/`) for layout utilities and form components
-- Bootstrap JS bundle (includes Popper) — loaded via CDN in `index.html`
-- Custom CSS theme layered on top: `src/styles.css` (medical-green brand `#0a7d2c`, white background)
+- Bootstrap 5.3.x — loaded via CDN in `index.html` for layout utilities and form components
+- Custom CSS theme on top: `src/styles.css` (medical-green brand `#0a7d2c`)
 
 **Build/Dev:**
 - Vite ^8.0.16 — dev server and production bundler
-  - Config: no `vite.config.*` file detected; uses Vite defaults
+  - Config: `vite.config.js` — base `./`, dev proxy `/api → http://localhost/eszkoznyilvantartas_api`
   - Entry point: `index.html`
 
 **Testing:**
-- Not detected — no test runner or test files present
+- None — no test runner or test files present
 
 ## Key Dependencies
 
-**Critical:**
-- `bootstrap` ^5.3.8 (npm) — installed locally, but also loaded via CDN in `index.html`; the npm package is present in `node_modules` but Bootstrap CSS/JS are referenced from CDN at runtime
+**Runtime:**
+- `qrcode` ^1.5.x — lazy-imported only by `src/ui/qrLabel.js` to render device QR labels
+- `bootstrap` ^5.3.8 (npm) — installed locally, but Bootstrap CSS/JS are loaded
+  from CDN at runtime (the npm package is effectively unused at runtime)
 
 **Infrastructure:**
-- `vite` ^8.0.16 (devDependency) — build tooling only
-
-**No other runtime dependencies.** The application uses no npm packages at runtime beyond what the browser loads from CDN.
+- `vite` ^8.0.16 (devDependency) — build tooling
 
 ## Configuration
 
 **Environment:**
-- `.env` / `.env.local` / `.env.*.local` are gitignored; no `.env` file present
-- No environment variables consumed by the frontend code (fully client-side demo, no API keys or backend URLs)
+- `VITE_API_BASE` (optional) — production API base path; defaults to `/eszkoznyilvantartas_api`
+- `.env*` files are gitignored
 
 **Build:**
-- `package.json` scripts:
-  - `npm run dev` — Vite dev server
-  - `npm run build` — production build to `dist/`
-  - `npm run preview` — preview production build
-- No `vite.config.*` — all Vite defaults apply
+- `package.json` scripts: `dev` (Vite dev server), `build` (→ `dist/`), `preview`
+- `vite.config.js` present (base path + `/api` dev proxy)
 
 ## Platform Requirements
 
 **Development:**
-- Node.js (v24.x confirmed); npm
-- XAMPP environment (project lives under `C:/xampp/htdocs/`)
+- Node.js + npm for the frontend; XAMPP (Apache + MySQL + PHP) for the backend API
+- Project lives under `C:/xampp/htdocs/`
 
 **Production:**
-- Static file hosting only — Vite builds a static bundle; no server-side runtime required
-- Designed to be embedded in a clinical web application (Hungária Med-M Kft. admin panel)
-
-## Application Architecture Note
-
-This is a **fully client-side demo application** with no backend:
-- All state lives in browser memory (`src/state/store.js`)
-- State is persisted to `localStorage` under key `eszkoznyilvantarto_state_v2`
-- Seed data in `src/data/seed.js` initialises the in-memory store on first load
-- The accompanying SQL schema (`device-inventory-schema.sql`) describes the intended PostgreSQL/MySQL backend that does not yet exist in this repo
+- Frontend: static file hosting (Vite `dist/`), embedded in the clinical web app
+- Backend: PHP under Apache, pointed at the clinic's MySQL DB
 
 ---
 
-*Stack analysis: 2026-06-12*
+*Stack analysis: 2026-06-23*

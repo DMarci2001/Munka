@@ -9,8 +9,7 @@ import { statusBadge, statusLabel, locationLabel, holderLabel, esc } from '../li
 import { icons } from '../ui/components.js';
 
 // szűrőállapot (megőrződik nézetváltáskor)
-const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: ''
-};
+const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: '' };
 
 const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Szerviz alatt', 'Elveszett', 'Selejtezve'];
 
@@ -41,6 +40,8 @@ function sortValue(v, col) {
 
 export function renderInventory(el) {
   const isStore = roleAtLeast(currentRole(), 'storekeeper');
+  // azon felhasználók, akiknél jelenleg van eszköz — a „birtokos" szűrőhöz
+  const holderIds = new Set(getDevices().map((d) => d.holder_id).filter((id) => id != null));
   const calRows = isStore
     ? getDevices().map(deviceVM)
         .filter((v) => (v.calibrationFlag === 'overdue' || v.calibrationFlag === 'soon') && v.status !== 'Selejtezve')
@@ -82,7 +83,7 @@ export function renderInventory(el) {
         <div class="select-wrap" style="max-width:180px">
           <select class="form-select" id="f-holder">
             <option value="">Minden birtokos</option>
-            ${getUsers().filter((u) => getDevices().map(deviceVM).some((v) => v.holderId === u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
+            ${getUsers().filter((u) => holderIds.has(u.id)).map((u) => `<option value="${u.id}" ${String(u.id) === filters.holder ? 'selected' : ''}>${esc(u.full_name)}</option>`).join('')}
           </select>
         </div>
 

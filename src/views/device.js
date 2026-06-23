@@ -10,8 +10,8 @@ import {
 import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
 import {
-  statusBadge, statusLabel, locationLabel, holderLabel, typeLabel,
-  fmtDate, fmtDateTime, fmtRelative, fmtAttrValue, eventLabel, confLabel,
+  statusBadge, locationLabel,
+  fmtDateTime, fmtRelative, fmtAttrValue, eventLabel, confLabel,
   calibrationFlag, esc,
 } from '../lib/format.js';
 import { icons } from '../ui/components.js';

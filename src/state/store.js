@@ -226,10 +226,3 @@ export function subscribe(fn) {
 function notify() {
   for (const fn of subscribers) fn();
 }
-
-const STORAGE_KEY = 'eszkoznyilvantartas_store';
-
-// Visszaállítás a kiinduló mintaadatokra (törli a mentést).
-export function resetToSeed() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-  location.reload();}

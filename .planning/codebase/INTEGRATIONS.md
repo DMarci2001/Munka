@@ -1,107 +1,94 @@
 # External Integrations
 
-**Analysis Date:** 2026-06-12
+**Analysis Date:** 2026-06-23
 
 ## APIs & External Services
 
+**Inventory backend API (PHP + MySQL/MariaDB):**
+- Separate repo `eszkoznyilvantartas_api`, served by Apache (XAMPP) under
+  `http://localhost/eszkoznyilvantartas_api`
+- Called from `src/lib/api.js` (`apiGet` / `apiSend`), `credentials: 'include'`
+- Base URL: dev → `/api` (Vite proxy in `vite.config.js`, so requests are
+  same-origin and CORS-free); prod → `import.meta.env.VITE_API_BASE` or the
+  embedded default `/eszkoznyilvantartas_api`
+- Response envelope `{ ok, data } | { ok, error }`; errors become `OpError`
+- Key endpoints: `GET /bootstrap`, `GET /devices|/pending|/reservations`,
+  `POST /devices/move`, `POST /auth/login|/auth/sso`, `GET /me`
+
 **CDN (runtime asset delivery):**
-- jsDelivr CDN — Bootstrap 5.3.3 CSS and JS bundle
-  - CSS: `https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css`
-  - JS: `https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js`
-  - Auth: none
-  - Referenced in: `index.html` lines 9, 19
-
-**Google Fonts (runtime):**
-- Google Fonts API — Inter typeface family (weights 400, 500, 600, 700)
-  - URL: `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap`
-  - Preconnect: `fonts.googleapis.com`, `fonts.gstatic.com`
-  - Auth: none
-  - Referenced in: `index.html` lines 12–14
-  - Note: `styles.css` uses `'Roboto', 'Segoe UI', Arial` as the body font-stack — Inter is loaded but not the primary body font
-
-**Backend API (planned, not yet implemented):**
-- No HTTP API calls exist in the current codebase
-- The application is a fully in-memory demo; all data operations run against `localStorage`
-- The intended backend is a MySQL/MariaDB database described in `device-inventory-schema.sql`
+- jsDelivr CDN — Bootstrap 5.3.x CSS and JS bundle (`index.html`)
+- Google Fonts — Inter family (loaded in `index.html`; note `styles.css` uses a
+  `'Roboto', 'Segoe UI', Arial` body stack, so Inter is loaded but not primary)
 
 ## Data Storage
 
-**Databases:**
-- No live database connection exists in this frontend application
-- Planned: MySQL/MariaDB — schema at `device-inventory-schema.sql`
-  - Tables: `devices`, `device_types`, `attribute_definitions`, `device_custody_events`, `device_reservations`, `departments`
-  - External tables (owned by clinic web app, referenced only): `users`, `locations`
-  - Views: `device_current_state`, `device_pending_checkins`, `device_active_reservations`
+**Database (via the backend API):**
+- MySQL/MariaDB — schema in the API repo (`db/schema_dev.sql`,
+  `db/schema_integration.sql`); a reference copy lives here as
+  `device-inventory-schema.sql`
+  - Tables: `devices`, `device_types`, `attribute_definitions`,
+    `device_custody_events`, `device_reservations`, `departments`
+  - External tables (owned by the clinic system): `users`, `helyszinek` (locations)
+  - Views: `device_current_state`, `device_pending_checkins`,
+    `device_active_reservations`
 
 **Browser Storage:**
-- `localStorage` — primary persistence for the demo
-  - Key: `eszkoznyilvantarto_state_v2`
-  - Stores: full application state (devices, events, reservations, users, departments, locations, counters)
-  - Managed by: `src/state/store.js` — `persist()` and `loadPersisted()` functions
-  - Migration: `migrateStatuses()` handles status renames on load
-
-**File Storage:**
-- Local filesystem only — no cloud file storage
+- None for application data — the store is in-memory and re-hydrated from the API.
+  Identity lives in the API session cookie (`eszkozsession`, httpOnly).
 
 **Caching:**
-- None — no service worker, no cache API usage
+- In-memory only: the store caches lookups and per-device custody history
+  (`historyCache`); both are cleared/refreshed after mutations.
 
 ## Authentication & Identity
 
-**Auth Provider:**
-- None — authentication is explicitly out of scope for this module
-- Design intent (documented in `SCRIPT_LOGIC_DOCUMENTATION.md` §2): authentication is handled by an external clinic web application which passes an authenticated `user_id` and `auth` role
-- Demo substitute: `index.html` renders a `<select>` dropdown (`#user-select`) to simulate switching users; `src/appshell.js` manages this via `setCurrentUser()` from `src/state/store.js`
+**Auth provider:**
+- The PHP API session. Identity is established by either:
+  1. **SSO handoff** from the clinic website — `appshell.init()` posts
+     `?sso=<token>&u=<username>&t=<timestamp>` to `POST /auth/sso`; the API
+     verifies an HMAC token (60s TTL) and starts a session.
+  2. **Dev auto-login** — when `import.meta.env.DEV`, the shell logs in a default
+     seed user and shows a user-switcher `<select>` (hidden in production builds).
+- `GET /me` (inside `/bootstrap`) returns the current user.
 
-**Role system (internal, not an external provider):**
-- Three roles: `user` (1), `storekeeper` (2), `it_admin` (3)
-- Stored in seed data: `src/data/seed.js` → `users[].auth`
-- Enforced in: `src/state/store.js` — `roleAtLeast()`, `requireStorekeeper()`, `requireAdmin()`
-- Role ranks compared via `roleRank` map in `src/state/store.js` line 174
+**Role system:**
+- Three roles: `user` (0), `storekeeper` (1), `it_admin` (2) — stored as the
+  clinic `users.jogosultsag` INT, mapped to the `auth` string by the API.
+- Enforced server-side (`Auth::requireRole`); the frontend `roleAtLeast()` only
+  decides which UI/actions are shown.
 
 ## Monitoring & Observability
 
-**Error Tracking:**
-- None detected — no Sentry, Datadog, or similar SDK
-
-**Logs:**
-- Browser `console` only; errors from store operations are caught and surfaced as toast notifications via `src/ui/components.js` — `toast()`
+- **Error tracking:** none (no Sentry/Datadog). API errors surface as toasts; the
+  backend logs server errors via `error_log`.
+- **Logs:** browser `console` on the client; PHP `error_log` on the server.
 
 ## CI/CD & Deployment
 
-**Hosting:**
-- Development: XAMPP local server (`C:/xampp/htdocs/`)
-- Production target: static file hosting (Vite outputs to `dist/`); intended to be embedded in the Hungária Med-M admin panel
-
-**CI Pipeline:**
-- None detected — no GitHub Actions, no CI config files
+- **Frontend hosting:** Vite builds a static bundle to `dist/` (base `./`),
+  intended to be embedded in the Hungária Med-M admin panel.
+- **Backend hosting:** PHP under Apache/XAMPP; production points at the clinic's
+  existing MySQL DB via `config/config.php`.
+- **CI pipeline:** none detected.
 
 ## Environment Configuration
 
-**Required env vars:**
-- None — the application has no environment variable dependencies in its current demo state
-- `.env` files are gitignored as a precaution for future backend integration
+- `VITE_API_BASE` (optional) — production API base path; defaults to
+  `/eszkoznyilvantartas_api`.
+- `.env*` files are gitignored.
+- The backend's secrets (DB credentials, `SSO_SECRET`) live in the API repo's
+  `config/config.php`, not in the frontend.
 
-**Secrets location:**
-- No secrets present — pure frontend demo with no API keys or credentials
+## External System Boundary
 
-## Webhooks & Callbacks
-
-**Incoming:**
-- None
-
-**Outgoing:**
-- None
-
-## External System Boundary (Planned Integration)
-
-The SQL schema and documentation describe two external systems that this inventory module will integrate with when a real backend is built:
-
-1. **Clinic web application** — owns the `users` table (authentication, user profiles) and `locations` table (clinic site/address data). This inventory system will read these as foreign references only, never write them.
-   - Note in `src/state/store.js` line 512–516: `addLocation()` is demo-only; production integration syncs from the clinic system.
-
-2. **MySQL/MariaDB database** — the full schema is defined in `device-inventory-schema.sql`; the frontend store (`src/state/store.js`) mirrors this schema structure in-memory, making the eventual API integration straightforward.
+1. **Clinic web application** — owns the `users` and `helyszinek` (locations)
+   tables and the primary authentication. This module reads them through the API
+   (column mapping configured in the API's `config/config.php`) and hands off
+   identity via SSO. `addLocation()` exists but production normally syncs locations
+   from the clinic system.
+2. **MySQL/MariaDB** — accessed only through the PHP API, never directly from the
+   browser.
 
 ---
 
-*Integration audit: 2026-06-12*
+*Integration audit: 2026-06-23*
