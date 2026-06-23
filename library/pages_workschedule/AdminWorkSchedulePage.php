@@ -197,6 +197,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
             megj    TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (tipusid, datum)
         )");
+        $hasVacMegj = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_szabadsag' AND column_name='megj'"
+        )->fetchColumn();
+        if (!$hasVacMegj) {
+            sql_query("ALTER TABLE schedule_szabadsag ADD COLUMN megj VARCHAR(200) NULL DEFAULT NULL");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1173,7 +1179,7 @@ HTML;
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
-                    COALESCE(sz.tipus,'') AS tipus,
+                    COALESCE(sz.tipus,'') AS tipus, COALESCE(sz.megj,'') AS megj,
                     IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id = sz.oid
@@ -1188,12 +1194,13 @@ HTML;
             $end = min($v["datumig"], $weekEnd);
             while ($cur <= $end) {
                 if ($v["tipus"] === "Elérhető") {
-                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"]];
+                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"], "megj" => $v["megj"]];
                 } else {
                     $szabadsagByDate[$cur][] = [
                         "workerId" => (int)$v["workerid"],
                         "name"     => $v["workernev"],
                         "status"   => (int)$v["status"],
+                        "megj"     => $v["megj"],
                     ];
                 }
                 $cur = date("Y-m-d", strtotime($cur . " +1 day"));
@@ -1903,7 +1910,7 @@ HTML;
         $rows = sql_query(
             "SELECT sz.groupid, sz.oid AS workerid, MIN(sz.datumtol) AS datumtol, MAX(sz.datumig) AS datumig,
                     MIN(sz.status) AS minstatus, MAX(sz.status) AS maxstatus, COUNT(*) AS napok,
-                    MIN(sz.tipus) AS tipus,
+                    MIN(sz.tipus) AS tipus, MIN(sz.megj) AS megj,
                     IF(TRIM(w.teljesnev)<>'', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id=sz.oid
@@ -1927,6 +1934,7 @@ HTML;
                     "days"       => (int)$r["napok"],
                     "status"     => $minStatus === $maxStatus ? $minStatus : -1,
                     "tipus"      => $r["tipus"] ?: "Szabadság",
+                    "megj"       => $r["megj"] ?? "",
                 ];
             }, $rows),
         ]);
@@ -1941,6 +1949,7 @@ HTML;
         $tol      = $_POST["tol"] ?? "";
         $ig       = $_POST["ig"]  ?? "";
         $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb", "Elérhető"]) ? $_POST["tipus"] : "Szabadság";
+        $megj     = substr(trim($_POST["megj"] ?? ""), 0, 200) ?: null;
 
         if (!$workerId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a munkatársat és a szabadság kezdő/vég napját!"]);
@@ -1957,7 +1966,7 @@ HTML;
                 $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
                 continue;
             }
-            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?", [$cur, $cur, $workerId, $tipus]);
+            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?, megj=?", [$cur, $cur, $workerId, $tipus, $megj]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
             sql_query("UPDATE schedule_szabadsag SET groupid=? WHERE id=?", [$groupId, $newId]);

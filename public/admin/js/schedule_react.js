@@ -1512,13 +1512,13 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   };
 
   const addVacation = async (rec) => {
-    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus });
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus, megj:rec.megj||"" });
     if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const addElerheto = async (rec) => {
-    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető" });
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető", megj:rec.megj||"" });
     if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
@@ -1583,6 +1583,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
         <div className="mb-mono" style={{ fontSize:11.5, color:"var(--muted)" }}>
           {fmtShortISO(v.from)}{v.to!==v.from?` – ${fmtShortISO(v.to)}`:""} · {v.days} nap{v.status===-1?" · vegyes állapot":""}
         </div>
+        {!!v.megj && <div style={{ fontSize:12, color:"var(--muted)", fontStyle:"italic", marginTop:1 }}>{v.megj}</div>}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {secKey==="pending" && (<>
@@ -1830,6 +1831,7 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
   const [tipus, setTipus]       = useState(forceTipus || "Szabadság");
+  const [megj, setMegj]         = useState("");
   const [saving, setSaving]     = useState(false);
 
   useEffect(() => {
@@ -1841,7 +1843,8 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = !workerid || !tol || !ig || tol > ig;
-  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig, tipus }); setSaving(false); };
+  const showMegj = tipus === "Egyéb" || forceTipus === "Elérhető";
+  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig, tipus, megj }); setSaving(false); };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1876,7 +1879,15 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
           </div>
           {!forceTipus && (
             <Field label="Típus">
-              <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+              <MiniSelect value={tipus} onChange={(v)=>{ setTipus(v); if (v!=="Egyéb") setMegj(""); }} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+            </Field>
+          )}
+          {showMegj && (
+            <Field label="Megjegyzés">
+              <div className="relative">
+                <textarea value={megj} maxLength={200} onChange={(e)=>setMegj(e.target.value)} rows={2} placeholder={forceTipus==="Elérhető" ? "pl. Miskolc, délelőtt" : "pl. Egyéb indok"} className="mb-in px-3 py-2.5" style={{ fontSize:13, resize:"none" }}/>
+                <span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{megj.length} / 200</span>
+              </div>
             </Field>
           )}
           {tol && ig && tol > ig && <p style={{ fontSize:11.5, color:"var(--danger-ink)" }}>A kezdő nap nem lehet később, mint az utolsó nap.</p>}
@@ -2585,7 +2596,10 @@ function MunkaidoBeosztas() {
                             </div>
                             <div className="flex flex-col p-2 gap-0.5">
                               {elerhetoByDay[di].map((e, idx) => (
-                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>{e.name}</div>
+                                <div key={idx} style={{ padding:"2px 4px" }}>
+                                  <div style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>{e.name}</div>
+                                  {!!e.megj && <div style={{ fontSize:11.5, color:"var(--muted)", fontStyle:"italic" }}>{e.megj}</div>}
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -2606,8 +2620,11 @@ function MunkaidoBeosztas() {
                             </div>
                             <div className="flex flex-col p-2 gap-0.5">
                               {szabadsagByDay[di].map((v, idx) => (
-                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>
-                                  {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                <div key={idx} style={{ padding:"2px 4px" }}>
+                                  <div style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>
+                                    {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                  </div>
+                                  {!!v.megj && <div style={{ fontSize:11.5, color:"var(--muted)", fontStyle:"italic" }}>{v.megj}</div>}
                                 </div>
                               ))}
                             </div>
