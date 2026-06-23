@@ -180,6 +180,13 @@ class AdminWorkSchedulePage extends AdminCorePage {
             aktiv   TINYINT(1) NOT NULL DEFAULT 0,
             PRIMARY KEY (tipusid, datum)
         )");
+        $hasValidFrom = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='validfrom'"
+        )->fetchColumn();
+        if (!$hasValidFrom) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validfrom DATE NULL DEFAULT NULL");
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validto DATE NULL DEFAULT NULL");
+        }
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1185,6 +1192,12 @@ HTML;
                 $weekday = (int)date("N", strtotime($date));
                 $napok   = (int)($tipus["napok"] ?? 127);
                 if (!($napok & (1 << ($weekday - 1)))) continue;
+                if (!empty($tipus["kiszallas"])) {
+                    $vf = $tipus["validfrom"] ?? null;
+                    $vt = $tipus["validto"]   ?? null;
+                    if ($vf && $date < $vf) continue;
+                    if ($vt && $date > $vt) continue;
+                }
 
                 $key      = "{$date}_{$tipus["id"]}";
                 $staffRows = $mappingIdx[$key] ?? [];
@@ -1655,6 +1668,8 @@ HTML;
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
                     "color"        => $r["color"] ?? null,
+                    "validfrom"    => $r["validfrom"] ?? null,
+                    "validto"      => $r["validto"]   ?? null,
                 ];
             }, $rows),
         ]);
@@ -1676,8 +1691,17 @@ HTML;
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
         $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
         $color     = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
+        $validfrom = null;
+        $validto   = null;
+        if ($kiszallas) {
+            $vf = trim($_POST["validfrom"] ?? "");
+            $vt = trim($_POST["validto"]   ?? "");
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
+        }
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?, validfrom=?, validto=?",
+            [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color, $validfrom, $validto]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1738,9 +1762,17 @@ HTML;
         $cur       = sql_query("SELECT kulso, kiszallas FROM schedule_tipusok WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
+        $validfrom = null;
+        $validto   = null;
+        if ($kiszallas) {
+            $vf = trim($_POST["validfrom"] ?? "");
+            $vt = trim($_POST["validto"]   ?? "");
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
+        }
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=?, validfrom=?, validto=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $validfrom, $validto, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }

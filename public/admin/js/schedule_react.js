@@ -417,7 +417,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
     const dates = b
       ? (multiApply && b.cat==="kiszallas" ? datesBetween(multiFrom, multiTo) : [dateStr])
       : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note };
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note, validfrom:cat==="kiszallas"?dateStart:"", validto:cat==="kiszallas"?dateEnd:"" };
     onSave(rec);
   };
 
@@ -1239,9 +1239,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1260,7 +1260,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   };
 
   const openNew = () => {
-    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31 } });
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"" } });
   };
 
   const getSectionKey = (p) => p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso");
@@ -1332,9 +1332,18 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
                         {(p.kiszallas===1||p.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
                         {(p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
+                        {p.kiszallas===1 && (() => {
+                          const today = new Date().toISOString().slice(0,10);
+                          if (!p.validfrom && !p.validto) return <span style={{ fontSize:11, fontWeight:700, color:"var(--faint)", background:"var(--surface-2)", borderRadius:4, padding:"1px 5px" }}>Nincs időszak</span>;
+                          const active = (!p.validfrom || today >= p.validfrom) && (!p.validto || today <= p.validto);
+                          return <span style={{ fontSize:11, fontWeight:700, color:active?"var(--green)":"var(--danger-ink)", background:active?"var(--green-soft)":"var(--danger-soft)", borderRadius:4, padding:"1px 5px" }}>{active?"Aktív":"Lejárt"}</span>;
+                        })()}
                       </div>
                       {!!p.rendelo && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{p.rendelo}</div>}
                       {!!p.cim && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)" }}>{p.cim}</div>}
+                      {p.kiszallas===1 && (p.validfrom||p.validto) && (
+                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{p.validfrom||"?"} – {p.validto||"?"}</div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1365,11 +1374,13 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
   const [orvosKell,    setOrvosKell]   = useState((p.orvos_kell ?? 1) !== 0);
   const [color,        setColor]       = useState(p.color||"");
+  const [validfrom,    setValidfrom]   = useState(p.validfrom||"");
+  const [validto,      setValidto]     = useState(p.validto||"");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"" });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1415,9 +1426,22 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           </div>
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
-            <Field label="Aktív napok">
-              <NapokSelector value={napok} onChange={setNapok}/>
-            </Field>
+            {cat !== "kiszallas" && (
+              <Field label="Aktív napok">
+                <NapokSelector value={napok} onChange={setNapok}/>
+              </Field>
+            )}
+            {cat === "kiszallas" && (
+              <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Érvényességi időszak</div>
+                <Field label="Kezdő dátum">
+                  <input type="date" value={validfrom} onChange={(e)=>setValidfrom(e.target.value)} className="mb-in px-3 py-2" style={{ fontSize:13, width:"100%" }}/>
+                </Field>
+                <Field label="Záró dátum">
+                  <input type="date" value={validto} onChange={(e)=>setValidto(e.target.value)} className="mb-in px-3 py-2" style={{ fontSize:13, width:"100%" }}/>
+                </Field>
+              </div>
+            )}
             {cat !== "kiszallas" && (
               <label className="flex items-center gap-2 cursor-pointer">
                 <Toggle on={orvosKell} onChange={setOrvosKell}/>
@@ -2307,7 +2331,7 @@ function MunkaidoBeosztas() {
     try {
       let tipusId = rec.tipusId;
       if (!tipusId) {
-        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org: rec.org||"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"", napok: rec.napok??31 });
+        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org: rec.org||"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"", napok: rec.napok??31, validfrom: rec.validfrom||"", validto: rec.validto||"" });
         const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const result = await resp.json();
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
