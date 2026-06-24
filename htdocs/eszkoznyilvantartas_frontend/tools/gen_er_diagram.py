@@ -40,45 +40,45 @@ T = {
  "users": ("external", [
     ("id","PK"),("username","U"),("full_name",""),("auth",""),("title","")], "KÜLSŐ — a webalkalmazásé"),
  "locations": ("external", [("id","PK"),("address","")], "KÜLSŐ — a klinika weboldala"),
- "departments": ("geo", [
+ "eszkoznyilvantartas_departments": ("geo", [
     ("id","PK"),("locations_id","FK:locations"),("name",""),("type","raktár|osztály|recepció|műhely")], "ehhez a DB-hez"),
- "device_types": ("catalog", [("id","PK"),("type","U"),("description","")], None),
- "attribute_definitions": ("catalog", [
-    ("id","PK"),("device_type_id","FK:device_types"),("attribute_key",""),("label",""),
+ "eszkoznyilvantartas_device_types": ("catalog", [("id","PK"),("type","U"),("description","")], None),
+ "eszkoznyilvantartas_attribute_definitions": ("catalog", [
+    ("id","PK"),("device_type_id","FK:eszkoznyilvantartas_device_types"),("attribute_key",""),("label",""),
     ("data_type",""),("is_required",""),("options",""),("sort_order","")], None),
- "devices": ("device", [
-    ("device_id","PK"),("asset_tag","U"),("device_type_id","FK:device_types"),
+ "eszkoznyilvantartas_devices": ("device", [
+    ("device_id","PK"),("asset_tag","U"),("device_type_id","FK:eszkoznyilvantartas_device_types"),
     ("manufacturer",""),("model",""),("serial_number",""),("status",""),("condition",""),
     ("notes",""),("created_at",""),("updated_at",""),("created_by","FK:users"),
     ("updated_by","FK:users"),("retired_date","")], None),
- "device_attribute_values": ("device", [
-    ("id","PK"),("device_id","FK:devices"),
-    ("attribute_definition_id","FK:attribute_definitions"),("value","")], None),
- "device_custody_events": ("events", [
-    ("event_id","PK"),("device_id","FK:devices"),("event_type",""),
+ "eszkoznyilvantartas_device_attribute_values": ("device", [
+    ("id","PK"),("device_id","FK:eszkoznyilvantartas_devices"),
+    ("attribute_definition_id","FK:eszkoznyilvantartas_attribute_definitions"),("value","")], None),
+ "eszkoznyilvantartas_device_custody_events": ("events", [
+    ("event_id","PK"),("device_id","FK:eszkoznyilvantartas_devices"),("event_type",""),
     ("actor_user_id","FK:users"),("from_user_id","FK:users"),
-    ("from_locations_id","FK:locations"),("from_departments_id","FK:departments"),
+    ("from_locations_id","FK:locations"),("from_departments_id","FK:eszkoznyilvantartas_departments"),
     ("to_user_id","FK:users"),("to_locations_id","FK:locations"),
-    ("to_departments_id","FK:departments"),("event_timestamp",""),
+    ("to_departments_id","FK:eszkoznyilvantartas_departments"),("event_timestamp",""),
     ("expected_return_date",""),("condition_at_event",""),("notes",""),
     ("confirmation_status",""),("confirmed_by","FK:users"),("confirmed_at","")], None),
- "device_reservations": ("resv", [
-    ("reservation_id","PK"),("device_id","FK:devices U"),("reserved_by","FK:users"),
+ "eszkoznyilvantartas_device_reservations": ("resv", [
+    ("reservation_id","PK"),("device_id","FK:eszkoznyilvantartas_devices U"),("reserved_by","FK:users"),
     ("reserved_at",""),("expires_at",""),("notes","")], None),
 }
 
-# ---- elrendezés (drawSQL-szerű): devices középen, custody alatta;
-#      users / departments / locations / reservations jobbra; katalógus balra ----
+# ---- elrendezés (drawSQL-szerű): eszkoznyilvantartas_devices középen, custody alatta;
+#      users / eszkoznyilvantartas_departments / locations / reservations jobbra; katalógus balra ----
 POS = {
- "device_attribute_values":(40,  70),
- "attribute_definitions":  (40,  222),
- "device_types":           (40,  458),
- "devices":                (360, 70),
- "device_custody_events":  (360, 432),
+ "eszkoznyilvantartas_device_attribute_values":(40,  70),
+ "eszkoznyilvantartas_attribute_definitions":  (40,  222),
+ "eszkoznyilvantartas_device_types":           (40,  458),
+ "eszkoznyilvantartas_devices":                (360, 70),
+ "eszkoznyilvantartas_device_custody_events":  (360, 432),
  "users":           (700, 70),
- "departments":            (700, 243),
+ "eszkoznyilvantartas_departments":            (700, 243),
  "locations":              (700, 395),
- "device_reservations":    (700, 505),
+ "eszkoznyilvantartas_device_reservations":    (700, 505),
 }
 CARD_W = 250
 HEAD_H = 30
@@ -173,15 +173,15 @@ for name,(grp,cols,note) in T.items():
 
 # ---- cím ----
 d.text((sc(40), sc(18)), "Hordozható Eszköznyilvántartás — adatbázisséma (v3)", font=f_title, fill=INK)
-d.text((sc(42), sc(50)), "Append-only custody-napló az igazságforrás · kétszintű hely (locations + departments) · users + locations külső (klinika)",
+d.text((sc(42), sc(50)), "Append-only custody-napló az igazságforrás · kétszintű hely (locations + eszkoznyilvantartas_departments) · users + locations külső (klinika)",
        font=f_sub, fill=MUTE)
 
 # ---- jelmagyarázat (bal alsó, üres sávban) ----
-lx, ly = 40, rects["device_types"][1] + rects["device_types"][3] + 40
+lx, ly = 40, rects["eszkoznyilvantartas_device_types"][1] + rects["eszkoznyilvantartas_device_types"][3] + 40
 d.text((sc(lx), sc(ly-20)), "Jelmagyarázat", font=f_colb, fill=MUTE)
-legend = [("external","users / locations (külső — klinika)"),("geo","departments (ehhez a DB-hez)"),
-          ("catalog","device_types / attribute_definitions"),("device","devices / device_attribute_values"),
-          ("events","device_custody_events"),("resv","device_reservations")]
+legend = [("external","users / locations (külső — klinika)"),("geo","eszkoznyilvantartas_departments (ehhez a DB-hez)"),
+          ("catalog","eszkoznyilvantartas_device_types / eszkoznyilvantartas_attribute_definitions"),("device","eszkoznyilvantartas_devices / eszkoznyilvantartas_device_attribute_values"),
+          ("events","eszkoznyilvantartas_device_custody_events"),("resv","eszkoznyilvantartas_device_reservations")]
 for i,(g,lab) in enumerate(legend):
     yy = ly + i*17
     b,hf = GROUPS[g]
