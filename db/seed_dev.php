@@ -20,8 +20,8 @@ function ts(int $daysOffset): string { return date('Y-m-d H:i:s', time() + $days
 
 $db->exec('SET FOREIGN_KEY_CHECKS = 0');
 foreach ([
-  'device_reservations', 'device_custody_events', 'device_attribute_values',
-  'devices', 'attribute_definitions', 'device_types', 'departments', 'helyszinek', 'users',
+  'eszkoznyilvantartas_device_reservations', 'eszkoznyilvantartas_device_custody_events', 'eszkoznyilvantartas_device_attribute_values',
+  'eszkoznyilvantartas_devices', 'eszkoznyilvantartas_attribute_definitions', 'eszkoznyilvantartas_device_types', 'eszkoznyilvantartas_departments', 'helyszinek', 'users',
 ] as $t) {
   $db->exec("TRUNCATE TABLE `$t`");
 }
@@ -59,7 +59,7 @@ $departments = [
   [7, 2, 'Belgyógyászat', 'osztály'],
   [8, 1, 'Szerviz / IT', 'műhely'],
 ];
-$ins = $db->prepare('INSERT INTO departments (id, locations_id, name, type) VALUES (?, ?, ?, ?)');
+$ins = $db->prepare('INSERT INTO eszkoznyilvantartas_departments (id, locations_id, name, type) VALUES (?, ?, ?, ?)');
 foreach ($departments as $d) $ins->execute($d);
 
 // ---- device_types ------------------------------------------
@@ -72,7 +72,7 @@ $deviceTypes = [
   [6, 'EKG', 'Hordozható EKG eszköz'],
   [7, 'USB meghajtó', 'Titkosítható USB tároló'],
 ];
-$ins = $db->prepare('INSERT INTO device_types (id, type, description) VALUES (?, ?, ?)');
+$ins = $db->prepare('INSERT INTO eszkoznyilvantartas_device_types (id, type, description) VALUES (?, ?, ?)');
 foreach ($deviceTypes as $t) $ins->execute($t);
 
 // ---- attribute_definitions ---------------------------------
@@ -104,7 +104,7 @@ $attrDefs = [
   [7, 'phi_approved', 'PHI-re engedélyezett', 'boolean', 0, null, 3],
 ];
 $ins = $db->prepare(
-  'INSERT INTO attribute_definitions (device_type_id, attribute_key, label, data_type, is_required, options, sort_order)
+  'INSERT INTO eszkoznyilvantartas_attribute_definitions (device_type_id, attribute_key, label, data_type, is_required, options, sort_order)
    VALUES (?, ?, ?, ?, ?, ?, ?)'
 );
 $attrIdByTypeKey = [];   // "typeId:key" → def id
@@ -137,17 +137,17 @@ $devices = [
 ];
 
 $insDev = $db->prepare(
-  'INSERT INTO devices (device_id, asset_tag, device_type_id, manufacturer, model, serial_number, status, `condition`, notes, created_by, updated_by, retired_date)
+  'INSERT INTO eszkoznyilvantartas_devices (device_id, asset_tag, device_type_id, manufacturer, model, serial_number, status, `condition`, notes, created_by, updated_by, retired_date)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
-$insAttr = $db->prepare('INSERT INTO device_attribute_values (device_id, attribute_definition_id, value) VALUES (?, ?, ?)');
+$insAttr = $db->prepare('INSERT INTO eszkoznyilvantartas_device_attribute_values (device_id, attribute_definition_id, value) VALUES (?, ?, ?)');
 $insEv = $db->prepare(
-  'INSERT INTO device_custody_events
+  'INSERT INTO eszkoznyilvantartas_device_custody_events
    (device_id, event_type, actor_user_id, from_user_id, from_locations_id, from_departments_id,
     to_user_id, to_locations_id, to_departments_id, event_timestamp, expected_return_date, condition_at_event, notes, confirmation_status)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
-$insResv = $db->prepare('INSERT INTO device_reservations (device_id, reserved_by, reserved_at, expires_at, notes) VALUES (?, ?, ?, ?, ?)');
+$insResv = $db->prepare('INSERT INTO eszkoznyilvantartas_device_reservations (device_id, reserved_by, reserved_at, expires_at, notes) VALUES (?, ?, ?, ?, ?)');
 
 foreach ($devices as $d) {
   [$id, $tag, $type, $model, $manuf, $serial, $status, $cond, $notes, $attrs, $holder, $loc, $dept, $extra] = $d;

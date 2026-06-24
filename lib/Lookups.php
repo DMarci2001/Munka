@@ -16,7 +16,7 @@ final class Lookups {
   }
 
   public static function departments(): array {
-    $rows = getDB()->query('SELECT id, locations_id, name, type FROM departments ORDER BY id')->fetchAll();
+    $rows = getDB()->query('SELECT id, locations_id, name, type FROM eszkoznyilvantartas_departments ORDER BY id')->fetchAll();
     return array_map(fn($r) => [
       'id' => (int) $r['id'], 'locations_id' => (int) $r['locations_id'],
       'name' => $r['name'], 'type' => $r['type'],
@@ -34,14 +34,14 @@ final class Lookups {
   }
 
   public static function deviceTypes(): array {
-    $rows = getDB()->query('SELECT id, type, description FROM device_types ORDER BY id')->fetchAll();
+    $rows = getDB()->query('SELECT id, type, description FROM eszkoznyilvantartas_device_types ORDER BY id')->fetchAll();
     return array_map(fn($r) => ['id' => (int) $r['id'], 'type' => $r['type'], 'description' => $r['description']], $rows);
   }
 
   public static function attributeDefinitions(): array {
     $rows = getDB()->query(
       'SELECT id, device_type_id, attribute_key, label, data_type, is_required, options, sort_order
-       FROM attribute_definitions ORDER BY device_type_id, sort_order'
+       FROM eszkoznyilvantartas_attribute_definitions ORDER BY device_type_id, sort_order'
     )->fetchAll();
     return array_map(fn($r) => [
       'id' => (int) $r['id'],
@@ -55,7 +55,7 @@ final class Lookups {
   // device_custody_events egy eszközre, legújabb elöl (store.historyOf).
   public static function history(int $deviceId): array {
     $st = getDB()->prepare(
-      'SELECT * FROM device_custody_events WHERE device_id = ? ORDER BY event_timestamp DESC, event_id DESC'
+      'SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE device_id = ? ORDER BY event_timestamp DESC, event_id DESC'
     );
     $st->execute([$deviceId]);
     return $st->fetchAll();
@@ -69,7 +69,7 @@ final class Lookups {
       "SELECT event_id, device_id, event_type, actor_user_id, from_user_id, from_locations_id,
               from_departments_id, to_user_id, to_locations_id, to_departments_id,
               event_timestamp, condition_at_event, notes, confirmation_status
-       FROM device_custody_events
+       FROM eszkoznyilvantartas_device_custody_events
        WHERE confirmation_status = 'pending' AND event_type = 'check_in'
        ORDER BY event_timestamp"
     )->fetchAll();
@@ -78,7 +78,7 @@ final class Lookups {
   public static function activeReservations(): array {
     return getDB()->query(
       'SELECT reservation_id, device_id, reserved_by, reserved_at, expires_at, notes
-       FROM device_reservations WHERE expires_at > NOW()'
+       FROM eszkoznyilvantartas_device_reservations WHERE expires_at > NOW()'
     )->fetchAll();
   }
 }

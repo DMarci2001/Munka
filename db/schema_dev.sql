@@ -16,16 +16,16 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP VIEW  IF EXISTS device_active_reservations;
-DROP VIEW  IF EXISTS device_pending_checkins;
-DROP VIEW  IF EXISTS device_current_state;
-DROP TABLE IF EXISTS device_reservations;
-DROP TABLE IF EXISTS device_custody_events;
-DROP TABLE IF EXISTS device_attribute_values;
-DROP TABLE IF EXISTS devices;
-DROP TABLE IF EXISTS attribute_definitions;
-DROP TABLE IF EXISTS device_types;
-DROP TABLE IF EXISTS departments;
+DROP VIEW  IF EXISTS eszkoznyilvantartas_device_active_reservations;
+DROP VIEW  IF EXISTS eszkoznyilvantartas_device_pending_checkins;
+DROP VIEW  IF EXISTS eszkoznyilvantartas_device_current_state;
+DROP TABLE IF EXISTS eszkoznyilvantartas_device_reservations;
+DROP TABLE IF EXISTS eszkoznyilvantartas_device_custody_events;
+DROP TABLE IF EXISTS eszkoznyilvantartas_device_attribute_values;
+DROP TABLE IF EXISTS eszkoznyilvantartas_devices;
+DROP TABLE IF EXISTS eszkoznyilvantartas_attribute_definitions;
+DROP TABLE IF EXISTS eszkoznyilvantartas_device_types;
+DROP TABLE IF EXISTS eszkoznyilvantartas_departments;
 DROP TABLE IF EXISTS helyszinek;
 DROP TABLE IF EXISTS users;
 
@@ -58,8 +58,8 @@ CREATE TABLE helyszinek (
 -- Eszköznyilvántartás táblái (EHHEZ az adatbázishoz tartoznak)
 -- ------------------------------------------------------------
 
--- departments — helyiségek egy telephelyen (helyszinek). type='raktár' soha nem birtokos.
-CREATE TABLE departments (
+-- eszkoznyilvantartas_departments — helyiségek egy telephelyen (helyszinek). type='raktár' soha nem birtokos.
+CREATE TABLE eszkoznyilvantartas_departments (
   id            INT          NOT NULL AUTO_INCREMENT,
   locations_id  INT          NOT NULL,
   name          VARCHAR(128) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE departments (
   CONSTRAINT chk_departments_type CHECK (type IN ('raktár','osztály','recepció','műhely'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE device_types (
+CREATE TABLE eszkoznyilvantartas_device_types (
   id           INT          NOT NULL AUTO_INCREMENT,
   type         VARCHAR(64)  NOT NULL,
   description  VARCHAR(255) NULL,
@@ -78,7 +78,7 @@ CREATE TABLE device_types (
   UNIQUE KEY uq_device_types_type (type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE attribute_definitions (
+CREATE TABLE eszkoznyilvantartas_attribute_definitions (
   id              INT          NOT NULL AUTO_INCREMENT,
   device_type_id  INT          NULL,
   attribute_key   VARCHAR(64)  NOT NULL,
@@ -89,11 +89,11 @@ CREATE TABLE attribute_definitions (
   sort_order      INT          NULL DEFAULT 0,
   PRIMARY KEY (id),
   UNIQUE KEY uq_attrdef_type_key (device_type_id, attribute_key),
-  CONSTRAINT fk_attrdef_type FOREIGN KEY (device_type_id) REFERENCES device_types (id),
+  CONSTRAINT fk_attrdef_type FOREIGN KEY (device_type_id) REFERENCES eszkoznyilvantartas_device_types (id),
   CONSTRAINT chk_attrdef_datatype CHECK (data_type IN ('text','integer','decimal','date','boolean','enum'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE devices (
+CREATE TABLE eszkoznyilvantartas_devices (
   device_id       INT          NOT NULL AUTO_INCREMENT,
   asset_tag       VARCHAR(64)  NOT NULL,
   device_type_id  INT          NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE devices (
   PRIMARY KEY (device_id),
   UNIQUE KEY uq_devices_asset_tag (asset_tag),
   KEY idx_devices_type (device_type_id),
-  CONSTRAINT fk_devices_type       FOREIGN KEY (device_type_id) REFERENCES device_types (id),
+  CONSTRAINT fk_devices_type       FOREIGN KEY (device_type_id) REFERENCES eszkoznyilvantartas_device_types (id),
   CONSTRAINT fk_devices_created_by FOREIGN KEY (created_by)     REFERENCES users (id),
   CONSTRAINT fk_devices_updated_by FOREIGN KEY (updated_by)     REFERENCES users (id),
   CONSTRAINT chk_devices_status CHECK (status IN
@@ -119,7 +119,7 @@ CREATE TABLE devices (
      'Szerviz alatt','Elveszett','Selejtezve'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE device_attribute_values (
+CREATE TABLE eszkoznyilvantartas_device_attribute_values (
   id                       INT  NOT NULL AUTO_INCREMENT,
   device_id                INT  NOT NULL,
   attribute_definition_id  INT  NOT NULL,
@@ -127,11 +127,11 @@ CREATE TABLE device_attribute_values (
   PRIMARY KEY (id),
   UNIQUE KEY uq_dav_device_attr (device_id, attribute_definition_id),
   KEY idx_dav_attrdef (attribute_definition_id),
-  CONSTRAINT fk_dav_device  FOREIGN KEY (device_id)               REFERENCES devices (device_id) ON DELETE CASCADE,
-  CONSTRAINT fk_dav_attrdef FOREIGN KEY (attribute_definition_id) REFERENCES attribute_definitions (id)
+  CONSTRAINT fk_dav_device  FOREIGN KEY (device_id)               REFERENCES eszkoznyilvantartas_devices (device_id) ON DELETE CASCADE,
+  CONSTRAINT fk_dav_attrdef FOREIGN KEY (attribute_definition_id) REFERENCES eszkoznyilvantartas_attribute_definitions (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE device_custody_events (
+CREATE TABLE eszkoznyilvantartas_device_custody_events (
   event_id              INT          NOT NULL AUTO_INCREMENT,
   device_id             INT          NOT NULL,
   event_type            VARCHAR(24)  NOT NULL,
@@ -154,14 +154,14 @@ CREATE TABLE device_custody_events (
   KEY idx_custody_device (device_id, event_timestamp),
   KEY idx_custody_status (confirmation_status, event_timestamp),
   UNIQUE KEY uq_one_pending_checkin_per_device (pending_device_id),
-  CONSTRAINT fk_custody_device      FOREIGN KEY (device_id)           REFERENCES devices (device_id),
+  CONSTRAINT fk_custody_device      FOREIGN KEY (device_id)           REFERENCES eszkoznyilvantartas_devices (device_id),
   CONSTRAINT fk_custody_actor       FOREIGN KEY (actor_user_id)       REFERENCES users (id),
   CONSTRAINT fk_custody_from_user   FOREIGN KEY (from_user_id)        REFERENCES users (id),
   CONSTRAINT fk_custody_from_loc    FOREIGN KEY (from_locations_id)   REFERENCES helyszinek (id),
-  CONSTRAINT fk_custody_from_dept   FOREIGN KEY (from_departments_id) REFERENCES departments (id),
+  CONSTRAINT fk_custody_from_dept   FOREIGN KEY (from_departments_id) REFERENCES eszkoznyilvantartas_departments (id),
   CONSTRAINT fk_custody_to_user     FOREIGN KEY (to_user_id)          REFERENCES users (id),
   CONSTRAINT fk_custody_to_loc      FOREIGN KEY (to_locations_id)     REFERENCES helyszinek (id),
-  CONSTRAINT fk_custody_to_dept     FOREIGN KEY (to_departments_id)   REFERENCES departments (id),
+  CONSTRAINT fk_custody_to_dept     FOREIGN KEY (to_departments_id)   REFERENCES eszkoznyilvantartas_departments (id),
   CONSTRAINT fk_custody_confirmedby FOREIGN KEY (confirmed_by)        REFERENCES users (id),
   CONSTRAINT chk_custody_event_type CHECK (event_type IN
     ('check_out','check_in','transfer','stock_transfer',
@@ -181,7 +181,7 @@ CREATE TABLE device_custody_events (
     (confirmation_status = 'confirmed' OR event_type = 'check_in')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE device_reservations (
+CREATE TABLE eszkoznyilvantartas_device_reservations (
   reservation_id  INT       NOT NULL AUTO_INCREMENT,
   device_id       INT       NOT NULL,
   reserved_by     INT       NOT NULL,
@@ -192,29 +192,29 @@ CREATE TABLE device_reservations (
   UNIQUE KEY uq_resv_one_per_device (device_id),
   KEY idx_resv_expires (expires_at),
   KEY idx_resv_user (reserved_by),
-  CONSTRAINT fk_resv_device FOREIGN KEY (device_id)   REFERENCES devices (device_id),
+  CONSTRAINT fk_resv_device FOREIGN KEY (device_id)   REFERENCES eszkoznyilvantartas_devices (device_id),
   CONSTRAINT fk_resv_user   FOREIGN KEY (reserved_by) REFERENCES users (id),
   CONSTRAINT chk_resv_expiry CHECK (expires_at > reserved_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===================== Nézetek =====================
 
-CREATE VIEW device_current_state AS
+CREATE VIEW eszkoznyilvantartas_device_current_state AS
 SELECT e.device_id,
        e.to_user_id        AS current_holder_user_id,
        e.to_locations_id   AS current_location_id,
        e.to_departments_id AS current_department_id,
        e.event_timestamp   AS since
-FROM device_custody_events e
+FROM eszkoznyilvantartas_device_custody_events e
 JOIN (
     SELECT device_id, MAX(event_timestamp) AS mx
-    FROM device_custody_events
+    FROM eszkoznyilvantartas_device_custody_events
     WHERE confirmation_status = 'confirmed'
     GROUP BY device_id
 ) latest ON latest.device_id = e.device_id AND latest.mx = e.event_timestamp
 WHERE e.confirmation_status = 'confirmed';
 
-CREATE VIEW device_pending_checkins AS
+CREATE VIEW eszkoznyilvantartas_device_pending_checkins AS
 SELECT event_id, device_id,
        actor_user_id     AS submitted_by,
        from_user_id      AS returning_user,
@@ -222,11 +222,11 @@ SELECT event_id, device_id,
        to_departments_id AS claimed_department_id,
        event_timestamp   AS submitted_at,
        condition_at_event, notes
-FROM device_custody_events
+FROM eszkoznyilvantartas_device_custody_events
 WHERE confirmation_status = 'pending'
 ORDER BY event_timestamp;
 
-CREATE VIEW device_active_reservations AS
+CREATE VIEW eszkoznyilvantartas_device_active_reservations AS
 SELECT reservation_id, device_id, reserved_by, reserved_at, expires_at, notes
-FROM device_reservations
+FROM eszkoznyilvantartas_device_reservations
 WHERE expires_at > NOW();

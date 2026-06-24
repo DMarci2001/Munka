@@ -33,7 +33,7 @@ final class Ops {
     $ev = array_merge($defaults, $ev);
 
     $place = implode(', ', array_map(fn($c) => ':' . $c, $cols));
-    $sql = 'INSERT INTO device_custody_events (' . implode(', ', $cols) . ") VALUES ($place)";
+    $sql = 'INSERT INTO eszkoznyilvantartas_device_custody_events (' . implode(', ', $cols) . ") VALUES ($place)";
     $st = $db->prepare($sql);
     foreach ($cols as $c) $st->bindValue(':' . $c, $ev[$c]);
     $st->execute();
@@ -42,12 +42,12 @@ final class Ops {
 
   // Eszköz státuszának + updated_by frissítése.
   private static function setStatus(PDO $db, int $deviceId, string $status): void {
-    $st = $db->prepare('UPDATE devices SET status = ?, updated_by = ? WHERE device_id = ?');
+    $st = $db->prepare('UPDATE eszkoznyilvantartas_devices SET status = ?, updated_by = ? WHERE device_id = ?');
     $st->execute([$status, Auth::userId(), $deviceId]);
   }
 
   private static function deleteReservation(PDO $db, int $deviceId): void {
-    $db->prepare('DELETE FROM device_reservations WHERE device_id = ?')->execute([$deviceId]);
+    $db->prepare('DELETE FROM eszkoznyilvantartas_device_reservations WHERE device_id = ?')->execute([$deviceId]);
   }
 
   // store.js statusFromEvent
@@ -65,7 +65,7 @@ final class Ops {
   }
 
   private static function requireDevice(int $deviceId): array {
-    $st = getDB()->prepare('SELECT * FROM devices WHERE device_id = ?');
+    $st = getDB()->prepare('SELECT * FROM eszkoznyilvantartas_devices WHERE device_id = ?');
     $st->execute([$deviceId]);
     $dev = $st->fetch();
     if (!$dev) throw new OpError('Eszköz nem található.');
@@ -170,14 +170,14 @@ final class Ops {
     $db = getDB();
     $db->beginTransaction();
     try {
-      $st = $db->prepare('SELECT * FROM device_custody_events WHERE event_id = ?');
+      $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE event_id = ?');
       $st->execute([$eventId]);
       $ev = $st->fetch();
       if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'check_in')
         throw new OpError('Csak függőben lévő visszavétel erősíthető meg.');
 
       $db->prepare(
-        "UPDATE device_custody_events SET confirmation_status = 'confirmed', confirmed_by = ?, confirmed_at = ? WHERE event_id = ?"
+        "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'confirmed', confirmed_by = ?, confirmed_at = ? WHERE event_id = ?"
       )->execute([Auth::userId(), self::nowTs(), $eventId]);
 
       // check_in után mindig kivehető, a check_in céljától függetlenül
@@ -196,7 +196,7 @@ final class Ops {
     $db = getDB();
     $db->beginTransaction();
     try {
-      $st = $db->prepare('SELECT * FROM device_custody_events WHERE event_id = ?');
+      $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE event_id = ?');
       $st->execute([$eventId]);
       $ev = $st->fetch();
       if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'check_in')
@@ -204,7 +204,7 @@ final class Ops {
 
       $notes = ($ev['notes'] ? $ev['notes'] . ' ' : '') . 'ELUTASÍTVA: ' . ($reason ?: 'nincs indok');
       $db->prepare(
-        "UPDATE device_custody_events SET confirmation_status = 'rejected', confirmed_by = ?, confirmed_at = ?, notes = ? WHERE event_id = ?"
+        "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'rejected', confirmed_by = ?, confirmed_at = ?, notes = ? WHERE event_id = ?"
       )->execute([Auth::userId(), self::nowTs(), $notes, $eventId]);
 
       // visszaáll a check_in előtti birtoklásra
@@ -225,7 +225,7 @@ final class Ops {
     try {
       $actor = Auth::userId();
       // lejárt foglalás takarítása az eszközre
-      $db->prepare('DELETE FROM device_reservations WHERE device_id = ? AND expires_at <= NOW()')->execute([$deviceId]);
+      $db->prepare('DELETE FROM eszkoznyilvantartas_device_reservations WHERE device_id = ? AND expires_at <= NOW()')->execute([$deviceId]);
 
       $dev = self::requireDevice($deviceId);
       $cur = Repo::currentState($deviceId);
@@ -234,7 +234,7 @@ final class Ops {
       if (Repo::activeReservation($deviceId)) throw new OpError('Az eszköz már le van foglalva.');
 
       $db->prepare(
-        'INSERT INTO device_reservations (device_id, reserved_by, reserved_at, expires_at, notes) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO eszkoznyilvantartas_device_reservations (device_id, reserved_by, reserved_at, expires_at, notes) VALUES (?, ?, ?, ?, ?)'
       )->execute([$deviceId, $actor, self::nowTs(), self::daysFromNow(RESERVATION_DAYS), $notes]);
 
       self::setStatus($db, $deviceId, 'Lefoglalva');
@@ -292,7 +292,7 @@ final class Ops {
     try {
       self::requireDevice($deviceId);
       if ($toDept === null) {
-        $repair = $db->query("SELECT id FROM departments WHERE type = 'műhely' LIMIT 1")->fetchColumn();
+        $repair = $db->query("SELECT id FROM eszkoznyilvantartas_departments WHERE type = 'műhely' LIMIT 1")->fetchColumn();
         $toDept = $repair !== false ? (int) $repair : null;
       }
       self::moveAssetInternal($db, [
@@ -375,7 +375,7 @@ final class Ops {
   // attribútum-kulcs → attribute_definitions.id leképezés egy típushoz
   private static function attrDefMap(PDO $db, int $deviceTypeId): array {
     $st = $db->prepare(
-      'SELECT id, attribute_key FROM attribute_definitions WHERE device_type_id = ? OR device_type_id IS NULL'
+      'SELECT id, attribute_key FROM eszkoznyilvantartas_attribute_definitions WHERE device_type_id = ? OR device_type_id IS NULL'
     );
     $st->execute([$deviceTypeId]);
     $map = [];
@@ -388,13 +388,13 @@ final class Ops {
     if (!$attrs) return;
     $map = self::attrDefMap($db, $deviceTypeId);
     $up = $db->prepare(
-      'INSERT INTO device_attribute_values (device_id, attribute_definition_id, value)
+      'INSERT INTO eszkoznyilvantartas_device_attribute_values (device_id, attribute_definition_id, value)
        VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)'
     );
     foreach ($attrs as $key => $val) {
       if (!isset($map[$key])) continue; // ismeretlen attribútum kihagyva
       if ($val === null || $val === '') {
-        $db->prepare('DELETE FROM device_attribute_values WHERE device_id = ? AND attribute_definition_id = ?')
+        $db->prepare('DELETE FROM eszkoznyilvantartas_device_attribute_values WHERE device_id = ? AND attribute_definition_id = ?')
            ->execute([$deviceId, $map[$key]]);
         continue;
       }
@@ -413,13 +413,13 @@ final class Ops {
       $deviceTypeId = (int) $in['device_type_id'];
       $assetTag = trim((string) $in['asset_tag']);
 
-      $exists = $db->prepare('SELECT 1 FROM devices WHERE LOWER(asset_tag) = LOWER(?)');
+      $exists = $db->prepare('SELECT 1 FROM eszkoznyilvantartas_devices WHERE LOWER(asset_tag) = LOWER(?)');
       $exists->execute([$assetTag]);
       if ($exists->fetchColumn()) throw new OpError("Ez a leltári azonosító már létezik: $assetTag");
 
       $uid = Auth::userId();
       $st = $db->prepare(
-        'INSERT INTO devices (asset_tag, device_type_id, manufacturer, model, serial_number, status, `condition`, notes, created_by, updated_by)
+        'INSERT INTO eszkoznyilvantartas_devices (asset_tag, device_type_id, manufacturer, model, serial_number, status, `condition`, notes, created_by, updated_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       );
       $st->execute([
@@ -460,7 +460,7 @@ final class Ops {
 
       if (!empty($changes['asset_tag'])) {
         $tag = trim((string) $changes['asset_tag']);
-        $st = $db->prepare('SELECT device_id FROM devices WHERE LOWER(asset_tag) = LOWER(?)');
+        $st = $db->prepare('SELECT device_id FROM eszkoznyilvantartas_devices WHERE LOWER(asset_tag) = LOWER(?)');
         $st->execute([$tag]);
         $other = $st->fetchColumn();
         if ($other !== false && (int) $other !== $deviceId)
@@ -480,7 +480,7 @@ final class Ops {
       $set[] = 'updated_by = ?';
       $vals[] = Auth::userId();
       $vals[] = $deviceId;
-      $db->prepare('UPDATE devices SET ' . implode(', ', $set) . ' WHERE device_id = ?')->execute($vals);
+      $db->prepare('UPDATE eszkoznyilvantartas_devices SET ' . implode(', ', $set) . ' WHERE device_id = ?')->execute($vals);
 
       if (!empty($changes['attrs']) && is_array($changes['attrs'])) {
         $typeId = isset($changes['device_type_id']) ? (int) $changes['device_type_id'] : (int) $dev['device_type_id'];
@@ -503,7 +503,7 @@ final class Ops {
     try {
       $dev = self::requireDevice($deviceId);
       $notes = ($dev['notes'] ? $dev['notes'] . ' ' : '') . 'Selejtezve: ' . ($reason ?: 'nincs indok');
-      $db->prepare('UPDATE devices SET status = ?, retired_date = ?, notes = ?, updated_by = ? WHERE device_id = ?')
+      $db->prepare('UPDATE eszkoznyilvantartas_devices SET status = ?, retired_date = ?, notes = ?, updated_by = ? WHERE device_id = ?')
          ->execute(['Selejtezve', date('Y-m-d'), $notes, Auth::userId(), $deviceId]);
       self::deleteReservation($db, $deviceId);
       $db->commit();
@@ -536,7 +536,7 @@ final class Ops {
     $type = $in['type'] ?? 'osztály';
     enum_in($type, ['raktár', 'osztály', 'recepció', 'műhely'], 'részleg-típus');
     $db = getDB();
-    $db->prepare('INSERT INTO departments (locations_id, name, type) VALUES (?, ?, ?)')->execute([$locId, $name, $type]);
+    $db->prepare('INSERT INTO eszkoznyilvantartas_departments (locations_id, name, type) VALUES (?, ?, ?)')->execute([$locId, $name, $type]);
     $id = (int) $db->lastInsertId();
     return ['id' => $id, 'locations_id' => $locId, 'name' => $name, 'type' => $type];
   }
@@ -547,7 +547,7 @@ final class Ops {
     if ($type === '') throw new OpError('Add meg az eszköztípus nevét.');
     $desc = trim((string) ($in['description'] ?? ''));
     $db = getDB();
-    $db->prepare('INSERT INTO device_types (type, description) VALUES (?, ?)')->execute([$type, $desc]);
+    $db->prepare('INSERT INTO eszkoznyilvantartas_device_types (type, description) VALUES (?, ?)')->execute([$type, $desc]);
     $id = (int) $db->lastInsertId();
     return ['id' => $id, 'type' => $type, 'description' => $desc];
   }
@@ -566,7 +566,7 @@ final class Ops {
     $options = $dataType === 'enum' ? (trim((string) ($in['options'] ?? '')) ?: null) : null;
     $db = getDB();
     $db->prepare(
-      'INSERT INTO attribute_definitions (device_type_id, attribute_key, label, data_type, is_required, options, sort_order)
+      'INSERT INTO eszkoznyilvantartas_attribute_definitions (device_type_id, attribute_key, label, data_type, is_required, options, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)'
     )->execute([
       $deviceTypeId, $key, $label, $dataType,

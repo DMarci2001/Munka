@@ -13,7 +13,7 @@ final class Repo {
   // ---- Törzsadat-segédek ------------------------------------
   public static function departments(): array {
     if (self::$deptCache === null) {
-      self::$deptCache = getDB()->query('SELECT id, locations_id, name, type FROM departments')->fetchAll();
+      self::$deptCache = getDB()->query('SELECT id, locations_id, name, type FROM eszkoznyilvantartas_departments')->fetchAll();
     }
     return self::$deptCache;
   }
@@ -34,7 +34,7 @@ final class Repo {
   public static function currentState(int $deviceId): array {
     $st = getDB()->prepare(
       "SELECT to_user_id, to_locations_id, to_departments_id, event_timestamp
-       FROM device_custody_events
+       FROM eszkoznyilvantartas_device_custody_events
        WHERE device_id = ? AND confirmation_status = 'confirmed'
        ORDER BY event_timestamp DESC, event_id DESC LIMIT 1"
     );
@@ -54,7 +54,7 @@ final class Repo {
   public static function activeReservation(int $deviceId): ?array {
     $st = getDB()->prepare(
       'SELECT reservation_id, device_id, reserved_by, reserved_at, expires_at, notes
-       FROM device_reservations WHERE device_id = ? AND expires_at > NOW() LIMIT 1'
+       FROM eszkoznyilvantartas_device_reservations WHERE device_id = ? AND expires_at > NOW() LIMIT 1'
     );
     $st->execute([$deviceId]);
     return $st->fetch() ?: null;
@@ -62,7 +62,7 @@ final class Repo {
 
   public static function pendingCheckin(int $deviceId): ?array {
     $st = getDB()->prepare(
-      "SELECT * FROM device_custody_events
+      "SELECT * FROM eszkoznyilvantartas_device_custody_events
        WHERE device_id = ? AND confirmation_status = 'pending' AND event_type = 'check_in' LIMIT 1"
     );
     $st->execute([$deviceId]);
@@ -72,8 +72,8 @@ final class Repo {
   public static function attrsFor(int $deviceId): array {
     $st = getDB()->prepare(
       'SELECT ad.attribute_key, dav.value, ad.data_type
-       FROM device_attribute_values dav
-       JOIN attribute_definitions ad ON ad.id = dav.attribute_definition_id
+       FROM eszkoznyilvantartas_device_attribute_values dav
+       JOIN eszkoznyilvantartas_attribute_definitions ad ON ad.id = dav.attribute_definition_id
        WHERE dav.device_id = ?'
     );
     $st->execute([$deviceId]);
@@ -107,7 +107,7 @@ final class Repo {
 
   // ---- Egy eszköz "kibővített" (enriched) nézete ------------
   public static function enrichOne(int $deviceId): ?array {
-    $st = getDB()->prepare('SELECT * FROM devices WHERE device_id = ?');
+    $st = getDB()->prepare('SELECT * FROM eszkoznyilvantartas_devices WHERE device_id = ?');
     $st->execute([$deviceId]);
     $dev = $st->fetch();
     if (!$dev) return null;
@@ -118,13 +118,13 @@ final class Repo {
     $attrs   = self::attrsFor($deviceId);
 
     $lc = getDB()->prepare(
-      "SELECT MAX(event_timestamp) FROM device_custody_events
+      "SELECT MAX(event_timestamp) FROM eszkoznyilvantartas_device_custody_events
        WHERE device_id = ? AND event_type = 'check_out' AND confirmation_status = 'confirmed'"
     );
     $lc->execute([$deviceId]);
     $lastCheckout = $lc->fetchColumn() ?: null;
 
-    $lm = getDB()->prepare('SELECT MAX(event_timestamp) FROM device_custody_events WHERE device_id = ?');
+    $lm = getDB()->prepare('SELECT MAX(event_timestamp) FROM eszkoznyilvantartas_device_custody_events WHERE device_id = ?');
     $lm->execute([$deviceId]);
     $lastModified = $lm->fetchColumn() ?: null;
 
@@ -134,40 +134,40 @@ final class Repo {
   // ---- Az összes eszköz enriched listája (kötegelt, N+1 nélkül) ----
   public static function allEnriched(): array {
     $db = getDB();
-    $devices = $db->query('SELECT * FROM devices ORDER BY device_id')->fetchAll();
+    $devices = $db->query('SELECT * FROM eszkoznyilvantartas_devices ORDER BY device_id')->fetchAll();
 
     // current_state mindenkire
     $cs = [];
-    foreach ($db->query('SELECT * FROM device_current_state')->fetchAll() as $r) {
+    foreach ($db->query('SELECT * FROM eszkoznyilvantartas_device_current_state')->fetchAll() as $r) {
       $cs[(int)$r['device_id']] = $r;
     }
     // aktív foglalások
     $resvs = [];
-    foreach ($db->query('SELECT * FROM device_reservations WHERE expires_at > NOW()')->fetchAll() as $r) {
+    foreach ($db->query('SELECT * FROM eszkoznyilvantartas_device_reservations WHERE expires_at > NOW()')->fetchAll() as $r) {
       $resvs[(int)$r['device_id']] = $r;
     }
     // függő visszavételek
     $pendings = [];
-    foreach ($db->query("SELECT * FROM device_custody_events WHERE confirmation_status='pending' AND event_type='check_in'")->fetchAll() as $r) {
+    foreach ($db->query("SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE confirmation_status='pending' AND event_type='check_in'")->fetchAll() as $r) {
       $pendings[(int)$r['device_id']] = $r;
     }
     // attribútumok
     $attrsByDev = [];
     $allAttrs = $db->query(
       'SELECT dav.device_id, ad.attribute_key, dav.value, ad.data_type
-       FROM device_attribute_values dav
-       JOIN attribute_definitions ad ON ad.id = dav.attribute_definition_id'
+       FROM eszkoznyilvantartas_device_attribute_values dav
+       JOIN eszkoznyilvantartas_attribute_definitions ad ON ad.id = dav.attribute_definition_id'
     )->fetchAll();
     foreach ($allAttrs as $r) {
       $attrsByDev[(int)$r['device_id']][$r['attribute_key']] = self::castAttr($r['value'], $r['data_type']);
     }
     // utolsó kivét / utolsó módosítás
     $lastCheckout = [];
-    foreach ($db->query("SELECT device_id, MAX(event_timestamp) mx FROM device_custody_events WHERE event_type='check_out' AND confirmation_status='confirmed' GROUP BY device_id")->fetchAll() as $r) {
+    foreach ($db->query("SELECT device_id, MAX(event_timestamp) mx FROM eszkoznyilvantartas_device_custody_events WHERE event_type='check_out' AND confirmation_status='confirmed' GROUP BY device_id")->fetchAll() as $r) {
       $lastCheckout[(int)$r['device_id']] = $r['mx'];
     }
     $lastModified = [];
-    foreach ($db->query('SELECT device_id, MAX(event_timestamp) mx FROM device_custody_events GROUP BY device_id')->fetchAll() as $r) {
+    foreach ($db->query('SELECT device_id, MAX(event_timestamp) mx FROM eszkoznyilvantartas_device_custody_events GROUP BY device_id')->fetchAll() as $r) {
       $lastModified[(int)$r['device_id']] = $r['mx'];
     }
 

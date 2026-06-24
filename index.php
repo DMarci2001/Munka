@@ -82,7 +82,7 @@ try {
     $regex = '#^' . preg_replace('/\\\\\{(\w+)\\\\\}/', '(?P<$1>[^/]+)', preg_quote($pattern, '#')) . '$#';
     if (preg_match($regex, $route, $m)) {
       $params = array_filter($m, 'is_string', ARRAY_FILTER_USE_KEY);
-      $result = $handler($params);
+      $result = call_user_func_array($handler, empty($params) ? [] : [$params]);
       json_success($result);
     }
   }
@@ -147,7 +147,7 @@ function h_device(array $p): array {
   return $dev;
 }
 function h_device_by_tag(array $p): array {
-  $st = getDB()->prepare('SELECT device_id FROM devices WHERE LOWER(asset_tag) = LOWER(?)');
+  $st = getDB()->prepare('SELECT device_id FROM eszkoznyilvantartas_devices WHERE LOWER(asset_tag) = LOWER(?)');
   $st->execute([rawurldecode($p['tag'])]);
   $id = $st->fetchColumn();
   if ($id === false) json_error(404, 'Eszköz nem található ezzel a leltári azonosítóval.');
