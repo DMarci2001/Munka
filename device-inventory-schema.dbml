@@ -3,9 +3,9 @@
 // EXTERNAL tables are owned by the clinic web app — referenced, not created here.
 //
 // Streamlining notes:
-//  - devices holds NO holder/location columns. Custody is the single source of truth.
-//  - Current holder/location is read through the view device_current_state (see bottom).
-//  - departments merged into locations (locations.type = stockroom | room | department).
+//  - eszkoznyilvantartas_devices holds NO holder/location columns. Custody is the single source of truth.
+//  - Current holder/location is read through the view eszkoznyilvantartas_device_current_state (see bottom).
+//  - eszkoznyilvantartas_departments merged into locations (locations.type = stockroom | room | department).
 
 // ===================== EXTERNAL (owned by the clinic web app) =====================
 Table firms {                     // EXTERNAL
@@ -52,16 +52,16 @@ Table locations {
   is_central boolean [note: 'true = the HQ central stockroom']
 }
 
-Table device_types {
+Table eszkoznyilvantartas_device_types {
   id uuid [pk]
   name varchar [not null, unique]
   description varchar
 }
 
 // Metadata-driven type attributes (the per-type "sub-attributes")
-Table attribute_definitions {
+Table eszkoznyilvantartas_attribute_definitions {
   id uuid [pk]
-  device_type_id uuid [not null, ref: > device_types.id]
+  device_type_id uuid [not null, ref: > eszkoznyilvantartas_device_types.id]
   attribute_key varchar [not null, note: 'e.g. calibration_due_date']
   label varchar
   data_type varchar [note: 'text | integer | decimal | date | boolean | enum']
@@ -71,10 +71,10 @@ Table attribute_definitions {
   indexes { (device_type_id, attribute_key) [unique] }
 }
 
-Table devices {
+Table eszkoznyilvantartas_devices {
   internal_id uuid [pk]
   asset_tag varchar [not null, unique, note: 'encoded in the QR code']
-  device_type_id uuid [not null, ref: > device_types.id]
+  device_type_id uuid [not null, ref: > eszkoznyilvantartas_device_types.id]
   name_label varchar [not null]
   manufacturer varchar
   model varchar
@@ -92,10 +92,10 @@ Table devices {
   retired_date date
 }
 
-Table device_attribute_values {
+Table eszkoznyilvantartas_device_attribute_values {
   id uuid [pk]
-  device_id uuid [not null, ref: > devices.internal_id]
-  attribute_definition_id uuid [not null, ref: > attribute_definitions.id]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
+  attribute_definition_id uuid [not null, ref: > eszkoznyilvantartas_attribute_definitions.id]
   value varchar
   indexes { (device_id, attribute_definition_id) [unique] }
 }
@@ -103,7 +103,7 @@ Table device_attribute_values {
 // Many-to-many: which examination types a device can serve
 Table device_examination_types {
   id uuid [pk]
-  device_id uuid [not null, ref: > devices.internal_id]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
   examination_type_id uuid [not null, ref: > examination_types.id]
   indexes { (device_id, examination_type_id) [unique] }
 }
@@ -111,9 +111,9 @@ Table device_examination_types {
 // Append-only custody log = single source of truth for holder & location.
 // actor_user_id is always recorded (incl. stockroom->stockroom). The "to" side may name a
 // user, a location, or BOTH (who holds it AND where they took it).
-Table device_custody_events {
+Table eszkoznyilvantartas_device_custody_events {
   event_id uuid [pk]
-  device_id uuid [not null, ref: > devices.internal_id]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
   event_type varchar [not null, note: 'check_out | check_in | transfer | stock_transfer | send_to_repair | mark_lost']
   actor_user_id uuid [not null, ref: > clinic_users.id, note: 'who performed/logged it — always set']
   from_user_id uuid [ref: > clinic_users.id, note: 'previous holder, if a person']
@@ -133,9 +133,9 @@ Table device_custody_events {
 // Active device reservations. A user reserves a free device; the row is DELETED
 // on pickup (check_out) / cancel / 3-day expiry, so the table holds only currently
 // active reservations. UNIQUE(device_id) => at most one active reservation each.
-Table device_reservations {
+Table eszkoznyilvantartas_device_reservations {
   reservation_id uuid [pk]
-  device_id uuid [not null, unique, ref: > devices.internal_id, note: 'one active reservation per device']
+  device_id uuid [not null, unique, ref: > eszkoznyilvantartas_devices.internal_id, note: 'one active reservation per device']
   reserved_by uuid [not null, ref: > clinic_users.id]
   reserved_at timestamp [not null]
   expires_at timestamp [not null, note: 'default reserved_at + 3 days; row deleted after expiry']
@@ -144,15 +144,15 @@ Table device_reservations {
 }
 
 // ===================== VIEW (not a table) =====================
-// device_current_state — derives the current holder/location from the newest
+// eszkoznyilvantartas_device_current_state — derives the current holder/location from the newest
 // custody event per device, so the app reads it like columns without storing them:
 //
-//   CREATE VIEW device_current_state AS
+//   CREATE VIEW eszkoznyilvantartas_device_current_state AS
 //   SELECT DISTINCT ON (device_id)
 //          device_id,
 //          to_user_id     AS current_holder_user_id,
 //          to_location_id AS current_location_id,
 //          event_timestamp AS since
-//   FROM device_custody_events
+//   FROM eszkoznyilvantartas_device_custody_events
 //   WHERE confirmation_status = 'confirmed'   -- checkpoint: pending/rejected ignored
 //   ORDER BY device_id, event_timestamp DESC;

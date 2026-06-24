@@ -1,11 +1,11 @@
 -- ============================================================
--- Nézet — device_current_state
+-- Nézet — eszkoznyilvantartas_device_current_state
 -- Hordozható Eszköznyilvántartás (Hungária Med-M Kft.)
 -- Dátum: 2026-06-02
 --
 -- Eszközönként az aktuális birtokost és helyet adja: a legújabb
 -- birtoklási esemény „to" oldala. A birtokos és a hely soha nincs
--- a devices során tárolva — ez a nézet az egyetlen igazságforrás
+-- a eszkoznyilvantartas_devices során tárolva — ez a nézet az egyetlen igazságforrás
 -- (lásd DATABASE_DOCUMENTATION.md §7).
 --
 -- A current_location_id NYERS locations.id idegen kulcs: a nézet
@@ -23,17 +23,17 @@
 -- (jellemzően a felhasználót) mutatja.
 --
 -- Idempotens: CREATE OR REPLACE. PostgreSQL.
--- Előfeltétel: a device_custody_events tábla már létezik, és a
+-- Előfeltétel: a eszkoznyilvantartas_device_custody_events tábla már létezik, és a
 -- migration-2026-06-add-checkpoint-confirmation.sql lefutott.
 -- ============================================================
 
-CREATE OR REPLACE VIEW device_current_state AS
+CREATE OR REPLACE VIEW eszkoznyilvantartas_device_current_state AS
 SELECT DISTINCT ON (device_id)
        device_id,
        to_user_id      AS current_holder_user_id,
        to_location_id  AS current_location_id,
        event_timestamp AS since
-FROM device_custody_events
+FROM eszkoznyilvantartas_device_custody_events
 WHERE confirmation_status = 'confirmed'
 ORDER BY device_id, event_timestamp DESC;
 
@@ -45,7 +45,7 @@ ORDER BY device_id, event_timestamp DESC;
 
 
 -- ------------------------------------------------------------
--- Nézet — device_pending_checkins (a raktáros ellenőrzési listája)
+-- Nézet — eszkoznyilvantartas_device_pending_checkins (a raktáros ellenőrzési listája)
 --
 -- Minden függőben lévő (pending) felhasználói visszavétel, amelyet a
 -- raktárosnak fizikailag ellenőriznie és megerősítenie/elutasítania
@@ -53,7 +53,7 @@ ORDER BY device_id, event_timestamp DESC;
 -- állítása szerint visszavitte az eszközt.
 -- ------------------------------------------------------------
 
-CREATE OR REPLACE VIEW device_pending_checkins AS
+CREATE OR REPLACE VIEW eszkoznyilvantartas_device_pending_checkins AS
 SELECT event_id,
        device_id,
        actor_user_id   AS submitted_by,   -- ki adta le a visszavételt
@@ -62,7 +62,7 @@ SELECT event_id,
        event_timestamp AS submitted_at,
        condition_at_event,
        notes
-FROM device_custody_events
+FROM eszkoznyilvantartas_device_custody_events
 WHERE confirmation_status = 'pending'
 ORDER BY event_timestamp;
 
@@ -72,7 +72,7 @@ ORDER BY event_timestamp;
 --
 -- Ha a megjelenített helynevet az adatbázisban szeretné feloldani
 -- (a §10 location_label SQL-megfelelője), használja az alábbi
--- kibővített nézetet. A device_current_state változatlan marad;
+-- kibővített nézetet. A eszkoznyilvantartas_device_current_state változatlan marad;
 -- ez csak egy kényelmi réteg fölötte. Vegye ki a kommentből, ha kell.
 --
 -- CREATE OR REPLACE VIEW device_current_state_resolved AS
@@ -84,7 +84,7 @@ ORDER BY event_timestamp;
 --            ELSE l.name                            -- konkrét szoba / raktár / osztály
 --        END AS current_location_label,
 --        s.since
--- FROM device_current_state s
+-- FROM eszkoznyilvantartas_device_current_state s
 -- LEFT JOIN locations l ON l.id = s.current_location_id
 -- LEFT JOIN sites     si ON si.id = l.site_id;
 -- ------------------------------------------------------------
