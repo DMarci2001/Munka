@@ -1,0 +1,370 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1760 880" font-family="Helvetica,Arial,sans-serif">
+<rect width="1760" height="880" fill="#FAFAFB"/>
+<text x="40" y="40" font-size="24" font-weight="700" fill="#111827">Portable Device Inventory — Schema</text>
+<text x="40" y="60" font-size="13" fill="#6B7280">Custody log is the single source of truth (a checkout can record a user AND their destination) · actor logged on every event · roles: user / storekeeper / it_admin · dashed = external (web app)</text>
+<defs>
+<marker id="dot_org" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#0E7490"/></marker>
+<marker id="bar_org" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#0E7490"/></marker>
+<marker id="dot_meta" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#6D28D9"/></marker>
+<marker id="bar_meta" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#6D28D9"/></marker>
+<marker id="dot_dev" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#1E3A8A"/></marker>
+<marker id="bar_dev" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#1E3A8A"/></marker>
+<marker id="dot_cust" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#B45309"/></marker>
+<marker id="bar_cust" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#B45309"/></marker>
+<marker id="dot_link" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#047857"/></marker>
+<marker id="bar_link" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#047857"/></marker>
+<marker id="dot_ext" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#475569"/></marker>
+<marker id="bar_ext" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#475569"/></marker>
+<marker id="dot_view" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#3730A3"/></marker>
+<marker id="bar_view" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#3730A3"/></marker>
+<marker id="dot_role" markerWidth="8" markerHeight="8" refX="4" refY="4"><circle cx="4" cy="4" r="3.2" fill="#9D174D"/></marker>
+<marker id="bar_role" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto"><rect x="1" y="2" width="2.4" height="8" fill="#9D174D"/></marker>
+</defs>
+<path d="M 380 290.0 C 310 290.0 310 126.0 380 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 380 480.0 C 310 480.0 310 266.0 380 266.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 720 174.0 C 606.0 174.0 454.0 126.0 340 126.0" fill="none" stroke="#6D28D9" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_meta)" marker-end="url(#bar_meta)"/>
+<path d="M 720 318.0 C 650 318.0 750 266.0 680 266.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1020 486.0 C 1090 486.0 990 126.0 1060 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1020 510.0 C 1090 510.0 990 126.0 1060 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1060 320.0 C 990 320.0 1090 126.0 1020 126.0" fill="none" stroke="#1E3A8A" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_dev)" marker-end="url(#bar_dev)"/>
+<path d="M 1360 368.0 C 1430 368.0 1430 126.0 1360 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1360 392.0 C 1430 392.0 1430 126.0 1360 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1360 440.0 C 1430 440.0 1430 126.0 1360 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1060 416.0 C 946.0 416.0 794.0 456.0 680 456.0" fill="none" stroke="#0E7490" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_org)" marker-end="url(#bar_org)"/>
+<path d="M 1060 464.0 C 946.0 464.0 794.0 456.0 680 456.0" fill="none" stroke="#0E7490" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_org)" marker-end="url(#bar_org)"/>
+<path d="M 1060 690.0 C 990 690.0 1090 126.0 1020 126.0" fill="none" stroke="#1E3A8A" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_dev)" marker-end="url(#bar_dev)"/>
+<path d="M 1360 714.0 C 1430 714.0 1330 666.0 1400 666.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1400 126.0 C 1330 126.0 1430 126.0 1360 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 1400 174.0 C 1330 174.0 1430 126.0 1360 126.0" fill="none" stroke="#475569" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_ext)" marker-end="url(#bar_ext)"/>
+<path d="M 40 286.0 C -30 286.0 -30 126.0 40 126.0" fill="none" stroke="#6D28D9" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_meta)" marker-end="url(#bar_meta)"/>
+<path d="M 340 542.0 C 454.0 542.0 606.0 126.0 720 126.0" fill="none" stroke="#1E3A8A" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_dev)" marker-end="url(#bar_dev)"/>
+<path d="M 40 566.0 C -30 566.0 -30 262.0 40 262.0" fill="none" stroke="#6D28D9" stroke-width="1.8" opacity="0.8" marker-start="url(#dot_meta)" marker-end="url(#bar_meta)"/>
+<path d="M 1020 660 C 1110 660 1150 600 1210 572" fill="none" stroke="#3730A3" stroke-width="1.6" stroke-dasharray="2 4" opacity="0.85"/>
+<text x="1024" y="690" font-size="10.5" fill="#3730A3" font-style="italic">derived from newest custody event per device</text>
+<rect x="40" y="80" width="300" height="106" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 40 90 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#6D28D9"/>
+<rect x="40" y="80" width="300" height="106" rx="8" fill="none" stroke="#6D28D9" stroke-width="1.5"/>
+<text x="52" y="102" font-size="14" font-weight="700" fill="#FFFFFF">device_types</text>
+<rect x="41" y="114" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="114" x2="340" y2="114" stroke="#EEF0F3"/>
+<text x="328" y="130" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="54" y="130" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="41" y="138" width="298" height="24" fill="#F5F3FF"/>
+<line x1="40" y1="138" x2="340" y2="138" stroke="#EEF0F3"/>
+<text x="54" y="154" font-size="12.5" font-weight="400" fill="#1F2937">name</text>
+<rect x="41" y="162" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="162" x2="340" y2="162" stroke="#EEF0F3"/>
+<text x="54" y="178" font-size="12.5" font-weight="400" fill="#1F2937">description</text>
+<rect x="40" y="216" width="300" height="226" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 40 226 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#6D28D9"/>
+<rect x="40" y="216" width="300" height="226" rx="8" fill="none" stroke="#6D28D9" stroke-width="1.5"/>
+<text x="52" y="238" font-size="14" font-weight="700" fill="#FFFFFF">attribute_definitions</text>
+<rect x="41" y="250" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="250" x2="340" y2="250" stroke="#EEF0F3"/>
+<text x="328" y="266" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="54" y="266" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="41" y="274" width="298" height="24" fill="#EDE9FE"/>
+<line x1="40" y1="274" x2="340" y2="274" stroke="#EEF0F3"/>
+<text x="328" y="290" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="54" y="290" font-size="12.5" font-weight="400" fill="#1F2937">device_type_id</text>
+<rect x="41" y="298" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="298" x2="340" y2="298" stroke="#EEF0F3"/>
+<text x="54" y="314" font-size="12.5" font-weight="400" fill="#1F2937">attribute_key</text>
+<rect x="41" y="322" width="298" height="24" fill="#F5F3FF"/>
+<line x1="40" y1="322" x2="340" y2="322" stroke="#EEF0F3"/>
+<text x="54" y="338" font-size="12.5" font-weight="400" fill="#1F2937">label</text>
+<rect x="41" y="346" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="346" x2="340" y2="346" stroke="#EEF0F3"/>
+<text x="54" y="362" font-size="12.5" font-weight="400" fill="#1F2937">data_type</text>
+<rect x="41" y="370" width="298" height="24" fill="#F5F3FF"/>
+<line x1="40" y1="370" x2="340" y2="370" stroke="#EEF0F3"/>
+<text x="54" y="386" font-size="12.5" font-weight="400" fill="#1F2937">is_required</text>
+<rect x="41" y="394" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="394" x2="340" y2="394" stroke="#EEF0F3"/>
+<text x="54" y="410" font-size="12.5" font-weight="400" fill="#1F2937">options</text>
+<rect x="41" y="418" width="298" height="24" fill="#F5F3FF"/>
+<line x1="40" y1="418" x2="340" y2="418" stroke="#EEF0F3"/>
+<text x="54" y="434" font-size="12.5" font-weight="400" fill="#1F2937">sort_order</text>
+<rect x="40" y="472" width="300" height="130" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 40 482 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#6D28D9"/>
+<rect x="40" y="472" width="300" height="130" rx="8" fill="none" stroke="#6D28D9" stroke-width="1.5"/>
+<text x="52" y="494" font-size="14" font-weight="700" fill="#FFFFFF">device_attribute_values</text>
+<rect x="41" y="506" width="298" height="24" fill="#FFFFFF"/>
+<line x1="40" y1="506" x2="340" y2="506" stroke="#EEF0F3"/>
+<text x="328" y="522" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="54" y="522" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="41" y="530" width="298" height="24" fill="#EDE9FE"/>
+<line x1="40" y1="530" x2="340" y2="530" stroke="#EEF0F3"/>
+<text x="328" y="546" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="54" y="546" font-size="12.5" font-weight="400" fill="#1F2937">device_id</text>
+<rect x="41" y="554" width="298" height="24" fill="#EDE9FE"/>
+<line x1="40" y1="554" x2="340" y2="554" stroke="#EEF0F3"/>
+<text x="328" y="570" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="54" y="570" font-size="12.5" font-weight="400" fill="#1F2937">attribute_definition_id</text>
+<rect x="41" y="578" width="298" height="24" fill="#F5F3FF"/>
+<line x1="40" y1="578" x2="340" y2="578" stroke="#EEF0F3"/>
+<text x="54" y="594" font-size="12.5" font-weight="400" fill="#1F2937">value</text>
+<rect x="380" y="80" width="300" height="106" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 380 90 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#475569"/>
+<rect x="380" y="80" width="300" height="106" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="392" y="102" font-size="14" font-weight="700" fill="#FFFFFF">firms  (external)</text>
+<rect x="381" y="114" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="114" x2="680" y2="114" stroke="#EEF0F3"/>
+<text x="668" y="130" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="394" y="130" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="381" y="138" width="298" height="24" fill="#F1F5F9"/>
+<line x1="380" y1="138" x2="680" y2="138" stroke="#EEF0F3"/>
+<text x="394" y="154" font-size="12.5" font-weight="400" fill="#1F2937">name</text>
+<rect x="381" y="162" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="162" x2="680" y2="162" stroke="#EEF0F3"/>
+<text x="394" y="178" font-size="12.5" font-weight="400" fill="#1F2937">tax_id</text>
+<rect x="380" y="220" width="300" height="154" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 380 230 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#475569"/>
+<rect x="380" y="220" width="300" height="154" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="392" y="242" font-size="14" font-weight="700" fill="#FFFFFF">sites  (external)</text>
+<rect x="381" y="254" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="254" x2="680" y2="254" stroke="#EEF0F3"/>
+<text x="668" y="270" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="394" y="270" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="381" y="278" width="298" height="24" fill="#E2E8F0"/>
+<line x1="380" y1="278" x2="680" y2="278" stroke="#EEF0F3"/>
+<text x="668" y="294" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="394" y="294" font-size="12.5" font-weight="400" fill="#1F2937">firm_id</text>
+<rect x="381" y="302" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="302" x2="680" y2="302" stroke="#EEF0F3"/>
+<text x="394" y="318" font-size="12.5" font-weight="400" fill="#1F2937">name</text>
+<rect x="381" y="326" width="298" height="24" fill="#F1F5F9"/>
+<line x1="380" y1="326" x2="680" y2="326" stroke="#EEF0F3"/>
+<text x="394" y="342" font-size="12.5" font-weight="400" fill="#1F2937">code</text>
+<rect x="381" y="350" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="350" x2="680" y2="350" stroke="#EEF0F3"/>
+<text x="394" y="366" font-size="12.5" font-weight="400" fill="#1F2937">address</text>
+<rect x="380" y="410" width="300" height="154" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 380 420 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#0E7490"/>
+<rect x="380" y="410" width="300" height="154" rx="8" fill="none" stroke="#0E7490" stroke-width="1.5"/>
+<text x="392" y="432" font-size="14" font-weight="700" fill="#FFFFFF">locations</text>
+<rect x="381" y="444" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="444" x2="680" y2="444" stroke="#EEF0F3"/>
+<text x="668" y="460" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="394" y="460" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="381" y="468" width="298" height="24" fill="#CFFAFE"/>
+<line x1="380" y1="468" x2="680" y2="468" stroke="#EEF0F3"/>
+<text x="668" y="484" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="394" y="484" font-size="12.5" font-weight="400" fill="#1F2937">site_id</text>
+<rect x="381" y="492" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="492" x2="680" y2="492" stroke="#EEF0F3"/>
+<text x="394" y="508" font-size="12.5" font-weight="400" fill="#1F2937">name</text>
+<rect x="381" y="516" width="298" height="24" fill="#ECFEFF"/>
+<line x1="380" y1="516" x2="680" y2="516" stroke="#EEF0F3"/>
+<text x="394" y="532" font-size="12.5" font-weight="400" fill="#1F2937">type</text>
+<rect x="381" y="540" width="298" height="24" fill="#FFFFFF"/>
+<line x1="380" y1="540" x2="680" y2="540" stroke="#EEF0F3"/>
+<text x="394" y="556" font-size="12.5" font-weight="400" fill="#1F2937">is_central</text>
+<rect x="720" y="80" width="300" height="466" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 720 90 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#1E3A8A"/>
+<rect x="720" y="80" width="300" height="466" rx="8" fill="none" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="732" y="102" font-size="14" font-weight="700" fill="#FFFFFF">devices</text>
+<rect x="721" y="114" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="114" x2="1020" y2="114" stroke="#EEF0F3"/>
+<text x="1008" y="130" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="734" y="130" font-size="12.5" font-weight="700" fill="#1F2937">internal_id</text>
+<rect x="721" y="138" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="138" x2="1020" y2="138" stroke="#EEF0F3"/>
+<text x="1008" y="154" font-size="10" font-weight="700" fill="#059669" text-anchor="end">UQ</text>
+<text x="734" y="154" font-size="12.5" font-weight="400" fill="#1F2937">asset_tag</text>
+<rect x="721" y="162" width="298" height="24" fill="#DCE6F8"/>
+<line x1="720" y1="162" x2="1020" y2="162" stroke="#EEF0F3"/>
+<text x="1008" y="178" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="734" y="178" font-size="12.5" font-weight="400" fill="#1F2937">device_type_id</text>
+<rect x="721" y="186" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="186" x2="1020" y2="186" stroke="#EEF0F3"/>
+<text x="734" y="202" font-size="12.5" font-weight="400" fill="#1F2937">name_label</text>
+<rect x="721" y="210" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="210" x2="1020" y2="210" stroke="#EEF0F3"/>
+<text x="734" y="226" font-size="12.5" font-weight="400" fill="#1F2937">manufacturer</text>
+<rect x="721" y="234" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="234" x2="1020" y2="234" stroke="#EEF0F3"/>
+<text x="734" y="250" font-size="12.5" font-weight="400" fill="#1F2937">model</text>
+<rect x="721" y="258" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="258" x2="1020" y2="258" stroke="#EEF0F3"/>
+<text x="734" y="274" font-size="12.5" font-weight="400" fill="#1F2937">serial_number</text>
+<rect x="721" y="282" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="282" x2="1020" y2="282" stroke="#EEF0F3"/>
+<text x="734" y="298" font-size="12.5" font-weight="400" fill="#1F2937">status</text>
+<rect x="721" y="306" width="298" height="24" fill="#DCE6F8"/>
+<line x1="720" y1="306" x2="1020" y2="306" stroke="#EEF0F3"/>
+<text x="1008" y="322" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="734" y="322" font-size="12.5" font-weight="400" fill="#1F2937">site_id</text>
+<rect x="721" y="330" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="330" x2="1020" y2="330" stroke="#EEF0F3"/>
+<text x="734" y="346" font-size="12.5" font-weight="400" fill="#1F2937">warranty_expiry</text>
+<rect x="721" y="354" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="354" x2="1020" y2="354" stroke="#EEF0F3"/>
+<text x="734" y="370" font-size="12.5" font-weight="400" fill="#1F2937">condition</text>
+<rect x="721" y="378" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="378" x2="1020" y2="378" stroke="#EEF0F3"/>
+<text x="734" y="394" font-size="12.5" font-weight="400" fill="#1F2937">photo</text>
+<rect x="721" y="402" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="402" x2="1020" y2="402" stroke="#EEF0F3"/>
+<text x="734" y="418" font-size="12.5" font-weight="400" fill="#1F2937">notes</text>
+<rect x="721" y="426" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="426" x2="1020" y2="426" stroke="#EEF0F3"/>
+<text x="734" y="442" font-size="12.5" font-weight="400" fill="#1F2937">created_at</text>
+<rect x="721" y="450" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="450" x2="1020" y2="450" stroke="#EEF0F3"/>
+<text x="734" y="466" font-size="12.5" font-weight="400" fill="#1F2937">updated_at</text>
+<rect x="721" y="474" width="298" height="24" fill="#DCE6F8"/>
+<line x1="720" y1="474" x2="1020" y2="474" stroke="#EEF0F3"/>
+<text x="1008" y="490" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="734" y="490" font-size="12.5" font-weight="400" fill="#1F2937">created_by</text>
+<rect x="721" y="498" width="298" height="24" fill="#DCE6F8"/>
+<line x1="720" y1="498" x2="1020" y2="498" stroke="#EEF0F3"/>
+<text x="1008" y="514" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="734" y="514" font-size="12.5" font-weight="400" fill="#1F2937">updated_by</text>
+<rect x="721" y="522" width="298" height="24" fill="#EFF3FB"/>
+<line x1="720" y1="522" x2="1020" y2="522" stroke="#EEF0F3"/>
+<text x="734" y="538" font-size="12.5" font-weight="400" fill="#1F2937">retired_date</text>
+<rect x="720" y="590" width="300" height="130" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 720 600 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#3730A3"/>
+<rect x="720" y="590" width="300" height="130" rx="8" fill="none" stroke="#3730A3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="732" y="612" font-size="14" font-weight="700" fill="#FFFFFF">device_current_state  (view)</text>
+<rect x="721" y="624" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="624" x2="1020" y2="624" stroke="#EEF0F3"/>
+<text x="734" y="640" font-size="12.5" font-weight="400" fill="#1F2937">device_id</text>
+<rect x="721" y="648" width="298" height="24" fill="#EEF0FB"/>
+<line x1="720" y1="648" x2="1020" y2="648" stroke="#EEF0F3"/>
+<text x="734" y="664" font-size="12.5" font-weight="400" fill="#1F2937">current_holder_user_id</text>
+<rect x="721" y="672" width="298" height="24" fill="#FFFFFF"/>
+<line x1="720" y1="672" x2="1020" y2="672" stroke="#EEF0F3"/>
+<text x="734" y="688" font-size="12.5" font-weight="400" fill="#1F2937">current_location_id</text>
+<rect x="721" y="696" width="298" height="24" fill="#EEF0FB"/>
+<line x1="720" y1="696" x2="1020" y2="696" stroke="#EEF0F3"/>
+<text x="734" y="712" font-size="12.5" font-weight="400" fill="#1F2937">since</text>
+<rect x="1060" y="80" width="300" height="130" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 1060 90 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#475569"/>
+<rect x="1060" y="80" width="300" height="130" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="1072" y="102" font-size="14" font-weight="700" fill="#FFFFFF">clinic_users  (external)</text>
+<rect x="1061" y="114" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="114" x2="1360" y2="114" stroke="#EEF0F3"/>
+<text x="1348" y="130" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="1074" y="130" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="1061" y="138" width="298" height="24" fill="#F1F5F9"/>
+<line x1="1060" y1="138" x2="1360" y2="138" stroke="#EEF0F3"/>
+<text x="1074" y="154" font-size="12.5" font-weight="400" fill="#1F2937">username</text>
+<rect x="1061" y="162" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="162" x2="1360" y2="162" stroke="#EEF0F3"/>
+<text x="1074" y="178" font-size="12.5" font-weight="400" fill="#1F2937">full_name</text>
+<rect x="1061" y="186" width="298" height="24" fill="#F1F5F9"/>
+<line x1="1060" y1="186" x2="1360" y2="186" stroke="#EEF0F3"/>
+<text x="1074" y="202" font-size="12.5" font-weight="400" fill="#1F2937">role</text>
+<rect x="1060" y="250" width="300" height="322" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 1060 260 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#B45309"/>
+<rect x="1060" y="250" width="300" height="322" rx="8" fill="none" stroke="#B45309" stroke-width="1.5"/>
+<text x="1072" y="272" font-size="14" font-weight="700" fill="#FFFFFF">device_custody_events</text>
+<rect x="1061" y="284" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="284" x2="1360" y2="284" stroke="#EEF0F3"/>
+<text x="1348" y="300" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="1074" y="300" font-size="12.5" font-weight="700" fill="#1F2937">event_id</text>
+<rect x="1061" y="308" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="308" x2="1360" y2="308" stroke="#EEF0F3"/>
+<text x="1348" y="324" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="324" font-size="12.5" font-weight="400" fill="#1F2937">device_id</text>
+<rect x="1061" y="332" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="332" x2="1360" y2="332" stroke="#EEF0F3"/>
+<text x="1074" y="348" font-size="12.5" font-weight="400" fill="#1F2937">event_type</text>
+<rect x="1061" y="356" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="356" x2="1360" y2="356" stroke="#EEF0F3"/>
+<text x="1348" y="372" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="372" font-size="12.5" font-weight="400" fill="#1F2937">actor_user_id</text>
+<rect x="1061" y="380" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="380" x2="1360" y2="380" stroke="#EEF0F3"/>
+<text x="1348" y="396" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="396" font-size="12.5" font-weight="400" fill="#1F2937">from_user_id</text>
+<rect x="1061" y="404" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="404" x2="1360" y2="404" stroke="#EEF0F3"/>
+<text x="1348" y="420" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="420" font-size="12.5" font-weight="400" fill="#1F2937">from_location_id</text>
+<rect x="1061" y="428" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="428" x2="1360" y2="428" stroke="#EEF0F3"/>
+<text x="1348" y="444" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="444" font-size="12.5" font-weight="400" fill="#1F2937">to_user_id</text>
+<rect x="1061" y="452" width="298" height="24" fill="#FEF3C7"/>
+<line x1="1060" y1="452" x2="1360" y2="452" stroke="#EEF0F3"/>
+<text x="1348" y="468" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="468" font-size="12.5" font-weight="400" fill="#1F2937">to_location_id</text>
+<rect x="1061" y="476" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="476" x2="1360" y2="476" stroke="#EEF0F3"/>
+<text x="1074" y="492" font-size="12.5" font-weight="400" fill="#1F2937">event_timestamp</text>
+<rect x="1061" y="500" width="298" height="24" fill="#FFFBEB"/>
+<line x1="1060" y1="500" x2="1360" y2="500" stroke="#EEF0F3"/>
+<text x="1074" y="516" font-size="12.5" font-weight="400" fill="#1F2937">expected_return_date</text>
+<rect x="1061" y="524" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="524" x2="1360" y2="524" stroke="#EEF0F3"/>
+<text x="1074" y="540" font-size="12.5" font-weight="400" fill="#1F2937">condition_at_event</text>
+<rect x="1061" y="548" width="298" height="24" fill="#FFFBEB"/>
+<line x1="1060" y1="548" x2="1360" y2="548" stroke="#EEF0F3"/>
+<text x="1074" y="564" font-size="12.5" font-weight="400" fill="#1F2937">notes</text>
+<rect x="1060" y="620" width="300" height="106" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 1060 630 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#047857"/>
+<rect x="1060" y="620" width="300" height="106" rx="8" fill="none" stroke="#047857" stroke-width="1.5"/>
+<text x="1072" y="642" font-size="14" font-weight="700" fill="#FFFFFF">device_examination_types</text>
+<rect x="1061" y="654" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1060" y1="654" x2="1360" y2="654" stroke="#EEF0F3"/>
+<text x="1348" y="670" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="1074" y="670" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="1061" y="678" width="298" height="24" fill="#D1FAE5"/>
+<line x1="1060" y1="678" x2="1360" y2="678" stroke="#EEF0F3"/>
+<text x="1348" y="694" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="694" font-size="12.5" font-weight="400" fill="#1F2937">device_id</text>
+<rect x="1061" y="702" width="298" height="24" fill="#D1FAE5"/>
+<line x1="1060" y1="702" x2="1360" y2="702" stroke="#EEF0F3"/>
+<text x="1348" y="718" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1074" y="718" font-size="12.5" font-weight="400" fill="#1F2937">examination_type_id</text>
+<rect x="1400" y="80" width="300" height="130" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 1400 90 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#9D174D"/>
+<rect x="1400" y="80" width="300" height="130" rx="8" fill="none" stroke="#9D174D" stroke-width="1.5"/>
+<text x="1412" y="102" font-size="14" font-weight="700" fill="#FFFFFF">inventory_user_roles</text>
+<rect x="1401" y="114" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1400" y1="114" x2="1700" y2="114" stroke="#EEF0F3"/>
+<text x="1688" y="130" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="1414" y="130" font-size="12.5" font-weight="700" fill="#1F2937">user_id</text>
+<rect x="1401" y="138" width="298" height="24" fill="#FDF2F8"/>
+<line x1="1400" y1="138" x2="1700" y2="138" stroke="#EEF0F3"/>
+<text x="1414" y="154" font-size="12.5" font-weight="400" fill="#1F2937">role</text>
+<rect x="1401" y="162" width="298" height="24" fill="#FCE7F3"/>
+<line x1="1400" y1="162" x2="1700" y2="162" stroke="#EEF0F3"/>
+<text x="1688" y="178" font-size="10" font-weight="700" fill="#2563EB" text-anchor="end">FK</text>
+<text x="1414" y="178" font-size="12.5" font-weight="400" fill="#1F2937">granted_by</text>
+<rect x="1401" y="186" width="298" height="24" fill="#FDF2F8"/>
+<line x1="1400" y1="186" x2="1700" y2="186" stroke="#EEF0F3"/>
+<text x="1414" y="202" font-size="12.5" font-weight="400" fill="#1F2937">granted_at</text>
+<rect x="1400" y="620" width="300" height="154" rx="8" fill="#FFFFFF" stroke="#D1D5DB"/>
+<path d="M 1400 630 a10 10 0 0 1 10 -10 h280 a10 10 0 0 1 10 10 v24 h-300 z" fill="#475569"/>
+<rect x="1400" y="620" width="300" height="154" rx="8" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="1412" y="642" font-size="14" font-weight="700" fill="#FFFFFF">examination_types  (external)</text>
+<rect x="1401" y="654" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1400" y1="654" x2="1700" y2="654" stroke="#EEF0F3"/>
+<text x="1688" y="670" font-size="10" font-weight="700" fill="#B45309" text-anchor="end">PK</text>
+<text x="1414" y="670" font-size="12.5" font-weight="700" fill="#1F2937">id</text>
+<rect x="1401" y="678" width="298" height="24" fill="#F1F5F9"/>
+<line x1="1400" y1="678" x2="1700" y2="678" stroke="#EEF0F3"/>
+<text x="1414" y="694" font-size="12.5" font-weight="400" fill="#1F2937">name</text>
+<rect x="1401" y="702" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1400" y1="702" x2="1700" y2="702" stroke="#EEF0F3"/>
+<text x="1414" y="718" font-size="12.5" font-weight="400" fill="#1F2937">code</text>
+<rect x="1401" y="726" width="298" height="24" fill="#F1F5F9"/>
+<line x1="1400" y1="726" x2="1700" y2="726" stroke="#EEF0F3"/>
+<text x="1414" y="742" font-size="12.5" font-weight="400" fill="#1F2937">modality</text>
+<rect x="1401" y="750" width="298" height="24" fill="#FFFFFF"/>
+<line x1="1400" y1="750" x2="1700" y2="750" stroke="#EEF0F3"/>
+<text x="1414" y="766" font-size="12.5" font-weight="400" fill="#1F2937">description</text>
+<rect x="40" y="812" width="1680" height="52" rx="8" fill="#FFFFFF" stroke="#E5E7EB"/>
+<text x="58" y="833" font-size="12" font-weight="700" fill="#374151">Legend:</text>
+<text x="128" y="833" font-size="11" font-weight="700" fill="#B45309">PK</text>
+<text x="154" y="833" font-size="11" fill="#4B5563">primary key</text>
+<text x="254.0" y="833" font-size="11" font-weight="700" fill="#2563EB">FK</text>
+<text x="280.0" y="833" font-size="11" fill="#4B5563">foreign key</text>
+<text x="380.0" y="833" font-size="11" font-weight="700" fill="#059669">UQ</text>
+<text x="406.0" y="833" font-size="11" fill="#4B5563">unique</text>
+<text x="58" y="852" font-size="11" fill="#4B5563">Custody "to" side: at least one of to_user_id / to_location_id (both allowed → who has it + where). current_location_id in the view = to_location_id of newest event.</text>
+</svg>

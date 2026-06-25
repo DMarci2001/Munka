@@ -1,0 +1,52 @@
+<?php
+// ============================================================
+// Központi konfiguráció — Eszköznyilvántartás API
+// ------------------------------------------------------------
+// Másold ezt a fájlt `config.php` néven, és töltsd ki a saját
+// (fejlesztői / éles) értékeiddel. A `config.php` git-ignorált,
+// mert érzékeny adatokat (DB jelszó, SSO titok) tartalmaz.
+// ============================================================
+
+// ---- Adatbázis (fejlesztői XAMPP alapértelmezés) -----------
+const DB_HOST = '127.0.0.1';
+const DB_PORT = 3306;
+const DB_NAME = 'eszkoznyilvantartas';   // éles: a klinikai adatbázis neve
+const DB_USER = 'root';
+const DB_PASS = '';                       // XAMPP alapértelmezés: üres jelszó
+
+// ---- Klinikai users tábla oszlop-leképezése ----------------
+// A frontend `full_name`/`auth` mezőket vár; a klinikai tábla `nev`/`jogosultsag`.
+// A backend itt fordít, így a frontend szerepkör-logikája változatlan marad.
+const USER_NAME_COLUMN     = 'nev';          // → full_name
+const USER_ROLE_COLUMN     = 'jogosultsag';  // INT 0/1/2 → auth string
+const USER_PASSWORD_COLUMN = 'jelszo';       // bcrypt hash (éles: a klinika oszlopa)
+
+// helyszinek (locations) oszlopa
+const LOCATION_ADDRESS_COLUMN = 'cim';       // → address
+
+// jogosultsag (INT) ↔ auth (string) leképezés
+const ROLE_INT_TO_STRING = [0 => 'user', 1 => 'storekeeper', 2 => 'it_admin'];
+
+// ---- CORS --------------------------------------------------
+// A Vite dev szerver origin-je. Éles azonos-origin esetén nem számít.
+const CORS_ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost',
+];
+
+// ---- Munkamenet --------------------------------------------
+const SESSION_NAME = 'eszkozsession';
+
+// ---- SSO ---------------------------------------------------
+// Shared secret for cross-domain SSO handoff from the clinic website.
+// Must match the value configured on the clinic website side.
+// Replace with a long random string before deploying.
+const SSO_SECRET      = 'CHANGE_THIS_TO_A_LONG_RANDOM_STRING';
+const SSO_TTL_SECONDS = 60;
+
+// Add the clinic website's origin here when known, e.g.:
+//   'https://klinika.example.hu'
+
+// ---- Üzleti állandók ---------------------------------------
+const RESERVATION_DAYS = 3;  // foglalás élettartama (nap)

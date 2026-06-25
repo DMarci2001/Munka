@@ -1,0 +1,22 @@
+# ---- Secrets / local config -------------------------------
+backend/config/config.php          # live DB credentials + SSO secret
+
+# ---- Dependencies / build artifacts -----------------------
+node_modules/
+frontend/dist/
+.vite/
+.venv/
+
+# ---- Logs -------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---- Tooling / editor / OS --------------------------------
+.claude/
+.playwright-mcp/
+.planning/
+.DS_Store
+Thumbs.db
+nul
