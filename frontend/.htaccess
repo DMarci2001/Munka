@@ -19,4 +19,4 @@
 # átirányítást. Csak a pontos belépési pontra illeszkedik — a dist/,
 # az assets/ és a src/ kérések érintetlenek maradnak.
 # ============================================================
-RedirectMatch 302 ^/eszkoznyilvantartas_frontend/webapp/?$ /eszkoznyilvantartas_frontend/webapp/dist/
+RedirectMatch 302 ^/eszkoznyilvantartas/frontend/?$ /eszkoznyilvantartas/frontend/dist/

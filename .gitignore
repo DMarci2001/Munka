@@ -1,5 +1,6 @@
 # ---- Secrets / local config -------------------------------
-backend/config/config.php          # live DB credentials + SSO secret
+# (live DB credentials + SSO secret)
+backend/config/config.php
 
 # ---- Dependencies / build artifacts -----------------------
 node_modules/

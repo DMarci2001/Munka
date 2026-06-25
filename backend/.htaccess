@@ -4,7 +4,7 @@
 # ============================================================
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /eszkoznyilvantartas_api/
+  RewriteBase /eszkoznyilvantartas/backend/
 
   # Meglévő fájl/könyvtár közvetlenül kiszolgálható.
   RewriteCond %{REQUEST_FILENAME} -f [OR]

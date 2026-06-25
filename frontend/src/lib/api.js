@@ -12,7 +12,7 @@
 
 const API_BASE = import.meta.env.DEV
   ? '/api'
-  : (import.meta.env.VITE_API_BASE || '/eszkoznyilvantartas_api');
+  : (import.meta.env.VITE_API_BASE || '/eszkoznyilvantartas/backend');
 
 // Üzleti / API hiba — a UI ennek a message-ét toastolja.
 export class OpError extends Error {}

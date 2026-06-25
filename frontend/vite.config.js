@@ -19,7 +19,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost/eszkoznyilvantartas_api',
+        target: 'http://localhost/eszkoznyilvantartas/backend',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

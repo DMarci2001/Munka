@@ -3,8 +3,8 @@
 ## Project Overview
 
 Medical device inventory management SPA for Hungária Med-M Kft.
-The SPA is backed by a **PHP + MySQL/MariaDB API** (separate repo
-`eszkoznyilvantartas_api`, served under `C:/xampp/htdocs/eszkoznyilvantartas_api`).
+The SPA is backed by a **PHP + MySQL/MariaDB API** (the `backend/` directory of
+this monorepo, served under `C:/xampp/htdocs/eszkoznyilvantartas/backend`).
 The backend is the single source of truth; the browser store is an in-memory
 **mirror** that hydrates from `GET /bootstrap` and re-fetches the dynamic slices
 after every mutation. There is no `localStorage` persistence.
@@ -13,7 +13,7 @@ after every mutation. There is no `localStorage` persistence.
 
 - **Vanilla JS** (ES Modules) — no UI framework
 - **Vite** (dev server + build) — `npm run dev`; config in `vite.config.js`
-  (dev proxy `/api → http://localhost/eszkoznyilvantartas_api`, base `./`)
+  (dev proxy `/api → http://localhost/eszkoznyilvantartas/backend`, base `./`)
 - **Bootstrap 5.3.x** — loaded from CDN in `index.html`; npm package present but
   not used at runtime
 - **qrcode** — lazy-imported only by `src/ui/qrLabel.js`
