@@ -201,6 +201,7 @@ const Ico = {
   eye:      S(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/></>, 16),
   eyeOff:   S(<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
   logout:   S(<><path d="M16 17l5-5-5-5M21 12H9M13 7V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></>, 16),
+  lock:     S(<><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>, 16),
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
@@ -218,13 +219,13 @@ function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
     const slots = [];
-    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title })));
+    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title, ac:!!s.acceptedConflict })));
     for (let i=0; i<slots.length; i++) for (let j=i+1; j<slots.length; j++) {
       const x=slots[i], y=slots[j];
-      if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e) {
+      if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e && !x.ac && !y.ac) {
         set.add(x.key); set.add(y.key);
-        (det[x.key]||=[]).push({ p:y.p, from:y.from, to:y.to, title:y.title, key:y.key });
-        (det[y.key]||=[]).push({ p:x.p, from:x.from, to:x.to, title:x.title, key:x.key });
+        (det[x.key]||=[]).push({ p:y.p, workerId:x.workerId, from:y.from, to:y.to, title:y.title, key:y.key });
+        (det[y.key]||=[]).push({ p:x.p, workerId:y.workerId, from:x.from, to:x.to, title:x.title, key:x.key });
       }
     }
     const vacs = (vacationsByDay && vacationsByDay[di]) || [];
@@ -417,7 +418,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
     const dates = b
       ? (multiApply && b.cat==="kiszallas" ? datesBetween(multiFrom, multiTo) : [dateStr])
       : (cat==="kiszallas" ? datesBetween(dateStart, dateEnd) : Array.from(selectedDays).sort().map((di)=>iso(dayDates[di])));
-    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note };
+    const rec = { id:b?b.id:null, tipusId:b?b.tipusId:null, date:dateStr, dates, cat, org, title, address, rendelo:rendInput, napok, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, staff, from, to, note, validfrom:cat==="kiszallas"?dateStart:"", validto:cat==="kiszallas"?dateEnd:"" };
     onSave(rec);
   };
 
@@ -593,7 +594,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
               <Row icon={Ico.alert({width:15,height:15})} label="Státusz">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
-                  {b && (b.staff||[]).length>0 && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
+                  {b && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
                 </div>
               </Row>
             </div>
@@ -679,7 +680,7 @@ function MapPopover({ booking, onClose }) {
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
-function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
+function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
@@ -709,7 +710,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
   const cardBorder = inactive ? "var(--border-soft)" : red ? "var(--danger)" : (b.color ? `color-mix(in srgb,${b.color} 50%,var(--border))` : "var(--border)");
   return (
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
-      {hasStaff && <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>}
+      <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -723,14 +724,19 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
         {egyebs.map((s,i)                    => <StaffChip key={"e"+i} s={s} color="var(--green)"  soft="var(--green-soft)"  icon={Ico.building({width:12,height:12})}/>)}
       </div>}
       {b.note&&!conflict&&!inactive&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
-      {!inactive&&overlapDouble[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {overlapDouble[0].p} {overlapDouble[0].from}–{overlapDouble[0].to}</div>}
+      {!inactive&&overlapDouble.map((o,i)=>(
+        <div key={i} className="mt-1.5 flex items-center justify-between gap-2">
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {o.p} {o.from}–{o.to}</span>
+          <button onClick={(e)=>{e.stopPropagation();onDismissConflict&&onDismissConflict(b,o.workerId);}} className="rounded px-1.5 py-0.5" style={{ fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)", flexShrink:0 }}>Elfogad</button>
+        </div>
+      ))}
       {!inactive&&overlapVac[0]&&<div className="mt-1.5" style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>{overlapVac[0].p} szabadságon van{overlapVac[0].status===0?" (függő kérelem)":""}</div>}
     </div>
   );
 }
 
 /* ---- Csoport -------------------------------------------------------- */
-function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, weekWorkerHours, monthHours }) {
+function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -739,7 +745,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
-        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
+        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} onDismissConflict={onDismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
         {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
@@ -747,7 +753,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
-function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv }) {
+function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv, onDismissConflict }) {
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
@@ -795,8 +801,13 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
                             <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
-                            {(b.staff||[]).length>0 && <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>}
-                            {!inactive&&hasDouble && <RedBadge text="Ütközés"/>}
+                            <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>
+                            {!inactive&&overlap.filter((o)=>!o.vac).map((o,i)=>(
+                              <span key={i} className="flex items-center gap-1">
+                                <RedBadge text={`Ütközés: ${o.p}`}/>
+                                <button onClick={(e)=>{e.stopPropagation();onDismissConflict&&onDismissConflict(b,o.workerId);}} className="rounded px-1.5 py-0.5" style={{ fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)", flexShrink:0 }}>Elfogad</button>
+                              </span>
+                            ))}
                             {!inactive&&hasVac && <RedBadge text="Szabadságon"/>}
                             {!inactive&&noDoc && <RedBadge text="Nincs orvos"/>}
                           </div>
@@ -1229,9 +1240,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1250,7 +1261,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   };
 
   const openNew = () => {
-    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31 } });
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"" } });
   };
 
   const getSectionKey = (p) => p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso");
@@ -1322,9 +1333,18 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
                         {(p.kiszallas===1||p.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
                         {(p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
+                        {p.kiszallas===1 && (() => {
+                          const today = new Date().toISOString().slice(0,10);
+                          if (!p.validfrom && !p.validto) return <span style={{ fontSize:11, fontWeight:700, color:"var(--faint)", background:"var(--surface-2)", borderRadius:4, padding:"1px 5px" }}>Nincs időszak</span>;
+                          const active = (!p.validfrom || today >= p.validfrom) && (!p.validto || today <= p.validto);
+                          return <span style={{ fontSize:11, fontWeight:700, color:active?"var(--green)":"var(--danger-ink)", background:active?"var(--green-soft)":"var(--danger-soft)", borderRadius:4, padding:"1px 5px" }}>{active?"Aktív":"Lejárt"}</span>;
+                        })()}
                       </div>
                       {!!p.rendelo && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:600 }}>{p.rendelo}</div>}
                       {!!p.cim && <div className="truncate" style={{ fontSize:11.5, color:"var(--muted)" }}>{p.cim}</div>}
+                      {p.kiszallas===1 && (p.validfrom||p.validto) && (
+                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{p.validfrom||"?"} – {p.validto||"?"}</div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1355,11 +1375,13 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [ktartoEmail,  setKtartoEmail] = useState(p.ktarto_email||"");
   const [orvosKell,    setOrvosKell]   = useState((p.orvos_kell ?? 1) !== 0);
   const [color,        setColor]       = useState(p.color||"");
+  const [validfrom,    setValidfrom]   = useState(p.validfrom||"");
+  const [validto,      setValidto]     = useState(p.validto||"");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null });
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"" });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1405,9 +1427,22 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           </div>
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
-            <Field label="Aktív napok">
-              <NapokSelector value={napok} onChange={setNapok}/>
-            </Field>
+            {cat !== "kiszallas" && (
+              <Field label="Aktív napok">
+                <NapokSelector value={napok} onChange={setNapok}/>
+              </Field>
+            )}
+            {cat === "kiszallas" && (
+              <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)" }}>Érvényességi időszak</div>
+                <Field label="Kezdő dátum">
+                  <input type="date" value={validfrom} onChange={(e)=>setValidfrom(e.target.value)} className="mb-in px-3 py-2" style={{ fontSize:13, width:"100%" }}/>
+                </Field>
+                <Field label="Záró dátum">
+                  <input type="date" value={validto} onChange={(e)=>setValidto(e.target.value)} className="mb-in px-3 py-2" style={{ fontSize:13, width:"100%" }}/>
+                </Field>
+              </div>
+            )}
             {cat !== "kiszallas" && (
               <label className="flex items-center gap-2 cursor-pointer">
                 <Toggle on={orvosKell} onChange={setOrvosKell}/>
@@ -1478,13 +1513,13 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   };
 
   const addVacation = async (rec) => {
-    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus });
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus, megj:rec.megj||"" });
     if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const addElerheto = async (rec) => {
-    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető" });
+    const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető", megj:rec.megj||"" });
     if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
@@ -1549,6 +1584,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
         <div className="mb-mono" style={{ fontSize:11.5, color:"var(--muted)" }}>
           {fmtShortISO(v.from)}{v.to!==v.from?` – ${fmtShortISO(v.to)}`:""} · {v.days} nap{v.status===-1?" · vegyes állapot":""}
         </div>
+        {!!v.megj && <div style={{ fontSize:12, color:"var(--muted)", fontStyle:"italic", marginTop:1 }}>{v.megj}</div>}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {secKey==="pending" && (<>
@@ -1796,6 +1832,7 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   const [tol, setTol]           = useState("");
   const [ig, setIg]             = useState("");
   const [tipus, setTipus]       = useState(forceTipus || "Szabadság");
+  const [megj, setMegj]         = useState("");
   const [saving, setSaving]     = useState(false);
 
   useEffect(() => {
@@ -1807,7 +1844,8 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = !workerid || !tol || !ig || tol > ig;
-  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig, tipus }); setSaving(false); };
+  const showMegj = tipus === "Egyéb" || forceTipus === "Elérhető";
+  const save = async () => { setSaving(true); await onSave({ workerid, tol, ig, tipus, megj }); setSaving(false); };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1842,7 +1880,15 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
           </div>
           {!forceTipus && (
             <Field label="Típus">
-              <MiniSelect value={tipus} onChange={setTipus} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+              <MiniSelect value={tipus} onChange={(v)=>{ setTipus(v); if (v!=="Egyéb") setMegj(""); }} options={VACATION_TYPES.map((t)=>({ v:t, l:t }))}/>
+            </Field>
+          )}
+          {showMegj && (
+            <Field label="Megjegyzés">
+              <div className="relative">
+                <textarea value={megj} maxLength={200} onChange={(e)=>setMegj(e.target.value)} rows={2} placeholder={forceTipus==="Elérhető" ? "pl. Miskolc, délelőtt" : "pl. Egyéb indok"} className="mb-in px-3 py-2.5" style={{ fontSize:13, resize:"none" }}/>
+                <span className="absolute bottom-2 right-3 mb-mono" style={{ fontSize:11, color:"var(--faint)" }}>{megj.length} / 200</span>
+              </div>
             </Field>
           )}
           {tol && ig && tol > ig && <p style={{ fontSize:11.5, color:"var(--danger-ink)" }}>A kezdő nap nem lehet később, mint az utolsó nap.</p>}
@@ -2255,6 +2301,16 @@ function MunkaidoBeosztas() {
     (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
+  const lezartByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => ({ lezart: !!d.lezart, megj: d.lezartMegj||"" })),
+  [weekData]);
+
+  const toggleLezart = useCallback(async (date) => {
+    const body = new URLSearchParams({ toggledaylezart:"1", datum:date });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
   const weekWorkerHours = useMemo(() => {
     const map = {};
     (weekData?.days||[]).forEach((day) => {
@@ -2297,13 +2353,13 @@ function MunkaidoBeosztas() {
     try {
       let tipusId = rec.tipusId;
       if (!tipusId) {
-        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org: rec.org||"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"", napok: rec.napok??31 });
+        const body = new URLSearchParams({ addplace:"1", roleid:"1", kulso: rec.cat==="kulso"?"1":"0", kiszallas: rec.cat==="kiszallas"?"1":"0", org: rec.org||"HMM", megnev: rec.title||"", cim: rec.address||"", megj: rec.note||"", napok: rec.napok??31, validfrom: rec.validfrom||"", validto: rec.validto||"" });
         const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const result = await resp.json();
         if (result.status!=="ok") { setToast("Hiba: "+(result.message||"Ismeretlen hiba")); setSaving(false); return; }
         tipusId = result.id;
       } else if (rec.id) {
-        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", megj: rec.note||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
+        const body = new URLSearchParams({ updateplaceaddress:"1", id:tipusId, cim: rec.address||"", rendelo: rec.rendelo||"", napok: rec.napok ?? 127, org: rec.org||"HMM", ktarto_nev: rec.ktarto_nev||"", ktarto_tel: rec.ktarto_tel||"", ktarto_email: rec.ktarto_email||"" });
         const addrResp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
         const addrResult = await addrResp.json();
         if (addrResult.status !== "ok") { setToast("Hiba: " + (addrResult.message||"Ismeretlen hiba")); setSaving(false); return; }
@@ -2316,6 +2372,10 @@ function MunkaidoBeosztas() {
         if (result.status!=="ok") { allOk = false; setToast("Hiba: "+(result.message||"Ismeretlen hiba")); break; }
       }
       if (allOk) {
+        if (rec.note !== undefined) {
+          const noteBody = new URLSearchParams({ savedaynote:"1", tipusid:tipusId||"", datum:dates.join(","), megj:rec.note||"" });
+          await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:noteBody.toString() });
+        }
         await fetchWeek(weekOffset);
         setModal(null);
         setToast(dates.length>1 ? `Beosztás mentve ${dates.length} napra.` : "Beosztás mentve!");
@@ -2334,6 +2394,12 @@ function MunkaidoBeosztas() {
   const toggleAktiv = useCallback(async (b) => {
     const newAktiv = b.aktiv === 0 ? 1 : 0;
     const body = new URLSearchParams({ togglebookingaktiv:"1", tipusid:b.tipusId, datum:b.date, aktiv:newAktiv });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
+  const dismissConflict = useCallback(async (b, workerId) => {
+    const body = new URLSearchParams({ dismissconflict:"1", tipusid:b.tipusId, datum:b.date, workerid:workerId });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
     await fetchWeek(weekOffset);
   }, [weekOffset, fetchWeek]);
@@ -2497,7 +2563,7 @@ function MunkaidoBeosztas() {
                 </div>
               </div>
             ) : nav==="list" ? (
-              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv}/>
+              <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict}/>
             ) : nav==="conflicts" ? (
               <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
@@ -2516,22 +2582,26 @@ function MunkaidoBeosztas() {
                   const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
                   const hol  = holidayOf(iso(dayDates[di]));
                   const rest = di===6 || !!hol;
+                  const { lezart, megj: lezartMegj } = lezartByDay[di] || {};
+                  const dateStr = iso(dayDates[di]);
                   return (
-                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:(di>=5||hol)?"var(--weekend)":"var(--bg)", border:"1px solid var(--border-soft)" }}>
+                    <div key={day} className="mb-col flex flex-col rounded-xl" style={{ width:278, flexShrink:0, background:lezart?"color-mix(in srgb,var(--danger) 6%,var(--bg))":(di>=5||hol)?"var(--weekend)":"var(--bg)", border:`1px solid ${lezart?"color-mix(in srgb,var(--danger) 35%,var(--border-soft))":"var(--border-soft)"}` }}>
                       <div className="px-3 py-2.5" style={{ borderBottom:"1px solid var(--border)" }}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-baseline gap-2">
-                            <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:rest?"var(--danger)":"var(--ink)" }}>{HU_DAYS_UP[di]}</span>
+                            <span className="mb-display" style={{ fontSize:13.5, fontWeight:700, letterSpacing:".03em", color:lezart?"var(--danger)":rest?"var(--danger)":"var(--ink)" }}>{HU_DAYS_UP[di]}</span>
                             <span className="flex items-center justify-center rounded-md" style={{ minWidth:18, height:18, padding:"0 4px", fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{weekDays[di].length}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            {dayConflict && <span className="mb-pulse" style={{ color:"var(--danger)" }} title="Ütközés">{Ico.alert({width:14,height:14})}</span>}
-                            <span className="mb-mono" style={{ fontSize:11, color:rest?"var(--danger-ink)":"var(--faint)", textTransform:"uppercase" }}>{HU_MON_SHORT[dayDates[di].getUTCMonth()]} {dayDates[di].getUTCDate()}.</span>
+                            {dayConflict && !lezart && <span className="mb-pulse" style={{ color:"var(--danger)" }} title="Ütközés">{Ico.alert({width:14,height:14})}</span>}
+                            <span className="mb-mono" style={{ fontSize:11, color:rest||lezart?"var(--danger-ink)":"var(--faint)", textTransform:"uppercase" }}>{HU_MON_SHORT[dayDates[di].getUTCMonth()]} {dayDates[di].getUTCDate()}.</span>
+                            <button onClick={()=>toggleLezart(dateStr)} title={lezart?"Leállás feloldása":"Nap lezárása (leállás)"} className="mb-btn flex items-center justify-center rounded-md" style={{ width:22, height:22, color:lezart?"var(--danger-ink)":"var(--faint)", background:lezart?"var(--danger-soft)":"var(--surface-2)", border:lezart?"1px solid color-mix(in srgb,var(--danger) 30%,transparent)":"1px solid var(--border)" }}>{Ico.lock({width:11,height:11})}</button>
                           </div>
                         </div>
-                        {hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
+                        {lezart && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> Leállás{lezartMegj ? ` · ${lezartMegj}` : ""}</div>}
+                        {!lezart && hol && <div className="flex items-center gap-1 mt-1" style={{ fontSize:10.5, fontWeight:700, color:"var(--danger-ink)" }}><span style={{ width:6, height:6, borderRadius:99, background:"var(--danger)", display:"inline-block" }}/> {hol} · munkaszüneti nap</div>}
                       </div>
-                      <div className="mb-colbody flex flex-col gap-2.5 p-2.5">
+                      <div className="mb-colbody flex flex-col gap-2.5 p-2.5" style={{ opacity:lezart?0.45:1, pointerEvents:lezart?"none":"auto" }}>
                         {!conflictView && elerhetoByDay[di] && elerhetoByDay[di].length > 0 && (
                           <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
                             <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,#2563eb 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
@@ -2541,7 +2611,10 @@ function MunkaidoBeosztas() {
                             </div>
                             <div className="flex flex-col p-2 gap-0.5">
                               {elerhetoByDay[di].map((e, idx) => (
-                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>{e.name}</div>
+                                <div key={idx} style={{ padding:"2px 4px" }}>
+                                  <div style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>{e.name}</div>
+                                  {!!e.megj && <div style={{ fontSize:11.5, color:"var(--muted)", fontStyle:"italic" }}>{e.megj}</div>}
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -2550,7 +2623,7 @@ function MunkaidoBeosztas() {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
                           if (filtering && items.length===0) return null;
-                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
+                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
                         {!conflictView && szabadsagByDay[di] && szabadsagByDay[di].length > 0 && (
@@ -2562,8 +2635,11 @@ function MunkaidoBeosztas() {
                             </div>
                             <div className="flex flex-col p-2 gap-0.5">
                               {szabadsagByDay[di].map((v, idx) => (
-                                <div key={idx} style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", padding:"2px 4px" }}>
-                                  {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                <div key={idx} style={{ padding:"2px 4px" }}>
+                                  <div style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>
+                                    {v.name}{v.status === 0 && <span style={{ fontSize:11, fontWeight:500, opacity:.7 }}> (elbírálás alatt)</span>}
+                                  </div>
+                                  {!!v.megj && <div style={{ fontSize:11.5, color:"var(--muted)", fontStyle:"italic" }}>{v.megj}</div>}
                                 </div>
                               ))}
                             </div>

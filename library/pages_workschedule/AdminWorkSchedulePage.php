@@ -121,8 +121,20 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiToggleBookingAktiv();
         }
 
+        if (isset($_POST["dismissconflict"])) {
+            $this->_apiDismissConflict();
+        }
+
         if (isset($_POST["clearweek"])) {
             $this->_apiClearWeek();
+        }
+
+        if (isset($_POST["savedaynote"])) {
+            $this->_apiSaveDayNote();
+        }
+
+        if (isset($_POST["toggledaylezart"])) {
+            $this->_apiToggleDayLezart();
         }
 
         if (isset($_GET["getmonthhours"])) {
@@ -164,6 +176,43 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasColor) {
             sql_query("ALTER TABLE schedule_tipusok ADD COLUMN color VARCHAR(7) DEFAULT NULL");
         }
+        $hasMappingAccepted = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_mapping' AND column_name='accepted_conflict'"
+        )->fetchColumn();
+        if (!$hasMappingAccepted) {
+            sql_query("ALTER TABLE schedule_mapping ADD COLUMN accepted_conflict TINYINT(1) NOT NULL DEFAULT 0");
+        }
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_datum_aktiv (
+            tipusid INT NOT NULL,
+            datum   DATE NOT NULL,
+            aktiv   TINYINT(1) NOT NULL DEFAULT 0,
+            PRIMARY KEY (tipusid, datum)
+        )");
+        $hasValidFrom = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='validfrom'"
+        )->fetchColumn();
+        if (!$hasValidFrom) {
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validfrom DATE NULL DEFAULT NULL");
+            sql_query("ALTER TABLE schedule_tipusok ADD COLUMN validto DATE NULL DEFAULT NULL");
+        }
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_datum_megj (
+            tipusid INT NOT NULL,
+            datum   DATE NOT NULL,
+            megj    TEXT NOT NULL DEFAULT '',
+            PRIMARY KEY (tipusid, datum)
+        )");
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_nap_lezart (
+            datum DATE NOT NULL,
+            megj  VARCHAR(200) NULL DEFAULT NULL,
+            PRIMARY KEY (datum)
+        )");
+        $hasVacMegj = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_szabadsag' AND column_name='megj'"
+        )->fetchColumn();
+        if (!$hasVacMegj) {
+            sql_query("ALTER TABLE schedule_szabadsag ADD COLUMN megj VARCHAR(200) NULL DEFAULT NULL");
+        }
+        sql_query("DELETE FROM schedule_mapping WHERE tipusid NOT IN (SELECT id FROM schedule_tipusok)");
 
         if (isset($_GET["getnotifications"])) {
             $this->_apiGetNotifications();
@@ -1103,7 +1152,7 @@ HTML;
 
         $mondayStart = $monday . " 00:00:00";
         $mappings = sql_query(
-            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv,
+            "SELECT m.id, m.datumfrom, m.datumto, m.tipusid, m.roleid, m.workerid, m.megj, COALESCE(m.aktiv, 1) AS aktiv, COALESCE(m.accepted_conflict, 0) AS accepted_conflict,
                     w.nev AS workernev
              FROM schedule_mapping m
              LEFT JOIN schedule_workers w ON m.workerid = w.id
@@ -1119,10 +1168,37 @@ HTML;
             $mappingIdx[$key][] = $m;
         }
 
+        $datumAktivRows = sql_query(
+            "SELECT tipusid, datum, aktiv FROM schedule_datum_aktiv WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $datumAktivIdx = [];
+        foreach ($datumAktivRows as $o) {
+            $datumAktivIdx[(int)$o["tipusid"] . "_" . $o["datum"]] = (int)$o["aktiv"];
+        }
+
+        $lezartRows = sql_query(
+            "SELECT datum, megj FROM schedule_nap_lezart WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $lezartIdx = [];
+        foreach ($lezartRows as $r) {
+            $lezartIdx[$r["datum"]] = $r["megj"] ?? "";
+        }
+
+        $dayNoteRows = sql_query(
+            "SELECT tipusid, datum, megj FROM schedule_datum_megj WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $dayNoteIdx = [];
+        foreach ($dayNoteRows as $r) {
+            $dayNoteIdx[(int)$r["tipusid"] . "_" . $r["datum"]] = $r["megj"];
+        }
+
         $weekEnd = date("Y-m-d", strtotime($monday . " +6 days"));
         $vacationRows = sql_query(
             "SELECT sz.oid AS workerid, sz.datumtol, sz.datumig, sz.status,
-                    COALESCE(sz.tipus,'') AS tipus,
+                    COALESCE(sz.tipus,'') AS tipus, COALESCE(sz.megj,'') AS megj,
                     IF(TRIM(w.teljesnev) <> '', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id = sz.oid
@@ -1137,12 +1213,13 @@ HTML;
             $end = min($v["datumig"], $weekEnd);
             while ($cur <= $end) {
                 if ($v["tipus"] === "Elérhető") {
-                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"]];
+                    $elerhetoByDate[$cur][] = ["name" => $v["workernev"], "megj" => $v["megj"]];
                 } else {
                     $szabadsagByDate[$cur][] = [
                         "workerId" => (int)$v["workerid"],
                         "name"     => $v["workernev"],
                         "status"   => (int)$v["status"],
+                        "megj"     => $v["megj"],
                     ];
                 }
                 $cur = date("Y-m-d", strtotime($cur . " +1 day"));
@@ -1160,6 +1237,12 @@ HTML;
                 $weekday = (int)date("N", strtotime($date));
                 $napok   = (int)($tipus["napok"] ?? 127);
                 if (!($napok & (1 << ($weekday - 1)))) continue;
+                if (!empty($tipus["kiszallas"])) {
+                    $vf = $tipus["validfrom"] ?? null;
+                    $vt = $tipus["validto"]   ?? null;
+                    if ($vf && $date < $vf) continue;
+                    if ($vt && $date > $vt) continue;
+                }
 
                 $key      = "{$date}_{$tipus["id"]}";
                 $staffRows = $mappingIdx[$key] ?? [];
@@ -1180,8 +1263,9 @@ HTML;
                         "workerId" => (int)$m["workerid"],
                         "from"     => $from,
                         "to"       => $to,
-                        "megj"     => $m["megj"] ?? "",
-                        "aktiv"    => (int)($m["aktiv"] ?? 1)
+                        "megj"             => $m["megj"] ?? "",
+                        "aktiv"            => (int)($m["aktiv"] ?? 1),
+                        "acceptedConflict" => (int)($m["accepted_conflict"] ?? 0),
                     ];
 
                     if ($minFrom === null || $from < $minFrom) $minFrom = $from;
@@ -1196,7 +1280,7 @@ HTML;
                     "title"   => $tipus["megnev"],
                     "address"     => $tipus["cim"]    ?? "",
                     "rendelo"     => $tipus["rendelo"] ?? "",
-                    "note"        => $tipus["megj"]  ?? "",
+                    "note"        => $dayNoteIdx[(int)$tipus["id"] . "_" . $date] ?? ($tipus["megj"] ?? ""),
                     "napok"       => (int)($tipus["napok"] ?? 127),
                     "org"         => $tipus["org"] ?: "HMM",
                     "orvosKell"   => (int)($tipus["orvos_kell"] ?? 1),
@@ -1209,11 +1293,16 @@ HTML;
                     "date"    => $date,
                     "staff"   => $staff,
                     "forDay"  => $forDay,
-                    "aktiv"   => empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0)
+                    "aktiv"   => (function() use ($datumAktivIdx, $tipus, $date, $staffRows) {
+                        $overrideKey = (int)$tipus["id"] . "_" . $date;
+                        if (isset($datumAktivIdx[$overrideKey])) return $datumAktivIdx[$overrideKey];
+                        return empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0);
+                    })()
                 ];
             }
 
-            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? []];
+            $lezart = isset($lezartIdx[$date]);
+            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? [], "lezart" => $lezart, "lezartMegj" => $lezart ? ($lezartIdx[$date] ?? "") : ""];
         }
 
         $doctorRows = sql_query(
@@ -1271,6 +1360,55 @@ HTML;
         );
 
         $this->utils->jsonOut(["status" => "ok"]);
+        die;
+    }
+
+    private function _apiSaveDayNote(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]);
+            die;
+        }
+
+        $tipusId = intval($_POST["tipusid"] ?? 0);
+        $megj    = substr(trim($_POST["megj"] ?? ""), 0, 200);
+        $datums  = array_filter(
+            array_map('trim', explode(',', $_POST["datum"] ?? "")),
+            fn($d) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)
+        );
+
+        if (!$tipusId || empty($datums)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok!"]);
+            die;
+        }
+
+        foreach ($datums as $datum) {
+            sql_query(
+                "INSERT INTO schedule_datum_megj (tipusid, datum, megj) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE megj=VALUES(megj)",
+                [$tipusId, $datum, $megj]
+            );
+        }
+
+        $this->utils->jsonOut(["status" => "ok"]);
+        die;
+    }
+
+    private function _apiToggleDayLezart(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $datum = trim($_POST["datum"] ?? "");
+        $megj  = substr(trim($_POST["megj"] ?? ""), 0, 200) ?: null;
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Érvénytelen dátum!"]); die;
+        }
+        $exists = sql_query("SELECT COUNT(*) FROM schedule_nap_lezart WHERE datum=?", [$datum])->fetchColumn();
+        if ($exists) {
+            sql_query("DELETE FROM schedule_nap_lezart WHERE datum=?", [$datum]);
+            $this->utils->jsonOut(["status" => "ok", "lezart" => false]);
+        } else {
+            sql_query("INSERT INTO schedule_nap_lezart (datum, megj) VALUES (?, ?)", [$datum, $megj]);
+            $this->utils->jsonOut(["status" => "ok", "lezart" => true]);
+        }
         die;
     }
 
@@ -1423,11 +1561,12 @@ HTML;
             $from  = $s["from"] ?? "08:00";
             $to    = $s["to"]   ?? "16:00";
             if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) continue;
-            $roleId  = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
-            $megj    = substr($s["megj"] ?? "", 0, 200);
+            $roleId           = ($s["role"] ?? "d") === "n" ? 2 : (($s["role"] ?? "d") === "e" ? 3 : (($s["role"] ?? "d") === "v" ? 5 : 1));
+            $megj             = substr($s["megj"] ?? "", 0, 200);
+            $acceptedConflict = intval($s["acceptedConflict"] ?? 0) ? 1 : 0;
             sql_query(
-                "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, createdat=now(), createdby=?",
-                ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $this->adminUser->user["id"]]
+                "INSERT INTO schedule_mapping SET datumfrom=?, datumto=?, napszak=0, tipusid=?, roleid=?, workerid=?, megj=?, accepted_conflict=?, createdat=now(), createdby=?",
+                ["{$datum} {$from}:00", "{$datum} {$to}:00", $tipusId, $roleId, $workerId, $megj, $acceptedConflict, $this->adminUser->user["id"]]
             );
             if ($roleId === 4) {
                 $this->workScheduleService->notifyScheduleChange($workerId);
@@ -1624,6 +1763,8 @@ HTML;
                     "ktarto_tel"   => $r["ktarto_tel"]   ?? "",
                     "ktarto_email" => $r["ktarto_email"] ?? "",
                     "color"        => $r["color"] ?? null,
+                    "validfrom"    => $r["validfrom"] ?? null,
+                    "validto"      => $r["validto"]   ?? null,
                 ];
             }, $rows),
         ]);
@@ -1645,8 +1786,17 @@ HTML;
         $napok     = intval($_POST["napok"] ?? 31) & 0x7F;
         $orvosKell = intval($_POST["orvos_kell"] ?? 1) ? 1 : 0;
         $color     = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST["color"] ?? "") ? $_POST["color"] : null;
+        $validfrom = null;
+        $validto   = null;
+        if ($kiszallas) {
+            $vf = trim($_POST["validfrom"] ?? "");
+            $vt = trim($_POST["validto"]   ?? "");
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
+        }
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?", [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?, validfrom=?, validto=?",
+            [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color, $validfrom, $validto]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1707,9 +1857,17 @@ HTML;
         $cur       = sql_query("SELECT kulso, kiszallas FROM schedule_tipusok WHERE id=?", [$id])->fetch(PDO::FETCH_ASSOC);
         $kulso     = $cat === "kulso" ? 1 : ($cat !== "" ? 0 : (int)$cur["kulso"]);
         $kiszallas = $cat === "kiszallas" ? 1 : ($cat !== "" ? 0 : (int)$cur["kiszallas"]);
+        $validfrom = null;
+        $validto   = null;
+        if ($kiszallas) {
+            $vf = trim($_POST["validfrom"] ?? "");
+            $vt = trim($_POST["validto"]   ?? "");
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
+        }
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=?, validfrom=?, validto=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $validfrom, $validto, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1725,6 +1883,9 @@ HTML;
         }
 
         sql_query("DELETE FROM schedule_tipusok WHERE id=?", [$id]);
+        sql_query("DELETE FROM schedule_mapping WHERE tipusid=?", [$id]);
+        sql_query("DELETE FROM schedule_datum_aktiv WHERE tipusid=?", [$id]);
+        sql_query("DELETE FROM schedule_datum_megj WHERE tipusid=?", [$id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
@@ -1792,7 +1953,7 @@ HTML;
         $rows = sql_query(
             "SELECT sz.groupid, sz.oid AS workerid, MIN(sz.datumtol) AS datumtol, MAX(sz.datumig) AS datumig,
                     MIN(sz.status) AS minstatus, MAX(sz.status) AS maxstatus, COUNT(*) AS napok,
-                    MIN(sz.tipus) AS tipus,
+                    MIN(sz.tipus) AS tipus, MIN(sz.megj) AS megj,
                     IF(TRIM(w.teljesnev)<>'', w.teljesnev, w.nev) AS workernev
              FROM schedule_szabadsag sz
              LEFT JOIN schedule_workers w ON w.id=sz.oid
@@ -1816,6 +1977,7 @@ HTML;
                     "days"       => (int)$r["napok"],
                     "status"     => $minStatus === $maxStatus ? $minStatus : -1,
                     "tipus"      => $r["tipus"] ?: "Szabadság",
+                    "megj"       => $r["megj"] ?? "",
                 ];
             }, $rows),
         ]);
@@ -1830,6 +1992,7 @@ HTML;
         $tol      = $_POST["tol"] ?? "";
         $ig       = $_POST["ig"]  ?? "";
         $tipus    = in_array($_POST["tipus"] ?? "", ["Szabadság", "Betegszabadság", "Képzés", "Egyéb", "Elérhető"]) ? $_POST["tipus"] : "Szabadság";
+        $megj     = substr(trim($_POST["megj"] ?? ""), 0, 200) ?: null;
 
         if (!$workerId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tol) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a munkatársat és a szabadság kezdő/vég napját!"]);
@@ -1837,16 +2000,10 @@ HTML;
         if (strtotime($tol) > strtotime($ig)) {
             $this->utils->jsonOut(["status" => "error", "message" => "A kezdő dátum nem lehet később, mint a vég dátum!"]);
         }
-        $szRow     = sql_query("SELECT szunnapok FROM settings LIMIT 1")->fetch();
-        $szunnapok = $szRow ? array_filter(array_map('trim', explode(',', $szRow['szunnapok']))) : [];
         $groupId   = 0;
         $cur       = $tol;
         while (strtotime($cur) <= strtotime($ig)) {
-            if ($tipus !== "Elérhető" && ((int)date('N', strtotime($cur)) >= 6 || in_array($cur, $szunnapok))) {
-                $cur = date("Y-m-d", strtotime("{$cur} +1 day"));
-                continue;
-            }
-            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?", [$cur, $cur, $workerId, $tipus]);
+            sql_query("INSERT INTO schedule_szabadsag SET datumtol=?, datumig=?, oid=?, tipus=?, megj=?", [$cur, $cur, $workerId, $tipus, $megj]);
             $newId = sql_insert_id();
             if ($groupId === 0) $groupId = $newId;
             sql_query("UPDATE schedule_szabadsag SET groupid=? WHERE id=?", [$groupId, $newId]);
@@ -1891,6 +2048,24 @@ HTML;
         $this->utils->jsonOut(["status" => "ok"]);
     }
 
+    private function _apiDismissConflict(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $tipusId  = intval($_POST["tipusid"]  ?? 0);
+        $datum    = $_POST["datum"]   ?? "";
+        $workerId = intval($_POST["workerid"] ?? 0);
+        if (!$tipusId || !$datum || !$workerId) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok"]); die;
+        }
+        sql_query(
+            "UPDATE schedule_mapping SET accepted_conflict=1 WHERE tipusid=? AND DATE(datumfrom)=? AND workerid=?",
+            [$tipusId, $datum, $workerId]
+        );
+        $this->utils->jsonOut(["status" => "ok"]);
+        die;
+    }
+
     private function _apiToggleBookingAktiv(): void {
         $tipusId = intval($_POST["tipusid"] ?? 0);
         $datum   = $_POST["datum"] ?? "";
@@ -1900,6 +2075,11 @@ HTML;
             die;
         }
         sql_query("UPDATE schedule_mapping SET aktiv=? WHERE tipusid=? AND DATE(datumfrom)=?", [$aktiv, $tipusId, $datum]);
+        if ($aktiv === 0) {
+            sql_query("INSERT INTO schedule_datum_aktiv (tipusid, datum, aktiv) VALUES (?,?,0) ON DUPLICATE KEY UPDATE aktiv=0", [$tipusId, $datum]);
+        } else {
+            sql_query("DELETE FROM schedule_datum_aktiv WHERE tipusid=? AND datum=?", [$tipusId, $datum]);
+        }
         $this->utils->jsonOut(["status" => "ok"]);
         die;
     }
@@ -1917,7 +2097,18 @@ HTML;
         foreach ($workers as $w) {
             $changed = sql_query(
                 "SELECT 1 FROM schedule_mapping m
-                 WHERE m.datumfrom>=DATE(DATE_ADD(NOW(), INTERVAL 1 DAY)) AND m.notifyhash<>md5(concat(m.datumfrom, m.datumto)) AND m.workerid=:uid LIMIT 1",
+                 JOIN schedule_tipusok t ON t.id = m.tipusid
+                 WHERE m.datumfrom>=DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))
+                   AND m.notifyhash<>md5(concat(m.datumfrom, m.datumto))
+                   AND m.aktiv=1
+                   AND m.workerid=:uid
+                   AND NOT EXISTS (
+                       SELECT 1 FROM schedule_datum_aktiv sda
+                       WHERE sda.tipusid=m.tipusid AND sda.datum=DATE(m.datumfrom) AND sda.aktiv=0
+                   )
+                   AND NOT EXISTS (
+                       SELECT 1 FROM schedule_nap_lezart WHERE datum=DATE(m.datumfrom)
+                   ) LIMIT 1",
                 ["uid" => $w["id"]]
             )->fetch();
 
@@ -2020,8 +2211,17 @@ HTML;
             "SELECT DISTINCT w.id, w.nev, w.teljesnev, w.tel, w.email, w.smsert, w.emailert
              FROM schedule_mapping m
              JOIN schedule_workers w ON w.id = m.workerid
+             JOIN schedule_tipusok t ON t.id = m.tipusid
              WHERE m.datumfrom >= :from AND m.datumfrom < DATE_ADD(:from, INTERVAL 7 DAY)
              AND COALESCE(w.aktiv, 1) = 1
+             AND m.aktiv = 1
+             AND NOT EXISTS (
+                 SELECT 1 FROM schedule_datum_aktiv sda
+                 WHERE sda.tipusid = m.tipusid AND sda.datum = DATE(m.datumfrom) AND sda.aktiv = 0
+             )
+             AND NOT EXISTS (
+                 SELECT 1 FROM schedule_nap_lezart WHERE datum = DATE(m.datumfrom)
+             )
              ORDER BY w.roleid, w.nev",
             ["from" => $mondayStart]
         )->fetchAll(PDO::FETCH_ASSOC);
