@@ -78,11 +78,11 @@ class BeosztasService {
             WHERE h.aktiv=1 AND o.aktiv=1 AND b.aktiv=1 AND b.nap<>0 AND (b.nap<>10 or b.beonap>=DATE(NOW())) AND b.`helyszinid` IS NOT NULL and (instr(b.beocegek, ?) or b.beocegek='') and (instr(b.tipusok, ?) or ? = 0) 
             GROUP BY h.id ORDER BY cim", ["|{$cegId}|", "|{$szuresTipusId}|", $szuresTipusId])->fetchAll();
 
-            if(CompanyService::isFGSZ()){
+            /*if(CompanyService::isFGSZ()){
                 $helyszinek = array();
                 $helyszinek[] = ["id" => 1, "cim" => "Budapest (1135) Jász utca 33-35."];
                 $helyszinek[] = ["id" => 644, "cim" => "Budapest (1117)  Bercsényi utca 24. KELTEXMED"];
-            }
+            }*/
         //if ($cegId == 74) {
         //    $helyszinek[] = ["id" => 98989898989898, "cim" => "Budapest (1135) Jász utca 33-35. (Haller Gardens irodaház orvosi rendelése helyett)"];
         //}
