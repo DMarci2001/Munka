@@ -3699,15 +3699,15 @@ class BookingService
 
     public function numberOfReservationRequired():int {
         if (CompanyService::isFGSZ()) {
-            if (session_id() == "fpsdm440519dgohrth4a3kf4om" || session_id() == "rj5cbf2g8d5n22r73hv00jobar") {
+            //if (session_id() == "fpsdm440519dgohrth4a3kf4om" || session_id() == "rj5cbf2g8d5n22r73hv00jobar") {
                 $doctors = $this->beosztasService->getDoctors($_SESSION["helyszindata"]["id"], $this->helyszin, $this->szuresTipus);
                 if (count($doctors) == 1) {
                     if ($doctors[0]["onlytel"] == 1 && substr_count($doctors[0]["email"], "@") && substr_count($doctors[0]["email"], ".")) {
                         return 3;
                     }
                 }
-                return 3;
-            }
+                //return 3;
+            //}
         }
         return 1;
     }

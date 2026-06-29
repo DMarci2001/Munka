@@ -143,9 +143,9 @@ class NotificationService
                 return;
             }
 
-            if ($row["fgroupid"] != "0") {
+            /*if ($row["fgroupid"] != "0") {
                 return;
-            }
+            }*/
 
             if (!empty($row["jarat"])) {
                 $row["datum"] = substr($row["datum"], 0, 10)." ".$row["jarat"];
@@ -163,6 +163,11 @@ class NotificationService
                     $mailTemplate = $this->userMailTemplateWebDoctor($row);
                 }
             }
+
+            //3 időpontos levél sablon
+            /*if(!empty($row["fgroupid"])){
+                $mailTemplate = $this->userMultiBookingTemplate($row);
+            }*/
 
             if ($this->isVarolista($row)) {
                 $mailTemplate = $this->userMailTemplateVarolista($row);
@@ -265,7 +270,7 @@ class NotificationService
                         $mailTemplate = $this->orvosMailTemplateRemote($rowf, $rowo);
                     }
 
-                    if ($rowf["fgroupid"] != 0) {
+                    if (!empty($rowf["fgroupid"])) {
                         $mailTemplate = $this->orvosMailTemplateMultiTime($rowf, $rowo);
                     }
 
@@ -355,6 +360,10 @@ class NotificationService
 
                     if ($row["orvosnev"] != "" && $row["orvosemail"] != "") {
                         $mbody .= "Értesített orvos: {$row["orvosnev"]} ({$row["orvosemail"]})";
+                    }
+
+                    if(!empty($row["fgroupid"])){
+                        $mbody = "Orvos részére kimenő levél";
                     }
 
                     $mail->Subject = $subject;
@@ -577,6 +586,9 @@ class NotificationService
             $dateLinks = "";
 
             $reservations = sql_query("select id, pass, datum from foglalasok where fgroupid=? and regdatum>=? order by datum", [$rowf["fgroupid"], date("Y-m-d 00:00:00", strtotime($rowf["regdatum"]))])->fetchAll(PDO::FETCH_ASSOC);
+            echo "<pre>";
+            print_r($reservations);
+            echo "</pre>";
             foreach ($reservations as $reservation) {
                 $dateLinks .= "<a href='" . Booking_Constants::MAIN_URL . "/index.php?selectthistime={$reservation["id"]}&p={$reservation["pass"]}'>" . date("Y.m.d. H:i", strtotime($reservation["datum"])) . "</a><br/>";
             }
@@ -646,15 +658,27 @@ class NotificationService
         }*/
 
         $mbody = "";
-        $mbody .= "<strong>" . date("Y.m.d. H:i", strtotime($row["datum"])) . " - {$row["helyszin"]}</strong><br/><br/>";
+        $mbody .= "<strong>" . ($row["fgroupid"]==""?date("Y.m.d. H:i", strtotime($row["datum"]))." - ":"") . "{$row["helyszin"]}</strong><br/><br/>";
 
         $mbody .= "{$webTextLocal["nev"]}: {$row["nev"]}<br>";
         if (!empty($row["telefon"])) {
             $mbody .= "{$webTextLocal["telefon"]}: {$row["telefon"]}<br>";
         }
         $mbody .= "<br>";
-        if (!$this->isVarolista($row)) {
-            $mbody .= "<b>{$webTextLocal["idopont"]}: " . date("Y.m.d. H:i", strtotime($row["datum"])) . "</b><br><br>";
+
+        if($row["fgroupid"]==""){
+            if (!$this->isVarolista($row)) {
+                $mbody .= "<b>{$webTextLocal["idopont"]}: " . date("Y.m.d. H:i", strtotime($row["datum"])) . "</b><br><br>";
+            }
+        }
+        
+
+        if(!empty($row["fgroupid"])){
+            $multiBookings = sql_query("SELECT * FROM foglalasok WHERE fgroupid=?",[$row["fgroupid"]])->fetchAll(PDO::FETCH_ASSOC);
+            foreach($multiBookings as $multibooking){
+                $mbody .= "<b>{$webTextLocal["idopont"]}: " . date("Y.m.d. H:i", strtotime($multibooking["datum"])) . "</b><br><br>";
+            }
+            
         }
 
         $szuresTipus = $row["szurestipus"];
@@ -693,6 +717,10 @@ class NotificationService
         $mbody .= ($row["cegid"] == 6 ? "Ellátó orvos: {$row["orvosnev"]}<br>" : "");
         $mbody .= "{$packText}";
         $mbody .= "{$webTextLocal["helyszin"]}: {$row["helyszin"]}<br>";
+
+         if(!empty($row["fgroupid"])){
+            $mbody .= "<br>Orvosunk hamarosan visszafog jelezni egy automata levél formájában a kiválaszott időpontjával!<br>";
+         }
 
         if ($row["cegid"] == CompanyService::ALDI_FIFI_ID && Booking_Constants::SQL_DB == "hungariamed") {
             $mbody.= "<hr><br/>";
@@ -834,6 +862,8 @@ class NotificationService
             }
             $mbody.="</ul>";
         }
+
+        
 
         $template["subject"] = "{$webTextLocal["sikeresidopontreg"]}";
         $template["body"] = $mbody;
@@ -2399,182 +2429,4 @@ END:VCALENDAR";
 
         return;
     }
-
-    public function samsung_notification(){
-        $html= "";
-
-        $result = sql_query("SELECT datum,nev,szuldatum,taj,email FROM foglalasok 
-                             WHERE cegid=1629 AND helyszinid=1246 
-                             AND datum BETWEEN '2026-04-20 00:00:01' AND '2026-04-24 23:59:59';")->fetchAll(PDO::FETCH_ASSOC);
-        $unit = 0;
-        foreach($result as $row)
-        {
-            $html= "";
-            $unit++;
-            $mail = self::getDefaultMailer();
-            $mail->AddAddress($row["email"]);
-            $mail->addBCC("tesztemail@hungariamed.hu");
-            //$mail->addAddress("tesztemail@hungariamed.hu");
-            $subject = "Lung Screening – Reminder and Information";
-                            
-            $html .="<p style='font-family:calibri'>[ENG]</p>";
-
-            $html .="<p style='font-family:calibri'>Lung Screening – Reminder and Information</p>";
-            $html .="<p style='font-family:calibri'>Dear Colleagues,</p>";
-            $html .="<p style='font-family:calibri'>We are delighted to see that so many of you have signed up for our Health Day.</p>";
-            $html .="<p style='font-family:calibri'>Please read the following information very carefully.</p>";
-
-            $html .="<ol>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>Please arrive 5 minutes before your scheduled screening time!</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html.="           <strong>Check your appointment time:</strong> You received a confirmation email at this E-mail address after booking your appointment."; 
-            $html .="          Look for the sender: \"Hungariamed\"; you will find your appointment time in the email.";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>Location: SDIHU Central Park (at the main entrance)</strong></p>";
-            $html .="   </li>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>The screening process:</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Quick data verification (please bring your ID or TAJ card)";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Screening";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           You will receive your results via email, and they will also be uploaded to the EESZT platform (within 1 month)";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li style=\"list-style: none;\">";
-            $html .="       <p style='font-family:calibri'><strong>Join our 30-minute presentation on the importance of regular screening & health awareness</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Date: Tuesday, April 21, 2026";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Start Time: 10:00 AM";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Value 4 – Welfare Building";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="</ol>";
-            $html .="<hr>";
-
-            $html .="<p style='font-family:calibri'>[HUN]</p>";
-
-            $html .="<p style='font-family:calibri'>Tüdőszűrés – Emlékeztető és információ</p>";
-            $html .="<p style='font-family:calibri'>Kedves Kollégák,</p>";
-            $html .="<p style='font-family:calibri'>Örömmel látjuk, hogy ilyen sokan jelentkeztetek az egészségnapunkra.</p>";
-            $html .="<p style='font-family:calibri'>Kérünk benneteket, nagyon figyelmesen olvassátok végig az alábbi információkat.</p>";
-
-            $html .="<ol>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong> A szűrésre foglalt időpontod előtt 5 perccel jelenj meg!</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html.="           <strong>Időpontot ellenőrzése:</strong> Erre az e-mail címedre kaptál visszaigazolást az időpontfoglalás után. Keress rá a feladóra: „Hungariamed\", az E-mailben megtalálod az időpontodat.";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>Helyszín: SDIHU Central Park ( A főbejáratnál )</strong></p>";
-            $html .="   </li>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>A szűrés folyamata:</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Gyors adategyeztetés (hozd magaddal személyi vagy TAJ kártyádat)";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Szűrés";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Az eredményedet E-mailben kapod majd meg, és az EESZT felületen is felöltésre kerül (1 hónapon belül)";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li style=\"list-style: none;\">";
-            $html .="       <p style='font-family:calibri'><strong>Gyere el a szűréssel és az egészségmegőrzéssel kapcsolatos 30 perces előadásunkra is!</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="          Dátum: 2026. 04. 21-én Kedd";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Kezdés Időpontja: 10:00";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Value 4 – Welfare Épület";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="</ol>";
-            $html .="<hr>";
-
-            $html .="<p style='font-family:calibri'>[UA]</p>";
-
-            $html .="<p style='font-family:calibri'>Обстеження легенів – Нагадування та інформація</p>";
-            $html .="<p style='font-family:calibri'>Шановні колеги,</p>";
-            $html .="<p style='font-family:calibri'>Ми раді бачити, що так багато з вас зареєструвалися на наш день здоров'я.</p>";
-            $html .="<p style='font-family:calibri'>Просимо вас дуже уважно прочитати наведену нижче інформацію.</p>";
-
-            $html .="<ol>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>З'явіться на обстеження за 5 хвилин до призначеного часу!</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html.="           <strong>Перевірка часу:</strong>Після бронювання часу ви отримали підтвердження на цю електронну адресу. Знайдіть відправника: «Hungariamed», у листі ви знайдете час вашого візиту.";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>Місце проведення: SDIHU Central Park (біля головного входу)</strong></p>";
-            $html .="   </li>";
-            $html .="   <li>";
-            $html .="       <p style='font-family:calibri'><strong>Процес обстеження:</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Швидка перевірка даних (візьміть із собою паспорт або картку TAJ)";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Обстеження";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Результати ви отримаєте електронною поштою, а також вони будуть завантажені на платформу EESZT (протягом одного місяця)";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="   <li style=\"list-style: none;\">";
-            $html .="       <p style='font-family:calibri'><strong>Завітайте також на нашу 30-хвилинну лекцію, присвячену обстеженню та збереженню здоров'я</strong></p>";
-            $html .="   </li>";
-            $html .="   <ul style=\"margin-left:10px;font-family:calibri\">";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="          Дата: вівторок, 21 квітня 2026 року";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="            Час початку: 10:00";
-            $html .="      </li>";
-            $html .="      <li style=\"list-style: disc;\">";
-            $html .="           Будівля Value 4 – Welfare";
-            $html .="      </li>";
-            $html .="   </ul>";
-            $html .="</ol>";
-            
-            $mail->Subject = $subject;
-            $mail->Body = $html;
-            $mail->Send();
-
-            echo $unit."<br>";
-        }
-
-        //return $html;
-    }
-
 }

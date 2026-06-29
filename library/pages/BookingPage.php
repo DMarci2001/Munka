@@ -784,6 +784,7 @@ class BookingPage extends CorePage
             }
 
             if (empty($this->errors) && isset($multipleTimes)) {
+                $firstReservationId = "";
                 //leágazás több időpont esetén
                 foreach ($multipleTimes as $time) {
                     $_POST["datum"] = $time["datum"];
@@ -791,12 +792,15 @@ class BookingPage extends CorePage
                     $_POST["orvosselected"] = $_POST["orvosid"] = $time["orvosselected"];
                     $forwardURL = $this->bookingService->addReservation($_POST);
                     $fid = $this->bookingService->newReservationId;
-                    if (!isset($firstReservationId)) {
+                    if ($firstReservationId=="") {
                         $firstReservationId = $fid;
                     }
 
                     sql_query("update foglalasok set aktiv=1, fgroupid=? where id=? limit 1", [$firstReservationId, $fid]);
                 }
+
+                sql_query("INSERT INTO foglalasok_multibooking SET fgroupid=?,status=?,created_at=NOW();",[$firstReservationId,"WAITING FOR RESPONSE"]);
+                //Ki kell találjam itt az értesítést.
 
                 if (isset($forwardURL)) {
                     header("location:{$forwardURL}");
