@@ -345,7 +345,7 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours, embedded }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
@@ -429,10 +429,8 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
     </div>
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
-      <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
-      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:840, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:16, marginBottom:16 }}>
+  const panel = (
+      <div className="mb-pop relative w-full rounded-2xl overflow-hidden" style={{ maxWidth:840, background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"0 50px 100px -28px rgba(0,0,0,.6)", marginTop:embedded?0:16, marginBottom:embedded?0:16 }}>
         <div className="flex items-center justify-between gap-3 px-6 py-4" style={{ borderBottom:"1px solid var(--border)" }}>
           <div>
             <h2 className="mb-display" style={{ fontSize:19, fontWeight:700 }}>{title || "Új rendelés"}</h2>
@@ -611,6 +609,12 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
           </div>
         </div>
       </div>
+  );
+  if (embedded) return panel;
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
+      <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.55)", backdropFilter:"blur(4px)" }} onClick={onClose}/>
+      {panel}
     </div>
   );
 }
@@ -832,6 +836,36 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
   );
 }
 
+/* ---- Ütközés pár modal ------------------------------------------------ */
+function ConflictPairModal({ cluster, onClose, onSave, onDelete, onMap, dayDates, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours }) {
+  useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
+  const cols = cluster.length;
+  return (
+    <div className="fixed inset-0 z-50 mb-scroll" style={{ overflowY:"auto", padding:"16px" }}>
+      <div className="mb-back fixed inset-0" style={{ background:"rgba(4,6,10,.72)", backdropFilter:"blur(6px)" }} onClick={onClose}/>
+      <div className="relative" style={{ maxWidth: cols===1 ? 860 : cols===2 ? 1720 : "100%", margin:"0 auto" }}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="flex items-center gap-2" style={{ fontSize:13.5, fontWeight:700, color:"#fff" }}>{Ico.alert({width:15,height:15})} Ütköző rendelések</span>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ color:"#fff", background:"rgba(255,255,255,.15)" }}>{Ico.x()}</button>
+        </div>
+        <div className="grid gap-4" style={{ gridTemplateColumns:`repeat(${cols},minmax(0,1fr))` }}>
+          {cluster.map(({ b, di }) => (
+            <EditModal key={`${di}-${b.id}`} embedded={true}
+              ctx={{ day:di, cat:b.cat, booking:b, date:b.date }}
+              dayDates={dayDates} onClose={onClose}
+              onSave={(rec)=>{ onSave(rec); onClose(); }}
+              onDelete={(id)=>{ onDelete(id); onClose(); }}
+              onMap={onMap} doctorList={doctorList} assistantList={assistantList}
+              egyebList={egyebList} vehicleList={vehicleList} places={places}
+              saving={saving} onToggleAktiv={onToggleAktiv} onToggleFlag={onToggleFlag}
+              vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---- Ütközés nézet ---------------------------------------------------- */
 function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
@@ -862,7 +896,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   );
 }
 
-function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, onOpenCard, onMap }) {
+function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, onOpenCard, onOpenPair, onMap }) {
   const q = (query||"").trim().toLowerCase();
   const groups = { double: [], vac: [], noDoc: [] };
   weekDays.forEach((day, di) => {
@@ -939,7 +973,7 @@ function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, o
               <div className="flex flex-col gap-2.5 p-2.5">
                 {doubleClusters.map((cluster, ci) => (
                   <div key={ci} className="flex flex-col gap-1.5">
-                    {cluster.map(({ b, di, overlaps }) => <ConflictCard key={`${di}-${b.id}`} b={b} di={di} overlaps={overlaps} sectionKey={sec.key} onOpenCard={onOpenCard} onMap={onMap}/>)}
+                    {cluster.map(({ b, di, overlaps }) => <ConflictCard key={`${di}-${b.id}`} b={b} di={di} overlaps={overlaps} sectionKey={sec.key} onOpenCard={()=>onOpenPair?onOpenPair(cluster):onOpenCard(b,di)} onMap={onMap}/>)}
                   </div>
                 ))}
               </div>
@@ -2217,6 +2251,7 @@ function MunkaidoBeosztas() {
   const [collapsed,    setCollapsed]    = useState({});
   const [modal,        setModal]        = useState(null);
   const [mapBk,        setMapBk]        = useState(null);
+  const [conflictPair, setConflictPair] = useState(null);
   const [copyOpen,     setCopyOpen]     = useState(false);
   const [toast,        setToast]        = useState(null);
   const [staffNewSignal, setStaffNewSignal] = useState(0);
@@ -2574,7 +2609,7 @@ function MunkaidoBeosztas() {
             ) : nav==="list" ? (
               <ListView weekDays={weekDays} dayDates={dayDates} conf={conf} matches={matches} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict}/>
             ) : nav==="conflicts" ? (
-              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)}/>
+              <ConflictView weekDays={weekDays} conf={conf} catFilter={catFilter} query={query} collapsed={collapsed} onToggle={(key)=>setCollapsed((p)=>({...p,[key]:!p[key]}))} onOpenCard={(b,di)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onOpenPair={(cluster)=>setConflictPair(cluster)} onMap={(b)=>setMapBk(b)}/>
             ) : nav==="workers" ? (
               <StaffView setToast={setToast} newSignal={staffNewSignal} query={query} onStaffSaved={()=>setStaffSavedSignal(s=>s+1)}/>
             ) : nav==="workplaces" ? (
@@ -2666,6 +2701,7 @@ function MunkaidoBeosztas() {
 
       {/* MODÁLOK */}
       {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} vehicleList={vehicles} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} onToggleFlag={toggleFlag} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
+      {conflictPair && <ConflictPairModal cluster={conflictPair} onClose={()=>setConflictPair(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} dayDates={dayDates} doctorList={doctors} assistantList={assistants} egyebList={egyebs} vehicleList={vehicles} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} onToggleFlag={toggleFlag} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
