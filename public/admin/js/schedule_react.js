@@ -219,7 +219,7 @@ function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
     const slots = [];
-    day.forEach((b) => (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title, ac:!!s.acceptedConflict })));
+    day.forEach((b) => { if (b.aktiv === 0) return; (b.staff||[]).forEach((s) => slots.push({ key:`${di}:${b.id}`, p:s.name, workerId:s.workerId, s:toMin(s.from), e:toMin(s.to), from:s.from, to:s.to, title:b.title, ac:!!s.acceptedConflict })); });
     for (let i=0; i<slots.length; i++) for (let j=i+1; j<slots.length; j++) {
       const x=slots[i], y=slots[j];
       if (x.p===y.p && x.key!==y.key && x.s<y.e && y.s<x.e && !x.ac && !y.ac) {
