@@ -586,9 +586,7 @@ class NotificationService
             $dateLinks = "";
 
             $reservations = sql_query("select id, pass, datum from foglalasok where fgroupid=? and regdatum>=? order by datum", [$rowf["fgroupid"], date("Y-m-d 00:00:00", strtotime($rowf["regdatum"]))])->fetchAll(PDO::FETCH_ASSOC);
-            echo "<pre>";
-            print_r($reservations);
-            echo "</pre>";
+            
             foreach ($reservations as $reservation) {
                 $dateLinks .= "<a href='" . Booking_Constants::MAIN_URL . "/index.php?selectthistime={$reservation["id"]}&p={$reservation["pass"]}'>" . date("Y.m.d. H:i", strtotime($reservation["datum"])) . "</a><br/>";
             }
