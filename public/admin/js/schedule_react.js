@@ -345,7 +345,7 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
-function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, vacPerDay, monthHours, weekWorkerHours }) {
+function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
   const [to, setTo]         = useState(b ? b.to   : "16:00");
@@ -595,6 +595,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge text={noDoc?"Hiányos":aktiv?"Aktív":"Inaktív"} color={noDoc?"var(--danger)":aktiv?"var(--green)":"var(--faint)"}/>
                   {b && <button onClick={()=>{ const next=!aktiv; setAktiv(next); onToggleAktiv&&onToggleAktiv({...b, aktiv:aktiv?1:0}); }} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:aktiv?"var(--muted)":"var(--brand-ink)", background:"var(--surface-2)", border:"1px solid var(--border)" }}>{aktiv?<>{Ico.eyeOff({width:12,height:12})} Inaktiválás</>:<>{Ico.eye({width:12,height:12})} Aktiválás</>}</button>}
+                  {b && <button onClick={()=>onToggleFlag&&onToggleFlag(b)} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ fontSize:11.5, fontWeight:600, color:b.flagged?"#f97316":"var(--muted)", background:b.flagged?"#fff7ed":"var(--surface-2)", border:`1px solid ${b.flagged?"#f97316":"var(--border)"}` }}>! {b.flagged?"Jelölés levétele":"Hiányzó info"}</button>}
                 </div>
               </Row>
             </div>
@@ -680,7 +681,7 @@ function MapPopover({ booking, onClose }) {
 /* ---- Kártya --------------------------------------------------------- */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
-function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
+function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
@@ -706,10 +707,12 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     const onVac = overlapVac.some((o)=>o.p===s.name);
     return (<span className="flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background:onVac?"var(--danger-soft)":soft, color:onVac?"var(--danger-ink)":color, fontSize:11.5, fontWeight:600, maxWidth:"100%" }}><span style={{ flexShrink:0 }}>{icon}</span><span className="truncate">{s.name}</span>{diff && <span className="mb-mono" style={{ fontSize:10, opacity:.85, flexShrink:0 }}>{s.from}–{s.to}</span>}</span>);
   };
-  const cardBg = inactive ? "var(--surface-2)" : red ? `color-mix(in srgb,var(--danger) 13%,var(--card))` : (b.color ? `color-mix(in srgb,${b.color} 18%,var(--card))` : "var(--card)");
-  const cardBorder = inactive ? "var(--border-soft)" : red ? "var(--danger)" : (b.color ? `color-mix(in srgb,${b.color} 50%,var(--border))` : "var(--border)");
+  const flagged = !!b.flagged;
+  const cardBg = inactive ? "var(--surface-2)" : flagged ? "#fff7ed" : red ? `color-mix(in srgb,var(--danger) 13%,var(--card))` : (b.color ? `color-mix(in srgb,${b.color} 18%,var(--card))` : "var(--card)");
+  const cardBorder = inactive ? "var(--border-soft)" : flagged ? "#f97316" : red ? "var(--danger)" : (b.color ? `color-mix(in srgb,${b.color} 50%,var(--border))` : "var(--border)");
   return (
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
+      <button onClick={(e)=>{e.stopPropagation();onToggleFlag&&onToggleFlag(b);}} title={flagged?"Jelölés eltávolítása":"Hiányzó info jelölése"} className="absolute right-14 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:flagged?"#f97316":"var(--faint)", background:flagged?"#fff7ed":"transparent", fontWeight:700, fontSize:13 }}>!</button>
       <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>
       <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
@@ -736,7 +739,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
 }
 
 /* ---- Csoport -------------------------------------------------------- */
-function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onDismissConflict, weekWorkerHours, monthHours }) {
+function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
     <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
@@ -745,7 +748,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
         <span style={{ color:"var(--faint)" }}>{collapsed?Ico.chevDown({width:16,height:16}):Ico.chevUp({width:16,height:16})}</span>
       </button>
       {!collapsed && (<div className="flex flex-col gap-1.5 p-2">
-        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} onDismissConflict={onDismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
+        {items.map((b) => <Card key={b.id} b={b} conflict={conf.set.has(`${di}:${b.id}`)} overlap={conf.det[`${di}:${b.id}`]} query={query} roleFilter={roleFilter} onOpen={()=>onOpenCard(b)} onMap={()=>onMap(b)} onToggleAktiv={onToggleAktiv} onToggleFlag={onToggleFlag} onDismissConflict={onDismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>)}
         {items.length===0 && <div className="px-1 py-2" style={{ fontSize:12, color:"var(--faint)" }}>Nincs rendelés.</div>}
       </div>)}
     </div>
@@ -2398,6 +2401,12 @@ function MunkaidoBeosztas() {
     await fetchWeek(weekOffset);
   }, [weekOffset, fetchWeek]);
 
+  const toggleFlag = useCallback(async (b) => {
+    const body = new URLSearchParams({ togglebookingflag:"1", tipusid:b.tipusId, datum:b.date });
+    await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
+    await fetchWeek(weekOffset);
+  }, [weekOffset, fetchWeek]);
+
   const dismissConflict = useCallback(async (b, workerId) => {
     const body = new URLSearchParams({ dismissconflict:"1", tipusid:b.tipusId, datum:b.date, workerid:workerId });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
@@ -2623,7 +2632,7 @@ function MunkaidoBeosztas() {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
                           if (filtering && items.length===0) return null;
-                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onDismissConflict={dismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
+                          return (<Group key={cat} cat={cat} di={di} items={items} collapsed={!!collapsed[key]} onToggle={()=>setCollapsed((p)=>({...p,[key]:!p[key]}))} conf={conf} query={query} roleFilter={roleFilter} onOpenCard={(b)=>setModal({ day:di, cat:b.cat, booking:b, date:b.date })} onMap={(b)=>setMapBk(b)} onToggleAktiv={toggleAktiv} onToggleFlag={toggleFlag} onDismissConflict={dismissConflict} weekWorkerHours={weekWorkerHours} monthHours={monthHours}/>);
                         })}
                         {filtering && weekDays[di].filter((b)=>matches(b,di)).length===0 && <div className="text-center py-6" style={{ fontSize:12, color:"var(--faint)" }}>Nincs találat.</div>}
                         {!conflictView && szabadsagByDay[di] && szabadsagByDay[di].length > 0 && (
@@ -2656,7 +2665,7 @@ function MunkaidoBeosztas() {
       </div>
 
       {/* MODÁLOK */}
-      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} vehicleList={vehicles} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
+      {modal && <EditModal ctx={modal} dayDates={dayDates} onClose={()=>setModal(null)} onSave={saveBooking} onDelete={deleteBooking} onMap={(b)=>setMapBk(b)} doctorList={doctors} assistantList={assistants} egyebList={egyebs} vehicleList={vehicles} places={weekData?.places||[]} saving={saving} onToggleAktiv={toggleAktiv} onToggleFlag={toggleFlag} vacPerDay={vacPerDay} monthHours={monthHours} weekWorkerHours={weekWorkerHours}/>}
       {copyOpen && <CopyWeekModal year={year} week={week} monday={monday} onClose={()=>setCopyOpen(false)} onCopy={copyWeek}/>}
       {mapBk && <MapPopover booking={mapBk} onClose={()=>setMapBk(null)}/>}
 
