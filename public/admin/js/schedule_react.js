@@ -1373,7 +1373,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                         {p.kiszallas===1 && (() => {
                           const today = new Date().toISOString().slice(0,10);
                           if (!p.validfrom && !p.validto) return <span style={{ fontSize:11, fontWeight:700, color:"var(--faint)", background:"var(--surface-2)", borderRadius:4, padding:"1px 5px" }}>Nincs időszak</span>;
-                          const active = (!p.validfrom || today >= p.validfrom) && (!p.validto || today <= p.validto);
+                          const active = !p.validto || today <= p.validto;
                           return <span style={{ fontSize:11, fontWeight:700, color:active?"var(--green)":"var(--danger-ink)", background:active?"var(--green-soft)":"var(--danger-soft)", borderRadius:4, padding:"1px 5px" }}>{active?"Aktív":"Lejárt"}</span>;
                         })()}
                       </div>
