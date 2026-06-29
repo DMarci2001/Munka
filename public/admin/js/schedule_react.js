@@ -404,7 +404,7 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
     if (!mh || mh.quota == null) return false;
     if (mh.munkaora_tipus === "heti") {
       const weekH = (weekWorkerHours && weekWorkerHours[s.workerId]) || 0;
-      return weekH >= mh.quota || (weekH + bookingHours) > mh.quota;
+      return weekH > mh.quota || (weekH + bookingHours) > mh.quota;
     }
     return (mh.booked + bookingHours) > mh.quota;
   });
@@ -691,8 +691,8 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     if (!s.workerId) return false;
     const mh = monthHours && monthHours[s.workerId];
     if (!mh || mh.quota == null) return false;
-    if (mh.munkaora_tipus === "heti") return ((weekWorkerHours && weekWorkerHours[s.workerId]) || 0) >= mh.quota;
-    return mh.booked >= mh.quota;
+    if (mh.munkaora_tipus === "heti") return ((weekWorkerHours && weekWorkerHours[s.workerId]) || 0) > mh.quota;
+    return mh.booked > mh.quota;
   });
   const red    = noDoc||conflict;
   const accent = inactive?"var(--faint)":(red?"var(--danger)":(CATS[b.cat]?.color||"var(--muted)"));
