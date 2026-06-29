@@ -1555,7 +1555,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const sections = [
     {
       key:"pending",  label:"Függő szabadságok",   color:"var(--brand)",  icon:"clock",
-      items: vacations.filter((v) => isVac(v) && (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)),
+      items: vacations.filter((v) => isVac(v) && (v.status===0||v.status===-1) && isFuture(v) && filterVac(v)).sort((a,b)=>a.from.localeCompare(b.from)),
     },
     {
       key:"approved", label:"Elfogadott szabadság", color:"var(--green)",  icon:"sun",
