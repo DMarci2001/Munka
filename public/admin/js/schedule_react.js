@@ -729,7 +729,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
       {b.note&&!conflict&&!inactive&&<div className="mt-1.5" style={{ fontSize:11, color:"var(--faint)" }}>{b.note}</div>}
       {!inactive&&overlapDouble.map((o,i)=>(
         <div key={i} className="mt-1.5 flex items-center justify-between gap-2">
-          <span style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {o.p} {o.from}–{o.to}</span>
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--danger-ink)" }}>Átfedés: {o.p} {o.from}–{o.to}{o.title ? ` · ${o.title}` : ""}</span>
           <button onClick={(e)=>{e.stopPropagation();onDismissConflict&&onDismissConflict(b,o.workerId);}} className="rounded px-1.5 py-0.5" style={{ fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)", flexShrink:0 }}>Elfogad</button>
         </div>
       ))}
