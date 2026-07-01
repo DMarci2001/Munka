@@ -137,6 +137,10 @@ class AdminWorkSchedulePage extends AdminCorePage {
             $this->_apiToggleDayLezart();
         }
 
+        if (isset($_POST["togglebookingflag"])) {
+            $this->_apiToggleBookingFlag();
+        }
+
         if (isset($_GET["getmonthhours"])) {
             $this->_apiGetMonthHours();
         }
@@ -205,6 +209,11 @@ class AdminWorkSchedulePage extends AdminCorePage {
             datum DATE NOT NULL,
             megj  VARCHAR(200) NULL DEFAULT NULL,
             PRIMARY KEY (datum)
+        )");
+        sql_query("CREATE TABLE IF NOT EXISTS schedule_booking_flag (
+            tipusid INT NOT NULL,
+            datum   DATE NOT NULL,
+            PRIMARY KEY (tipusid, datum)
         )");
         $hasVacMegj = sql_query(
             "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_szabadsag' AND column_name='megj'"
@@ -1186,6 +1195,15 @@ HTML;
             $lezartIdx[$r["datum"]] = $r["megj"] ?? "";
         }
 
+        $flagRows = sql_query(
+            "SELECT tipusid, datum FROM schedule_booking_flag WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
+            ["mon" => $monday]
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $flagIdx = [];
+        foreach ($flagRows as $r) {
+            $flagIdx[(int)$r["tipusid"] . "_" . $r["datum"]] = true;
+        }
+
         $dayNoteRows = sql_query(
             "SELECT tipusid, datum, megj FROM schedule_datum_megj WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
             ["mon" => $monday]
@@ -1297,7 +1315,8 @@ HTML;
                         $overrideKey = (int)$tipus["id"] . "_" . $date;
                         if (isset($datumAktivIdx[$overrideKey])) return $datumAktivIdx[$overrideKey];
                         return empty($staffRows) ? 1 : (int)(min(array_column($staffRows, "aktiv")) > 0);
-                    })()
+                    })(),
+                    "flagged" => isset($flagIdx[(int)$tipus["id"] . "_" . $date])
                 ];
             }
 
@@ -1408,6 +1427,26 @@ HTML;
         } else {
             sql_query("INSERT INTO schedule_nap_lezart (datum, megj) VALUES (?, ?)", [$datum, $megj]);
             $this->utils->jsonOut(["status" => "ok", "lezart" => true]);
+        }
+        die;
+    }
+
+    private function _apiToggleBookingFlag(): void {
+        if (!$this->adminUser->beosztasPageAccess()) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Nincs jogosultságod!"]); die;
+        }
+        $tipusId = intval($_POST["tipusid"] ?? 0);
+        $datum   = trim($_POST["datum"] ?? "");
+        if (!$tipusId || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
+            $this->utils->jsonOut(["status" => "error", "message" => "Hiányzó adatok!"]); die;
+        }
+        $exists = sql_query("SELECT COUNT(*) FROM schedule_booking_flag WHERE tipusid=? AND datum=?", [$tipusId, $datum])->fetchColumn();
+        if ($exists) {
+            sql_query("DELETE FROM schedule_booking_flag WHERE tipusid=? AND datum=?", [$tipusId, $datum]);
+            $this->utils->jsonOut(["status" => "ok", "flagged" => false]);
+        } else {
+            sql_query("INSERT INTO schedule_booking_flag (tipusid, datum) VALUES (?, ?)", [$tipusId, $datum]);
+            $this->utils->jsonOut(["status" => "ok", "flagged" => true]);
         }
         die;
     }
