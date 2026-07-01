@@ -515,7 +515,7 @@ class AdminBookingEditor {
             }
 
 
-            if (Booking_Constants::SQL_DB == "hungariamed" && $row["cegid"] == CompanyService::BP_ID && $this->user->psyhosockerdoivAccess()) {
+            if (Booking_Constants::SQL_DB == "hungariamed" && in_array($row["cegid"],[CompanyService::BP_ID,CompanyService::HUNREN_ID]) && $this->user->psyhosockerdoivAccess()) {
                 $html .= "<a class='printbutton' target='_blank' href='../index.php?page=psychosocialform&fid={$row["id"]}&pass={$row["pass"]}&status=modify'><i class='fa-solid fa-print'></i> Pszihoszociális kérdőív</a>&nbsp;&nbsp;";
             }
 

@@ -2482,6 +2482,14 @@ class BookingService
             $forwardURL = "https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&fid={$fogl["id"]}&pass={$fogl["pass"]}";
         }
 
+        if(CompanyService::isHunRen() && true){
+             //Itt kell létrehozzam a pszihosoc kérdőív adatsort a foglalási adatok alapján és legenerálnom a forwardurl-t.
+            $fogl= sql_fetch_array(sql_query("SELECT * FROM foglalasok WHERE id=?",array($fid)));
+            sql_query("INSERT INTO psychosoc_eredmenyek SET foglid=?,cegid=?,pass=?",array($fid,$fogl["cegid"],$fogl["pass"]));
+
+            $forwardURL = "https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&fid={$fogl["id"]}&pass={$fogl["pass"]}";
+        }
+
         //Foglaljorvost.hu-nak átküldés
         $foService = new FoglaljOrvostService();
         $foService->newReservation($fid);

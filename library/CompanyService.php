@@ -21,6 +21,7 @@ class CompanyService {
     const ALDI_FIFI_ID      = 348;
     const ALDI_FIFI_CTD_ID  = 340;
     const SUZUKI_MENEDZSER  = 892;
+    const HUNREN_ID         = 1472;
 
     const SUZUKI_ARENA_HELYSZIN_ID = 640;
 
@@ -51,7 +52,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="tesco";
+            $d="hun-ren";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -229,6 +230,10 @@ class CompanyService {
 
     public static function isDRV($companyId = 0):bool{
         return ($companyId == self::DRV_HELYSZINI || $_SESSION["helyszindata"]["domain"] == "drv-helyszini") && Booking_Constants::SQL_DB == "hungariamed";
+    }
+
+    public static function isHunRen(){
+        return ($_SESSION["helyszindata"]["domain"] == "hun-ren") && Booking_Constants::SQL_DB == "hungariamed"; 
     }
 
     public static function telExceptions(){
