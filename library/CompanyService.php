@@ -232,9 +232,10 @@ class CompanyService {
         return ($companyId == self::DRV_HELYSZINI || $_SESSION["helyszindata"]["domain"] == "drv-helyszini") && Booking_Constants::SQL_DB == "hungariamed";
     }
 
-    public static function isHunRen(){
-        return ($_SESSION["helyszindata"]["domain"] == "hun-ren") && Booking_Constants::SQL_DB == "hungariamed"; 
+    public static function isHunRen($companyId = 0):bool{
+        return ($_SESSION["helyszindata"]["domain"] == "hun-ren" && Booking_Constants::SQL_DB == "hungariamed") || companyId == self::HUNREN_ID; 
     }
+
 
     public static function telExceptions(){
         

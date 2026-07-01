@@ -1459,7 +1459,7 @@ class BookingPage extends CorePage
 
         //Kérjük akkut egészségkárosodás vagy életveszély esetén azonnal hívja az 104-es országos mentőszolgálat vagy a 112 központi segélyhívót.
 
-        if(CompanyService::isBP() && true){
+        if(CompanyService::isBP() || CompanyService::isHunRen()){
             //Figyelmeztetés a piszohosc kitöltésére
             echo "<div style='border-radius:20px;background-color:#990000;padding:5px 10px;'>";
             echo $webText["pszihoszocialis_kerdoiv_figyelmeztetes"];

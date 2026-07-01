@@ -791,9 +791,9 @@ class NotificationService
         }
 
         if ($row["rlang"] != "de" && $row["rlang"] != "en") {
-            if (CompanyService::isBP($row["cegid"])) {
+            if (CompanyService::isBP($row["cegid"]) || CompanyService::isHunRen($row["cegid"])) {
                 $mbody .= "A pszihoszociális kérdőívet az alábbi linken tudja megtekinteni és kitölteni:<br>";
-                $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&pass={$row["pass"]}\">Pszihoszociális kérdőív link</a><br><br>";
+                $mbody .= "<a target=\"_blank\" href=\"https://{$_SERVER["HTTP_HOST"]}/?page=psychosocialform&fid={$row["id"]}&pass={$row["pass"]}\">Pszihoszociális kérdőív link</a><br><br>";
             }
 
             if (CompanyService::isAuchan()) {
