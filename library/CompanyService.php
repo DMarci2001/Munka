@@ -52,7 +52,7 @@ class CompanyService {
             $d = "bejelentkezes";
         }
         if($d=="marciteszt"){
-            $d="hun-ren";
+            $d="bejelentkezes";
         }
         if($d=="mak-fehervariut"){
             header("Location:https://mak-bercsenyiut.hungariamed.hu");
@@ -161,6 +161,11 @@ class CompanyService {
     const OIF_ID = 499;
     public static function isOIF($companyId = 0):bool {
         return $_SESSION["helyszindata"]["domain"] == "oif" || ($companyId == self::OIF_ID && Booking_Constants::SQL_DB == "hungariamed");
+    }
+
+    const HMM_ID = 11;
+    public static function isHMM($companyId = 0):bool {
+        return $_SESSION["helyszindata"]["domain"] == "bejelentkezes" || ($companyId == self::HMM_ID && Booking_Constants::SQL_DB == "hungariamed");
     }
 
     public static function isFogleu($companyId = 0):bool {
