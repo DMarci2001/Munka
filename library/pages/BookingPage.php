@@ -740,6 +740,20 @@ class BookingPage extends CorePage
                         $this->errors[] = "{$webText["idopontlefoglaltak"]}";
                     } else {
                         //további check, hogy az esetleg kiválasztott szolgáltatás is belefér-e
+                        if(CompanyService::isHMM() && in_array($_POST["szurestipus"],[15])){
+                            $vanAltipus = false;
+                            foreach ($_POST as $key => $value) {
+                                if (strpos($key, 'altipus') === 0 && $value == 1) {
+                                    $vanAltipus = true;
+                                    break;
+                                }
+                            }
+
+                            if(!$vanAltipus){
+                                $this->errors[] = "Válasszon egy szolgáltatást legalább!"; 
+                            }
+                        }
+                       
                         $result = $this->bookingService->checkIdopontSzabadForServices($_POST);
                         if (!empty($result)) {
                             $this->errors[] = $result["error"];
