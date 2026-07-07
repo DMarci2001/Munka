@@ -168,6 +168,12 @@ class AdminWorkSchedulePage extends AdminCorePage {
         if (!$hasAktiv) {
             sql_query("ALTER TABLE schedule_workers ADD COLUMN aktiv TINYINT(1) NOT NULL DEFAULT 1");
         }
+        $hasWorkerOrg = sql_query(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_workers' AND column_name='org'"
+        )->fetchColumn();
+        if (!$hasWorkerOrg) {
+            sql_query("ALTER TABLE schedule_workers ADD COLUMN org VARCHAR(20) NOT NULL DEFAULT ''");
+        }
         $hasOrvosKell = sql_query(
             "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='schedule_tipusok' AND column_name='orvos_kell'"
         )->fetchColumn();
@@ -1171,11 +1177,17 @@ HTML;
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $mappingIdx = [];
+        $assignedByDate = [];
         foreach ($mappings as $m) {
             $date = date("Y-m-d", strtotime($m["datumfrom"]));
             $key  = "{$date}_{$m["tipusid"]}";
             $mappingIdx[$key][] = $m;
+            $assignedByDate[$date][(int)$m["workerid"]] = true;
         }
+
+        $allandoWorkers = sql_query(
+            "SELECT id, nev, teljesnev, roleid, org FROM schedule_workers WHERE org IN ('HMM','Keltexmed') AND COALESCE(aktiv,1)=1 ORDER BY roleid, nev"
+        )->fetchAll(PDO::FETCH_ASSOC);
 
         $datumAktivRows = sql_query(
             "SELECT tipusid, datum, aktiv FROM schedule_datum_aktiv WHERE datum >= :mon AND datum < DATE_ADD(:mon, INTERVAL 7 DAY)",
@@ -1226,6 +1238,7 @@ HTML;
 
         $elerhetoByDate  = [];
         $szabadsagByDate = [];
+        $vacWorkerByDate = [];
         foreach ($vacationRows as $v) {
             $cur = max($v["datumtol"], $monday);
             $end = min($v["datumig"], $weekEnd);
@@ -1239,6 +1252,7 @@ HTML;
                         "status"   => (int)$v["status"],
                         "megj"     => $v["megj"],
                     ];
+                    $vacWorkerByDate[$cur][(int)$v["workerid"]] = true;
                 }
                 $cur = date("Y-m-d", strtotime($cur . " +1 day"));
             }
@@ -1320,8 +1334,21 @@ HTML;
                 ];
             }
 
+            $assignable = [];
+            foreach ($allandoWorkers as $w) {
+                $wid = (int)$w["id"];
+                if (isset($vacWorkerByDate[$date][$wid])) continue;
+                if (isset($assignedByDate[$date][$wid])) continue;
+                $assignable[] = [
+                    "id"     => $wid,
+                    "name"   => trim($w["teljesnev"]) ?: $w["nev"],
+                    "roleid" => (int)$w["roleid"],
+                    "org"    => $w["org"],
+                ];
+            }
+
             $lezart = isset($lezartIdx[$date]);
-            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? [], "lezart" => $lezart, "lezartMegj" => $lezart ? ($lezartIdx[$date] ?? "") : ""];
+            $days[] = ["date" => $date, "dayIndex" => $i, "bookings" => $bookings, "elerheto" => $elerhetoByDate[$date] ?? [], "szabadsag" => $szabadsagByDate[$date] ?? [], "assignable" => $assignable, "lezart" => $lezart, "lezartMegj" => $lezart ? ($lezartIdx[$date] ?? "") : ""];
         }
 
         $doctorRows = sql_query(
@@ -1704,6 +1731,7 @@ HTML;
                     "munkaora"       => isset($w["munkaora"]) && $w["munkaora"] !== null ? (float)$w["munkaora"] : null,
                     "munkaora_tipus" => $w["munkaora_tipus"] ?? "havi",
                     "aktiv"          => (int)($w["aktiv"] ?? 1),
+                    "org"            => $w["org"] ?? "",
                 ];
             }, $workers),
             "users" => array_map(fn($u) => ["id" => (int)$u["id"], "nev" => $u["nev"], "beouserid" => (int)$u["beouserid"]], $users),
@@ -1728,6 +1756,7 @@ HTML;
         $munkaora       = (isset($_POST["munkaora"]) && $_POST["munkaora"] !== "") ? floatval($_POST["munkaora"]) : null;
         $munkaora_tipus = in_array($_POST["munkaora_tipus"] ?? "", ["havi","heti"]) ? $_POST["munkaora_tipus"] : "havi";
         $aktiv          = isset($_POST["aktiv"]) ? (intval($_POST["aktiv"]) ? 1 : 0) : 1;
+        $org            = in_array($_POST["org"] ?? "", ["HMM","Keltexmed"]) ? $_POST["org"] : "";
 
         if ($nev === "" || !$roleid) {
             $this->utils->jsonOut(["status" => "error", "message" => "Add meg a nevet és a típust!"]);
@@ -1735,13 +1764,13 @@ HTML;
 
         if ($id) {
             sql_query(
-                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=? WHERE id=?",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $aktiv, $id]
+                "UPDATE schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=?, org=? WHERE id=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $aktiv, $org, $id]
             );
         } else {
             sql_query(
-                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=1",
-                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus]
+                "INSERT INTO schedule_workers SET roleid=?, nev=?, teljesnev=?, email=?, tel=?, smsert=?, emailert=?, efo=?, munkaora=?, munkaora_tipus=?, aktiv=1, org=?",
+                [$roleid, $nev, $teljesnev, $email, $tel, $smsert, $emailert, $efo, $munkaora, $munkaora_tipus, $org]
             );
             $id = (int)sql_insert_id();
         }

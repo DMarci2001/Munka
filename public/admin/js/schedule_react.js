@@ -1109,6 +1109,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
         efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"", munkaora_tipus:rec.munkaora_tipus||"havi",
         aktiv: rec.aktiv===false||rec.aktiv===0 ? "0" : "1",
+        org: rec.org||"",
       });
       if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1181,6 +1182,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {w.aktiv===0 && <Badge text="Inaktív" color="var(--faint)"/>}
+                        {!!w.org && <Badge text={w.org} color={orgColor(w.org)}/>}
                         {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
                         {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
                         {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
@@ -1215,11 +1217,12 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const [munkaora,       setMunkaora]       = useState(w && w.munkaora != null ? String(w.munkaora) : "");
   const [munkaora_tipus, setMunkaoraTipus] = useState(w ? (w.munkaora_tipus || "havi") : "havi");
   const [aktiv,          setAktiv]         = useState(w ? (w.aktiv !== 0) : true);
+  const [org,            setOrg]           = useState(w ? (w.org || "") : "");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus, aktiv });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus, aktiv, org });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1238,6 +1241,9 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
           </Field>
           <Field label="Típus">
             <MiniSelect value={String(roleid)} onChange={(v)=>setRoleid(Number(v))} options={(roles||[]).map((r)=>({ v:String(r.id), l:r.megnev }))}/>
+          </Field>
+          <Field label="Állandó tag">
+            <SegBtn value={org} onChange={setOrg} options={[{v:"",l:"Nincs"},{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Telefon"><input value={tel} onChange={(e)=>setTel(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
@@ -2457,6 +2463,10 @@ function MunkaidoBeosztas() {
     (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
+  const assignableByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.assignable || []),
+  [weekData]);
+
   const lezartByDay = useMemo(() =>
     (weekData?.days||[]).map((d) => ({ lezart: !!d.lezart, megj: d.lezartMegj||"" })),
   [weekData]);
@@ -2776,6 +2786,24 @@ function MunkaidoBeosztas() {
                                 <div key={idx} style={{ padding:"2px 4px" }}>
                                   <div style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>{e.name}</div>
                                   {!!e.megj && <div style={{ fontSize:11.5, color:"var(--muted)", fontStyle:"italic" }}>{e.megj}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {!conflictView && assignableByDay[di] && assignableByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,var(--green) 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"var(--green)" }}>{Ico.users({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"var(--green)" }}>Beosztható állandó munkatársak</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{assignableByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {assignableByDay[di].map((w) => (
+                                <div key={w.id} className="flex items-center gap-1.5" style={{ padding:"2px 4px" }}>
+                                  <span style={{ color:w.roleid===1?"var(--blue)":w.roleid===2?"var(--purple)":"var(--green)", flexShrink:0 }}>{(w.roleid===1?Ico.doctor:w.roleid===2?Ico.person:Ico.building)({width:12,height:12})}</span>
+                                  <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>{w.name}</span>
+                                  <span style={{ fontSize:10.5, fontWeight:700, color:orgColor(w.org) }}>{w.org}</span>
                                 </div>
                               ))}
                             </div>
