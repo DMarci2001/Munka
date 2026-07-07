@@ -1,5 +1,7 @@
 ﻿"use strict";
 
+// #region Konfiguráció és segédfüggvények
+// Globális beállítások, dátum/idő helperek, ünnepnapok, kategória- és szabadságtípus-definíciók, alaprajz adatok.
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 const HMM_CONFIG = window.HMM_SCHEDULE_CONFIG || {
@@ -86,6 +88,10 @@ const SHORT = {"Rendelő 2. fogl.":"Rend. 2.","Rendelő 4. fogl.":"Rend. 4.","Re
 const isInternalRoom = (t) => FLOORS.some((f) => f.rooms.includes(t));
 
 /* ---- stílusok ------------------------------------------------------- */
+// #endregion
+
+// #region Stílusok és ikonok
+/** Globális CSS (egyedi property-k, fontok, animációk) a teljes munkabeosztás UI-hoz. */
 const Styles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -158,7 +164,9 @@ const Styles = () => (
 );
 
 /* ---- ikonok --------------------------------------------------------- */
+/** Ikon-gyár: egy SVG path-ból React ikonkomponenst csinál (méretezhető). */
 const S = (path, w=18) => (p) => (<svg viewBox="0 0 24 24" width={w} height={w} fill="none" {...p}>{path}</svg>);
+/** Az összes felületen használt SVG ikon gyűjteménye, kulcs szerint elérhető (Ico.trash, Ico.plus, stb). */
 const Ico = {
   overview: S(<><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/></>),
   calendar: S(<><rect x="3.5" y="5" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
@@ -205,6 +213,10 @@ const Ico = {
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
+// #endregion
+
+// #region Kis megjelenítő komponensek (logó, ütközés-elemzés, térkép, form primitívek)
+/** HMM logó SVG jelvény. */
 function LogoMark({ size=34 }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} style={{ flexShrink:0 }}>
@@ -215,6 +227,12 @@ function LogoMark({ size=34 }) {
 }
 
 /* ---- ütközés-elemzés ------------------------------------------------ */
+/**
+ * Az ütközés-elemzés algoritmusa: megnézi egy hét napjaira, hogy ugyanaz a munkatárs
+ * két rendelésbe van-e egyszerre beosztva (időbeli átfedés), vagy szabadságon van-e
+ * miközben be van osztva. Visszaadja az érintett rendelés-kulcsok halmazát (set) és
+ * a részletes ütközés-adatokat (det) kulcsonként.
+ */
 function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
@@ -243,6 +261,7 @@ function analyzeDays(days, vacationsByDay) {
 }
 
 /* ---- térkép --------------------------------------------------------- */
+/** Emeleti alaprajz SVG-je, az aktív (kiválasztott) szoba kiemelésével. Belső rendelések helyszín-térképe. */
 function FloorPlan({ active }) {
   const cols=3, boxH=28, gx=7, gy=7, padX=12, labelH=19, fGap=13, W=300;
   const boxW=(W-padX*2-gx*(cols-1))/cols;
@@ -259,6 +278,7 @@ function FloorPlan({ active }) {
   );
 }
 
+/** Sematikus utcatérkép SVG, külső rendelések/kiszállások címének vizuális jelzésére. */
 function StreetMap({ address }) {
   return (
     <svg viewBox="0 0 300 150" width="100%" style={{ display:"block" }}>
@@ -272,6 +292,7 @@ function StreetMap({ address }) {
   );
 }
 
+/** Kiválasztja a megfelelő térképet: belső szoba esetén FloorPlan, egyébként StreetMap. */
 function RoomMap({ booking }) {
   if (booking.cat==="belso" && isInternalRoom(booking.title)) return <FloorPlan active={booking.title}/>;
   const addr = booking.title.includes("–") ? booking.title.split("–").slice(1).join("–").trim() : booking.title;
@@ -279,6 +300,7 @@ function RoomMap({ booking }) {
 }
 
 /* ---- Combobox ------------------------------------------------------- */
+/** Kereshető legördülő választó (orvos/asszisztens/irodai munkatárs kiválasztásához). */
 function Combobox({ value, onChange, options, placeholder, kind, compact }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -306,20 +328,28 @@ function Combobox({ value, onChange, options, placeholder, kind, compact }) {
   );
 }
 
+/** Egyszerű natív &lt;select&gt; egyedi nyíl-ikonnal. */
 function MiniSelect({ value, onChange, options }) {
   return (<div className="relative"><select value={value} onChange={(e)=>onChange(e.target.value)} className="mb-in appearance-none py-2.5 pl-3 pr-8" style={{ fontSize:13.5, fontWeight:600 }}>{options.map((o)=><option key={o.v} value={o.v}>{o.l}</option>)}</select><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.chevDown({width:14,height:14})}</span></div>);
 }
+/** Időpont beviteli mező (HH:MM). */
 function TimeBox({ value, onChange }) { return <input type="time" value={value} onChange={(e)=>onChange(e.target.value)} className="mb-mono mb-in py-2 px-2 text-center" style={{ width:86, fontSize:12.5 }}/>; }
 
+/** Egyedi checkbox jelölőnégyzet felirattal. */
 function Check({ checked, onChange, label }) {
   return (<button type="button" onClick={()=>onChange(!checked)} className="flex items-center gap-2"><span className="flex items-center justify-center rounded" style={{ width:18, height:18, background:checked?"var(--brand)":"var(--surface-2)", border:`1px solid ${checked?"var(--brand)":"var(--border)"}`, flexShrink:0 }}>{checked && <svg viewBox="0 0 24 24" width="13" height="13" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}</span><span style={{ fontSize:13, fontWeight:500 }}>{label}</span></button>);
 }
+/** Egyedi rádiógomb felirattal. */
 function Radio({ selected, onSelect, label }) {
   return (<button type="button" onClick={onSelect} className="flex items-center gap-2"><span className="flex items-center justify-center rounded-full" style={{ width:18, height:18, border:`2px solid ${selected?"var(--brand)":"var(--border)"}`, flexShrink:0 }}>{selected && <span style={{ width:9, height:9, borderRadius:99, background:"var(--brand)" }}/>}</span><span style={{ fontSize:13, fontWeight:500 }}>{label}</span></button>);
 }
+/** Be/ki kapcsoló (switch) csúszkával. */
 function Toggle({ on, onChange }) { return (<button type="button" onClick={()=>onChange(!on)} style={{ width:40, height:22, borderRadius:99, background:on?"var(--brand)":"var(--border)", position:"relative", flexShrink:0, transition:"background .15s" }}><span style={{ position:"absolute", top:2, left:on?20:2, width:18, height:18, borderRadius:99, background:"#fff", transition:"left .15s", boxShadow:"0 1px 2px rgba(0,0,0,.3)" }}/></button>); }
+// #endregion
 
+// #region Beosztás szerkesztő modal (StaffEditor, EditModal)
 /* ---- StaffEditor (workerId-t is kezel) ------------------------------ */
+/** Napi rendeléshez rendelt személyzet (orvos/asszisztens/irodai/jármű) szerkesztő listája egy szerepkörre. */
 function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
   const nameOptions = (workerList || []).map((w) => w.nev || w.name || "");
   const accent = role==="d" ? "var(--blue)" : role==="e" ? "var(--green)" : "var(--purple)";
@@ -345,6 +375,13 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
+/**
+ * A rendelés/beosztás létrehozó és szerkesztő modal — a legnagyobb komponens.
+ * Kezeli: időpont, típus (belső/külső/kiszállás), személyzet hozzárendelés,
+ * kvóta/túlóra ellenőrzés, ismétlődő (multi-day / kiszállás időszak) mentés,
+ * aktív/inaktív és flag (hiányzó info) kapcsolók. `embedded` módban panelként
+ * (overlay nélkül) is használható — ezt a ConflictPairModal alkalmazza.
+ */
 function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours, embedded }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
@@ -619,13 +656,22 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   );
 }
 
+// #endregion
+
+// #region Tábla nézet elemek (Field, Badge, Th/Td/Tag, CopyWeekModal, MapPopover, Card, Group, ListView)
+/** Form mező címkével. */
 function Field({ label, children }) { return (<label className="block"><span className="block mb-1.5" style={{ fontSize:12.5, fontWeight:500, color:"var(--muted)" }}>{label}</span>{children}</label>); }
+/** Színes jelvény (kategória, szervező, státusz jelzésére). */
 function Badge({ text, color }) { return <span className="inline-block rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:700, color, background:`color-mix(in srgb, ${color} 16%, transparent)` }}>{text}</span>; }
+/** Táblázat fejléc cella. */
 function Th({ children }) { return <th className="mb-display" style={{ textAlign:"left", padding:"9px 12px", fontSize:11, fontWeight:700, letterSpacing:".04em", color:"var(--faint)", textTransform:"uppercase", borderBottom:"1px solid var(--border)", whiteSpace:"nowrap" }}>{children}</th>; }
+/** Táblázat adat cella. */
 function Td({ children, mono, style }) { return <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>; }
+/** Színes pötty + felirat (jelmagyarázathoz). */
 function Tag({ color, label }) { return (<span className="flex items-center gap-2" style={{ fontSize:12.5, color:"var(--muted)" }}><span style={{ width:11, height:11, borderRadius:3, background:color, display:"inline-block" }}/>{label}</span>); }
 
 /* ---- HétMásolás Modal ---------------------------------------------- */
+/** Hét másolása modal: kiválasztott hetet másol egy vagy több célhét(ek)re, felülírás opcióval. */
 function CopyWeekModal({ year, week, monday, onClose, onCopy }) {
   const options = Array.from({ length:8 }, (_,i) => week+1+i);
   const [targets, setTargets]   = useState(new Set([week+1, week+2, week+3]));
@@ -669,6 +715,7 @@ function CopyWeekModal({ year, week, monday, onClose, onCopy }) {
 }
 
 /* ---- TérképPopover -------------------------------------------------- */
+/** Egy rendelés helyszínét mutató térkép popover (RoomMap becsomagolva). */
 function MapPopover({ booking, onClose }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
   return (
@@ -683,8 +730,13 @@ function MapPopover({ booking, onClose }) {
 }
 
 /* ---- Kártya --------------------------------------------------------- */
+/** Kis piros státusz-jelvény (pl. "Ütközés", "Nincs orvos"). */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
+/**
+ * Egy rendelés/beosztás kártyája a tábla nézetben: mutatja az időpontot, személyzetet,
+ * ütközés/túlóra/hiányzó-orvos jelzéseket, aktiválás és flag gombokat.
+ */
 function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
@@ -743,6 +795,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
 }
 
 /* ---- Csoport -------------------------------------------------------- */
+/** Egy nap egy kategóriájának (belső/külső/kiszállás stb.) összecsukható kártya-csoportja. */
 function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
@@ -760,6 +813,7 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
+/** A heti beosztás táblázatos (lista) nézete, naponkénti bontásban. */
 function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv, onDismissConflict }) {
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
@@ -836,7 +890,11 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
   );
 }
 
+// #endregion
+
+// #region Ütközés kezelés (ConflictPairModal, ConflictCard, ConflictView)
 /* ---- Ütközés pár modal ------------------------------------------------ */
+/** Egymással ütköző rendeléseket egymás mellett, egyszerre szerkeszthető EditModal panelekben jelenít meg. */
 function ConflictPairModal({ cluster, onClose, onSave, onDelete, onMap, dayDates, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
   const cols = cluster.length;
@@ -867,6 +925,7 @@ function ConflictPairModal({ cluster, onClose, onSave, onDelete, onMap, dayDates
 }
 
 /* ---- Ütközés nézet ---------------------------------------------------- */
+/** Egy ütköző/problémás rendelés kártyája az Ütközések nézetben (dupla-foglalás, szabadság-ütközés, hiányzó orvos). */
 function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
@@ -896,6 +955,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   );
 }
 
+/** Az "Ütközések" nézet: csoportosítja a heti problémás rendeléseket (ütközés / szabadságon / nincs orvos) szekciónként. */
 function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, onOpenCard, onOpenPair, onMap }) {
   const q = (query||"").trim().toLowerCase();
   const groups = { double: [], vac: [], noDoc: [] };
@@ -990,7 +1050,11 @@ function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, o
   );
 }
 
+// #endregion
+
+// #region Munkatársak (LoadingBlock megosztott betöltés-jelző, StaffView, StaffModal)
 /* ---- LoadingBlock ---------------------------------------------------- */
+/** Általános betöltés-jelző (pörgő ikon + felirat), több nézet is használja. */
 function LoadingBlock({ label }) {
   return (
     <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
@@ -1003,13 +1067,16 @@ function LoadingBlock({ label }) {
 }
 
 /* ---- StaffView / StaffModal (Munkatársak) ---------------------------- */
+/** Szerepkör (orvos/asszisztens/irodai) megjelenítési adatai (címke, ikon, szín). */
 const ROLE_DISPLAY = {
   1: { label:"Orvosok",            icon:"doctor",   color:"var(--blue)"   },
   2: { label:"Asszisztensek",      icon:"person",   color:"var(--purple)" },
   3: { label:"Irodai munkatársak", icon:"building", color:"var(--green)"  },
 };
+/** Lekéri egy szerepkör megjelenítési adatait, ismeretlen szerepkörnél alapértelmezettet ad vissza. */
 const getRoleDisplay = (role) => ROLE_DISPLAY[role.id] || { label:role.megnev, icon:"truck", color:"var(--faint)" };
 
+/** Munkatársak listája szerepkör szerint csoportosítva, kereséssel, inaktiválással, felvitel/szerkesztés modallal. */
 function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const [data, setData]           = useState(null);
   const [loading, setLoading]     = useState(true);
@@ -1133,6 +1200,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   );
 }
 
+/** Munkatárs felviteli/szerkesztő modal (elérhetőségek, kvóta, EFO, aktív státusz). */
 function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const w = ctx.worker;
   const [nev, setNev]             = useState(w ? w.nev : "");
@@ -1208,8 +1276,13 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   );
 }
 
+// #endregion
+
+// #region Helyszínek / kiszállás (NapokSelector, SegBtn, PlacesView, LocationModal)
 /* ---- NapokSelector -------------------------------------------------- */
+/** Hét napjainak bit-flag kódolása (H=1, K=2, Sze=4, ... V=64) a napszűréshez. */
 const NAPOK_DAYS = [{bit:1,l:"H"},{bit:2,l:"K"},{bit:4,l:"Sze"},{bit:8,l:"Cs"},{bit:16,l:"P"},{bit:32,l:"Szo"},{bit:64,l:"V"}];
+/** Hét napjait bit-flag alapon ki/bekapcsoló gombsor (rendelés aktív napjainak beállítására). */
 function NapokSelector({ value, onChange }) {
   return (
     <div className="flex gap-1">
@@ -1226,6 +1299,7 @@ function NapokSelector({ value, onChange }) {
   );
 }
 
+/** Szegmentált (kapcsológomb-csoport) választó, pl. Belső/Külső/Kiszállás típus váltásra. */
 function SegBtn({ options, value, onChange }) {
   return (
     <div className="flex rounded-lg overflow-hidden" style={{ border:"1px solid var(--border)", display:"inline-flex" }}>
@@ -1244,6 +1318,7 @@ function SegBtn({ options, value, onChange }) {
 }
 
 /* ---- PlacesView / LocationModal (Rendelések) ------------------------- */
+/** Rendelések/helyszínek listája szekciónként (belső/külső/kiszállás), drag&amp;drop sorrendezéssel. */
 function PlacesView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]               = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -1396,6 +1471,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   );
 }
 
+/** Rendelés/helyszín felviteli/szerkesztő modal (cím, napok, orvos szükséges, szín, kapcsolattartó, kiszállás időszak). */
 function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const p = ctx.place;
   const isNew = !p.id;
@@ -1525,7 +1601,11 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   );
 }
 
+// #endregion
+
+// #region Szabadságok — lista nézet (VacationsView)
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
+/** Szabadságok/elérhető napok listája szekciónként (függő/elfogadott/elérhető/archivált), elfogadás/elutasítás/törlés műveletekkel. */
 function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(true);
@@ -1675,7 +1755,11 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   );
 }
 
+// #endregion
+
+// #region Statisztika
 /* ---- StatisticsView -------------------------------------------------- */
+/** Havi munkaidő-statisztika munkatársanként: kvóta, beosztott órák, eltérés, túlóra állapot, export. */
 function StatisticsView({ setToast }) {
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1786,6 +1870,10 @@ function StatisticsView({ setToast }) {
   );
 }
 
+// #endregion
+
+// #region Szabadságok — dátum input és felviteli modal (TriDateInput, VacationModal)
+/** Három részes (év/hó/nap) dátum beviteli mező auto-ugrással a mezők között, natív date picker gombbal. */
 function TriDateInput({ value, onChange, className, style }) {
   const [y, setY] = useState('');
   const [m, setM] = useState('');
@@ -1848,6 +1936,7 @@ function TriDateInput({ value, onChange, className, style }) {
   );
 }
 
+/** Új szabadság / elérhető nap felviteli modal, munkatárs kereséssel és típusválasztóval. */
 function VacationModal({ workers, onClose, onSave, forceTipus }) {
   const [workerSearch, setWorkerSearch] = useState("");
 
@@ -1939,7 +2028,11 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   );
 }
 
+// #endregion
+
+// #region Értesítések (NotifyView)
 /* ---- NotifyView (Értesítések) ---------------------------------------- */
+/** Értesítések nézet: heti beosztás szerinti és beosztás-változás miatti SMS/email küldés, egyéni üzenet, küldési napló. */
 function NotifyView({ setToast }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2224,13 +2317,22 @@ function NotifyView({ setToast }) {
   );
 }
 
+// #endregion
+
+// #region Fő komponens (root)
 /* ---- Kis komponensek ----------------------------------------------- */
+/** Ikon gomb (fejléc/sidebar), opcionális piros számláló jelvénnyel. */
 function IconBtn({ children, onClick, badge, title }) {
   return (<button onClick={onClick} title={title} className="mb-btn relative flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)" }}>{children}{badge>0&&<span className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full" style={{ minWidth:16, height:16, padding:"0 4px", fontSize:10, fontWeight:700, color:"#fff", background:"var(--danger)", border:"2px solid var(--surface)" }}>{badge}</span>}</button>);
 }
 /* ================================================================
  *  FŐ KOMPONENS
  * ================================================================ */
+/**
+ * A munkabeosztás React alkalmazás gyökérkomponense: sidebar navigáció, hét-váltás,
+ * adatlekérés (getweekdata), mentés/törlés/aktiválás/flag műveletek, hét másolása/törlése,
+ * és az aktuális nézet (tábla/lista/ütközések/munkatársak/rendelések/szabadságok/statisztika/értesítések) route-olása.
+ */
 function MunkaidoBeosztas() {
   const [theme,        setTheme]        = useState("light");
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
@@ -2716,6 +2818,8 @@ function MunkaidoBeosztas() {
     </div>
   );
 }
+
+// #endregion
 
 /* ---- Mountolás ------------------------------------------------------ */
 const _root = ReactDOM.createRoot(document.getElementById("hmm-schedule-root"));
