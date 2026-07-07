@@ -1089,9 +1089,9 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModal({ worker:null, roleid:1 }); }, [newSignal]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -1111,7 +1111,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
         aktiv: rec.aktiv===false||rec.aktiv===0 ? "0" : "1",
         org: rec.org||"",
       });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1121,7 +1121,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
     setSaving(true);
     try {
       const result = await post({ deletestaff:"1", id });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs törölve."); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Munkatárs törölve."); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1336,9 +1336,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   const [dragOverId, setDragOverId]   = useState(null);
   const [secCollapsed, setSecCollapsed] = useState({});
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (data?.places) setOrderedPlaces([...data.places].sort((a,b)=>a.sorrend-b.sorrend)); }, [data]);
@@ -1362,7 +1362,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       } else {
         result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"", forday:rec.forday||"" });
       }
-      if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1372,7 +1372,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
     setSaving(true);
     try {
       const result = await post({ deleteplace:"1", id });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Rendelés törölve."); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Rendelés törölve."); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1639,9 +1639,9 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModalOpen(true); }, [newSignal]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getvacations=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getvacations=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -1653,20 +1653,20 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
 
   const addVacation = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus, megj:rec.megj||"" });
-    if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
+    if (result.status==="ok") { await load(true); setModalOpen(false); setToast("Szabadság rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const addElerheto = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető", megj:rec.megj||"" });
-    if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
+    if (result.status==="ok") { await load(true); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const setStatus = async (groupid, status) => {
     setBusyId(groupid);
     const result = await post({ setvacationgroupstatus:"1", groupid, status });
-    if (result.status==="ok") await load();
+    if (result.status==="ok") await load(true);
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     setBusyId(null);
   };
@@ -1674,7 +1674,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const remove = async (groupid) => {
     setBusyId(groupid);
     const result = await post({ deletevacation:"1", groupid });
-    if (result.status==="ok") { await load(); setToast("Szabadság törölve."); }
+    if (result.status==="ok") { await load(true); setToast("Szabadság törölve."); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     setBusyId(null);
   };
@@ -2385,8 +2385,8 @@ function MunkaidoBeosztas() {
   const [staffSavedSignal, setStaffSavedSignal] = useState(0);
 
   /* ---- adatlekérés ---- */
-  const fetchWeek = useCallback((offset) => {
-    setLoading(true);
+  const fetchWeek = useCallback((offset, silent=false) => {
+    if (!silent) setLoading(true);
     fetch(`${HMM_CONFIG.url}&getweekdata=1&offset=${offset}`)
       .then((r) => r.json())
       .then((data) => {
@@ -2395,9 +2395,9 @@ function MunkaidoBeosztas() {
         setAssistants(data.assistantsWithId || []);
         setEgyebs(data.egyebWithId || []);
         setVehicles(data.vehiclesWithId || []);
-        setLoading(false);
+        if (!silent) setLoading(false);
       })
-      .catch((err) => { console.error("fetchWeek:", err); setLoading(false); });
+      .catch((err) => { console.error("fetchWeek:", err); if (!silent) setLoading(false); });
   }, []);
 
   useEffect(() => { fetchWeek(weekOffset); }, [weekOffset, fetchWeek]);
@@ -2474,7 +2474,7 @@ function MunkaidoBeosztas() {
   const toggleLezart = useCallback(async (date) => {
     const body = new URLSearchParams({ toggledaylezart:"1", datum:date });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const weekWorkerHours = useMemo(() => {
@@ -2542,7 +2542,7 @@ function MunkaidoBeosztas() {
           const noteBody = new URLSearchParams({ savedaynote:"1", tipusid:tipusId||"", datum:dates.join(","), megj:rec.note||"" });
           await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:noteBody.toString() });
         }
-        await fetchWeek(weekOffset);
+        await fetchWeek(weekOffset, true);
         setModal(null);
         setToast(dates.length>1 ? `Beosztás mentve ${dates.length} napra.` : "Beosztás mentve!");
       }
@@ -2561,19 +2561,19 @@ function MunkaidoBeosztas() {
     const newAktiv = b.aktiv === 0 ? 1 : 0;
     const body = new URLSearchParams({ togglebookingaktiv:"1", tipusid:b.tipusId, datum:b.date, aktiv:newAktiv });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const toggleFlag = useCallback(async (b) => {
     const body = new URLSearchParams({ togglebookingflag:"1", tipusid:b.tipusId, datum:b.date });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const dismissConflict = useCallback(async (b, workerId) => {
     const body = new URLSearchParams({ dismissconflict:"1", tipusid:b.tipusId, datum:b.date, workerid:workerId });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   /* ---- hét törlése ---- */
@@ -2584,7 +2584,7 @@ function MunkaidoBeosztas() {
     const body = new URLSearchParams({ clearweek:"1", monday });
     const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
     const result = await resp.json();
-    if (result.status==="ok") { await fetchWeek(weekOffset); setToast("Hét törölve."); }
+    if (result.status==="ok") { await fetchWeek(weekOffset, true); setToast("Hét törölve."); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   }, [monday, week, weekOffset, fetchWeek]);
 
@@ -2602,7 +2602,7 @@ function MunkaidoBeosztas() {
         if (result.status==="ok") done++;
       } catch(e) { console.error("copyWeek error:", e); }
     }
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
     setCopyOpen(false);
     setToast(`${sourceWeek}. hét átmásolva ${done} hétre.`);
   }, [monday, year, weekOffset, fetchWeek]);
