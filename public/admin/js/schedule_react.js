@@ -818,7 +818,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
-        const rows = weekDays[di].filter((b)=>matches(b,di)).sort((a,b)=>toMin(a.from)-toMin(b.from));
+        const rows = weekDays[di].filter((b)=>matches(b,di)).slice().sort((a,b)=>CAT_ORDER.indexOf(a.cat)-CAT_ORDER.indexOf(b.cat));
         const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
         const hol  = holidayOf(iso(dayDates[di]));
         const rest = di===6 || !!hol;
