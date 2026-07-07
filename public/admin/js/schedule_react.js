@@ -1352,9 +1352,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"", forday:rec.forday||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"", forday:rec.forday||"" });
       }
       if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
@@ -1373,10 +1373,10 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   };
 
   const openNew = () => {
-    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"" } });
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"", forday:"" } });
   };
 
-  const getSectionKey = (p) => p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso");
+  const getSectionKey = (p) => (p.forday && p.forday!=="0000-00-00") ? "egyszeri" : (p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso"));
 
   const handleDrop = async (group, targetId) => {
     if (!dragId || dragId === targetId || dragGroup !== group) {
@@ -1404,6 +1404,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
     { key:"belso",     label:"Belső rendelések", accent:CATS.belso.color     },
     { key:"kulso",     label:"Külső rendelések", accent:CATS.kulso.color     },
     { key:"kiszallas", label:"Kiszállások",      accent:CATS.kiszallas.color },
+    { key:"egyszeri",  label:"Egyszeri rendelések", accent:"#2563eb"         },
   ];
 
   return (
@@ -1411,7 +1412,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
         {SECTIONS.map((sec) => {
           const places = orderedPlaces.filter(p => getSectionKey(p) === sec.key && (!q || `${p.megnev} ${p.rendelo||""} ${p.cim||""}`.toLowerCase().includes(q)));
-          const SectionIcon = sec.key === "kiszallas" ? Ico.truck : Ico.building;
+          const SectionIcon = sec.key === "kiszallas" ? Ico.truck : sec.key === "egyszeri" ? Ico.calendar : Ico.building;
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
               <button onClick={()=>setSecCollapsed(p=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:secCollapsed[sec.key]?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.accent} 15%,transparent)` }}>
@@ -1444,7 +1445,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
                         {(p.kiszallas===1||p.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
-                        {(p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
+                        {p.forday && p.forday!=="0000-00-00" ? (
+                          <span style={{ fontSize:11, fontWeight:700, color:"#2563eb", background:"rgba(37,99,235,.12)", borderRadius:4, padding:"1px 5px" }}>{p.forday}</span>
+                        ) : (p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
                         {p.kiszallas===1 && (() => {
                           const today = new Date().toISOString().slice(0,10);
                           if (!p.validfrom && !p.validto) return <span style={{ fontSize:11, fontWeight:700, color:"var(--faint)", background:"var(--surface-2)", borderRadius:4, padding:"1px 5px" }}>Nincs időszak</span>;
@@ -1490,11 +1493,13 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [color,        setColor]       = useState(p.color||"");
   const [validfrom,    setValidfrom]   = useState(p.validfrom||"");
   const [validto,      setValidto]     = useState(p.validto||"");
+  const [egyszeri,     setEgyszeri]    = useState(!!(p.forday && p.forday!=="0000-00-00"));
+  const [forday,       setForday]      = useState(p.forday && p.forday!=="0000-00-00" ? p.forday : "");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
-  const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"" });
+  const invalid = megnev.trim()==="" || (egyszeri && cat!=="kiszallas" && !forday);
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"", forday:(egyszeri&&cat!=="kiszallas")?forday:"" });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1541,9 +1546,20 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
             {cat !== "kiszallas" && (
-              <Field label="Aktív napok">
-                <NapokSelector value={napok} onChange={setNapok}/>
-              </Field>
+              <>
+                <Field label="Ismétlődés">
+                  <SegBtn value={egyszeri?"egyszeri":"ismetlodo"} onChange={(v)=>setEgyszeri(v==="egyszeri")} options={[{v:"ismetlodo",l:"Ismétlődő"},{v:"egyszeri",l:"Egyszeri"}]}/>
+                </Field>
+                {egyszeri ? (
+                  <Field label="Dátum">
+                    <input type="date" value={forday} onChange={(e)=>setForday(e.target.value)} className="mb-in px-3 py-2.5 mb-mono" style={{ fontSize:13.5 }}/>
+                  </Field>
+                ) : (
+                  <Field label="Aktív napok">
+                    <NapokSelector value={napok} onChange={setNapok}/>
+                  </Field>
+                )}
+              </>
             )}
             {cat === "kiszallas" && (
               <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>

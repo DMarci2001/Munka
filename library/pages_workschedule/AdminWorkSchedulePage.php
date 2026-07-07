@@ -1156,7 +1156,7 @@ HTML;
         $week    = (int)date("W", strtotime($monday));
 
         $allTipusok = sql_query(
-            "SELECT * FROM schedule_tipusok WHERE forday='0000-00-00' ORDER BY kulso, sorrend"
+            "SELECT * FROM schedule_tipusok ORDER BY kulso, sorrend"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $mondayStart = $monday . " 00:00:00";
@@ -1466,7 +1466,7 @@ HTML;
             "SELECT m.workerid, ROUND(SUM(TIMESTAMPDIFF(MINUTE, m.datumfrom, m.datumto)) / 60.0, 2) AS hours
              FROM schedule_mapping m
              LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
-             WHERE m.datumfrom >= :start AND m.datumfrom < :end AND t.forday='0000-00-00'
+             WHERE m.datumfrom >= :start AND m.datumfrom < :end
              GROUP BY m.workerid",
             ["start" => $monthStart, "end" => $monthEnd]
         )->fetchAll(PDO::FETCH_ASSOC);
@@ -1512,7 +1512,7 @@ HTML;
                     ROUND(TIMESTAMPDIFF(MINUTE,m.datumfrom,m.datumto)/60.0,2) AS ora
              FROM schedule_mapping m
              LEFT JOIN schedule_tipusok t ON t.id=m.tipusid
-             WHERE m.datumfrom >= :start AND m.datumfrom < :end AND t.forday='0000-00-00'
+             WHERE m.datumfrom >= :start AND m.datumfrom < :end
              ORDER BY m.workerid, m.datumfrom",
             ["start" => $monthStart, "end" => $monthEnd]
         )->fetchAll(PDO::FETCH_ASSOC);
@@ -1776,7 +1776,7 @@ HTML;
         }
 
         $rows = sql_query(
-            "SELECT * FROM schedule_tipusok WHERE forday='0000-00-00' ORDER BY kulso, roleid, sorrend"
+            "SELECT * FROM schedule_tipusok ORDER BY kulso, roleid, sorrend, forday"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $roles = sql_query("SELECT * FROM schedule_roles ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
@@ -1804,6 +1804,7 @@ HTML;
                     "color"        => $r["color"] ?? null,
                     "validfrom"    => $r["validfrom"] ?? null,
                     "validto"      => $r["validto"]   ?? null,
+                    "forday"       => $r["forday"] ?? "0000-00-00",
                 ];
             }, $rows),
         ]);
@@ -1833,9 +1834,14 @@ HTML;
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
         }
+        $forday = "0000-00-00";
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST["forday"] ?? "")) {
+            $forday = $_POST["forday"];
+            $napok  = 127;
+        }
 
-        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?, validfrom=?, validto=?",
-            [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color, $validfrom, $validto]);
+        sql_query("INSERT INTO schedule_tipusok SET megnev=?, cim=?, rendelo=?, megj=?, roleid=?, kulso=?, kiszallas=?, org=?, aktiv=1, napok=?, orvos_kell=?, color=?, validfrom=?, validto=?, forday=?",
+            [$megnev, $cim, $rendelo, $megj, $roleid, $kulso, $kiszallas, $org, $napok, $orvosKell, $color, $validfrom, $validto, $forday]);
 
         $this->utils->jsonOut(["status" => "ok", "id" => (int)sql_insert_id()]);
     }
@@ -1904,9 +1910,14 @@ HTML;
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vf)) $validfrom = $vf;
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $vt)) $validto   = $vt;
         }
+        $forday = "0000-00-00";
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST["forday"] ?? "")) {
+            $forday = $_POST["forday"];
+            $napok  = 127;
+        }
 
-        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=?, validfrom=?, validto=? WHERE id=?",
-            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $validfrom, $validto, $id]);
+        sql_query("UPDATE schedule_tipusok SET megnev=?, cim=?, rendelo=?, sorrend=?, org=?, napok=?, kulso=?, kiszallas=?, ktarto_nev=?, ktarto_tel=?, ktarto_email=?, orvos_kell=?, color=?, validfrom=?, validto=?, forday=? WHERE id=?",
+            [$megnev, $cim, $rendelo, $sorrend, $org, $napok, $kulso, $kiszallas, $ktarto_nev, $ktarto_tel, $ktarto_email, $orvosKell, $color, $validfrom, $validto, $forday, $id]);
 
         $this->utils->jsonOut(["status" => "ok"]);
     }
