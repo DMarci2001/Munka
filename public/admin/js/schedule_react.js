@@ -770,7 +770,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
       <button onClick={(e)=>{e.stopPropagation();onToggleFlag&&onToggleFlag(b);}} title={flagged?"Jelölés eltávolítása":"Hiányzó info jelölése"} className="absolute right-14 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:flagged?"#f97316":"var(--faint)", background:flagged?"#fff7ed":"transparent", fontWeight:700, fontSize:13 }}>!</button>
       <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>
-      <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
+      <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
         <div className="truncate" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
@@ -861,7 +861,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                         <Td>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
-                            <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+                            <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
                             <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>
                             {!inactive&&overlap.filter((o)=>!o.vac).map((o,i)=>(
                               <span key={i} className="flex items-center gap-1">
@@ -936,7 +936,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
           <span style={{ color:"var(--danger)" }}>{Ico.alert({width:15,height:15})}</span>
           {b.title}
           <Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/>
-          <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+          <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
         </div>
         <span className="mb-mono" style={{ fontSize:12, color:"var(--muted)" }}>{HU_DAYS[di]}, {fmtShortISO(b.date)} · {b.from}–{b.to}</span>
       </div>
