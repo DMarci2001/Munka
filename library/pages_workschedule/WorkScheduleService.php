@@ -254,7 +254,11 @@ class WorkScheduleService {
         $res = sql_query(
             "SELECT
                 DATE(m.datumfrom) AS datum,
-                m.datumfrom, m.datumto, m.tipusid, m.workerid, m.megj,
+                m.datumfrom, m.datumto, m.tipusid, m.workerid,
+                COALESCE(
+                    (SELECT dm.megj FROM schedule_datum_megj dm WHERE dm.tipusid = m.tipusid AND dm.datum = DATE(m.datumfrom)),
+                    t.megj
+                ) AS megj,
                 t.megnev AS tipusnev, t.kulso, t.kiszallas, t.roleid AS tipusroleid, t.cim, t.rendelo,
                 (
                     SELECT GROUP_CONCAT(
@@ -277,6 +281,11 @@ class WorkScheduleService {
              FROM schedule_mapping m
              JOIN schedule_tipusok t ON t.id = m.tipusid
              WHERE m.workerid = ? AND m.datumfrom >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
+               AND m.aktiv = 1
+               AND NOT EXISTS (
+                   SELECT 1 FROM schedule_datum_aktiv sda
+                   WHERE sda.tipusid = m.tipusid AND sda.datum = DATE(m.datumfrom) AND sda.aktiv = 0
+               )
                AND NOT EXISTS (SELECT 1 FROM schedule_nap_lezart WHERE datum = DATE(m.datumfrom))
              ORDER BY m.datumfrom, t.kulso, t.kiszallas, t.sorrend",
             [$workerId]

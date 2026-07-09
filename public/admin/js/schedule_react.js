@@ -1,5 +1,7 @@
 ﻿"use strict";
 
+// #region Konfiguráció és segédfüggvények
+// Globális beállítások, dátum/idő helperek, ünnepnapok, kategória- és szabadságtípus-definíciók, alaprajz adatok.
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 const HMM_CONFIG = window.HMM_SCHEDULE_CONFIG || {
@@ -86,6 +88,10 @@ const SHORT = {"Rendelő 2. fogl.":"Rend. 2.","Rendelő 4. fogl.":"Rend. 4.","Re
 const isInternalRoom = (t) => FLOORS.some((f) => f.rooms.includes(t));
 
 /* ---- stílusok ------------------------------------------------------- */
+// #endregion
+
+// #region Stílusok és ikonok
+/** Globális CSS (egyedi property-k, fontok, animációk) a teljes munkabeosztás UI-hoz. */
 const Styles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -158,7 +164,9 @@ const Styles = () => (
 );
 
 /* ---- ikonok --------------------------------------------------------- */
+/** Ikon-gyár: egy SVG path-ból React ikonkomponenst csinál (méretezhető). */
 const S = (path, w=18) => (p) => (<svg viewBox="0 0 24 24" width={w} height={w} fill="none" {...p}>{path}</svg>);
+/** Az összes felületen használt SVG ikon gyűjteménye, kulcs szerint elérhető (Ico.trash, Ico.plus, stb). */
 const Ico = {
   overview: S(<><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/></>),
   calendar: S(<><rect x="3.5" y="5" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></>),
@@ -205,6 +213,10 @@ const Ico = {
 };
 
 /* ---- HMM logó ------------------------------------------------------- */
+// #endregion
+
+// #region Kis megjelenítő komponensek (logó, ütközés-elemzés, térkép, form primitívek)
+/** HMM logó SVG jelvény. */
 function LogoMark({ size=34 }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} style={{ flexShrink:0 }}>
@@ -215,6 +227,12 @@ function LogoMark({ size=34 }) {
 }
 
 /* ---- ütközés-elemzés ------------------------------------------------ */
+/**
+ * Az ütközés-elemzés algoritmusa: megnézi egy hét napjaira, hogy ugyanaz a munkatárs
+ * két rendelésbe van-e egyszerre beosztva (időbeli átfedés), vagy szabadságon van-e
+ * miközben be van osztva. Visszaadja az érintett rendelés-kulcsok halmazát (set) és
+ * a részletes ütközés-adatokat (det) kulcsonként.
+ */
 function analyzeDays(days, vacationsByDay) {
   const set = new Set(); const det = {};
   days.forEach((day, di) => {
@@ -243,6 +261,7 @@ function analyzeDays(days, vacationsByDay) {
 }
 
 /* ---- térkép --------------------------------------------------------- */
+/** Emeleti alaprajz SVG-je, az aktív (kiválasztott) szoba kiemelésével. Belső rendelések helyszín-térképe. */
 function FloorPlan({ active }) {
   const cols=3, boxH=28, gx=7, gy=7, padX=12, labelH=19, fGap=13, W=300;
   const boxW=(W-padX*2-gx*(cols-1))/cols;
@@ -259,6 +278,7 @@ function FloorPlan({ active }) {
   );
 }
 
+/** Sematikus utcatérkép SVG, külső rendelések/kiszállások címének vizuális jelzésére. */
 function StreetMap({ address }) {
   return (
     <svg viewBox="0 0 300 150" width="100%" style={{ display:"block" }}>
@@ -272,6 +292,7 @@ function StreetMap({ address }) {
   );
 }
 
+/** Kiválasztja a megfelelő térképet: belső szoba esetén FloorPlan, egyébként StreetMap. */
 function RoomMap({ booking }) {
   if (booking.cat==="belso" && isInternalRoom(booking.title)) return <FloorPlan active={booking.title}/>;
   const addr = booking.title.includes("–") ? booking.title.split("–").slice(1).join("–").trim() : booking.title;
@@ -279,6 +300,7 @@ function RoomMap({ booking }) {
 }
 
 /* ---- Combobox ------------------------------------------------------- */
+/** Kereshető legördülő választó (orvos/asszisztens/irodai munkatárs kiválasztásához). */
 function Combobox({ value, onChange, options, placeholder, kind, compact }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -306,20 +328,28 @@ function Combobox({ value, onChange, options, placeholder, kind, compact }) {
   );
 }
 
+/** Egyszerű natív &lt;select&gt; egyedi nyíl-ikonnal. */
 function MiniSelect({ value, onChange, options }) {
   return (<div className="relative"><select value={value} onChange={(e)=>onChange(e.target.value)} className="mb-in appearance-none py-2.5 pl-3 pr-8" style={{ fontSize:13.5, fontWeight:600 }}>{options.map((o)=><option key={o.v} value={o.v}>{o.l}</option>)}</select><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color:"var(--faint)" }}>{Ico.chevDown({width:14,height:14})}</span></div>);
 }
+/** Időpont beviteli mező (HH:MM). */
 function TimeBox({ value, onChange }) { return <input type="time" value={value} onChange={(e)=>onChange(e.target.value)} className="mb-mono mb-in py-2 px-2 text-center" style={{ width:86, fontSize:12.5 }}/>; }
 
+/** Egyedi checkbox jelölőnégyzet felirattal. */
 function Check({ checked, onChange, label }) {
   return (<button type="button" onClick={()=>onChange(!checked)} className="flex items-center gap-2"><span className="flex items-center justify-center rounded" style={{ width:18, height:18, background:checked?"var(--brand)":"var(--surface-2)", border:`1px solid ${checked?"var(--brand)":"var(--border)"}`, flexShrink:0 }}>{checked && <svg viewBox="0 0 24 24" width="13" height="13" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}</span><span style={{ fontSize:13, fontWeight:500 }}>{label}</span></button>);
 }
+/** Egyedi rádiógomb felirattal. */
 function Radio({ selected, onSelect, label }) {
   return (<button type="button" onClick={onSelect} className="flex items-center gap-2"><span className="flex items-center justify-center rounded-full" style={{ width:18, height:18, border:`2px solid ${selected?"var(--brand)":"var(--border)"}`, flexShrink:0 }}>{selected && <span style={{ width:9, height:9, borderRadius:99, background:"var(--brand)" }}/>}</span><span style={{ fontSize:13, fontWeight:500 }}>{label}</span></button>);
 }
+/** Be/ki kapcsoló (switch) csúszkával. */
 function Toggle({ on, onChange }) { return (<button type="button" onClick={()=>onChange(!on)} style={{ width:40, height:22, borderRadius:99, background:on?"var(--brand)":"var(--border)", position:"relative", flexShrink:0, transition:"background .15s" }}><span style={{ position:"absolute", top:2, left:on?20:2, width:18, height:18, borderRadius:99, background:"#fff", transition:"left .15s", boxShadow:"0 1px 2px rgba(0,0,0,.3)" }}/></button>); }
+// #endregion
 
+// #region Beosztás szerkesztő modal (StaffEditor, EditModal)
 /* ---- StaffEditor (workerId-t is kezel) ------------------------------ */
+/** Napi rendeléshez rendelt személyzet (orvos/asszisztens/irodai/jármű) szerkesztő listája egy szerepkörre. */
 function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
   const nameOptions = (workerList || []).map((w) => w.nev || w.name || "");
   const accent = role==="d" ? "var(--blue)" : role==="e" ? "var(--green)" : "var(--purple)";
@@ -345,6 +375,13 @@ function StaffEditor({ role, items, onChange, slotFrom, slotTo, workerList }) {
 }
 
 /* ---- EditModal ------------------------------------------------------ */
+/**
+ * A rendelés/beosztás létrehozó és szerkesztő modal — a legnagyobb komponens.
+ * Kezeli: időpont, típus (belső/külső/kiszállás), személyzet hozzárendelés,
+ * kvóta/túlóra ellenőrzés, ismétlődő (multi-day / kiszállás időszak) mentés,
+ * aktív/inaktív és flag (hiányzó info) kapcsolók. `embedded` módban panelként
+ * (overlay nélkül) is használható — ezt a ConflictPairModal alkalmazza.
+ */
 function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours, embedded }) {
   const b = ctx.booking;
   const [from, setFrom]     = useState(b ? b.from : "08:00");
@@ -619,13 +656,22 @@ function EditModal({ ctx, onClose, onSave, onDelete, dayDates, onMap, doctorList
   );
 }
 
+// #endregion
+
+// #region Tábla nézet elemek (Field, Badge, Th/Td/Tag, CopyWeekModal, MapPopover, Card, Group, ListView)
+/** Form mező címkével. */
 function Field({ label, children }) { return (<label className="block"><span className="block mb-1.5" style={{ fontSize:12.5, fontWeight:500, color:"var(--muted)" }}>{label}</span>{children}</label>); }
+/** Színes jelvény (kategória, szervező, státusz jelzésére). */
 function Badge({ text, color }) { return <span className="inline-block rounded-md px-2 py-0.5" style={{ fontSize:11.5, fontWeight:700, color, background:`color-mix(in srgb, ${color} 16%, transparent)` }}>{text}</span>; }
+/** Táblázat fejléc cella. */
 function Th({ children }) { return <th className="mb-display" style={{ textAlign:"left", padding:"9px 12px", fontSize:11, fontWeight:700, letterSpacing:".04em", color:"var(--faint)", textTransform:"uppercase", borderBottom:"1px solid var(--border)", whiteSpace:"nowrap" }}>{children}</th>; }
+/** Táblázat adat cella. */
 function Td({ children, mono, style }) { return <td className={mono?"mb-mono":""} style={{ padding:"9px 12px", fontSize:13, verticalAlign:"middle", ...style }}>{children}</td>; }
+/** Színes pötty + felirat (jelmagyarázathoz). */
 function Tag({ color, label }) { return (<span className="flex items-center gap-2" style={{ fontSize:12.5, color:"var(--muted)" }}><span style={{ width:11, height:11, borderRadius:3, background:color, display:"inline-block" }}/>{label}</span>); }
 
 /* ---- HétMásolás Modal ---------------------------------------------- */
+/** Hét másolása modal: kiválasztott hetet másol egy vagy több célhét(ek)re, felülírás opcióval. */
 function CopyWeekModal({ year, week, monday, onClose, onCopy }) {
   const options = Array.from({ length:8 }, (_,i) => week+1+i);
   const [targets, setTargets]   = useState(new Set([week+1, week+2, week+3]));
@@ -669,6 +715,7 @@ function CopyWeekModal({ year, week, monday, onClose, onCopy }) {
 }
 
 /* ---- TérképPopover -------------------------------------------------- */
+/** Egy rendelés helyszínét mutató térkép popover (RoomMap becsomagolva). */
 function MapPopover({ booking, onClose }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
   return (
@@ -683,8 +730,13 @@ function MapPopover({ booking, onClose }) {
 }
 
 /* ---- Kártya --------------------------------------------------------- */
+/** Kis piros státusz-jelvény (pl. "Ütközés", "Nincs orvos"). */
 function RedBadge({ text }) { return <span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"var(--danger-ink)", background:"var(--danger-soft)" }}>{text}</span>; }
 
+/**
+ * Egy rendelés/beosztás kártyája a tábla nézetben: mutatja az időpontot, személyzetet,
+ * ütközés/túlóra/hiányzó-orvos jelzéseket, aktiválás és flag gombokat.
+ */
 function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const q = query.trim().toLowerCase();
   const inactive = b.aktiv === 0;
@@ -718,7 +770,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
     <div className="mb-tcard relative rounded-xl" onClick={onOpen} style={{ background:cardBg, border:`1px solid ${cardBorder}`, padding:"9px 10px 10px 11px", outline:hit?"2px solid var(--brand)":"none", opacity:inactive?.55:1 }}>
       <button onClick={(e)=>{e.stopPropagation();onToggleFlag&&onToggleFlag(b);}} title={flagged?"Jelölés eltávolítása":"Hiányzó info jelölése"} className="absolute right-14 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:flagged?"#f97316":"var(--faint)", background:flagged?"#fff7ed":"transparent", fontWeight:700, fontSize:13 }}>!</button>
       <button onClick={(e)=>{e.stopPropagation();onToggleAktiv&&onToggleAktiv(b);}} title={inactive?"Aktiválás":"Inaktiválás"} className="absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:14,height:14}):Ico.eyeOff({width:14,height:14})}</button>
-      <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
+      <button onClick={(e)=>{e.stopPropagation();b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap();}} title="Hely a térképen" className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:14,height:14})}</button>
       <div className="mb-mono flex items-center gap-1.5 flex-wrap pr-14" style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}><span>{b.from} – {b.to}</span>{!inactive&&overlapDouble.length>0&&<RedBadge text="Ütközés"/>}{!inactive&&overlapVac.length>0&&<RedBadge text="Szabadságon"/>}{noDoc&&<RedBadge text="Nincs orvos"/>}{overQuota&&<span className="rounded px-1.5 py-0.5" style={{ fontFamily:"Manrope", fontSize:10, fontWeight:700, color:"#92400e", background:"#fef3c7" }}>Túlóra</span>}</div>
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
         <div className="truncate" style={{ fontSize:13.5, fontWeight:700, color:inactive?"var(--muted)":"var(--ink)" }}>{b.title}</div>
@@ -743,6 +795,7 @@ function Card({ b, conflict, overlap, onOpen, onMap, query, roleFilter, onToggle
 }
 
 /* ---- Csoport -------------------------------------------------------- */
+/** Egy nap egy kategóriájának (belső/külső/kiszállás stb.) összecsukható kártya-csoportja. */
 function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, query, roleFilter, onToggleAktiv, onToggleFlag, onDismissConflict, weekWorkerHours, monthHours }) {
   const c = CATS[cat]; const catIcon = Ico[c.icon];
   return (
@@ -760,11 +813,12 @@ function Group({ cat, di, items, collapsed, onToggle, conf, onOpenCard, onMap, q
 }
 
 /* ---- Listás nézet ---------------------------------------------------- */
+/** A heti beosztás táblázatos (lista) nézete, naponkénti bontásban. */
 function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOpenCard, onMap, onToggleAktiv, onDismissConflict }) {
   return (
     <div className="px-4 lg:px-6 py-4 flex flex-col gap-3">
       {HU_DAYS.map((_, di) => {
-        const rows = weekDays[di].filter((b)=>matches(b,di)).sort((a,b)=>toMin(a.from)-toMin(b.from));
+        const rows = weekDays[di].filter((b)=>matches(b,di)).slice().sort((a,b)=>CAT_ORDER.indexOf(a.cat)-CAT_ORDER.indexOf(b.cat));
         const dayConflict = weekDays[di].some((b)=>conf.set.has(`${di}:${b.id}`));
         const hol  = holidayOf(iso(dayDates[di]));
         const rest = di===6 || !!hol;
@@ -807,7 +861,7 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
                         <Td>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span style={{ fontWeight:600 }}>{b.title}</span>
-                            <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+                            <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
                             <button onClick={(e)=>{ e.stopPropagation(); onToggleAktiv&&onToggleAktiv(b); }} title={inactive?"Aktiválás":"Inaktiválás"} style={{ color:inactive?"var(--brand)":"var(--faint)" }}>{inactive?Ico.eye({width:13,height:13}):Ico.eyeOff({width:13,height:13})}</button>
                             {!inactive&&overlap.filter((o)=>!o.vac).map((o,i)=>(
                               <span key={i} className="flex items-center gap-1">
@@ -836,7 +890,11 @@ function ListView({ weekDays, dayDates, conf, matches, collapsed, onToggle, onOp
   );
 }
 
+// #endregion
+
+// #region Ütközés kezelés (ConflictPairModal, ConflictCard, ConflictView)
 /* ---- Ütközés pár modal ------------------------------------------------ */
+/** Egymással ütköző rendeléseket egymás mellett, egyszerre szerkeszthető EditModal panelekben jelenít meg. */
 function ConflictPairModal({ cluster, onClose, onSave, onDelete, onMap, dayDates, doctorList, assistantList, egyebList, vehicleList, places, saving, onToggleAktiv, onToggleFlag, vacPerDay, monthHours, weekWorkerHours }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
   const cols = cluster.length;
@@ -867,6 +925,7 @@ function ConflictPairModal({ cluster, onClose, onSave, onDelete, onMap, dayDates
 }
 
 /* ---- Ütközés nézet ---------------------------------------------------- */
+/** Egy ütköző/problémás rendelés kártyája az Ütközések nézetben (dupla-foglalás, szabadság-ütközés, hiányzó orvos). */
 function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   const docs   = (b.staff||[]).filter((s)=>s.role==="d");
   const nurses = (b.staff||[]).filter((s)=>s.role==="n");
@@ -877,7 +936,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
           <span style={{ color:"var(--danger)" }}>{Ico.alert({width:15,height:15})}</span>
           {b.title}
           <Badge text={CATS[b.cat]?.type||b.cat} color={CATS[b.cat]?.color||"var(--muted)"}/>
-          <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
+          <button onClick={(e)=>{ e.stopPropagation(); b.address?window.open(`https://www.google.com/maps/search/${encodeURIComponent(b.address)}`,"_blank"):onMap(b); }} title="Hely a térképen" style={{ color:b.address?"var(--brand)":"var(--faint)" }}>{Ico.place({width:13,height:13})}</button>
         </div>
         <span className="mb-mono" style={{ fontSize:12, color:"var(--muted)" }}>{HU_DAYS[di]}, {fmtShortISO(b.date)} · {b.from}–{b.to}</span>
       </div>
@@ -896,6 +955,7 @@ function ConflictCard({ b, di, overlaps, sectionKey, onOpenCard, onMap }) {
   );
 }
 
+/** Az "Ütközések" nézet: csoportosítja a heti problémás rendeléseket (ütközés / szabadságon / nincs orvos) szekciónként. */
 function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, onOpenCard, onOpenPair, onMap }) {
   const q = (query||"").trim().toLowerCase();
   const groups = { double: [], vac: [], noDoc: [] };
@@ -990,7 +1050,11 @@ function ConflictView({ weekDays, conf, catFilter, query, collapsed, onToggle, o
   );
 }
 
+// #endregion
+
+// #region Munkatársak (LoadingBlock megosztott betöltés-jelző, StaffView, StaffModal)
 /* ---- LoadingBlock ---------------------------------------------------- */
+/** Általános betöltés-jelző (pörgő ikon + felirat), több nézet is használja. */
 function LoadingBlock({ label }) {
   return (
     <div className="flex items-center justify-center" style={{ color:"var(--muted)", flex:"1 1 auto", minHeight:0 }}>
@@ -1003,13 +1067,16 @@ function LoadingBlock({ label }) {
 }
 
 /* ---- StaffView / StaffModal (Munkatársak) ---------------------------- */
+/** Szerepkör (orvos/asszisztens/irodai) megjelenítési adatai (címke, ikon, szín). */
 const ROLE_DISPLAY = {
   1: { label:"Orvosok",            icon:"doctor",   color:"var(--blue)"   },
   2: { label:"Asszisztensek",      icon:"person",   color:"var(--purple)" },
   3: { label:"Irodai munkatársak", icon:"building", color:"var(--green)"  },
 };
+/** Lekéri egy szerepkör megjelenítési adatait, ismeretlen szerepkörnél alapértelmezettet ad vissza. */
 const getRoleDisplay = (role) => ROLE_DISPLAY[role.id] || { label:role.megnev, icon:"truck", color:"var(--faint)" };
 
+/** Munkatársak listája szerepkör szerint csoportosítva, kereséssel, inaktiválással, felvitel/szerkesztés modallal. */
 function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const [data, setData]           = useState(null);
   const [loading, setLoading]     = useState(true);
@@ -1022,9 +1089,9 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModal({ worker:null, roleid:1 }); }, [newSignal]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getstaff=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -1042,8 +1109,9 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
         email:rec.email, tel:rec.tel, smsert:rec.smsert?"1":"", emailert:rec.emailert?"1":"",
         efo:rec.efo?"1":"", beouserid:rec.beouserid||"0", munkaora:rec.munkaora||"", munkaora_tipus:rec.munkaora_tipus||"havi",
         aktiv: rec.aktiv===false||rec.aktiv===0 ? "0" : "1",
+        org: rec.org||"",
       });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Munkatárs mentve!"); onStaffSaved && onStaffSaved(); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1053,7 +1121,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
     setSaving(true);
     try {
       const result = await post({ deletestaff:"1", id });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Munkatárs törölve."); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Munkatárs törölve."); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1114,6 +1182,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {w.aktiv===0 && <Badge text="Inaktív" color="var(--faint)"/>}
+                        {!!w.org && <Badge text={w.org} color={orgColor(w.org)}/>}
                         {!!w.efo && <Badge text="EFO" color="var(--purple)"/>}
                         {!!w.onVacation && <Badge text="Szabadságon" color="var(--danger)"/>}
                         {!!w.smsert && <Badge text="SMS" color="var(--blue)"/>}
@@ -1133,6 +1202,7 @@ function StaffView({ setToast, newSignal, query: searchQuery, onStaffSaved }) {
   );
 }
 
+/** Munkatárs felviteli/szerkesztő modal (elérhetőségek, kvóta, EFO, aktív státusz). */
 function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const w = ctx.worker;
   const [nev, setNev]             = useState(w ? w.nev : "");
@@ -1147,11 +1217,12 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   const [munkaora,       setMunkaora]       = useState(w && w.munkaora != null ? String(w.munkaora) : "");
   const [munkaora_tipus, setMunkaoraTipus] = useState(w ? (w.munkaora_tipus || "havi") : "havi");
   const [aktiv,          setAktiv]         = useState(w ? (w.aktiv !== 0) : true);
+  const [org,            setOrg]           = useState(w ? (w.org || "") : "");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
   const invalid = nev.trim()==="";
-  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus, aktiv });
+  const save = () => onSave({ id:w?w.id:0, nev, teljesnev, roleid, email, tel, smsert, emailert, efo, beouserid, munkaora, munkaora_tipus, aktiv, org });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 mb-scroll" style={{ overflowY:"auto" }}>
@@ -1170,6 +1241,9 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
           </Field>
           <Field label="Típus">
             <MiniSelect value={String(roleid)} onChange={(v)=>setRoleid(Number(v))} options={(roles||[]).map((r)=>({ v:String(r.id), l:r.megnev }))}/>
+          </Field>
+          <Field label="Állandó tag">
+            <SegBtn value={org} onChange={setOrg} options={[{v:"",l:"Nincs"},{v:"HMM",l:"HMM"},{v:"Keltexmed",l:"Keltexmed"}]}/>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Telefon"><input value={tel} onChange={(e)=>setTel(e.target.value)} className="mb-in px-3 py-2.5" style={{ fontSize:13.5 }}/></Field>
@@ -1208,8 +1282,13 @@ function StaffModal({ ctx, roles, users, onClose, onSave, onDelete, saving }) {
   );
 }
 
+// #endregion
+
+// #region Helyszínek / kiszállás (NapokSelector, SegBtn, PlacesView, LocationModal)
 /* ---- NapokSelector -------------------------------------------------- */
+/** Hét napjainak bit-flag kódolása (H=1, K=2, Sze=4, ... V=64) a napszűréshez. */
 const NAPOK_DAYS = [{bit:1,l:"H"},{bit:2,l:"K"},{bit:4,l:"Sze"},{bit:8,l:"Cs"},{bit:16,l:"P"},{bit:32,l:"Szo"},{bit:64,l:"V"}];
+/** Hét napjait bit-flag alapon ki/bekapcsoló gombsor (rendelés aktív napjainak beállítására). */
 function NapokSelector({ value, onChange }) {
   return (
     <div className="flex gap-1">
@@ -1226,6 +1305,7 @@ function NapokSelector({ value, onChange }) {
   );
 }
 
+/** Szegmentált (kapcsológomb-csoport) választó, pl. Belső/Külső/Kiszállás típus váltásra. */
 function SegBtn({ options, value, onChange }) {
   return (
     <div className="flex rounded-lg overflow-hidden" style={{ border:"1px solid var(--border)", display:"inline-flex" }}>
@@ -1244,6 +1324,7 @@ function SegBtn({ options, value, onChange }) {
 }
 
 /* ---- PlacesView / LocationModal (Rendelések) ------------------------- */
+/** Rendelések/helyszínek listája szekciónként (belső/külső/kiszállás), drag&amp;drop sorrendezéssel. */
 function PlacesView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]               = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -1255,9 +1336,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   const [dragOverId, setDragOverId]   = useState(null);
   const [secCollapsed, setSecCollapsed] = useState({});
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getplaces=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (data?.places) setOrderedPlaces([...data.places].sort((a,b)=>a.sorrend-b.sorrend)); }, [data]);
@@ -1277,11 +1358,11 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       if (!rec.id) {
         const kulso     = rec.cat === "kulso" ? 1 : 0;
         const kiszallas = rec.cat === "kiszallas" ? 1 : 0;
-        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
+        result = await post({ addplace:"1", roleid:1, kulso, kiszallas, org:rec.org, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", napok:rec.napok, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"", forday:rec.forday||"" });
       } else {
-        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"" });
+        result = await post({ saveplace:"1", id:rec.id, megnev:rec.megnev, cim:rec.cim, rendelo:rec.rendelo||"", sorrend:rec.sorrend, org:rec.org, napok:rec.napok, cat:rec.cat, orvos_kell:rec.orvos_kell??1, ktarto_nev:rec.ktarto_nev||"", ktarto_tel:rec.ktarto_tel||"", ktarto_email:rec.ktarto_email||"", color:rec.color||"", validfrom:rec.validfrom||"", validto:rec.validto||"", forday:rec.forday||"" });
       }
-      if (result.status==="ok") { await load(); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast(rec.id ? "Rendelés mentve!" : "Rendelés létrehozva!"); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
@@ -1291,17 +1372,17 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
     setSaving(true);
     try {
       const result = await post({ deleteplace:"1", id });
-      if (result.status==="ok") { await load(); setModal(null); setToast("Rendelés törölve."); }
+      if (result.status==="ok") { await load(true); setModal(null); setToast("Rendelés törölve."); }
       else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     } catch(e) { setToast("Hálózati hiba!"); }
     finally { setSaving(false); }
   };
 
   const openNew = () => {
-    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"" } });
+    setModal({ place:{ id:0, megnev:"", cim:"", rendelo:"", kulso:0, kiszallas:0, roleid:1, org:"HMM", sorrend:0, aktiv:1, napok:31, validfrom:"", validto:"", forday:"" } });
   };
 
-  const getSectionKey = (p) => p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso");
+  const getSectionKey = (p) => (p.forday && p.forday!=="0000-00-00") ? "egyszeri" : (p.kiszallas === 1 ? "kiszallas" : (p.kulso === 0 ? "belso" : "kulso"));
 
   const handleDrop = async (group, targetId) => {
     if (!dragId || dragId === targetId || dragGroup !== group) {
@@ -1329,6 +1410,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
     { key:"belso",     label:"Belső rendelések", accent:CATS.belso.color     },
     { key:"kulso",     label:"Külső rendelések", accent:CATS.kulso.color     },
     { key:"kiszallas", label:"Kiszállások",      accent:CATS.kiszallas.color },
+    { key:"egyszeri",  label:"Egyszeri rendelések", accent:"#2563eb"         },
   ];
 
   return (
@@ -1336,7 +1418,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
       <div className="flex flex-col gap-3" style={{ maxWidth:760 }}>
         {SECTIONS.map((sec) => {
           const places = orderedPlaces.filter(p => getSectionKey(p) === sec.key && (!q || `${p.megnev} ${p.rendelo||""} ${p.cim||""}`.toLowerCase().includes(q)));
-          const SectionIcon = sec.key === "kiszallas" ? Ico.truck : Ico.building;
+          const SectionIcon = sec.key === "kiszallas" ? Ico.truck : sec.key === "egyszeri" ? Ico.calendar : Ico.building;
           return (
             <div key={sec.key} className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
               <button onClick={()=>setSecCollapsed(p=>({...p,[sec.key]:!p[sec.key]}))} className="flex w-full items-center justify-between px-3 py-2.5" style={{ borderBottom:secCollapsed[sec.key]?"none":"1px solid var(--border-soft)", background:`color-mix(in srgb,${sec.accent} 15%,transparent)` }}>
@@ -1369,7 +1451,9 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <div className="truncate" style={{ fontSize:13.5, fontWeight:700 }}>{p.megnev}</div>
                         {(p.kiszallas===1||p.kulso===1) && <Badge text={p.org||"HMM"} color={orgColor(p.org)}/>}
-                        {(p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
+                        {p.forday && p.forday!=="0000-00-00" ? (
+                          <span style={{ fontSize:11, fontWeight:700, color:"#2563eb", background:"rgba(37,99,235,.12)", borderRadius:4, padding:"1px 5px" }}>{p.forday}</span>
+                        ) : (p.napok??127)!==127 && <span style={{ fontSize:11, fontWeight:700, color:"var(--brand-ink)", background:"var(--brand-soft)", borderRadius:4, padding:"1px 5px" }}>{(p.napok??127)===31?"H–P":NAPOK_DAYS.filter(d=>((p.napok??127)&d.bit)).map(d=>d.l).join(" ")}</span>}
                         {p.kiszallas===1 && (() => {
                           const today = new Date().toISOString().slice(0,10);
                           if (!p.validfrom && !p.validto) return <span style={{ fontSize:11, fontWeight:700, color:"var(--faint)", background:"var(--surface-2)", borderRadius:4, padding:"1px 5px" }}>Nincs időszak</span>;
@@ -1396,6 +1480,7 @@ function PlacesView({ setToast, newSignal, query: searchQuery }) {
   );
 }
 
+/** Rendelés/helyszín felviteli/szerkesztő modal (cím, napok, orvos szükséges, szín, kapcsolattartó, kiszállás időszak). */
 function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const p = ctx.place;
   const isNew = !p.id;
@@ -1414,11 +1499,13 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   const [color,        setColor]       = useState(p.color||"");
   const [validfrom,    setValidfrom]   = useState(p.validfrom||"");
   const [validto,      setValidto]     = useState(p.validto||"");
+  const [egyszeri,     setEgyszeri]    = useState(!!(p.forday && p.forday!=="0000-00-00"));
+  const [forday,       setForday]      = useState(p.forday && p.forday!=="0000-00-00" ? p.forday : "");
 
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); }, [onClose]);
 
-  const invalid = megnev.trim()==="";
-  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"" });
+  const invalid = megnev.trim()==="" || (egyszeri && cat!=="kiszallas" && !forday);
+  const save = () => onSave({ id:p.id||0, megnev:megnev.trim(), cim, rendelo, sorrend:p.sorrend||0, org, napok, cat, orvos_kell:orvosKell?1:0, ktarto_nev:ktartoNev, ktarto_tel:ktartoTel, ktarto_email:ktartoEmail, color:color||null, validfrom:cat==="kiszallas"?validfrom:"", validto:cat==="kiszallas"?validto:"", forday:(egyszeri&&cat!=="kiszallas")?forday:"" });
 
   const CAT_OPTS = [{v:"belso",l:"Belső"},{v:"kulso",l:"Külső"},{v:"kiszallas",l:"Kiszállás"}];
 
@@ -1465,9 +1552,20 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
           <div className="flex flex-col gap-4">
             <div style={{ fontSize:12, fontWeight:700 }}>Részletek</div>
             {cat !== "kiszallas" && (
-              <Field label="Aktív napok">
-                <NapokSelector value={napok} onChange={setNapok}/>
-              </Field>
+              <>
+                <Field label="Ismétlődés">
+                  <SegBtn value={egyszeri?"egyszeri":"ismetlodo"} onChange={(v)=>setEgyszeri(v==="egyszeri")} options={[{v:"ismetlodo",l:"Ismétlődő"},{v:"egyszeri",l:"Egyszeri"}]}/>
+                </Field>
+                {egyszeri ? (
+                  <Field label="Dátum">
+                    <input type="date" value={forday} onChange={(e)=>setForday(e.target.value)} className="mb-in px-3 py-2.5 mb-mono" style={{ fontSize:13.5 }}/>
+                  </Field>
+                ) : (
+                  <Field label="Aktív napok">
+                    <NapokSelector value={napok} onChange={setNapok}/>
+                  </Field>
+                )}
+              </>
             )}
             {cat === "kiszallas" && (
               <div className="rounded-xl p-3 flex flex-col gap-2.5" style={{ background:"var(--surface-2)", border:"1px solid var(--border)" }}>
@@ -1525,7 +1623,11 @@ function LocationModal({ ctx, onClose, onSave, onDelete, saving }) {
   );
 }
 
+// #endregion
+
+// #region Szabadságok — lista nézet (VacationsView)
 /* ---- VacationsView / VacationModal (Szabadságok) --------------------- */
+/** Szabadságok/elérhető napok listája szekciónként (függő/elfogadott/elérhető/archivált), elfogadás/elutasítás/törlés műveletekkel. */
 function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(true);
@@ -1537,9 +1639,9 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const initialSignal = useRef(newSignal);
   useEffect(() => { if (newSignal > initialSignal.current) setModalOpen(true); }, [newSignal]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    fetch(`${HMM_CONFIG.url}&getvacations=1`).then((r)=>r.json()).then((d)=>{ setData(d); setLoading(false); }).catch(()=>setLoading(false));
+  const load = useCallback((silent=false) => {
+    if (!silent) setLoading(true);
+    fetch(`${HMM_CONFIG.url}&getvacations=1`).then((r)=>r.json()).then((d)=>{ setData(d); if (!silent) setLoading(false); }).catch(()=>{ if (!silent) setLoading(false); });
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -1551,20 +1653,20 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
 
   const addVacation = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:rec.tipus, megj:rec.megj||"" });
-    if (result.status==="ok") { await load(); setModalOpen(false); setToast("Szabadság rögzítve!"); }
+    if (result.status==="ok") { await load(true); setModalOpen(false); setToast("Szabadság rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const addElerheto = async (rec) => {
     const result = await post({ addvacation:"1", workerid:rec.workerid, tol:rec.tol, ig:rec.ig, tipus:"Elérhető", megj:rec.megj||"" });
-    if (result.status==="ok") { await load(); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
+    if (result.status==="ok") { await load(true); setElerhetoOpen(false); setToast("Elérhető nap rögzítve!"); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   };
 
   const setStatus = async (groupid, status) => {
     setBusyId(groupid);
     const result = await post({ setvacationgroupstatus:"1", groupid, status });
-    if (result.status==="ok") await load();
+    if (result.status==="ok") await load(true);
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     setBusyId(null);
   };
@@ -1572,7 +1674,7 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   const remove = async (groupid) => {
     setBusyId(groupid);
     const result = await post({ deletevacation:"1", groupid });
-    if (result.status==="ok") { await load(); setToast("Szabadság törölve."); }
+    if (result.status==="ok") { await load(true); setToast("Szabadság törölve."); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
     setBusyId(null);
   };
@@ -1675,7 +1777,11 @@ function VacationsView({ setToast, newSignal, query: searchQuery }) {
   );
 }
 
+// #endregion
+
+// #region Statisztika
 /* ---- StatisticsView -------------------------------------------------- */
+/** Havi munkaidő-statisztika munkatársanként: kvóta, beosztott órák, eltérés, túlóra állapot, export. */
 function StatisticsView({ setToast }) {
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1786,6 +1892,10 @@ function StatisticsView({ setToast }) {
   );
 }
 
+// #endregion
+
+// #region Szabadságok — dátum input és felviteli modal (TriDateInput, VacationModal)
+/** Három részes (év/hó/nap) dátum beviteli mező auto-ugrással a mezők között, natív date picker gombbal. */
 function TriDateInput({ value, onChange, className, style }) {
   const [y, setY] = useState('');
   const [m, setM] = useState('');
@@ -1848,6 +1958,7 @@ function TriDateInput({ value, onChange, className, style }) {
   );
 }
 
+/** Új szabadság / elérhető nap felviteli modal, munkatárs kereséssel és típusválasztóval. */
 function VacationModal({ workers, onClose, onSave, forceTipus }) {
   const [workerSearch, setWorkerSearch] = useState("");
 
@@ -1939,7 +2050,11 @@ function VacationModal({ workers, onClose, onSave, forceTipus }) {
   );
 }
 
+// #endregion
+
+// #region Értesítések (NotifyView)
 /* ---- NotifyView (Értesítések) ---------------------------------------- */
+/** Értesítések nézet: heti beosztás szerinti és beosztás-változás miatti SMS/email küldés, egyéni üzenet, küldési napló. */
 function NotifyView({ setToast }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2224,13 +2339,22 @@ function NotifyView({ setToast }) {
   );
 }
 
+// #endregion
+
+// #region Fő komponens (root)
 /* ---- Kis komponensek ----------------------------------------------- */
+/** Ikon gomb (fejléc/sidebar), opcionális piros számláló jelvénnyel. */
 function IconBtn({ children, onClick, badge, title }) {
   return (<button onClick={onClick} title={title} className="mb-btn relative flex h-9 w-9 items-center justify-center rounded-lg" style={{ color:"var(--muted)" }}>{children}{badge>0&&<span className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full" style={{ minWidth:16, height:16, padding:"0 4px", fontSize:10, fontWeight:700, color:"#fff", background:"var(--danger)", border:"2px solid var(--surface)" }}>{badge}</span>}</button>);
 }
 /* ================================================================
  *  FŐ KOMPONENS
  * ================================================================ */
+/**
+ * A munkabeosztás React alkalmazás gyökérkomponense: sidebar navigáció, hét-váltás,
+ * adatlekérés (getweekdata), mentés/törlés/aktiválás/flag műveletek, hét másolása/törlése,
+ * és az aktuális nézet (tábla/lista/ütközések/munkatársak/rendelések/szabadságok/statisztika/értesítések) route-olása.
+ */
 function MunkaidoBeosztas() {
   const [theme,        setTheme]        = useState("light");
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
@@ -2261,8 +2385,8 @@ function MunkaidoBeosztas() {
   const [staffSavedSignal, setStaffSavedSignal] = useState(0);
 
   /* ---- adatlekérés ---- */
-  const fetchWeek = useCallback((offset) => {
-    setLoading(true);
+  const fetchWeek = useCallback((offset, silent=false) => {
+    if (!silent) setLoading(true);
     fetch(`${HMM_CONFIG.url}&getweekdata=1&offset=${offset}`)
       .then((r) => r.json())
       .then((data) => {
@@ -2271,9 +2395,9 @@ function MunkaidoBeosztas() {
         setAssistants(data.assistantsWithId || []);
         setEgyebs(data.egyebWithId || []);
         setVehicles(data.vehiclesWithId || []);
-        setLoading(false);
+        if (!silent) setLoading(false);
       })
-      .catch((err) => { console.error("fetchWeek:", err); setLoading(false); });
+      .catch((err) => { console.error("fetchWeek:", err); if (!silent) setLoading(false); });
   }, []);
 
   useEffect(() => { fetchWeek(weekOffset); }, [weekOffset, fetchWeek]);
@@ -2339,6 +2463,10 @@ function MunkaidoBeosztas() {
     (weekData?.days||[]).map((d) => d.szabadsag || []),
   [weekData]);
 
+  const assignableByDay = useMemo(() =>
+    (weekData?.days||[]).map((d) => d.assignable || []),
+  [weekData]);
+
   const lezartByDay = useMemo(() =>
     (weekData?.days||[]).map((d) => ({ lezart: !!d.lezart, megj: d.lezartMegj||"" })),
   [weekData]);
@@ -2346,7 +2474,7 @@ function MunkaidoBeosztas() {
   const toggleLezart = useCallback(async (date) => {
     const body = new URLSearchParams({ toggledaylezart:"1", datum:date });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const weekWorkerHours = useMemo(() => {
@@ -2414,7 +2542,7 @@ function MunkaidoBeosztas() {
           const noteBody = new URLSearchParams({ savedaynote:"1", tipusid:tipusId||"", datum:dates.join(","), megj:rec.note||"" });
           await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:noteBody.toString() });
         }
-        await fetchWeek(weekOffset);
+        await fetchWeek(weekOffset, true);
         setModal(null);
         setToast(dates.length>1 ? `Beosztás mentve ${dates.length} napra.` : "Beosztás mentve!");
       }
@@ -2433,19 +2561,19 @@ function MunkaidoBeosztas() {
     const newAktiv = b.aktiv === 0 ? 1 : 0;
     const body = new URLSearchParams({ togglebookingaktiv:"1", tipusid:b.tipusId, datum:b.date, aktiv:newAktiv });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const toggleFlag = useCallback(async (b) => {
     const body = new URLSearchParams({ togglebookingflag:"1", tipusid:b.tipusId, datum:b.date });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   const dismissConflict = useCallback(async (b, workerId) => {
     const body = new URLSearchParams({ dismissconflict:"1", tipusid:b.tipusId, datum:b.date, workerid:workerId });
     await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
   }, [weekOffset, fetchWeek]);
 
   /* ---- hét törlése ---- */
@@ -2456,7 +2584,7 @@ function MunkaidoBeosztas() {
     const body = new URLSearchParams({ clearweek:"1", monday });
     const resp = await fetch(HMM_CONFIG.url, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:body.toString() });
     const result = await resp.json();
-    if (result.status==="ok") { await fetchWeek(weekOffset); setToast("Hét törölve."); }
+    if (result.status==="ok") { await fetchWeek(weekOffset, true); setToast("Hét törölve."); }
     else setToast("Hiba: "+(result.message||"Ismeretlen hiba"));
   }, [monday, week, weekOffset, fetchWeek]);
 
@@ -2474,7 +2602,7 @@ function MunkaidoBeosztas() {
         if (result.status==="ok") done++;
       } catch(e) { console.error("copyWeek error:", e); }
     }
-    await fetchWeek(weekOffset);
+    await fetchWeek(weekOffset, true);
     setCopyOpen(false);
     setToast(`${sourceWeek}. hét átmásolva ${done} hétre.`);
   }, [monday, year, weekOffset, fetchWeek]);
@@ -2663,6 +2791,24 @@ function MunkaidoBeosztas() {
                             </div>
                           </div>
                         )}
+                        {!conflictView && assignableByDay[di] && assignableByDay[di].length > 0 && (
+                          <div className="rounded-xl overflow-hidden" style={{ background:"var(--surface)", border:"1px solid var(--border-soft)" }}>
+                            <div className="flex items-center gap-2 px-3 py-2" style={{ background:"color-mix(in srgb,var(--green) 15%,transparent)", borderBottom:"1px solid var(--border-soft)" }}>
+                              <span style={{ color:"var(--green)" }}>{Ico.users({width:14,height:14})}</span>
+                              <span className="mb-display" style={{ fontSize:12.5, fontWeight:700, letterSpacing:".04em", color:"var(--green)" }}>Beosztható állandó munkatársak</span>
+                              <span className="rounded-md px-1.5" style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--surface-2)" }}>{assignableByDay[di].length}</span>
+                            </div>
+                            <div className="flex flex-col p-2 gap-0.5">
+                              {assignableByDay[di].map((w) => (
+                                <div key={w.id} className="flex items-center gap-1.5" style={{ padding:"2px 4px" }}>
+                                  <span style={{ color:w.roleid===1?"var(--blue)":w.roleid===2?"var(--purple)":"var(--green)", flexShrink:0 }}>{(w.roleid===1?Ico.doctor:w.roleid===2?Ico.person:Ico.building)({width:12,height:12})}</span>
+                                  <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)" }}>{w.name}</span>
+                                  <span style={{ fontSize:10.5, fontWeight:700, color:orgColor(w.org) }}>{w.org}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {CAT_ORDER.filter((c)=>catFilter==="all"||c===catFilter).map((cat) => {
                           const items = weekDays[di].filter((b)=>b.cat===cat && matches(b,di));
                           const key   = `${di}:${cat}`;
@@ -2716,6 +2862,8 @@ function MunkaidoBeosztas() {
     </div>
   );
 }
+
+// #endregion
 
 /* ---- Mountolás ------------------------------------------------------ */
 const _root = ReactDOM.createRoot(document.getElementById("hmm-schedule-root"));
