@@ -86,12 +86,12 @@ final class Repo {
 
   private static function castAttr(?string $v, string $type) {
     if ($v === null) return null;
-    return match ($type) {
-      'integer' => (int)$v,
-      'decimal' => (float)$v,
-      'boolean' => $v === '1' || $v === 'true',
-      default   => $v,
-    };
+    switch ($type) {
+      case 'integer': return (int)$v;
+      case 'decimal': return (float)$v;
+      case 'boolean': return $v === '1' || $v === 'true';
+      default:        return $v;
+    }
   }
 
   // ---- Effektív státusz (deviceVM logika) -------------------

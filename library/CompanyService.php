@@ -51,7 +51,7 @@ class CompanyService {
         if ($d == "keltexmed" || $d == "bejelentkezesuj" || $d == "demo") {
             $d = "bejelentkezes";
         }
-        if($d=="marciteszt"){
+        if($d=="marciteszt" || $d=="dmarciteszt"){
             $d="bejelentkezes";
         }
         if($d=="mak-fehervariut"){

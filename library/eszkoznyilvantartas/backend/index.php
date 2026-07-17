@@ -23,7 +23,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
 $route = $uriPath;
-if ($base !== '' && str_starts_with($route, $base)) $route = substr($route, strlen($base));
+if ($base !== '' && strpos($route, $base) === 0) $route = substr($route, strlen($base));
 $route = preg_replace('#^/?index\.php#', '', $route);   // direkt /index.php/... hívás esetén
 $route = trim($route, '/');                              // pl. "devices/5/history"
 

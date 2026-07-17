@@ -52,16 +52,16 @@ final class Ops {
 
   // store.js statusFromEvent
   private static function statusFromEvent(string $eventType): string {
-    return match ($eventType) {
-      'check_out'      => 'Kiadva',
-      'check_in'       => 'Kivehető',
-      'transfer'       => 'Kiadva',
-      'stock_transfer' => 'Kivehető',
-      'send_to_repair' => 'Szerviz alatt',
-      'mark_lost'      => 'Elveszett',
-      'mark_found'     => 'Kivehető',
-      default          => 'Kivehető',
-    };
+    switch ($eventType) {
+      case 'check_out':      return 'Kiadva';
+      case 'check_in':       return 'Kivehető';
+      case 'transfer':       return 'Kiadva';
+      case 'stock_transfer': return 'Kivehető';
+      case 'send_to_repair': return 'Szerviz alatt';
+      case 'mark_lost':      return 'Elveszett';
+      case 'mark_found':     return 'Kivehető';
+      default:               return 'Kivehető';
+    }
   }
 
   private static function requireDevice(int $deviceId): array {

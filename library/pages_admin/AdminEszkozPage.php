@@ -15,7 +15,7 @@ class AdminEszkozPage extends AdminCorePage {
         $ts = time();
         $token = hash_hmac("sha256", $username . $ts, SSO_SECRET);
 
-        $url = "/admin/eszkoznyilvantartas/app/?" . http_build_query(["sso" => $token, "u" => $username, "t" => $ts]);
+        $url = "/js/eszkoznyilvantartas/?" . http_build_query(["sso" => $token, "u" => $username, "t" => $ts]);
 
         echo "<iframe src='" . htmlspecialchars($url, ENT_QUOTES) . "'"
            . " style='display:block;width:100%;height:calc(100vh - 175px);min-height:500px;border:0;background:#fff;'"
