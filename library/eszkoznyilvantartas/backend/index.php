@@ -91,7 +91,8 @@ try {
   json_error(422, $e->getMessage());          // üzleti szabály megsértése
 } catch (Throwable $e) {
   error_log('[API] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-  json_error(500, 'Szerverhiba.');
+  // IDEIGLENES HIBAKERESÉS — vissza kell állítani 'Szerverhiba.'-ra, ha a hiba oka megvan.
+  json_error(500, 'Szerverhiba: ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine());
 }
 
 // ============================================================
