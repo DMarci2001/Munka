@@ -1,0 +1,24 @@
+<?php
+
+class AdminEszkozPage extends AdminCorePage {
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function showPage() {
+        // SSO_SECRET / SSO_TTL_SECONDS egyetlen forrása a webapp konfigja:
+        require_once __DIR__ . "/../eszkoznyilvantartas/backend/config/config.php";
+
+        $username = $this->adminUser->user["username"];
+        $ts = time();
+        $token = hash_hmac("sha256", $username . $ts, SSO_SECRET);
+
+        $url = "/admin/eszkoznyilvantartas/app/?" . http_build_query(["sso" => $token, "u" => $username, "t" => $ts]);
+
+        echo "<iframe src='" . htmlspecialchars($url, ENT_QUOTES) . "'"
+           . " style='display:block;width:100%;height:calc(100vh - 175px);min-height:500px;border:0;background:#fff;'"
+           . " allow='camera'></iframe>";
+    }
+}

@@ -1,0 +1,21 @@
+# ============================================================
+# Minden kérést a front controllerhez (index.php) irányítunk,
+# kivéve a ténylegesen létező fájlokat/könyvtárakat.
+# ============================================================
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /eszkoznyilvantartas/backend/
+
+  # Meglévő fájl/könyvtár közvetlenül kiszolgálható.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Minden más → index.php (a path az index.php után marad).
+  RewriteRule ^(.*)$ index.php/$1 [L,QSA]
+</IfModule>
+
+# A nyers SQL sémák és a config közvetlen letöltésének tiltása.
+<FilesMatch "\.(sql|md)$">
+  Require all denied
+</FilesMatch>

@@ -1,0 +1,158 @@
+// Portable Device Inventory — DBML (streamlined)
+// Paste into https://drawsql.app (Import > DBML) or https://dbdiagram.io
+// EXTERNAL tables are owned by the clinic web app — referenced, not created here.
+//
+// Streamlining notes:
+//  - eszkoznyilvantartas_devices holds NO holder/location columns. Custody is the single source of truth.
+//  - Current holder/location is read through the view eszkoznyilvantartas_device_current_state (see bottom).
+//  - eszkoznyilvantartas_departments merged into locations (locations.type = stockroom | room | department).
+
+// ===================== EXTERNAL (owned by the clinic web app) =====================
+Table firms {                     // EXTERNAL
+  id uuid [pk]
+  name varchar
+  tax_id varchar
+}
+Table sites {                     // EXTERNAL
+  id uuid [pk]
+  firm_id uuid [ref: > firms.id]
+  name varchar
+  code varchar
+  address varchar
+}
+Table clinic_users {              // EXTERNAL
+  id uuid [pk]
+  username varchar
+  full_name varchar
+  role varchar
+}
+Table examination_types {         // EXTERNAL
+  id uuid [pk]
+  name varchar
+  code varchar
+  modality varchar [note: 'e.g. ultrasound, ECG, blood pressure']
+  description varchar
+}
+
+// ===================== OWNED BY THIS INVENTORY DB =====================
+// Authorization level per web-app user. Login stays with the web app; this only
+// stores what a user may do here. No row => 'user'. Only it_admin may edit it.
+Table inventory_user_roles {
+  user_id uuid [pk, ref: > clinic_users.id]
+  role varchar [not null, note: 'user | storekeeper | it_admin (default user)']
+  granted_by uuid [ref: > clinic_users.id]
+  granted_at timestamp [not null]
+}
+
+Table locations {
+  id uuid [pk]
+  site_id uuid [not null, ref: > sites.id]
+  name varchar [not null]
+  type varchar [note: 'stockroom | room | department']
+  is_central boolean [note: 'true = the HQ central stockroom']
+}
+
+Table eszkoznyilvantartas_device_types {
+  id uuid [pk]
+  name varchar [not null, unique]
+  description varchar
+}
+
+// Metadata-driven type attributes (the per-type "sub-attributes")
+Table eszkoznyilvantartas_attribute_definitions {
+  id uuid [pk]
+  device_type_id uuid [not null, ref: > eszkoznyilvantartas_device_types.id]
+  attribute_key varchar [not null, note: 'e.g. calibration_due_date']
+  label varchar
+  data_type varchar [note: 'text | integer | decimal | date | boolean | enum']
+  is_required boolean [default: false]
+  options varchar [note: 'allowed values for enum types']
+  sort_order integer
+  indexes { (device_type_id, attribute_key) [unique] }
+}
+
+Table eszkoznyilvantartas_devices {
+  internal_id uuid [pk]
+  asset_tag varchar [not null, unique, note: 'encoded in the QR code']
+  device_type_id uuid [not null, ref: > eszkoznyilvantartas_device_types.id]
+  name_label varchar [not null]
+  manufacturer varchar
+  model varchar
+  serial_number varchar
+  status varchar [not null, note: 'Ready to deploy | Deployed | Reserved | Retired | Lost | In repair']
+  site_id uuid [not null, ref: > sites.id, note: 'owning clinic; current whereabouts come from custody']
+  warranty_expiry date
+  condition varchar
+  photo varchar
+  notes text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  created_by uuid [ref: > clinic_users.id]
+  updated_by uuid [ref: > clinic_users.id]
+  retired_date date
+}
+
+Table eszkoznyilvantartas_device_attribute_values {
+  id uuid [pk]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
+  attribute_definition_id uuid [not null, ref: > eszkoznyilvantartas_attribute_definitions.id]
+  value varchar
+  indexes { (device_id, attribute_definition_id) [unique] }
+}
+
+// Many-to-many: which examination types a device can serve
+Table device_examination_types {
+  id uuid [pk]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
+  examination_type_id uuid [not null, ref: > examination_types.id]
+  indexes { (device_id, examination_type_id) [unique] }
+}
+
+// Append-only custody log = single source of truth for holder & location.
+// actor_user_id is always recorded (incl. stockroom->stockroom). The "to" side may name a
+// user, a location, or BOTH (who holds it AND where they took it).
+Table eszkoznyilvantartas_device_custody_events {
+  event_id uuid [pk]
+  device_id uuid [not null, ref: > eszkoznyilvantartas_devices.internal_id]
+  event_type varchar [not null, note: 'check_out | check_in | transfer | stock_transfer | send_to_repair | mark_lost']
+  actor_user_id uuid [not null, ref: > clinic_users.id, note: 'who performed/logged it — always set']
+  from_user_id uuid [ref: > clinic_users.id, note: 'previous holder, if a person']
+  from_location_id uuid [ref: > locations.id, note: 'source room/stockroom, if applicable']
+  to_user_id uuid [ref: > clinic_users.id, note: 'new holder, if a person']
+  to_location_id uuid [ref: > locations.id, note: 'destination room/stockroom (also set for a user destination)']
+  event_timestamp timestamp [not null]
+  expected_return_date date
+  condition_at_event varchar
+  notes text
+  confirmation_status varchar [not null, default: 'confirmed', note: 'pending | confirmed | rejected — only a user check_in starts pending (checkpoint)']
+  confirmed_by uuid [ref: > clinic_users.id, note: 'storekeeper who confirmed/rejected; null while pending']
+  confirmed_at timestamp [note: 'when confirmed/rejected; null while pending']
+  Note: 'CHECK: at least one of to_user_id / to_location_id is set (both allowed). CHECK: confirmation_status in (pending,confirmed,rejected); pending => confirmed_by/at null, else not null; only check_in may be pending/rejected.'
+}
+
+// Active device reservations. A user reserves a free device; the row is DELETED
+// on pickup (check_out) / cancel / 3-day expiry, so the table holds only currently
+// active reservations. UNIQUE(device_id) => at most one active reservation each.
+Table eszkoznyilvantartas_device_reservations {
+  reservation_id uuid [pk]
+  device_id uuid [not null, unique, ref: > eszkoznyilvantartas_devices.internal_id, note: 'one active reservation per device']
+  reserved_by uuid [not null, ref: > clinic_users.id]
+  reserved_at timestamp [not null]
+  expires_at timestamp [not null, note: 'default reserved_at + 3 days; row deleted after expiry']
+  notes text
+  Note: 'CHECK: expires_at > reserved_at. Row deleted on check_out / cancel / expiry.'
+}
+
+// ===================== VIEW (not a table) =====================
+// eszkoznyilvantartas_device_current_state — derives the current holder/location from the newest
+// custody event per device, so the app reads it like columns without storing them:
+//
+//   CREATE VIEW eszkoznyilvantartas_device_current_state AS
+//   SELECT DISTINCT ON (device_id)
+//          device_id,
+//          to_user_id     AS current_holder_user_id,
+//          to_location_id AS current_location_id,
+//          event_timestamp AS since
+//   FROM eszkoznyilvantartas_device_custody_events
+//   WHERE confirmation_status = 'confirmed'   -- checkpoint: pending/rejected ignored
+//   ORDER BY device_id, event_timestamp DESC;

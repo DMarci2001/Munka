@@ -1,0 +1,22 @@
+# ============================================================
+# /webapp/ → /webapp/dist/ átirányítás
+#
+# A /webapp/ a FEJLESZTŐI forrás (Vite) belépési pontja. Az itt lévő
+# index.html a ./src/appshell.js-t natív ES-modulként tölti be, aminek
+# a bare-import-jait (pl. `import 'qrcode'`) a böngésző Vite/bundler
+# nélkül NEM tudja feloldani → a modul hibára fut → ÜRES oldal.
+# Pont ez történt a QR-beolvasáskor: a kód a .../webapp/#/scan/:tag
+# címre mutat, amit az Apache a fejlesztői forrással szolgál ki.
+#
+# Az éles, bundle-ölt alkalmazás a dist/ alatt van. Ezért a csupasz
+# /webapp/ kérést átirányítjuk a dist/-re.
+#
+# A hash-deep-link (#/scan/:tag) megmarad: a böngésző a fragmentet a
+# fragment nélküli Location-re örökli (RFC 7231 §7.1.2), így a
+# .../webapp/#/scan/ESZ-0010 → .../webapp/dist/#/scan/ESZ-0010 lesz.
+#
+# 302 (ideiglenes), hogy a böngésző ne cache-elje tartósan az
+# átirányítást. Csak a pontos belépési pontra illeszkedik — a dist/,
+# az assets/ és a src/ kérések érintetlenek maradnak.
+# ============================================================
+RedirectMatch 302 ^/eszkoznyilvantartas/frontend/?$ /eszkoznyilvantartas/frontend/dist/
