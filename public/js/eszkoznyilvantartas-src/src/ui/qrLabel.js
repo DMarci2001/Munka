@@ -45,9 +45,11 @@ export async function dlgQrLabel(deviceId) {
   });
 }
 
-// ---- Közvetlen nyomtatás (előnézeti modal nélkül), a fizikai Zebra ZD421
-// címkeanyaghoz igazítva: 104mm x 76.2mm (a nyomtató-illesztőprogram
-// alapértelmezett készlet-mérete, "Nyomtatási beállítások" > Méret). ----
+// ---- Közvetlen nyomtatás (előnézeti modal nélkül). A lapméretet NEM
+// találgatjuk (a nyomtató-illesztőprogram készlet-mérete megbízhatatlannak
+// bizonyult) — a címke pontosan a tartalma köré simul (fit-content), a
+// tényleges renderelt méretét megmérjük, és PONT azt a méretet írjuk elő
+// @page size-ként, hogy a lap ne legyen se nagyobb, se kisebb a tartalomnál. ----
 export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
@@ -56,22 +58,29 @@ export async function printQrLabel(deviceId) {
   const { default: QRCode } = await import('qrcode');
   const dataUrl = await QRCode.toDataURL(url, { width: 480, margin: 1 });
 
-  const style = document.createElement('style');
-  style.textContent = `@media print{@page{size:104mm 76.2mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
-  document.head.appendChild(style);
-
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:104mm;height:76.2mm;padding:4mm;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6mm;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;display:inline-flex;align-items:center;gap:4mm;padding:3mm;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto">
       <img src="${dataUrl}" alt="QR kód" style="width:14mm;height:14mm;display:block" />
       <div style="font-weight:700;font-size:4mm;margin-top:1.5mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
     </div>
-    <img src="${logoUrl}" alt="Hungária Med-M" style="width:32mm;height:auto;flex:0 0 auto" />`;
+    <img src="${logoUrl}" alt="Hungária Med-M" style="width:32mm;height:auto;flex:0 0 auto;display:block" />`;
   document.body.appendChild(label);
 
   await waitForImages(label);
+
+  // Renderelt méret (px) → mm, hogy a @page pontosan a tartalom köré simuljon.
+  const rect = label.getBoundingClientRect();
+  const pxToMm = (px) => (px * 25.4) / 96;
+  const wMm = pxToMm(rect.width).toFixed(1);
+  const hMm = pxToMm(rect.height).toFixed(1);
+
+  const style = document.createElement('style');
+  style.textContent = `@media print{@page{size:${wMm}mm ${hMm}mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:inline-flex!important}}`;
+  document.head.appendChild(style);
+
   window.print();
   label.remove();
   style.remove();
