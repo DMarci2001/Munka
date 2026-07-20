@@ -62,11 +62,11 @@ export async function printQrLabel(deviceId) {
 
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:104mm;height:76.2mm;padding:4mm;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:4mm;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:104mm;height:76.2mm;padding:4mm;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6mm;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto">
-      <img src="${dataUrl}" alt="QR kód" style="width:60mm;height:60mm;display:block" />
-      <div style="font-weight:700;font-size:6mm;margin-top:2mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
+      <img src="${dataUrl}" alt="QR kód" style="width:14mm;height:14mm;display:block" />
+      <div style="font-weight:700;font-size:4mm;margin-top:1.5mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
     </div>
     <img src="${logoUrl}" alt="Hungária Med-M" style="width:32mm;height:auto;flex:0 0 auto" />`;
   document.body.appendChild(label);
