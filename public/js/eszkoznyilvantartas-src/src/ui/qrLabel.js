@@ -46,14 +46,15 @@ export async function dlgQrLabel(deviceId) {
 }
 
 // ---- Közvetlen nyomtatás (előnézeti modal nélkül), a fizikai Zebra ZD421
-// címkeanyaghoz igazítva: 40mm x 20mm. ----
+// címkeanyaghoz igazítva: 104mm x 76.2mm (a nyomtató-illesztőprogram
+// alapértelmezett készlet-mérete, "Nyomtatási beállítások" > Méret). ----
 export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
 
   const url = deepLinkFor(dev.asset_tag);
   const { default: QRCode } = await import('qrcode');
-  const dataUrl = await QRCode.toDataURL(url, { width: 240, margin: 1 });
+  const dataUrl = await QRCode.toDataURL(url, { width: 480, margin: 1 });
 
   const style = document.createElement('style');
   style.textContent = `@media print{@page{size:auto;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
@@ -61,13 +62,13 @@ export async function printQrLabel(deviceId) {
 
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:40mm;height:20mm;padding:1mm;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:1mm;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:104mm;height:76.2mm;padding:4mm;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:4mm;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto;max-width:15mm">
-      <img src="${dataUrl}" alt="QR kód" style="width:14mm;height:14mm;display:block" />
-      <div style="font-weight:700;font-size:1.7mm;margin-top:0.3mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto">
+      <img src="${dataUrl}" alt="QR kód" style="width:60mm;height:60mm;display:block" />
+      <div style="font-weight:700;font-size:6mm;margin-top:2mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
     </div>
-    <img src="${logoUrl}" alt="Hungária Med-M" style="width:22mm;height:auto;flex:0 0 auto" />`;
+    <img src="${logoUrl}" alt="Hungária Med-M" style="width:32mm;height:auto;flex:0 0 auto" />`;
   document.body.appendChild(label);
 
   await waitForImages(label);
