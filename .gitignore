@@ -3931,4 +3931,12 @@ library/pages_admin/other/zarok/2024-10-18/standard/Laborok/Udvardi Krisztina.pd
 library/pages_admin/other/zarok/2024-10-18/standard/Laborok/Varró Tamás-119004184.pdf
 library/pages_admin/other/zarok/2024-10-18/standard/Laborok/Varró Tamás.pdf
 
-library/eszkoznyilvantartas/frontend/node_modules/
+
+# Eszköznyilvántartás frontend forrás — a fenti globális *.js/*.json/*.css
+# szabályok alól kivéve, hogy a tényleges alkalmazáskód verziókövetett legyen.
+# A node_modules-t viszont továbbra is ki kell zárni (utoljára, hogy felülírja
+# a fenti negációt az alatta lévő fájlokra).
+!public/js/eszkoznyilvantartas-src/**/*.js
+!public/js/eszkoznyilvantartas-src/**/*.json
+!public/js/eszkoznyilvantartas-src/**/*.css
+public/js/eszkoznyilvantartas-src/node_modules/
