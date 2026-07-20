@@ -1,12 +1,21 @@
 import { getDevice } from '../state/store.js';
 import { openModal } from './components.js';
 import { esc } from '../lib/format.js';
+import logoUrl from '../assets/hmm_logo.png';
 
-// A QR mindig a /admin eszköznyilvántartás oldalra mutat (nem a nyers /js
-// build útvonalra) — az admin oldal a "tag" paramétert továbbadja a beágyazott
-// alkalmazásnak, ami közvetlenül az adott eszköz lapjára ugrik.
-function deepLinkFor(assetTag) {
-  return `${location.origin}/admin/index.php?page=eszkoz&tag=${encodeURIComponent(assetTag)}`;
+// Saját, egyszerű "URL-rövidítő" — nincs külső szolgáltatás (pl. TinyURL) és
+// nincs átirányítás: a rövid link MAGA a végcél, csak egy sokkal rövidebb
+// alakban. A kód az eszköz numerikus azonosítójának base36 kódolása; a
+// /a.php (site gyökér) ezt egyetlen adatbázis-lekérdezéssel visszafejti
+// eszközazonosítóra, és rögtön le is rendereli az admin eszközoldalt (lásd
+// public/a.php). Ez a rövidség kell ahhoz, hogy a QR alacsonyabb verziójú
+// (kevesebb modulos) legyen, és a modulok elég nagyok maradjanak ahhoz, hogy
+// a teljes HMM-logó a közepébe férjen anélkül, hogy a QR olvashatatlanná válna.
+function shortCodeFor(deviceId) {
+  return deviceId.toString(36);
+}
+function deepLinkFor(deviceId) {
+  return `${location.origin}/a.php?${shortCodeFor(deviceId)}`;
 }
 
 function waitForImages(container) {
@@ -14,9 +23,43 @@ function waitForImages(container) {
     img.decode ? img.decode().catch(() => {}) : new Promise((res) => { img.onload = res; img.onerror = res; })));
 }
 
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// KÍSÉRLET: a teljes HMM-logót sütjük a QR közepébe, hogy lássuk, a telefonos
+// olvasók így is felismerik-e. 'H' szintű hibajavítás kell (a legmagasabb,
+// ~30%-os tartalék), mert a logó a QR jelentős részét eltakarja.
 async function buildQr(QRCode, url, sizePx) {
   const canvas = document.createElement('canvas');
-  await QRCode.toCanvas(canvas, url, { width: sizePx, margin: 1, errorCorrectionLevel: 'M' });
+  await QRCode.toCanvas(canvas, url, { width: sizePx, margin: 1, errorCorrectionLevel: 'H' });
+  const ctx = canvas.getContext('2d');
+  const logoImg = await loadImage(logoUrl);
+
+  const logoW = sizePx * 0.32;
+  const logoH = logoW * (logoImg.height / logoImg.width);
+  const pad = sizePx * 0.02;
+  const x = (sizePx - logoW) / 2;
+  const y = (sizePx - logoH) / 2;
+
+  const bx = x - pad, by = y - pad, bw = logoW + pad * 2, bh = logoH + pad * 2, r = Math.min(bw, bh) * 0.1;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(bx + r, by);
+  ctx.arcTo(bx + bw, by, bx + bw, by + bh, r);
+  ctx.arcTo(bx + bw, by + bh, bx, by + bh, r);
+  ctx.arcTo(bx, by + bh, bx, by, r);
+  ctx.arcTo(bx, by, bx + bw, by, r);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.drawImage(logoImg, x, y, logoW, logoH);
+
   return canvas.toDataURL('image/png');
 }
 
@@ -24,7 +67,7 @@ export async function dlgQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
 
-  const url = deepLinkFor(dev.asset_tag);
+  const url = deepLinkFor(dev.device_id);
   const { default: QRCode } = await import('qrcode');
   const dataUrl = await buildQr(QRCode, url, 480);
 
@@ -59,7 +102,7 @@ export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
 
-  const url = deepLinkFor(dev.asset_tag);
+  const url = deepLinkFor(dev.device_id);
   const { default: QRCode } = await import('qrcode');
   const dataUrl = await buildQr(QRCode, url, 850);
 
@@ -68,7 +111,7 @@ export async function printQrLabel(deviceId) {
   label.style.cssText = 'position:fixed;left:-9999px;top:0;display:inline-flex;align-items:center;gap:0.5mm;padding:0;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
     <img src="${dataUrl}" alt="QR kód" style="height:25mm;width:25mm;display:block;flex:0 0 auto" />
-    <div style="flex:0 0 auto;font-weight:700;font-size:1.6mm;line-height:1;white-space:nowrap">${esc(dev.asset_tag)}</div>`;
+    <div style="flex:0 0 auto;font-weight:700;font-size:2.4mm;line-height:1;white-space:nowrap">${esc(dev.asset_tag)}</div>`;
   document.body.appendChild(label);
 
   await waitForImages(label);
