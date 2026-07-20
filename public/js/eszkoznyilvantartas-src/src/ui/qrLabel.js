@@ -57,7 +57,7 @@ export async function printQrLabel(deviceId) {
   const dataUrl = await QRCode.toDataURL(url, { width: 480, margin: 1 });
 
   const style = document.createElement('style');
-  style.textContent = `@media print{@page{size:auto;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
+  style.textContent = `@media print{@page{size:104mm 76.2mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
   document.head.appendChild(style);
 
   const label = document.createElement('div');
