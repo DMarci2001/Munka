@@ -180,6 +180,7 @@ async function init() {
 
   // SSO handoff from clinic website: ?sso=<token>&u=<username>&t=<timestamp>
   const ssoParams = new URLSearchParams(location.search);
+  let ssoError = null;
   if (ssoParams.has('sso')) {
     try {
       await apiSend('POST', '/auth/sso', {
@@ -187,7 +188,7 @@ async function init() {
         username: ssoParams.get('u'),
         timestamp: Number(ssoParams.get('t')),
       });
-    } catch (e) { /* expired or invalid token — fall through to normal auth check */ }
+    } catch (e) { ssoError = e.message; }   // lejárt/érvénytelen token — a normál auth-ellenőrzésre esünk vissza
     history.replaceState(null, '', location.pathname + location.hash);
   }
 
@@ -210,7 +211,8 @@ async function init() {
   if (!currentUser()) {
     fullScreen(`<div class="big">${icons.my}</div>
       <h2>Bejelentkezés szükséges</h2>
-      <p class="muted">Jelentkezz be a főoldalon az eszköznyilvántartó használatához.</p>`);
+      <p class="muted">Jelentkezz be a főoldalon az eszköznyilvántartó használatához.</p>
+      ${ssoError ? `<p class="muted" style="font-size:.8rem;margin-top:8px">(SSO: ${esc(ssoError)})</p>` : ''}`);
     return;
   }
 

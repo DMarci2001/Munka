@@ -50,7 +50,11 @@ const SESSION_NAME = 'eszkozsession';
 // Must match the value configured on the clinic website side.
 // Replace with a long random string before deploying.
 const SSO_SECRET      = '5beaa1029ca92f6215d5c5c6a24b95b9fba2c195800db584a6f48bf7e23d308a';
-const SSO_TTL_SECONDS = 60;
+// A token az admin oldal RENDERELÉSEKOR keletkezik, de csak azután válik be,
+// hogy a beágyazott app JS-csomagjai (több chunk) letöltődtek és lefutottak —
+// lassú mobilneten (hideg cache, cellás net) ez önmagában meghaladhatja a
+// korábbi 60mp-et, ami hamis "Bejelentkezés szükséges" hibát okozott.
+const SSO_TTL_SECONDS = 180;
 
 // Add the clinic website's origin here when known, e.g.:
 //   'https://klinika.example.hu'

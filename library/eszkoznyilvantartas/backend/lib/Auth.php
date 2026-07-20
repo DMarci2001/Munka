@@ -11,12 +11,18 @@ require_once __DIR__ . '/../helpers/Response.php';
 require_once __DIR__ . '/Roles.php';
 
 final class Auth {
+  private const LOGIN_MAX_ATTEMPTS = 5;
+  private const LOGIN_LOCKOUT_SECONDS = 900; // 15 perc
+
   // ---- Bejelentkezés -----------------------------------------
   // A klinikai users táblából azonosít username + jelszó alapján.
   // A jelszó-oszlop a config-ban állítható (USER_PASSWORD_COLUMN).
   public static function login(string $username, string $password): array {
+    $db = getDB();
+    self::checkLoginLock($db, $username);
+
     $col = USER_PASSWORD_COLUMN;
-    $st = getDB()->prepare(
+    $st = $db->prepare(
       "SELECT id, username, " . USER_NAME_COLUMN . " AS full_name,
               " . USER_ROLE_COLUMN . " AS jogosultsag, `$col` AS pwhash
        FROM users WHERE username = ? LIMIT 1"
@@ -26,14 +32,45 @@ final class Auth {
 
     $hash = $row['pwhash'] ?? '';
     if (!$row || $hash === null || $hash === '' || !password_verify($password, $hash)) {
+      self::registerLoginFailure($db, $username);
       throw new OpError('Hibás felhasználónév vagy jelszó.');
     }
+    self::clearLoginFailures($db, $username);
 
     // Munkamenet rögzítése (session fixation ellen: új azonosító).
     session_regenerate_id(true);
     $_SESSION['uid']  = (int) $row['id'];
     $_SESSION['role'] = Roles::intToString($row['jogosultsag']);
     return self::publicUser($row);
+  }
+
+  // ---- Bejelentkezési rate limit -------------------------------
+  private static function checkLoginLock(PDO $db, string $username): void {
+    $st = $db->prepare('SELECT locked_until FROM eszkoznyilvantartas_login_attempts WHERE username = ?');
+    $st->execute([$username]);
+    $lockedUntil = $st->fetchColumn();
+    if ($lockedUntil !== false && $lockedUntil !== null && strtotime($lockedUntil) > time()) {
+      throw new OpError('Túl sok sikertelen bejelentkezési kísérlet. Próbáld újra néhány perc múlva.');
+    }
+  }
+
+  private static function registerLoginFailure(PDO $db, string $username): void {
+    $now = date('Y-m-d H:i:s');
+    $st = $db->prepare('SELECT fail_count FROM eszkoznyilvantartas_login_attempts WHERE username = ?');
+    $st->execute([$username]);
+    $failCount = ((int) $st->fetchColumn()) + 1;
+    $lockedUntil = $failCount >= self::LOGIN_MAX_ATTEMPTS
+      ? date('Y-m-d H:i:s', time() + self::LOGIN_LOCKOUT_SECONDS)
+      : null;
+    $db->prepare(
+      'INSERT INTO eszkoznyilvantartas_login_attempts (username, fail_count, last_attempt, locked_until)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE fail_count = VALUES(fail_count), last_attempt = VALUES(last_attempt), locked_until = VALUES(locked_until)'
+    )->execute([$username, $failCount, $now, $lockedUntil]);
+  }
+
+  private static function clearLoginFailures(PDO $db, string $username): void {
+    $db->prepare('DELETE FROM eszkoznyilvantartas_login_attempts WHERE username = ?')->execute([$username]);
   }
 
   // SSO: log in by username only (password check skipped — caller must have verified HMAC token).

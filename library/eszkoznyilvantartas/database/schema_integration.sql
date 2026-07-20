@@ -150,6 +150,22 @@ CREATE TABLE IF NOT EXISTS eszkoznyilvantartas_device_reservations (
   CONSTRAINT chk_resv_expiry CHECK (expires_at > reserved_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- SSO token egyszeri felhasználásának nyilvántartása (replay-védelem).
+CREATE TABLE IF NOT EXISTS eszkoznyilvantartas_sso_used_tokens (
+  token_hash  CHAR(64)  NOT NULL,   -- SHA-256(token) — maga a token nem kerül tárolásra
+  used_at     DATETIME  NOT NULL,
+  PRIMARY KEY (token_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bejelentkezési kísérletek nyilvántartása (rate limit / lockout).
+CREATE TABLE IF NOT EXISTS eszkoznyilvantartas_login_attempts (
+  username      VARCHAR(191) NOT NULL,
+  fail_count    INT          NOT NULL DEFAULT 0,
+  last_attempt  DATETIME     NOT NULL,
+  locked_until  DATETIME     NULL,
+  PRIMARY KEY (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ===================== Nézetek =====================
 
 CREATE VIEW eszkoznyilvantartas_device_current_state AS

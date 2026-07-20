@@ -161,6 +161,9 @@ class AdminUser {
         ],
         "jog_newsinsert" => [
             "name" => "Faliújságra támát hozzáadhat",
+        ],
+        "jog_eszkoznyilvantartas" => [
+            "name" => "Hozzáférhet az eszköznyilvántartáshoz"
         ]
 
     ];
@@ -609,6 +612,10 @@ class AdminUser {
 
     public function newsInsertAccess():bool {
         return $this->checkPermission("jog_newsinsert");
+    }
+
+    public function eszkoznyilvantartasAccess():bool {
+        return $this->checkPermission("jog_eszkoznyilvantartas");
     }
 
 

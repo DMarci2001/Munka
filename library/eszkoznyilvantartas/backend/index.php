@@ -91,8 +91,7 @@ try {
   json_error(422, $e->getMessage());          // üzleti szabály megsértése
 } catch (Throwable $e) {
   error_log('[API] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-  // IDEIGLENES HIBAKERESÉS — vissza kell állítani 'Szerverhiba.'-ra, ha a hiba oka megvan.
-  json_error(500, 'Szerverhiba: ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine());
+  json_error(500, 'Szerverhiba.');
 }
 
 // ============================================================
@@ -113,7 +112,28 @@ function h_sso(): array {
   $ts = (int) $b['timestamp'];
   if (abs(time() - $ts) > SSO_TTL_SECONDS) json_error(401, 'SSO token lejárt.');
   $expected = hash_hmac('sha256', (string) $b['username'] . $ts, SSO_SECRET);
-  if (!hash_equals($expected, (string) $b['token'])) json_error(401, 'Érvénytelen SSO token.');
+  $token = (string) $b['token'];
+  if (!hash_equals($expected, $token)) json_error(401, 'Érvénytelen SSO token.');
+
+  // Egyszeri felhasználás kikényszerítése: egy elcsípett token az TTL-ablakon
+  // belül csak egyszer válthat be bejelentkezést (replay-védelem).
+  // Ha a tábla hiányzik (pl. a migráció még nincs lefuttatva élesben), ne
+  // dőljön el az egész bejelentkezés 500-cal — a replay-védelem ilyenkor
+  // egyszerűen kikapcsolt állapotban fut, amíg a migráció le nem fut.
+  $db = getDB();
+  try {
+    $db->prepare(
+      'DELETE FROM eszkoznyilvantartas_sso_used_tokens WHERE used_at < ?'
+    )->execute([date('Y-m-d H:i:s', time() - SSO_TTL_SECONDS - 5)]);
+    $db->prepare(
+      'INSERT INTO eszkoznyilvantartas_sso_used_tokens (token_hash, used_at) VALUES (?, ?)'
+    )->execute([hash('sha256', $token), date('Y-m-d H:i:s')]);
+  } catch (\PDOException $e) {
+    if ($e->getCode() === '23000') json_error(401, 'SSO token már felhasználva.');
+    if ($e->getCode() !== '42S02') throw $e;   // csak a "tábla nem létezik" hibát nyeljük el
+    error_log('[SSO] eszkoznyilvantartas_sso_used_tokens tábla hiányzik — futtasd le a migrációt.');
+  }
+
   return Auth::loginByUsername((string) $b['username']);
 }
 function h_me(): ?array { return Auth::currentUser(); }

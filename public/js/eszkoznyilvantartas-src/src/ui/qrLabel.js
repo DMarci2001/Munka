@@ -1,16 +1,23 @@
 import { getDevice } from '../state/store.js';
 import { openModal } from './components.js';
 import { esc } from '../lib/format.js';
-import logoUrl from '../assets/hmm_logo.png';
 
+// A QR mindig a /admin eszköznyilvántartás oldalra mutat (nem a nyers /js
+// build útvonalra) — az admin oldal a "tag" paramétert továbbadja a beágyazott
+// alkalmazásnak, ami közvetlenül az adott eszköz lapjára ugrik.
 function deepLinkFor(assetTag) {
-  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-  return `${base}#/scan/${encodeURIComponent(assetTag)}`;
+  return `${location.origin}/admin/index.php?page=eszkoz&tag=${encodeURIComponent(assetTag)}`;
 }
 
 function waitForImages(container) {
   return Promise.all([...container.querySelectorAll('img')].map((img) =>
     img.decode ? img.decode().catch(() => {}) : new Promise((res) => { img.onload = res; img.onerror = res; })));
+}
+
+async function buildQr(QRCode, url, sizePx) {
+  const canvas = document.createElement('canvas');
+  await QRCode.toCanvas(canvas, url, { width: sizePx, margin: 1, errorCorrectionLevel: 'M' });
+  return canvas.toDataURL('image/png');
 }
 
 export async function dlgQrLabel(deviceId) {
@@ -19,54 +26,49 @@ export async function dlgQrLabel(deviceId) {
 
   const url = deepLinkFor(dev.asset_tag);
   const { default: QRCode } = await import('qrcode');
-  const dataUrl = await QRCode.toDataURL(url, { width: 240, margin: 1 });
+  const dataUrl = await buildQr(QRCode, url, 480);
 
   openModal({
     title: `QR Címke · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
-      <div id="qr-label-area" style="text-align:center;padding:12px 0">
-        <img src="${dataUrl}" alt="QR kód" style="width:240px;height:240px;display:block;margin:0 auto 12px" />
-        <div class="tag-mono" style="font-size:1.1rem;font-weight:600">${esc(dev.asset_tag)}</div>
-        <div style="font-size:.9rem;color:#666;margin-top:4px">${esc([dev.manufacturer, dev.model].filter(Boolean).join(' '))}</div>
+      <div id="qr-label-area" style="display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0">
+        <img src="${dataUrl}" alt="QR kód" style="width:240px;height:240px;display:block;flex:0 0 auto" />
+        <div style="text-align:left">
+          <div class="tag-mono" style="font-size:1.3rem;font-weight:600">${esc(dev.asset_tag)}</div>
+          <div style="font-size:.9rem;color:#666;margin-top:4px">${esc([dev.manufacturer, dev.model].filter(Boolean).join(' '))}</div>
+        </div>
       </div>`,
     confirmText: 'Nyomtatás',
     onConfirm: () => {
-      const style = document.createElement('style');
-      style.textContent = `@media print{@page{size:auto;margin:10mm}body>*{display:none!important}#qr-print-clone{display:block!important;text-align:center;padding:24px}#qr-print-clone img{width:240px!important;height:240px!important}}`;
-      document.head.appendChild(style);
-      const clone = document.getElementById('qr-label-area').cloneNode(true);
-      clone.id = 'qr-print-clone';
-      document.body.appendChild(clone);
-      window.print();
-      clone.remove();
-      style.remove();
+      printQrLabel(deviceId);
       return false;
     },
   });
 }
 
-// ---- Közvetlen nyomtatás (előnézeti modal nélkül). A lapméretet NEM
-// találgatjuk (a nyomtató-illesztőprogram készlet-mérete megbízhatatlannak
-// bizonyult) — a címke pontosan a tartalma köré simul (fit-content), a
-// tényleges renderelt méretét megmérjük, és PONT azt a méretet írjuk elő
-// @page size-ként, hogy a lap ne legyen se nagyobb, se kisebb a tartalomnál. ----
+// ---- Nyomtatás (mind az előnézeti modálból, mind a lista gyorsgombjából).
+// A fizikai címke 50mm×25mm, fekvő (horizontális) tájolású. A QR a TELJES
+// 25mm magasságot kitölti (nulla margó/padding — semmi nem vész el feleslegesen),
+// jobbra pedig az eszközazonosító, amilyen kicsi méretben csak lehet, de
+// TELJES egészében, csonkolás nélkül. A címke-elem SZÁNDÉKOSAN nem kap fix
+// width/height-et (fit-content, mint egy inline-flex) — a TÉNYLEGESEN
+// renderelt méretet mérjük meg és PONT azt írjuk elő @page size-ként, hogy a
+// lap sose legyen nagyobb vagy kisebb a tartalomnál (ez zárja ki, hogy a QR
+// a címke fizikai szélén túl nyomtatódjon). ----
 export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
 
   const url = deepLinkFor(dev.asset_tag);
   const { default: QRCode } = await import('qrcode');
-  const dataUrl = await QRCode.toDataURL(url, { width: 480, margin: 1 });
+  const dataUrl = await buildQr(QRCode, url, 850);
 
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;display:inline-flex;align-items:center;gap:4mm;padding:3mm;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;display:inline-flex;align-items:center;gap:0.5mm;padding:0;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto">
-      <img src="${dataUrl}" alt="QR kód" style="width:14mm;height:14mm;display:block" />
-      <div style="font-weight:700;font-size:4mm;margin-top:1.5mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
-    </div>
-    <img src="${logoUrl}" alt="Hungária Med-M" style="width:32mm;height:auto;flex:0 0 auto;display:block" />`;
+    <img src="${dataUrl}" alt="QR kód" style="height:25mm;width:25mm;display:block;flex:0 0 auto" />
+    <div style="flex:0 0 auto;font-weight:700;font-size:1.6mm;line-height:1;white-space:nowrap">${esc(dev.asset_tag)}</div>`;
   document.body.appendChild(label);
 
   await waitForImages(label);
@@ -78,7 +80,11 @@ export async function printQrLabel(deviceId) {
   const hMm = pxToMm(rect.height).toFixed(1);
 
   const style = document.createElement('style');
-  style.textContent = `@media print{@page{size:${wMm}mm ${hMm}mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:inline-flex!important}}`;
+  // html/body margin/padding NULLÁZÁSA kötelező: a böngésző alap margója
+  // (pl. 8px) a tartalmat a @page-hez képest eltolja, így a lapon kívülre
+  // csúszik a bal/felső rész (a QR) — csak a jobb oldali szöveg maradna
+  // látható. Enélkül a QR levágva jelenik meg nyomtatáskor.
+  style.textContent = `@media print{html,body{margin:0!important;padding:0!important}@page{size:${wMm}mm ${hMm}mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:inline-flex!important}}`;
   document.head.appendChild(style);
 
   window.print();

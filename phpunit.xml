@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Futtatás: php tools/phpunit.phar
+  (a phar nincs commitolva — ha hiányzik: curl -fsSL -o tools/phpunit.phar https://phar.phpunit.de/phpunit-9.phar)
+  Előfeltétel: helyi MySQL/MariaDB az `eszkoznyilvantartas_test` adatbázissal,
+  betöltve a library/eszkoznyilvantartas/database/schema_dev.sql sémával.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         bootstrap="library/eszkoznyilvantartas/tests/bootstrap.php"
+         colors="true">
+  <testsuites>
+    <testsuite name="eszkoznyilvantartas">
+      <directory>library/eszkoznyilvantartas/tests</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

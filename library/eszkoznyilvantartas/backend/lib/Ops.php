@@ -72,6 +72,25 @@ final class Ops {
     return $dev;
   }
 
+  // Mint requireDevice, de sorzárolással (versenyhelyzetek ellen egy tranzakción belül).
+  private static function lockDevice(PDO $db, int $deviceId): array {
+    $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_devices WHERE device_id = ? FOR UPDATE');
+    $st->execute([$deviceId]);
+    $dev = $st->fetch();
+    if (!$dev) throw new OpError('Eszköz nem található.');
+    return $dev;
+  }
+
+  // Idegenkulcs-létezés ellenőrzése barátságos hibaüzenettel (nyers FK-hiba helyett).
+  private static function requireExists(PDO $db, string $table, string $col, ?int $id, string $label): void {
+    if ($id === null) return;
+    $st = $db->prepare("SELECT 1 FROM `$table` WHERE `$col` = ? LIMIT 1");
+    $st->execute([$id]);
+    if (!$st->fetchColumn()) throw new OpError("Érvénytelen $label.");
+  }
+
+  private const TERMINAL_STATUSES = ['Selejtezve', 'Elveszett', 'Szerviz alatt'];
+
   // ============================================================
   // move_asset — minden birtoklási mozgás egyetlen kapun megy át
   // (store.js moveAsset). A felhasználói (user) korlátozásokkal.
@@ -93,7 +112,9 @@ final class Ops {
     $db = getDB();
     $db->beginTransaction();
     try {
-      self::requireDevice($deviceId);
+      $dev = self::lockDevice($db, $deviceId);
+      if (in_array($dev['status'], self::TERMINAL_STATUSES, true))
+        throw new OpError('Az eszköz állapota (' . $dev['status'] . ') miatt előbb a megfelelő visszaállítási műveletet kell elvégezni.');
       $actor = Auth::userId();
       $role  = Auth::role();
       $cur   = Repo::currentState($deviceId);
@@ -176,6 +197,10 @@ final class Ops {
       if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'check_in')
         throw new OpError('Csak függőben lévő visszavétel erősíthető meg.');
 
+      $dev = self::lockDevice($db, (int) $ev['device_id']);
+      if ($dev['status'] !== 'Visszavétel folyamatban')
+        throw new OpError('Az eszköz állapota közben megváltozott (' . $dev['status'] . '), a visszavétel már nem erősíthető meg.');
+
       $db->prepare(
         "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'confirmed', confirmed_by = ?, confirmed_at = ? WHERE event_id = ?"
       )->execute([Auth::userId(), self::nowTs(), $eventId]);
@@ -202,6 +227,10 @@ final class Ops {
       if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'check_in')
         throw new OpError('Csak függőben lévő visszavétel utasítható el.');
 
+      $dev = self::lockDevice($db, (int) $ev['device_id']);
+      if ($dev['status'] !== 'Visszavétel folyamatban')
+        throw new OpError('Az eszköz állapota közben megváltozott (' . $dev['status'] . '), a visszavétel már nem utasítható el.');
+
       $notes = ($ev['notes'] ? $ev['notes'] . ' ' : '') . 'ELUTASÍTVA: ' . ($reason ?: 'nincs indok');
       $db->prepare(
         "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'rejected', confirmed_by = ?, confirmed_at = ?, notes = ? WHERE event_id = ?"
@@ -227,7 +256,7 @@ final class Ops {
       // lejárt foglalás takarítása az eszközre
       $db->prepare('DELETE FROM eszkoznyilvantartas_device_reservations WHERE device_id = ? AND expires_at <= NOW()')->execute([$deviceId]);
 
-      $dev = self::requireDevice($deviceId);
+      $dev = self::lockDevice($db, $deviceId);
       $cur = Repo::currentState($deviceId);
       $free = $cur['holder'] === null && ($cur['department'] !== null || $cur['location'] !== null) && $dev['status'] === 'Kivehető';
       if (!$free) throw new OpError('Csak szabad, raktárban lévő eszköz foglalható.');
@@ -295,6 +324,8 @@ final class Ops {
         $repair = $db->query("SELECT id FROM eszkoznyilvantartas_departments WHERE type = 'műhely' LIMIT 1")->fetchColumn();
         $toDept = $repair !== false ? (int) $repair : null;
       }
+      self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
+      self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
       self::moveAssetInternal($db, [
         'device_id' => $deviceId, 'event_type' => 'send_to_repair',
         'to_locations_id' => $toLoc, 'to_departments_id' => $toDept, 'notes' => $notes,
@@ -316,6 +347,8 @@ final class Ops {
       $dev = self::requireDevice($deviceId);
       if ($dev['status'] !== 'Szerviz alatt')
         throw new OpError('Csak szerviz alatt lévő eszköz helyezhető vissza.');
+      self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
+      self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
       self::moveAssetInternal($db, [
         'device_id' => $deviceId, 'event_type' => 'return_from_repair',
         'to_locations_id' => $toLoc, 'to_departments_id' => $toDept, 'notes' => $notes,
@@ -356,6 +389,8 @@ final class Ops {
     $db->beginTransaction();
     try {
       self::requireDevice($deviceId);
+      self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
+      self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
       self::moveAssetInternal($db, [
         'device_id' => $deviceId, 'event_type' => 'mark_found',
         'to_locations_id' => $toLoc, 'to_departments_id' => $toDept, 'notes' => $notes,
@@ -412,6 +447,7 @@ final class Ops {
     try {
       $deviceTypeId = (int) $in['device_type_id'];
       $assetTag = trim((string) $in['asset_tag']);
+      self::requireExists($db, 'eszkoznyilvantartas_device_types', 'id', $deviceTypeId, 'eszköztípus');
 
       $exists = $db->prepare('SELECT 1 FROM eszkoznyilvantartas_devices WHERE LOWER(asset_tag) = LOWER(?)');
       $exists->execute([$assetTag]);
@@ -422,11 +458,16 @@ final class Ops {
         'INSERT INTO eszkoznyilvantartas_devices (asset_tag, device_type_id, manufacturer, model, serial_number, status, `condition`, notes, created_by, updated_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       );
-      $st->execute([
-        $assetTag, $deviceTypeId,
-        $in['manufacturer'] ?? null, $in['model'] ?? null, $in['serial_number'] ?? null,
-        'Kivehető', $in['condition'] ?? 'Jó', $in['notes'] ?? '', $uid, $uid,
-      ]);
+      try {
+        $st->execute([
+          $assetTag, $deviceTypeId,
+          $in['manufacturer'] ?? null, $in['model'] ?? null, $in['serial_number'] ?? null,
+          'Kivehető', $in['condition'] ?? 'Jó', $in['notes'] ?? '', $uid, $uid,
+        ]);
+      } catch (\PDOException $e) {
+        if ($e->getCode() === '23000') throw new OpError("Ez a leltári azonosító már létezik: $assetTag");
+        throw $e;
+      }
       $deviceId = (int) $db->lastInsertId();
 
       if (!empty($in['attrs']) && is_array($in['attrs'])) {
@@ -467,8 +508,16 @@ final class Ops {
           throw new OpError("Ez a leltári azonosító már létezik: $tag");
       }
 
-      // csak engedélyezett közös oszlopok módosíthatók
-      $allowed = ['asset_tag', 'device_type_id', 'manufacturer', 'model', 'serial_number', 'condition', 'notes', 'status'];
+      if (array_key_exists('device_type_id', $changes))
+        self::requireExists($db, 'eszkoznyilvantartas_device_types', 'id', (int) $changes['device_type_id'], 'eszköztípus');
+      if (array_key_exists('condition', $changes))
+        enum_in($changes['condition'], ['Jó', 'Kopott', 'Hibás', 'Ismeretlen'], 'állapot');
+
+      // csak engedélyezett közös oszlopok módosíthatók — a "status" szándékosan
+      // NEM szerkeszthető itt: kizárólag a dedikált műveleteken (moveAsset,
+      // retireDevice, markLost/Found, sendToRepair/returnFromRepair,
+      // confirmCheckIn/rejectCheckIn) keresztül változhat.
+      $allowed = ['asset_tag', 'device_type_id', 'manufacturer', 'model', 'serial_number', 'condition', 'notes'];
       $set = [];
       $vals = [];
       foreach ($allowed as $col) {
@@ -536,6 +585,7 @@ final class Ops {
     $type = $in['type'] ?? 'osztály';
     enum_in($type, ['raktár', 'osztály', 'recepció', 'műhely'], 'részleg-típus');
     $db = getDB();
+    self::requireExists($db, 'helyszinek', 'id', $locId, 'helyszín');
     $db->prepare('INSERT INTO eszkoznyilvantartas_departments (locations_id, name, type) VALUES (?, ?, ?)')->execute([$locId, $name, $type]);
     $id = (int) $db->lastInsertId();
     return ['id' => $id, 'locations_id' => $locId, 'name' => $name, 'type' => $type];
@@ -565,6 +615,7 @@ final class Ops {
     $deviceTypeId = int_or_null($in['device_type_id'] ?? null);
     $options = $dataType === 'enum' ? (trim((string) ($in['options'] ?? '')) ?: null) : null;
     $db = getDB();
+    self::requireExists($db, 'eszkoznyilvantartas_device_types', 'id', $deviceTypeId, 'eszköztípus');
     $db->prepare(
       'INSERT INTO eszkoznyilvantartas_attribute_definitions (device_type_id, attribute_key, label, data_type, is_required, options, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)'
