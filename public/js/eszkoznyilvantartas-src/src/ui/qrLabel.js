@@ -45,8 +45,8 @@ export async function dlgQrLabel(deviceId) {
   });
 }
 
-// ---- Közvetlen nyomtatás (előnézeti modal nélkül), Zebra címke méretarányhoz igazítva ----
-// arány ~3.46:1, a database/QR_label_generator/print_labels.py 900×260px címkéjével egyezően
+// ---- Közvetlen nyomtatás (előnézeti modal nélkül), a fizikai Zebra ZD421
+// címkeanyaghoz igazítva: 40mm x 20mm. ----
 export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
@@ -56,18 +56,18 @@ export async function printQrLabel(deviceId) {
   const dataUrl = await QRCode.toDataURL(url, { width: 240, margin: 1 });
 
   const style = document.createElement('style');
-  style.textContent = `@media print{@page{size:auto;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
+  style.textContent = `@media print{@page{size:40mm 20mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important}}`;
   document.head.appendChild(style);
 
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:70mm;height:20mm;padding:1mm 1.5mm;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:2mm;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:40mm;height:20mm;padding:1mm;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:1mm;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto">
-      <img src="${dataUrl}" alt="QR kód" style="width:13mm;height:13mm;display:block" />
-      <div style="font-weight:700;font-size:2.6mm;margin-top:0.6mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto;max-width:15mm">
+      <img src="${dataUrl}" alt="QR kód" style="width:14mm;height:14mm;display:block" />
+      <div style="font-weight:700;font-size:1.7mm;margin-top:0.3mm;white-space:nowrap">${esc(dev.asset_tag)}</div>
     </div>
-    <img src="${logoUrl}" alt="Hungária Med-M" style="height:15mm;width:auto;flex:0 0 auto" />`;
+    <img src="${logoUrl}" alt="Hungária Med-M" style="width:22mm;height:auto;flex:0 0 auto" />`;
   document.body.appendChild(label);
 
   await waitForImages(label);
