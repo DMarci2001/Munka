@@ -119,8 +119,10 @@ final class Ops {
       $role  = Auth::role();
       $cur   = Repo::currentState($deviceId);
 
-      // engedélyezés (store.js)
-      if ($role === 'user') {
+      // engedélyezés (store.js) — allowlist: csak storekeeper+ mozgathat
+      // szabadon; mindenki más (bármi, ami nem legalább storekeeper) a
+      // lenti szűkített user-szabályok alá esik.
+      if (!Roles::atLeast($role, 'storekeeper')) {
         $freeInStock = $cur['holder'] === null && ($cur['department'] !== null || $cur['location'] !== null);
         $heldByActor = $cur['holder'] === $actor;
         if ($eventType === 'check_out') {

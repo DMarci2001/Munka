@@ -165,7 +165,12 @@ if (isset($GLOBALS["admin"])) {
     require_once(__DIR__ . "/library/pages_admin/AdminVehiclesPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminKeltexmedProductsPage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminCancelsPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminEszkozBasePage.php");
     require_once(__DIR__ . "/library/pages_admin/AdminEszkozPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminEszkozlistaPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminNalamPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminLeadottPage.php");
+    require_once(__DIR__ . "/library/pages_admin/AdminAdatbevitelPage.php");
     //require_once(__DIR__ . "/library/pages_admin/AdminBeutalokKezelesePage.php");
     
     

@@ -69,6 +69,12 @@ class AdminPage {
         //ha nincs bejelentkezve, akkor loginra dobjuk
         if (empty($this->adminUser->user)) {
             $this->skipFrame = true;
+            // az eredetileg kért oldalt (pl. QR-szkennelésből érkező
+            // page=eszkoz&tag=...) eltesszük, hogy belépés után oda
+            // irányíthassunk vissza (lásd AdminLoginPage sikeres belépés).
+            if (!isset($_SESSION["postLoginRedirect"])) {
+                $_SESSION["postLoginRedirect"] = $_GET;
+            }
             $page = new AdminLoginPage();
         }
 
@@ -76,6 +82,9 @@ class AdminPage {
         if (isset($this->adminUser->user["auth2fac"]) && $this->adminUser->user["auth2fac"]==1) {
             if (!isset($_SESSION["2facomplete"])) {
                 $this->skipFrame = true;
+                if (!isset($_SESSION["postLoginRedirect"])) {
+                    $_SESSION["postLoginRedirect"] = $_GET;
+                }
                 $page = new AdminLoginPage();
             }
         }
@@ -92,6 +101,13 @@ class AdminPage {
             $this->skipFrame = true;
             $page = new AdminLoginPage();
         }
+
+        // sikeres, teljes bejelentkezés (nem login/2FA oldal) — a mélylink-
+        // visszairányítás célba ért, a tárolt célt eldobjuk.
+        if (!($page instanceof AdminLoginPage) && isset($_SESSION["postLoginRedirect"])) {
+            unset($_SESSION["postLoginRedirect"]);
+        }
+
         return $page;
     }
 
@@ -125,7 +141,7 @@ class AdminPage {
 
         if ($this->pageData["skipmenu"] == 0 && !$this->skipMenu) {
             echo "<td valign='top' class='menuoszlop'>";
-            echo "<div id='mainmenucolumn' style='width:{$_SESSION["mainmenuwidth"]};overflow: hidden;transition: all 0.3s ease 0s;'>";
+            echo "<div id='mainmenucolumn' style='width:{$_SESSION["mainmenuwidth"]};overflow-x: hidden;;transition: all 0.3s ease 0s;'>";
             echo $this->_menuColumn();
             echo "</div>";
             echo "</td>";

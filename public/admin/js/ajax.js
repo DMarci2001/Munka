@@ -31,6 +31,7 @@ $(document).ready(function () {
     initQueryDatePicker();
     initWaitList();
     initHamburgerIcon();
+    scrollActiveMenuItemIntoView();
     checkChat();
 
     if (Notification.permission !== "granted") {
@@ -2662,6 +2663,14 @@ function toggleSubMenu(id) {
         });
     });
 
+}
+
+function scrollActiveMenuItemIntoView() {
+    var el = document.querySelector("#mainmenucolumn .mainmenuitem_sub_aktiv")
+        || document.querySelector("#mainmenucolumn .mainmenuitem_aktiv");
+    if (el) {
+        el.scrollIntoView({ block: "center" });
+    }
 }
 
 function toggleElojegyzesTableNaptar(oid, tid) {

@@ -74,10 +74,10 @@ export async function dlgQrLabel(deviceId) {
   openModal({
     title: `QR Címke · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
-      <div id="qr-label-area" style="display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0">
-        <img src="${dataUrl}" alt="QR kód" style="width:240px;height:240px;display:block;flex:0 0 auto" />
-        <div style="text-align:left">
-          <div class="tag-mono" style="font-size:1.3rem;font-weight:600">${esc(dev.asset_tag)}</div>
+      <div id="qr-label-area" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0">
+        <img src="${dataUrl}" alt="QR kód" style="width:260px;height:260px;display:block" />
+        <div style="text-align:center">
+          <div class="tag-mono" style="font-size:1.6rem;font-weight:700">${esc(dev.asset_tag)}</div>
           <div style="font-size:.9rem;color:#666;margin-top:4px">${esc([dev.manufacturer, dev.model].filter(Boolean).join(' '))}</div>
         </div>
       </div>`,
@@ -90,28 +90,28 @@ export async function dlgQrLabel(deviceId) {
 }
 
 // ---- Nyomtatás (mind az előnézeti modálból, mind a lista gyorsgombjából).
-// A fizikai címke 50mm×25mm, fekvő (horizontális) tájolású. A QR a TELJES
-// 25mm magasságot kitölti (nulla margó/padding — semmi nem vész el feleslegesen),
-// jobbra pedig az eszközazonosító, amilyen kicsi méretben csak lehet, de
-// TELJES egészében, csonkolás nélkül. A címke-elem SZÁNDÉKOSAN nem kap fix
-// width/height-et (fit-content, mint egy inline-flex) — a TÉNYLEGESEN
-// renderelt méretet mérjük meg és PONT azt írjuk elő @page size-ként, hogy a
-// lap sose legyen nagyobb vagy kisebb a tartalomnál (ez zárja ki, hogy a QR
-// a címke fizikai szélén túl nyomtatódjon). ----
+// A fizikai címke 58mm×60mm, majdnem négyzetes (az új nyomtató-címkékhez
+// igazítva — a korábbi 50×25mm-es fekvő címkénél a QR és a szöveg egymás
+// MELLETT fért csak el; itt bőven van hely alatta is, ezért a QR felül,
+// az eszközazonosító ALATTA, függőlegesen egymás alatt). A címke SZÉLESSÉGE
+// fixen 58mm (ez a fizikai papír szélessége). A MAGASSÁGA szándékosan nem
+// fix — a TÉNYLEGESEN renderelt magasságot mérjük meg és PONT azt írjuk elő
+// @page size-ként, hogy a lap sose legyen nagyobb vagy kisebb a tartalomnál
+// (ez zárja ki, hogy a QR a címke fizikai szélén túl nyomtatódjon). ----
 export async function printQrLabel(deviceId) {
   const dev = getDevice(deviceId);
   if (!dev) return;
 
   const url = deepLinkFor(dev.device_id);
   const { default: QRCode } = await import('qrcode');
-  const dataUrl = await buildQr(QRCode, url, 850);
+  const dataUrl = await buildQr(QRCode, url, 1900);
 
   const label = document.createElement('div');
   label.id = 'qr-print-label';
-  label.style.cssText = 'position:fixed;left:-9999px;top:0;display:inline-flex;align-items:center;gap:0.5mm;padding:0;font-family:Arial,sans-serif;background:#fff';
+  label.style.cssText = 'position:fixed;left:-9999px;top:0;width:58mm;display:flex;flex-direction:column;align-items:center;gap:1.5mm;padding:0;font-family:Arial,sans-serif;background:#fff';
   label.innerHTML = `
-    <img src="${dataUrl}" alt="QR kód" style="height:25mm;width:25mm;display:block;flex:0 0 auto" />
-    <div style="flex:0 0 auto;font-weight:700;font-size:2.4mm;line-height:1;white-space:nowrap">${esc(dev.asset_tag)}</div>`;
+    <img src="${dataUrl}" alt="QR kód" style="width:54mm;height:54mm;display:block" />
+    <div style="font-weight:700;font-size:4mm;line-height:1.05;text-align:center">${esc(dev.asset_tag)}</div>`;
   document.body.appendChild(label);
 
   await waitForImages(label);
@@ -127,7 +127,7 @@ export async function printQrLabel(deviceId) {
   // (pl. 8px) a tartalmat a @page-hez képest eltolja, így a lapon kívülre
   // csúszik a bal/felső rész (a QR) — csak a jobb oldali szöveg maradna
   // látható. Enélkül a QR levágva jelenik meg nyomtatáskor.
-  style.textContent = `@media print{html,body{margin:0!important;padding:0!important}@page{size:${wMm}mm ${hMm}mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:inline-flex!important}}`;
+  style.textContent = `@media print{html,body{margin:0!important;padding:0!important}@page{size:${wMm}mm ${hMm}mm;margin:0}body>*{display:none!important}#qr-print-label{position:static!important;left:auto!important;display:flex!important;flex-direction:column!important}}`;
   document.head.appendChild(style);
 
   window.print();

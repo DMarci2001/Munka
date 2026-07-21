@@ -35,18 +35,25 @@ $locations = [
 $ins = $db->prepare('INSERT INTO helyszinek (id, cim) VALUES (?, ?)');
 foreach ($locations as $l) $ins->execute($l);
 
-// ---- users (jogosultsag: 0=user, 1=storekeeper, 2=it_admin) ----
+// ---- users ---------------------------------------------------
+// Szerepkör = Roles::fromUserRow(): a permissions JSON-ban lévő
+// jog_eszkoznyilvantartas_admin flag adja a storekeeper szintet;
+// it_admin csak akkor, ha emellett jogosultsag is 2 (nincs önálló
+// dedikált flag a legfelső szinthez — ld. schema_dev.sql komment).
 $pw = password_hash($DEV_PASSWORD, PASSWORD_BCRYPT);
+$permUser    = json_encode(['permissions' => ['jog_eszkoznyilvantartas' => 1]]);
+$permStore   = json_encode(['permissions' => ['jog_eszkoznyilvantartas' => 1, 'jog_eszkoznyilvantartas_admin' => 1]]);
+$permItAdmin = $permStore; // jogosultsag=2 + admin flag → it_admin (ld. Roles::fromUserRow)
 $users = [
-  [1, 'kovacs.anna',    'Dr. Kovács Anna',    0],
-  [2, 'nagy.peter',     'Nagy Péter',         0],
-  [3, 'szabo.julia',    'Szabó Júlia',        1],
-  [4, 'toth.gabor',     'Tóth Gábor',         2],
-  [5, 'horvath.eszter', 'Dr. Horváth Eszter', 0],
-  [6, 'kiss.laszlo',    'Dr. Kiss László',    0],
+  [1, 'kovacs.anna',    'Dr. Kovács Anna',    0, $permUser],
+  [2, 'nagy.peter',     'Nagy Péter',         0, $permUser],
+  [3, 'szabo.julia',    'Szabó Júlia',        1, $permStore],
+  [4, 'toth.gabor',     'Tóth Gábor',         2, $permItAdmin],
+  [5, 'horvath.eszter', 'Dr. Horváth Eszter', 0, $permUser],
+  [6, 'kiss.laszlo',    'Dr. Kiss László',    0, $permUser],
 ];
-$ins = $db->prepare('INSERT INTO users (id, username, nev, jogosultsag, jelszo) VALUES (?, ?, ?, ?, ?)');
-foreach ($users as $u) $ins->execute([$u[0], $u[1], $u[2], $u[3], $pw]);
+$ins = $db->prepare('INSERT INTO users (id, username, nev, jogosultsag, permissions, jelszo) VALUES (?, ?, ?, ?, ?, ?)');
+foreach ($users as $u) $ins->execute([$u[0], $u[1], $u[2], $u[3], $u[4], $pw]);
 
 // ---- departments -------------------------------------------
 $departments = [

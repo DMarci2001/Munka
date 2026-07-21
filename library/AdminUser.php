@@ -164,6 +164,9 @@ class AdminUser {
         ],
         "jog_eszkoznyilvantartas" => [
             "name" => "Hozzáférhet az eszköznyilvántartáshoz"
+        ],
+        "jog_eszkoznyilvantartas_admin" => [
+            "name" => "Hozzáférhet a raktárkezeléshez"
         ]
 
     ];
@@ -616,6 +619,10 @@ class AdminUser {
 
     public function eszkoznyilvantartasAccess():bool {
         return $this->checkPermission("jog_eszkoznyilvantartas");
+    }
+
+    public function eszkoznyilvantartasAdminAccess():bool {
+        return $this->checkPermission("jog_eszkoznyilvantartas_admin");
     }
 
 

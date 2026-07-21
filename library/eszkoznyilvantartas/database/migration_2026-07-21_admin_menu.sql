@@ -1,0 +1,31 @@
+-- ============================================================
+-- Migráció — Eszköznyilvántartás menüpontok javítása a FŐOLDAL
+-- admin felületének sidebarjában (adminmenu tábla).
+--
+-- FONTOS: ez NEM az eszköznyilvántartás saját adatbázisa, hanem
+-- a főoldal admin adatbázisa (pl. hungariamed / keltexmed stb. —
+-- amelyiken az `adminmenu` tábla van). Minden telephely saját
+-- adatbázisában külön kell futtatni, ahol a sorok már megvannak
+-- (id=55..59, pageid: eszkoz/eszkozlista/nalam/leadott/adatbevitel).
+--
+-- A szülő sor (id=55) pageid-ja eddig 'eszkoz' volt — ez azonos
+-- lenne az AdminEszkozPage-ét kiszolgáló pageid-vel, amit az
+-- a.php (QR rövidlink → #/scan/:tag mélylink) közvetlenül használ.
+-- Hogy a szülő menüpont önmagában NE navigáljon sehova (csak
+-- lenyíló kategória-fejléc legyen), a pageid-jét '#'-re kell
+-- állítani — így elválik az a.php által használt 'eszkoz'
+-- pageid-től.
+--
+-- A négy almenüpont (Eszközlista / Nálam / Leadott eszközök /
+-- Adatbevitel) saját `Admin*Page` PHP osztályra hivatkozik (lásd
+-- library/pages_admin/Admin{Eszkozlista,Nalam,Leadott,Adatbevitel}Page.php),
+-- amelyek ugyanazt az SSO-iframe-et töltik be, csak más SPA
+-- route-ra navigálva (/inventory, /my, /pending, /register-data).
+--
+-- Futtatás:
+--   USE <a megfelelő site adatbázis>;
+--   SOURCE migration_2026-07-21_admin_menu.sql;
+-- ============================================================
+SET NAMES utf8mb4;
+
+UPDATE adminmenu SET pageid = '#' WHERE id = 55 AND pageid = 'eszkoz';

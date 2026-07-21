@@ -15,6 +15,25 @@ final class Roles {
     return ROLE_INT_TO_STRING[$i] ?? 'user';
   }
 
+  // users sor → tényleges eszköznyilvántartás-szerepkör.
+  // A jogosultsag oszlopot NEM használjuk önmagában — az a fő admin
+  // rendszerben cég-szintű tier (recepció/céguser/cégadmin), más jelentéssel.
+  // A storekeeper szintet a jog_eszkoznyilvantartas_admin permission-flag adja
+  // (users.permissions JSON — lásd AdminUser::buildPermissions a fő rendszerben).
+  // it_admin csak akkor, ha emellett jogosultsag is a legfelső (2) cég-tier —
+  // nincs önálló dedikált flag a legfelső szinthez.
+  public static function fromUserRow(array $row): string {
+    $perms = [];
+    if (!empty($row['permissions'])) {
+      $decoded = json_decode($row['permissions'], true);
+      $perms = $decoded['permissions'] ?? [];
+    }
+    if (empty($perms['jog_eszkoznyilvantartas_admin'])) {
+      return 'user';
+    }
+    return ((int) ($row['jogosultsag'] ?? 0) === 2) ? 'it_admin' : 'storekeeper';
+  }
+
   // role >= min ?
   public static function atLeast(string $role, string $min): bool {
     return (self::RANK[$role] ?? 1) >= (self::RANK[$min] ?? 1);

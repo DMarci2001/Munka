@@ -46,12 +46,37 @@ export function toast(message, type = 'default') {
   }, 3200);
 }
 
+// ---- Beágyazó <iframe> teljes képernyőre bővítése, amíg egy modal nyitva
+// van — az app admin panelbe ágyazva egy annál kisebb <iframe>-dobozban fut
+// (lásd AdminEszkozBasePage.php), a modal .modal-backdrop-c pedig csak AZT
+// tölti ki (fixed a saját iframe-viewportjához képest). Hogy a modal az
+// EGÉSZ oldalt takarja (pl. QR-szkennelés utáni kivétel/leadás dialógus ne
+// a kis iframe-dobozba szoruljon), magát a beágyazó <iframe>-elemet nyitjuk
+// ki a szülő dokumentumban — ez csak azonos eredetű (same-origin) beágyazás
+// esetén lehetséges, ami itt mindig teljesül.
+function expandHostFrame() {
+  const frame = window.frameElement;
+  if (!frame) return; // nem iframe-be ágyazva (pl. önálló/dev futtatás)
+  if (frame.dataset.eszkozOrigStyle === undefined) {
+    frame.dataset.eszkozOrigStyle = frame.getAttribute('style') || '';
+  }
+  frame.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:99999;border:0;background:#fff;';
+}
+
+function restoreHostFrame() {
+  const frame = window.frameElement;
+  if (!frame || frame.dataset.eszkozOrigStyle === undefined) return;
+  frame.setAttribute('style', frame.dataset.eszkozOrigStyle);
+  delete frame.dataset.eszkozOrigStyle;
+}
+
 // ---- Modal --------------------------------------------------
 // openModal({ title, bodyHTML, confirmText, confirmClass, onConfirm, onMount })
 // onConfirm(rootEl) → return false to keep open; throw/reject OpError → toast hiba
 // (onConfirm lehet async; futás közben a megerősítő gomb letiltva)
 export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmClass = 'btn-primary', onConfirm, onMount, wide = false }) {
   closeModal();
+  expandHostFrame();
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop-c';
   backdrop.innerHTML = `
@@ -66,7 +91,7 @@ export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmCla
   document.body.appendChild(backdrop);
   const root = backdrop.querySelector('.modal-c');
 
-  const close = () => backdrop.remove();
+  const close = () => { backdrop.remove(); restoreHostFrame(); };
   backdrop.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', close));
   backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
   document.addEventListener('keydown', function esc(e) {
@@ -94,4 +119,5 @@ export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmCla
 
 export function closeModal() {
   document.querySelectorAll('.modal-backdrop-c').forEach((m) => m.remove());
+  restoreHostFrame();
 }

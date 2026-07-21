@@ -162,6 +162,13 @@ input:not([type]), input[type="submit"]:hover, input[type="button"]:hover {
 	background-color:#eee;
 }
 
+#mainmenucolumn {
+	position: sticky;
+	top: 0;
+	max-height: 100vh;
+	overflow-y: auto;
+}
+
 .statussor {
 	background-color:#a00;color:#fff;font-size:28px;
 	padding:10px;

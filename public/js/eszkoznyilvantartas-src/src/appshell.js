@@ -12,7 +12,7 @@ import {
   subscribe, hydrate, getUsers, currentUser, currentRole, roleAtLeast, setCurrentUser,
   pendingCheckins,
 } from './state/store.js';
-import { roleLabel, esc } from './lib/format.js';
+import { esc } from './lib/format.js';
 import { icons } from './ui/components.js';
 
 import { renderInventory } from './views/inventory.js';
@@ -55,11 +55,7 @@ function buildShell() {
           </button>
           <h1 id="page-title">Irányítópult</h1>
           <div class="spacer"></div>
-          <div class="user-switch" title="${IS_DEV ? 'Demó: válts felhasználót a szerepkörök kipróbálásához' : ''}">
-            <span class="avatar" id="avatar"></span>
-            ${IS_DEV ? '<select id="user-select"></select>' : '<span class="user-name" id="user-name"></span>'}
-            <span class="role-pill" id="role-pill"></span>
-          </div>
+          ${IS_DEV ? '<div class="user-switch" title="Demó: válts felhasználót a szerepkörök kipróbálásához"><select id="user-select"></select></div>' : ''}
         </div>
         <div id="content"></div>
       </main>
@@ -123,20 +119,9 @@ function renderNav() {
 // ---- Topbar -------------------------------------------------
 function renderTopbar() {
   const u = currentUser();
-  const role = currentRole();
   document.getElementById('page-title').textContent = PAGES[active.key]?.title || 'Eszköz';
-  document.getElementById('avatar').textContent = initials(u.full_name);
   const sel = document.getElementById('user-select');
   if (sel && sel.value !== String(u.id)) sel.value = String(u.id);
-  const nameEl = document.getElementById('user-name');
-  if (nameEl) nameEl.textContent = u.full_name;
-  const pill = document.getElementById('role-pill');
-  pill.textContent = roleLabel(role);
-  pill.className = 'role-pill ' + role;
-}
-
-function initials(name) {
-  return name.replace(/^Dr\.?\s*/, '').split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
 }
 
 // ---- Aktuális nézet -----------------------------------------

@@ -24,7 +24,7 @@ final class Auth {
     $col = USER_PASSWORD_COLUMN;
     $st = $db->prepare(
       "SELECT id, username, " . USER_NAME_COLUMN . " AS full_name,
-              " . USER_ROLE_COLUMN . " AS jogosultsag, `$col` AS pwhash
+              " . USER_ROLE_COLUMN . " AS jogosultsag, permissions, `$col` AS pwhash
        FROM users WHERE username = ? LIMIT 1"
     );
     $st->execute([$username]);
@@ -40,7 +40,7 @@ final class Auth {
     // Munkamenet rögzítése (session fixation ellen: új azonosító).
     session_regenerate_id(true);
     $_SESSION['uid']  = (int) $row['id'];
-    $_SESSION['role'] = Roles::intToString($row['jogosultsag']);
+    $_SESSION['role'] = Roles::fromUserRow($row);
     return self::publicUser($row);
   }
 
@@ -77,7 +77,7 @@ final class Auth {
   public static function loginByUsername(string $username): array {
     $st = getDB()->prepare(
       "SELECT id, username, " . USER_NAME_COLUMN . " AS full_name,
-              " . USER_ROLE_COLUMN . " AS jogosultsag
+              " . USER_ROLE_COLUMN . " AS jogosultsag, permissions
        FROM users WHERE username = ? LIMIT 1"
     );
     $st->execute([$username]);
@@ -85,7 +85,7 @@ final class Auth {
     if (!$row) throw new OpError('Felhasználó nem található.');
     session_regenerate_id(true);
     $_SESSION['uid']  = (int) $row['id'];
-    $_SESSION['role'] = Roles::intToString($row['jogosultsag']);
+    $_SESSION['role'] = Roles::fromUserRow($row);
     return self::publicUser($row);
   }
 
@@ -116,7 +116,7 @@ final class Auth {
     $id = self::userId();
     if ($id === null) return null;
     $st = getDB()->prepare(
-      "SELECT id, username, " . USER_NAME_COLUMN . " AS full_name, " . USER_ROLE_COLUMN . " AS jogosultsag
+      "SELECT id, username, " . USER_NAME_COLUMN . " AS full_name, " . USER_ROLE_COLUMN . " AS jogosultsag, permissions
        FROM users WHERE id = ? LIMIT 1"
     );
     $st->execute([$id]);
@@ -141,7 +141,7 @@ final class Auth {
       'id'        => (int) $row['id'],
       'username'  => $row['username'],
       'full_name' => $row['full_name'],
-      'auth'      => Roles::intToString($row['jogosultsag']),
+      'auth'      => Roles::fromUserRow($row),
     ];
   }
 }

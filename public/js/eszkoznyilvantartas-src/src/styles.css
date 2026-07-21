@@ -103,22 +103,10 @@ body {
 .user-switch {
   display: flex; align-items: center; gap: 8px;
 }
-.user-switch .avatar {
-  width: 28px; height: 28px; border-radius: 2px;
-  background: var(--brand); color: #fff; display: grid; place-items: center;
-  font-weight: 700; font-size: .78rem;
-}
 .user-switch select {
   border: 1px solid var(--line); background: #fff; font-weight: 500; font-size: .85rem;
   color: var(--link); cursor: pointer; outline: none; padding: 4px 6px; border-radius: 2px;
 }
-.role-pill {
-  font-size: .66rem; font-weight: 700; padding: 2px 7px; border-radius: 2px;
-  background: var(--brand); color: #fff; text-transform: uppercase; letter-spacing: .03em;
-}
-.role-pill.storekeeper { background: var(--brand); }
-.role-pill.it_admin { background: #6d28d9; }
-.role-pill.user { background: #888; }
 
 /* az admin a tartalom-panelra tesz nagy árnyékot */
 .content {
@@ -360,6 +348,13 @@ a.devlink:hover { text-decoration: underline; }
   inset: 0;
   background: rgba(0,0,0,.35);
   z-index: 199;
+}
+
+/* Asztali nézetben az oldalsáv felesleges — a klinikai weboldal admin
+   sidebarja alatt már ott a navigáció (Eszköznyilvántartás menüpont).
+   Mobilon (lásd lentebb) a hamburger-menü továbbra is megjeleníti. */
+@media (min-width: 768px) {
+  .sidebar { display: none; }
 }
 
 @media (max-width: 767px) {

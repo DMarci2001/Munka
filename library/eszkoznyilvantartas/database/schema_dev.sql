@@ -33,16 +33,23 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ------------------------------------------------------------
 -- KÜLSŐ (klinikai) táblák — itt CSAK a fejlesztéshez hozzuk létre.
--- A valódi oszlopnevek: users(id, username, nev, jogosultsag), helyszinek(id, cim).
+-- A valódi oszlopnevek: users(id, username, nev, jogosultsag, permissions), helyszinek(id, cim).
 -- A `jelszo` (bcrypt hash) a helyi bejelentkezéshez kell; éles rendszerben
 -- a klinika saját hitelesítési oszlopát/munkamenetét használd.
--- jogosultsag: 0 = felhasználó, 1 = raktáros, 2 = superadmin (it_admin)
+--
+-- jogosultsag: a fő admin rendszerben CÉG-szintű tier (recepció/céguser/
+-- cégadmin), NEM az eszköznyilvántartás szerepköre — ld. Roles::fromUserRow().
+-- Az eszköznyilvántartás storekeeper-szintjét a `permissions` JSON-ban lévő
+-- jog_eszkoznyilvantartas_admin flag adja; it_admin csak akkor, ha emellett
+-- jogosultsag is 2 (nincs önálló dedikált flag a legfelső szinthez).
+-- permissions formátuma: {"permissions":{"jog_eszkoznyilvantartas":1,"jog_eszkoznyilvantartas_admin":1}}
 -- ------------------------------------------------------------
 CREATE TABLE users (
   id           INT          NOT NULL AUTO_INCREMENT,
   username     VARCHAR(64)  NOT NULL,
   nev          VARCHAR(128) NOT NULL,
   jogosultsag  TINYINT      NOT NULL DEFAULT 0,
+  permissions  TEXT         NULL,
   jelszo       VARCHAR(255) NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_username (username)

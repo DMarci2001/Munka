@@ -12,7 +12,7 @@ class AdminLoginPage extends AdminCorePage {
             $result = $this->adminUser->adminLogin($_REQUEST["loginusername"], $_REQUEST["loginpassword"]);
             if ($result == "") {
                 //sikeres bejelentkezés
-                header("Location:index.php");
+                header("Location:" . $this->_postLoginRedirectUrl());
                 die();
             }
             $_SESSION["error"] = $result;
@@ -62,7 +62,7 @@ class AdminLoginPage extends AdminCorePage {
                 $_SESSION["2facomplete"] = $code;
                 logintryLog("smscodetry",$this->adminUser->user["username"],"success",$code);
                 sql_query("update users set authorizeduntil = date_add(now(), interval 1 day) where id=?", array($this->adminUser->user["id"]));
-                header("location:index.php");
+                header("location:" . $this->_postLoginRedirectUrl());
                 die();
             } else {
                 if ($this->adminUser->user["codetry"] > 3) {
@@ -166,6 +166,18 @@ class AdminLoginPage extends AdminCorePage {
         echo "</html>";
     }
 
+
+    // Sikeres belépés (jelszó, majd — ha kell — 2FA) utáni cél URL.
+    // A tényleges eldobás (unset) az AdminPage::_getActualPage()-ben történik,
+    // amikor a felhasználó ténylegesen megérkezik a nem-login oldalra —
+    // így ez a session-érték túléli a jelszó→2FA közti köztes redirectet is.
+    private function _postLoginRedirectUrl(): string {
+        if (!empty($_SESSION["postLoginRedirect"])) {
+            $query = http_build_query($_SESSION["postLoginRedirect"]);
+            return "index.php" . ($query !== "" ? "?{$query}" : "");
+        }
+        return "index.php";
+    }
 
     private function _sendTwoFacCode() {
         $user = $this->adminUser->user;

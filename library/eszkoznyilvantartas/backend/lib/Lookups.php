@@ -25,11 +25,11 @@ final class Lookups {
 
   public static function users(): array {
     $rows = getDB()->query(
-      'SELECT id, username, ' . USER_NAME_COLUMN . ' AS full_name, ' . USER_ROLE_COLUMN . ' AS jogosultsag FROM users ORDER BY id'
+      'SELECT id, username, ' . USER_NAME_COLUMN . ' AS full_name, ' . USER_ROLE_COLUMN . ' AS jogosultsag, permissions FROM users ORDER BY id'
     )->fetchAll();
     return array_map(fn($r) => [
       'id' => (int) $r['id'], 'username' => $r['username'],
-      'full_name' => $r['full_name'], 'auth' => Roles::intToString($r['jogosultsag']),
+      'full_name' => $r['full_name'], 'auth' => Roles::fromUserRow($r),
     ], $rows);
   }
 

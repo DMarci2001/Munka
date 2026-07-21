@@ -2,21 +2,24 @@
 // ============================================================
 // Rövid link az eszköz QR-címkékhez.
 //
-// Nincs átirányítás és nincs külső szolgáltatás (pl. TinyURL): ez a fájl
-// MAGA rendereli a végcélt, csak egy sokkal rövidebb URL alatt. A kód az
-// eszköz numerikus azonosítójának base36 kódolása (lásd qrLabel.js
-// shortCodeFor függvénye) — nincs szükség adatbázis-táblára a kód <-> cél
-// megfeleltetéshez, az odavissza alakítás pusztán számrendszer-váltás.
+// Ez a fájl CSAK dekódol és TOVÁBBIRÁNYÍT az admin felület saját,
+// /admin/ alatti belépési pontjára — nem rendereli itt, a site
+// gyökeréből. Az admin oldalak (pl. AdminLoginPage sikeres belépés
+// utáni redirectje) RELATÍV "index.php" hivatkozásokat használnak,
+// amik /admin/index.php-ra vonatkoznak. Ha innen, a site gyökeréből
+// rendereltük volna magát az admin oldalt, ezek a redirectek tévesen
+// a PUBLIKUS (páciens) index.php-ra vittek volna át — pontosan ez
+// történt éles teszt közben.
+//
+// A rövidség (base36 kód, nincs adatbázis-tábla a kód <-> eszköz
+// megfeleltetéshez) megmarad — lásd qrLabel.js shortCodeFor függvénye.
 // ============================================================
 session_start();
 
-$GLOBALS["admin"] = 1;
-
 require_once "../autoload.php";
 
-$_GET["page"] = "eszkoz";
-
 $code = preg_replace('/[^0-9a-zA-Z]/', '', $_SERVER["QUERY_STRING"] ?? '');
+$params = ['page' => 'eszkoz'];
 if ($code !== '') {
   $deviceId = (int) base_convert($code, 36, 10);
   if ($deviceId > 0) {
@@ -24,9 +27,9 @@ if ($code !== '') {
       "SELECT asset_tag FROM eszkoznyilvantartas_devices WHERE device_id = ?",
       [$deviceId]
     ));
-    if ($row) $_GET["tag"] = $row["asset_tag"];
+    if ($row) $params['tag'] = $row["asset_tag"];
   }
 }
 
-$page = new AdminPage();
-$page->showPage();
+header("Location: /admin/index.php?" . http_build_query($params));
+die();

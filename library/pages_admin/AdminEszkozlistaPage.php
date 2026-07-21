@@ -1,6 +1,6 @@
 <?php
 
-class AdminEszkozPage extends AdminEszkozBasePage {
+class AdminEszkozlistaPage extends AdminEszkozBasePage {
 
     protected string $hashRoute = "/inventory";
 
