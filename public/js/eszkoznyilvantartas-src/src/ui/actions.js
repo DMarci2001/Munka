@@ -194,8 +194,7 @@ export function dlgStockTransfer(deviceId) {
     onMount: (root) => wireLocationDept(root, (d) => d.type === 'raktár'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       await moveAsset({ device_id: deviceId, event_type: 'stock_transfer', to_locations_id: to_location_id, to_departments_id: to_department_id, notes });
       toast('Készlet áthelyezve.', 'success');
@@ -263,8 +262,7 @@ export function dlgSendToRepair(deviceId) {
     onMount: (root) => wireLocationDept(root, (d) => d.type === 'műhely'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       await sendToRepair(deviceId, to_location_id, to_department_id, notes);
       toast('Szervizbe küldve.', 'success');
@@ -292,8 +290,7 @@ export function dlgReturnFromRepair(deviceId) {
     onMount: (root) => wireLocationDept(root),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       await returnFromRepair(deviceId, to_location_id, to_department_id, notes);
       toast('Javítva visszahelyezve.', 'success');
@@ -330,8 +327,7 @@ export function dlgMarkFound(deviceId) {
     onMount: (root) => wireLocationDept(root),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       await markFound(deviceId, to_location_id, to_department_id, notes);
       toast('Találtnak jelölve.', 'success'); },

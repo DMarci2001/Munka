@@ -25,6 +25,14 @@ final class RepairLostFoundTest extends TestCase {
     Ops::sendToRepair(2, 9999, 8, null);
   }
 
+  // Részleg nélkül: sendToRepair automatikusan az első 'műhely' típusú
+  // részleget választja (nem a helyszín szerintit) - lásd Ops::sendToRepair,
+  // ez a meglévő null-dept auto-választás, nem a jelen módosítás tárgya.
+  public function testSendToRepairSucceedsWithLocationOnlyNoDepartment(): void {
+    $dev = Ops::sendToRepair(2, 1, null, 'nem kapcsol be');
+    $this->assertSame('Szerviz alatt', $dev['status']);
+  }
+
   public function testReturnFromRepairHappyPath(): void {
     // device 8 fixture status: 'Szerviz alatt'
     $dev = Ops::returnFromRepair(8, 1, 1, 'megjavítva');
@@ -41,6 +49,12 @@ final class RepairLostFoundTest extends TestCase {
     Ops::returnFromRepair(8, 1, 9999, null);
   }
 
+  public function testReturnFromRepairSucceedsWithLocationOnlyNoDepartment(): void {
+    $dev = Ops::returnFromRepair(8, 1, null, 'megjavítva');
+    $this->assertSame('Kivehető', $dev['status']);
+    $this->assertNull($dev['department_id']);
+  }
+
   public function testMarkLostHappyPath(): void {
     $dev = Ops::markLost(2, 'nem található');
     $this->assertSame('Elveszett', $dev['status']);
@@ -54,5 +68,11 @@ final class RepairLostFoundTest extends TestCase {
   public function testMarkFoundRejectsUnknownDepartment(): void {
     $this->expectException(OpError::class);
     Ops::markFound(17, 1, 9999, null);
+  }
+
+  public function testMarkFoundSucceedsWithLocationOnlyNoDepartment(): void {
+    $dev = Ops::markFound(17, 1, null, 'megkerült');
+    $this->assertSame('Kivehető', $dev['status']);
+    $this->assertNull($dev['department_id']);
   }
 }

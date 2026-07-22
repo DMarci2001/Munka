@@ -139,8 +139,9 @@ final class Ops {
       // cél ellenőrzése
       if ($toUser === null && $toDept === null && $toLoc === null)
         throw new OpError('Cél (személy vagy osztály) megadása kötelező.');
-      if ($eventType === 'stock_transfer' && !($toDept !== null && $toUser === null && $toLoc !== null))
-        throw new OpError('Raktármozgatáshoz cél-osztály kell, személy nélkül.');
+      // Részleg megadása opcionális — csak a cél-helyszín kötelező (személy nélkül).
+      if ($eventType === 'stock_transfer' && !($toUser === null && $toLoc !== null))
+        throw new OpError('Raktármozgatáshoz cél-helyszín kell, személy nélkül.');
       if ($eventType === 'check_in' && $toDept === null && $toLoc === null)
         throw new OpError('Visszavételhez cél-osztály kell.');
 
@@ -298,7 +299,9 @@ final class Ops {
   }
 
   // belső változat ami megkerüli a user-korlátozást (csak storekeeper+ hívja)
-  private static function moveAssetInternal(PDO $db, array $a): void {
+  // $statusOverride: ha adott, ez kerül beállításra a szokásos
+  // statusFromEvent($eventType) eredmény helyett (lásd markFound/returnFromRepair).
+  private static function moveAssetInternal(PDO $db, array $a, ?string $statusOverride = null): void {
     $deviceId  = (int) $a['device_id'];
     $eventType = $a['event_type'];
     $cur = Repo::currentState($deviceId);
@@ -312,7 +315,7 @@ final class Ops {
       'confirmation_status' => 'confirmed',
     ]);
     self::deleteReservation($db, $deviceId);
-    self::setStatus($db, $deviceId, self::statusFromEvent($eventType));
+    self::setStatus($db, $deviceId, $statusOverride ?? self::statusFromEvent($eventType));
   }
 
   // ---- send_to_repair — storekeeper+ -------------------------
@@ -351,10 +354,15 @@ final class Ops {
         throw new OpError('Csak szerviz alatt lévő eszköz helyezhető vissza.');
       self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
       self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
+      // Ha a szervizbe küldés egy megerősítésre váró visszavétel ALATT történt,
+      // a visszahelyezés állítsa vissza a "Visszavétel folyamatban" állapotot —
+      // így az eredeti visszavétel ismét megerősíthető/elutasítható, nem ragad
+      // örökre a confirmCheckIn/rejectCheckIn "állapot közben megváltozott" hibája mögött.
+      $statusOverride = Repo::pendingCheckin($deviceId) ? 'Visszavétel folyamatban' : null;
       self::moveAssetInternal($db, [
         'device_id' => $deviceId, 'event_type' => 'return_from_repair',
         'to_locations_id' => $toLoc, 'to_departments_id' => $toDept, 'notes' => $notes,
-      ]);
+      ], $statusOverride);
       $db->commit();
       return Repo::enrichOne($deviceId);
     } catch (\Throwable $e) {
@@ -393,10 +401,15 @@ final class Ops {
       self::requireDevice($deviceId);
       self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
       self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
+      // Ld. returnFromRepair megjegyzése: ha a "elveszettnek jelölés" egy
+      // megerősítésre váró visszavétel ALATT történt, a "megkerült" állítsa
+      // vissza a "Visszavétel folyamatban" állapotot ahelyett, hogy a
+      // pending visszavétel örökre blokkolva maradna.
+      $statusOverride = Repo::pendingCheckin($deviceId) ? 'Visszavétel folyamatban' : null;
       self::moveAssetInternal($db, [
         'device_id' => $deviceId, 'event_type' => 'mark_found',
         'to_locations_id' => $toLoc, 'to_departments_id' => $toDept, 'notes' => $notes,
-      ]);
+      ], $statusOverride);
       $db->commit();
       return Repo::enrichOne($deviceId);
     } catch (\Throwable $e) {

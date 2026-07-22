@@ -81,6 +81,27 @@ final class MoveAssetTest extends TestCase {
     $this->assertSame(3, $dev['holder_id']);
   }
 
+  public function testStockTransferSucceedsWithLocationOnlyNoDepartment(): void {
+    // Raktármozgatás: a részleg megadása opcionális, csak a cél-helyszín kötelező.
+    login_as(3, 'storekeeper');
+    $dev = Ops::moveAsset([
+      'device_id' => 2, 'event_type' => 'stock_transfer',
+      'to_locations_id' => 2, 'to_departments_id' => null,
+    ]);
+    $this->assertSame('Kivehető', $dev['status']);
+    $this->assertSame(2, $dev['location_id']);
+    $this->assertNull($dev['department_id']);
+  }
+
+  public function testStockTransferStillRequiresLocation(): void {
+    login_as(3, 'storekeeper');
+    $this->expectException(OpError::class);
+    Ops::moveAsset([
+      'device_id' => 2, 'event_type' => 'stock_transfer',
+      'to_locations_id' => null, 'to_departments_id' => null,
+    ]);
+  }
+
   public function testRowLockSerializesConcurrentMoves(): void {
     // Egy második nyers PDO-kapcsolattal bizonyítjuk, hogy a lockDevice()
     // valódi SELECT ... FOR UPDATE zárolást tesz: amíg egy tranzakció

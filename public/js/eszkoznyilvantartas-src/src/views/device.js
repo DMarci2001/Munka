@@ -51,7 +51,7 @@ export function renderDevice(el, { id }) {
       <div class="detail-grid">
         <div style="display:flex; flex-direction:column; gap:18px">
           <div class="panel">
-            <div class="panel-head">Általános adatok</div>
+            <div class="panel-head">${esc(v.typeName)}</div>
             <div class="panel-body">
               <dl class="kv">
                 <dt>Birtokos</dt><dd>${v.holder ? esc(v.holder.full_name) : '<span class="muted">— raktáron —</span>'}</dd>
@@ -61,15 +61,8 @@ export function renderDevice(el, { id }) {
                 <dt>Sorozatszám</dt><dd>${esc(dev.serial_number || '—')}</dd>
                 <dt>Gyártó / modell</dt><dd>${esc(dev.manufacturer || '—')} ${esc(dev.model || '')}</dd>
                 ${dev.notes ? `<dt>Megjegyzés</dt><dd>${esc(dev.notes)}</dd>` : ''}
+                ${defs.map((d) => attrRow(d, dev.attrs?.[d.attribute_key])).join('')}
               </dl>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">${esc(v.typeName)} — típusspecifikus adatok</div>
-            <div class="panel-body">
-              ${defs.length ? `<dl class="kv">${defs.map((d) => attrRow(d, dev.attrs?.[d.attribute_key])).join('')}</dl>`
-                : `<div class="muted">Nincs típusattribútum.</div>`}
             </div>
           </div>
         </div>
