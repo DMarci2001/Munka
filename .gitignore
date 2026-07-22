@@ -3941,6 +3941,10 @@ library/pages_admin/other/zarok/2024-10-18/standard/Laborok/Varró Tamás.pdf
 !public/js/eszkoznyilvantartas-src/**/*.css
 public/js/eszkoznyilvantartas-src/node_modules/
 
+# Eszköznyilvántartás build bundle output (compiled by Vite) — committed too
+!public/js/eszkoznyilvantartas/**/*.js
+!public/js/eszkoznyilvantartas/**/*.css
+
 # PHPUnit standalone binary (downloaded, not committed)
 tools/phpunit.phar
 .phpunit.result.cache
