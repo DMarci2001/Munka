@@ -325,10 +325,10 @@ final class Ops {
     $db->beginTransaction();
     try {
       self::requireDevice($deviceId);
-      if ($toDept === null) {
-        $repair = $db->query("SELECT id FROM eszkoznyilvantartas_departments WHERE type = 'műhely' LIMIT 1")->fetchColumn();
-        $toDept = $repair !== false ? (int) $repair : null;
-      }
+      // Nincs automatikus részleg-választás: ha a célhelyszínnek nincs
+      // részlege (vagy a felhasználó nem választott egyet), a részleg
+      // null marad - NEM esik vissza egy másik helyszínen lévő, véletlenül
+      // első 'műhely'-típusú részlegre.
       self::requireExists($db, 'helyszinek', 'id', $toLoc, 'helyszín');
       self::requireExists($db, 'eszkoznyilvantartas_departments', 'id', $toDept, 'részleg');
       self::moveAssetInternal($db, [

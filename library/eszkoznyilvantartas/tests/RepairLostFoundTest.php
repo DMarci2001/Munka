@@ -25,12 +25,10 @@ final class RepairLostFoundTest extends TestCase {
     Ops::sendToRepair(2, 9999, 8, null);
   }
 
-  // Részleg nélkül: sendToRepair automatikusan az első 'műhely' típusú
-  // részleget választja (nem a helyszín szerintit) - lásd Ops::sendToRepair,
-  // ez a meglévő null-dept auto-választás, nem a jelen módosítás tárgya.
   public function testSendToRepairSucceedsWithLocationOnlyNoDepartment(): void {
     $dev = Ops::sendToRepair(2, 1, null, 'nem kapcsol be');
     $this->assertSame('Szerviz alatt', $dev['status']);
+    $this->assertNull($dev['department_id']);
   }
 
   public function testReturnFromRepairHappyPath(): void {

@@ -33,16 +33,25 @@ function conditionField(value = 'Jó') {
 
 // Helyszín→részleg kaszkád: a [name=to_location] változására feltölti a
 // [name=to_dept] listát az adott helyszín részlegeivel. A `prefer` predikátum
-// jelöli ki az alapértelmezett részleget (egyébként az első).
-function wireLocationDept(root, prefer = () => false) {
+// jelöli ki az alapértelmezett részleget. Ha `fallbackToFirst` false és a
+// `prefer` nem talál egyezést, a részleg üresen marad (nem esik vissza az
+// adott helyszín első, esetleg oda nem illő részlegére).
+function wireLocationDept(root, prefer = () => false, { fallbackToFirst = true } = {}) {
   const locSel = root.querySelector('[name=to_location]');
   const deptSel = root.querySelector('[name=to_dept]');
   const fill = () => {
     const list = getDepartments().filter((d) => d.locations_id === Number(locSel.value));
-    const pick = list.find(prefer) || list[0];
-    deptSel.innerHTML = list.length
-      ? list.map((d) => `<option value="${d.id}" ${pick && d.id === pick.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')
-      : '<option value="">— nincs részleg ezen a helyszínen —</option>';
+    const matched = list.find(prefer);
+    const pick = matched || (fallbackToFirst ? list[0] : undefined);
+    if (!list.length) {
+      deptSel.innerHTML = '<option value="">— nincs részleg ezen a helyszínen —</option>';
+    } else if (!pick) {
+      deptSel.innerHTML = ['<option value="">— válassz részleget —</option>']
+        .concat(list.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`))
+        .join('');
+    } else {
+      deptSel.innerHTML = list.map((d) => `<option value="${d.id}" ${d.id === pick.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
+    }
   };
   locSel.addEventListener('change', fill);
   fill();
@@ -259,7 +268,7 @@ export function dlgSendToRepair(deviceId) {
         <select class="form-select" name="to_dept"></select>
       </div>`,
     confirmText: 'Szervizbe',
-    onMount: (root) => wireLocationDept(root, (d) => d.type === 'műhely'),
+    onMount: (root) => wireLocationDept(root, (d) => d.type === 'műhely', { fallbackToFirst: false }),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]').value);
       const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
