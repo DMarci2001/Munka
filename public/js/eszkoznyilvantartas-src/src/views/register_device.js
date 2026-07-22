@@ -11,6 +11,7 @@ import { navigate } from '../lib/router.js';
 import { openModal, toast } from '../ui/components.js';
 import { esc } from '../lib/format.js';
 import { icons } from '../ui/components.js';
+import { enhanceSelects } from '../ui/searchableSelect.js';
 
 // ---- Dinamikus attribútum-mezők -----------------------------
 function attrFieldHTML(def, value) {
@@ -135,7 +136,9 @@ export function renderRegister(el) {
     if (!tid) { common.style.display = 'none'; return; }
     common.style.display = 'block';
     attrsBox.innerHTML = getAttrDefs(tid).map((d) => attrFieldHTML(d, '')).join('') || '<div class="muted">Nincs típusattribútum.</div>';
+    enhanceSelects(attrsBox);
   });
+  enhanceSelects(el);
 
   const saveBtn = el.querySelector('#r-save');
   saveBtn.addEventListener('click', async () => {
@@ -188,6 +191,7 @@ export function dlgEditDevice(deviceId) {
         ${defs.map((d) => attrFieldHTML(d, dev.attrs?.[d.attribute_key])).join('') || '<div class="muted">Nincs típusattribútum.</div>'}
       </div>`,
     confirmText: 'Mentés',
+    onMount: (root) => enhanceSelects(root),
     onConfirm: async (root) => {
       const { attrs, error } = collectAttrs(root.querySelector('#e-attrs'));
       if (error) { toast(error, 'error'); return false; }

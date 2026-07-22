@@ -3944,3 +3944,8 @@ public/js/eszkoznyilvantartas-src/node_modules/
 # PHPUnit standalone binary (downloaded, not committed)
 tools/phpunit.phar
 .phpunit.result.cache
+
+# Root-level Node deps + graphify tool output (not part of the app)
+/node_modules/
+/graphify-out/
+library/graphify-out/

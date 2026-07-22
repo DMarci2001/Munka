@@ -11,6 +11,7 @@ import {
 } from '../state/store.js';
 import { openModal, toast } from './components.js';
 import { locationLabel, esc } from '../lib/format.js';
+import { enhanceSelects } from './searchableSelect.js';
 
 // --- Form mező-építők ----------------------------------------
 
@@ -45,6 +46,7 @@ function wireLocationDept(root, prefer = () => false) {
   };
   locSel.addEventListener('change', fill);
   fill();
+  enhanceSelects(root);
 }
 
 // --- Kivétel (check_out) -------------------------------------
@@ -55,6 +57,7 @@ export function dlgCheckOut(deviceId) {
   const me = currentUser();
   openModal({
     title: `Eszköz kivétele · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
+    closeOnBackdrop: false,
     bodyHTML: `
       ${onBehalf ? `
       <div class="field">
@@ -83,8 +86,7 @@ export function dlgCheckOut(deviceId) {
     onConfirm: async (root) => {
       const to_user_id = onBehalf ? Number(root.querySelector('[name=to_user]').value) : me.id;
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       if (isStorageDept(to_department_id)) {
         toast('Kivételkor használati helyet (nem raktárt) válassz — a raktár a készletet jelenti.', 'error');
         return false;
@@ -104,13 +106,14 @@ export function dlgCheckIn(deviceId) {
   const pending = currentRole() === 'user';
   openModal({
     title: `Eszköz leadása · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
+    closeOnBackdrop: false,
     bodyHTML: `
       <div class="field">
         <label class="form-label">Hová — helyszín</label>
         <select class="form-select" name="to_location">${locOptions()}</select>
       </div>
       <div class="field">
-        <label class="form-label">Hová — raktár / részleg</label>
+        <label class="form-label">Hová — raktár / részleg (opcionális)</label>
         <select class="form-select" name="to_dept"></select>
       </div>
       <div class="field">
@@ -126,8 +129,7 @@ export function dlgCheckIn(deviceId) {
     onMount: (root) => wireLocationDept(root, (d) => d.type === 'raktár'),
     onConfirm: async (root) => {
       const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
-      const to_department_id = Number(root.querySelector('[name=to_dept]').value);
-      if (!to_department_id) { toast('Ezen a helyszínen nincs választható részleg.', 'error'); return false; }
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
       const condition_at_event = root.querySelector('[name=condition]').value;
       const notes = root.querySelector('[name=notes]').value.trim() || null;
       await moveAsset({ device_id: deviceId, event_type: 'check_in', to_locations_id: to_location_id, to_departments_id: to_department_id, condition_at_event, notes });
@@ -153,6 +155,7 @@ export function dlgTransfer(deviceId) {
         <input type="text" class="form-control" name="notes" />
       </div>`,
     confirmText: 'Átadás',
+    onMount: (root) => enhanceSelects(root),
     onConfirm: async (root) => {
       const to_user_id = Number(root.querySelector('[name=to_user]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;

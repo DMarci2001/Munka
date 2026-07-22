@@ -7,6 +7,7 @@ import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
 import { statusBadge, statusLabel, locationLabel, holderLabel, esc } from '../lib/format.js';
 import { icons } from '../ui/components.js';
+import { enhanceSelects, refreshSelectDisplay } from '../ui/searchableSelect.js';
 
 // szűrőállapot (megőrződik nézetváltáskor)
 const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: '' };
@@ -33,6 +34,7 @@ function thHTML(col, label) {
 function sortValue(v, col) {
   switch (col) {
     case 'lastModified': return v.lastModified || '';
+    case 'assetTag':     return v.dev.asset_tag || '';
     case 'typeName':     return (v.typeName || '') + ' ' + (v.dev.model || '');
     case 'status':       return v.status || '';
     case 'holder':       return v.holder ? v.holder.full_name : '';
@@ -137,15 +139,16 @@ export function renderInventory(el) {
     filters.dept = '';
     filters.holder = '';
     q.value = '';
-    el.querySelector('#f-type').value = '';
-    el.querySelector('#f-status').value = '';
-    el.querySelector('#f_loc').value = '';
-    el.querySelector('#f-dept').value = '';
-    el.querySelector('#f-holder').value = '';
+    ['#f-type', '#f-status', '#f_loc', '#f-dept', '#f-holder'].forEach((sel) => {
+      const node = el.querySelector(sel);
+      node.value = '';
+      refreshSelectDisplay(node);
+    });
     paint(el);
   });
   el.querySelectorAll('.panel [data-dev]').forEach((r) =>
     r.addEventListener('click', () => navigate('/device/' + r.dataset.dev)));
+  enhanceSelects(el);
   paint(el);
 }
 
@@ -184,7 +187,7 @@ function paint(el) {
     <div class="table-wrap">
       <table class="grid">
         <thead><tr>
-          ${thHTML('lastModified', 'Utoljára módosítva')}${thHTML('typeName', 'Típus / modell')}${thHTML('status', 'Státusz')}
+          ${thHTML('lastModified', 'Utoljára módosítva')}${thHTML('assetTag', 'Leltári azonosító')}${thHTML('typeName', 'Típus / modell')}${thHTML('status', 'Státusz')}
           ${thHTML('holder', 'Birtokos')}${thHTML('location', 'Hely')}${thHTML(' ', ' ')}<th></th>
         </tr></thead>
         <tbody>${pageVms.map(rowHTML).join('')}</tbody>
@@ -223,6 +226,7 @@ function rowHTML(v) {
   return `
     <tr data-dev="${v.dev.device_id}">
       <td><span class="tag-mono">${esc(v.lastModified) || '—'}</span></td>
+      <td><span class="tag-mono">${esc(v.dev.asset_tag)}</span></td>
       <td>${esc(v.typeName)}<div class="cell-sub">${esc(v.dev.manufacturer)} ${esc(v.dev.model)}</div></td>
       <td>${statusBadge(v.status)}${resvNote}</td>
       <td>${holder}</td>

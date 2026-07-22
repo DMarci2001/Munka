@@ -74,7 +74,7 @@ function restoreHostFrame() {
 // openModal({ title, bodyHTML, confirmText, confirmClass, onConfirm, onMount })
 // onConfirm(rootEl) → return false to keep open; throw/reject OpError → toast hiba
 // (onConfirm lehet async; futás közben a megerősítő gomb letiltva)
-export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmClass = 'btn-primary', onConfirm, onMount, wide = false }) {
+export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmClass = 'btn-primary', onConfirm, onMount, wide = false, closeOnBackdrop = true }) {
   closeModal();
   expandHostFrame();
   const backdrop = document.createElement('div');
@@ -93,7 +93,7 @@ export function openModal({ title, bodyHTML, confirmText = 'Mentés', confirmCla
 
   const close = () => { backdrop.remove(); restoreHostFrame(); };
   backdrop.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', close));
-  backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+  if (closeOnBackdrop) backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
   });

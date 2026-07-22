@@ -7,6 +7,7 @@ import { navigate } from '../lib/router.js';
 import { toast } from '../ui/components.js';
 import { esc } from '../lib/format.js';
 import { icons } from '../ui/components.js';
+import { enhanceSelects } from '../ui/searchableSelect.js';
 
 // ---- Törzsadat bevitele ------------------------------------
 export function renderRegisterData(el) {
@@ -106,6 +107,7 @@ export function renderRegisterData(el) {
     </div>`;
 
   el.querySelector('#back').addEventListener('click', () => navigate('/'));
+  enhanceSelects(el);
 
   const cat = el.querySelector('#rd-cat');
   const formIds = ['location', 'department', 'device_type', 'attr_general', 'attr_type'];
