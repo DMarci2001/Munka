@@ -53,7 +53,6 @@ function buildShell() {
           <button class="btn-hamburger" id="btn-hamburger" aria-label="Menü">
             <span></span><span></span><span></span>
           </button>
-          <h1 id="page-title">Irányítópult</h1>
           <div class="spacer"></div>
           ${IS_DEV ? '<div class="user-switch" title="Demó: válts felhasználót a szerepkörök kipróbálásához"><select id="user-select"></select></div>' : ''}
         </div>
@@ -119,7 +118,6 @@ function renderNav() {
 // ---- Topbar -------------------------------------------------
 function renderTopbar() {
   const u = currentUser();
-  document.getElementById('page-title').textContent = PAGES[active.key]?.title || 'Eszköz';
   const sel = document.getElementById('user-select');
   if (sel && sel.value !== String(u.id)) sel.value = String(u.id);
 }
