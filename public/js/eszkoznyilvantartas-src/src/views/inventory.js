@@ -184,7 +184,7 @@ function openBulkCheckoutDialog(deviceIds, isStore) {
       ${isStore ? `
       <div class="field">
         <label class="form-label">Kinek</label>
-        <select class="form-select" name="to_user">${getUsers().filter((u) => u.id !== me.id).map((u) => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('')}</select>
+        <select class="form-select" name="to_user">${getUsers().map((u) => `<option value="${u.id}" ${u.id === me.id ? 'selected' : ''}>${esc(u.full_name)}${u.id === me.id ? ' (én)' : ''}</option>`).join('')}</select>
       </div>` : `<div class="alert-soft" style="margin-bottom:15px">Az eszközöket <strong>magadnak</strong> veszed ki: ${esc(me.full_name)}.</div>`}
       <div class="field">
         <label class="form-label">Hová (osztály / felhasználási hely)</label>
