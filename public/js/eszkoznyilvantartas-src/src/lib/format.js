@@ -10,6 +10,7 @@ const STATUS = {
   'Kivehető': { label: 'Kivehető',          cls: 'status-ready' },
   'Lefoglalva':        { label: 'Lefoglalva',        cls: 'status-reserved' },
   'Visszavétel folyamatban':  { label: 'Visszavétel folyamatban', cls: 'status-pending' },
+  'Átadás folyamatban':  { label: 'Átadás folyamatban', cls: 'status-pending' },
   'Szerviz alatt':       { label: 'Szerviz alatt',     cls: 'status-repair' },
   'Elveszett':            { label: 'Elveszett',          cls: 'status-lost' },
   'Selejtezve':         { label: 'Selejtezve',         cls: 'status-retired' },

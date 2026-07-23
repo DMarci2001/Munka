@@ -136,12 +136,25 @@ final class Auth {
     }
   }
 
+  // A bejelentkezett user vehet-e ki eszközt (l. Roles::canCheckOut).
+  public static function canCheckOut(): bool {
+    $id = self::userId();
+    if ($id === null) return false;
+    $st = getDB()->prepare(
+      "SELECT " . USER_ROLE_COLUMN . " AS jogosultsag, permissions FROM users WHERE id = ? LIMIT 1"
+    );
+    $st->execute([$id]);
+    $row = $st->fetch();
+    return $row ? Roles::canCheckOut($row) : false;
+  }
+
   private static function publicUser(array $row): array {
     return [
-      'id'        => (int) $row['id'],
-      'username'  => $row['username'],
-      'full_name' => $row['full_name'],
-      'auth'      => Roles::fromUserRow($row),
+      'id'             => (int) $row['id'],
+      'username'       => $row['username'],
+      'full_name'      => $row['full_name'],
+      'auth'           => Roles::fromUserRow($row),
+      'can_check_out'  => Roles::canCheckOut($row),
     ];
   }
 }

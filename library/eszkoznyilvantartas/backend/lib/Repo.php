@@ -69,6 +69,15 @@ final class Repo {
     return $st->fetch() ?: null;
   }
 
+  public static function pendingTransfer(int $deviceId): ?array {
+    $st = getDB()->prepare(
+      "SELECT * FROM eszkoznyilvantartas_device_custody_events
+       WHERE device_id = ? AND confirmation_status = 'pending' AND event_type = 'transfer' LIMIT 1"
+    );
+    $st->execute([$deviceId]);
+    return $st->fetch() ?: null;
+  }
+
   public static function attrsFor(int $deviceId): array {
     $st = getDB()->prepare(
       'SELECT ad.attribute_key, dav.value, ad.data_type
@@ -97,10 +106,11 @@ final class Repo {
   // ---- Effektív státusz (deviceVM logika) -------------------
   // A "sticky" manuális státuszokat a tárolt status adja; a többit a
   // tényleges birtoklásból/foglalásból vezetjük le.
-  public static function effectiveStatus(string $stored, ?int $holder, ?array $resv, ?array $pending): string {
+  public static function effectiveStatus(string $stored, ?int $holder, ?array $resv, ?array $pending, ?array $pendingTransfer = null): string {
     if (in_array($stored, ['Selejtezve', 'Elveszett', 'Szerviz alatt', 'Lefoglalva'], true)) return $stored;
     if ($resv)              return 'Lefoglalva';
     if ($pending)           return 'Visszavétel folyamatban';
+    if ($pendingTransfer)   return 'Átadás folyamatban';
     if ($holder !== null)   return 'Kiadva';
     return 'Kivehető';
   }
@@ -112,10 +122,11 @@ final class Repo {
     $dev = $st->fetch();
     if (!$dev) return null;
 
-    $cur     = self::currentState($deviceId);
-    $resv    = self::activeReservation($deviceId);
-    $pending = self::pendingCheckin($deviceId);
-    $attrs   = self::attrsFor($deviceId);
+    $cur       = self::currentState($deviceId);
+    $resv      = self::activeReservation($deviceId);
+    $pending   = self::pendingCheckin($deviceId);
+    $pendingTr = self::pendingTransfer($deviceId);
+    $attrs     = self::attrsFor($deviceId);
 
     $lc = getDB()->prepare(
       "SELECT MAX(event_timestamp) FROM eszkoznyilvantartas_device_custody_events
@@ -128,7 +139,7 @@ final class Repo {
     $lm->execute([$deviceId]);
     $lastModified = $lm->fetchColumn() ?: null;
 
-    return self::assemble($dev, $cur, $resv, $pending, $attrs, $lastCheckout, $lastModified);
+    return self::assemble($dev, $cur, $resv, $pending, $attrs, $lastCheckout, $lastModified, $pendingTr);
   }
 
   // ---- Az összes eszköz enriched listája (kötegelt, N+1 nélkül) ----
@@ -150,6 +161,11 @@ final class Repo {
     $pendings = [];
     foreach ($db->query("SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE confirmation_status='pending' AND event_type='check_in'")->fetchAll() as $r) {
       $pendings[(int)$r['device_id']] = $r;
+    }
+    // függő átadások
+    $pendingTransfers = [];
+    foreach ($db->query("SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE confirmation_status='pending' AND event_type='transfer'")->fetchAll() as $r) {
+      $pendingTransfers[(int)$r['device_id']] = $r;
     }
     // attribútumok
     $attrsByDev = [];
@@ -185,15 +201,16 @@ final class Repo {
       ];
       $out[] = self::assemble(
         $dev, $cur, $resvs[$id] ?? null, $pendings[$id] ?? null,
-        $attrsByDev[$id] ?? [], $lastCheckout[$id] ?? null, $lastModified[$id] ?? null
+        $attrsByDev[$id] ?? [], $lastCheckout[$id] ?? null, $lastModified[$id] ?? null,
+        $pendingTransfers[$id] ?? null
       );
     }
     return $out;
   }
 
   // Egységes enriched szerkezet — a frontend deviceVM ezt fogyasztja.
-  private static function assemble(array $dev, array $cur, ?array $resv, ?array $pending, array $attrs, $lastCheckout, $lastModified): array {
-    $status = self::effectiveStatus($dev['status'], $cur['holder'], $resv, $pending);
+  private static function assemble(array $dev, array $cur, ?array $resv, ?array $pending, array $attrs, $lastCheckout, $lastModified, ?array $pendingTransfer = null): array {
+    $status = self::effectiveStatus($dev['status'], $cur['holder'], $resv, $pending, $pendingTransfer);
     $isFree = $status === 'Kivehető' && ($cur['department'] !== null || $cur['location'] !== null);
     return [
       'device_id'      => (int)$dev['device_id'],
@@ -215,9 +232,10 @@ final class Repo {
       'location_id'    => $cur['location'],
       'department_id'  => $cur['department'],
       'since'          => $cur['since'],
-      // foglalás / függő visszavétel
-      'reservation'    => $resv,
-      'pending'        => $pending,
+      // foglalás / függő visszavétel / függő átadás
+      'reservation'      => $resv,
+      'pending'          => $pending,
+      'pending_transfer' => $pendingTransfer,
       // származtatott megjelenítési mezők
       'calibration_due'  => $attrs['calibration_due'] ?? null,
       'last_checkout_at' => $lastCheckout,

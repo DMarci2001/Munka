@@ -10,7 +10,7 @@ import { route, setNotFound, startRouter, navigate } from './lib/router.js';
 import { apiSend } from './lib/api.js';
 import {
   subscribe, hydrate, getUsers, currentUser, currentRole, roleAtLeast, setCurrentUser,
-  pendingCheckins,
+  pendingCheckins, myPendingTransfers,
 } from './state/store.js';
 import { esc } from './lib/format.js';
 import { icons } from './ui/components.js';
@@ -29,7 +29,7 @@ const DEV_DEFAULT_USER = 'szabo.julia';   // dev auto-login (raktáros)
 // ---- Route-tábla --------------------------------------------
 const PAGES = {
   '/inventory': { title: 'Eszközlista',                        nav: 'inventory', render: renderInventory },
-  '/my':        { title: 'Nálam',             nav: 'my',        render: renderMyDevices },
+  '/my':        { title: 'Eszközeim',             nav: 'my',        render: renderMyDevices },
   '/pending':   { title: 'Ellenőrzésre vár', nav: 'pending',   render: renderPending, role: 'storekeeper' },
   '/register-data':  { title: 'Adatbevitel',      nav: 'register-data', render: renderRegisterData, role: 'storekeeper' },
   '/register':  { title: 'Új eszköz bevitele', nav: 'register', render: renderRegister, role: 'storekeeper' },
@@ -87,11 +87,12 @@ function buildShell() {
 function renderNav() {
   const isStore = roleAtLeast(currentRole(), 'storekeeper');
   const pendingCount = pendingCheckins().length;
+  const myTransfersCount = myPendingTransfers().length;
   const cur = PAGES[active.key]?.nav;
 
   const items = [
     { key: 'inventory', path: '/inventory', label: 'Eszközlista',     ico: icons.inventory },
-    { key: 'my',        path: '/my',        label: 'Nálam',        ico: icons.my },
+    { key: 'my',        path: '/my',        label: 'Eszközeim',        ico: icons.my, badge: myTransfersCount || null },
   ];
   const storeItems = [
     { key: 'pending',       path: '/pending',       label: 'Leadott eszközök', ico: icons.pending,   badge: pendingCount || null },

@@ -5,6 +5,7 @@
 
 import {
   moveAsset, reserveDevice, cancelReservation, confirmCheckIn, rejectCheckIn,
+  confirmTransfer, rejectTransfer, resolveRejectedTransfer,
   sendToRepair, returnFromRepair, markLost, markFound, retireDevice,
   getDepartments, getLocations, getUsers, getDevice, currentUser, currentRole,
   currentState, roleAtLeast, isStorageDept,
@@ -168,10 +169,11 @@ export function dlgTransfer(deviceId) {
     onConfirm: async (root) => {
       const to_user_id = Number(root.querySelector('[name=to_user]').value);
       const notes = root.querySelector('[name=notes]').value.trim() || null;
+      const pending = currentRole() === 'user';
       // Átadás = birtokosváltás: a hely/részleg az aktuális állapotból öröklődik (nem raktár),
       // így a moveAsset megőrzi a birtokost és „Kiadva" marad — nem esik vissza „Kivehető"-re.
       await moveAsset({ device_id: deviceId, event_type: 'transfer', to_user_id, to_locations_id: cur.location, to_departments_id: cur.department, notes });
-      toast('Eszköz átadva.', 'success');
+      toast(pending ? 'Átadás folyamatban — az átvevő megerősítésére vár.' : 'Eszköz átadva.', 'success');
     },
   });
 }
@@ -246,6 +248,50 @@ export function dlgRejectCheckIn(eventId) {
       if (!reason) { toast('Adj meg indokot.', 'error'); return false; }
       await rejectCheckIn(eventId, reason);
       toast('Visszavétel elutasítva.', 'success');
+    },
+  });
+}
+
+// --- Átadás: megerősítés / elutasítás (az átvevő oldaláról) --
+export async function doConfirmTransfer(eventId) {
+  try { await confirmTransfer(eventId); toast('Átadás megerősítve.', 'success'); }
+  catch (e) { toast(e.message, 'error'); }
+}
+export function dlgRejectTransfer(eventId) {
+  openModal({
+    title: 'Átadás elutasítása',
+    bodyHTML: `
+      <p class="muted" style="margin-top:0">Nem vetted át fizikailag az eszközt? Az elutasítással a birtoklás a küldőnél marad — a raktáros dönthet felülbírálásról.</p>
+      <div class="field">
+        <label class="form-label">Indok (kötelező)</label>
+        <input type="text" class="form-control" name="reason" placeholder="pl. nem kaptam meg az eszközt" />
+      </div>`,
+    confirmText: 'Elutasítás',
+    confirmClass: 'btn-danger',
+    onConfirm: async (root) => {
+      const reason = root.querySelector('[name=reason]').value.trim();
+      if (!reason) { toast('Adj meg indokot.', 'error'); return false; }
+      await rejectTransfer(eventId, reason);
+      toast('Átadás elutasítva.', 'success');
+    },
+  });
+}
+
+// --- Átadás: raktáros döntése egy már elutasított átadásról ---
+export async function doAcceptRejection(eventId) {
+  try { await resolveRejectedTransfer(eventId, true); toast('Elutasítás elfogadva.', 'success'); }
+  catch (e) { toast(e.message, 'error'); }
+}
+export function dlgOverrideRejection(eventId) {
+  openModal({
+    title: 'Átadás felülbírálása',
+    bodyHTML: `
+      <p class="muted" style="margin-top:0">Az átvevő elutasította az átadást, de raktárosként felülbírálhatod: az átadás ekkor mégis végbemegy, az átvevő jóváhagyása nélkül.</p>`,
+    confirmText: 'Felülbírálás — átadás végrehajtása',
+    confirmClass: 'btn-danger',
+    onConfirm: async () => {
+      await resolveRejectedTransfer(eventId, false);
+      toast('Átadás felülbírálva és végrehajtva.', 'success');
     },
   });
 }

@@ -46,6 +46,7 @@ $routes = [
   ['GET',  'lookups',                        'h_lookups'],
   ['GET',  'pending',                        'h_pending'],
   ['GET',  'reservations',                   'h_reservations'],
+  ['GET',  'transfers/mine',                 'h_my_pending_transfers'],
   ['GET',  'devices',                        'h_devices'],
   ['GET',  'devices/by-tag/{tag}',           'h_device_by_tag'],
   ['GET',  'devices/{id}/history',           'h_history'],
@@ -53,6 +54,9 @@ $routes = [
 
   // Eszköz-műveletek
   ['POST', 'devices/move',                   'h_move'],
+  ['POST', 'devices/batch-check-out',        'h_batch_check_out'],
+  ['POST', 'devices/batch-transfer',         'h_batch_transfer'],
+  ['POST', 'devices/batch-check-in',         'h_batch_check_in'],
   ['POST', 'devices',                        'h_register'],
   ['PUT',  'devices/{id}',                   'h_edit'],
   ['PATCH','devices/{id}',                   'h_edit'],
@@ -67,6 +71,11 @@ $routes = [
   // Visszavétel megerősítés
   ['POST', 'checkins/{id}/confirm',          'h_confirm'],
   ['POST', 'checkins/{id}/reject',           'h_reject'],
+
+  // Átadás megerősítés
+  ['POST', 'transfers/{id}/confirm',         'h_confirm_transfer'],
+  ['POST', 'transfers/{id}/reject',          'h_reject_transfer'],
+  ['POST', 'transfers/{id}/resolve',         'h_resolve_transfer'],
 
   // Törzsadat
   ['POST', 'locations',                      'h_add_location'],
@@ -91,7 +100,11 @@ try {
   json_error(422, $e->getMessage());          // üzleti szabály megsértése
 } catch (Throwable $e) {
   error_log('[API] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-  json_error(500, 'Szerverhiba.');
+  if (defined('API_DEBUG_ERRORS') && API_DEBUG_ERRORS) {
+    json_error(500, get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine());
+  } else {
+    json_error(500, 'Szerverhiba.');
+  }
 }
 
 // ============================================================
@@ -157,8 +170,9 @@ function h_bootstrap(): array {
     'deviceTypes'          => Lookups::deviceTypes(),
     'attributeDefinitions' => Lookups::attributeDefinitions(),
     'devices'              => Repo::allEnriched(),
-    'pending'              => Lookups::pendingCheckins(),
+    'pending'              => Lookups::reviewQueue(),
     'reservations'         => Lookups::activeReservations(),
+    'myPendingTransfers'   => Auth::userId() !== null ? Lookups::myPendingTransfers(Auth::userId()) : [],
   ];
 }
 function h_devices(): array { return Repo::allEnriched(); }
@@ -175,13 +189,40 @@ function h_device_by_tag(array $p): array {
   return Repo::enrichOne((int) $id);
 }
 function h_history(array $p): array { return Lookups::history((int) $p['id']); }
-function h_pending(): array { return Lookups::pendingCheckins(); }
+function h_pending(): array { return Lookups::reviewQueue(); }
 function h_reservations(): array { return Lookups::activeReservations(); }
+function h_my_pending_transfers(): array {
+  $id = Auth::userId();
+  return $id !== null ? Lookups::myPendingTransfers($id) : [];
+}
 
 // ---- Eszköz-műveletek ----
 function h_move(): array {
   $b = body();
   return Ops::moveAsset($b);
+}
+function h_batch_check_out(): array {
+  $b = body();
+  require_fields($b, ['device_ids', 'to_user_id']);
+  return Ops::batchCheckOut(
+    (array) $b['device_ids'], (int) $b['to_user_id'],
+    int_or_null($b['to_locations_id'] ?? null), int_or_null($b['to_departments_id'] ?? null),
+    $b['expected_return_date'] ?? null, $b['notes'] ?? null
+  );
+}
+function h_batch_transfer(): array {
+  $b = body();
+  require_fields($b, ['device_ids', 'to_user_id']);
+  return Ops::batchTransfer((array) $b['device_ids'], (int) $b['to_user_id'], $b['notes'] ?? null);
+}
+function h_batch_check_in(): array {
+  $b = body();
+  require_fields($b, ['device_ids']);
+  return Ops::batchCheckIn(
+    (array) $b['device_ids'],
+    int_or_null($b['to_locations_id'] ?? null), int_or_null($b['to_departments_id'] ?? null),
+    $b['condition_at_event'] ?? null, $b['notes'] ?? null
+  );
 }
 function h_register(): array { return Ops::registerDevice(body()); }
 function h_edit(array $p): array { return Ops::editDevice((int) $p['id'], body()); }
@@ -205,6 +246,11 @@ function h_retire(array $p): array { return Ops::retireDevice((int) $p['id'], bo
 // ---- Visszavétel megerősítés ----
 function h_confirm(array $p): array { return Ops::confirmCheckIn((int) $p['id']); }
 function h_reject(array $p): array { return Ops::rejectCheckIn((int) $p['id'], body()['reason'] ?? null); }
+
+// ---- Átadás megerősítés ----
+function h_confirm_transfer(array $p): array { return Ops::confirmTransfer((int) $p['id']); }
+function h_reject_transfer(array $p): array { return Ops::rejectTransfer((int) $p['id'], body()['reason'] ?? null); }
+function h_resolve_transfer(array $p): array { return Ops::resolveRejectedTransfer((int) $p['id'], (bool) (body()['accept_rejection'] ?? false)); }
 
 // ---- Törzsadat ----
 function h_add_location(): array { return Ops::addLocation(body()); }

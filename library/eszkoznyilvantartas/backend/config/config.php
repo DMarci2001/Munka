@@ -61,3 +61,12 @@ const SSO_TTL_SECONDS = 180;
 
 // ---- Üzleti állandók ---------------------------------------
 const RESERVATION_DAYS = 3;  // foglalás élettartama (nap)
+
+// ---- Hibakeresés ---------------------------------------------
+// Csak az itt felsorolt teszt-hosztokon adjuk vissza a nyers kivétel-
+// üzenetet (fájl:sor) az API-válaszban 500 esetén — bármely más hoszton
+// (éles) ez MINDIG "Szerverhiba."-ra korlátozódik, hogy ne szivárogjon
+// infrastruktúra-részlet. Ide vedd fel a teszt-domaint, ha diagnosztizálni
+// akarsz, majd távolítsd el (vagy hagyd itt, csak arra a hosztra hat).
+const API_DEBUG_HOSTS = ['dmarciteszt.hungariamed.hu', 'localhost'];
+define('API_DEBUG_ERRORS', in_array($_SERVER['HTTP_HOST'] ?? '', API_DEBUG_HOSTS, true));

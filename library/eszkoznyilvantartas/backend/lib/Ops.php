@@ -98,6 +98,13 @@ final class Ops {
   public static function moveAsset(array $in): array {
     Auth::requireLogin();
     require_fields($in, ['device_id', 'event_type']);
+    return self::moveAssetOne($in);
+  }
+
+  // Egy eszközre vonatkozó move_asset törzs — saját tranzakcióban fut, hogy a
+  // batch-wrapperek (batchCheckOut/batchTransfer/batchCheckIn) soronként
+  // hívhassák, és egy sor hibája ne görgesse vissza a többi sikeres sort.
+  private static function moveAssetOne(array $in): array {
     $deviceId  = (int) $in['device_id'];
     $eventType = $in['event_type'];
     enum_in($eventType, ['check_out', 'check_in', 'transfer', 'stock_transfer'], 'eseménytípus');
@@ -126,6 +133,8 @@ final class Ops {
         $freeInStock = $cur['holder'] === null && ($cur['department'] !== null || $cur['location'] !== null);
         $heldByActor = $cur['holder'] === $actor;
         if ($eventType === 'check_out') {
+          if (!Auth::canCheckOut())
+            throw new OpError('Nincs jogosultságod eszköz kivételéhez.');
           if (!($freeInStock && $toUser === $actor))
             throw new OpError('Felhasználóként csak szabad eszközt vehet ki, és csak magának.');
         } elseif ($eventType === 'check_in' || $eventType === 'transfer') {
@@ -152,15 +161,17 @@ final class Ops {
           throw new OpError('Az eszköz másnak van fenntartva (foglalás).');
       }
 
-      // pending check_in: csak egy nyitott lehet (user ág)
+      // pending check_in/transfer: csak egy nyitott lehet (user ág)
       if ($eventType === 'check_in' && $role === 'user' && Repo::pendingCheckin($deviceId))
         throw new OpError('Erre az eszközre már van megerősítésre váró visszavétel.');
+      if ($eventType === 'transfer' && $role === 'user' && Repo::pendingTransfer($deviceId))
+        throw new OpError('Erre az eszközre már van megerősítésre váró átadás.');
 
       // Raktár sosem birtokos: ha a cél raktár-részleg, az eszköz a készletbe kerül.
       $toStorage = Repo::isStorageDept($toDept);
       if ($toStorage) $toUser = null;
 
-      $confirmation = ($eventType === 'check_in' && $role === 'user') ? 'pending' : 'confirmed';
+      $confirmation = (($eventType === 'check_in' || $eventType === 'transfer') && $role === 'user') ? 'pending' : 'confirmed';
 
       self::pushEvent($db, [
         'device_id' => $deviceId, 'event_type' => $eventType, 'actor_user_id' => $actor,
@@ -175,7 +186,7 @@ final class Ops {
       if ($eventType === 'check_out') self::deleteReservation($db, $deviceId);
 
       // státusz
-      if ($confirmation === 'pending')      $status = 'Visszavétel folyamatban';
+      if ($confirmation === 'pending')      $status = $eventType === 'transfer' ? 'Átadás folyamatban' : 'Visszavétel folyamatban';
       elseif ($toStorage)                   $status = 'Kivehető';
       else                                  $status = self::statusFromEvent($eventType);
       self::setStatus($db, $deviceId, $status);
@@ -186,6 +197,62 @@ final class Ops {
       throw $e;
     }
     return Repo::enrichOne($deviceId);
+  }
+
+  // ============================================================
+  // Batch műveletek — device-enként külön tranzakcióban futtatja a
+  // meglévő moveAssetOne()-t, soronkénti eredménnyel (nem all-or-nothing):
+  // egy device hibája nem befolyásolja a többi sikeres sort.
+  // Visszatérés: [{device_id, ok, device?, error?}, ...]
+  // ============================================================
+  private static function batchMove(array $deviceIds, string $eventType, array $common): array {
+    Auth::requireLogin();
+    $results = [];
+    foreach ($deviceIds as $deviceId) {
+      $deviceId = (int) $deviceId;
+      try {
+        $dev = self::moveAssetOne(array_merge($common, ['device_id' => $deviceId, 'event_type' => $eventType]));
+        $results[] = ['device_id' => $deviceId, 'ok' => true, 'device' => $dev];
+      } catch (\Throwable $e) {
+        $results[] = ['device_id' => $deviceId, 'ok' => false, 'error' => $e->getMessage()];
+      }
+    }
+    return $results;
+  }
+
+  public static function batchCheckOut(array $deviceIds, int $toUserId, ?int $toLoc, ?int $toDept, ?string $expectedReturn, ?string $notes): array {
+    return self::batchMove($deviceIds, 'check_out', [
+      'to_user_id' => $toUserId, 'to_locations_id' => $toLoc, 'to_departments_id' => $toDept,
+      'expected_return_date' => $expectedReturn, 'notes' => $notes,
+    ]);
+  }
+
+  public static function batchTransfer(array $deviceIds, int $toUserId, ?string $notes): array {
+    // Az átadás célja mindig az eszköz jelenlegi helyszíne/részlege (mint az
+    // egyes dlgTransfer-nél) — ezt device-onként kell feloldani, mert eltérhet.
+    $results = [];
+    Auth::requireLogin();
+    foreach ($deviceIds as $deviceId) {
+      $deviceId = (int) $deviceId;
+      try {
+        $cur = Repo::currentState($deviceId);
+        $dev = self::moveAssetOne([
+          'device_id' => $deviceId, 'event_type' => 'transfer', 'to_user_id' => $toUserId,
+          'to_locations_id' => $cur['location'], 'to_departments_id' => $cur['department'], 'notes' => $notes,
+        ]);
+        $results[] = ['device_id' => $deviceId, 'ok' => true, 'device' => $dev];
+      } catch (\Throwable $e) {
+        $results[] = ['device_id' => $deviceId, 'ok' => false, 'error' => $e->getMessage()];
+      }
+    }
+    return $results;
+  }
+
+  public static function batchCheckIn(array $deviceIds, ?int $toLoc, ?int $toDept, ?string $condition, ?string $notes): array {
+    return self::batchMove($deviceIds, 'check_in', [
+      'to_locations_id' => $toLoc, 'to_departments_id' => $toDept,
+      'condition_at_event' => $condition, 'notes' => $notes,
+    ]);
   }
 
   // ---- confirm_check_in — storekeeper / it_admin -------------
@@ -243,6 +310,114 @@ final class Ops {
       self::setStatus($db, (int) $ev['device_id'], 'Kiadva');
       $db->commit();
       return Repo::enrichOne((int) $ev['device_id']);
+    } catch (\Throwable $e) {
+      $db->rollBack();
+      throw $e;
+    }
+  }
+
+  // ---- confirm_transfer — az átvevő (to_user_id) vagy storekeeper+ ----
+  public static function confirmTransfer(int $eventId): array {
+    Auth::requireLogin();
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+      $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE event_id = ?');
+      $st->execute([$eventId]);
+      $ev = $st->fetch();
+      if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'transfer')
+        throw new OpError('Csak függőben lévő átadás erősíthető meg.');
+      if ((int) $ev['to_user_id'] !== Auth::userId() && !Roles::atLeast(Auth::role(), 'storekeeper'))
+        throw new OpError('Csak az átvevő vagy raktáros erősítheti meg az átadást.');
+
+      $dev = self::lockDevice($db, (int) $ev['device_id']);
+      if ($dev['status'] !== 'Átadás folyamatban')
+        throw new OpError('Az eszköz állapota közben megváltozott (' . $dev['status'] . '), az átadás már nem erősíthető meg.');
+
+      $db->prepare(
+        "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'confirmed', confirmed_by = ?, confirmed_at = ? WHERE event_id = ?"
+      )->execute([Auth::userId(), self::nowTs(), $eventId]);
+
+      self::setStatus($db, (int) $ev['device_id'], 'Kiadva');
+      $db->commit();
+      return Repo::enrichOne((int) $ev['device_id']);
+    } catch (\Throwable $e) {
+      $db->rollBack();
+      throw $e;
+    }
+  }
+
+  // ---- reject_transfer — csak az átvevő (to_user_id) ------------------
+  public static function rejectTransfer(int $eventId, ?string $reason): array {
+    Auth::requireLogin();
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+      $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE event_id = ?');
+      $st->execute([$eventId]);
+      $ev = $st->fetch();
+      if (!$ev || $ev['confirmation_status'] !== 'pending' || $ev['event_type'] !== 'transfer')
+        throw new OpError('Csak függőben lévő átadás utasítható el.');
+      if ((int) $ev['to_user_id'] !== Auth::userId())
+        throw new OpError('Csak az átvevő utasíthatja el az átadást.');
+
+      $dev = self::lockDevice($db, (int) $ev['device_id']);
+      if ($dev['status'] !== 'Átadás folyamatban')
+        throw new OpError('Az eszköz állapota közben megváltozott (' . $dev['status'] . '), az átadás már nem utasítható el.');
+
+      $notes = ($ev['notes'] ? $ev['notes'] . ' ' : '') . 'ELUTASÍTVA: ' . ($reason ?: 'nincs indok');
+      $db->prepare(
+        "UPDATE eszkoznyilvantartas_device_custody_events SET confirmation_status = 'rejected', confirmed_by = ?, confirmed_at = ?, notes = ? WHERE event_id = ?"
+      )->execute([Auth::userId(), self::nowTs(), $notes, $eventId]);
+
+      // custody nem változott (a pending event sosem volt confirmed) — csak a stray
+      // 'Átadás folyamatban' státuszt állítjuk vissza a küldő korábbi állapotára.
+      self::setStatus($db, (int) $ev['device_id'], 'Kiadva');
+      $db->commit();
+      return Repo::enrichOne((int) $ev['device_id']);
+    } catch (\Throwable $e) {
+      $db->rollBack();
+      throw $e;
+    }
+  }
+
+  // ---- resolve_rejected_transfer — storekeeper+ (második döntési kör) -
+  // $acceptRejection === true  -> az elutasítás marad, csak lezárjuk (resolved_*).
+  // $acceptRejection === false -> felülbírálás: az átadás mégis végbemegy, új
+  //                                azonnal megerősített transfer esemény jön létre,
+  //                                az eredeti rejected esemény érintetlen marad,
+  //                                csak "resolved"-ként megjelölve (audit trail).
+  public static function resolveRejectedTransfer(int $eventId, bool $acceptRejection): array {
+    Auth::requireRole('storekeeper');
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+      $st = $db->prepare('SELECT * FROM eszkoznyilvantartas_device_custody_events WHERE event_id = ?');
+      $st->execute([$eventId]);
+      $ev = $st->fetch();
+      if (!$ev || $ev['confirmation_status'] !== 'rejected' || $ev['event_type'] !== 'transfer' || $ev['resolved_at'] !== null)
+        throw new OpError('Csak függőben lévő (még nem lezárt) elutasított átadás dönthető el.');
+
+      $deviceId = (int) $ev['device_id'];
+      if (!$acceptRejection) {
+        self::lockDevice($db, $deviceId);
+        self::pushEvent($db, [
+          'device_id' => $deviceId, 'event_type' => 'transfer', 'actor_user_id' => Auth::userId(),
+          'from_user_id' => $ev['from_user_id'], 'from_locations_id' => $ev['from_locations_id'], 'from_departments_id' => $ev['from_departments_id'],
+          'to_user_id' => $ev['to_user_id'], 'to_locations_id' => $ev['to_locations_id'], 'to_departments_id' => $ev['to_departments_id'],
+          'event_timestamp' => self::nowTs(),
+          'notes' => 'Raktáros felülbírálás (eredeti esemény: #' . $eventId . ')',
+          'confirmation_status' => 'confirmed', 'confirmed_by' => Auth::userId(), 'confirmed_at' => self::nowTs(),
+        ]);
+        self::setStatus($db, $deviceId, 'Kiadva');
+      }
+
+      $db->prepare(
+        'UPDATE eszkoznyilvantartas_device_custody_events SET resolved_by = ?, resolved_at = ? WHERE event_id = ?'
+      )->execute([Auth::userId(), self::nowTs(), $eventId]);
+
+      $db->commit();
+      return Repo::enrichOne($deviceId);
     } catch (\Throwable $e) {
       $db->rollBack();
       throw $e;

@@ -169,16 +169,19 @@ function renderActions(container, v, role, isStore, me) {
   const reservedByOther = v.reservation && v.reservation.reserved_by !== me.id;
   const retired = dev.status === 'Selejtezve';
   const lost = dev.status === 'Elveszett';
+  // Sima usernek alapból nincs Kivétel joga — jogosultsághoz kötött
+  // (l. jog_eszkoznyilvantartas_kivetel); raktáros+ mindig kiveheti.
+  const canOut = isStore || !!me.can_check_out;
 
   if (!retired && !lost) {
     // Kivétel: szabad eszköz (vagy nekem foglalt), vagy raktáros bármikor szabadra
     if (v.isFree && !reservedByOther) {
-      btns.push(`<button class="btn btn-primary" data-act="checkout">${icons.arrowRight} Kivétel</button>`);
+      if (canOut) btns.push(`<button class="btn btn-primary" data-act="checkout">${icons.arrowRight} Kivétel</button>`);
       if (!v.reservation)
         btns.push(`<button class="btn btn-outline" data-act="reserve">${icons.bookmark} Foglalás</button>`);
     }
     if (reservedByMe) {
-      btns.push(`<button class="btn btn-primary" data-act="checkout">${icons.arrowRight} Kivétel</button>`);
+      if (canOut) btns.push(`<button class="btn btn-primary" data-act="checkout">${icons.arrowRight} Kivétel</button>`);
       btns.push(`<button class="btn btn-outline" data-act="cancel-resv">Foglalás lemondása</button>`);
     }
     if (reservedByOther && isStore) {

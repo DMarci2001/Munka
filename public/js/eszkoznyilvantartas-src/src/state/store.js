@@ -25,8 +25,9 @@ const state = {
   deviceTypes: [],
   attributeDefinitions: [],
   devices: [],         // enriched eszközök (a backend Repo::allEnriched-jából)
-  pending: [],         // megerősítésre váró visszavételek (nyers események)
+  pending: [],         // 'Ellenőrzésre vár' összevont lista (pending check-in + elutasított átadás)
   reservations: [],    // aktív foglalások
+  myPendingTransfers: [], // rám váró átvételek (pending transfer, to_user_id = én)
   currentUser: null,   // a /me-ből (a host oldal munkamenetéből)
 };
 
@@ -48,6 +49,7 @@ export async function hydrate() {
   state.devices              = b.devices || [];
   state.pending              = b.pending || [];
   state.reservations         = b.reservations || [];
+  state.myPendingTransfers   = b.myPendingTransfers || [];
   state.currentUser          = b.currentUser || null;
   historyCache = {};
   notify();
@@ -55,14 +57,16 @@ export async function hydrate() {
 
 // Mutáció utáni frissítés: csak a változó szeletek (lookups/currentUser nem).
 export async function refresh() {
-  const [devices, pending, reservations] = await Promise.all([
+  const [devices, pending, reservations, myPendingTransfers] = await Promise.all([
     apiGet('/devices'),
     apiGet('/pending'),
     apiGet('/reservations'),
+    apiGet('/transfers/mine'),
   ]);
   state.devices = devices || [];
   state.pending = pending || [];
   state.reservations = reservations || [];
+  state.myPendingTransfers = myPendingTransfers || [];
   historyCache = {};   // előzmények elavultak a mutáció után
   notify();
 }
@@ -114,8 +118,10 @@ export function currentState(deviceId) {
 }
 export const activeReservation = (deviceId) => getDevice(deviceId)?.reservation || null;
 export const pendingCheckinFor = (deviceId) => getDevice(deviceId)?.pending || null;
+export const pendingTransferFor = (deviceId) => getDevice(deviceId)?.pending_transfer || null;
 export const pendingCheckins = () => state.pending;
 export const activeReservations = () => state.reservations;
+export const myPendingTransfers = () => state.myPendingTransfers;
 
 // ---- Custody-előzmény (igény szerint töltve) ----------------
 export const historyOf = (deviceId) => historyCache[deviceId] || [];
@@ -146,12 +152,49 @@ export async function moveAsset(payload) {
   await refresh();
 }
 
+// Batch műveletek — soronkénti eredménnyel térnek vissza ([{device_id, ok, device?, error?}, ...]),
+// a hívó felelőssége a részleges hibák megjelenítése (nem all-or-nothing).
+export async function batchCheckOut(deviceIds, toUserId, toLocationsId = null, toDepartmentsId = null, expectedReturnDate = null, notes = null) {
+  const results = await apiSend('POST', '/devices/batch-check-out', {
+    device_ids: deviceIds, to_user_id: toUserId, to_locations_id: toLocationsId,
+    to_departments_id: toDepartmentsId, expected_return_date: expectedReturnDate, notes,
+  });
+  await refresh();
+  return results;
+}
+export async function batchTransfer(deviceIds, toUserId, notes = null) {
+  const results = await apiSend('POST', '/devices/batch-transfer', { device_ids: deviceIds, to_user_id: toUserId, notes });
+  await refresh();
+  return results;
+}
+export async function batchCheckIn(deviceIds, toLocationsId, toDepartmentsId = null, conditionAtEvent = null, notes = null) {
+  const results = await apiSend('POST', '/devices/batch-check-in', {
+    device_ids: deviceIds, to_locations_id: toLocationsId, to_departments_id: toDepartmentsId,
+    condition_at_event: conditionAtEvent, notes,
+  });
+  await refresh();
+  return results;
+}
+
 export async function confirmCheckIn(eventId) {
   await apiSend('POST', `/checkins/${eventId}/confirm`);
   await refresh();
 }
 export async function rejectCheckIn(eventId, reason) {
   await apiSend('POST', `/checkins/${eventId}/reject`, { reason });
+  await refresh();
+}
+
+export async function confirmTransfer(eventId) {
+  await apiSend('POST', `/transfers/${eventId}/confirm`);
+  await refresh();
+}
+export async function rejectTransfer(eventId, reason) {
+  await apiSend('POST', `/transfers/${eventId}/reject`, { reason });
+  await refresh();
+}
+export async function resolveRejectedTransfer(eventId, acceptRejection) {
+  await apiSend('POST', `/transfers/${eventId}/resolve`, { accept_rejection: acceptRejection });
   await refresh();
 }
 

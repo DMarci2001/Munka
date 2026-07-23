@@ -2,17 +2,23 @@
 // Eszközlista — keresés, szűrés, böngészés
 // ============================================================
 
-import { getDevices, getDeviceTypes, getLocations, getDepartments, currentRole, roleAtLeast, getUsers } from '../state/store.js';
+import { getDevices, getDeviceTypes, getLocations, getDepartments, currentRole, roleAtLeast, getUsers, currentUser, batchCheckOut } from '../state/store.js';
 import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
 import { statusBadge, statusLabel, locationLabel, holderLabel, esc } from '../lib/format.js';
-import { icons } from '../ui/components.js';
+import { icons, openModal, toast } from '../ui/components.js';
 import { enhanceSelects, refreshSelectDisplay } from '../ui/searchableSelect.js';
+import { fitTableToWidth, watchFitToWidth } from '../ui/fitToWidth.js';
+import { createBulkSelection, renderActionBar, injectCheckboxColumn, summarizeBatchResults } from '../ui/bulkSelect.js';
 
 // szűrőállapot (megőrződik nézetváltáskor)
 const filters = { q: '', type: '', status: '', dept: '', loc: '', holder: '' };
 
-const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Szerviz alatt', 'Elveszett', 'Selejtezve'];
+// tömeges kivétel — device_id-alapú kijelölés, a szűrésen túlél
+const bulk = createBulkSelection();
+let bulkMode = false;
+
+const STATUSES = ['Kivehető', 'Kiadva', 'Lefoglalva', 'Visszavétel folyamatban', 'Átadás folyamatban', 'Szerviz alatt', 'Elveszett', 'Selejtezve'];
 
 // rendezési állapot
 let sortCol = null;
@@ -45,6 +51,7 @@ function sortValue(v, col) {
 
 export function renderInventory(el) {
   const isStore = roleAtLeast(currentRole(), 'storekeeper');
+  const canOut = isStore || !!currentUser()?.can_check_out;
   // azon felhasználók, akiknél jelenleg van eszköz — a „birtokos" szűrőhöz
   const holderIds = new Set(getDevices().map((d) => d.holder_id).filter((id) => id != null));
   const calRows = isStore
@@ -94,8 +101,10 @@ export function renderInventory(el) {
 
         <button class="btn btn-reset-filters-custom" id="btn-reset-filters">Szűrők törlése</button>
         <button class="btn btn-outline" id="btn-scan">${icons.qr} Beolvasás</button>
+        ${canOut ? `<button class="btn btn-outline" id="btn-bulk-toggle">${bulkMode ? 'Tömeges kivétel — kilépés' : 'Tömeges kivétel'}</button>` : ''}
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
+      <div id="bulk-bar" class="bulk-action-bar-slot"></div>
       ${isStore ? `
         <div class="panel" style="margin-bottom:16px">
           <div class="panel-head">Felülvizsgálandó eszközök</div>
@@ -149,7 +158,68 @@ export function renderInventory(el) {
   el.querySelectorAll('.panel [data-dev]').forEach((r) =>
     r.addEventListener('click', () => navigate('/device/' + r.dataset.dev)));
   enhanceSelects(el);
+
+  const btnBulkToggle = el.querySelector('#btn-bulk-toggle');
+  if (btnBulkToggle) btnBulkToggle.addEventListener('click', () => {
+    bulkMode = !bulkMode;
+    if (!bulkMode) bulk.clear();
+    paint(el);
+  });
+  if (canOut) {
+    renderActionBar(el.querySelector('#bulk-bar'), bulk, {
+      label: 'Tömeges kivétel',
+      finalizeText: 'Kivétel véglegesítése',
+      onFinalize: (ids) => openBulkCheckoutDialog(ids, isStore),
+    });
+  }
   paint(el);
+}
+
+function openBulkCheckoutDialog(deviceIds, isStore) {
+  const me = currentUser();
+  openModal({
+    title: `Tömeges kivétel (${deviceIds.length} eszköz)`,
+    closeOnBackdrop: false,
+    bodyHTML: `
+      ${isStore ? `
+      <div class="field">
+        <label class="form-label">Kinek</label>
+        <select class="form-select" name="to_user">${getUsers().filter((u) => u.id !== me.id).map((u) => `<option value="${u.id}">${esc(u.full_name)}</option>`).join('')}</select>
+      </div>` : `<div class="alert-soft" style="margin-bottom:15px">Az eszközöket <strong>magadnak</strong> veszed ki: ${esc(me.full_name)}.</div>`}
+      <div class="field">
+        <label class="form-label">Hová (osztály / felhasználási hely)</label>
+        <select class="form-select" name="to_location">${getLocations().map((l) => `<option value="${l.id}">${esc(l.address)}</option>`).join('')}</select>
+        <select class="form-select" name="to_dept"></select>
+      </div>
+      <div class="field">
+        <label class="form-label">Megjegyzés (opcionális)</label>
+        <input type="text" class="form-control" name="notes" />
+      </div>`,
+    confirmText: 'Kivétel',
+    onMount: (root) => {
+      const locSel = root.querySelector('[name=to_location]');
+      const deptSel = root.querySelector('[name=to_dept]');
+      const fill = () => {
+        const list = getDepartments().filter((d) => d.locations_id === Number(locSel.value) && d.type !== 'raktár');
+        deptSel.innerHTML = list.length
+          ? list.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join('')
+          : '<option value="">— nincs részleg ezen a helyszínen —</option>';
+      };
+      locSel.addEventListener('change', fill);
+      fill();
+      enhanceSelects(root);
+    },
+    onConfirm: async (root) => {
+      const to_user_id = isStore ? Number(root.querySelector('[name=to_user]').value) : currentUser().id;
+      const to_location_id = Number(root.querySelector('[name=to_location]')?.value);
+      const to_department_id = Number(root.querySelector('[name=to_dept]').value) || null;
+      const notes = root.querySelector('[name=notes]').value.trim() || null;
+      const results = await batchCheckOut(deviceIds, to_user_id, to_location_id, to_department_id, null, notes);
+      summarizeBatchResults(results, toast);
+      bulk.clear();
+      bulkMode = false;
+    },
+  });
 }
 
 function paint(el) {
@@ -218,6 +288,26 @@ function paint(el) {
       const id = Number(e.currentTarget.closest('[data-dev]').dataset.dev);
       import('../ui/qrLabel.js').then((m) => m.printQrLabel(id));
     }));
+
+  if (bulkMode) {
+    wrap.querySelectorAll('.table-wrap').forEach((tw) => injectCheckboxColumn(tw, bulk, (id) => getDeviceStatus(id) === 'Kivehető'));
+  }
+
+  wrap.querySelectorAll('.table-wrap').forEach((tw) => {
+    watchFitToWidth(tw);
+    fitTableToWidth(tw);
+  });
+  wrap.querySelectorAll('.page-radio').forEach((radio) =>
+    radio.addEventListener('change', () => {
+      const section = wrap.querySelector(`.page-section[data-page="${radio.id.replace('inv-p', '')}"]`);
+      const tw = section?.querySelector('.table-wrap');
+      if (tw) fitTableToWidth(tw);
+      if (bulkMode && tw) injectCheckboxColumn(tw, bulk, (id) => getDeviceStatus(id) === 'Kivehető');
+    }));
+}
+
+function getDeviceStatus(deviceId) {
+  return getDevices().find((d) => d.device_id === deviceId)?.status;
 }
 
 function rowHTML(v) {

@@ -167,6 +167,10 @@ class AdminUser {
         ],
         "jog_eszkoznyilvantartas_admin" => [
             "name" => "Hozzáférhet a raktárkezeléshez"
+        ],
+        "jog_eszkoznyilvantartas_kivetel" => [
+            "name" => "Eszköznyilvántartás: eszköz kivétele",
+            "description" => "Sima felhasználóként is kivehet eszközt (raktáros/IT-admin ettől függetlenül mindig kivehet)"
         ]
 
     ];

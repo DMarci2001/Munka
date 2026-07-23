@@ -23,15 +23,26 @@ final class Roles {
   // it_admin csak akkor, ha emellett jogosultsag is a legfelső (2) cég-tier —
   // nincs önálló dedikált flag a legfelső szinthez.
   public static function fromUserRow(array $row): string {
-    $perms = [];
-    if (!empty($row['permissions'])) {
-      $decoded = json_decode($row['permissions'], true);
-      $perms = $decoded['permissions'] ?? [];
-    }
+    $perms = self::permissionsOf($row);
     if (empty($perms['jog_eszkoznyilvantartas_admin'])) {
       return 'user';
     }
     return ((int) ($row['jogosultsag'] ?? 0) === 2) ? 'it_admin' : 'storekeeper';
+  }
+
+  private static function permissionsOf(array $row): array {
+    if (empty($row['permissions'])) return [];
+    $decoded = json_decode($row['permissions'], true);
+    return $decoded['permissions'] ?? [];
+  }
+
+  // Kivétel (check_out) jogosultság: storekeeper+ mindig szabad, sima
+  // usernél a jog_eszkoznyilvantartas_kivetel flag dönt (l.
+  // AdminUser::$jogosultsagLista — a fő rendszer admin "Jogosultságok"
+  // oldalán szerkeszthető, per-user checkbox-listával).
+  public static function canCheckOut(array $row): bool {
+    if (self::fromUserRow($row) !== 'user') return true;
+    return !empty(self::permissionsOf($row)['jog_eszkoznyilvantartas_kivetel']);
   }
 
   // role >= min ?

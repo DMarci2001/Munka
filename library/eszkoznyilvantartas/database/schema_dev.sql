@@ -122,7 +122,7 @@ CREATE TABLE eszkoznyilvantartas_devices (
   CONSTRAINT fk_devices_created_by FOREIGN KEY (created_by)     REFERENCES users (id),
   CONSTRAINT fk_devices_updated_by FOREIGN KEY (updated_by)     REFERENCES users (id),
   CONSTRAINT chk_devices_status CHECK (status IN
-    ('Kivehető','Kiadva','Lefoglalva','Visszavétel folyamatban',
+    ('Kivehető','Kiadva','Lefoglalva','Visszavétel folyamatban','Átadás folyamatban',
      'Szerviz alatt','Elveszett','Selejtezve'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -156,6 +156,8 @@ CREATE TABLE eszkoznyilvantartas_device_custody_events (
   confirmation_status   VARCHAR(12)  NOT NULL DEFAULT 'confirmed',
   confirmed_by          INT          NULL,
   confirmed_at          DATETIME     NULL,
+  resolved_by           INT          NULL,
+  resolved_at           DATETIME     NULL,
   pending_device_id     INT          AS (CASE WHEN confirmation_status = 'pending' THEN device_id END) VIRTUAL,
   PRIMARY KEY (event_id),
   KEY idx_custody_device (device_id, event_timestamp),
@@ -170,6 +172,7 @@ CREATE TABLE eszkoznyilvantartas_device_custody_events (
   CONSTRAINT fk_custody_to_loc      FOREIGN KEY (to_locations_id)     REFERENCES helyszinek (id),
   CONSTRAINT fk_custody_to_dept     FOREIGN KEY (to_departments_id)   REFERENCES eszkoznyilvantartas_departments (id),
   CONSTRAINT fk_custody_confirmedby FOREIGN KEY (confirmed_by)        REFERENCES users (id),
+  CONSTRAINT fk_custody_resolvedby  FOREIGN KEY (resolved_by)         REFERENCES users (id),
   CONSTRAINT chk_custody_event_type CHECK (event_type IN
     ('check_out','check_in','transfer','stock_transfer',
      'send_to_repair','return_from_repair','mark_lost','mark_found')),
@@ -185,7 +188,7 @@ CREATE TABLE eszkoznyilvantartas_device_custody_events (
         (confirmed_by IS NOT NULL AND confirmed_at IS NOT NULL)))
   ),
   CONSTRAINT chk_custody_pending_only_checkin CHECK
-    (confirmation_status = 'confirmed' OR event_type = 'check_in')
+    (confirmation_status = 'confirmed' OR event_type IN ('check_in','transfer'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE eszkoznyilvantartas_device_reservations (

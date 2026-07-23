@@ -61,18 +61,46 @@ final class Lookups {
     return $st->fetchAll();
   }
 
-  // Megerősítésre váró visszavételek (store.pendingCheckins).
-  // Nyers eseménymezőkkel — ugyanaz a forma, mint az enriched eszköz `pending`
-  // mezője (Repo::pendingCheckin), így a frontend egységesen kezeli mindkettőt.
-  public static function pendingCheckins(): array {
-    return getDB()->query(
+  // 'Ellenőrzésre vár' összevont lekérdezés (store.pendingCheckins + a
+  // fogadó által elutasított, storekeeper-döntésre váró átadások).
+  // `kind`: 'pending_checkin' (storekeeper jóváhagyására vár) vagy
+  //         'rejected_transfer' (a fogadó elutasította, storekeeper dönt).
+  public static function reviewQueue(): array {
+    $db = getDB();
+    $cols = "event_id, device_id, event_type, actor_user_id, from_user_id, from_locations_id,
+             from_departments_id, to_user_id, to_locations_id, to_departments_id,
+             event_timestamp, condition_at_event, notes, confirmation_status";
+
+    $checkins = $db->query(
+      "SELECT $cols, 'pending_checkin' AS kind
+       FROM eszkoznyilvantartas_device_custody_events
+       WHERE confirmation_status = 'pending' AND event_type = 'check_in'"
+    )->fetchAll();
+
+    $rejectedTransfers = $db->query(
+      "SELECT $cols, 'rejected_transfer' AS kind
+       FROM eszkoznyilvantartas_device_custody_events
+       WHERE confirmation_status = 'rejected' AND event_type = 'transfer' AND resolved_at IS NULL"
+    )->fetchAll();
+
+    $items = array_merge($checkins, $rejectedTransfers);
+    usort($items, fn($a, $b) => strcmp($a['event_timestamp'], $b['event_timestamp']));
+    return $items;
+  }
+
+  // Rám váró átvételek (myDevices.js "Rám váró átvételek" szekció) —
+  // csak a hívóhoz címzett, még megerősítésre váró transfer eventek.
+  public static function myPendingTransfers(int $userId): array {
+    $st = getDB()->prepare(
       "SELECT event_id, device_id, event_type, actor_user_id, from_user_id, from_locations_id,
               from_departments_id, to_user_id, to_locations_id, to_departments_id,
               event_timestamp, condition_at_event, notes, confirmation_status
        FROM eszkoznyilvantartas_device_custody_events
-       WHERE confirmation_status = 'pending' AND event_type = 'check_in'
+       WHERE confirmation_status = 'pending' AND event_type = 'transfer' AND to_user_id = ?
        ORDER BY event_timestamp"
-    )->fetchAll();
+    );
+    $st->execute([$userId]);
+    return $st->fetchAll();
   }
 
   public static function activeReservations(): array {

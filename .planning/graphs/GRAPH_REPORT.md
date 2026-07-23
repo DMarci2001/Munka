@@ -1,16 +1,16 @@
 # Graph Report - hungariamed  (2026-07-22)
 
 ## Corpus Check
-- 419 files · ~1,841,376 words
+- 420 files · ~1,842,233 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5363 nodes · 9515 edges · 435 communities (176 shown, 259 thin omitted)
+- 5372 nodes · 9525 edges · 425 communities (180 shown, 245 thin omitted)
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 538 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d878c2ed`
+- Built from commit: `c22a5b6a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -123,7 +123,6 @@
 - Other (13/13)
 - Waybill (13/13)
 - Salary (13/13)
-- Beosztasservice.Php (12/12)
 - Bookingservice.Php (11/12)
 - Documentation (11/12)
 - Szamlaagent (12/12)
@@ -226,7 +225,6 @@
 - Pages Admin (4/4)
 - Pages Admin (4/4)
 - Dailystat (4/4)
-- VaroteremService
 - Pages (4/4)
 - Pages (4/4)
 - Language
@@ -255,7 +253,6 @@
 - Other (2/2)
 - Other (1/2)
 - Other (1/2)
-- ConfirmRejectCheckInTest
 - Header (2/2)
 - Header (2/2)
 - Header (2/2)
@@ -270,22 +267,17 @@
 - SuzukiFormPage
 - Font (1/1)
 - Font (1/1)
-- Font (1/1)
 - FinalInvoiceHeader.php
 - AdminLaborkeroPage
 - Font (1/1)
 - Font (1/1)
-- AdminPatientsPage
 - Font (1/1)
 - Font (1/1)
-- Tutorial (1/1)
-- BookingSuccessfulPage
 - Tutorial (1/1)
 - Fpdm (1/1)
 - Src (1/1)
 - Src (1/1)
 - Fdf (1/1)
-- LeletekPage
 - Documentation (1/1)
 - Docs (1/1)
 - Language (1/1)
@@ -328,12 +320,10 @@
 - [2.6.0] - 2019.08.28
 - [2.7.0] - 2019.09.04
 - [2.8.0] - 2019.10.24
-- [2.8.2] - 2019.12.26
 - [2.9.0] - 2020.06.10
 - [2.9.4] - 2020.07.08
 - [2.9.5] - 2020.07.15
 - [2.9.7] - 2020.10.07
-- [2.9.8] - 2020.11.24
 - CorrectiveInvoiceHeader
 - DeliveryNoteHeader
 - license.md
@@ -361,7 +351,7 @@
 4. `Ops` - 94 edges
 5. `FPDF` - 92 edges
 6. `BookingService` - 87 edges
-7. `Communities (417 total, 235 thin omitted)` - 85 edges
+7. `Communities (435 total, 259 thin omitted)` - 80 edges
 8. `AdminUser` - 79 edges
 9. `Utils` - 74 edges
 10. `SzamlaAgentRequest` - 73 edges
@@ -381,7 +371,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (435 total, 259 thin omitted)
+## Communities (425 total, 245 thin omitted)
 
 ### Community 0 - "SzamlaAgent Core Client"
 Cohesion: 0.00
@@ -395,25 +385,29 @@ Nodes (85): C(), f(), g(), i(), j(), k(), m(), n() (+77 more)
 Cohesion: 0.20
 Nodes (4): nusoap_fault, soap_fault, soapval, nusoap_base
 
+### Community 9 - "Utils Helper Functions"
+Cohesion: 0.08
+Nodes (5): KeltexMedWebSQL, AdminBookingPage, AdminKeltexmedProductsPage, VaroteremService, WebShopService
+
 ### Community 10 - "PHPMailer/SzamlaAgent Docs"
 Cohesion: 0.08
-Nodes (5): DeliveryNote, Invoice, ReverseInvoice, Proforma, DeliveryNoteHeader
+Nodes (6): CorrectiveInvoice, Invoice, ReverseInvoice, Proforma, CorrectiveInvoiceHeader, ProformaHeader
 
 ### Community 12 - "Eszkoznyilvantartas Test Bootstrap"
-Cohesion: 0.07
-Nodes (9): getDB(), PDO, login_as(), logout_session(), PDO, reseed_fixtures(), MasterDataTest, MoveAssetTest (+1 more)
+Cohesion: 0.09
+Nodes (7): ConfirmRejectCheckInTest, PDO, login_as(), MasterDataTest, MoveAssetTest, ReservationTest, PHPUnit\Framework\TestCase
 
 ### Community 13 - "SzamlaAgent Reverse Invoice"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (4): FinalInvoice, DeliveryNoteItem, InvoiceItem, ProformaItem
 
 ### Community 14 - "CompanyService & Booking Helpers"
 Cohesion: 0.05
-Nodes (4): ProformaHeader, ReverseInvoiceHeader, SimpleXMLElement, SzamlaAgentUtil
+Nodes (3): ReverseInvoiceHeader, SimpleXMLElement, SzamlaAgentUtil
 
 ### Community 18 - "DocAgent Asset/Document Management"
-Cohesion: 0.12
-Nodes (36): calibrationFlag(), CONF, confLabel(), eventLabel(), fmtAttrValue(), fmtDate(), fmtDateTime(), fmtRelative() (+28 more)
+Cohesion: 0.13
+Nodes (34): calibrationFlag(), CONF, confLabel(), eventLabel(), fmtAttrValue(), fmtDate(), fmtDateTime(), fmtRelative() (+26 more)
 
 ### Community 20 - "Synlabservice.Php (23/41)"
 Cohesion: 0.07
@@ -427,41 +421,49 @@ Nodes (14): getDB(), PDO, h_bootstrap(), h_device_by_tag(), h_history(), h_logou
 Cohesion: 0.06
 Nodes (34): 10.1 `send_to_repair(actor, device_id, to_location_id=null, to_department_id=null, notes=null)`, 10.2 `return_from_repair(actor, device_id, to_location_id, to_department_id, notes=null)`, 10.3 `mark_lost(actor, device_id, notes=null)`, 10.4 `mark_found(actor, device_id, to_location_id, to_department_id, notes=null)`, 10. Szerviz- és elveszett-kezelők — raktáros+, 11. Összefoglaló, 1. Felelősségi körök, 2. Szerepkörök és jogosultsági mátrix (+26 more)
 
+### Community 30 - "Other (34/34)"
+Cohesion: 0.06
+Nodes (5): CreditNote, InvoiceCreditNote, ReceiptCreditNote, Document, ReceiptItemLedger
+
 ### Community 33 - "Foglaljorvost (32/32)"
-Cohesion: 0.08
+Cohesion: 0.09
 Nodes (6): h_cancel_resv(), h_confirm(), Ops, PDO, RegisterEditDeviceTest, RepairLostFoundTest
 
 ### Community 42 - "Nusoap (27/27)"
-Cohesion: 0.17
-Nodes (27): apiGet(), apiSend(), OpError, request(), addAttrDef(), addDepartment(), addDeviceType(), addLocation() (+19 more)
+Cohesion: 0.16
+Nodes (28): apiGet(), apiSend(), OpError, request(), addAttrDef(), addDepartment(), addDeviceType(), addLocation() (+20 more)
 
 ### Community 43 - "Nusoap (26/26)"
 Cohesion: 0.15
 Nodes (21): enum_in(), int_or_null(), require_fields(), body(), h_add_attr_def(), h_add_department(), h_add_device_type(), h_add_location() (+13 more)
 
 ### Community 45 - "Lib (18/25)"
-Cohesion: 0.20
-Nodes (26): currentState(), isStorageDept(), moveAsset(), conditionField(), dlgCheckIn(), dlgCheckOut(), dlgMarkFound(), dlgMarkLost() (+18 more)
+Cohesion: 0.22
+Nodes (26): esc(), currentState(), isStorageDept(), moveAsset(), conditionField(), dlgCheckIn(), dlgCheckOut(), dlgMarkFound() (+18 more)
 
 ### Community 48 - "Test (25/25)"
 Cohesion: 0.06
-Nodes (6): AdminBanktransactionsPage, AdminCorePage, AdminErrorPage, AdminLangSettingsPage, AdminDailyStatPage, AdminMonthlyStatPage
+Nodes (6): AdminCorePage, AdminErrorPage, AdminLogPage, AdminPlacesPage, AdminUsersPage, AdminDailyStatPage
 
 ### Community 49 - "Pages Admin (25/25)"
-Cohesion: 0.10
-Nodes (4): BookingDeleteSuccessfulPage, CorePage, LoginWithTajNumberPage, ProfilePage
+Cohesion: 0.07
+Nodes (6): BookingSuccessfulPage, CorePage, LeletekPage, PasswordSendPage, ProfilePage, RegistrationSuccessfulPage
 
 ### Community 50 - "Adminbookingeditor.Php (24/24)"
-Cohesion: 0.19
-Nodes (25): active, buildShell(), fullScreen(), init(), PAGES, renderCurrent(), renderNav(), renderTopbar() (+17 more)
+Cohesion: 0.17
+Nodes (28): active, buildShell(), fullScreen(), init(), PAGES, renderCurrent(), renderNav(), renderTopbar() (+20 more)
 
 ### Community 51 - "Fgszcostumefunctions.Php (24/24)"
-Cohesion: 0.08
-Nodes (22): bootstrap, author, dependencies, bootstrap, qrcode, description, devDependencies, @types/node (+14 more)
+Cohesion: 0.10
+Nodes (20): bootstrap, author, dependencies, bootstrap, description, devDependencies, @types/node, vite (+12 more)
+
+### Community 53 - "Page.Php (16/24)"
+Cohesion: 0.07
+Nodes (3): AdminUtils, DokirexService, AdminCompaniesPage
 
 ### Community 54 - "Waybill (5/24)"
-Cohesion: 0.02
-Nodes (85): Communities (417 total, 235 thin omitted), Community 0 - "SzamlaAgent Core Client", Community 100 - "Nusoap (14/14)", Community 103 - "Dailystat (14/14)", Community 104 - "Pages (14/14)", Community 105 - "Reviewservice.Php (10/14)", Community 106 - "Documentation (13/13)", Community 10 - "PHPMailer/SzamlaAgent Docs" (+77 more)
+Cohesion: 0.03
+Nodes (80): Communities (435 total, 259 thin omitted), Community 0 - "SzamlaAgent Core Client", Community 100 - "Nusoap (14/14)", Community 103 - "Dailystat (14/14)", Community 104 - "Pages (14/14)", Community 105 - "Reviewservice.Php (10/14)", Community 106 - "Documentation (13/13)", Community 10 - "PHPMailer/SzamlaAgent Docs" (+72 more)
 
 ### Community 56 - "Phpmailer (23/23)"
 Cohesion: 0.09
@@ -470,6 +472,10 @@ Nodes (7): nusoap_base, nusoap_fault, soap_fault, soap_server, soapclient, soapv
 ### Community 65 - "Nusoap (19/21)"
 Cohesion: 0.10
 Nodes (6): nusoap_client_mime, nusoap_server_mime, nusoapservermime, soapclientmime, nusoap_client, nusoap_server
+
+### Community 66 - "Lib (10/20)"
+Cohesion: 0.07
+Nodes (4): DocAgent, AdminPatientsPage, AdminWebPageDataPage, WebPageData
 
 ### Community 67 - "Test (20/20)"
 Cohesion: 0.09
@@ -482,6 +488,10 @@ Nodes (22): 10. Send to repair / return from repair (storekeeper / it_admin), 11
 ### Community 70 - "Nusoap (19/19)"
 Cohesion: 0.13
 Nodes (4): TestFailure, TestResult, TestRunner, TextTestResult
+
+### Community 72 - "Nusoap (19/19)"
+Cohesion: 0.11
+Nodes (5): getDB(), PDO, logout_session(), PDO, reseed_fixtures()
 
 ### Community 81 - "Teladoc (18/18)"
 Cohesion: 0.16
@@ -496,12 +506,12 @@ Cohesion: 0.11
 Nodes (18): CheckboxSpec, CollectionSpec, ColorInputSpec, ColorPickerSpec, CustomEditorNewSpec, CustomEditorOldSpec, DropZoneSpec, FormComponentSpec (+10 more)
 
 ### Community 97 - "Pages (15/15)"
-Cohesion: 0.31
-Nodes (15): d(), esc(), getAttrDefs(), getDeviceTypes(), getLocations(), enhanceSelects(), mount(), attrFormHTML() (+7 more)
+Cohesion: 0.35
+Nodes (10): d(), activeReservation(), getAttrDefs(), getDepartments(), getDevice(), pendingCheckinFor(), attrFieldHTML(), collectAttrs() (+2 more)
 
-### Community 99 - "Tests (12/14)"
-Cohesion: 0.11
-Nodes (3): Roles, RolesTest, PHPUnit\Framework\TestCase
+### Community 98 - "Pages (6/14)"
+Cohesion: 0.23
+Nodes (3): OltasIgenyFelmeresPage, PHPMailer\PHPMailer\Exception, PHPMailer\PHPMailer\PHPMailer
 
 ### Community 100 - "Nusoap (14/14)"
 Cohesion: 0.25
@@ -521,7 +531,7 @@ Nodes (15): Checkboxes, classmaps vs. psr-4 (or: legacy code vs modern framework
 
 ### Community 106 - "Documentation (13/13)"
 Cohesion: 0.12
-Nodes (15): [2.10.16] - 2023.01.25, [2.10.17] - 2023.06.14, [2.10.7] - 2021.08.25, [2.1.0] - 2019.05.21, [2.8.1] - 2019.11.20, [2.9.2] - 2020.06.19, [2.9.5] - 2020.07.15, Added (+7 more)
+Nodes (15): [2.10.17] - 2023.06.14, [2.10.7] - 2021.08.25, [2.1.0] - 2019.05.21, [2.8.2] - 2019.12.26, [2.9.2] - 2020.06.19, [2.9.5] - 2020.07.15, [2.9.8] - 2020.11.24, Added (+7 more)
 
 ### Community 110 - "Waybill (13/13)"
 Cohesion: 0.17
@@ -535,25 +545,29 @@ Nodes (14): 1. The core decision: how to model "different sub-attributes per typ
 Cohesion: 0.30
 Nodes (14): Error(), GetInfoFromTrueType(), GetInfoFromType1(), LoadMap(), MakeDefinitionFile(), MakeFont(), MakeFontDescriptor(), MakeFontEncoding() (+6 more)
 
+### Community 119 - "Invoiceservice.Php (9/11)"
+Cohesion: 0.83
+Nodes (3): vexp-guard.sh script, vexp_allow(), vexp_deny()
+
 ### Community 129 - "Dailystat (10/10)"
 Cohesion: 0.83
 Nodes (3): allow(), deny(), graphify-guard.sh script
 
 ### Community 133 - "Documentation (9/9)"
-Cohesion: 0.26
-Nodes (15): holderLabel(), statusBadge(), statusLabel(), getDepartments(), getDevices(), roleAtLeast(), refreshSelectDisplay(), filters (+7 more)
+Cohesion: 0.18
+Nodes (21): holderLabel(), statusBadge(), statusLabel(), getDevices(), getDeviceTypes(), getLocations(), enhanceSelects(), mount() (+13 more)
 
 ### Community 142 - "Adminuser.Php (8/8)"
 Cohesion: 0.17
 Nodes (11): compilerOptions, checkJs, module, moduleResolution, target, types, exclude, include (+3 more)
 
 ### Community 143 - "Filters (8/8)"
-Cohesion: 0.20
-Nodes (9): Auto-refresh (Stop hook), graphify - Knowledge-Graph-Aware AI Coding <!-- graphify (replaces vexp) -->, MANDATORY: always use the cheapest query form - this is about token savings, full stop, MANDATORY: list changed files after every modification, MANDATORY: use the graphify knowledge graph - do NOT grep or glob the codebase, Notes, Primary workflow, Rebuild reminder: eszkoznyilvantartas frontend (+1 more)
+Cohesion: 0.10
+Nodes (19): Advanced Parameters, Auto-refresh (Stop hook), graphify - Knowledge-Graph-Aware AI Coding <!-- graphify (replaces vexp) -->, MANDATORY: always use the cheapest query form - this is about token savings, full stop, MANDATORY: list changed files after every modification, MANDATORY: use the graphify knowledge graph - do NOT grep or glob the codebase, MANDATORY: use vexp pipeline - do NOT grep or glob the codebase, Multi-Repo Workspaces (+11 more)
 
 ### Community 152 - "Tutorial (7/7)"
-Cohesion: 0.36
-Nodes (10): activeReservation(), getDevice(), pendingCheckinFor(), buildQr(), deepLinkFor(), dlgQrLabel(), loadImage(), printQrLabel() (+2 more)
+Cohesion: 0.26
+Nodes (9): qrcode, buildQr(), deepLinkFor(), dlgQrLabel(), loadImage(), printQrLabel(), shortCodeFor(), waitForImages() (+1 more)
 
 ### Community 155 - "Documentation (7/7)"
 Cohesion: 0.18
@@ -614,10 +628,6 @@ Nodes (4): [2.10.14] - 2022.09.28, Added, Changed, Removed
 ### Community 261 - "Font (1/1)"
 Cohesion: 0.50
 Nodes (4): [2.9.10] - 2021.01.27, Added, Changed, Deprecated
-
-### Community 267 - "Font (1/1)"
-Cohesion: 0.11
-Nodes (4): AdminLogPage, AdminPlacesPage, AdminUsersPage, logActivity()
 
 ### Community 282 - "Tutorial (1/1)"
 Cohesion: 0.50
@@ -695,23 +705,19 @@ Nodes (3): InlineBasePattern, InlineCmdPattern, InlineFormatPattern
 Cohesion: 0.67
 Nodes (3): ParserArgs, PostProcessEvent, PreProcessEvent
 
-### Community 347 - "CorrectiveInvoiceHeader"
-Cohesion: 0.12
-Nodes (4): CorrectiveInvoice, PrePaymentInvoice, CorrectiveInvoiceHeader, PrePaymentInvoiceHeader
-
 ## Knowledge Gaps
-- **789 isolated node(s):** `Booking_Constants`, `Booking_Constants`, `Booking_Constants`, `Booking_Constants`, `PdfContent` (+784 more)
+- **793 isolated node(s):** `Booking_Constants`, `Booking_Constants`, `Booking_Constants`, `Booking_Constants`, `PdfContent` (+788 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **259 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **245 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SzamlaAgentUtil` connect `CompanyService & Booking Helpers` to `AdminUser Access Control`, `Font (1/1)`, `Pages Admin (9/9)`, `PHPMailer/SzamlaAgent Docs`, `SzamlaAgent Reverse Invoice`, `SzamlaAgent Item/Invoice Scripts`, `SzamlaAgent Request/XML Building`, `Pages Workschedule (40/40)`, `Api (37/37)`, `Other (34/34)`, `Nusoap (32/32)`, `Language (1/1)`, `Pages (28/28)`, `Invoice (25/28)`, `Szamlaagent (26/26)`, `InvoiceItemLedger`, `MPLWaybill`, `Nusoap (19/19)`, `Nusoap (19/19)`, `Other (19/19)`, `Bookingsyncapi.Php (18/18)`, `Foglaljorvost (16/17)`, `Receipt (16/16)`, `Nusoap (13/13)`, `Nusoap (13/13)`, `Salary (13/13)`, `Adminpage.Php (11/11)`, `Invoiceservice.Php (9/11)`, `Szamlaagent (10/11)`, `Adminajaxservice.Php (7/10)`?**
-  _High betweenness centrality (0.180) - this node is a cross-community bridge._
+- **Why does `SzamlaAgentUtil` connect `CompanyService & Booking Helpers` to `AdminUser Access Control`, `Pages Admin (9/9)`, `PHPMailer/SzamlaAgent Docs`, `SzamlaAgent Reverse Invoice`, `SzamlaAgent Item/Invoice Scripts`, `SzamlaAgent Request/XML Building`, `Pages Workschedule (40/40)`, `Api (37/37)`, `Other (34/34)`, `Nusoap (32/32)`, `Language (1/1)`, `Pages (28/28)`, `Invoice (25/28)`, `Szamlaagent (26/26)`, `InvoiceItemLedger`, `MPLWaybill`, `Nusoap (19/19)`, `Other (19/19)`, `Bookingsyncapi.Php (18/18)`, `Foglaljorvost (16/17)`, `Receipt (16/16)`, `Nusoap (13/13)`, `Nusoap (13/13)`, `Adminpage.Php (11/11)`, `Szamlaagent (10/11)`, `Adminajaxservice.Php (7/10)`?**
+  _High betweenness centrality (0.183) - this node is a cross-community bridge._
 - **Why does `Utils` connect `BookingService Appointment Logic` to `SzamlaAgent Response Parsing`, `Utils Helper Functions`, `Font (1/1)`, `Synlabservice.Php (23/41)`, `Lib (30/39)`, `Makefont (37/37)`, `Fdf (1/1)`, `Maps.Php (6/6)`, `Pages (6/6)`, `Item (23/23)`, `Pages Workschedule (22/22)`, `Szamlaagent (5/5)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Waybill (16/16)`, `Waybill (16/16)`, `Makefont (15/15)`, `Response (15/15)`, `Pages (6/14)`, `Munkakorvizsgalatok.Php (3/3)`, `Adminajaxservice.Php (7/10)`?**
-  _High betweenness centrality (0.115) - this node is a cross-community bridge._
-- **Why does `AdminCorePage` connect `Test (25/25)` to `Reservationservice.Php (10/10)`, `PHPMailer Core`, `Font (1/1)`, `Utils Helper Functions`, `Pages Admin (9/9)`, `AdminKeltexmedProductsPage`, `Font (1/1)`, `Font (1/1)`, `Font (1/1)`, `Pages Admin (9/9)`, `AdminLaborkeroPage`, `Synlabservice.Php (23/41)`, `AdminPatientsPage`, `Pages Workschedule (8/8)`, `Lib (30/39)`, `Documentation (6/7)`, `Pages Admin (7/7)`, `Fpdm (3/6)`, `Maps.Php (6/6)`, `Other (6/6)`, `Test (6/6)`, `Pages Admin (6/6)`, `Pages (6/6)`, `Pages (6/6)`, `Pages Workschedule (6/6)`, `Header (23/23)`, `Other (5/5)`, `Szamlaagent (5/5)`, `Pages Admin (5/5)`, `Pages Admin (5/5)`, `Pages Admin (5/5)`, `Pages Admin (5/5)`, `Other (4/4)`, `Test (4/4)`, `Response (4/4)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Pages Admin (4/4)`, `Waybill (16/16)`, `Pages (4/4)`, `Szamlaagent (14/15)`, `Pages (6/14)`, `Qr Label Generator (3/3)`, `Munkakorvizsgalatok.Php (3/3)`, `Szamlaagent (3/3)`, `Header (3/3)`, `Header (3/3)`, `Adminuser.Php (2/2)`, `Adminuser.Php (2/2)`, `Documentation (10/11)`, `Nusoap (11/11)`?**
+  _High betweenness centrality (0.123) - this node is a cross-community bridge._
+- **Why does `NotificationService` connect `SzamlaAgent Response Parsing` to `Tests (19/33)`, `Pages (6/14)`, `KeltexMedWebSQL Legacy DB Layer`, `Font (1/1)`, `Laborkeroservice.Php (18/18)`, `Fpdf (41/41)`, `Page.Php (16/24)`, `Pages (6/6)`, `Lib (30/39)`, `Adminajaxservice.Php (7/10)`?**
   _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Are the 68 inferred relationships involving `SzamlaAgentUtil` (e.g. with `.buildXmlData()` and `.checkField()`) actually correct?**
   _`SzamlaAgentUtil` has 68 INFERRED edges - model-reasoned connections that need verification._
@@ -720,4 +726,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 65 inferred relationships involving `Ops` (e.g. with `h_add_attr_def()` and `h_add_department()`) actually correct?**
   _`Ops` has 65 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Booking_Constants`, `Booking_Constants`, `Booking_Constants` to the rest of the system?**
-  _789 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _793 weakly-connected nodes found - possible documentation gaps or missing edges._

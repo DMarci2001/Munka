@@ -110,9 +110,9 @@ body {
 
 /* az admin a tartalom-panelra tesz nagy árnyékot */
 .content {
-  padding: 20px; max-width: 1280px; width: 100%;
+  padding: 20px; max-width: 1280px; width: 100%; min-width: 0;
   margin: 14px; background: #fff; border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow); overflow-x: hidden;
 }
 
 /* ---- Cards ---- */
@@ -317,6 +317,25 @@ a.devlink, table.grid tbody tr td a { color: var(--link); }
 .toast-c.success { background: var(--brand); }
 .toast-c.error { background: #b00; }
 @keyframes slidein { from { transform: translateX(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---- Bulk-select akciósáv (tömeges műveletek) ---- */
+.bulk-action-bar-slot { position: sticky; top: 0; z-index: 40; }
+.bulk-action-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  background: var(--card); border: 1px solid var(--brand); border-radius: var(--radius);
+  padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+.bulk-action-bar-label { font-weight: 700; font-size: .88rem; white-space: nowrap; }
+.bulk-action-bar-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.bulk-action-bar-chips .chip {
+  display: inline-flex; align-items: center; gap: 5px; background: #f1f1f1;
+  border-radius: 999px; padding: 3px 6px 3px 10px; font-size: .78rem; font-family: monospace;
+}
+.bulk-action-bar-chips .chip button {
+  border: none; background: none; cursor: pointer; color: #999; font-size: 1rem; line-height: 1; padding: 0 2px;
+}
+.bulk-action-bar-buttons { display: flex; gap: 8px; margin-left: auto; }
+.bulk-th, .bulk-td { width: 32px; text-align: center; }
 
 /* ---- Misc ---- */
 .row-actions { display: flex; gap: 6px; }
