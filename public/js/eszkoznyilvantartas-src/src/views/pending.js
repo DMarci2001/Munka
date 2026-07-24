@@ -6,7 +6,7 @@
 
 import { pendingCheckins, getDevice, getUser, getDeviceType } from '../state/store.js';
 import { navigate } from '../lib/router.js';
-import { locationLabel, fmtDateTime, esc } from '../lib/format.js';
+import { locationLabel, fmtDateTime, esc, splitRejectionNote } from '../lib/format.js';
 import { icons } from '../ui/components.js';
 import * as A from '../ui/actions.js';
 import { fitTableToWidth, watchFitToWidth } from '../ui/fitToWidth.js';
@@ -98,6 +98,12 @@ function paint(el) {
   });
 }
 
+// Elutasított átadásnál az indokot mutatjuk (ha volt), különben az eredeti megjegyzést.
+function rejectedTransferNote(notes) {
+  const { note, reason } = splitRejectionNote(notes);
+  return reason || note;
+}
+
 function targetLabel(ev) {
   if (ev.kind === 'rejected_transfer') {
     const toUser = getUser(ev.to_user_id);
@@ -120,7 +126,7 @@ function rowHTML(ev) {
       <td>${esc(submitter?.full_name || '—')}</td>
       <td>${targetLabel(ev)}</td>
       <td>${fmtDateTime(ev.event_timestamp)}</td>
-      <td>${esc((isRejectedTransfer ? ev.notes : ev.condition_at_event) || '—')}</td>
+      <td>${esc((isRejectedTransfer ? rejectedTransferNote(ev.notes) : ev.condition_at_event) || '—')}</td>
       <td style="text-align:right">
         <div class="row-actions" style="justify-content:flex-end">
           ${isRejectedTransfer ? `

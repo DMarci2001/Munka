@@ -11,8 +11,8 @@ import { deviceVM } from '../lib/vm.js';
 import { navigate } from '../lib/router.js';
 import {
   statusBadge, locationLabel,
-  fmtDateTime, fmtRelative, fmtAttrValue, eventLabel, confLabel,
-  calibrationFlag, esc,
+  fmtDateTime, fmtRelative, fmtAttrValue, eventLabel, confLabel, confClass,
+  calibrationFlag, esc, splitRejectionNote,
 } from '../lib/format.js';
 import { icons } from '../ui/components.js';
 import * as A from '../ui/actions.js';
@@ -149,14 +149,16 @@ function tlItem(ev) {
   else if (!noFrom && (ev.from_departments_id || ev.from_locations_id)) fromTo.push(locationLabel(ev.from_locations_id, ev.from_departments_id));
   const toLabel = ev.to_user_id ? getUser(ev.to_user_id)?.full_name : locationLabel(ev.to_locations_id, ev.to_departments_id);
   const confTag = ev.confirmation_status !== 'confirmed'
-    ? ` · <span class="muted">${confLabel(ev.confirmation_status)}</span>` : '';
+    ? `<span class="status-badge ${confClass(ev.confirmation_status)}">${confLabel(ev.confirmation_status)}</span>` : '';
+  const { note, reason } = splitRejectionNote(ev.notes);
   return `
     <div class="tl-item">
       <span class="tl-dot ${dotCls}"></span>
       <div class="tl-head">${esc(eventLabel(ev.event_type))}${confTag}</div>
-      <div class="tl-meta">${fromTo.length ? esc(fromTo.join(', ')) + ' → ' : ''}${esc(toLabel || '—')}</div>
-      <div class="tl-meta">Végrehajtó: ${esc(actor?.full_name || '—')}${ev.notes ? ' · ' + esc(ev.notes) : ''}</div>
-      <div class="tl-time">${fmtDateTime(ev.event_timestamp)}</div>
+      <div class="tl-route">${fromTo.length ? esc(fromTo.join(', ')) + ' → ' : ''}${esc(toLabel || '—')}</div>
+      <div class="tl-meta">Végrehajtó: ${esc(actor?.full_name || '—')} · ${fmtDateTime(ev.event_timestamp)}</div>
+      ${note ? `<div class="tl-note">${esc(note)}</div>` : ''}
+      ${reason ? `<div class="tl-reason">Indok: ${esc(reason)}</div>` : ''}
     </div>`;
 }
 
@@ -217,7 +219,7 @@ function renderActions(container, v, role, isStore, me) {
     btns.push(`<button class="btn btn-outline" data-act="edit">${icons.edit} Szerkesztés</button>`);
   }
 
-  btns.push(`<button class="btn btn-ghost btn-sm" data-act="qr-label" style="margin-left:auto">${icons.qr} QR Címke</button>`);
+  btns.push(`<button class="btn btn-ghost btn-sm" data-act="qr-label" style="margin-left:auto">${icons.qr} QR címke</button>`);
 
   container.innerHTML = btns.join('') || `<span class="muted" style="font-size:.85rem">Nincs elérhető művelet ehhez az állapothoz.</span>`;
 
@@ -245,7 +247,7 @@ function showMore(container, id) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:absolute; margin-top:6px; background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); padding:6px; z-index:50; display:flex; flex-direction:column; gap:2px';
   wrap.innerHTML = `
-    <button class="btn btn-ghost btn-sm" data-m="lost" style="justify-content:flex-start">${icons.warning} Elveszettnek jelöl</button>
+    <button class="btn btn-ghost btn-sm" data-m="lost" style="justify-content:flex-start">${icons.warning} Elveszettnek jelölés</button>
     <button class="btn btn-ghost btn-sm" data-m="retire" style="justify-content:flex-start; color:#c0392b">Selejtezés</button>`;
   container.appendChild(wrap);
   wrap.querySelector('[data-m=lost]').addEventListener('click', () => { wrap.remove(); A.dlgMarkLost(id); });

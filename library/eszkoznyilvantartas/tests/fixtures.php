@@ -38,18 +38,27 @@ function reseed_fixtures(?PDO $db = null): void {
   $ins = $db->prepare('INSERT INTO helyszinek (id, cim) VALUES (?, ?)');
   foreach ($locations as $l) $ins->execute($l);
 
-  // ---- users (jogosultsag: 0=user, 1=storekeeper, 2=it_admin) ----
+  // ---- users ----
+  // jogosultsag (0/1/2) az admin rendszer cég-szintű tier-je — ÖNMAGÁBAN nem
+  // dönt eszköznyilvántartás-szerepkörről. A tényleges storekeeper/it_admin
+  // szerepkört a permissions JSON jog_eszkoznyilvantartas_admin flagje adja
+  // (l. Roles::fromUserRow); jogosultsag=2 csak a admin/storekeeper közti
+  // választásnál számít. jog_eszkoznyilvantartas_kivetel pedig sima usernél
+  // dönt az önkivételi jogról (l. Roles::canCheckOut) — storekeeper/it_admin
+  // erre a flagre tekintet nélkül mindig kivehet.
   $pw = password_hash($DEV_PASSWORD, PASSWORD_BCRYPT);
+  $permsJson = fn(array $flags) => json_encode(['permissions' => $flags]);
   $users = [
-    [1, 'kovacs.anna',    'Dr. Kovács Anna',    0],
-    [2, 'nagy.peter',     'Nagy Péter',         0],
-    [3, 'szabo.julia',    'Szabó Júlia',        1],
-    [4, 'toth.gabor',     'Tóth Gábor',         2],
-    [5, 'horvath.eszter', 'Dr. Horváth Eszter', 0],
-    [6, 'kiss.laszlo',    'Dr. Kiss László',    0],
+    // id, username, nev, jogosultsag, permissions
+    [1, 'kovacs.anna',    'Dr. Kovács Anna',    0, $permsJson(['jog_eszkoznyilvantartas_kivetel' => 1])], // user WITH checkout permission
+    [2, 'nagy.peter',     'Nagy Péter',         0, null], // plain user, NO checkout permission
+    [3, 'szabo.julia',    'Szabó Júlia',        1, $permsJson(['jog_eszkoznyilvantartas_admin' => 1])], // storekeeper
+    [4, 'toth.gabor',     'Tóth Gábor',         2, $permsJson(['jog_eszkoznyilvantartas_admin' => 1])], // it_admin
+    [5, 'horvath.eszter', 'Dr. Horváth Eszter', 0, null], // plain user, NO checkout permission
+    [6, 'kiss.laszlo',    'Dr. Kiss László',    0, null], // plain user, NO checkout permission
   ];
-  $ins = $db->prepare('INSERT INTO users (id, username, nev, jogosultsag, jelszo) VALUES (?, ?, ?, ?, ?)');
-  foreach ($users as $u) $ins->execute([$u[0], $u[1], $u[2], $u[3], $pw]);
+  $ins = $db->prepare('INSERT INTO users (id, username, nev, jogosultsag, permissions, jelszo) VALUES (?, ?, ?, ?, ?, ?)');
+  foreach ($users as $u) $ins->execute([$u[0], $u[1], $u[2], $u[3], $u[4], $pw]);
 
   // ---- departments -------------------------------------------
   $departments = [

@@ -95,7 +95,7 @@ function renderNav() {
     { key: 'my',        path: '/my',        label: 'Eszközeim',        ico: icons.my, badge: myTransfersCount || null },
   ];
   const storeItems = [
-    { key: 'pending',       path: '/pending',       label: 'Leadott eszközök', ico: icons.pending,   badge: pendingCount || null },
+    { key: 'pending',       path: '/pending',       label: 'Ellenőrzésre vár', ico: icons.pending,   badge: pendingCount || null },
     { key: 'register-data', path: '/register-data', label: 'Adatbevitel', ico: icons.building },
   ];
 

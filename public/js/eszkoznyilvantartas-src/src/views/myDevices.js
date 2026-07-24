@@ -55,7 +55,7 @@ export function renderMyDevices(el) {
 
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <h3 class="section-title" style="margin:0">Eszközök a birtokomban</h3>
-        ${held.length ? `<button class="btn btn-outline btn-sm" id="btn-bulk-toggle">${bulkMode ? 'Tömeges átadás/leadás — kilépés' : 'Tömeges átadás / leadás'}</button>` : ''}
+        ${held.length ? `<button class="btn btn-outline btn-sm btn-toggle ${bulkMode ? 'active' : ''}" id="btn-bulk-toggle" aria-pressed="${bulkMode}">Tömeges átadás / leadás</button>` : ''}
       </div>
       <div id="bulk-bar" class="bulk-action-bar-slot"></div>
       ${held.length ? `

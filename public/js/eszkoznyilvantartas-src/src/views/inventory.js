@@ -101,7 +101,7 @@ export function renderInventory(el) {
 
         <button class="btn btn-reset-filters-custom" id="btn-reset-filters">Szűrők törlése</button>
         <button class="btn btn-outline" id="btn-scan">${icons.qr} Beolvasás</button>
-        ${canOut ? `<button class="btn btn-outline" id="btn-bulk-toggle">${bulkMode ? 'Tömeges kivétel — kilépés' : 'Tömeges kivétel'}</button>` : ''}
+        ${canOut ? `<button class="btn btn-outline btn-toggle ${bulkMode ? 'active' : ''}" id="btn-bulk-toggle" aria-pressed="${bulkMode}">Tömeges kivétel</button>` : ''}
         ${isStore ? `<button class="btn btn-primary" id="btn-new-device">${icons.register} Új eszköz bevitele</button>` : ''}
       </div>
       <div id="bulk-bar" class="bulk-action-bar-slot"></div>

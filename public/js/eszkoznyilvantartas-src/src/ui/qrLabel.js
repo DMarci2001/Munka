@@ -72,7 +72,7 @@ export async function dlgQrLabel(deviceId) {
   const dataUrl = await buildQr(QRCode, url, 480);
 
   openModal({
-    title: `QR Címke · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
+    title: `QR címke · <span class="tag-mono" style="margin-left:8px">${esc(dev.asset_tag)}</span>`,
     bodyHTML: `
       <div id="qr-label-area" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0">
         <img src="${dataUrl}" alt="QR kód" style="width:260px;height:260px;display:block" />

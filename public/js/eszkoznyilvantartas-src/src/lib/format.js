@@ -42,6 +42,25 @@ export const eventLabel = (e) => EVENT[e] || e;
 // ---- Megerősítési állapot -----------------------------------
 const CONF = { pending: 'Függőben', confirmed: 'Megerősítve', rejected: 'Elutasítva' };
 export const confLabel = (c) => CONF[c] || c;
+const CONF_CLS = { pending: 'status-pending', rejected: 'status-rejected' };
+export const confClass = (c) => CONF_CLS[c] || '';
+
+// ---- Elutasítási indok kiemelése ------------------------------
+// A backend (Ops::rejectCheckIn / rejectTransfer) az elutasítás indokát a
+// notes mezőbe fűzi: "<eredeti megjegyzés> ELUTASÍTVA: <indok>". Ez a
+// segédfüggvény tisztán megjelenítési célból választja szét a kettőt —
+// nem nyúl a tárolt adathoz.
+const REJECTION_MARKER = ' ELUTASÍTVA: ';
+const NO_REASON_PLACEHOLDER = 'nincs indok';
+export function splitRejectionNote(notes) {
+  if (!notes) return { note: '', reason: '' };
+  const idx = notes.indexOf(REJECTION_MARKER);
+  if (idx === -1) return { note: notes, reason: '' };
+  const note = notes.slice(0, idx).trim();
+  const reasonRaw = notes.slice(idx + REJECTION_MARKER.length).trim();
+  const reason = reasonRaw === NO_REASON_PLACEHOLDER ? '' : reasonRaw;
+  return { note, reason };
+}
 
 // ---- location_label: department → olvasható hely ------------
 export function locationLabel(locationId, departmentId) {

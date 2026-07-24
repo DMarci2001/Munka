@@ -202,6 +202,7 @@ a.devlink, table.grid tbody tr td a { color: var(--link); }
 .status-lost { background: #f0e6fb; color: #7c3aed; }
 .status-retired { background: #eaeaea; color: #666; }
 .status-default { background: #eaeaea; color: #666; }
+.status-rejected { background: #fbe3e3; color: #b00; }
 
 /* ---- Buttons (utilitárius, az admin szürke gomb + zöld primary) ---- */
 .btn {
@@ -225,6 +226,13 @@ a.devlink, table.grid tbody tr td a { color: var(--link); }
 .btn-success:hover { background: var(--brand-dark); }
 .ico-svg { width: 16px; height: 16px; }
 
+/* ---- Toggle gombok (pl. "Tömeges kivétel") — bekapcsolt állapot ----
+   Ugyanaz a vizuális nyelv, mint a .nav-item.active / .ssel-item.active. */
+.btn-toggle.active,
+.btn-toggle.active:hover {
+  background: var(--brand-soft); color: var(--brand-dark); border-color: var(--brand);
+}
+
 /* ---- Detail page ---- */
 .detail-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
   border-bottom: 1px solid var(--line-soft); padding-bottom: 14px; }
@@ -243,16 +251,18 @@ a.devlink, table.grid tbody tr td a { color: var(--link); }
 .attr-flag.soon { background: #fdf3d6; color: #9a6700; }
 
 /* ---- Timeline ---- */
-.timeline { position: relative; padding-left: 22px; }
-.timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--line-soft); }
-.tl-item { position: relative; padding: 0 0 16px 0; }
+.timeline { position: relative; padding-left: 26px; }
+.timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--line-soft); }
+.tl-item { position: relative; padding: 0 0 22px 0; }
 .tl-item:last-child { padding-bottom: 0; }
-.tl-dot { position: absolute; left: -22px; top: 3px; width: 11px; height: 11px; border-radius: 50%; background: var(--brand); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.tl-dot { position: absolute; left: -26px; top: 4px; width: 13px; height: 13px; border-radius: 50%; background: var(--brand); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
 .tl-dot.pending { background: #d97706; }
 .tl-dot.rejected { background: #b00; }
-.tl-head { font-weight: 700; font-size: .88rem; }
-.tl-meta { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
-.tl-time { font-size: .74rem; color: #999; }
+.tl-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .95rem; }
+.tl-route { font-size: .88rem; color: #333; margin-top: 3px; }
+.tl-meta { font-size: .8rem; color: var(--ink-soft); margin-top: 4px; }
+.tl-note { font-size: .82rem; color: #333; margin-top: 4px; }
+.tl-reason { font-size: .82rem; color: #b00; margin-top: 4px; padding-left: 10px; border-left: 2px solid #f0b8b8; }
 
 /* ---- CSS lapozó (radio + :has()) ---- */
 .page-radio { display: none; }
